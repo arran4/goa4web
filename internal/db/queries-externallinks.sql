@@ -45,3 +45,6 @@ ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id);
 
 -- name: AdminGetExternalLinkByCacheID :one
 SELECT * FROM external_links WHERE card_image_cache = ? OR favicon_cache = ? LIMIT 1;
+
+-- name: TouchExternalLink :exec
+UPDATE external_links SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;

@@ -2,9 +2,9 @@ package a4code2html
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/google/go-cmp/cmp"
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/google/go-cmp/cmp"
 	"io"
 	"testing"
 )
@@ -274,79 +274,23 @@ func TestHrTag(t *testing.T) {
 	}
 }
 
-// legacyTestLinkProvider implements LinkProvider to simulate the old MetadataProvider logic for tests
-type legacyTestLinkProvider struct {
-	metadata map[string]struct {
-		Title       string
-		Description string
-		ImageURL    string
-	}
-}
-
-func (p *legacyTestLinkProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (string, string, bool) {
-	safe, ok := SanitizeURL(url)
-	if !ok {
-		return url, "", false
-	}
-	meta, hasMeta := p.metadata[url]
-	if isBlock && hasMeta {
-		// Render Card
-		imageHTML := ""
-		if meta.ImageURL != "" {
-			safeImg, imgOk := SanitizeURL(meta.ImageURL)
-			if imgOk {
-				imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
-			}
-		}
-
-		if isImmediateClose {
-			// Complex Card: Title and Description from Metadata
-			return fmt.Sprintf(
-				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
-				safe, imageHTML, meta.Title, meta.Description), "", true
-		} else {
-			// Simple Card: Title from user provided text (consumed later)
-			return fmt.Sprintf(
-				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">",
-				safe, imageHTML), "</div></div></a></div>", false
-		}
-	}
-
-	// Inline Link or Block fallback (no metadata)
-	if isImmediateClose {
-		text := url
-		if hasMeta && meta.Title != "" {
-			text = meta.Title
-		}
-		// Return consumeImmediate=false so the parser handles the closing ] and subsequent newline
-		return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">%s", safe, text), "</a>", false
-	}
-
-	return fmt.Sprintf("<a href=\"%s\" target=\"_blank\">", safe), "</a>", false
-}
-
-func (p *legacyTestLinkProvider) MapImageURL(tag, val string) string {
-	return val
-}
-
 func TestExternalLinkCard(t *testing.T) {
-	provider := &legacyTestLinkProvider{
-		metadata: map[string]struct {
-			Title       string
-			Description string
-			ImageURL    string
-		}{
-			"http://example.com/card": {
+	provider := func(u string) *a4code.LinkMetadata {
+		if u == "http://example.com/card" {
+			return &a4code.LinkMetadata{
 				Title:       "Example Title",
 				Description: "Example Description",
 				ImageURL:    "http://example.com/image.jpg",
-			},
-			"http://example.com/simple": {
+			}
+		}
+		if u == "http://example.com/simple" {
+			return &a4code.LinkMetadata{
 				Title:       "Simple Title",
 				Description: "Simple Description",
 				ImageURL:    "http://example.com/image.jpg",
-			},
-		},
+			}
+		}
+		return nil
 	}
 
 	tests := []struct {
@@ -357,7 +301,7 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Inline with metadata (Title injection)",
 			input: "See [link http://example.com/card]",
-			want:  "See <a href=\"http://example.com/card\" target=\"_blank\">Example Title</a>",
+			want:  "See <a href=\"http://example.com/card\" target=\"_blank\" title=\"Example Description\">Example Title</a>",
 		},
 		{
 			name:  "Inline without metadata",
@@ -367,7 +311,7 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Inline with explicit title (ignore metadata title)",
 			input: "See [link http://example.com/card Explicit]",
-			want:  "See <a href=\"http://example.com/card\" target=\"_blank\"> Explicit</a>",
+			want:  "See <a href=\"http://example.com/card\" target=\"_blank\" title=\"Example Title - Example Description\"> Explicit</a>",
 		},
 		{
 			name:  "Block link [link url] with metadata (Complex Card)",
@@ -380,9 +324,9 @@ func TestExternalLinkCard(t *testing.T) {
 			want:  "<a href=\"http://example.com/none\" target=\"_blank\">http://example.com/none</a><br />\n",
 		},
 		{
-			name:  "Block link [link url Title] with metadata -> Simple Card",
+			name:  "Block link [link url Title] with metadata -> Inline with Tooltip",
 			input: "[link http://example.com/simple Simple!]\n",
-			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/simple\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\"> Simple!</div></div></a></div><br />\n",
+			want:  "<a href=\"http://example.com/simple\" target=\"_blank\" title=\"Simple Title - Simple Description\"> Simple!</a><br />\n",
 		},
 		{
 			name:  "Consecutive Block Links",
@@ -394,7 +338,7 @@ func TestExternalLinkCard(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New(LinkProvider(provider))
+			c := New(a4code.LinkMetadataProvider(provider))
 			c.SetInput(tt.input)
 			gotBytes := testhelpers.Must(io.ReadAll(c.Process()))
 			got := string(gotBytes)
@@ -402,49 +346,5 @@ func TestExternalLinkCard(t *testing.T) {
 				t.Errorf("%s: diff\n%s", tt.name, diff)
 			}
 		})
-	}
-}
-
-type mockProvider struct{}
-
-func (m *mockProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (string, string, bool) {
-	if url == "http://custom.com" {
-		return "<custom-link>", "", true
-	}
-	if isBlock {
-		return "<block-link>", "</block-link>", false
-	}
-	return "<inline-link>", "</inline-link>", false
-}
-
-func (m *mockProvider) MapImageURL(tag, val string) string {
-	return "mapped:" + val
-}
-
-func TestLinkProvider(t *testing.T) {
-	c := New(&mockProvider{})
-
-	// Case 1: Custom handling (consumed immediate)
-	c.SetInput("[link http://custom.com]")
-	got := testhelpers.Must(io.ReadAll(c.Process()))
-	want := "<custom-link>"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
-	}
-
-	// Case 2: Block link
-	c.SetInput("[link http://other.com]\n")
-	got = testhelpers.Must(io.ReadAll(c.Process()))
-	want = "<block-link></block-link><br />\n"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
-	}
-
-	// Case 3: Image mapping
-	c.SetInput("[img foo.jpg]")
-	got = testhelpers.Must(io.ReadAll(c.Process()))
-	want = "<img class=\"a4code-image\" src=\"mapped:foo.jpg\" />"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
 	}
 }

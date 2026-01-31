@@ -11,6 +11,8 @@ import (
 	"log"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/a4code"
 )
 
 // CodeType defines the output mode for A4code2html.
@@ -30,12 +32,6 @@ const (
 	CTWordsOnly
 )
 
-// LinkProvider provides HTML rendering for links and maps image URLs.
-type LinkProvider interface {
-	RenderLink(url string, isBlock bool, isImmediateClose bool) (htmlOpen string, htmlClose string, consumeImmediate bool)
-	MapImageURL(tag, val string) string
-}
-
 type A4code2html struct {
 	r        *bufio.Reader
 	w        io.Writer
@@ -46,12 +42,15 @@ type A4code2html struct {
 	// ImageURLMapper optionally maps tag URLs to fully qualified versions.
 	// The first parameter provides the tag name, e.g. "img" or "a".
 	ImageURLMapper func(tag, val string) string
+	// ImageHTMLMapper optionally maps tag values to a full HTML tag string.
+	// The first parameter provides the tag name, e.g. "img".
+	ImageHTMLMapper func(tag, val string) string
 	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
 	UserColorMapper func(username string) string
 	quoteDepth      int
-	// Provider optionally provides custom rendering for links.
-	Provider    LinkProvider
-	atLineStart bool
+	// MetadataProvider optionally provides metadata for external links.
+	MetadataProvider a4code.LinkMetadataProvider
+	atLineStart      bool
 }
 
 // WithTOC enables or disables table-of-contents generation when passed to New.
@@ -73,10 +72,12 @@ func New(opts ...interface{}) *A4code2html {
 			c.CodeType = v
 		case func(tag, val string) string:
 			c.ImageURLMapper = v
+		case ImageHTMLMapperOption:
+			c.ImageHTMLMapper = func(tag, val string) string(v)
 		case func(string) string:
 			c.UserColorMapper = v
-		case LinkProvider:
-			c.Provider = v
+		case a4code.LinkMetadataProvider:
+			c.MetadataProvider = v
 		case WithTOC:
 			c.makeTC = bool(v)
 		case *bufio.Reader:
@@ -336,14 +337,20 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		if err != nil && err != io.EOF {
 			return err
 		}
-		if a.Provider != nil {
-			raw = a.Provider.MapImageURL("img", raw)
-		} else if a.ImageURLMapper != nil {
-			raw = a.ImageURLMapper("img", raw)
-		}
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
+			if a.ImageHTMLMapper != nil {
+				if htmlStr := a.ImageHTMLMapper("img", raw); htmlStr != "" {
+					if _, err := io.WriteString(w, htmlStr); err != nil {
+						return err
+					}
+					break
+				}
+			}
+			if a.ImageURLMapper != nil {
+				raw = a.ImageURLMapper("img", raw)
+			}
 			if _, err := io.WriteString(w, "<img class=\"a4code-image\" src=\""+html.EscapeString(raw)+"\" />"); err != nil {
 				return err
 			}
@@ -367,55 +374,118 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 				return err
 			}
 
-			if a.Provider != nil {
-				isBlock := false
-				isImmediateClose := false
-				if wasAtLineStart {
-					isBlock, isImmediateClose = a.peekBlockLink(r)
-				}
-				if !isBlock {
-					p, err := r.Peek(1)
-					if err == nil && len(p) > 0 && p[0] == ']' {
-						isImmediateClose = true
-					}
-				}
-				htmlOpen, htmlClose, consumeImmediate := a.Provider.RenderLink(raw, isBlock, isImmediateClose)
-				if _, err := io.WriteString(w, htmlOpen); err != nil {
-					return err
-				}
-				if consumeImmediate {
-					// Consume ] and potentially \n
-					r.ReadByte() // ]
-					if isBlock {
-						r.ReadByte() // \n
-						a.atLineStart = true
-					}
-				} else {
-					a.stack = append(a.stack, htmlClose)
-				}
-				return nil
-			}
-
 			original := raw
 			if a.ImageURLMapper != nil {
 				raw = a.ImageURLMapper("a", raw)
 			}
 			safe, ok := SanitizeURL(raw)
 			if ok {
-				// Inline Link
-				if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
-					return err
+				var meta *a4code.LinkMetadata
+				if a.MetadataProvider != nil {
+					meta = a.MetadataProvider(raw)
 				}
 
-				p, err := r.Peek(1)
-				if err == nil && len(p) > 0 && p[0] == ']' {
-					// Case [link url]
-					// Default legacy behavior without metadata provider: just print original
-					if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
+				isBlock := false
+				isImmediateClose := false
+				if wasAtLineStart {
+					isBlock, isImmediateClose = a.peekBlockLink(r)
+				}
+
+				if isBlock && isImmediateClose && meta != nil {
+					// Render Card
+					imageHTML := ""
+					if meta.ImageURL != "" {
+						handled := false
+						if a.ImageHTMLMapper != nil {
+							if htmlStr := a.ImageHTMLMapper("img", meta.ImageURL); htmlStr != "" {
+								imageHTML = htmlStr
+								handled = true
+							}
+						}
+						if !handled {
+							imgURL := meta.ImageURL
+							if a.ImageURLMapper != nil {
+								imgURL = a.ImageURLMapper("img", imgURL)
+							}
+							safeImg, imgOk := SanitizeURL(imgURL)
+							if imgOk {
+								imageHTML = fmt.Sprintf("<img src=\"%s\" class=\"external-link-image\" />", safeImg)
+							}
+						}
+					}
+
+					// Consume ] and newline
+					r.ReadByte() // ]
+					r.ReadByte() // \n
+
+					a.atLineStart = true
+
+					// Determine Title and Description
+					title := meta.Title
+					if title == "" {
+						title = original // Fallback
+					}
+					description := meta.Description
+
+					if _, err := io.WriteString(w, fmt.Sprintf(
+						"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
+						safe, imageHTML, html.EscapeString(title), html.EscapeString(description))); err != nil {
 						return err
 					}
+				} else {
+					// Inline Link
+					p, _ := r.Peek(1)
+					isNoUserTitle := len(p) > 0 && p[0] == ']'
+
+					titleAttr := ""
+					if meta != nil {
+						if !isNoUserTitle {
+							if meta.Title != "" {
+								titleAttr = meta.Title
+							}
+							if meta.Description != "" {
+								if titleAttr != "" {
+									titleAttr += " - "
+								}
+								titleAttr += meta.Description
+							}
+						} else {
+							titleAttr = meta.Description
+						}
+					}
+
+					if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\""); err != nil {
+						return err
+					}
+					if titleAttr != "" {
+						if _, err := io.WriteString(w, " title=\""+html.EscapeString(titleAttr)+"\""); err != nil {
+							return err
+						}
+					}
+					if _, err := io.WriteString(w, ">"); err != nil {
+						return err
+					}
+
+					if isNoUserTitle {
+						// Case [link url]
+						// Inject title if available
+						linkText := original
+						if meta != nil {
+							if meta.Title != "" {
+								linkText = meta.Title
+							} else if meta.Description != "" {
+								linkText = meta.Description
+								if len(linkText) > 100 {
+									linkText = linkText[:97] + "..."
+								}
+							}
+						}
+						if _, err := io.WriteString(w, html.EscapeString(linkText)); err != nil {
+							return err
+						}
+					}
+					a.stack = append(a.stack, "</a>")
 				}
-				a.stack = append(a.stack, "</a>")
 			} else {
 				if _, err := io.WriteString(w, safe); err != nil {
 					return err
@@ -660,3 +730,6 @@ func (c *A4code2html) readCommandBreak(r *bufio.Reader) (string, error) {
 	}
 	return buf.String(), nil
 }
+
+// ImageHTMLMapperOption is an option to set the ImageHTMLMapper.
+type ImageHTMLMapperOption func(tag, val string) string

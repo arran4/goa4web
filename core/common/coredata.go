@@ -107,6 +107,7 @@ type CoreData struct {
 	AtomFeedURL       string
 	PublicAtomFeedURL string
 	AutoRefresh       string
+	bus               *eventbus.Bus
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
 	FeedsEnabled      bool
@@ -1158,6 +1159,9 @@ func (cd *CoreData) CurrentWritingLoaded() *db.GetWritingForListerByIDRow {
 	}
 	return v
 }
+
+// Bus returns the event bus.
+func (cd *CoreData) Bus() *eventbus.Bus { return cd.bus }
 
 // CustomQueries returns the db.CustomQueries instance associated with this CoreData.
 func (cd *CoreData) CustomQueries() db.CustomQueries { return cd.customQueries }
@@ -2764,6 +2768,11 @@ func WithGrants(g []*db.Grant) CoreOption {
 // WithConfig sets the runtime config for this CoreData.
 func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 	return func(cd *CoreData) { cd.Config = cfg }
+}
+
+// WithBus sets the event bus.
+func WithBus(b *eventbus.Bus) CoreOption {
+	return func(cd *CoreData) { cd.bus = b }
 }
 
 // WithSiteTitle sets the site title used by templates.

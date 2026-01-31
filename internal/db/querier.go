@@ -609,6 +609,7 @@ type Querier interface {
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
+	TouchExternalLink(ctx context.Context, id int32) error
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error
 	SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error

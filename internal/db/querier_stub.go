@@ -28,6 +28,10 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	TouchExternalLinkCalls []int32
+	TouchExternalLinkErr   error
+	TouchExternalLinkFn    func(context.Context, int32) error
+
 	AdminCountSentEmailsCalls   []AdminCountSentEmailsParams
 	AdminCountSentEmailsReturns int64
 	AdminCountSentEmailsErr     error
@@ -1068,6 +1072,18 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) TouchExternalLink(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.TouchExternalLinkCalls = append(s.TouchExternalLinkCalls, id)
+	fn := s.TouchExternalLinkFn
+	err := s.TouchExternalLinkErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
 }
 
 func (s *QuerierStub) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error) {

@@ -3,6 +3,23 @@
 
 <form method="post" action="/usr/subscriptions/update">
     {{ csrfField }}
+
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+        <strong>Global Controls:</strong>
+        <span style="margin-left: 20px;">
+            Internal:
+            <button type="button" onclick="selectSubs(this, 'internal', 'all')">All</button>
+            <button type="button" onclick="selectSubs(this, 'internal', 'none')">None</button>
+            <button type="button" onclick="selectSubs(this, 'internal', 'invert')">Invert</button>
+        </span>
+        <span style="margin-left: 20px;">
+            Email:
+            <button type="button" onclick="selectSubs(this, 'email', 'all')">All</button>
+            <button type="button" onclick="selectSubs(this, 'email', 'none')">None</button>
+            <button type="button" onclick="selectSubs(this, 'email', 'invert')">Invert</button>
+        </span>
+    </div>
+
     {{ range .Groups }}
     {{ $group := . }}
     <div class="subscription-group">
@@ -14,11 +31,31 @@
             <thead>
                 <tr>
                     <th>Target</th>
-                    <th>Internal</th>
-                    <th>Email</th>
+                    <th>
+                        Internal<br>
+                        <button type="button" onclick="selectSubs(this, 'internal', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'internal', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'internal', 'invert')">Invert</button>
+                    </th>
+                    <th>
+                        Email<br>
+                        <button type="button" onclick="selectSubs(this, 'email', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'email', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'email', 'invert')">Invert</button>
+                    </th>
                     {{ if .SupportsAutoSubscribe }}
-                    <th>Auto-subscribe Internal</th>
-                    <th>Auto-subscribe Email</th>
+                    <th>
+                        Auto-subscribe Internal<br>
+                        <button type="button" onclick="selectSubs(this, 'autosub_internal', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_internal', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_internal', 'invert')">Invert</button>
+                    </th>
+                    <th>
+                        Auto-subscribe Email<br>
+                        <button type="button" onclick="selectSubs(this, 'autosub_email', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_email', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_email', 'invert')">Invert</button>
+                    </th>
                     {{ end }}
                 </tr>
             </thead>
@@ -81,4 +118,54 @@
     <a href="/usr/subscriptions/threads" class="button">Manage Thread Subscriptions</a>
 </p>
 
+<script>
+    let lastChecked = null;
+
+    function selectSubs(btn, type, action) {
+        // Find the closest table
+        const table = btn.closest('table');
+        let inputs;
+        if (table) {
+            inputs = table.querySelectorAll('input[type="checkbox"]');
+        } else {
+            inputs = document.querySelectorAll('input[name="subs"]');
+        }
+
+        inputs.forEach(input => {
+            // value is "pattern|type"
+            if (input.value.endsWith('|' + type)) {
+                if (action === 'all') input.checked = true;
+                else if (action === 'none') input.checked = false;
+                else if (action === 'invert') input.checked = !input.checked;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name="subs"]');
+        checkboxes.forEach(chk => {
+            chk.addEventListener('click', function(e) {
+                if (lastChecked && lastChecked !== this && e.shiftKey) {
+                    // Check if they are in the same table and same column (type)
+                    const thisType = this.value.split('|').pop();
+                    const lastType = lastChecked.value.split('|').pop();
+                    const thisTable = this.closest('table');
+                    const lastTable = lastChecked.closest('table');
+
+                    if (thisType === lastType && thisTable === lastTable) {
+                        const groupCheckboxes = Array.from(thisTable.querySelectorAll(`input[value$="|${thisType}"]`));
+                        const start = groupCheckboxes.indexOf(this);
+                        const end = groupCheckboxes.indexOf(lastChecked);
+
+                        if (start !== -1 && end !== -1) {
+                            const range = groupCheckboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+                            range.forEach(c => c.checked = this.checked);
+                        }
+                    }
+                }
+                lastChecked = this;
+            });
+        });
+    });
+</script>
 {{ template "tail" $ }}

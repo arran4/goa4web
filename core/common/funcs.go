@@ -127,6 +127,48 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"lower":                     strings.ToLower,
 	}
 
+	if r != nil {
+		makeAuthURL := func(base string) string {
+			path := r.URL.Path
+			q := url.Values{}
+			if strings.HasPrefix(path, "/login") || strings.HasPrefix(path, "/register") || strings.HasPrefix(path, "/usr/logout") {
+				cq := r.URL.Query()
+				if v := cq.Get("back"); v != "" {
+					q.Set("back", v)
+				}
+				if v := cq.Get("method"); v != "" {
+					q.Set("method", v)
+				}
+				if v := cq.Get("data"); v != "" {
+					q.Set("data", v)
+				}
+			} else {
+				q.Set("back", r.RequestURI)
+				if r.Method == http.MethodPost {
+					_ = r.ParseForm()
+					q.Set("method", r.Method)
+					if cd != nil {
+						if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
+							q.Set("data", enc)
+						} else {
+							log.Printf("failed to encrypt form data: %v", err)
+						}
+					}
+				}
+			}
+
+			if len(q) == 0 {
+				return base
+			}
+			if strings.Contains(base, "?") {
+				return base + "&" + q.Encode()
+			}
+			return base + "?" + q.Encode()
+		}
+		funcs["loginURL"] = func() string { return makeAuthURL("/login") }
+		funcs["registerURL"] = func() string { return makeAuthURL("/register") }
+	}
+
 	if cd != nil {
 		funcs["cd"] = func() *CoreData { return cd }
 		funcs["now"] = func() time.Time { return time.Now().In(cd.Location()) }

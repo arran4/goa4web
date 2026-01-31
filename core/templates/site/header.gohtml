@@ -37,8 +37,8 @@
         {{ with $u := cd.CurrentUserLoaded }}{{ if $u }}<span class="username">{{ $u.Username.String }}</span>{{ end }}{{ end }}
         <a href="/usr/logout" class="logout-link">Logout</a>
         {{ else }}
-            <a href="/login">Login</a>
-            <a href="/register">Register</a>
+            <a href="{{ loginURL }}">Login</a>
+            <a href="{{ registerURL }}">Register</a>
         {{ end }}
     </div>
 </header>

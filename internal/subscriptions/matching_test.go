@@ -6,53 +6,53 @@ import (
 
 func TestMatchDefinition_Repro(t *testing.T) {
 	tests := []struct {
-		pattern string
-		shouldMatch bool
+		pattern        string
+		shouldMatch    bool
 		definitionName string
 	}{
 		{
-			pattern: "create thread:/forum/topic/123",
-			shouldMatch: true,
+			pattern:        "create thread:/forum/topic/123",
+			shouldMatch:    true,
 			definitionName: "New Threads (Specific Topic)",
 		},
 		{
-			pattern: "create thread:/forum/topic/123/some/other",
-			shouldMatch: true,
+			pattern:        "create thread:/forum/topic/123/some/other",
+			shouldMatch:    true,
 			definitionName: "New Threads (Specific Topic)",
 		},
 		{
-			pattern: "create thread:/forum/topic/*",
-			shouldMatch: true,
+			pattern:        "create thread:/forum/topic/*",
+			shouldMatch:    true,
 			definitionName: "New Threads (All)",
 		},
 		{
-			pattern: "reply:/forum/topic/123/thread/456",
-			shouldMatch: true,
+			pattern:        "reply:/forum/topic/123/thread/456",
+			shouldMatch:    true,
 			definitionName: "Replies (Specific Thread)",
 		},
 		{
-			pattern: "reply:/forum/topic/123/thread/456/something",
-			shouldMatch: true,
+			pattern:        "reply:/forum/topic/123/thread/456/something",
+			shouldMatch:    true,
 			definitionName: "Replies (Specific Thread)",
 		},
 		{
-			pattern: "reply:/forum/topic/*/thread/*",
-			shouldMatch: true,
+			pattern:        "reply:/forum/topic/*/thread/*",
+			shouldMatch:    true,
 			definitionName: "Replies (All)",
 		},
 		{
-			pattern: "edit reply:/forum/topic/123/thread/456",
-			shouldMatch: true,
+			pattern:        "edit reply:/forum/topic/123/thread/456",
+			shouldMatch:    true,
 			definitionName: "Edit Reply",
 		},
 		{
-			pattern: "create thread:/private/topic/123",
-			shouldMatch: true,
+			pattern:        "create thread:/private/topic/123",
+			shouldMatch:    true,
 			definitionName: "New Threads (Private Topic)",
 		},
 		{
-			pattern: "reply:/private/topic/123/thread/456",
-			shouldMatch: true,
+			pattern:        "reply:/private/topic/123/thread/456",
+			shouldMatch:    true,
 			definitionName: "Replies (Private Thread)",
 		},
 	}

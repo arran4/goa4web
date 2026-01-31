@@ -28,10 +28,10 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
-	AdminCountSentEmailsCalls         []AdminCountSentEmailsParams
-	AdminCountSentEmailsReturns       int64
-	AdminCountSentEmailsErr           error
-	AdminCountSentEmailsFn            func(context.Context, AdminCountSentEmailsParams) (int64, error)
+	AdminCountSentEmailsCalls   []AdminCountSentEmailsParams
+	AdminCountSentEmailsReturns int64
+	AdminCountSentEmailsErr     error
+	AdminCountSentEmailsFn      func(context.Context, AdminCountSentEmailsParams) (int64, error)
 
 	AdminCountUnsentPendingEmailsCalls   []AdminCountUnsentPendingEmailsParams
 	AdminCountUnsentPendingEmailsReturns int64

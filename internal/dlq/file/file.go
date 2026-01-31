@@ -114,10 +114,10 @@ func List(path string, limit int) ([]Record, error) {
 	scanner := bufio.NewScanner(fh)
 
 	var (
-		currentMsg strings.Builder
+		currentMsg  strings.Builder
 		currentTime time.Time
-		inLegacy bool
-		inMbox bool
+		inLegacy    bool
+		inMbox      bool
 	)
 
 	flushMbox := func() {

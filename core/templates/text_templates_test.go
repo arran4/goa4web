@@ -24,7 +24,7 @@ func TestParseGoTxtTemplates(t *testing.T) {
 			return s
 		},
 	}
-	emailTemplates := templates.GetCompiledEmailTextTemplates(nil)
+	emailTemplates := templates.GetCompiledEmailTextTemplates(funcs)
 	notificationTemplates := templates.GetCompiledNotificationTemplates(funcs)
 
 	err := fs.WalkDir(textTemplates, ".", func(path string, d fs.DirEntry, err error) error {
@@ -72,19 +72,23 @@ func TestAnnouncementTemplatesExist(t *testing.T) {
 	if nt.Lookup("announcement.gotxt") == nil {
 		t.Fatalf("missing announcement notification template")
 	}
-	et := templates.GetCompiledEmailHtmlTemplates(nil)
+	et := templates.GetCompiledEmailHtmlTemplates(funcs)
 	if et.Lookup("announcementEmail.gohtml") == nil {
 		t.Fatalf("missing announcement email html template")
 	}
-	tt := templates.GetCompiledEmailTextTemplates(nil)
+	tt := templates.GetCompiledEmailTextTemplates(funcs)
 	if tt.Lookup("announcementEmail.gotxt") == nil {
 		t.Fatalf("missing announcement email text template")
 	}
 }
 
 func TestAllEmailTemplatesComplete(t *testing.T) {
-	htmlT := templates.GetCompiledEmailHtmlTemplates(nil)
-	textT := templates.GetCompiledEmailTextTemplates(nil)
+	funcs := map[string]any{
+		"a4code2string": func(s string) string { return s },
+		"truncateWords": func(i int, s string) string { return s },
+	}
+	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs)
+	textT := templates.GetCompiledEmailTextTemplates(funcs)
 
 	type trio struct{ html, text, subj bool }
 	m := map[string]*trio{}

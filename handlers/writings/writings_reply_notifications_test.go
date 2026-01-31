@@ -198,7 +198,7 @@ func TestWritingReply(t *testing.T) {
 		}
 	}
 
-	expectedSubscriberNotif := fmt.Sprintf("New reply in %q by replier\n", WritingTopicName)
+	expectedSubscriberNotif := fmt.Sprintf(" replied to %s: Hello Writing", WritingTopicName)
 	if subscriberNotif != expectedSubscriberNotif {
 		t.Errorf("expected subscriber notif %q, got %q", expectedSubscriberNotif, subscriberNotif)
 	}

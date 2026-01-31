@@ -78,6 +78,7 @@ func getEmailFuncs(evt eventbus.TaskEvent) map[string]any {
 			}
 			return "Unknown"
 		},
+		"truncateWords": func(i int, s string) string { return s },
 	}
 }
 
@@ -90,6 +91,7 @@ func getNotificationFuncs(evt eventbus.TaskEvent) map[string]any {
 			}
 			return "Unknown"
 		},
+		"truncateWords": func(i int, s string) string { return s },
 	}
 }
 

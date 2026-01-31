@@ -11,11 +11,9 @@ import (
 
 	"github.com/arran4/goa4web"
 	"os"
-	"path/filepath"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/imagebbs"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/app/server"
 
@@ -177,7 +175,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	adminhandlers.AdminAPISecret = o.APISecret
 	email.SetDefaultFromName(cfg.EmailFrom)
 
-	if err := os.MkdirAll(filepath.Join(cfg.ImageUploadDir, imagebbs.ImagebbsUploadPrefix), 0755); err != nil {
+	if err := os.MkdirAll(cfg.ImageUploadDir, 0755); err != nil {
 		return nil, fmt.Errorf("create image upload dir: %w", err)
 	}
 

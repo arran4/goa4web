@@ -16,8 +16,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
-
-	"github.com/arran4/goa4web/core"
 )
 
 func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
@@ -108,6 +106,10 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Type:        "article",
 	}
 
+	commentRows, err := cd.SelectedThreadComments()
+	if err != nil {
+		log.Printf("thread comments: %v", err)
+	}
 	if len(commentRows) > 0 {
 		cd.OpenGraph.Description = a4code.SnipText(commentRows[0].Text.String, 128)
 	}

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/core/common"
@@ -29,10 +28,6 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum"
 	cd.LoadSelectionsFromRequest(r)
-	_, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
 
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), "Forum", "A place for discussion.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{

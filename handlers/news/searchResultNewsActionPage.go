@@ -10,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	searchutil "github.com/arran4/goa4web/workers/searchworker"
@@ -34,11 +33,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 	data := Data{}
 	cd.PageTitle = "News Search Results"
 	queries := cd.Queries()
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	uid, _ := session.Values["UID"].(int32)
+	uid := cd.UserID
 
 	ftbn, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{Valid: true, String: NewsTopicName})
 	if err != nil {

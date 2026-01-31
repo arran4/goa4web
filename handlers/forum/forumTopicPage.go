@@ -18,7 +18,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -44,9 +43,6 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Labels                  []templates.TopicLabel
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
 

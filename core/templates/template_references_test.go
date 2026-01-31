@@ -18,6 +18,9 @@ func TestAllTemplateReferencesAreSatisfied(t *testing.T) {
 	cd := common.CoreData{}
 	r := httptest.NewRequest("GET", "/", nil)
 	f := cd.Funcs(r)
+	// Add notification helper function "lower" which is normally provided by the notifier
+	f["lower"] = func(s string) string { return s }
+
 	t.Run("site html", func(t *testing.T) {
 		tpl := templates.GetCompiledSiteTemplates(f)
 		assertAllRefsSatisfiedHTML(t, tpl)

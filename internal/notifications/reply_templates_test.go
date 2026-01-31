@@ -23,6 +23,7 @@ func TestReplyTemplatesExist(t *testing.T) {
 			}
 			return s
 		},
+		"lower": strings.ToLower,
 	}
 	html := templates.GetCompiledEmailHtmlTemplates(funcs)
 	text := templates.GetCompiledEmailTextTemplates(funcs)

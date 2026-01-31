@@ -1,27 +1,30 @@
 {{ template "head" $ }}
 <div id="notification-open">
     <h3>Notification</h3>
+    <p><strong>Date:</strong> {{ cd.FormatLocalTime .Notification.CreatedAt }}</p>
     <p>{{ .Notification.Message.String }}</p>
+
+    {{ if .ReplyPreview }}
+    <div class="notification-preview">
+        <div class="preview-header">
+            Reply Preview
+        </div>
+        <div class="preview-content">
+            {{ .ReplyPreview }}
+        </div>
+    </div>
+    {{ end }}
+
     {{ if .RedirectURL }}
-    <p>Opening notification…</p>
-    <p>If you are not redirected, <a href="{{ .RedirectURL }}">continue to the notification</a>.</p>
-    <script>
-    window.addEventListener('load', () => {
-        const params = new URLSearchParams();
-        params.set('id', '{{ .Notification.ID }}');
-        params.set('task', '{{ .TaskName }}');
-        fetch('/usr/notifications/dismiss', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRF-Token': '{{ csrfToken }}'
-            },
-            body: params.toString()
-        }).catch(() => {}).finally(() => {
-            window.location.href = '{{ .RedirectURL }}';
-        });
-    });
-    </script>
+    <div class="actions">
+        <p>
+            <a href="{{ .RedirectURL }}" class="button">Click here to view</a>
+        </p>
+        <form action="/usr/notifications/go/{{ .Notification.ID }}" method="POST">
+            <input type="submit" value="Click here to dismiss and view" class="button">
+            {{ csrfField }}
+        </form>
+    </div>
     {{ end }}
 </div>
 {{ template "tail" $ }}

@@ -1,2 +1,2 @@
-User {{.Item.Username}} replied to a forum thread.
-{{ .Item.Body | a4code2string | truncateWords 20 }}
+User {{.Item.Username}} replied to the {{if .Item.SubjectPrefix}}{{.Item.SubjectPrefix | lower}}{{else}}forum{{end}} thread.
+{{ .Item.ThreadOpenerPreview }}

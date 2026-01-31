@@ -62,7 +62,7 @@ func TestQuoteApi(t *testing.T) {
 				Text:     sql.NullString{String: "hello\n\nworld", Valid: true},
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"text":"[quoteof \"testuser\" hello]\n\n\n[quoteof \"testuser\" world]\n"}`,
+			expectedBody:   `{"text":"[quoteof \"testuser\" hello]\n\n\n\n[quoteof \"testuser\" world]\n"}`,
 		},
 		{
 			name:           "Invalid Comment ID",

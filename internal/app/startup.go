@@ -79,10 +79,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 				if !img.Path.Valid {
 					continue
 				}
-				cleanPath := strings.TrimPrefix(img.Path.String, "/")
-				cleanPath = strings.TrimPrefix(cleanPath, "uploads")
-				cleanPath = strings.TrimPrefix(cleanPath, "/")
-				p := filepath.Join(cfg.ImageUploadDir, cleanPath)
+				p := filepath.Join(cfg.ImageUploadDir, img.Path.String)
 				if _, err := os.Stat(p); os.IsNotExist(err) {
 					missing = append(missing, fmt.Sprintf("Uploaded image missing: %s", p))
 				}
@@ -104,7 +101,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 						sub1, sub2 := id[:2], id[2:4]
 						p := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
 						if _, err := os.Stat(p); os.IsNotExist(err) {
-							missing = append(missing, fmt.Sprintf("Cached card image missing: %s", p))
+							fmt.Printf("Warning: Cached card image missing: %s\n", p)
 						}
 					}
 				}
@@ -114,7 +111,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 						sub1, sub2 := id[:2], id[2:4]
 						p := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
 						if _, err := os.Stat(p); os.IsNotExist(err) {
-							missing = append(missing, fmt.Sprintf("Cached favicon missing: %s", p))
+							fmt.Printf("Warning: Cached favicon missing: %s\n", p)
 						}
 					}
 				}

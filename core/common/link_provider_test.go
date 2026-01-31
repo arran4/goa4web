@@ -77,9 +77,7 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 			rawURL:           "http://example.com/card",
 			isBlock:          true,
 			isImmediateClose: true,
-			wantContains:     `href="http://example.com/card"`, // Should stay direct (uses sanitized rawURL)
-			// The rule says "All links that don't have a card ... should be routed through goto".
-			// So links WITH a card stay direct.
+			wantContains:     "http://site.local/goto?u=http%3A%2F%2Fexample.com%2Fcard&sig=",
 		},
 	}
 

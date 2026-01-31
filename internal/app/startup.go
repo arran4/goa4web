@@ -98,13 +98,15 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 				if link.CardImageCache.Valid {
 					p := filepath.Join(cfg.ImageCacheDir, link.CardImageCache.String)
 					if _, err := os.Stat(p); os.IsNotExist(err) {
-						missing = append(missing, fmt.Sprintf("Cached card image missing: %s", p))
+						// Cache is volatile; log warning but do not block startup
+						fmt.Printf("Warning: Cached card image missing: %s\n", p)
 					}
 				}
 				if link.FaviconCache.Valid {
 					p := filepath.Join(cfg.ImageCacheDir, link.FaviconCache.String)
 					if _, err := os.Stat(p); os.IsNotExist(err) {
-						missing = append(missing, fmt.Sprintf("Cached favicon missing: %s", p))
+						// Cache is volatile; log warning but do not block startup
+						fmt.Printf("Warning: Cached favicon missing: %s\n", p)
 					}
 				}
 			}
@@ -112,7 +114,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	}
 
 	if len(missing) > 0 {
-		msg := fmt.Sprintf("Found %d missing media files (checking recent 5 uploaded and cached):\n%s\n\n", len(missing), strings.Join(missing, "\n"))
+		msg := fmt.Sprintf("Found %d missing media files (checking recent 5 uploaded):\n%s\n\n", len(missing), strings.Join(missing, "\n"))
 		msg += fmt.Sprintf("Configured Image Upload Dir: %s\n", cfg.ImageUploadDir)
 		msg += fmt.Sprintf("Configured Image Cache Dir: %s\n", cfg.ImageCacheDir)
 		msg += fmt.Sprintf("Default Image Upload Dir: %s\n", filepath.Join(config.DefaultDataDir(), "images"))

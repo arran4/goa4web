@@ -124,6 +124,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"dict":                      Dict,
 		"toJSON":                    ToJSON,
 		"version":                   func() string { return goa4web.Version },
+		"lower":                     strings.ToLower,
 	}
 
 	if cd != nil {

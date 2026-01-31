@@ -1,59 +1,72 @@
 # Handler Guidelines
 
-Tasks in the handlers package must include compile time checks to ensure their concrete types satisfy the `tasks.Task` interface. Declare these using:
+## Task Implementation
 
-```go
-var _ tasks.Task = (*myTaskType)(nil)
-```
+*   **Interface Satisfaction Check:** Tasks in the handlers package **MUST** include compile-time checks to ensure their concrete types satisfy the `tasks.Task` interface.
+    ```go
+    var _ tasks.Task = (*myTaskType)(nil)
+    ```
+    This prevents accidental API drift if method signatures change.
 
-This pattern prevents accidental API drift if method signatures change.
+## Testing Standards
 
-## Standard Page and Task Testing System
+All handler tests **MUST** adhere to the following structure to ensure consistency and comprehensive coverage.
 
-When adding or modifying handlers, ensure that tests follow this structure to ensure comprehensive coverage. Use `t.Run()` or explicit sections (comments) to separate these concerns.
+### Test Structure
+
+Use `t.Run()` to encapsulate logical test sections. The "Happy Path" **MUST** be explicitly defined.
 
 ```go
 func TestHandlerName(t *testing.T) {
     t.Run("Happy Path", func(t *testing.T) {
-        // Setup
-        // ... (Mocks, Data, Context)
+        // 1. Setup
+        // Initialize mocks (QuerierStub), CoreData, and Context.
+        // Use testhelpers.NewQuerierStub() and common.NewCoreData().
 
-        // Page execution(s -- there might be multiple)
-        // ... (Call the handler)
+        // 2. Page Execution
+        // Create the request and recorder, then call the handler.
 
-        // Head data test (card wall, title, etc)
-        // Verify cd.PageTitle, cd.OpenGraph, etc.
+        // 3. Head Data Verification
+        // Assert expectations on cd.PageTitle, cd.OpenGraph, etc.
 
-        // page content test (bread crumbs)
-        // Verify response body content, breadcrumbs, etc.
+        // 4. Page Content Verification
+        // Assert expectations on the response body (breadcrumbs, specific HTML elements).
 
-        // data consequences test (if applicable.)
-        // Verify DB side effects, calls to mocks
+        // 5. Data Consequences (Side Effects)
+        // Verify DB calls (e.g., mock call history) and state changes.
 
-        // Event bus test (if applicable.)
-        // Verify events published
+        // 6. Event Bus Verification
+        // Verify that expected events were published.
 
-        // Subscription notification test  (if applicable.)
-        // Verify subscriptions triggered
+        // 7. Subscription Notification
+        // Verify that subscriptions were triggered correctly.
 
-        // Indexer & post count worker tests (if applicable)
+        // 8. Background Workers
+        // Verify indexer, post count, and external link worker behaviors if applicable.
 
-        // External link worker tests (if applicable)
+        // 9. Notifications
+        // Verify notification generation and matching.
 
-        // Background worker tests (if applicable)
+        // 10. Email & Internal Notifications
+        // Verify the content of generated emails or internal notifications.
 
-        // Notification generation (matching) test  (if applicable.)
-
-        // Email & Internal notification content test  (if applicable.)
-
-        // RSS/Atom presence  (if applicable.)
+        // 11. RSS/Atom Feeds
+        // Verify feed presence and content if applicable.
     })
 
-    // Unhappy path tests
-    // ...
+    t.Run("Unhappy Path - [Scenario Name]", func(t *testing.T) {
+        // ...
+    })
 }
 ```
 
-Ideally functions shared only between the test and the unhappy tests are not ideal. However something funky with `t.Run()` where we effectively have some of this in a lambda inside the function emulating a kind of `@Before`/`@after` like structure is acceptable. But it has to be go-like.
+### Conventions
 
-Overall shared functions between all the tests in handlers is acceptable, `/handlers/testframework` or `/handlers/testutil` or something is an acceptable location if there is no better one.
+*   **Shared Helpers:** Shared test helpers **SHOULD** be placed in `/handlers/testframework` or `/handlers/testutil` (or `internal/testhelpers` if broadly applicable). Do not duplicate setup logic across multiple test files if it can be shared.
+*   **Context Injection:** Tests relying on session data **MUST** inject a valid session into the context using `core.Store.New` and `core.ContextValues("session")`.
+    ```go
+    sess, _ := core.Store.New(req, core.SessionName)
+    ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+    ```
+*   **Mocking:** Use `testhelpers.NewQuerierStub()` for database interaction. Manually update the stub if SQLC generates new methods.
+*   **Sub-tests:** Use `t.Run()` for all distinct test cases. This mimics a `@Before` / `@After` structure where the outer function handles common setup if designed correctly, though explicit setup per `t.Run` is preferred for isolation.

@@ -227,6 +227,9 @@ type ExternalLink struct {
 	CardImage       sql.NullString
 	CardImageCache  sql.NullString
 	FaviconCache    sql.NullString
+	CardDuration    sql.NullString
+	CardUploadDate  sql.NullString
+	CardAuthor      sql.NullString
 }
 
 type Faq struct {

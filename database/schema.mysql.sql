@@ -687,6 +687,9 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   `card_image` tinytext,
   `card_image_cache` tinytext,
   `favicon_cache` tinytext,
+  `card_duration` tinytext,
+  `card_upload_date` tinytext,
+  `card_author` tinytext,
   PRIMARY KEY (`id`),
   UNIQUE KEY `external_links_url_idx` (`url`(255))
 );

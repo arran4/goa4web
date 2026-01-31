@@ -11,6 +11,9 @@
         {{ end }}
         {{ if $link.CardTitle.Valid }}<p><strong>{{$link.CardTitle.String}}</strong></p>{{ end }}
         {{ if $link.CardDescription.Valid }}<p>{{$link.CardDescription.String}}</p>{{ end }}
+        {{ if $link.CardDuration.Valid }}<p>Duration: {{$link.CardDuration.String}}</p>{{ end }}
+        {{ if $link.CardUploadDate.Valid }}<p>Upload Date: {{$link.CardUploadDate.String}}</p>{{ end }}
+        {{ if $link.CardAuthor.Valid }}<p>Author: {{$link.CardAuthor.String}}</p>{{ end }}
     </div>
 {{ end }}
 <p>

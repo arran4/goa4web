@@ -67,6 +67,7 @@ const (
 var _ http.Handler = (*redirectBackPageHandler)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg string) {
+	handlers.SetNoCacheHeaders(w)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.SetCurrentError(errMsg)
 	cd.SetCurrentNotice(noticeMsg)

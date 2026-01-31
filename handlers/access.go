@@ -7,6 +7,13 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 )
 
+// SetNoCacheHeaders sets headers to prevent caching of the response.
+func SetNoCacheHeaders(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+}
+
 func RenderPermissionDenied(w http.ResponseWriter, r *http.Request) {
 	RenderErrorPage(w, r, WrapForbidden(ErrLoginRequired))
 }
@@ -18,7 +25,17 @@ func VerifyAccess(h http.HandlerFunc, err error, roles ...string) http.HandlerFu
 	if err == nil {
 		err = ErrForbidden
 	}
+	isPublic := false
+	for _, role := range roles {
+		if role == "anyone" {
+			isPublic = true
+			break
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !isPublic {
+			SetNoCacheHeaders(w)
+		}
 		if !common.Allowed(r, roles...) {
 			w.WriteHeader(http.StatusForbidden)
 			RenderErrorPage(w, r, err)

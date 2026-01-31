@@ -157,7 +157,7 @@ func (q *Queries) AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt32
 }
 
 const adminListForumCategoriesWithCounts = `-- name: AdminListForumCategoriesWithCounts :many
-SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, COUNT(c2.idforumcategory) AS SubcategoryCount,
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, c.deleted_at, COUNT(c2.idforumcategory) AS SubcategoryCount,
        COUNT(t.idforumtopic) AS TopicCount
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
@@ -191,6 +191,7 @@ type AdminListForumCategoriesWithCountsRow struct {
 	LanguageID                   sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
+	DeletedAt                    sql.NullTime
 	Subcategorycount             int64
 	Topiccount                   int64
 }
@@ -215,6 +216,7 @@ func (q *Queries) AdminListForumCategoriesWithCounts(ctx context.Context, arg Ad
 			&i.LanguageID,
 			&i.Title,
 			&i.Description,
+			&i.DeletedAt,
 			&i.Subcategorycount,
 			&i.Topiccount,
 		); err != nil {
@@ -550,7 +552,7 @@ func (q *Queries) CreateForumTopicForPoster(ctx context.Context, arg CreateForum
 }
 
 const getAllForumCategories = `-- name: GetAllForumCategories :many
-SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description
+SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description, f.deleted_at
 FROM forumcategory f
 WHERE (
     f.language_id = 0
@@ -585,6 +587,7 @@ func (q *Queries) GetAllForumCategories(ctx context.Context, arg GetAllForumCate
 			&i.LanguageID,
 			&i.Title,
 			&i.Description,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -600,7 +603,7 @@ func (q *Queries) GetAllForumCategories(ctx context.Context, arg GetAllForumCate
 }
 
 const getAllForumCategoriesWithSubcategoryCount = `-- name: GetAllForumCategoriesWithSubcategoryCount :many
-SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, COUNT(c2.idforumcategory) as SubcategoryCount,
+SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, c.deleted_at, COUNT(c2.idforumcategory) as SubcategoryCount,
        COUNT(t.idforumtopic)   as TopicCount
 FROM forumcategory c
 LEFT JOIN forumcategory c2 ON c.idforumcategory = c2.forumcategory_idforumcategory
@@ -630,6 +633,7 @@ type GetAllForumCategoriesWithSubcategoryCountRow struct {
 	LanguageID                   sql.NullInt32
 	Title                        sql.NullString
 	Description                  sql.NullString
+	DeletedAt                    sql.NullTime
 	Subcategorycount             int64
 	Topiccount                   int64
 }
@@ -649,6 +653,7 @@ func (q *Queries) GetAllForumCategoriesWithSubcategoryCount(ctx context.Context,
 			&i.LanguageID,
 			&i.Title,
 			&i.Description,
+			&i.DeletedAt,
 			&i.Subcategorycount,
 			&i.Topiccount,
 		); err != nil {
@@ -866,7 +871,7 @@ func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx con
 }
 
 const getForumCategoryById = `-- name: GetForumCategoryById :one
-SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description FROM forumcategory
+SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description, deleted_at FROM forumcategory
 WHERE idforumcategory = ?
   AND (
       language_id = 0
@@ -896,6 +901,7 @@ func (q *Queries) GetForumCategoryById(ctx context.Context, arg GetForumCategory
 		&i.LanguageID,
 		&i.Title,
 		&i.Description,
+		&i.DeletedAt,
 	)
 	return &i, err
 }

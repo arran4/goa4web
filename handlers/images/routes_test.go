@@ -1,10 +1,17 @@
 package images
 
 import (
+	"bytes"
 	"context"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -16,6 +23,8 @@ import (
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/upload"
+	"github.com/arran4/goa4web/internal/upload/local"
 )
 
 func TestValidID(t *testing.T) {
@@ -129,15 +138,6 @@ func TestSignImageURL_EndToEnd(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
 	cfg.BaseURL = "http://localhost"
-	// Create a dummy image directory or mock the serving part?
-	// For this test, we only care about middleware passing (200 OK or 404 NotFound if file missing, but not 403 Forbidden).
-	// But serveImage will try to serve file.
-	// We can't easily mock serveImage without changing code, but if middleware passes, serveImage runs.
-	// serveImage checks ValidID which we will use a valid ID.
-	// It then tries to serve file. If file missing -> 404.
-	// If middleware fails -> 403.
-	// So we expect !403.
-
 	navReg := navigation.NewRegistry()
 	RegisterRoutes(r, cfg, navReg)
 
@@ -168,13 +168,111 @@ func TestSignImageURL_EndToEnd(t *testing.T) {
 	r.ServeHTTP(rr, req)
 
 	// We expect 404 (because file doesn't exist) but NOT 403 (Forbidden).
-	// If the middleware works, it should reach serveImage, which likely returns 404 for missing file.
-	// If middleware fails, it returns 403.
 	if rr.Code == http.StatusForbidden {
 		t.Errorf("Request was forbidden (403). Middleware failed verification. URL: %s", signedURLStr)
 	} else if rr.Code != http.StatusNotFound && rr.Code != http.StatusOK {
 		t.Errorf("Unexpected status code: %d. Expected 404 (file missing) or 200 (if we mocked file).", rr.Code)
 	} else {
 		t.Logf("Success: Got status %d (likely passed middleware)", rr.Code)
+	}
+}
+
+func TestThumbnailRegeneration(t *testing.T) {
+	// 1. Setup
+	local.Register()
+
+	tmpDir, err := os.MkdirTemp("", "images-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	uploadDir := filepath.Join(tmpDir, "uploads")
+	cacheDir := filepath.Join(tmpDir, "cache")
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.NewRuntimeConfig()
+	cfg.ImageUploadProvider = "local"
+	cfg.ImageCacheProvider = "local"
+	cfg.ImageUploadDir = uploadDir
+	cfg.ImageCacheDir = cacheDir
+	cfg.BaseURL = "http://localhost"
+
+	req := httptest.NewRequest("GET", "/", nil)
+	key := "test-key"
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSignKey(key))
+
+	// Create image
+	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	for y := 0; y < 100; y++ {
+		for x := 0; x < 100; x++ {
+			img.Set(x, y, color.RGBA{255, 0, 0, 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatal(err)
+	}
+	imgData := buf.Bytes()
+
+	// Save original image using provider
+	id := "test1234"
+	ext := ".png"
+	sub1, sub2 := id[:2], id[2:4]
+	fname := id + ext
+
+	prov := upload.ProviderFromConfig(cfg)
+	if prov == nil {
+		t.Fatal("ProviderFromConfig returned nil")
+	}
+
+	// Write original
+	if err := prov.Write(context.Background(), path.Join(sub1, sub2, fname), imgData); err != nil {
+		t.Fatalf("Failed to write original image: %v", err)
+	}
+
+	// Ensure cache is EMPTY for this file
+	thumbID := id + "_thumb" + ext
+	cacheKey := path.Join(sub1, sub2, thumbID)
+	// We can try to read from cache provider to ensure it's not there
+	cacheProv := upload.CacheProviderFromConfig(cfg)
+	if _, err := cacheProv.Read(context.Background(), cacheKey); err == nil {
+		t.Fatal("Thumbnail should not exist yet")
+	}
+
+	// 2. Setup Router
+	r := mux.NewRouter()
+	navReg := navigation.NewRegistry()
+	RegisterRoutes(r, cfg, navReg)
+
+	// 3. Request Thumbnail
+	// Construct signed URL
+	signedURLStr := cd.SignCacheURL(thumbID, 1*time.Hour)
+	u, err := url.Parse(signedURLStr)
+	if err != nil {
+		t.Fatalf("Failed to parse signed URL: %v", err)
+	}
+
+	req = httptest.NewRequest("GET", u.Path+"?"+u.RawQuery, nil)
+	// Must inject CoreData into context
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	// 4. Assertions
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected 200 OK, got %d", rr.Code)
+	}
+
+	// Verify thumbnail was created
+	if _, err := cacheProv.Read(context.Background(), cacheKey); err != nil {
+		t.Errorf("Thumbnail was not created in cache: %v", err)
 	}
 }

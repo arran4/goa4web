@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,9 +12,11 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
+	"github.com/gorilla/mux"
 )
 
 // ImageCacheListTask refreshes the cache listing view.
@@ -98,6 +102,65 @@ func (ImageCacheDeleteTask) AuditRecord(data map[string]any) string {
 		return fmt.Sprintf("deleted %d image cache files (%s)", len(ids), strings.Join(ids, ","))
 	}
 	return "deleted image cache files"
+}
+
+// ImageCacheRefreshTask refreshes a specific cache entry.
+type ImageCacheRefreshTask struct{ tasks.TaskString }
+
+var imageCacheRefreshTask = &ImageCacheRefreshTask{TaskString: TaskImageCacheRefresh}
+
+var _ tasks.Task = (*ImageCacheRefreshTask)(nil)
+var _ tasks.AuditableTask = (*ImageCacheRefreshTask)(nil)
+
+func (ImageCacheRefreshTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	id := mux.Vars(r)["id"]
+	if !intimages.ValidID(id) {
+		return fmt.Errorf("invalid id: %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("invalid id")))
+	}
+
+	link, err := cd.Queries().AdminGetExternalLinkByCacheID(r.Context(), db.AdminGetExternalLinkByCacheIDParams{
+		CardImageCache: sql.NullString{String: id, Valid: true},
+		FaviconCache:   sql.NullString{String: id, Valid: true},
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("lookup link: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if link != nil {
+		if err := cd.Queries().AdminClearExternalLinkCache(r.Context(), db.AdminClearExternalLinkCacheParams{
+			UpdatedBy: sql.NullInt32{Int32: cd.UserID, Valid: true},
+			ID:        link.ID,
+		}); err != nil {
+			return fmt.Errorf("clear link cache: %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+	}
+
+	full, err := cachePath(cd.Config.ImageCacheDir, id)
+	if err != nil {
+		return fmt.Errorf("invalid cache id: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if err := os.Remove(full); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("delete cache file: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
+		}
+		evt.Data["ImageCacheRefreshedID"] = id
+		if link != nil {
+			evt.Data["ExternalLinkID"] = link.ID
+		}
+	}
+
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/images/cache/" + id}
+}
+
+// AuditRecord summarises the refresh action.
+func (ImageCacheRefreshTask) AuditRecord(data map[string]any) string {
+	id, _ := data["ImageCacheRefreshedID"].(string)
+	linkID, _ := data["ExternalLinkID"].(int32)
+	return fmt.Sprintf("refreshed image cache %s (link %d)", id, linkID)
 }
 
 func cachePath(dir, id string) (string, error) {

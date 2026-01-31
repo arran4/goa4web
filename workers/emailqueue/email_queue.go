@@ -161,15 +161,15 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		}
 		return false
 	}
+	const dlqThreshold = 4 * 24 * time.Hour
 	if provider == nil {
 		log.Printf("email provider not configured: cannot send email %d to %s", e.ID, addr.Address)
 		if err := q.SystemIncrementPendingEmailError(ctx, e.ID); err != nil {
 			log.Printf("increment email error: %v", err)
 		}
-		count, _ := q.GetPendingEmailErrorCount(ctx, e.ID)
-		if count > 4 {
+		if time.Since(e.CreatedAt) > dlqThreshold {
 			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: no provider configured\n%s", e.ID, addr.Address, e.Body)
+				msg := fmt.Sprintf("email %d to %s failed: no provider configured (age %s)\n%s", e.ID, addr.Address, time.Since(e.CreatedAt), e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
 			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
@@ -184,10 +184,9 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 			log.Printf("increment email error: %v", err)
 			return true
 		}
-		count, _ := q.GetPendingEmailErrorCount(ctx, e.ID)
-		if count > 4 {
+		if time.Since(e.CreatedAt) > dlqThreshold {
 			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: %v\n%s", e.ID, addr.Address, err, e.Body)
+				msg := fmt.Sprintf("email %d to %s failed: %v (age %s)\n%s", e.ID, addr.Address, err, time.Since(e.CreatedAt), e.Body)
 				_ = dlqProvider.Record(ctx, msg)
 			}
 			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {

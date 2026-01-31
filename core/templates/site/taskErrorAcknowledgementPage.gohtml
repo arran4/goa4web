@@ -3,6 +3,13 @@
 <p class="text-error">{{ $.Error }}</p>
 {{- end }}
 {{- if $.BackURL }}
-<a href="{{ $.BackURL }}">Go Back</a>
+<form action="{{ $.BackURL }}" method="POST">
+    {{ range $k, $v := .Form }}
+        {{ range $val := $v }}
+            <input type="hidden" name="{{ $k }}" value="{{ $val }}">
+        {{ end }}
+    {{ end }}
+    <button type="submit" onclick="if(history.length>1){history.back();return false;}">Return to editing</button>
+</form>
 {{- end }}
 {{ template "tail" $ }}

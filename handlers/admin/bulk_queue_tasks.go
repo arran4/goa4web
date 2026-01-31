@@ -3,11 +3,10 @@ package admin
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/core/consts"
 	"net/http"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -30,15 +29,15 @@ func (BulkResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	filters := emailQueueFiltersFromValues(r.PostForm)
-	langID, _ := strconv.Atoi(r.PostFormValue("lang"))
-	role := r.PostFormValue("role")
+	filters := emailFiltersFromValues(r.PostForm)
 	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
-		LanguageID:    sqlNullInt32(langID),
-		RoleName:      role,
+		LanguageID:    filters.LangIDParam(),
+		RoleName:      filters.Role,
 		Status:        filters.StatusParam(),
 		Provider:      filters.ProviderParam(),
 		CreatedBefore: filters.CreatedBefore,
+		Limit:         2147483647,
+		Offset:        0,
 	})
 	if err != nil {
 		return fmt.Errorf("list filtered emails fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -101,15 +100,15 @@ func (BulkDeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	filters := emailQueueFiltersFromValues(r.PostForm)
-	langID, _ := strconv.Atoi(r.PostFormValue("lang"))
-	role := r.PostFormValue("role")
+	filters := emailFiltersFromValues(r.PostForm)
 	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
-		LanguageID:    sqlNullInt32(langID),
-		RoleName:      role,
+		LanguageID:    filters.LangIDParam(),
+		RoleName:      filters.Role,
 		Status:        filters.StatusParam(),
 		Provider:      filters.ProviderParam(),
 		CreatedBefore: filters.CreatedBefore,
+		Limit:         2147483647,
+		Offset:        0,
 	})
 	if err != nil {
 		return fmt.Errorf("list filtered emails fail %w", handlers.ErrRedirectOnSamePageHandler(err))

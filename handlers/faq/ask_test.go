@@ -36,7 +36,7 @@ func TestAskActionPage_InvalidForms(t *testing.T) {
 	for _, form := range cases {
 		req := httptest.NewRequest("POST", "/faq/ask", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		sess, _ := store.Get(req, core.SessionName)
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
 		sess.Save(req, w)
@@ -71,7 +71,7 @@ func TestAskActionPage_AdminEvent(t *testing.T) {
 	form := url.Values{"language": {"1"}, "text": {"hi"}}
 	req := httptest.NewRequest("POST", "/faq/ask", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	sess, _ := store.Get(req, core.SessionName)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
 	sess.Save(req, w)

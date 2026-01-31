@@ -13,4 +13,4 @@ View thread:
 
 Manage notifications: {{.UnsubscribeUrl}}
 -- subject.gotxt --
-[{{.SubjectPrefix}}] {{.Item.SubjectPrefix}}: {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}
+[{{.SubjectPrefix}}] New Thread in {{.Item.TopicTitle}} - {{.Item.ThreadOpenerPreview}}

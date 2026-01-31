@@ -1,8 +1,6 @@
 package admin
 
 import (
-	"database/sql"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -11,10 +9,8 @@ import (
 	"github.com/arran4/goa4web/handlers"
 )
 
-func emailFiltersFromRequest(r *http.Request) (sql.NullInt32, string) {
-	langID, _ := strconv.Atoi(r.URL.Query().Get("lang"))
-	role := r.URL.Query().Get("role")
-	return sql.NullInt32{Int32: int32(langID), Valid: langID != 0}, role
+func emailFiltersFromRequest(r *http.Request) EmailFilters {
+	return emailFiltersFromValues(r.URL.Query())
 }
 
 func buildEmailStatusMap(r *http.Request, pageIDs []int32) map[int32]string {
@@ -109,19 +105,13 @@ func joinEmailIDs(ids []int32) string {
 	return strings.Join(parts, ",")
 }
 
-func emailFilterSummary(prefix string, langID sql.NullInt32, role string) string {
-	parts := []string{}
+func emailFilterSummary(prefix string, f EmailFilters) string {
+	s := f.AuditSummary()
 	if prefix != "" {
-		parts = append(parts, prefix)
+		if s == "no filters" {
+			return prefix
+		}
+		return prefix + ", " + s
 	}
-	if langID.Valid {
-		parts = append(parts, fmt.Sprintf("lang=%d", langID.Int32))
-	}
-	if role != "" {
-		parts = append(parts, fmt.Sprintf("role=%s", role))
-	}
-	if len(parts) == 0 {
-		return "all"
-	}
-	return strings.Join(parts, ", ")
+	return s
 }

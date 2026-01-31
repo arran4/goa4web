@@ -27,7 +27,7 @@ func TestRequireWritingAuthorWritingVar(t *testing.T) {
 	req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
 	req = mux.SetURLVars(req, map[string]string{"writing": "2"})
 
-	sess, _ := store.Get(req, core.SessionName)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = int32(1)
 
 	cd := common.NewCoreData(

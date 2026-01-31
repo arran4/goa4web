@@ -76,7 +76,7 @@ func (q *Queries) AdminGetForumThreadById(ctx context.Context, idforumthread int
 }
 
 const adminGetThreadsStartedByUser = `-- name: AdminGetThreadsStartedByUser :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE c.users_idusers = ?
@@ -100,6 +100,7 @@ func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Locked,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -115,7 +116,7 @@ func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers
 }
 
 const adminGetThreadsStartedByUserWithTopic = `-- name: AdminGetThreadsStartedByUserWithTopic :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
@@ -132,6 +133,7 @@ type AdminGetThreadsStartedByUserWithTopicRow struct {
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
+	DeletedAt              sql.NullTime
 	TopicTitle             sql.NullString
 	CategoryID             sql.NullInt32
 	CategoryTitle          sql.NullString
@@ -154,6 +156,7 @@ func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, use
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Locked,
+			&i.DeletedAt,
 			&i.TopicTitle,
 			&i.CategoryID,
 			&i.CategoryTitle,
@@ -379,7 +382,7 @@ const getThreadBySectionThreadIDForReplier = `-- name: GetThreadBySectionThreadI
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at
 FROM forumthread th
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread = ?
@@ -436,6 +439,7 @@ func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg 
 		&i.Comments,
 		&i.Lastaddition,
 		&i.Locked,
+		&i.DeletedAt,
 	)
 	return &i, err
 }
@@ -444,7 +448,7 @@ const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
     SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = th.lastposter
@@ -499,6 +503,7 @@ type GetThreadLastPosterAndPermsRow struct {
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
+	DeletedAt              sql.NullTime
 	Lastposterusername     sql.NullString
 	Firstpostuserid        sql.NullInt32
 }
@@ -521,6 +526,7 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 		&i.Comments,
 		&i.Lastaddition,
 		&i.Locked,
+		&i.DeletedAt,
 		&i.Lastposterusername,
 		&i.Firstpostuserid,
 	)

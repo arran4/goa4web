@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestEditRouteRegistered(t *testing.T) {
@@ -22,7 +23,7 @@ func TestEditRouteRegistered(t *testing.T) {
 			return nil
 		}
 		if path == "/news/news/{news}/edit" {
-			methods, _ := route.GetMethods()
+			methods := testhelpers.Must(route.GetMethods())
 			for _, m := range methods {
 				if m == http.MethodGet {
 					found = true

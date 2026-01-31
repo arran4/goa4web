@@ -52,7 +52,7 @@ func (TestTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	pageURL := base + r.URL.Path
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("email").Parse(notif.GetUpdateEmailText(r.Context(), queries, cd.Config))
+	tmpl, err := template.New("email").Funcs(cd.Funcs(r)).Parse(notif.GetUpdateEmailText(r.Context(), queries, cd.Config))
 	if err != nil {
 		return fmt.Errorf("parse template fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

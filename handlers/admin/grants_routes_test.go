@@ -7,6 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestRegisterRoutesRegistersGrantsLink(t *testing.T) {
@@ -40,7 +41,7 @@ func TestRegisterRoutesRegistersGrantAdd(t *testing.T) {
 			return nil
 		}
 		if path == "/admin/grant/add" {
-			methods, _ := route.GetMethods()
+			methods := testhelpers.Must(route.GetMethods())
 			for _, m := range methods {
 				if m == "GET" {
 					found = true
@@ -67,7 +68,7 @@ func TestRegisterRoutesRegistersGrantCreate(t *testing.T) {
 			return nil
 		}
 		if path == "/admin/grant" {
-			methods, _ := route.GetMethods()
+			methods := testhelpers.Must(route.GetMethods())
 			for _, m := range methods {
 				if m == "POST" {
 					found = true

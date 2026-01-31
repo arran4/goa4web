@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 )
 
@@ -26,6 +27,7 @@ func sampleEmailData() emailData {
 	item := map[string]interface{}{
 		"Action":       "action",
 		"Author":       "author",
+		"Body":         "body",
 		"ExpiresAt":    time.Now().Add(24 * time.Hour),
 		"BlogURL":      "https://example.com/blog",
 		"BoardURL":     "https://example.com/board",
@@ -81,8 +83,9 @@ func sampleEmailData() emailData {
 }
 
 func TestEmailTemplatesExecute(t *testing.T) {
-	htmlT := templates.GetCompiledEmailHtmlTemplates(nil)
-	textT := templates.GetCompiledEmailTextTemplates(nil)
+	funcs := common.GetTemplateFuncs()
+	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs)
+	textT := templates.GetCompiledEmailTextTemplates(funcs)
 	data := sampleEmailData()
 
 	for _, tmpl := range htmlT.Templates() {

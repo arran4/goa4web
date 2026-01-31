@@ -11,6 +11,97 @@ import (
 	"time"
 )
 
+const adminCountSentEmails = `-- name: AdminCountSentEmails :one
+SELECT COUNT(*)
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NOT NULL
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.sent_at <= ?)
+  AND (? IS NULL OR p.language_id = ?)
+  AND (? IS NULL OR r.name = ?)
+`
+
+type AdminCountSentEmailsParams struct {
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
+}
+
+// admin task
+func (q *Queries) AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountSentEmails,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const adminCountUnsentPendingEmails = `-- name: AdminCountUnsentPendingEmails :one
+SELECT COUNT(*)
+FROM pending_emails pe
+LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
+LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
+LEFT JOIN roles r ON ur.role_id = r.id
+WHERE pe.sent_at IS NULL
+  AND (? IS NULL
+    OR (? = 'pending' AND pe.error_count = 0)
+    OR (? = 'failed' AND pe.error_count > 0))
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.created_at <= ?)
+  AND (? IS NULL OR p.language_id = ?)
+  AND (? IS NULL OR r.name = ?)
+`
+
+type AdminCountUnsentPendingEmailsParams struct {
+	Status        interface{}
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
+}
+
+// admin task
+func (q *Queries) AdminCountUnsentPendingEmails(ctx context.Context, arg AdminCountUnsentPendingEmailsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountUnsentPendingEmails,
+		arg.Status,
+		arg.Status,
+		arg.Status,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
+		arg.LanguageID,
+		arg.LanguageID,
+		arg.RoleName,
+		arg.RoleName,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const adminDeletePendingEmail = `-- name: AdminDeletePendingEmail :exec
 DELETE FROM pending_emails WHERE id = ?
 `
@@ -56,19 +147,32 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.created_at <= ?)
   AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.id
 `
 
 type AdminListFailedEmailIDsParams struct {
-	LanguageID sql.NullInt32
-	RoleName   string
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
 }
 
 // admin task
 func (q *Queries) AdminListFailedEmailIDs(ctx context.Context, arg AdminListFailedEmailIDsParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, adminListFailedEmailIDs,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.LanguageID,
 		arg.RoleName,
@@ -169,19 +273,32 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.sent_at <= ?)
   AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.sent_at DESC
 `
 
 type AdminListSentEmailIDsParams struct {
-	LanguageID sql.NullInt32
-	RoleName   string
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
 }
 
 // admin task
 func (q *Queries) AdminListSentEmailIDs(ctx context.Context, arg AdminListSentEmailIDsParams) ([]int32, error) {
 	rows, err := q.db.QueryContext(ctx, adminListSentEmailIDs,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.LanguageID,
 		arg.RoleName,
@@ -215,6 +332,11 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
+  AND (? IS NULL
+    OR (? = 'direct' AND pe.direct_email = 1)
+    OR (? = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (? = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (? IS NULL OR pe.sent_at <= ?)
   AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.sent_at DESC
@@ -222,10 +344,12 @@ LIMIT ? OFFSET ?
 `
 
 type AdminListSentEmailsParams struct {
-	LanguageID sql.NullInt32
-	RoleName   string
-	Limit      int32
-	Offset     int32
+	Provider      interface{}
+	CreatedBefore sql.NullTime
+	LanguageID    sql.NullInt32
+	RoleName      string
+	Limit         int32
+	Offset        int32
 }
 
 type AdminListSentEmailsRow struct {
@@ -241,6 +365,12 @@ type AdminListSentEmailsRow struct {
 // admin task
 func (q *Queries) AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error) {
 	rows, err := q.db.QueryContext(ctx, adminListSentEmails,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.Provider,
+		arg.CreatedBefore,
+		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.LanguageID,
 		arg.RoleName,
@@ -295,6 +425,7 @@ WHERE pe.sent_at IS NULL
   AND (? IS NULL OR p.language_id = ?)
   AND (? IS NULL OR r.name = ?)
 ORDER BY pe.id
+LIMIT ? OFFSET ?
 `
 
 type AdminListUnsentPendingEmailsParams struct {
@@ -303,6 +434,8 @@ type AdminListUnsentPendingEmailsParams struct {
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
 	RoleName      string
+	Limit         int32
+	Offset        int32
 }
 
 type AdminListUnsentPendingEmailsRow struct {
@@ -330,6 +463,8 @@ func (q *Queries) AdminListUnsentPendingEmails(ctx context.Context, arg AdminLis
 		arg.LanguageID,
 		arg.RoleName,
 		arg.RoleName,
+		arg.Limit,
+		arg.Offset,
 	)
 	if err != nil {
 		return nil, err
@@ -396,7 +531,7 @@ func (q *Queries) SystemIncrementPendingEmailError(ctx context.Context, id int32
 }
 
 const systemListPendingEmails = `-- name: SystemListPendingEmails :many
-SELECT id, to_user_id, body, error_count, direct_email
+SELECT id, to_user_id, body, error_count, direct_email, created_at
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
@@ -414,6 +549,7 @@ type SystemListPendingEmailsRow struct {
 	Body        string
 	ErrorCount  int32
 	DirectEmail bool
+	CreatedAt   time.Time
 }
 
 func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error) {
@@ -431,6 +567,7 @@ func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPen
 			&i.Body,
 			&i.ErrorCount,
 			&i.DirectEmail,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -1,12 +1,9 @@
 package common
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
-
-	"github.com/arran4/goa4web/internal/db"
 )
 
 // Breadcrumb represents a single navigation step.
@@ -97,24 +94,8 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 			if topic.Title.Valid {
 				title = topic.Title.String
 			}
-			if topic.Handler == "private" && cd.queries != nil {
-				parts, err := cd.queries.ListPrivateTopicParticipantsByTopicIDForUser(cd.ctx, db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-					TopicID:  sql.NullInt32{Int32: topic.Idforumtopic, Valid: true},
-					ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-				})
-				if err != nil {
-					log.Printf("list private participants: %v", err)
-				} else {
-					var names []string
-					for _, p := range parts {
-						if p.Idusers != cd.UserID {
-							names = append(names, p.Username.String)
-						}
-					}
-					if len(names) > 0 {
-						title = strings.Join(names, ", ")
-					}
-				}
+			if topic.Handler == "private" {
+				title = cd.GetPrivateTopicDisplayTitle(topic.Idforumtopic, title)
 			}
 			link := fmt.Sprintf("%s/topic/%d", base, topicID)
 			if threadID == 0 {

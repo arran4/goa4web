@@ -406,3 +406,28 @@ func (s *QuerierStub) ListBlogEntriesByIDsForLister(ctx context.Context, arg Lis
 	}
 	return ret, err
 }
+
+func (s *QuerierStub) SystemIncrementPendingEmailError(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.SystemIncrementPendingEmailErrorCalls = append(s.SystemIncrementPendingEmailErrorCalls, id)
+	fn := s.SystemIncrementPendingEmailErrorFn
+	err := s.SystemIncrementPendingEmailErrorErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error) {
+	s.mu.Lock()
+	s.GetPendingEmailErrorCountCalls = append(s.GetPendingEmailErrorCountCalls, id)
+	fn := s.GetPendingEmailErrorCountFn
+	ret := s.GetPendingEmailErrorCountReturns
+	err := s.GetPendingEmailErrorCountErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return ret, err
+}

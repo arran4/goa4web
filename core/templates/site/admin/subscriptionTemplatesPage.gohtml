@@ -50,8 +50,19 @@
 {{- if .Upload.Patterns }}
 <h2>Uploaded Template Preview</h2>
 <p><strong>Template:</strong> {{ .Upload.TemplateName }}</p>
-<pre>{{- range .Upload.Patterns }}{{ .Method }} {{ .Pattern }}
-{{- end }}</pre>
+<table class="table table-bordered">
+<thead>
+<tr><th>Method</th><th>Pattern</th></tr>
+</thead>
+<tbody>
+{{- range .Upload.Patterns }}
+<tr>
+<td>{{ .Method }}</td>
+<td style="word-wrap: break-word; word-break: break-all;">{{ .Pattern }}</td>
+</tr>
+{{- end }}
+</tbody>
+</table>
 {{- end }}
 
 {{ with .Templates }}
@@ -62,8 +73,19 @@
     <td>{{ .Name }}</td>
     <td>
         {{- if .Patterns }}
-        <pre>{{- range .Patterns }}{{ .Method }} {{ .Pattern }}
-{{- end }}</pre>
+        <table class="table table-bordered">
+        <thead>
+        <tr><th>Method</th><th>Pattern</th></tr>
+        </thead>
+        <tbody>
+        {{- range .Patterns }}
+        <tr>
+        <td>{{ .Method }}</td>
+        <td style="word-wrap: break-word; word-break: break-all;">{{ .Pattern }}</td>
+        </tr>
+        {{- end }}
+        </tbody>
+        </table>
         {{- else }}
         <em>No patterns found.</em>
         {{- end }}

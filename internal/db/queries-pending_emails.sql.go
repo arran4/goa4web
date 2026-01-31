@@ -531,7 +531,7 @@ func (q *Queries) SystemIncrementPendingEmailError(ctx context.Context, id int32
 }
 
 const systemListPendingEmails = `-- name: SystemListPendingEmails :many
-SELECT id, to_user_id, body, error_count, direct_email
+SELECT id, to_user_id, body, error_count, direct_email, created_at
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
@@ -549,6 +549,7 @@ type SystemListPendingEmailsRow struct {
 	Body        string
 	ErrorCount  int32
 	DirectEmail bool
+	CreatedAt   time.Time
 }
 
 func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error) {
@@ -566,6 +567,7 @@ func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPen
 			&i.Body,
 			&i.ErrorCount,
 			&i.DirectEmail,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

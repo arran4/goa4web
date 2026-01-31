@@ -147,11 +147,11 @@ WHERE c.id IS NOT NULL
 ORDER BY c.id, f.id;
 
 -- name: AdminGetFAQCategoriesWithQuestionCount :many
-SELECT c.*, COUNT(f.id) AS QuestionCount
+SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.deleted_at IS NULL
-GROUP BY c.id;
+GROUP BY c.id, c.parent_category_id, c.language_id, c.name;
 
 
 -- name: AdminGetFAQByID :one
@@ -207,11 +207,11 @@ WHERE EXISTS (
 SELECT * FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC;
 
 -- name: AdminGetFAQCategoryWithQuestionCountByID :one
-SELECT c.*, COUNT(f.id) AS QuestionCount
+SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.id = ?
-GROUP BY c.id;
+GROUP BY c.id, c.parent_category_id, c.language_id, c.name;
 
 -- name: AdminGetFAQQuestionsByCategory :many
 SELECT * FROM faq WHERE category_id = ?;

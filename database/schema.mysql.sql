@@ -75,6 +75,7 @@ CREATE TABLE `faq_categories` (
   `parent_category_id` int(10) DEFAULT NULL,
   `language_id` int(10) DEFAULT NULL,
   `name` tinytext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 

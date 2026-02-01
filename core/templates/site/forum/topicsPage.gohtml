@@ -7,8 +7,38 @@
 {{ $topicTitle := topicTitleOrDefault .Topic.Title.String }}
 {{ if .Topic.DisplayTitle }}{{ $topicTitle = topicTitleOrDefault .Topic.DisplayTitle }}{{ end }}
 <h2>Topic: {{ $topicTitle }}</h2>
-    {{ if gt (len .Labels) 0 }}
-        {{ template "topicLabels" .Labels }}
+    {{ if .CanLabel }}
+        {{ if .Labels }}
+        <ul class="list-inline">
+            {{ range .Labels }}
+            <li class="list-inline-item">
+                {{ if eq .Type "public" }}
+                <form method="post" action="{{ $.BasePath }}/topic/{{ $.Topic.Idforumtopic }}/labels" style="display:inline;">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Remove Topic Public Label">
+                    <input type="hidden" name="label" value="{{ .Name }}">
+                    <span class="badge badge-secondary {{ .Type }}">{{ .Name }} <button type="submit" class="btn btn-sm btn-link text-white p-0 ml-1" aria-label="Remove">x</button></span>
+                </form>
+                {{ else }}
+                <span class="badge badge-secondary {{ .Type }}">{{ .Name }}</span>
+                {{ end }}
+            </li>
+            {{ end }}
+        </ul>
+        {{ end }}
+        <form method="post" action="{{ $.BasePath }}/topic/{{ .Topic.Idforumtopic }}/labels" class="form-inline mb-3">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Add Topic Public Label">
+            <div class="form-group">
+                <label for="new-label" class="sr-only">New Label</label>
+                <input type="text" class="form-control mr-2" id="new-label" name="label" placeholder="New Label">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Label</button>
+        </form>
+    {{ else }}
+        {{ if gt (len .Labels) 0 }}
+            {{ template "topicLabels" .Labels }}
+        {{ end }}
     {{ end }}
 
     {{ template "topicThreads" $ }}

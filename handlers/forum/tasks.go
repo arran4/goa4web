@@ -113,4 +113,10 @@ const (
 
 	// TaskSetLabels replaces public and private labels on a topic.
 	TaskSetLabels tasks.TaskString = "Set Labels"
+
+	// TaskAddTopicPublicLabel adds a public label to a topic.
+	TaskAddTopicPublicLabel tasks.TaskString = "Add Topic Public Label"
+
+	// TaskRemoveTopicPublicLabel removes a public label from a topic.
+	TaskRemoveTopicPublicLabel tasks.TaskString = "Remove Topic Public Label"
 )

@@ -68,14 +68,23 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var labels []string
+	if pub, _, err := cd.TopicPublicLabels(topic.Idforumtopic); err == nil {
+		labels = pub
+	} else {
+		log.Printf("list public labels: %v", err)
+	}
+
 	data := struct {
 		Topic           *db.Forumtopic
 		AnyoneHasAccess bool
 		Participants    []*db.AdminListPrivateTopicParticipantsByTopicIDRow
+		Labels          []string
 	}{
 		Topic:           topic,
 		AnyoneHasAccess: anyoneHasAccess,
 		Participants:    participants,
+		Labels:          labels,
 	}
 	ForumAdminTopicPageTmpl.Handle(w, r, data)
 }

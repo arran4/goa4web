@@ -293,14 +293,15 @@ func TestForumPageHandlers(t *testing.T) {
 			t.Fatalf("unexpected double slash in link: %q", body)
 		}
 		expectedCalls := []string{
+			"SystemCheckGrant:forum:topic:1",
 			"GetAllForumCategories",
 			"GetForumTopicByIdForUser:1",
 			"GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText:1",
 			"ListContentPublicLabels:thread:2",
 			"ListContentLabelStatus:thread:2",
 			"ListContentPrivateLabels:thread:2",
-			"ListContentPublicLabels:thread:1",
-			"ListContentLabelStatus:thread:1",
+			"ListContentPublicLabels:topic:1",
+			"ListContentLabelStatus:topic:1",
 		}
 		if diff := cmp.Diff(expectedCalls, queries.calls); diff != "" {
 			t.Fatalf("unexpected query sequence (-want +got):\n%s", diff)
@@ -520,6 +521,11 @@ func (f *forumTopicPageQuerierFake) ListContentPrivateLabels(_ context.Context, 
 		})
 	}
 	return rows, nil
+}
+
+func (f *forumTopicPageQuerierFake) SystemCheckGrant(ctx context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	f.record(fmt.Sprintf("SystemCheckGrant:%s:%s:%d", arg.Section, arg.Item.String, arg.ItemID.Int32))
+	return 0, nil
 }
 
 func TestThreadPageTitle(t *testing.T) {

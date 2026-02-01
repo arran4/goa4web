@@ -1,7 +1,6 @@
-{{define "title"}}{{.PageTitle}}{{end}}
-{{define "body"}}
+{{ template "head" . }}
 <div class="admin-wrapper">
-    <h1>{{.PageTitle}}</h1>
+    <h1>{{ cd.PageTitle }}</h1>
     <table class="table">
         <thead>
             <tr>
@@ -23,4 +22,4 @@
         </tbody>
     </table>
 </div>
-{{end}}
+{{ template "tail" . }}

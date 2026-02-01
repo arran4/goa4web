@@ -62,7 +62,7 @@ Configured providers: {{ .Providers }}<br />
 {{- range .DirErrors }}
 <tr>
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
-    <td>{{ .ID }}</td>
+    <td><a href="/admin/dlq/{{ .Provider }}/{{ .ID }}">{{ .ID }}</a></td>
     <td>{{ .Size }}</td>
     <td>
         {{ if .Parsed }}
@@ -90,11 +90,12 @@ Configured providers: {{ .Providers }}<br />
     {{ csrfField }}
     <input type="hidden" name="provider" value="db">
 <table class="table table-bordered">
-<tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th><th>Actions</th></tr>
+<tr><th>Select</th><th>ID</th><th>Size</th><th>Message</th><th>Created</th><th>Actions</th></tr>
 {{- range .Errors }}
 <tr>
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
-    <td>{{ .ID }}</td>
+    <td><a href="/admin/dlq/{{ .Provider }}/{{ .ID }}">{{ .ID }}</a></td>
+    <td>{{ .Size }}</td>
     <td>
         {{ if .Parsed }}
             <div><strong>Error:</strong> {{ .Parsed.Error }}</div>

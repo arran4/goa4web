@@ -16,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
@@ -42,18 +43,19 @@ var _ tasks.AuditableTask = (*DeleteDLQTask)(nil)
 var _ tasks.Task = (*ReEnlistDLQTask)(nil)
 var _ tasks.AuditableTask = (*ReEnlistDLQTask)(nil)
 
+type DisplayError struct {
+	ID       any
+	Message  string
+	Time     time.Time
+	Size     int64
+	Parsed   *dlq.Message
+	Raw      string
+	Provider string
+}
+
 func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Dead Letter Queue"
-
-	type DisplayError struct {
-		ID      any
-		Message string
-		Time    time.Time
-		Size    int64
-		Parsed  *dlq.Message
-		Raw     string
-	}
 
 	data := struct {
 		Errors     []*DisplayError
@@ -98,11 +100,13 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 			if rows, err := queries.SystemListDeadLetters(r.Context(), 100); err == nil {
 				for _, r := range rows {
 					data.Errors = append(data.Errors, &DisplayError{
-						ID:      r.ID,
-						Message: r.Message,
-						Time:    r.CreatedAt,
-						Raw:     r.Message,
-						Parsed:  parse(r.Message),
+						ID:       r.ID,
+						Message:  r.Message,
+						Time:     r.CreatedAt,
+						Raw:      r.Message,
+						Parsed:   parse(r.Message),
+						Size:     int64(len(r.Message)),
+						Provider: "db",
 					})
 				}
 			} else {
@@ -137,11 +141,12 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 			if recs, err := filedlq.List(cd.Config.DLQFile, 100); err == nil {
 				for _, r := range recs {
 					data.FileErrors = append(data.FileErrors, &DisplayError{
-						ID:      "",
-						Time:    r.Time,
-						Message: r.Message,
-						Raw:     r.Message,
-						Parsed:  parse(r.Message),
+						ID:       "",
+						Time:     r.Time,
+						Message:  r.Message,
+						Raw:      r.Message,
+						Parsed:   parse(r.Message),
+						Provider: "file",
 					})
 				}
 			} else {
@@ -159,11 +164,12 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 			if recs, err := dirdlq.List(cd.Config.DLQFile, 100); err == nil {
 				for _, r := range recs {
 					data.DirErrors = append(data.DirErrors, &DisplayError{
-						ID:      r.Name,
-						Message: r.Message,
-						Size:    r.Size,
-						Raw:     r.Message,
-						Parsed:  parse(r.Message),
+						ID:       r.Name,
+						Message:  r.Message,
+						Size:     r.Size,
+						Raw:      r.Message,
+						Parsed:   parse(r.Message),
+						Provider: "dir",
 					})
 				}
 			} else {
@@ -177,6 +183,65 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 }
 
 const AdminDLQPageTmpl tasks.Template = "admin/dlqPage.gohtml"
+const AdminDLQDetailsPageTmpl tasks.Template = "admin/dlqDetailsPage.gohtml"
+
+func AdminDLQDetailsPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Dead Letter Queue Details"
+	queries := cd.Queries()
+
+	vars := mux.Vars(r)
+	provider := vars["provider"]
+	idStr := vars["id"]
+
+	if provider == "" || idStr == "" {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("missing provider or id"))
+		return
+	}
+
+	cfg := *cd.Config
+	cfg.DLQProvider = provider
+	inst := cd.DLQReg.ProviderFromConfig(&cfg, queries)
+
+	m, ok := inst.(dlq.Manageable)
+	if !ok {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("provider not manageable"))
+		return
+	}
+
+	msgContent, err := m.Get(r.Context(), idStr)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("get message failed: %w", err))
+		return
+	}
+
+	data := &DisplayError{
+		ID:       idStr,
+		Message:  msgContent,
+		Raw:      msgContent,
+		Provider: provider,
+		Size:     int64(len(msgContent)),
+	}
+
+	// Try parse
+	if strings.HasPrefix(msgContent, "{") {
+		var dMsg dlq.Message
+		if err := json.Unmarshal([]byte(msgContent), &dMsg); err == nil {
+			data.Parsed = &dMsg
+		}
+	}
+
+	// Try get more info if DB
+	if provider == "db" {
+		if id, err := strconv.Atoi(idStr); err == nil {
+			if dl, err := queries.SystemGetDeadLetter(r.Context(), int32(id)); err == nil {
+				data.Time = dl.CreatedAt
+			}
+		}
+	}
+
+	AdminDLQDetailsPageTmpl.Handle(w, r, data)
+}
 
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

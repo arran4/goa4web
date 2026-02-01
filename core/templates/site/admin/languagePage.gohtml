@@ -1,7 +1,7 @@
 {{ template "head" $ }}
 <div>[<a href="/admin">Admin:</a> <a href="/admin/languages">Languages</a> <a href="/admin/languages/language/{{ .Language.ID }}">(This page/Refresh)</a>]</div>
 <h2>{{ .Language.Nameof.String }}</h2>
-<table>
+<table class="table table-bordered">
     <tr><th>Type</th><th>Count</th></tr>
     <tr><td>Comments</td><td>{{ .Counts.Comments }}</td></tr>
     <tr><td>Writings</td><td>{{ .Counts.Writings }}</td></tr>

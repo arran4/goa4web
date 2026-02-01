@@ -274,6 +274,28 @@ func (cd *CoreData) adminBreadcrumbs() ([]Breadcrumb, error) {
 		if cd.PageTitle != "" {
 			crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
 		}
+	case strings.HasPrefix(cd.PageTitle, "Email"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Email", Link: "/admin/email/queue"})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.HasPrefix(cd.PageTitle, "Comment"):
+		if cd.PageTitle != "Comments" {
+			crumbs = append(crumbs, Breadcrumb{Title: "Comments", Link: "/admin/comments"})
+		}
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.Contains(cd.PageTitle, "Announcements"):
+		if cd.PageTitle != "Admin Announcements" && cd.PageTitle != "Announcements" {
+			crumbs = append(crumbs, Breadcrumb{Title: "Announcements", Link: "/admin/announcements"})
+		}
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.HasPrefix(cd.PageTitle, "Database"):
+		crumbs = append(crumbs, Breadcrumb{Title: "Database", Link: "/admin/db/status"})
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.HasPrefix(cd.PageTitle, "Site Settings"):
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.HasPrefix(cd.PageTitle, "Server Stats"):
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+	case strings.HasPrefix(cd.PageTitle, "IP Bans"):
+		crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
 	default:
 		if cd.PageTitle != "" {
 			crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})

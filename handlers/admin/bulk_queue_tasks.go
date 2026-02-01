@@ -32,7 +32,7 @@ func (BulkResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	filters := emailFiltersFromValues(r.PostForm)
 	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
 		LanguageID:    filters.LangIDParam(),
-		RoleName:      filters.Role,
+		RoleName:      filters.RoleParam(),
 		Status:        filters.StatusParam(),
 		Provider:      filters.ProviderParam(),
 		CreatedBefore: filters.CreatedBefore,
@@ -103,7 +103,7 @@ func (BulkDeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 	filters := emailFiltersFromValues(r.PostForm)
 	rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
 		LanguageID:    filters.LangIDParam(),
-		RoleName:      filters.Role,
+		RoleName:      filters.RoleParam(),
 		Status:        filters.StatusParam(),
 		Provider:      filters.ProviderParam(),
 		CreatedBefore: filters.CreatedBefore,

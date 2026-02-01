@@ -74,7 +74,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 			Provider:      filters.ProviderParam(),
 			CreatedBefore: filters.CreatedBefore, // Uses SentAt
 			LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.Role,
+			RoleName:      filters.RoleParam(),
 		})
 		if err != nil {
 			log.Printf("count sent emails: %v", err)
@@ -87,7 +87,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 			Provider:      filters.ProviderParam(),
 			CreatedBefore: filters.CreatedBefore,
 			LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.Role,
+			RoleName:      filters.RoleParam(),
 			Limit:         int32(pageSize + 1),
 			Offset:        int32(offset),
 		})
@@ -111,7 +111,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 			Provider:      filters.ProviderParam(),
 			CreatedBefore: filters.CreatedBefore,
 			LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.Role,
+			RoleName:      filters.RoleParam(),
 		})
 		if err != nil {
 			log.Printf("count unsent emails: %v", err)
@@ -125,7 +125,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 			Provider:      filters.ProviderParam(),
 			CreatedBefore: filters.CreatedBefore,
 			LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.Role,
+			RoleName:      filters.RoleParam(),
 			Limit:         int32(pageSize + 1),
 			Offset:        int32(offset),
 		})

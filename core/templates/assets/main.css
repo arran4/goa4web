@@ -136,6 +136,7 @@ textarea {
 
 .sidebar {
         width: 200px;
+        flex-shrink: 0;
         padding-right: 1em;
         position: sticky;
         top: 0;
@@ -145,6 +146,8 @@ textarea {
 
 .content {
         flex: 1;
+        min-width: 0;
+        overflow-x: auto;
         display: flex;
         flex-direction: column;
         gap: 1em;

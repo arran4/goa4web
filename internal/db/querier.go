@@ -28,6 +28,7 @@ type Querier interface {
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
 	AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error)
+	AdminCountAllImagePosts(ctx context.Context) (int64, error)
 	AdminCountForumCategories(ctx context.Context, arg AdminCountForumCategoriesParams) (int64, error)
 	AdminCountForumThreads(ctx context.Context) (int64, error)
 	AdminCountForumTopics(ctx context.Context) (int64, error)
@@ -141,6 +142,7 @@ type Querier interface {
 	AdminLanguageUsageCounts(ctx context.Context, arg AdminLanguageUsageCountsParams) (*AdminLanguageUsageCountsRow, error)
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
+	AdminListAllImagePosts(ctx context.Context, arg AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error)
 	AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error)
 	AdminListAllPrivateTopics(ctx context.Context) ([]*AdminListAllPrivateTopicsRow, error)
 	AdminListAllUserIDs(ctx context.Context) ([]int32, error)

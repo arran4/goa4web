@@ -24,15 +24,16 @@ func (notFoundError) Error() string { return "not found" }
 
 // ImageFileEntry describes a stored image file and any related metadata.
 type ImageFileEntry struct {
-	Name     string
-	Path     string
-	Size     int64
-	IsDir    bool
-	Username string
-	Board    string
-	Posted   time.Time
-	URL      string
-	ModTime  time.Time
+	Name      string
+	Path      string
+	Size      int64
+	IsDir     bool
+	Username  string
+	Board     string
+	Posted    time.Time
+	URL       string
+	ModTime   time.Time
+	IsManaged bool
 }
 
 // ImageFilesListing describes a listing of image upload paths.
@@ -88,6 +89,7 @@ func BuildImageFilesListing(ctx context.Context, queries db.Querier, uploadDir s
 				Thumbnail: sql.NullString{Valid: true, String: dbPath},
 			})
 			if err == nil && row != nil {
+				ent.IsManaged = true
 				ent.Username = row.Username.String
 				ent.Board = row.Title.String
 				if row.Posted.Valid {

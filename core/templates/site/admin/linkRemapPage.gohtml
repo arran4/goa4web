@@ -1,5 +1,20 @@
 {{ template "head" $ }}
 <h2>Link Remap</h2>
+<div style="margin-bottom: 20px;">
+    <p>This tool allows you to bulk remap (search and replace) URLs found in site content (currently only Site News).</p>
+    <p><strong>Usage:</strong></p>
+    <ol>
+        <li><strong>Generate CSV:</strong> Click this button to scan all content for external links. The result will populate the text area below.</li>
+        <li><strong>Edit CSV:</strong> The generated CSV has three columns: <code>internal reference</code>, <code>original url</code>, and <code>to url</code>.
+            <ul>
+                <li><code>internal reference</code>: ID of the content (do not modify).</li>
+                <li><code>original url</code>: The URL currently in the content.</li>
+                <li><code>to url</code>: Enter the new URL here. Leave empty to skip.</li>
+            </ul>
+        </li>
+        <li><strong>Update:</strong> Click Update to apply the changes. This will replace the <code>original url</code> with the <code>to url</code> for the specific content item and clear the old URL from the external links cache.</li>
+    </ol>
+</div>
 <form method="get">
     <button type="submit" name="generate" value="1">Generate CSV</button>
 </form>

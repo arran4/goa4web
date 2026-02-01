@@ -1,13 +1,13 @@
 {{ template "head" $ }}
 <h2>Subscriptions of {{ .User.Username.String }}</h2>
-<table class="table table-bordered">
-    <tr><th>ID</th><th>Pattern</th><th>Method</th><th>Actions</th></tr>
+<table class="table table-bordered full-width">
+    <tr><th style="width: 1%">ID</th><th>Pattern</th><th style="width: 1%">Method</th><th style="width: 1%">Actions</th></tr>
     {{- range .Subs }}
     <tr>
         <form method="post" action="/admin/user/{{ $.User.Idusers }}/subscriptions">
             {{ csrfField }}
             <td><input type="hidden" name="id" value="{{ .ID }}">{{ .ID }}</td>
-            <td><input type="text" name="pattern" value="{{ .Pattern }}"></td>
+            <td><input type="text" name="pattern" value="{{ .Pattern }}" class="full-width"></td>
             <td>
                 <select name="method">
                     <option value="internal" {{ if eq .Method "internal" }}selected{{ end }}>Internal</option>
@@ -26,7 +26,7 @@
 <h3>Add Subscription</h3>
 <form method="post" action="/admin/user/{{ .User.Idusers }}/subscriptions">
     {{ csrfField }}
-    Pattern <input type="text" name="pattern">
+    Pattern <input type="text" name="pattern" class="full-width">
     Method
     <select name="method">
         <option value="internal">Internal</option>

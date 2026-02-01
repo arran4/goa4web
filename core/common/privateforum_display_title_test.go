@@ -11,12 +11,12 @@ import (
 
 func TestGetPrivateTopicDisplayTitle(t *testing.T) {
 	tests := []struct {
-		name              string
-		userID            int32
-		originalTitle     string
-		participants      []*db.AdminListPrivateTopicParticipantsByTopicIDRow
-		expectedTitle     string
-		expectQuery       bool
+		name          string
+		userID        int32
+		originalTitle string
+		participants  []*db.AdminListPrivateTopicParticipantsByTopicIDRow
+		expectedTitle string
+		expectQuery   bool
 	}{
 		{
 			name:          "Logged In (User 1) - Two Participants",

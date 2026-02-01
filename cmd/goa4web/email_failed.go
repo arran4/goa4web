@@ -130,7 +130,7 @@ func (c *emailFailedListCmd) Run() error {
 	queries := db.New(conn)
 	params := db.AdminListFailedEmailsParams{
 		LanguageID: sqlNullInt(c.LangID),
-		RoleName:   c.Role,
+		RoleName:   sql.NullString{String: c.Role, Valid: c.Role != ""},
 	}
 	pageRows, totalCount, err := c.loadFailedEmails(ctx, queries, params, provider)
 	if err != nil {

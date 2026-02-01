@@ -95,6 +95,10 @@ func (f EmailFilters) LangIDParam() sql.NullInt32 {
 	return sql.NullInt32{Int32: int32(f.LangID), Valid: f.LangID != 0}
 }
 
+func (f EmailFilters) RoleParam() sql.NullString {
+	return sql.NullString{String: f.Role, Valid: f.Role != ""}
+}
+
 // AuditSummary returns a summary of filters for audit logs.
 func (f EmailFilters) AuditSummary() string {
 	parts := make([]string, 0, 5)

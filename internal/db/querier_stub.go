@@ -567,6 +567,7 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+	AdminListPrivateTopicParticipantsByTopicIDFn      func(context.Context, sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
 
 	AdminCreateForumCategoryCalls   []AdminCreateForumCategoryParams
 	AdminCreateForumCategoryReturns int64
@@ -1077,6 +1078,9 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
+	if s.AdminListPrivateTopicParticipantsByTopicIDFn != nil {
+		return s.AdminListPrivateTopicParticipantsByTopicIDFn(ctx, itemID)
+	}
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
 }
 

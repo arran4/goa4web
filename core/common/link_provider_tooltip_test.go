@@ -52,14 +52,14 @@ func TestRenderLink_Tooltips(t *testing.T) {
 			rawURL:           "http://example.com/data",
 			isBlock:          false,
 			isImmediateClose: false, // User provided title
-			wantTitleAttr:    "DB Title - DB Description",
+			wantTitleAttr:    "http://example.com/data - DB Title - DB Description",
 		},
 		{
 			name:             "Inline + No User Title + Data",
 			rawURL:           "http://example.com/data",
 			isBlock:          false,
-			isImmediateClose: true,                        // No user title
-			wantTitleAttr:    "DB Title - DB Description", // Changed expectation: should show full details in tooltip
+			isImmediateClose: true,                                                  // No user title
+			wantTitleAttr:    "http://example.com/data - DB Title - DB Description", // Changed expectation: should show full details in tooltip
 			wantText:         "DB Title",
 		},
 		{
@@ -67,7 +67,7 @@ func TestRenderLink_Tooltips(t *testing.T) {
 			rawURL:           "http://example.com/notitle",
 			isBlock:          false,
 			isImmediateClose: false,
-			wantTitleAttr:    "DB Description Only", // Should not start with " - "
+			wantTitleAttr:    "http://example.com/notitle - DB Description Only", // Should not start with " - "
 		},
 	}
 

@@ -137,7 +137,7 @@ LIMIT ? OFFSET ?;
 
 -- name: AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers,
-s.news, s.occurred, th.comments as Comments
+s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
 LEFT JOIN users u ON s.users_idusers = u.idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread

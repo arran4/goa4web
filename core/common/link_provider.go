@@ -49,7 +49,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		targetURL = p.cd.SignLinkURL(rawURL)
 	}
 
-	var title, description, imageURL string
+	var title, description, imageURL, faviconURL string
 	var hasData bool
 
 	if p.cd.Queries() != nil {
@@ -62,81 +62,89 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 			if link.CardImageCache.Valid && link.CardImageCache.String != "" {
 				imageURL = p.cd.MapImageURL("img", link.CardImageCache.String)
 			}
+			if link.FaviconCache.Valid && link.FaviconCache.String != "" {
+				faviconURL = p.cd.MapImageURL("img", link.FaviconCache.String)
+			}
 		}
+	}
+
+	var tooltip string
+	if hasData {
+		meta := buildTooltip(title, description)
+		if meta != "" {
+			tooltip = rawURL + " - " + meta
+		} else {
+			tooltip = rawURL
+		}
+	} else {
+		tooltip = rawURL
 	}
 
 	hasUserTitle := !isImmediateClose
 
-	// Inline + Title + Without data -> No change
-	if !isBlock && hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, targetURL), "</a>", false
-	}
-
-	// Inline + Title + With data -> Title & Description added as alt text
-	if !isBlock && hasUserTitle && hasData {
-		altText := buildTooltip(title, description)
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(altText)), "</a>", false
-	}
-
-	// Inline + No title + Without data -> URL as link text
-	if !isBlock && !hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>`, targetURL, html.EscapeString(rawURL)), "", true
-	}
-
-	// Inline + No title + With data -> Title/Description as text
-	if !isBlock && !hasUserTitle && hasData {
-		linkText := title
-		if linkText == "" {
-			if len(description) > 50 {
-				linkText = description[:47] + "..."
-			} else {
-				linkText = description
-			}
-		}
-		if linkText == "" {
-			linkText = rawURL
-		}
-		altText := buildTooltip(title, description)
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, targetURL, html.EscapeString(altText), html.EscapeString(linkText)), "", true
-	}
-
-	// Online + Title + Without data -> No change
-	if isBlock && hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, targetURL), "</a>", false
-	}
-
-	// Online + Title + With data -> Title & Description added as alt text
-	if isBlock && hasUserTitle && hasData {
-		altText := buildTooltip(title, description)
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(altText)), "</a>", false
-	}
-
-	// Online + No title + Without data -> URL as link text
-	if isBlock && !hasUserTitle && !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>`, targetURL, html.EscapeString(rawURL)), "", true
-	}
-
-	// Online + No title + With data -> Link Card
-	if isBlock && !hasUserTitle && hasData {
-		imageHTML := ""
-		if imageURL != "" {
-			safeImg, imgOk := a4code2html.SanitizeURL(imageURL)
-			if imgOk {
-				imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
+	if !isBlock {
+		faviconHTML := ""
+		if faviconURL != "" {
+			safeFav, favOk := a4code2html.SanitizeURL(faviconURL)
+			if favOk {
+				faviconHTML = fmt.Sprintf(`<img src="%s" class="a4code-inline-favicon" />`, safeFav)
 			}
 		}
 
-		displayTitle := title
-		if displayTitle == "" {
-			displayTitle = rawURL
+		linkOpen := fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(tooltip))
+
+		if hasUserTitle {
+			// [link=url]Title[/link]
+			return linkOpen + faviconHTML, "</a>", false
+		} else {
+			// [link url] -> [link]url[/link] logic in immediate close
+			linkText := html.EscapeString(rawURL)
+			if hasData {
+				displayText := title
+				if displayText == "" {
+					if len(description) > 50 {
+						displayText = description[:47] + "..."
+					} else {
+						displayText = description
+					}
+				}
+				if displayText != "" {
+					linkText = html.EscapeString(displayText)
+				}
+			}
+			return fmt.Sprintf(`%s%s%s</a>`, linkOpen, faviconHTML, linkText), "", true
 		}
-
-		htmlStr := fmt.Sprintf(
-			`<div class="external-link-card"><a href="%s" target="_blank" rel="noopener noreferrer" class="external-link-card-inner">%s<div class="external-link-content"><div class="external-link-title">%s</div><div class="external-link-description">%s</div></div></a></div>`,
-			targetURL, imageHTML, html.EscapeString(displayTitle), html.EscapeString(description))
-
-		return htmlStr, "", true
 	}
 
-	return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer">`, safe), "</a>", false
+	// Block rendering logic
+
+	// Online + Title
+	if hasUserTitle {
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">`, targetURL, html.EscapeString(tooltip)), "</a>", false
+	}
+
+	// Online + No Title (Card or Text)
+	if !hasData {
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, targetURL, html.EscapeString(tooltip), html.EscapeString(rawURL)), "", true
+	}
+
+	// Card
+	imageHTML := ""
+	if imageURL != "" {
+		safeImg, imgOk := a4code2html.SanitizeURL(imageURL)
+		if imgOk {
+			imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
+		}
+	}
+
+	displayTitle := title
+	if displayTitle == "" {
+		displayTitle = rawURL
+	}
+
+	htmlStr := fmt.Sprintf(
+		`<div class="external-link-card"><a href="%s" target="_blank" rel="noopener noreferrer" class="external-link-card-inner" title="%s">%s<div class="external-link-content"><div class="external-link-title">%s</div><div class="external-link-description">%s</div></div></a></div>`,
+		targetURL, html.EscapeString(tooltip), imageHTML, html.EscapeString(displayTitle), html.EscapeString(description))
+
+	return htmlStr, "", true
 }

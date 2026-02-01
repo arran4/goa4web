@@ -76,7 +76,7 @@ func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int32) (
 }
 
 const adminListAllCommentsWithThreadInfo = `-- name: AdminListAllCommentsWithThreadInfo :many
-SELECT c.idcomments, c.written, c.text, c.deleted_at,
+SELECT c.idcomments, c.written, c.text, c.deleted_at, c.timezone,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, t.handler AS topic_handler,
        u.idusers, u.username AS posterusername
 FROM comments c
@@ -97,6 +97,7 @@ type AdminListAllCommentsWithThreadInfoRow struct {
 	Written         sql.NullTime
 	Text            sql.NullString
 	DeletedAt       sql.NullTime
+	Timezone        sql.NullString
 	Idforumthread   sql.NullInt32
 	Idforumtopic    sql.NullInt32
 	ForumtopicTitle sql.NullString
@@ -119,6 +120,7 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 			&i.Written,
 			&i.Text,
 			&i.DeletedAt,
+			&i.Timezone,
 			&i.Idforumthread,
 			&i.Idforumtopic,
 			&i.ForumtopicTitle,

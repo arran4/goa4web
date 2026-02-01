@@ -98,6 +98,16 @@ function insertA4CodeTag(targetId, tag) {
         } else {
             return; // Cancelled
         }
+    } else if (tag === 'u') {
+        replacement = `[u ${selectedText}]`;
+    } else if (tag === 'sub') {
+        replacement = `[sub ${selectedText}]`;
+    } else if (tag === 'sup') {
+        replacement = `[sup ${selectedText}]`;
+    } else if (tag === 'spoiler') {
+        replacement = `[spoiler ${selectedText}]`;
+    } else if (tag === 'hr') {
+        replacement = `[hr]`;
     } else if (tag === 'quote') {
         replacement = `[quote ${selectedText}]`;
     } else if (tag === 'code') {

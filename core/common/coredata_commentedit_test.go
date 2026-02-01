@@ -9,7 +9,7 @@ import (
 )
 
 func TestCommentEditURLsPrivateForum(t *testing.T) {
-	conn, mock, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
@@ -20,8 +20,6 @@ func TestCommentEditURLsPrivateForum(t *testing.T) {
 	common.WithUserRoles([]string{"administrator"})(cd)
 	cd.SetCurrentSection("privateforum")
 	cd.SetCurrentThreadAndTopic(106, 30)
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 	cd.ForumBasePath = "/private"
 	cmt := &db.GetCommentsByThreadIdForUserRow{Idcomments: 42, IsOwner: true}
 
@@ -34,7 +32,7 @@ func TestCommentEditURLsPrivateForum(t *testing.T) {
 }
 
 func TestCommentEditSaveURLPrivateForumFallback(t *testing.T) {
-	conn, mock, err := sqlmock.New()
+	conn, _, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
@@ -45,7 +43,6 @@ func TestCommentEditSaveURLPrivateForumFallback(t *testing.T) {
 	common.WithUserRoles([]string{"administrator"})(cd)
 	cd.SetCurrentSection("privateforum")
 	cd.SetCurrentThreadAndTopic(106, 30)
-	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 	cmt := &db.GetCommentsByThreadIdForUserRow{Idcomments: 42, IsOwner: true}
 
 	if got, want := cd.CommentEditSaveURL(cmt), "/forum/topic/30/thread/106/comment/42"; got != want {

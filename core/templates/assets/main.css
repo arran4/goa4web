@@ -696,12 +696,14 @@ tr.unsupported td {
         list-style: none;
         padding: 0;
         margin: 0;
-        display: inline;
+        display: flex;
+        justify-content: flex-end;
         direction: ltr;
 }
 
 .breadcrumbs li {
-        display: inline;
+        display: block;
+        white-space: nowrap;
 }
 
 .breadcrumbs li + li:before {

@@ -45,9 +45,6 @@ func AdminTemplatesPage(w http.ResponseWriter, r *http.Request) {
 	sort.Strings(names)
 
 	selected := r.URL.Query().Get("template")
-	if selected == "" && len(names) > 0 {
-		selected = names[0]
-	}
 
 	var question string
 	var answer string

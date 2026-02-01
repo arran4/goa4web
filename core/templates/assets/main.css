@@ -1301,3 +1301,12 @@ kbd {
 .a4code-btn:hover {
     background-color: #e0e0e0;
 }
+
+.a4code-inline-favicon {
+    height: 1.2em;
+    width: auto;
+    vertical-align: middle;
+    margin-right: 0.25em;
+    border: none;
+    display: inline-block;
+}

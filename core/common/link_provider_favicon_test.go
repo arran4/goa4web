@@ -15,13 +15,13 @@ func TestRenderLink_Favicon(t *testing.T) {
 	mockDB := &MockQuerier{
 		Links: map[string]*db.ExternalLink{
 			"http://example.com/favicon": {
-				Url:             "http://example.com/favicon",
-				CardTitle:       sql.NullString{String: "Favicon Title", Valid: true},
-				FaviconCache:    sql.NullString{String: "cache:favicon.ico", Valid: true},
+				Url:          "http://example.com/favicon",
+				CardTitle:    sql.NullString{String: "Favicon Title", Valid: true},
+				FaviconCache: sql.NullString{String: "cache:favicon.ico", Valid: true},
 			},
 			"http://example.com/nofavicon": {
-				Url:             "http://example.com/nofavicon",
-				CardTitle:       sql.NullString{String: "No Favicon Title", Valid: true},
+				Url:       "http://example.com/nofavicon",
+				CardTitle: sql.NullString{String: "No Favicon Title", Valid: true},
 			},
 		},
 	}

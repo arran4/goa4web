@@ -42,6 +42,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		BackURL                 string
 		ShareURL                string
 		Labels                  []templates.TopicLabel
+		CanLabel                bool
 	}
 
 	vars := mux.Vars(r)
@@ -50,10 +51,16 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cd.ForumBasePath = basePath
+	canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), "forum", int32(topicId), int32(cd.UserID))
+	if err != nil {
+		log.Printf("UserCanLabelTopic: %v", err)
+	}
+
 	data := &Data{
 		Admin:    cd.IsAdmin() && cd.IsAdminMode(),
 		BasePath: basePath,
 		BackURL:  r.URL.RequestURI(),
+		CanLabel: canLabel || (cd.IsAdmin() && cd.IsAdminMode()),
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
@@ -165,7 +172,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data.Threads = threads
 
 	var labels []templates.TopicLabel
-	if pub, _, err := cd.ThreadPublicLabels(topicRow.Idforumtopic); err == nil {
+	if pub, _, err := cd.TopicPublicLabels(topicRow.Idforumtopic); err == nil {
 		for _, l := range pub {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
 		}

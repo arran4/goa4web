@@ -293,14 +293,15 @@ func TestForumPageHandlers(t *testing.T) {
 			t.Fatalf("unexpected double slash in link: %q", body)
 		}
 		expectedCalls := []string{
+			"SystemCheckGrant:forum:topic:1",
 			"GetAllForumCategories",
 			"GetForumTopicByIdForUser:1",
 			"GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText:1",
 			"ListContentPublicLabels:thread:2",
 			"ListContentLabelStatus:thread:2",
 			"ListContentPrivateLabels:thread:2",
-			"ListContentPublicLabels:thread:1",
-			"ListContentLabelStatus:thread:1",
+			"ListContentPublicLabels:topic:1",
+			"ListContentLabelStatus:topic:1",
 		}
 		if diff := cmp.Diff(expectedCalls, queries.calls); diff != "" {
 			t.Fatalf("unexpected query sequence (-want +got):\n%s", diff)
@@ -330,8 +331,8 @@ func TestForumPageHandlers(t *testing.T) {
 				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
 			}, nil
 		}
-		qs.ListPrivateTopicParticipantsByTopicIDForUserFn = func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
-			return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+		qs.AdminListPrivateTopicParticipantsByTopicIDFn = func(ctx context.Context, arg sql.NullInt32) ([]*db.AdminListPrivateTopicParticipantsByTopicIDRow, error) {
+			return []*db.AdminListPrivateTopicParticipantsByTopicIDRow{
 				{Idusers: 1, Username: sql.NullString{String: "Alice", Valid: true}},
 				{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
 			}, nil
@@ -360,9 +361,12 @@ func TestForumPageHandlers(t *testing.T) {
 		if strings.Contains(body, "Category:") {
 			t.Fatalf("unexpected category heading: %q", body)
 		}
-		// Expect both Alice and Bob in the title (order may vary)
-		if !strings.Contains(body, "Alice") || !strings.Contains(body, "Bob") {
-			t.Fatalf("expected participant names (Alice, Bob), got %q", body)
+		// Expect Bob in the title (Alice is viewer, so excluded)
+		if strings.Contains(body, "Alice") {
+			t.Fatalf("unexpected participant name (Alice) in title, got %q", body)
+		}
+		if !strings.Contains(body, "Bob") {
+			t.Fatalf("expected participant name (Bob), got %q", body)
 		}
 	})
 
@@ -387,7 +391,7 @@ func TestForumPageHandlers(t *testing.T) {
 			Lastaddition:                 sql.NullTime{},
 			Handler:                      "private",
 		}
-		queries.ListPrivateTopicParticipantsByTopicIDForUserReturns = []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
+		queries.AdminListPrivateTopicParticipantsByTopicIDReturns = []*db.AdminListPrivateTopicParticipantsByTopicIDRow{
 			{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
 		}
 		queries.GetCommentsByThreadIdForUserReturns = []*db.GetCommentsByThreadIdForUserRow{}
@@ -517,6 +521,11 @@ func (f *forumTopicPageQuerierFake) ListContentPrivateLabels(_ context.Context, 
 		})
 	}
 	return rows, nil
+}
+
+func (f *forumTopicPageQuerierFake) SystemCheckGrant(ctx context.Context, arg db.SystemCheckGrantParams) (int32, error) {
+	f.record(fmt.Sprintf("SystemCheckGrant:%s:%s:%d", arg.Section, arg.Item.String, arg.ItemID.Int32))
+	return 0, nil
 }
 
 func TestThreadPageTitle(t *testing.T) {

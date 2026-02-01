@@ -146,7 +146,7 @@ func (c *emailSentListCmd) Run() error {
 
 	rows, err := queries.AdminListSentEmails(ctx, db.AdminListSentEmailsParams{
 		LanguageID: sql.NullInt32{},
-		RoleName:   "",
+		RoleName:   sql.NullString{},
 		Limit:      int32(maxQueryLimit),
 		Offset:     0,
 	})

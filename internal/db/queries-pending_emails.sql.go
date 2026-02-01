@@ -31,7 +31,7 @@ type AdminCountSentEmailsParams struct {
 	Provider      interface{}
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
-	RoleName      string
+	RoleName      sql.NullString
 }
 
 // admin task
@@ -77,7 +77,7 @@ type AdminCountUnsentPendingEmailsParams struct {
 	Provider      interface{}
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
-	RoleName      string
+	RoleName      sql.NullString
 }
 
 // admin task
@@ -161,7 +161,7 @@ type AdminListFailedEmailIDsParams struct {
 	Provider      interface{}
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
-	RoleName      string
+	RoleName      sql.NullString
 }
 
 // admin task
@@ -214,7 +214,7 @@ LIMIT ? OFFSET ?
 
 type AdminListFailedEmailsParams struct {
 	LanguageID sql.NullInt32
-	RoleName   string
+	RoleName   sql.NullString
 	Limit      int32
 	Offset     int32
 }
@@ -287,7 +287,7 @@ type AdminListSentEmailIDsParams struct {
 	Provider      interface{}
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
-	RoleName      string
+	RoleName      sql.NullString
 }
 
 // admin task
@@ -347,7 +347,7 @@ type AdminListSentEmailsParams struct {
 	Provider      interface{}
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
-	RoleName      string
+	RoleName      sql.NullString
 	Limit         int32
 	Offset        int32
 }
@@ -433,7 +433,7 @@ type AdminListUnsentPendingEmailsParams struct {
 	Provider      interface{}
 	CreatedBefore sql.NullTime
 	LanguageID    sql.NullInt32
-	RoleName      string
+	RoleName      sql.NullString
 	Limit         int32
 	Offset        int32
 }

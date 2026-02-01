@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -48,6 +49,37 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Determine Parent and Thumb IDs
+	var parentID, thumbID string
+	ext := filepath.Ext(id)
+	base := strings.TrimSuffix(id, ext)
+
+	if strings.HasSuffix(base, "_thumb") {
+		parentID = strings.TrimSuffix(base, "_thumb") + ext
+		thumbID = id
+	} else {
+		parentID = id
+		thumbID = base + "_thumb" + ext
+	}
+
+	parentExists := false
+	if parentID != id {
+		if p, err := getCachePath(cd.Config.ImageCacheDir, parentID); err == nil {
+			if _, err := os.Stat(p); err == nil {
+				parentExists = true
+			}
+		}
+	}
+
+	thumbExists := false
+	if thumbID != id {
+		if p, err := getCachePath(cd.Config.ImageCacheDir, thumbID); err == nil {
+			if _, err := os.Stat(p); err == nil {
+				thumbExists = true
+			}
+		}
+	}
+
 	link, err := cd.Queries().AdminGetExternalLinkByCacheID(r.Context(), db.AdminGetExternalLinkByCacheIDParams{
 		CardImageCache: sql.NullString{String: id, Valid: true},
 		FaviconCache:   sql.NullString{String: id, Valid: true},
@@ -57,22 +89,56 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If not found and we are a thumb (or just checking parent), try parent ID
+	if (link == nil || errors.Is(err, sql.ErrNoRows)) && parentID != id {
+		link, err = cd.Queries().AdminGetExternalLinkByCacheID(r.Context(), db.AdminGetExternalLinkByCacheIDParams{
+			CardImageCache: sql.NullString{String: parentID, Valid: true},
+			FaviconCache:   sql.NullString{String: parentID, Valid: true},
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			handlers.RenderErrorPage(w, r, err)
+			return
+		}
+	}
+	// If still error (NoRows), reset link to nil
+	if errors.Is(err, sql.ErrNoRows) {
+		link = nil
+	}
+
+	var ownerName string
+	if link != nil && link.UpdatedBy.Valid {
+		user, err := cd.Queries().SystemGetUserByID(r.Context(), link.UpdatedBy.Int32)
+		if err == nil && user != nil && user.Username.Valid {
+			ownerName = user.Username.String
+		}
+	}
+
 	type Data struct {
-		ID          string
-		FileExists  bool
-		FileSize    int64
-		FullPath    string
-		Link        *db.ExternalLink
-		TaskRefresh string
+		ID           string
+		FileExists   bool
+		FileSize     int64
+		FullPath     string
+		Link         *db.ExternalLink
+		TaskRefresh  string
+		ParentID     string
+		ParentExists bool
+		ThumbID      string
+		ThumbExists  bool
+		OwnerName    string
 	}
 
 	data := Data{
-		ID:          id,
-		FileExists:  fileExists,
-		FileSize:    fileSize,
-		FullPath:    fullPath,
-		Link:        link,
-		TaskRefresh: string(TaskImageCacheRefresh),
+		ID:           id,
+		FileExists:   fileExists,
+		FileSize:     fileSize,
+		FullPath:     fullPath,
+		Link:         link,
+		TaskRefresh:  string(TaskImageCacheRefresh),
+		ParentID:     parentID,
+		ParentExists: parentExists,
+		ThumbID:      thumbID,
+		ThumbExists:  thumbExists,
+		OwnerName:    ownerName,
 	}
 
 	AdminImageCacheDetailsPageTmpl.Handle(w, r, data)

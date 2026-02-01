@@ -1,5 +1,13 @@
 {{ template "head" $ }}
 <h2>External Links</h2>
+<div style="margin-bottom: 20px;">
+    <p>Manage and audit external links posted on the site.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Update:</strong> Refresh link metadata (title, description, image).</li>
+        <li><strong>Delete:</strong> Remove link records (does not remove the link from the content).</li>
+    </ul>
+</div>
 <form method="get">
     Search: <input name="q" value="{{ .Query }}">
     <input type="submit" value="Filter">

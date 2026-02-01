@@ -1,4 +1,14 @@
 {{ template "head" $ }}
+<h2>Email Management</h2>
+<div style="margin-bottom: 20px;">
+    <p>Monitor and manage outgoing emails.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Tabs:</strong> Switch between Queue (pending), Failed, and Sent emails.</li>
+        <li><strong>Filter:</strong> Search by status, provider, or age.</li>
+        <li><strong>Actions:</strong> Resend, retry, or delete emails.</li>
+    </ul>
+</div>
 <div style="margin-bottom: 1em;">
     <strong>View:</strong>
     {{ if eq .Mode "queue" }}Queue{{ else }}<a href="/admin/email/queue">Queue</a>{{ end }} |

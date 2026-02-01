@@ -21,8 +21,8 @@ type AddTopicPublicLabelTask struct{ tasks.TaskString }
 type RemoveTopicPublicLabelTask struct{ tasks.TaskString }
 
 var (
-	addTopicPublicLabelTask     = &AddTopicPublicLabelTask{TaskString: TaskAddTopicPublicLabel}
-	removeTopicPublicLabelTask  = &RemoveTopicPublicLabelTask{TaskString: TaskRemoveTopicPublicLabel}
+	addTopicPublicLabelTask    = &AddTopicPublicLabelTask{TaskString: TaskAddTopicPublicLabel}
+	removeTopicPublicLabelTask = &RemoveTopicPublicLabelTask{TaskString: TaskRemoveTopicPublicLabel}
 )
 
 var (

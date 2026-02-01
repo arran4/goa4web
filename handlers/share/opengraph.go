@@ -241,29 +241,42 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	dataBytes, decodeErr := base64.RawURLEncoding.DecodeString(dataB64)
+
+	// Try unmarshal as JSON
+	var payload imagePayload
+	if decodeErr == nil {
+		if err := json.Unmarshal(dataBytes, &payload); err != nil {
+			// Fallback for legacy URLs: treat entire data as title
+			payload.Title = string(dataBytes)
+		}
+	}
+
 	signed, err := signutil.GetSignedData(r, h.signKey)
 	if err != nil {
 		log.Printf("Error getting signed data: %v", err)
+		if decodeErr == nil {
+			log.Printf("Request Details: Title: %q, Description: %q", payload.Title, payload.Description)
+		}
+		log.Printf("Request Context: IP: %s, UserAgent: %s", r.RemoteAddr, r.UserAgent())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	if !signed.Valid {
 		log.Printf("Invalid signature")
+		if decodeErr == nil {
+			log.Printf("Request Details: Title: %q, Description: %q", payload.Title, payload.Description)
+		}
+		log.Printf("Request Context: IP: %s, UserAgent: %s", r.RemoteAddr, r.UserAgent())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	dataBytes, err := base64.RawURLEncoding.DecodeString(dataB64)
-	if err != nil {
-		log.Printf("Error decoding data: %v", err)
+
+	if decodeErr != nil {
+		log.Printf("Error decoding data: %v", decodeErr)
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	}
-
-	// Try unmarshal as JSON
-	var payload imagePayload
-	if err := json.Unmarshal(dataBytes, &payload); err != nil {
-		// Fallback for legacy URLs: treat entire data as title
-		payload.Title = string(dataBytes)
 	}
 
 	img, err := GenerateImage(payload.Title, payload.Description)

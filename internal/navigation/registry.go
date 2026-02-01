@@ -37,8 +37,20 @@ func (r *Registry) RegisterIndexLinkWithViewPermission(name, url string, weight 
 }
 
 // RegisterAdminControlCenter registers a link for the admin control center menu in the given section.
-func (r *Registry) RegisterAdminControlCenter(section, name, url string, weight int) {
-	r.admin = append(r.admin, link{section: section, name: name, link: url, weight: weight})
+func (r *Registry) RegisterAdminControlCenter(section interface{}, name, url string, weight int) {
+	var s string
+	switch v := section.(type) {
+	case string:
+		s = v
+	case []string:
+		for i, p := range v {
+			if i > 0 {
+				s += " > "
+			}
+			s += p
+		}
+	}
+	r.admin = append(r.admin, link{section: s, name: name, link: url, weight: weight})
 }
 
 // IndexItems returns navigation items sorted by weight.
@@ -120,7 +132,7 @@ func RegisterIndexLinkWithViewPermission(name, url string, weight int, section, 
 }
 
 // RegisterAdminControlCenter registers a link for the admin control center menu using the default registry.
-func RegisterAdminControlCenter(section, name, url string, weight int) {
+func RegisterAdminControlCenter(section interface{}, name, url string, weight int) {
 	defaultRegistry.RegisterAdminControlCenter(section, name, url, weight)
 }
 

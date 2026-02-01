@@ -1,14 +1,43 @@
 {{ template "head" $ }}
-<h2>Uploaded Files - {{ .Path }}</h2>
-{{ if .Parent }}<a href="/admin/files?path={{ .Parent }}">Parent</a><br>{{ end }}
+<h2>Managed Files</h2>
+<p><a href="/admin/files/unmanaged">View Unmanaged Files</a></p>
+<p>Total: {{ .Total }}</p>
+
 <table class="table table-bordered">
-<tr><th>Name<th>Size<th>Type<th>User<th>Board<th>Posted<th>Preview</tr>
+<tr>
+    <th>ID</th>
+    <th>Preview</th>
+    <th>Path</th>
+    <th>Description</th>
+    <th>User</th>
+    <th>Board</th>
+    <th>Size</th>
+    <th>Posted</th>
+    <th>Actions</th>
+</tr>
 {{ range .Entries }}
 <tr>
-<td>{{ if .IsDir }}<a href="/admin/files?path={{ .Path }}">{{ .Name }}/</a>{{ else }}{{ .Name }}{{ end }}</td>
-<td>{{ .Size }}</td>
-<td>{{ if .IsDir }}dir{{ else }}file{{ end }}</td>
-{{ if .IsDir }}<td colspan="4"></td>{{ else }}<td>{{ .Username }}</td><td>{{ .Board }}</td><td>{{ .Posted }}</td><td>{{ if .URL }}<a href="{{ .URL }}">view</a>{{ end }}</td>{{ end }}
+    <td>{{ .Idimagepost }}</td>
+    <td>
+        {{ if .Thumbnail.Valid }}
+        <img src="{{ .Thumbnail.String }}" style="max-height: 50px; max-width: 50px;">
+        {{ end }}
+    </td>
+    <td>
+        {{ if .Fullimage.Valid }}
+        <a href="{{ .Fullimage.String }}">{{ .Fullimage.String }}</a>
+        {{ end }}
+    </td>
+    <td>{{ .Description }}</td>
+    <td>{{ if .Username.Valid }}{{ .Username.String }}{{ else }}?{{ end }}</td>
+    <td>{{ if .Title.Valid }}{{ .Title.String }}{{ else }}?{{ end }}</td>
+    <td>{{ .FileSize }}</td>
+    <td>{{ .Posted }}</td>
+    <td>
+        {{ if .Fullimage.Valid }}
+        <a href="{{ .Fullimage.String }}" class="btn btn-sm btn-secondary" target="_blank">View</a>
+        {{ end }}
+    </td>
 </tr>
 {{ end }}
 </table>

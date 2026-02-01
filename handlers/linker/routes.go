@@ -18,6 +18,10 @@ var legacyRedirectsEnabled = true
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("Linker", "/linker", SectionWeight, "linker", "category")
 	navReg.RegisterAdminControlCenter("Linker", "Linker", "/admin/linker", SectionWeight)
+	navReg.RegisterAdminControlCenter("Linker", "Categories", "/admin/linker/categories", SectionWeight+1)
+	navReg.RegisterAdminControlCenter("Linker", "Links", "/admin/linker/links", SectionWeight+2)
+	navReg.RegisterAdminControlCenter("Linker", "Queue", "/admin/linker/queue", SectionWeight+3)
+	navReg.RegisterAdminControlCenter("Linker", "Add Link", "/admin/linker/add", SectionWeight+4)
 	lr := r.PathPrefix("/linker").Subrouter()
 	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex), handlers.SectionMiddleware("linker"))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")

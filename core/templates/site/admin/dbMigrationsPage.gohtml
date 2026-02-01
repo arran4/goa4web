@@ -1,0 +1,26 @@
+{{ template "head" $ }}
+<h1>Database Migrations</h1>
+
+<div style="display: flex; gap: 20px;">
+    <div style="width: 250px; flex-shrink: 0;">
+        <h3>Files</h3>
+        <ul>
+            {{ range .Files }}
+            <li>
+                <a href="?name={{ . }}" {{ if eq . $.SelectedFile }}style="font-weight: bold;"{{ end }}>{{ . }}</a>
+            </li>
+            {{ end }}
+        </ul>
+    </div>
+    <div style="flex-grow: 1;">
+        <h3>Content</h3>
+        {{ if .SelectedFile }}
+            <h4>{{ .SelectedFile }}</h4>
+            <pre style="background: #f4f4f4; padding: 1em; overflow-x: auto;">{{ .Content }}</pre>
+        {{ else }}
+            <p>Select a migration file to view its content.</p>
+        {{ end }}
+    </div>
+</div>
+
+{{ template "tail" $ }}

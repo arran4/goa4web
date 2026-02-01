@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"strings"
 
 	"github.com/arran4/goa4web/database"
 	"github.com/arran4/goa4web/internal/app/dbstart"
+	"github.com/arran4/goa4web/migrations"
 )
 
 // dbShowCmd implements "db show".
@@ -43,7 +45,7 @@ func (c *dbShowCmd) Run() error {
 	case "seed.sql":
 		_, err := fmt.Fprintln(os.Stdout, string(database.SeedSQL))
 		return err
-	case "schema.mysql.sql":
+	case "schema", "schema.mysql.sql":
 		_, err := fmt.Fprintln(os.Stdout, string(database.SchemaMySQL))
 		return err
 	case "schema-version":
@@ -59,6 +61,23 @@ func (c *dbShowCmd) Run() error {
 		_, err = fmt.Fprintln(os.Stdout, version)
 		return err
 	default:
+		if c.target == "migrations" {
+			entries, err := fs.ReadDir(migrations.FS, ".")
+			if err != nil {
+				return err
+			}
+			for _, e := range entries {
+				fmt.Println(e.Name())
+			}
+			return nil
+		}
+
+		b, err := fs.ReadFile(migrations.FS, c.target)
+		if err == nil {
+			_, err = fmt.Fprintln(os.Stdout, string(b))
+			return err
+		}
+
 		return fmt.Errorf("unknown target %q", c.target)
 	}
 }

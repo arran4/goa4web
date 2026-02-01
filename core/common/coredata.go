@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	ttemplate "text/template"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -1173,7 +1174,7 @@ func (cd *CoreData) EmailRegistry() *email.Registry { return cd.emailRegistry }
 
 // DefaultNotificationTemplate renders the default body for the current notification template.
 func (cd *CoreData) DefaultNotificationTemplate() string {
-	return defaultNotificationTemplate(cd.currentNotificationTemplateName, cd.Config)
+	return defaultNotificationTemplate(cd.currentNotificationTemplateName, cd)
 }
 
 // EmailProvider returns the configured email provider.
@@ -3004,23 +3005,32 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 
 // Email template helpers
 
-func defaultNotificationTemplate(name string, cfg *config.RuntimeConfig) string {
+func defaultNotificationTemplate(name string, cd *CoreData) string {
+	cfg := cd.Config
 	var buf bytes.Buffer
 	var opts []templates.Option
 	if cfg != nil && cfg.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
 	}
+
+	funcs := cd.Funcs(nil)
+
 	if strings.HasSuffix(name, ".gohtml") {
-		tmpl := templates.GetCompiledEmailHtmlTemplates(map[string]any{}, opts...)
+		tmpl := templates.GetCompiledEmailHtmlTemplates(funcs, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
 	} else {
-		tmpl := templates.GetCompiledEmailTextTemplates(map[string]any{}, opts...)
+		txtFuncs := ttemplate.FuncMap{}
+		for k, v := range funcs {
+			txtFuncs[k] = v
+		}
+
+		tmpl := templates.GetCompiledEmailTextTemplates(txtFuncs, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()
 		}
-		tmpl2 := templates.GetCompiledNotificationTemplates(map[string]any{}, opts...)
+		tmpl2 := templates.GetCompiledNotificationTemplates(txtFuncs, opts...)
 		buf.Reset()
 		if err := tmpl2.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
 			return buf.String()

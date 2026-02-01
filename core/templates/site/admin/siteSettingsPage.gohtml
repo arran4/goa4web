@@ -1,4 +1,9 @@
 {{ template "head" $ }}
+<h2>Site Configuration</h2>
+<div style="margin-bottom: 20px;">
+    <p>Review the runtime configuration of the application.</p>
+    <p>This page displays all configuration values resolved from environment variables, flags, and default values at startup. These values are read-only.</p>
+</div>
 <p>Configuration values resolved at startup.</p>
 <p>Config file: {{ .ConfigFile }}</p>
 <table class="table table-bordered">

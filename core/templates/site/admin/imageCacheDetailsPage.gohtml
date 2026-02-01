@@ -10,6 +10,12 @@
                 <tr><th>Exists</th><td>{{ if .FileExists }}Yes{{ else }}No{{ end }}</td></tr>
                 <tr><th>Size</th><td>{{ .FileSize }} bytes</td></tr>
                 <tr><th>Path</th><td>{{ .FullPath }}</td></tr>
+                {{ if and .ParentExists (ne .ParentID .ID) }}
+                <tr><th>Parent Image</th><td><a href="/admin/images/cache/{{ .ParentID }}">{{ .ParentID }}</a></td></tr>
+                {{ end }}
+                {{ if and .ThumbExists (ne .ThumbID .ID) }}
+                <tr><th>Thumbnail</th><td><a href="/admin/images/cache/{{ .ThumbID }}">{{ .ThumbID }}</a></td></tr>
+                {{ end }}
             </table>
 
             <h3>External Link Details</h3>
@@ -22,7 +28,10 @@
                 <tr><th>Clicks</th><td>{{ .Link.Clicks }}</td></tr>
                 <tr><th>Created At</th><td>{{ .Link.CreatedAt }}</td></tr>
                 <tr><th>Updated At</th><td>{{ .Link.UpdatedAt }}</td></tr>
-                <tr><th>Updated By</th><td>{{ if .Link.UpdatedBy.Valid }}{{ .Link.UpdatedBy.Int32 }}{{ end }}</td></tr>
+                <tr><th>Updated By</th><td>
+                    {{ if .Link.UpdatedBy.Valid }}{{ .Link.UpdatedBy.Int32 }}{{ end }}
+                    {{ if .OwnerName }} ({{ .OwnerName }}){{ end }}
+                </td></tr>
             </table>
             {{ else }}
             <p>No associated external link found for this cache file.</p>
@@ -39,6 +48,13 @@
                 <img src="{{ cd.MapImageURL "img" (printf "cache:%s" .ID) }}" style="max-width: 100%;">
             {{ else }}
                 <p>File does not exist.</p>
+            {{ end }}
+
+            {{ if and .ThumbExists (ne .ThumbID .ID) }}
+            <h4>Thumbnail Preview</h4>
+            <a href="/admin/images/cache/{{ .ThumbID }}">
+                <img src="{{ cd.MapImageURL "img" (printf "cache:%s" .ThumbID) }}" style="max-width: 200px;">
+            </a>
             {{ end }}
         </div>
     </div>

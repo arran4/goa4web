@@ -20,6 +20,7 @@ func adminCommentPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Comment %d", c.Idcomments)
+	cd.SetCurrentPage(&AdminCommentPageBreadcrumb{CommentID: c.Idcomments})
 	queries := cd.Queries()
 	rows, err := queries.GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
 		ViewerID: cd.UserID,

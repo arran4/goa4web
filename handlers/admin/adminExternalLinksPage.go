@@ -1,67 +1,13 @@
 package admin
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
-
-// AdminExternalLinksPage lists cached external links.
-func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		Links         []*db.ExternalLink
-		Query         string
-		ResultSummary string
-	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "External Links"
-	query := strings.TrimSpace(r.URL.Query().Get(externalLinksFilterQueryParam))
-	queries := cd.Queries()
-	rows, err := queries.AdminListExternalLinks(r.Context(), db.AdminListExternalLinksParams{Limit: 200, Offset: 0})
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("list external links: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
-		return
-	}
-	if query != "" {
-		filtered := make([]*db.ExternalLink, 0, len(rows))
-		queryLower := strings.ToLower(query)
-		for _, link := range rows {
-			if externalLinkMatchesQuery(link, queryLower) {
-				filtered = append(filtered, link)
-			}
-		}
-		rows = filtered
-	}
-	data := Data{
-		Links: rows,
-		Query: query,
-	}
-	action := r.URL.Query().Get(externalLinksActionQueryParam)
-	successCount := queryIntValue(r, externalLinksSuccessQueryParam)
-	failureCount := queryIntValue(r, externalLinksFailureQueryParam)
-	if action != "" {
-		actionLabel := action
-		switch action {
-		case externalLinksActionRefresh:
-			actionLabel = "Refreshed"
-		case externalLinksActionDelete:
-			actionLabel = "Deleted"
-		}
-		data.ResultSummary = fmt.Sprintf("%s external links: %d succeeded, %d failed.", actionLabel, successCount, failureCount)
-	}
-	AdminExternalLinksPageTmpl.Handle(w, r, data)
-}
 
 const AdminExternalLinksPageTmpl tasks.Template = "admin/externalLinksPage.gohtml"
 

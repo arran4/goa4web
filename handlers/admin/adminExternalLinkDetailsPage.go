@@ -47,6 +47,7 @@ func AdminExternalLinkDetailsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.PageTitle = fmt.Sprintf("External Link %d", link.ID)
+	cd.SetCurrentPage(&AdminExternalLinkDetailsPageBreadcrumb{LinkID: link.ID})
 
 	data := Data{
 		Link: link,

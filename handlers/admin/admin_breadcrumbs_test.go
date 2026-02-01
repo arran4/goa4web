@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -130,19 +131,19 @@ func TestAdminPages_HaveTitlesAndBreadcrumbs(t *testing.T) {
 	}{
 		{
 			name:          "Announcements",
-			handler:       AdminAnnouncementsPage,
+			handler:       handlers.TaskHandler(&AdminAnnouncementsPageTask{}),
 			url:           "/admin/announcements",
 			expectedTitle: "Admin Announcements",
 		},
 		{
 			name:          "Email Queue",
-			handler:       AdminEmailPage,
+			handler:       handlers.TaskHandler(&AdminEmailPageTask{}),
 			url:           "/admin/email/queue",
 			expectedTitle: "Email Queue",
 		},
 		{
 			name:          "Comments",
-			handler:       AdminCommentsPage,
+			handler:       handlers.TaskHandler(&AdminCommentsPageTask{}),
 			url:           "/admin/comments",
 			expectedTitle: "Comments",
 		},

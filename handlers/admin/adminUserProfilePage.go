@@ -21,6 +21,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
+	cd.SetCurrentPage(&AdminUserProfilePageBreadcrumb{UserID: user.Idusers, UserName: user.Username.String})
 	AdminUserProfilePageTmpl.Handle(w, r, struct{}{})
 }
 

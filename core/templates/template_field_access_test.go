@@ -29,6 +29,44 @@ func TestTemplateFieldAccess(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "faq/faqAdminCategoryPage.gohtml",
+			Data: struct {
+				Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+				Latest   []*db.Faq
+			}{
+				Category: &db.AdminGetFAQCategoryWithQuestionCountByIDRow{
+					ID:            1,
+					Name:          sql.NullString{String: "Test Category", Valid: true},
+					Questioncount: 5,
+				},
+				Latest: []*db.Faq{
+					{
+						ID:       101,
+						Question: sql.NullString{String: "Question 1", Valid: true},
+					},
+				},
+			},
+		},
+		{
+			Name: "faq/faqAdminCategoryQuestionsPage.gohtml",
+			Data: struct {
+				Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+				Questions []*db.Faq
+			}{
+				Category: &db.AdminGetFAQCategoryWithQuestionCountByIDRow{
+					ID:            1,
+					Name:          sql.NullString{String: "Test Category", Valid: true},
+					Questioncount: 5,
+				},
+				Questions: []*db.Faq{
+					{
+						ID:       102,
+						Question: sql.NullString{String: "Question 2", Valid: true},
+					},
+				},
+			},
+		},
 	}
 
 	// Setup necessary context

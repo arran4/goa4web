@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Breadcrumb represents a single navigation step.
@@ -19,6 +21,16 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
+
+	if hb := cd.currentPage; hb != nil {
+		return buildBreadcrumbs(hb)
+	}
+	if cd.event != nil && cd.event.Task != nil {
+		if hb, ok := cd.event.Task.(tasks.HasBreadcrumb); ok {
+			return buildBreadcrumbs(hb)
+		}
+	}
+
 	var (
 		crumbs []Breadcrumb
 		err    error
@@ -109,6 +121,19 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 		crumbs = append(crumbs, Breadcrumb{Title: fmt.Sprintf("Thread %d", threadID)})
 	}
 	return crumbs, nil
+}
+
+func buildBreadcrumbs(hb tasks.HasBreadcrumb) []Breadcrumb {
+	var crumbs []Breadcrumb
+	for hb != nil {
+		title, link, parent := hb.Breadcrumb()
+		if title != "" {
+			// Prepend because we traverse from child to parent
+			crumbs = append([]Breadcrumb{{Title: title, Link: link}}, crumbs...)
+		}
+		hb = parent
+	}
+	return crumbs
 }
 
 func (cd *CoreData) writingBreadcrumbs() ([]Breadcrumb, error) {

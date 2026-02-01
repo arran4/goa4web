@@ -1,5 +1,14 @@
 {{ template "head" $ }}
     <div>[<a href="/admin">Admin:</a> <a href="/admin/users">(This page/Refresh)</a>]</div>
+    <h2>Users</h2>
+    <div style="margin-bottom: 20px;">
+        <p>Manage registered users on the platform.</p>
+        <p><strong>Usage:</strong></p>
+        <ul>
+            <li><strong>Search:</strong> Filter users by username/email query, role, or account status.</li>
+            <li><strong>View Details:</strong> Click a User ID to view full profile details and grants.</li>
+        </ul>
+    </div>
     <form method="get">
         <input name="search" value="{{$.Search}}">
         <select name="role">

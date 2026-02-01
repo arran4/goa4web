@@ -1,5 +1,14 @@
 {{ template "head" $ }}
     <div>[<a href="/admin">Admin:</a> <a href="/admin/images/cache">(This page/Refresh)</a>]</div>
+    <h2>Image Cache</h2>
+    <div style="margin-bottom: 20px;">
+        <p>Manage the local cache of external images.</p>
+        <p><strong>Usage:</strong></p>
+        <ul>
+            <li><strong>Prune:</strong> Reduce cache size to the configured limit.</li>
+            <li><strong>Delete:</strong> Remove selected images from the cache.</li>
+        </ul>
+    </div>
     <p>
         Total cache size: <strong>{{ .TotalSize }}</strong> bytes
         {{- if .HasMax }} (max {{ .MaxSize }} bytes){{ else }} (no limit configured){{ end }}

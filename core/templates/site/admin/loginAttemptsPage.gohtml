@@ -1,4 +1,8 @@
 {{ template "head" $ }}
+<h2>Login Attempts</h2>
+<div style="margin-bottom: 20px;">
+    <p>View recent login attempts for security monitoring.</p>
+</div>
 <table class="table table-bordered">
     <tr><th>Time</th><th>Username</th><th>IP</th></tr>
     {{- range cd.AdminLoginAttempts }}

@@ -1,5 +1,14 @@
 {{ template "head" $ }}
 <div>[<a href="/admin">Admin:</a> <a href="/admin/ipbans">(This page/Refresh)</a>]</div>
+<h2>IP Bans</h2>
+<div style="margin-bottom: 20px;">
+    <p>Manage IP address bans to block access to the site.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Add/Import:</strong> Add single IPs or import a CSV list of bans.</li>
+        <li><strong>Format:</strong> CSV columns: <code>action</code>, <code>ip</code>, <code>reason</code>, <code>expires</code>, <code>id</code>.</li>
+    </ul>
+</div>
 {{ if .Error }}<p class="text-error">{{ .Error }}</p>{{ end }}
 {{ if .Notice }}<p><strong>{{ .Notice }}</strong></p>{{ end }}
 <form method="post">

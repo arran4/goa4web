@@ -1,5 +1,8 @@
 {{ template "head" $ }}
 <h2>Comments</h2>
+<div style="margin-bottom: 20px;">
+    <p>Moderate user comments across the site.</p>
+</div>
 <table class="table table-bordered">
 <tr><th>ID</th><th>Date</th><th>Topic</th><th>Thread</th><th>Excerpt</th><th>Link</th></tr>
 {{- range .Comments }}

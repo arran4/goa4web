@@ -29,7 +29,7 @@ WHERE pe.sent_at IS NULL
     OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
   AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
 ORDER BY pe.id
 LIMIT ? OFFSET ?;
 
@@ -50,7 +50,7 @@ WHERE pe.sent_at IS NULL
     OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
   AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name));
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name));
 
 -- name: AdminGetPendingEmailByID :one
 -- admin task
@@ -82,7 +82,7 @@ WHERE pe.sent_at IS NOT NULL
     OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
   AND (sqlc.narg(created_before) IS NULL OR pe.sent_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
 ORDER BY pe.sent_at DESC
 LIMIT ? OFFSET ?;
 
@@ -100,7 +100,7 @@ WHERE pe.sent_at IS NOT NULL
     OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
   AND (sqlc.narg(created_before) IS NULL OR pe.sent_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name));
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name));
 
 -- name: AdminListSentEmailIDs :many
 -- admin task
@@ -116,7 +116,7 @@ WHERE pe.sent_at IS NOT NULL
     OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
   AND (sqlc.narg(created_before) IS NULL OR pe.sent_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
 ORDER BY pe.sent_at DESC;
 
 -- name: AdminListFailedEmails :many
@@ -128,7 +128,7 @@ LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
 ORDER BY pe.id
 LIMIT ? OFFSET ?;
 
@@ -146,5 +146,5 @@ WHERE pe.sent_at IS NULL AND pe.error_count > 0
     OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
   AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
   AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
+  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
 ORDER BY pe.id;

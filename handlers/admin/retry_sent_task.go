@@ -34,7 +34,7 @@ func (RetrySentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		filters := emailFiltersFromRequest(r)
 		rows, err := queries.AdminListSentEmailIDs(r.Context(), db.AdminListSentEmailIDsParams{
 			LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.Role,
+			RoleName:      filters.RoleParam(),
 			Provider:      filters.ProviderParam(),
 			CreatedBefore: filters.CreatedBefore,
 		})

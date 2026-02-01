@@ -47,7 +47,7 @@ func TestDynamicBreadcrumb(t *testing.T) {
 	queries := &BreadcrumbTestQuerier{}
 	cd := common.NewCoreData(req.Context(), queries, cfg)
 
-    page := &AdminRolePageBreadcrumb{
+    page := &AdminRolePage{
         RoleName: "Moderator",
         RoleID: 1,
     }

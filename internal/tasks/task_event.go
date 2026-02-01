@@ -55,3 +55,7 @@ var _ Task = (TaskString)("")
 type HasBreadcrumb interface {
 	Breadcrumb() (name, link string, parent HasBreadcrumb)
 }
+
+type HasPageTitle interface {
+	PageTitle() string
+}

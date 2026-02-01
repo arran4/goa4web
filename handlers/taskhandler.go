@@ -20,6 +20,16 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			v.SetEventTask(t)
 		}
 		result := t.Action(w, r)
+
+		if v := r.Context().Value(consts.KeyCoreData).(*common.CoreData); v != nil {
+			if pt, ok := result.(tasks.HasPageTitle); ok {
+				v.PageTitle = pt.PageTitle()
+			}
+			if hb, ok := result.(tasks.HasBreadcrumb); ok {
+				v.SetCurrentPage(hb)
+			}
+		}
+
 		switch result := result.(type) {
 		case RedirectHandler:
 			// Use 303 See Other so POST actions redirect to a GET of the target resource.

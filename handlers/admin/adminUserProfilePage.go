@@ -2,28 +2,14 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
-
-func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.LoadSelectionsFromRequest(r)
-	user := cd.CurrentProfileUser()
-	if user == nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("user not found"))
-		return
-	}
-	cd.PageTitle = fmt.Sprintf("User %s", user.Username.String)
-	cd.SetCurrentPage(&AdminUserProfilePageBreadcrumb{UserID: user.Idusers, UserName: user.Username.String})
-	AdminUserProfilePageTmpl.Handle(w, r, struct{}{})
-}
 
 const AdminUserProfilePageTmpl tasks.Template = "admin/adminUserPage.gohtml"
 

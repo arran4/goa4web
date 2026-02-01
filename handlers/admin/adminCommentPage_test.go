@@ -16,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -119,7 +120,7 @@ func TestAdminCommentPage_UsesURLParam(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminCommentPage(rr, req)
+	handlers.TaskHandler(&AdminCommentTask{})(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
@@ -188,7 +189,7 @@ func TestAdminCommentPage_RendersCorrectTopicLink(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminCommentPage(rr, req)
+	handlers.TaskHandler(&AdminCommentTask{})(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}

@@ -36,8 +36,6 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 		config.EnvJMAPInsecure:       true,
 		config.EnvEmailSubjectPrefix: true,
 		config.EnvEmailSignOff:       true,
-		config.EnvEmailOverride:      true,
-		config.EnvEmailRetries:       true,
 		config.EnvJMAPEndpointOverride: true,
 		config.EnvJMAPDiscoveryRetries: true,
 	}

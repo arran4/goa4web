@@ -40,10 +40,6 @@ const (
 	EnvEmailSubjectPrefix = "EMAIL_SUBJECT_PREFIX"
 	// EnvEmailSignOff specifies the sign-off text appended to emails.
 	EnvEmailSignOff = "EMAIL_SIGNOFF"
-	// EnvEmailOverride overrides all outgoing email recipients with this address.
-	EnvEmailOverride = "EMAIL_OVERRIDE"
-	// EnvEmailRetries sets the maximum number of retries for sending an email before moving to DLQ.
-	EnvEmailRetries = "EMAIL_RETRIES"
 	// EnvAWSRegion is the AWS region for the SES provider.
 	EnvAWSRegion = "AWS_REGION"
 	// EnvJMAPEndpoint is the JMAP API endpoint.

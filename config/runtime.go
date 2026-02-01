@@ -68,10 +68,6 @@ type RuntimeConfig struct {
 	EmailSubjectPrefix        string
 	// EmailSignOff defines the optional sign-off appended to emails.
 	EmailSignOff string
-	// EmailOverride overrides all outgoing email recipients with this address.
-	EmailOverride string
-	// EmailRetries sets the maximum number of retries for sending an email before moving to DLQ.
-	EmailRetries int
 
 	// EmailEnabled toggles sending queued emails.
 	EmailEnabled bool

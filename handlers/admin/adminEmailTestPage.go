@@ -101,11 +101,11 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		data.ToAddress = r.FormValue("to_address")
 		data.ConfigText = r.FormValue("config_text")
-		useCurrentConfig := r.FormValue("use_current_config") == "on"
+		overwriteConfig := r.FormValue("overwrite_config") == "on"
 
 		var tempConfig *config.RuntimeConfig
 
-		if useCurrentConfig {
+		if !overwriteConfig {
 			tempConfig = cd.Config
 		} else {
 			// Reconstruct Config

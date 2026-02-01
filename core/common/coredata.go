@@ -9,7 +9,6 @@ import (
 	"html/template"
 	"io"
 	"log"
-	ttemplate "text/template"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	ttemplate "text/template"
 	"time"
 
 	"github.com/gorilla/mux"

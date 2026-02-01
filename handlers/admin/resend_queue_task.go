@@ -42,7 +42,7 @@ func (ResendQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 			filterPrefix = "failed"
 			rows, err := queries.AdminListFailedEmailIDs(r.Context(), db.AdminListFailedEmailIDsParams{
 				LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.RoleParam(),
+				RoleName:      filters.RoleParam(),
 				Provider:      filters.ProviderParam(),
 				CreatedBefore: filters.CreatedBefore,
 			})

@@ -47,7 +47,7 @@ func TestAdminGrantsAvailablePage(t *testing.T) {
 		t.Errorf("Response body does not contain expected content '%s'", expectedContent)
 	}
 
-    if len(strings.TrimSpace(body)) == 0 {
-        t.Errorf("Response body is empty")
-    }
+	if len(strings.TrimSpace(body)) == 0 {
+		t.Errorf("Response body is empty")
+	}
 }

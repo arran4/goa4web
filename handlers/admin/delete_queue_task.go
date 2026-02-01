@@ -47,7 +47,7 @@ func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 		} else {
 			rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
 				LanguageID:    filters.LangIDParam(),
-			RoleName:      filters.RoleParam(),
+				RoleName:      filters.RoleParam(),
 				Status:        filters.StatusParam(),
 				Provider:      filters.ProviderParam(),
 				CreatedBefore: filters.CreatedBefore,

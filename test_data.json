@@ -1,0 +1,11 @@
+{
+  "Dot": {
+    "Templates": ["t1"],
+    "SelectedTemplate": "t1",
+    "Question": "[b]Question[/b]",
+    "Answer": "[i]Answer[/i]",
+    "Categories": [],
+    "Languages": [],
+    "Authors": []
+  }
+}

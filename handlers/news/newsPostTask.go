@@ -24,6 +24,8 @@ import (
 type newsPostTask struct {
 }
 
+var _ tasks.Task = (*newsPostTask)(nil)
+
 const (
 	NewsPostPageTmpl tasks.Template = "news/postPage.gohtml"
 )

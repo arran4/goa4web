@@ -13,6 +13,8 @@ import (
 type bookmarksTask struct {
 }
 
+var _ tasks.Task = (*bookmarksTask)(nil)
+
 const (
 	BookmarksPageTmpl = "bookmarks/page.gohtml"
 	InfoPageTmpl      = "bookmarks/infoPage.gohtml"

@@ -27,6 +27,11 @@
             <h3>Backend Settings</h3>
             <p>Modify the values below to test different configurations (defaults to current runtime config).</p>
 
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="use_current_config" name="use_current_config" checked>
+                <label class="form-check-label" for="use_current_config">Test with current settings (ignore text below)</label>
+            </div>
+
             <div class="form-group">
                 <textarea class="form-control" name="config_text" rows="20" style="font-family: monospace;">{{ .ConfigText }}</textarea>
                 <small class="form-text text-muted">Format: KEY=VALUE. Lines starting with # are comments.</small>

@@ -167,7 +167,11 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		if err := q.SystemIncrementPendingEmailError(ctx, e.ID); err != nil {
 			log.Printf("increment email error: %v", err)
 		}
-		if time.Since(e.CreatedAt) > dlqThreshold {
+		shouldDLQ := time.Since(e.CreatedAt) > dlqThreshold
+		if cfg.EmailRetries > 0 && e.ErrorCount+1 >= int32(cfg.EmailRetries) {
+			shouldDLQ = true
+		}
+		if shouldDLQ {
 			if dlqProvider != nil {
 				msg := fmt.Sprintf("email %d to %s failed: no provider configured (age %s)\n%s", e.ID, addr.Address, time.Since(e.CreatedAt), e.Body)
 				_ = dlqProvider.Record(ctx, msg)
@@ -184,7 +188,11 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 			log.Printf("increment email error: %v", err)
 			return true
 		}
-		if time.Since(e.CreatedAt) > dlqThreshold {
+		shouldDLQ := time.Since(e.CreatedAt) > dlqThreshold
+		if cfg.EmailRetries > 0 && e.ErrorCount+1 >= int32(cfg.EmailRetries) {
+			shouldDLQ = true
+		}
+		if shouldDLQ {
 			if dlqProvider != nil {
 				msg := fmt.Sprintf("email %d to %s failed: %v (age %s)\n%s", e.ID, addr.Address, err, time.Since(e.CreatedAt), e.Body)
 				_ = dlqProvider.Record(ctx, msg)

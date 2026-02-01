@@ -1,8 +1,10 @@
 package email
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net/mail"
 	"sort"
 	"strings"
 	"sync"
@@ -44,13 +46,26 @@ func (r *Registry) providerFactory(name string) ProviderFactory {
 // ProviderFromConfig returns a provider configured from cfg.
 func (r *Registry) ProviderFromConfig(cfg *config.RuntimeConfig) (Provider, error) {
 	mode := strings.ToLower(cfg.EmailProvider)
+	var p Provider
+	var err error
+
 	if f := r.providerFactory(mode); f != nil {
-		return f(cfg)
-	}
-	if mode != "" {
+		p, err = f(cfg)
+	} else if mode != "" {
 		return nil, fmt.Errorf("Email disabled: unknown provider %q", mode)
 	}
-	return nil, nil
+
+	if err != nil {
+		return nil, err
+	}
+
+	if p != nil && cfg.EmailOverride != "" {
+		p = &overrideProvider{
+			Provider: p,
+			override: cfg.EmailOverride,
+		}
+	}
+	return p, nil
 }
 
 // ProviderNames returns registered provider names in sorted order.
@@ -63,4 +78,15 @@ func (r *Registry) ProviderNames() []string {
 	r.mu.RUnlock()
 	sort.Strings(names)
 	return names
+}
+
+type overrideProvider struct {
+	Provider
+	override string
+}
+
+func (p *overrideProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
+	log.Printf("email: overriding recipient %s with %s", to.Address, p.override)
+	to = mail.Address{Address: p.override}
+	return p.Provider.Send(ctx, to, rawEmailMessage)
 }

@@ -55,6 +55,7 @@ var StringOptions = []StringOption{
 	{"email-from", EnvEmailFrom, "The default 'From' address for outgoing emails.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailFrom }},
 	{"email-subject-prefix", EnvEmailSubjectPrefix, "The prefix to add to the subject of all outgoing emails.", "goa4web", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSubjectPrefix }},
 	{"email-signoff", EnvEmailSignOff, "A sign-off message to append to the end of all outgoing emails.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSignOff }},
+	{"email-override", EnvEmailOverride, "Override all outgoing email recipients with this address.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailOverride }},
 	{"aws-region", EnvAWSRegion, "The AWS region to use for SES.", "", []string{"us-east-1"}, "", func(c *RuntimeConfig) *string { return &c.EmailAWSRegion }},
 	{"jmap-endpoint", EnvJMAPEndpoint, "The endpoint for the JMAP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpoint }},
 	{"jmap-endpoint-override", EnvJMAPEndpointOverride, "The override URL for the JMAP endpoint, bypassing autodiscovery.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailJMAPEndpointOverride }},
@@ -98,6 +99,7 @@ var StringOptions = []StringOption{
 var IntOptions = []IntOption{
 	{"db-log-verbosity", EnvDBLogVerbosity, "The verbosity level for database logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.DBLogVerbosity }},
 	{"email-log-verbosity", EnvEmailLogVerbosity, "The verbosity level for email logging. 0 = off, 1 = errors, 2 = warnings, 3 = info, 4 = debug.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailLogVerbosity }},
+	{"email-retries", EnvEmailRetries, "The maximum number of retries for sending an email before moving to DLQ. 0 means rely on time threshold.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailRetries }},
 	{"jmap-discovery-retries", EnvJMAPDiscoveryRetries, "The number of retries for JMAP session discovery.", 5, "", func(c *RuntimeConfig) *int { return &c.EmailJMAPDiscoveryRetries }},
 	{"log-flags", EnvLogFlags, "The flags for request logging.", 0, "", func(c *RuntimeConfig) *int { return &c.LogFlags }},
 	{"page-size-min", EnvPageSizeMin, "The minimum allowed page size for paginated results.", 5, "", func(c *RuntimeConfig) *int { return &c.PageSizeMin }},

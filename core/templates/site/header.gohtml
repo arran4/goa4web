@@ -15,6 +15,7 @@
         {{- $crumbs := cd.Breadcrumbs }}
         {{- if $crumbs }}
             <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <div>
                 <ol>
                     {{- range $crumbs }}
                         {{- if .Link }}
@@ -24,6 +25,7 @@
                         {{- end }}
                     {{- end }}
                 </ol>
+                </div>
             </nav>
         {{- end }}
     </div>

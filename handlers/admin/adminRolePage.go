@@ -36,6 +36,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Role: %s", role.Name)
+	cd.SetCurrentPage(&AdminRolePageBreadcrumb{RoleName: role.Name, RoleID: role.ID})
 
 	id := cd.SelectedRoleID()
 	emailRows, err := queries.GetVerifiedUserEmails(r.Context())

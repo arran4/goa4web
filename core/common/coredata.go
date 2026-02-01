@@ -2221,7 +2221,7 @@ func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkI
 // comment. Only the original author can edit comments via the public
 // interface; administrative edits must occur through the admin portal.
 func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-	return cmt != nil && cmt.IsOwner
+	return cmt != nil && cmt.IsOwner && cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments)
 }
 
 // CommentEditing returns true if the given comment is currently being edited.

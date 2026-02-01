@@ -13,7 +13,7 @@ import (
 
 func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Server Stats"
+	cd.PageTitle = "Server Runtime Statistics"
 	var dlqReg, emailReg, routerReg = (*dlq.Registry)(nil), (*email.Registry)(nil), (*router.Registry)(nil)
 	if h.Srv != nil {
 		dlqReg = h.Srv.DLQReg

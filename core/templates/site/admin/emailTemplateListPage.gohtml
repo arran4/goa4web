@@ -7,14 +7,14 @@
 <tr>
     <td>{{ .Section }}</td>
     <td>{{ .Task }}</td>
-    <td>{{ range $i, $t := .SelfEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .SelfEmail }}{{ $h := index .SelfEmail 1 }}{{ $t := index .SelfEmail 0 }}{{ $s := index .SelfEmail 2 }}{{ $sep := false }}{{ if $h }}<a href="/admin/email/template?name={{ $h }}">html body</a>{{ $sep = true }}{{ end }}{{ if $t }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">text body</a>{{ $sep = true }}{{ end }}{{ if $s }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $s }}">subject</a>{{ end }}{{ end }}</td>
     <td>{{ if .SelfInternal }}<a href="/admin/email/template?name={{ .SelfInternal }}">{{ .SelfInternal }}</a>{{ end }}</td>
-    <td>{{ range $i, $t := .DirectEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
-    <td>{{ range $i, $t := .TargetEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .DirectEmail }}{{ $h := index .DirectEmail 1 }}{{ $t := index .DirectEmail 0 }}{{ $s := index .DirectEmail 2 }}{{ $sep := false }}{{ if $h }}<a href="/admin/email/template?name={{ $h }}">html body</a>{{ $sep = true }}{{ end }}{{ if $t }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">text body</a>{{ $sep = true }}{{ end }}{{ if $s }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $s }}">subject</a>{{ end }}{{ end }}</td>
+    <td>{{ if .TargetEmail }}{{ $h := index .TargetEmail 1 }}{{ $t := index .TargetEmail 0 }}{{ $s := index .TargetEmail 2 }}{{ $sep := false }}{{ if $h }}<a href="/admin/email/template?name={{ $h }}">html body</a>{{ $sep = true }}{{ end }}{{ if $t }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">text body</a>{{ $sep = true }}{{ end }}{{ if $s }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $s }}">subject</a>{{ end }}{{ end }}</td>
     <td>{{ if .TargetInternal }}<a href="/admin/email/template?name={{ .TargetInternal }}">{{ .TargetInternal }}</a>{{ end }}</td>
-    <td>{{ range $i, $t := .SubEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .SubEmail }}{{ $h := index .SubEmail 1 }}{{ $t := index .SubEmail 0 }}{{ $s := index .SubEmail 2 }}{{ $sep := false }}{{ if $h }}<a href="/admin/email/template?name={{ $h }}">html body</a>{{ $sep = true }}{{ end }}{{ if $t }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">text body</a>{{ $sep = true }}{{ end }}{{ if $s }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $s }}">subject</a>{{ end }}{{ end }}</td>
     <td>{{ if .SubInternal }}<a href="/admin/email/template?name={{ .SubInternal }}">{{ .SubInternal }}</a>{{ end }}</td>
-    <td>{{ range $i, $t := .AdminEmail }}{{ if $i }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">{{ $t }}</a>{{ end }}</td>
+    <td>{{ if .AdminEmail }}{{ $h := index .AdminEmail 1 }}{{ $t := index .AdminEmail 0 }}{{ $s := index .AdminEmail 2 }}{{ $sep := false }}{{ if $h }}<a href="/admin/email/template?name={{ $h }}">html body</a>{{ $sep = true }}{{ end }}{{ if $t }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $t }}">text body</a>{{ $sep = true }}{{ end }}{{ if $s }}{{ if $sep }}, {{ end }}<a href="/admin/email/template?name={{ $s }}">subject</a>{{ end }}{{ end }}</td>
     <td>{{ if .AdminInternal }}<a href="/admin/email/template?name={{ .AdminInternal }}">{{ .AdminInternal }}</a>{{ end }}</td>
 </tr>
 {{- end }}

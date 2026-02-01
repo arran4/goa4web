@@ -16,6 +16,8 @@ import (
 type userTask struct {
 }
 
+var _ tasks.Task = (*userTask)(nil)
+
 const (
 	UserPageTmpl tasks.Template = "user/page.gohtml"
 )

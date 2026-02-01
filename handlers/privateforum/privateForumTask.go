@@ -14,6 +14,8 @@ import (
 type privateForumTask struct {
 }
 
+var _ tasks.Task = (*privateForumTask)(nil)
+
 const (
 	CreateTopicTmpl tasks.Template = "forum/create_topic.gohtml"
 	TopicsOnlyTmpl  tasks.Template = "privateforum/topics_only.gohtml"

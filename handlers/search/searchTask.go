@@ -12,6 +12,8 @@ import (
 type searchTask struct {
 }
 
+var _ tasks.Task = (*searchTask)(nil)
+
 const (
 	SearchPageTmpl = "searchPage.gohtml"
 )

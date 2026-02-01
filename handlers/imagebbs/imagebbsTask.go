@@ -12,6 +12,8 @@ import (
 type imagebbsTask struct {
 }
 
+var _ tasks.Task = (*imagebbsTask)(nil)
+
 const (
 	ImagebbsPageTmpl = "imagebbs/page.gohtml"
 )

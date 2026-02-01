@@ -36,7 +36,7 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Load Role SQL"
+	cd.PageTitle = "Role SQL Loader"
 	data := Data{}
 
 	if r.Method == http.MethodPost {

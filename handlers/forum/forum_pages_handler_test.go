@@ -331,8 +331,12 @@ func TestForumPageHandlers(t *testing.T) {
 				Lastaddition:                 sql.NullTime{Time: time.Now(), Valid: true},
 			}, nil
 		}
-		qs.AdminListPrivateTopicParticipantsByTopicIDFn = func(ctx context.Context, arg sql.NullInt32) ([]*db.AdminListPrivateTopicParticipantsByTopicIDRow, error) {
-			return []*db.AdminListPrivateTopicParticipantsByTopicIDRow{
+		qs.AdminListPrivateTopicParticipantsByTopicIDReturns = []*db.AdminListPrivateTopicParticipantsByTopicIDRow{
+			{Idusers: 1, Username: sql.NullString{String: "Alice", Valid: true}},
+			{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
+		}
+		qs.ListPrivateTopicParticipantsByTopicIDForUserFn = func(ctx context.Context, arg db.ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*db.ListPrivateTopicParticipantsByTopicIDForUserRow, error) {
+			return []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{
 				{Idusers: 1, Username: sql.NullString{String: "Alice", Valid: true}},
 				{Idusers: 2, Username: sql.NullString{String: "Bob", Valid: true}},
 			}, nil
@@ -361,12 +365,12 @@ func TestForumPageHandlers(t *testing.T) {
 		if strings.Contains(body, "Category:") {
 			t.Fatalf("unexpected category heading: %q", body)
 		}
-		// Expect Bob in the title (Alice is viewer, so excluded)
-		if strings.Contains(body, "Alice") {
-			t.Fatalf("unexpected participant name (Alice) in title, got %q", body)
-		}
+		// Expect Bob in the title (Alice is the viewer, so she is excluded)
 		if !strings.Contains(body, "Bob") {
 			t.Fatalf("expected participant name (Bob), got %q", body)
+		}
+		if strings.Contains(body, "Alice") {
+			t.Fatalf("unexpected participant name (Alice) in title (viewer should be excluded), got %q", body)
 		}
 	})
 

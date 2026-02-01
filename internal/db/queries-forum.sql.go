@@ -998,9 +998,9 @@ func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndF
 }
 
 const getForumTopicById = `-- name: GetForumTopicById :one
-SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_id, title, description, threads, comments, lastaddition, handler, deleted_at
-FROM forumtopic
-WHERE idforumtopic = ?
+SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at
+FROM forumtopic t
+WHERE t.idforumtopic = ?
 `
 
 func (q *Queries) GetForumTopicById(ctx context.Context, idforumtopic int32) (*Forumtopic, error) {

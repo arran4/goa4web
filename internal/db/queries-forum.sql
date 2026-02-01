@@ -302,9 +302,9 @@ FROM forumtopic
 WHERE title=?;
 
 -- name: GetForumTopicById :one
-SELECT *
-FROM forumtopic
-WHERE idforumtopic = ?;
+SELECT t.*
+FROM forumtopic t
+WHERE t.idforumtopic = sqlc.arg(idforumtopic);
 
 -- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 WITH role_ids AS (

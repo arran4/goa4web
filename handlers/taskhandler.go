@@ -25,8 +25,8 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			if pt, ok := result.(tasks.HasPageTitle); ok {
 				v.PageTitle = pt.PageTitle()
 			}
-			if hb, ok := result.(tasks.HasBreadcrumb); ok {
-				v.SetCurrentPage(hb)
+			if p, ok := result.(tasks.Page); ok {
+				v.SetCurrentPage(p)
 			}
 		}
 

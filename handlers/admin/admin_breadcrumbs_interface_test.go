@@ -19,14 +19,14 @@ func TestInterfaceDrivenBreadcrumbs(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	// Test AdminRolesPageTask (Task implementation)
-	rolesTask := &AdminRolesPageTask{}
+	// Test AdminRolesPage (Page implementation)
+	rolesPage := &AdminRolesPage{}
 
-    cd.SetCurrentPage(rolesTask)
+    cd.SetCurrentPage(rolesPage)
 
     crumbs := cd.Breadcrumbs()
 
-    // AdminRolesPageTask breadcrumb is "Roles" -> "Admin"
+    // AdminRolesPage breadcrumb is "Roles" -> "Admin"
     // So we expect [Admin, Roles]
 
     if len(crumbs) != 2 {

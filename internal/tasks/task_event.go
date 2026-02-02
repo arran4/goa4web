@@ -59,3 +59,8 @@ type HasBreadcrumb interface {
 type HasPageTitle interface {
 	PageTitle() string
 }
+
+type Page interface {
+	HasBreadcrumb
+	HasPageTitle
+}

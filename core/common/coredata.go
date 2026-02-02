@@ -200,7 +200,7 @@ type CoreData struct {
 	currentTopicID                   int32
 	currentCategoryID                int32
 	currentWritingID                 int32
-	currentPage                      tasks.HasBreadcrumb
+	currentPage                      tasks.Page
 	event                            *eventbus.TaskEvent
 	externalLinks                    map[int32]*lazy.Value[*db.ExternalLink]
 	faqCategories                    lazy.Value[[]*db.FaqCategory]
@@ -2359,7 +2359,10 @@ func (cd *CoreData) SetCurrentThreadAndTopic(threadID, topicID int32) {
 func (cd *CoreData) SetCurrentWriting(id int32) { cd.currentWritingID = id }
 
 // SetCurrentPage stores the current page for breadcrumb generation.
-func (cd *CoreData) SetCurrentPage(p tasks.HasBreadcrumb) { cd.currentPage = p }
+func (cd *CoreData) SetCurrentPage(p tasks.Page) { cd.currentPage = p }
+
+// CurrentPage returns the current page.
+func (cd *CoreData) CurrentPage() tasks.Page { return cd.currentPage }
 
 // SetCurrentExternalLinkID stores the external link ID for subsequent lookups.
 func (cd *CoreData) SetCurrentExternalLinkID(id int32) { cd.currentExternalLinkID = id }

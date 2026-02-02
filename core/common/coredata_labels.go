@@ -293,6 +293,22 @@ func (cd *CoreData) SetTopicPublicLabels(topicID int32, labels []string) error {
 	return cd.SetPublicLabels("topic", topicID, labels)
 }
 
+func (cd *CoreData) TopicPrivateLabels(topicID int32, authorID int32) ([]string, error) {
+	return cd.PrivateLabels("topic", topicID, authorID)
+}
+
+func (cd *CoreData) AddTopicPrivateLabel(topicID int32, label string) error {
+	return cd.AddPrivateLabel("topic", topicID, label)
+}
+
+func (cd *CoreData) RemoveTopicPrivateLabel(topicID int32, label string) error {
+	return cd.RemovePrivateLabel("topic", topicID, label)
+}
+
+func (cd *CoreData) SetTopicPrivateLabels(topicID int32, labels []string) error {
+	return cd.SetPrivateLabels("topic", topicID, labels)
+}
+
 func (cd *CoreData) ThreadPublicLabels(threadID int32) (public, owner []string, err error) {
 	return cd.PublicLabels("thread", threadID)
 }

@@ -63,6 +63,12 @@ func TestManageTopicLabelsPage(t *testing.T) {
 				{Label: "Label2", Item: "topic", ItemID: topicID},
 			}, nil
 		}
+		queries.ListContentLabelStatusReturns = []*db.ListContentLabelStatusRow{}
+		queries.ListContentPrivateLabelsFn = func(arg db.ListContentPrivateLabelsParams) ([]*db.ListContentPrivateLabelsRow, error) {
+			return []*db.ListContentPrivateLabelsRow{
+				{Label: "PrivateLabel1", Item: "topic", ItemID: topicID, UserID: 123},
+			}, nil
+		}
 
 		// Setup CoreData
 		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
@@ -91,6 +97,9 @@ func TestManageTopicLabelsPage(t *testing.T) {
 		}
 		if !strings.Contains(body, "Label2") {
 			t.Errorf("expected Label2 in body")
+		}
+		if !strings.Contains(body, "PrivateLabel1") {
+			t.Errorf("expected PrivateLabel1 in body")
 		}
 	})
 

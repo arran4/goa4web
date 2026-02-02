@@ -6,6 +6,34 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
+// Section defines a type that can return a formatted section path string.
+type Section interface {
+	String() string
+}
+
+type sectionString []string
+
+func (s sectionString) String() string {
+	var str string
+	for i, p := range s {
+		if i > 0 {
+			str += " > "
+		}
+		str += p
+	}
+	return str
+}
+
+// AdminCCCategory creates a section from one or more categories.
+func AdminCCCategory(categories ...string) Section {
+	return sectionString(categories)
+}
+
+// AdminCCCategories creates a section from one or more categories.
+func AdminCCCategories(categories ...string) Section {
+	return sectionString(categories)
+}
+
 // link represents a navigation item for either index or admin control center.
 type link struct {
 	section     string
@@ -37,13 +65,15 @@ func (r *Registry) RegisterIndexLinkWithViewPermission(name, url string, weight 
 }
 
 // RegisterAdminControlCenter registers a link for the admin control center menu in the given section.
-func (r *Registry) RegisterAdminControlCenter(name, url string, weight int, section ...string) {
+func (r *Registry) RegisterAdminControlCenter(section any, name, url string, weight int) {
 	var s string
-	for i, p := range section {
-		if i > 0 {
-			s += " > "
-		}
-		s += p
+	switch v := section.(type) {
+	case string:
+		s = v
+	case Section:
+		s = v.String()
+	case []string:
+		s = sectionString(v).String()
 	}
 	r.admin = append(r.admin, link{section: s, name: name, link: url, weight: weight})
 }
@@ -127,8 +157,8 @@ func RegisterIndexLinkWithViewPermission(name, url string, weight int, section, 
 }
 
 // RegisterAdminControlCenter registers a link for the admin control center menu using the default registry.
-func RegisterAdminControlCenter(name, url string, weight int, section ...string) {
-	defaultRegistry.RegisterAdminControlCenter(name, url, weight, section...)
+func RegisterAdminControlCenter(section any, name, url string, weight int) {
+	defaultRegistry.RegisterAdminControlCenter(section, name, url, weight)
 }
 
 // IndexItems returns navigation items sorted by weight from the default registry.

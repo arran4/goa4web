@@ -9,8 +9,8 @@ import (
 
 // RegisterAdminRoutes attaches user admin endpoints to the router.
 func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
-	navReg.RegisterAdminControlCenter("Pending Users", "/admin/users/pending", SectionWeight-5, "Users")
-	navReg.RegisterAdminControlCenter("Users", "/admin/users", SectionWeight, "Users")
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Users"), "Pending Users", "/admin/users/pending", SectionWeight-5)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Users"), "Users", "/admin/users", SectionWeight)
 	ar.HandleFunc("/users", adminUsersPage).Methods("GET")
 	ar.HandleFunc("/users/pending", adminPendingUsersPage).Methods("GET")
 	ar.HandleFunc("/users/pending/approve", adminPendingUsersApprove).Methods("POST")

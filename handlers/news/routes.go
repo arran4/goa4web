@@ -18,7 +18,7 @@ import (
 // RegisterRoutes attaches the public news endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("News", "/", SectionWeight, "news", "post")
-	navReg.RegisterAdminControlCenter("News", "/admin/news", SectionWeight, "News")
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("News"), "News", "/admin/news", SectionWeight)
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
 	r.HandleFunc("/", NewsPageHandler).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")

@@ -12,7 +12,7 @@ import (
 // RegisterRoutes attaches the search endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("Search", "/search", SectionWeight)
-	navReg.RegisterAdminControlCenter("Search", "/admin/search", SectionWeight, "Search")
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Search"), "Search", "/admin/search", SectionWeight)
 	sr := r.PathPrefix("/search").Subrouter()
 	sr.Use(handlers.IndexMiddleware(CustomIndex))
 	sr.HandleFunc("", SearchPage).Methods("GET")

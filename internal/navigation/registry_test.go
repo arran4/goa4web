@@ -10,8 +10,8 @@ func TestIndexItemsOrdering(t *testing.T) {
 
 	RegisterIndexLink("b", "/b", 20)
 	RegisterIndexLink("a", "/a", 10)
-	RegisterAdminControlCenter("b", "/admin/b", 20, "sec")
-	RegisterAdminControlCenter("a", "/admin/a", 10, "sec")
+	RegisterAdminControlCenter("sec", "b", "/admin/b", 20)
+	RegisterAdminControlCenter("sec", "a", "/admin/a", 10)
 
 	items := IndexItems()
 	if len(items) != 2 {
@@ -34,7 +34,7 @@ func TestIndexItemsSkipEmpty(t *testing.T) {
 	defaultRegistry = NewRegistry()
 	t.Cleanup(func() { defaultRegistry = NewRegistry() })
 
-	RegisterAdminControlCenter("no", "/admin/no", 5, "sec")
+	RegisterAdminControlCenter("sec", "no", "/admin/no", 5)
 	items := IndexItems()
 	if len(items) != 0 {
 		t.Fatalf("expected 0 items got %d", len(items))

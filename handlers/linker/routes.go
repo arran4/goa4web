@@ -17,11 +17,11 @@ var legacyRedirectsEnabled = true
 // RegisterRoutes attaches the public linker endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLinkWithViewPermission("Linker", "/linker", SectionWeight, "linker", "category")
-	navReg.RegisterAdminControlCenter("Linker", "/admin/linker", SectionWeight, "Linker")
-	navReg.RegisterAdminControlCenter("Categories", "/admin/linker/categories", SectionWeight+1, "Linker")
-	navReg.RegisterAdminControlCenter("Links", "/admin/linker/links", SectionWeight+2, "Linker")
-	navReg.RegisterAdminControlCenter("Queue", "/admin/linker/queue", SectionWeight+3, "Linker")
-	navReg.RegisterAdminControlCenter("Add Link", "/admin/linker/add", SectionWeight+4, "Linker")
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Linker", "/admin/linker", SectionWeight)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Categories", "/admin/linker/categories", SectionWeight+1)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Links", "/admin/linker/links", SectionWeight+2)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Queue", "/admin/linker/queue", SectionWeight+3)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Add Link", "/admin/linker/add", SectionWeight+4)
 	lr := r.PathPrefix("/linker").Subrouter()
 	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex), handlers.SectionMiddleware("linker"))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")

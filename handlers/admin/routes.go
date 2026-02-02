@@ -36,6 +36,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "Once Off & Maintenance", "/admin/maintenance", 29)
 	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "External Links", "/admin/external-links", 30)
 	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Status", "/admin/db/status", 31)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Schema", "/admin/db/schema", 156)
+	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Migrations", "/admin/db/migrations", 157)
 	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Tools", "/admin/links/tools", 31)
 	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Remap", "/admin/link-remap", 32)
 	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Notifications"), "Notifications", "/admin/notifications", 90)

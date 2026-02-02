@@ -27,6 +27,11 @@
             <h3>Backend Settings</h3>
             <p>Modify the values below to test different configurations (defaults to current runtime config).</p>
 
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="overwrite_config" name="overwrite_config">
+                <label class="form-check-label" for="overwrite_config">Overwrite current settings with text below</label>
+            </div>
+
             <div class="form-group">
                 <textarea class="form-control" name="config_text" rows="20" style="font-family: monospace;">{{ .ConfigText }}</textarea>
                 <small class="form-text text-muted">Format: KEY=VALUE. Lines starting with # are comments.</small>

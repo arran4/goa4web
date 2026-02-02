@@ -273,16 +273,27 @@ func (cd *CoreData) DisallowPermission(id int32) error {
 }
 
 // SaveNotificationDigestPreferences updates notification digest settings for the user.
-func (cd *CoreData) SaveNotificationDigestPreferences(userID int32, hour *int, markRead bool) error {
+func (cd *CoreData) SaveNotificationDigestPreferences(userID int32, dailyHour *int, markRead bool, weeklyDay, weeklyHour, monthlyDay, monthlyHour *int) error {
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	var sqlHour sql.NullInt32
-	if hour != nil {
-		sqlHour = sql.NullInt32{Int32: int32(*hour), Valid: true}
-	} else {
-		sqlHour = sql.NullInt32{Valid: false}
+	var sqlDailyHour, sqlWeeklyDay, sqlWeeklyHour, sqlMonthlyDay, sqlMonthlyHour sql.NullInt32
+	if dailyHour != nil {
+		sqlDailyHour = sql.NullInt32{Int32: int32(*dailyHour), Valid: true}
 	}
+	if weeklyDay != nil {
+		sqlWeeklyDay = sql.NullInt32{Int32: int32(*weeklyDay), Valid: true}
+	}
+	if weeklyHour != nil {
+		sqlWeeklyHour = sql.NullInt32{Int32: int32(*weeklyHour), Valid: true}
+	}
+	if monthlyDay != nil {
+		sqlMonthlyDay = sql.NullInt32{Int32: int32(*monthlyDay), Valid: true}
+	}
+	if monthlyHour != nil {
+		sqlMonthlyHour = sql.NullInt32{Int32: int32(*monthlyHour), Valid: true}
+	}
+
 	_, err := cd.queries.GetPreferenceForLister(cd.ctx, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -297,8 +308,12 @@ func (cd *CoreData) SaveNotificationDigestPreferences(userID int32, hour *int, m
 	}
 
 	return cd.queries.UpdateNotificationDigestPreferences(cd.ctx, db.UpdateNotificationDigestPreferencesParams{
-		DailyDigestHour:     sqlHour,
+		DailyDigestHour:     sqlDailyHour,
 		DailyDigestMarkRead: markRead,
+		WeeklyDigestDay:     sqlWeeklyDay,
+		WeeklyDigestHour:    sqlWeeklyHour,
+		MonthlyDigestDay:    sqlMonthlyDay,
+		MonthlyDigestHour:   sqlMonthlyHour,
 		ListerID:            userID,
 	})
 }

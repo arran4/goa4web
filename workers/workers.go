@@ -53,7 +53,7 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 		)
 		n.NotificationPurgeWorker(ctx, time.Hour)
 	})
-	log.Printf("Starting notification digest worker")
+	log.Printf("Starting notification digest scheduler and consumer")
 	safeGo(func() {
 		n := notifications.New(
 			notifications.WithQueries(db.New(sdb)),
@@ -62,7 +62,11 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 			notifications.WithBus(bus),
 			notifications.WithConfig(cfg),
 		)
-		n.NotificationDigestWorker(ctx, 30*time.Minute)
+		// Start consumer
+		consumer := notifications.NewDigestConsumer(n)
+		go consumer.Run(ctx)
+		// Start scheduler
+		n.NotificationScheduler(ctx, 30*time.Minute)
 	})
 	log.Printf("Starting event bus logger worker")
 	safeGo(func() { logworker.Worker(ctx, bus) })

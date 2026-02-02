@@ -44,9 +44,41 @@ func (SaveDigestTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
+	weeklyDayStr := r.PostFormValue("weekly_digest_day")
+	var weeklyDay *int
+	if weeklyDayStr != "" && weeklyDayStr != "-1" {
+		if d, err := strconv.Atoi(weeklyDayStr); err == nil && d >= 0 && d <= 6 {
+			weeklyDay = &d
+		}
+	}
+
+	weeklyHourStr := r.PostFormValue("weekly_digest_hour")
+	var weeklyHour *int
+	if weeklyHourStr != "" {
+		if h, err := strconv.Atoi(weeklyHourStr); err == nil && h >= 0 && h <= 23 {
+			weeklyHour = &h
+		}
+	}
+
+	monthlyDayStr := r.PostFormValue("monthly_digest_day")
+	var monthlyDay *int
+	if monthlyDayStr != "" && monthlyDayStr != "-1" {
+		if d, err := strconv.Atoi(monthlyDayStr); err == nil && d >= 1 && d <= 31 {
+			monthlyDay = &d
+		}
+	}
+
+	monthlyHourStr := r.PostFormValue("monthly_digest_hour")
+	var monthlyHour *int
+	if monthlyHourStr != "" {
+		if h, err := strconv.Atoi(monthlyHourStr); err == nil && h >= 0 && h <= 23 {
+			monthlyHour = &h
+		}
+	}
+
 	markRead := r.PostFormValue("daily_digest_mark_read") == "on"
 
-	if err := cd.SaveNotificationDigestPreferences(uid, hour, markRead); err != nil {
+	if err := cd.SaveNotificationDigestPreferences(uid, hour, markRead, weeklyDay, weeklyHour, monthlyDay, monthlyHour); err != nil {
 		log.Printf("save digest pref: %v", err)
 		return fmt.Errorf("save digest pref fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

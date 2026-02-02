@@ -31,11 +31,11 @@
 
 {{ if .SelectedTemplate }}
 <div>
-    <h5>Template Preview</h5>
+    <h5>Template Source</h5>
     <p><strong>Question</strong></p>
-    <div class="preview-box">{{ .Question | a4code2html }}</div>
+    <div class="preview-box"><div class="a4code-code-body">{{ .Question }}</div></div>
     <p><strong>Answer</strong></p>
-    <div class="preview-box">{{ .Answer | a4code2html }}</div>
+    <div class="preview-box"><div class="a4code-code-body">{{ .Answer }}</div></div>
 </div>
 
 <div>

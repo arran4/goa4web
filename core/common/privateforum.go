@@ -146,6 +146,21 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				}
 			}
 
+			if pub, owner, err := cd.PublicLabels("topic", t.Idforumtopic); err == nil {
+				for _, l := range pub {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+				}
+				for _, l := range owner {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+				}
+			}
+
+			if priv, err := cd.PrivateLabels("topic", t.Idforumtopic, 0); err == nil {
+				for _, l := range priv {
+					labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+				}
+			}
+
 			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels})
 		}
 		return pts, nil

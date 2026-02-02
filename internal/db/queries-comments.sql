@@ -42,6 +42,7 @@ WHERE c.idcomments = sqlc.arg(comment_id)
       SELECT 1 FROM grants g
       WHERE (g.section='forum' OR g.section='privateforum')
         AND (
+            g.item IS NULL OR
             (g.item='thread' AND (g.item_id = c.forumthread_id OR g.item_id IS NULL)) OR
             (g.item='comment' AND (g.item_id = c.idcomments OR g.item_id IS NULL))
         )

@@ -36,6 +36,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
 	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())
 
+	pr.HandleFunc("/topic/{topic}/labels", forumhandlers.ManageTopicLabelsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	addTopicPublicLabelTask := &forumhandlers.AddTopicPublicLabelTask{TaskString: forumhandlers.TaskAddTopicPublicLabel}
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(addTopicPublicLabelTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addTopicPublicLabelTask.Matcher())
+	removeTopicPublicLabelTask := &forumhandlers.RemoveTopicPublicLabelTask{TaskString: forumhandlers.TaskRemoveTopicPublicLabel}
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(removeTopicPublicLabelTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(removeTopicPublicLabelTask.Matcher())
+
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.SetLabelsTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SetLabelsTaskHandler.Matcher())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.AddPublicLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.AddPublicLabelTaskHandler.Matcher())

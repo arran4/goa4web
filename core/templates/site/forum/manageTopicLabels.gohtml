@@ -1,0 +1,47 @@
+{{ template "head" $ }}
+<div class="container mt-4">
+    <h1>Manage Labels for Topic: {{ .DisplayTitle }}</h1>
+
+    <div class="mb-4">
+        <h3>Current Labels</h3>
+        {{ if .Labels }}
+        <ul class="list-group">
+            {{ range .Labels }}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ .Name }}
+                {{ if eq .Type "public" }}
+                <form method="post" action="{{ $.BasePath }}/topic/{{ $.Topic.Idforumtopic }}/labels" style="display:inline;">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Remove Topic Public Label">
+                    <input type="hidden" name="label" value="{{ .Name }}">
+                    <input type="hidden" name="back" value="{{ $.BasePath }}/topic/{{ $.Topic.Idforumtopic }}/labels">
+                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                </form>
+                {{ else }}
+                <span class="badge badge-secondary">{{ .Type }}</span>
+                {{ end }}
+            </li>
+            {{ end }}
+        </ul>
+        {{ else }}
+        <p>No labels.</p>
+        {{ end }}
+    </div>
+
+    <div class="mb-4">
+        <h3>Add New Label</h3>
+        <form method="post" action="{{ $.BasePath }}/topic/{{ .Topic.Idforumtopic }}/labels">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Add Topic Public Label">
+            <input type="hidden" name="back" value="{{ $.BasePath }}/topic/{{ $.Topic.Idforumtopic }}/labels">
+            <div class="form-group">
+                <label for="new-label">Label Name</label>
+                <input type="text" class="form-control" id="new-label" name="label" placeholder="Enter label name" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Label</button>
+        </form>
+    </div>
+
+    <a href="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}" class="btn btn-secondary">Back to Topic</a>
+</div>
+{{ template "tail" $ }}

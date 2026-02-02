@@ -21,80 +21,13 @@ const (
 
 const SchedulerTaskName = "digest_scheduler"
 
-// NotificationScheduler runs periodically to schedule digest runs.
-func (n *Notifier) NotificationScheduler(ctx context.Context, interval time.Duration) {
-	if n.Queries == nil || n.Bus == nil {
-		return
+// ScheduleDigest publishes a digest run event for the given time.
+func (n *Notifier) ScheduleDigest(ctx context.Context, t time.Time) error {
+	if n.Bus == nil {
+		return nil
 	}
-
-	// Ticker for the worker loop
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			n.processScheduler(ctx)
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (n *Notifier) processScheduler(ctx context.Context) {
-	// 1. Get Scheduler State
-	state, err := n.Queries.GetSchedulerState(ctx, SchedulerTaskName)
-	var lastRun time.Time
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// Initialize if not exists
-			lastRun = time.Now().UTC().Add(-1 * time.Hour) // Default to 1 hour ago if fresh
-		} else {
-			log.Printf("GetSchedulerState error: %v", err)
-			return
-		}
-	} else {
-		if state.LastRunAt.Valid {
-			lastRun = state.LastRunAt.Time
-		} else {
-			lastRun = time.Now().UTC().Add(-1 * time.Hour)
-		}
-	}
-
-	now := time.Now().UTC()
-	// Truncate to hour to ensure clean buckets
-	currentHour := now.Truncate(time.Hour)
-	lastRunTrunc := lastRun.Truncate(time.Hour)
-
-	// Avoid re-running for the same hour if called frequently
-	if !currentHour.After(lastRunTrunc) {
-		return
-	}
-
-	// Loop from lastRun + 1 hour to currentHour
-	// e.g. lastRun=10:00, now=13:30. currentHour=13:00.
-	// Loop: 11:00, 12:00, 13:00.
-	for t := lastRunTrunc.Add(time.Hour); !t.After(currentHour); t = t.Add(time.Hour) {
-		// Publish event to bus instead of processing directly
-		evt := eventbus.DigestRunEvent{Time: t}
-		if err := n.Bus.Publish(evt); err != nil {
-			log.Printf("Failed to publish DigestRunEvent for %v: %v", t, err)
-			// Decide whether to continue or abort.
-			// If we abort, we retry next tick. If we continue, we skip this hour.
-			// Ideally we abort to retry.
-			return
-		}
-	}
-
-	// Update Scheduler State
-	err = n.Queries.UpsertSchedulerState(ctx, db.UpsertSchedulerStateParams{
-		TaskName:  SchedulerTaskName,
-		LastRunAt: sql.NullTime{Time: currentHour, Valid: true},
-		Metadata:  sql.NullString{}, // Can store extra info if needed
-	})
-	if err != nil {
-		log.Printf("UpsertSchedulerState error: %v", err)
-	}
+	evt := eventbus.DigestRunEvent{Time: t}
+	return n.Bus.Publish(evt)
 }
 
 // ProcessDigestForTime is called by the consumer to process digests for a specific time.

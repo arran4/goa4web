@@ -12,56 +12,33 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-func TestNotificationDigestWorker_Scheduler(t *testing.T) {
-	conn, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer conn.Close()
-	q := db.New(conn)
-
+func TestNotificationDigestWorker_ScheduleDigest(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	bus := eventbus.NewBus()
-	n := New(WithQueries(q), WithConfig(cfg), WithBus(bus))
+	// No queries needed for this test
+	n := New(WithConfig(cfg), WithBus(bus))
 
-	// Test case: Last run was 2 hours ago. Should run for T-1 and T-0.
-	now := time.Now().UTC().Truncate(time.Hour)
-	lastRun := now.Add(-2 * time.Hour)
-
-	// Expect GetSchedulerState
-	rows := sqlmock.NewRows([]string{"task_name", "last_run_at", "metadata"}).
-		AddRow(SchedulerTaskName, lastRun, nil)
-	mock.ExpectQuery("SELECT task_name, last_run_at, metadata FROM scheduler_state").
-		WithArgs(SchedulerTaskName).
-		WillReturnRows(rows)
-
-	// Capture events using SyncPublish hook to avoid channel buffer issues
+	// Capture events using SyncPublish hook
 	var capturedEvents []eventbus.Message
 	bus.SyncPublish = func(msg eventbus.Message) {
 		capturedEvents = append(capturedEvents, msg)
 	}
 
-	// Expect UpsertSchedulerState
-	mock.ExpectExec("INSERT INTO scheduler_state").
-		WithArgs(SchedulerTaskName, sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// Execute
-	n.processScheduler(context.Background())
-
-	// Verify events
-	count := 0
-	for _, msg := range capturedEvents {
-		if _, ok := msg.(eventbus.DigestRunEvent); ok {
-			count++
-		}
-	}
-	if count != 2 {
-		t.Fatalf("expected 2 digest run events, got %d", count)
+	targetTime := time.Now().UTC()
+	err := n.ScheduleDigest(context.Background(), targetTime)
+	if err != nil {
+		t.Fatalf("ScheduleDigest error: %v", err)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("there were unfulfilled expectations: %s", err)
+	if len(capturedEvents) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(capturedEvents))
+	}
+	evt, ok := capturedEvents[0].(eventbus.DigestRunEvent)
+	if !ok {
+		t.Fatalf("expected DigestRunEvent")
+	}
+	if !evt.Time.Equal(targetTime) {
+		t.Fatalf("expected time %v, got %v", targetTime, evt.Time)
 	}
 }
 

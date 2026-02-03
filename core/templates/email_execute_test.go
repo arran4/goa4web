@@ -60,6 +60,15 @@ func sampleEmailData() emailData {
 		"UserPermissionsURL": "https://example.com/perm",
 		"UserURL":            "https://example.com/user",
 		"Username":           "username",
+		"Notifications": []interface{}{
+			map[string]interface{}{
+				"Link":      map[string]interface{}{"Valid": true, "String": "/link"},
+				"Message":   map[string]interface{}{"String": "message"},
+				"CreatedAt": time.Now(),
+			},
+		},
+		"BaseURL":     "https://example.com",
+		"DigestTitle": "Daily Digest",
 	}
 	return emailData{
 		URL:            "https://example.com",

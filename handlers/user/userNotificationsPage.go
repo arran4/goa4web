@@ -89,6 +89,8 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 
 	pref, _ := cd.UserSettings(cd.UserID)
 	var digestHour *int32
+	var weeklyDay, weeklyHour *int32
+	var monthlyDay, monthlyHour *int32
 	var digestMarkRead bool
 	var timezone string
 	var currentTime string
@@ -96,6 +98,18 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	if pref != nil {
 		if pref.DailyDigestHour.Valid {
 			digestHour = &pref.DailyDigestHour.Int32
+		}
+		if pref.WeeklyDigestDay.Valid {
+			weeklyDay = &pref.WeeklyDigestDay.Int32
+		}
+		if pref.WeeklyDigestHour.Valid {
+			weeklyHour = &pref.WeeklyDigestHour.Int32
+		}
+		if pref.MonthlyDigestDay.Valid {
+			monthlyDay = &pref.MonthlyDigestDay.Int32
+		}
+		if pref.MonthlyDigestHour.Valid {
+			monthlyHour = &pref.MonthlyDigestHour.Int32
 		}
 		digestMarkRead = pref.DailyDigestMarkRead
 		if pref.Timezone.Valid {
@@ -108,6 +122,28 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	if digestHour != nil {
 		dHour = int(*digestHour)
 		dEnabled = true
+	}
+
+	wDay := -1
+	wHour := 0
+	wEnabled := false
+	if weeklyDay != nil {
+		wDay = int(*weeklyDay)
+		wEnabled = true
+	}
+	if weeklyHour != nil {
+		wHour = int(*weeklyHour)
+	}
+
+	mDay := -1
+	mHour := 0
+	mEnabled := false
+	if monthlyDay != nil {
+		mDay = int(*monthlyDay)
+		mEnabled = true
+	}
+	if monthlyHour != nil {
+		mHour = int(*monthlyHour)
 	}
 
 	now := time.Now().UTC()
@@ -126,6 +162,12 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Request        *http.Request
 		DigestHour     int
 		DigestEnabled  bool
+		WeeklyDay      int
+		WeeklyHour     int
+		WeeklyEnabled  bool
+		MonthlyDay     int
+		MonthlyHour    int
+		MonthlyEnabled bool
 		DigestMarkRead bool
 		Timezone       string
 		CurrentTime    string
@@ -133,6 +175,12 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Request:        r,
 		DigestHour:     dHour,
 		DigestEnabled:  dEnabled,
+		WeeklyDay:      wDay,
+		WeeklyHour:     wHour,
+		WeeklyEnabled:  wEnabled,
+		MonthlyDay:     mDay,
+		MonthlyHour:    mHour,
+		MonthlyEnabled: mEnabled,
 		DigestMarkRead: digestMarkRead,
 		Timezone:       timezone,
 		CurrentTime:    currentTime,

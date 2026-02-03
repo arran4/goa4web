@@ -19,6 +19,8 @@ const (
 	TaskMessageType MessageType = iota
 	// EmailQueueMessageType identifies email queue events on the bus.
 	EmailQueueMessageType
+	// DigestRunMessageType identifies a scheduled digest run.
+	DigestRunMessageType
 )
 
 // Message represents an item sent over the event bus.
@@ -52,6 +54,14 @@ type EmailQueueEvent struct {
 
 // Type implements the Message interface.
 func (EmailQueueEvent) Type() MessageType { return EmailQueueMessageType }
+
+// DigestRunEvent notifies that a digest run is scheduled for a specific time.
+type DigestRunEvent struct {
+	Time time.Time
+}
+
+// Type implements the Message interface.
+func (DigestRunEvent) Type() MessageType { return DigestRunMessageType }
 
 // Bus provides a simple publish/subscribe mechanism for events.
 type subscriber struct {

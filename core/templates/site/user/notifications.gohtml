@@ -26,19 +26,69 @@
     </div>
 </form>
 <fieldset>
-    <legend>Daily Notification Digest</legend>
+    <legend>Notification Digests</legend>
     <form method="post" action="/usr/notifications">
         {{ csrfField }}
         <input type="hidden" name="task" value="SaveDigest">
-        <label>
-            Hour of day:
-            <select name="daily_digest_hour">
-                <option value="-1" {{ if not .DigestEnabled }}selected{{ end }}>Disabled</option>
-                {{ range $i := seq 0 23 }}
-                <option value="{{ $i }}" {{ if and $.DigestEnabled (eq $.DigestHour $i) }}selected{{ end }}>{{ printf "%02d:00" $i }}</option>
-                {{ end }}
-            </select>
-        </label>
+        <fieldset>
+            <legend>Daily Notification Digest</legend>
+            <label>
+                Hour of day:
+                <select name="daily_digest_hour">
+                    <option value="-1" {{ if not .DigestEnabled }}selected{{ end }}>Disabled</option>
+                    {{ range $i := seq 0 23 }}
+                    <option value="{{ $i }}" {{ if and $.DigestEnabled (eq $.DigestHour $i) }}selected{{ end }}>{{ printf "%02d:00" $i }}</option>
+                    {{ end }}
+                </select>
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Weekly Notification Digest</legend>
+            <label>
+                Day of week:
+                <select name="weekly_digest_day">
+                    <option value="-1" {{ if not .WeeklyEnabled }}selected{{ end }}>Disabled</option>
+                    <option value="0" {{ if and .WeeklyEnabled (eq .WeeklyDay 0) }}selected{{ end }}>Sunday</option>
+                    <option value="1" {{ if and .WeeklyEnabled (eq .WeeklyDay 1) }}selected{{ end }}>Monday</option>
+                    <option value="2" {{ if and .WeeklyEnabled (eq .WeeklyDay 2) }}selected{{ end }}>Tuesday</option>
+                    <option value="3" {{ if and .WeeklyEnabled (eq .WeeklyDay 3) }}selected{{ end }}>Wednesday</option>
+                    <option value="4" {{ if and .WeeklyEnabled (eq .WeeklyDay 4) }}selected{{ end }}>Thursday</option>
+                    <option value="5" {{ if and .WeeklyEnabled (eq .WeeklyDay 5) }}selected{{ end }}>Friday</option>
+                    <option value="6" {{ if and .WeeklyEnabled (eq .WeeklyDay 6) }}selected{{ end }}>Saturday</option>
+                </select>
+            </label>
+            <label>
+                Hour:
+                <select name="weekly_digest_hour">
+                    {{ range $i := seq 0 23 }}
+                    <option value="{{ $i }}" {{ if eq $.WeeklyHour $i }}selected{{ end }}>{{ printf "%02d:00" $i }}</option>
+                    {{ end }}
+                </select>
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Monthly Notification Digest</legend>
+            <label>
+                Day of month:
+                <select name="monthly_digest_day">
+                    <option value="-1" {{ if not .MonthlyEnabled }}selected{{ end }}>Disabled</option>
+                    {{ range $i := seq 1 31 }}
+                    <option value="{{ $i }}" {{ if and $.MonthlyEnabled (eq $.MonthlyDay $i) }}selected{{ end }}>{{ $i }}</option>
+                    {{ end }}
+                </select>
+            </label>
+            <label>
+                Hour:
+                <select name="monthly_digest_hour">
+                    {{ range $i := seq 0 23 }}
+                    <option value="{{ $i }}" {{ if eq $.MonthlyHour $i }}selected{{ end }}>{{ printf "%02d:00" $i }}</option>
+                    {{ end }}
+                </select>
+            </label>
+        </fieldset>
+
         <p class="help-text">
             {{ if .Timezone }}
                 Based on your timezone: {{ .Timezone }} (Current time: {{ .CurrentTime }}).

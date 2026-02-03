@@ -410,6 +410,7 @@ type Querier interface {
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetRoleByName(ctx context.Context, name string) (*Role, error)
+	GetSchedulerState(ctx context.Context, taskName string) (*SchedulerState, error)
 	GetSubscriptionArchetypesByRole(ctx context.Context, roleID int32) ([]*RoleSubscriptionArchetype, error)
 	GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
 	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
@@ -434,6 +435,10 @@ type Querier interface {
 	GetUsersForDailyDigest(ctx context.Context, arg GetUsersForDailyDigestParams) ([]*GetUsersForDailyDigestRow, error)
 	GetUsersForDailyDigestByTimezone(ctx context.Context, arg GetUsersForDailyDigestByTimezoneParams) ([]*GetUsersForDailyDigestByTimezoneRow, error)
 	GetUsersForDailyDigestNoTimezone(ctx context.Context, arg GetUsersForDailyDigestNoTimezoneParams) ([]*GetUsersForDailyDigestNoTimezoneRow, error)
+	GetUsersForMonthlyDigestByTimezone(ctx context.Context, arg GetUsersForMonthlyDigestByTimezoneParams) ([]*GetUsersForMonthlyDigestByTimezoneRow, error)
+	GetUsersForMonthlyDigestNoTimezone(ctx context.Context, arg GetUsersForMonthlyDigestNoTimezoneParams) ([]*GetUsersForMonthlyDigestNoTimezoneRow, error)
+	GetUsersForWeeklyDigestByTimezone(ctx context.Context, arg GetUsersForWeeklyDigestByTimezoneParams) ([]*GetUsersForWeeklyDigestByTimezoneRow, error)
+	GetUsersForWeeklyDigestNoTimezone(ctx context.Context, arg GetUsersForWeeklyDigestNoTimezoneParams) ([]*GetUsersForWeeklyDigestNoTimezoneRow, error)
 	// Fetch verified (active) email addresses ordered by notification priority.
 	GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int32) (*WritingCategory, error)
@@ -633,6 +638,8 @@ type Querier interface {
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
 	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
+	UpdateLastMonthlyDigestSentAt(ctx context.Context, arg UpdateLastMonthlyDigestSentAtParams) error
+	UpdateLastWeeklyDigestSentAt(ctx context.Context, arg UpdateLastWeeklyDigestSentAtParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
@@ -642,6 +649,7 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
 	UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error
+	UpsertSchedulerState(ctx context.Context, arg UpsertSchedulerStateParams) error
 }
 
 var _ Querier = (*Queries)(nil)

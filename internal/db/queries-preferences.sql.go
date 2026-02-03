@@ -13,7 +13,7 @@ import (
 const getDigestTimezones = `-- name: GetDigestTimezones :many
 SELECT DISTINCT timezone
 FROM preferences
-WHERE daily_digest_hour IS NOT NULL
+WHERE (daily_digest_hour IS NOT NULL OR weekly_digest_day IS NOT NULL OR monthly_digest_day IS NOT NULL)
   AND timezone IS NOT NULL
   AND timezone != ''
 `
@@ -42,7 +42,10 @@ func (q *Queries) GetDigestTimezones(ctx context.Context) ([]sql.NullString, err
 }
 
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
-SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css, daily_digest_hour, daily_digest_mark_read, last_digest_sent_at
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css,
+       daily_digest_hour, daily_digest_mark_read, last_digest_sent_at,
+       weekly_digest_day, weekly_digest_hour, last_weekly_digest_sent_at,
+       monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at
 FROM preferences
 WHERE users_idusers = ?
 `
@@ -62,6 +65,12 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*
 		&i.DailyDigestHour,
 		&i.DailyDigestMarkRead,
 		&i.LastDigestSentAt,
+		&i.WeeklyDigestDay,
+		&i.WeeklyDigestHour,
+		&i.LastWeeklyDigestSentAt,
+		&i.MonthlyDigestDay,
+		&i.MonthlyDigestHour,
+		&i.LastMonthlyDigestSentAt,
 	)
 	return &i, err
 }
@@ -207,6 +216,214 @@ func (q *Queries) GetUsersForDailyDigestNoTimezone(ctx context.Context, arg GetU
 	return items, nil
 }
 
+const getUsersForMonthlyDigestByTimezone = `-- name: GetUsersForMonthlyDigestByTimezone :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.monthly_digest_day = ?
+  AND p.monthly_digest_hour = ?
+  AND p.timezone = ?
+  AND (p.last_monthly_digest_sent_at IS NULL OR p.last_monthly_digest_sent_at < ?)
+`
+
+type GetUsersForMonthlyDigestByTimezoneParams struct {
+	Day      sql.NullInt32
+	Hour     sql.NullInt32
+	Timezone sql.NullString
+	Cutoff   sql.NullTime
+}
+
+type GetUsersForMonthlyDigestByTimezoneRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForMonthlyDigestByTimezone(ctx context.Context, arg GetUsersForMonthlyDigestByTimezoneParams) ([]*GetUsersForMonthlyDigestByTimezoneRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForMonthlyDigestByTimezone,
+		arg.Day,
+		arg.Hour,
+		arg.Timezone,
+		arg.Cutoff,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForMonthlyDigestByTimezoneRow
+	for rows.Next() {
+		var i GetUsersForMonthlyDigestByTimezoneRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersForMonthlyDigestNoTimezone = `-- name: GetUsersForMonthlyDigestNoTimezone :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.monthly_digest_day = ?
+  AND p.monthly_digest_hour = ?
+  AND (p.timezone IS NULL OR p.timezone = '')
+  AND (p.last_monthly_digest_sent_at IS NULL OR p.last_monthly_digest_sent_at < ?)
+`
+
+type GetUsersForMonthlyDigestNoTimezoneParams struct {
+	Day    sql.NullInt32
+	Hour   sql.NullInt32
+	Cutoff sql.NullTime
+}
+
+type GetUsersForMonthlyDigestNoTimezoneRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForMonthlyDigestNoTimezone(ctx context.Context, arg GetUsersForMonthlyDigestNoTimezoneParams) ([]*GetUsersForMonthlyDigestNoTimezoneRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForMonthlyDigestNoTimezone, arg.Day, arg.Hour, arg.Cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForMonthlyDigestNoTimezoneRow
+	for rows.Next() {
+		var i GetUsersForMonthlyDigestNoTimezoneRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersForWeeklyDigestByTimezone = `-- name: GetUsersForWeeklyDigestByTimezone :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.weekly_digest_day = ?
+  AND p.weekly_digest_hour = ?
+  AND p.timezone = ?
+  AND (p.last_weekly_digest_sent_at IS NULL OR p.last_weekly_digest_sent_at < ?)
+`
+
+type GetUsersForWeeklyDigestByTimezoneParams struct {
+	Day      sql.NullInt32
+	Hour     sql.NullInt32
+	Timezone sql.NullString
+	Cutoff   sql.NullTime
+}
+
+type GetUsersForWeeklyDigestByTimezoneRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForWeeklyDigestByTimezone(ctx context.Context, arg GetUsersForWeeklyDigestByTimezoneParams) ([]*GetUsersForWeeklyDigestByTimezoneRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForWeeklyDigestByTimezone,
+		arg.Day,
+		arg.Hour,
+		arg.Timezone,
+		arg.Cutoff,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForWeeklyDigestByTimezoneRow
+	for rows.Next() {
+		var i GetUsersForWeeklyDigestByTimezoneRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersForWeeklyDigestNoTimezone = `-- name: GetUsersForWeeklyDigestNoTimezone :many
+SELECT p.users_idusers, ue.email, p.daily_digest_mark_read
+FROM preferences p
+JOIN user_emails ue ON ue.id = (
+    SELECT id FROM user_emails ue2
+    WHERE ue2.user_id = p.users_idusers AND ue2.verified_at IS NOT NULL
+    ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE p.weekly_digest_day = ?
+  AND p.weekly_digest_hour = ?
+  AND (p.timezone IS NULL OR p.timezone = '')
+  AND (p.last_weekly_digest_sent_at IS NULL OR p.last_weekly_digest_sent_at < ?)
+`
+
+type GetUsersForWeeklyDigestNoTimezoneParams struct {
+	Day    sql.NullInt32
+	Hour   sql.NullInt32
+	Cutoff sql.NullTime
+}
+
+type GetUsersForWeeklyDigestNoTimezoneRow struct {
+	UsersIdusers        int32
+	Email               string
+	DailyDigestMarkRead bool
+}
+
+func (q *Queries) GetUsersForWeeklyDigestNoTimezone(ctx context.Context, arg GetUsersForWeeklyDigestNoTimezoneParams) ([]*GetUsersForWeeklyDigestNoTimezoneRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersForWeeklyDigestNoTimezone, arg.Day, arg.Hour, arg.Cutoff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUsersForWeeklyDigestNoTimezoneRow
+	for rows.Next() {
+		var i GetUsersForWeeklyDigestNoTimezoneRow
+		if err := rows.Scan(&i.UsersIdusers, &i.Email, &i.DailyDigestMarkRead); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertEmailPreferenceForLister = `-- name: InsertEmailPreferenceForLister :exec
 INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
 VALUES (?, ?, ?)
@@ -309,21 +526,69 @@ func (q *Queries) UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDige
 	return err
 }
 
+const updateLastMonthlyDigestSentAt = `-- name: UpdateLastMonthlyDigestSentAt :exec
+UPDATE preferences
+SET last_monthly_digest_sent_at = ?
+WHERE users_idusers = ?
+`
+
+type UpdateLastMonthlyDigestSentAtParams struct {
+	SentAt   sql.NullTime
+	ListerID int32
+}
+
+func (q *Queries) UpdateLastMonthlyDigestSentAt(ctx context.Context, arg UpdateLastMonthlyDigestSentAtParams) error {
+	_, err := q.db.ExecContext(ctx, updateLastMonthlyDigestSentAt, arg.SentAt, arg.ListerID)
+	return err
+}
+
+const updateLastWeeklyDigestSentAt = `-- name: UpdateLastWeeklyDigestSentAt :exec
+UPDATE preferences
+SET last_weekly_digest_sent_at = ?
+WHERE users_idusers = ?
+`
+
+type UpdateLastWeeklyDigestSentAtParams struct {
+	SentAt   sql.NullTime
+	ListerID int32
+}
+
+func (q *Queries) UpdateLastWeeklyDigestSentAt(ctx context.Context, arg UpdateLastWeeklyDigestSentAtParams) error {
+	_, err := q.db.ExecContext(ctx, updateLastWeeklyDigestSentAt, arg.SentAt, arg.ListerID)
+	return err
+}
+
 const updateNotificationDigestPreferences = `-- name: UpdateNotificationDigestPreferences :exec
 UPDATE preferences
 SET daily_digest_hour = ?,
-    daily_digest_mark_read = ?
+    daily_digest_mark_read = ?,
+    weekly_digest_day = ?,
+    weekly_digest_hour = ?,
+    monthly_digest_day = ?,
+    monthly_digest_hour = ?
 WHERE users_idusers = ?
 `
 
 type UpdateNotificationDigestPreferencesParams struct {
 	DailyDigestHour     sql.NullInt32
 	DailyDigestMarkRead bool
+	WeeklyDigestDay     sql.NullInt32
+	WeeklyDigestHour    sql.NullInt32
+	MonthlyDigestDay    sql.NullInt32
+	MonthlyDigestHour   sql.NullInt32
 	ListerID            int32
 }
 
 func (q *Queries) UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error {
-	_, err := q.db.ExecContext(ctx, updateNotificationDigestPreferences, arg.DailyDigestHour, arg.DailyDigestMarkRead, arg.ListerID)
+	_, err := q.db.ExecContext(ctx, updateNotificationDigestPreferences,
+		arg.DailyDigestHour,
+		arg.DailyDigestMarkRead,
+		arg.WeeklyDigestDay,
+		arg.WeeklyDigestHour,
+		arg.MonthlyDigestDay,
+		arg.MonthlyDigestHour,
+		arg.ListerID,
+	)
 	return err
 }
 

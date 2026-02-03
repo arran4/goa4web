@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/scheduler"
 
 	"github.com/arran4/goa4web/workers/auditworker"
 	"github.com/arran4/goa4web/workers/backgroundtaskworker"
@@ -53,16 +54,24 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 		)
 		n.NotificationPurgeWorker(ctx, time.Hour)
 	})
-	log.Printf("Starting notification digest worker")
+	log.Printf("Starting generic scheduler and digest consumer")
 	safeGo(func() {
+		q := db.New(sdb)
 		n := notifications.New(
-			notifications.WithQueries(db.New(sdb)),
-			notifications.WithCustomQueries(db.New(sdb)),
+			notifications.WithQueries(q),
+			notifications.WithCustomQueries(q),
 			notifications.WithEmailProvider(provider),
 			notifications.WithBus(bus),
 			notifications.WithConfig(cfg),
 		)
-		n.NotificationDigestWorker(ctx, 30*time.Minute)
+		// Start consumer
+		consumer := notifications.NewDigestConsumer(n)
+		go consumer.Run(ctx)
+
+		// Start generic scheduler
+		s := scheduler.New(q)
+		s.Register(notifications.SchedulerTaskName, n.ScheduleDigest)
+		s.Run(ctx, 30*time.Minute)
 	})
 	log.Printf("Starting event bus logger worker")
 	safeGo(func() { logworker.Worker(ctx, bus) })

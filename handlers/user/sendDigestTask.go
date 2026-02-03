@@ -64,7 +64,7 @@ func (t *SendDigestTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	preview := t.TaskString == TaskSendDigestPreview
 
-	if err := n.SendDigestToUser(r.Context(), uid, user.Email.String, markRead, preview); err != nil {
+	if err := n.SendDigestToUser(r.Context(), uid, user.Email.String, markRead, preview, notifications.DigestDaily); err != nil {
 		return fmt.Errorf("send digest: %w", err)
 	}
 

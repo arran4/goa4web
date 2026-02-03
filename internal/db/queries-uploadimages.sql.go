@@ -11,6 +11,38 @@ import (
 	"strings"
 )
 
+const adminListAllUploadedImages = `-- name: AdminListAllUploadedImages :many
+SELECT iduploadedimage, path FROM uploaded_images
+`
+
+type AdminListAllUploadedImagesRow struct {
+	Iduploadedimage int32
+	Path            sql.NullString
+}
+
+func (q *Queries) AdminListAllUploadedImages(ctx context.Context) ([]*AdminListAllUploadedImagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllUploadedImages)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAllUploadedImagesRow
+	for rows.Next() {
+		var i AdminListAllUploadedImagesRow
+		if err := rows.Scan(&i.Iduploadedimage, &i.Path); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListUploadedImages = `-- name: AdminListUploadedImages :many
 SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
 FROM uploaded_images
@@ -53,6 +85,22 @@ func (q *Queries) AdminListUploadedImages(ctx context.Context, arg AdminListUplo
 		return nil, err
 	}
 	return items, nil
+}
+
+const adminUpdateUploadedImagePath = `-- name: AdminUpdateUploadedImagePath :exec
+UPDATE uploaded_images
+SET path = ?
+WHERE iduploadedimage = ?
+`
+
+type AdminUpdateUploadedImagePathParams struct {
+	Path            sql.NullString
+	Iduploadedimage int32
+}
+
+func (q *Queries) AdminUpdateUploadedImagePath(ctx context.Context, arg AdminUpdateUploadedImagePathParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateUploadedImagePath, arg.Path, arg.Iduploadedimage)
+	return err
 }
 
 const createUploadedImageForUploader = `-- name: CreateUploadedImageForUploader :execlastid

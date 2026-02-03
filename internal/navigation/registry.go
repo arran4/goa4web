@@ -6,6 +6,34 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
+// Section defines a type that can return a formatted section path string.
+type Section interface {
+	String() string
+}
+
+type sectionString []string
+
+func (s sectionString) String() string {
+	var str string
+	for i, p := range s {
+		if i > 0 {
+			str += " > "
+		}
+		str += p
+	}
+	return str
+}
+
+// AdminCCCategory creates a section from one or more categories.
+func AdminCCCategory(categories ...string) Section {
+	return sectionString(categories)
+}
+
+// AdminCCCategories creates a section from one or more categories.
+func AdminCCCategories(categories ...string) Section {
+	return sectionString(categories)
+}
+
 // link represents a navigation item for either index or admin control center.
 type link struct {
 	section     string
@@ -37,8 +65,17 @@ func (r *Registry) RegisterIndexLinkWithViewPermission(name, url string, weight 
 }
 
 // RegisterAdminControlCenter registers a link for the admin control center menu in the given section.
-func (r *Registry) RegisterAdminControlCenter(section, name, url string, weight int) {
-	r.admin = append(r.admin, link{section: section, name: name, link: url, weight: weight})
+func (r *Registry) RegisterAdminControlCenter(section any, name, url string, weight int) {
+	var s string
+	switch v := section.(type) {
+	case string:
+		s = v
+	case Section:
+		s = v.String()
+	case []string:
+		s = sectionString(v).String()
+	}
+	r.admin = append(r.admin, link{section: s, name: name, link: url, weight: weight})
 }
 
 // IndexItems returns navigation items sorted by weight.
@@ -120,7 +157,7 @@ func RegisterIndexLinkWithViewPermission(name, url string, weight int, section, 
 }
 
 // RegisterAdminControlCenter registers a link for the admin control center menu using the default registry.
-func RegisterAdminControlCenter(section, name, url string, weight int) {
+func RegisterAdminControlCenter(section any, name, url string, weight int) {
 	defaultRegistry.RegisterAdminControlCenter(section, name, url, weight)
 }
 

@@ -46,6 +46,7 @@ sql:
         - "internal/db/queries-private_forum.sql"
         - "internal/db/queries-forum-cleanup.sql"
         - "internal/db/queries-subscription-archetypes.sql"
+        - "internal/db/queries-scheduler.sql"
       gen:
           go:
               package: "db"

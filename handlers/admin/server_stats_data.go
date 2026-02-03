@@ -13,23 +13,25 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
 // ServerStatsMetrics holds runtime and system usage metrics.
 type ServerStatsMetrics struct {
-	Goroutines int
-	Alloc      uint64
-	TotalAlloc uint64
-	Sys        uint64
-	HeapAlloc  uint64
-	HeapSys    uint64
-	NumGC      uint32
-	NumCPU     int
-	Arch       string
-	DiskFree   uint64
-	RAMFree    uint64
+	Goroutines                      int
+	Alloc                           uint64
+	TotalAlloc                      uint64
+	Sys                             uint64
+	HeapAlloc                       uint64
+	HeapSys                         uint64
+	NumGC                           uint32
+	NumCPU                          int
+	Arch                            string
+	DiskFree                        uint64
+	RAMFree                         uint64
+	AutoSubscribePreferenceFailures int64
 }
 
 // ServerStatsRegistries describes the registered component providers.
@@ -61,17 +63,18 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 
 	data := ServerStatsData{
 		Stats: ServerStatsMetrics{
-			Goroutines: runtime.NumGoroutine(),
-			Alloc:      mem.Alloc,
-			TotalAlloc: mem.TotalAlloc,
-			Sys:        mem.Sys,
-			HeapAlloc:  mem.HeapAlloc,
-			HeapSys:    mem.HeapSys,
-			NumGC:      mem.NumGC,
-			NumCPU:     runtime.NumCPU(),
-			Arch:       runtime.GOARCH,
-			DiskFree:   diskFree,
-			RAMFree:    ramFree,
+			Goroutines:                      runtime.NumGoroutine(),
+			Alloc:                           mem.Alloc,
+			TotalAlloc:                      mem.TotalAlloc,
+			Sys:                             mem.Sys,
+			HeapAlloc:                       mem.HeapAlloc,
+			HeapSys:                         mem.HeapSys,
+			NumGC:                           mem.NumGC,
+			NumCPU:                          runtime.NumCPU(),
+			Arch:                            runtime.GOARCH,
+			DiskFree:                        diskFree,
+			RAMFree:                         ramFree,
+			AutoSubscribePreferenceFailures: stats.AutoSubscribePreferenceFailures.Load(),
 		},
 	}
 

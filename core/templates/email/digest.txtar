@@ -1,5 +1,5 @@
 -- body.gohtml --
-<p>Here is your daily digest of unread notifications:</p>
+<p>Here is your {{ .Item.DigestTitle }} of unread notifications:</p>
 <ul>
 {{ range .Item.Notifications }}
     <li>
@@ -16,7 +16,7 @@
 <p style="color: #888; font-size: small;">Last digest sent at: {{ .Item.LastSentAt.Time.Format "2006-01-02 15:04" }}</p>
 {{ end }}
 -- body.gotxt --
-Here is your daily digest of unread notifications:
+Here is your {{ .Item.DigestTitle }} of unread notifications:
 
 {{ range .Item.Notifications }}
 * {{ .Message.String }} ({{ .CreatedAt.Format "2006-01-02 15:04" }})
@@ -30,4 +30,4 @@ Visit {{ .Item.BaseURL }}/usr/notifications to view them all.
 Last digest sent at: {{ .Item.LastSentAt.Time.Format "2006-01-02 15:04" }}
 {{ end }}
 -- subject.gotxt --
-Your Daily Notification Digest
+Your {{ .Item.DigestTitle }}

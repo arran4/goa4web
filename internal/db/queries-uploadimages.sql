@@ -35,3 +35,11 @@ SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
 FROM uploaded_images
 ORDER BY uploaded DESC
 LIMIT ? OFFSET ?;
+
+-- name: AdminUpdateUploadedImagePath :exec
+UPDATE uploaded_images
+SET path = ?
+WHERE iduploadedimage = ?;
+
+-- name: AdminListAllUploadedImages :many
+SELECT iduploadedimage, path FROM uploaded_images;

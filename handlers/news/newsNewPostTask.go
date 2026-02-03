@@ -62,6 +62,13 @@ func (NewPostTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, er
 	return string(TaskNewPost), evt.Path, nil
 }
 
+func (NewPostTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return []notif.GrantRequirement{{Section: "forum", Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+	}
+	return nil, nil
+}
+
 func (NewPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
 		return fmt.Errorf("validation fail %w", err)

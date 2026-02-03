@@ -51,5 +51,6 @@ func (h *Handlers) RegisterTasks() []tasks.NamedTask {
 		dbBackupTask,
 		dbRestoreTask,
 		h.NewServerShutdownTask(),
+		migrateImagePathsTask,
 	}
 }

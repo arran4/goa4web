@@ -285,6 +285,12 @@ CREATE TABLE `preferences` (
   `daily_digest_hour` int DEFAULT NULL,
   `daily_digest_mark_read` tinyint(1) NOT NULL DEFAULT 0,
   `last_digest_sent_at` datetime DEFAULT NULL,
+  `weekly_digest_day` INT DEFAULT NULL,
+  `weekly_digest_hour` INT DEFAULT NULL,
+  `last_weekly_digest_sent_at` DATETIME DEFAULT NULL,
+  `monthly_digest_day` INT DEFAULT NULL,
+  `monthly_digest_hour` INT DEFAULT NULL,
+  `last_monthly_digest_sent_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
@@ -750,6 +756,12 @@ CREATE TABLE `role_subscription_archetypes` (
   KEY `role_subscription_archetypes_role_idx` (`role_id`)
 );
 
+CREATE TABLE scheduler_state (
+    task_name VARCHAR(64) NOT NULL PRIMARY KEY,
+    last_run_at DATETIME DEFAULT NULL,
+    metadata TEXT DEFAULT NULL
+);
+
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (81)
+INSERT INTO `schema_version` (`version`) VALUES (82)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

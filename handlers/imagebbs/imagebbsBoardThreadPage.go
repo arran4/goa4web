@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -65,6 +66,16 @@ func (ReplyTask) RequiredTemplates() []tasks.Template {
 
 func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
 	return string(TaskReply), evt.Path, nil
+}
+
+func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	parts := strings.Split(evt.Path, "/")
+	if len(parts) >= 4 && parts[1] == "imagebbss" && parts[2] == "imagebbs" {
+		if bid, err := strconv.Atoi(parts[3]); err == nil {
+			return []notif.GrantRequirement{{Section: "imagebbs", Item: "board", ItemID: int32(bid), Action: "view"}}, nil
+		}
+	}
+	return nil, nil
 }
 
 func BoardThreadPage(w http.ResponseWriter, r *http.Request) {

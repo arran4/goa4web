@@ -69,6 +69,8 @@ func sampleEmailData() emailData {
 			},
 		},
 		"LastSentAt": map[string]interface{}{"Valid": true, "Time": time.Now()},
+		"BaseURL":     "https://example.com",
+		"DigestTitle": "Daily Digest",
 	}
 	return emailData{
 		URL:            "https://example.com",

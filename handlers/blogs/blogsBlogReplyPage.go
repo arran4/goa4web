@@ -77,6 +77,13 @@ func (ReplyBlogTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, 
 	//return TaskReply, evt.Path
 }
 
+func (ReplyBlogTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return []notif.GrantRequirement{{Section: "forum", Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+	}
+	return nil, nil
+}
+
 func (ReplyBlogTask) IndexType() string { return searchworker.TypeComment }
 
 func (ReplyBlogTask) IndexData(data map[string]any) []searchworker.IndexEventData {

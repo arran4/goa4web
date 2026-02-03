@@ -400,6 +400,10 @@ func (autoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, er
 	return "AutoSub", evt.Path, nil
 }
 
+func (autoSubTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]GrantRequirement, error) {
+	return nil, nil
+}
+
 func TestProcessEventAutoSubscribe(t *testing.T) {
 	ctx := context.Background()
 	cfg := config.NewRuntimeConfig()

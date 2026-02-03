@@ -373,17 +373,48 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 			if len(newPatterns) > 0 {
 				newPattern := newPatterns[0]
 
+				reqs, err := asp.AutoSubscribeGrants(evt)
+				if err != nil {
+					log.Printf("auto subscribe grants: %v", err)
+				}
+
+				checkGrants := func(userID int32) bool {
+					if err != nil {
+						return false
+					}
+					if len(reqs) == 0 {
+						return true
+					}
+					for _, g := range reqs {
+						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
+							ViewerID: userID,
+							Section:  g.Section,
+							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
+							Action:   g.Action,
+							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
+							UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
+						}); err != nil {
+							return false
+						}
+					}
+					return true
+				}
+
 				for id := range autoInternalSubs {
 					if id == evt.UserID {
 						continue
 					}
-					ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
+					if checkGrants(id) {
+						ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
+					}
 				}
 				for id := range autoEmailSubs {
 					if id == evt.UserID {
 						continue
 					}
-					ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+					if checkGrants(id) {
+						ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+					}
 				}
 			}
 		}

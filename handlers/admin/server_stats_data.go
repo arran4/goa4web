@@ -63,13 +63,13 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 
 	data := ServerStatsData{
 		Stats: ServerStatsMetrics{
-			Goroutines: runtime.NumGoroutine(),
-			Alloc:      mem.Alloc,
-			TotalAlloc: mem.TotalAlloc,
-			Sys:        mem.Sys,
-			HeapAlloc:  mem.HeapAlloc,
-			HeapSys:    mem.HeapSys,
-			NumGC:      mem.NumGC,
+			Goroutines:                      runtime.NumGoroutine(),
+			Alloc:                           mem.Alloc,
+			TotalAlloc:                      mem.TotalAlloc,
+			Sys:                             mem.Sys,
+			HeapAlloc:                       mem.HeapAlloc,
+			HeapSys:                         mem.HeapSys,
+			NumGC:                           mem.NumGC,
 			NumCPU:                          runtime.NumCPU(),
 			Arch:                            runtime.GOARCH,
 			DiskFree:                        diskFree,

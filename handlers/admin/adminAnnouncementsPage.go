@@ -14,10 +14,6 @@ import (
 
 type AdminAnnouncementsPage struct{}
 
-func (p *AdminAnnouncementsPage) Action(w http.ResponseWriter, r *http.Request) any {
-	return p
-}
-
 func (p *AdminAnnouncementsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Announcements []*db.AdminListAnnouncementsWithNewsRow
@@ -46,7 +42,6 @@ func (p *AdminAnnouncementsPage) PageTitle() string {
 }
 
 var _ tasks.Page = (*AdminAnnouncementsPage)(nil)
-var _ tasks.Task = (*AdminAnnouncementsPage)(nil)
 var _ http.Handler = (*AdminAnnouncementsPage)(nil)
 
 const AdminAnnouncementsPageTmpl tasks.Template = "admin/announcementsPage.gohtml"

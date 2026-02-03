@@ -79,6 +79,17 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// PageHandler wraps a Page to handle the request, setting the page title and current page
+func PageHandler(p tasks.Page) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if v := r.Context().Value(consts.KeyCoreData).(*common.CoreData); v != nil {
+			v.PageTitle = p.PageTitle()
+			v.SetCurrentPage(p)
+		}
+		p.ServeHTTP(w, r)
+	}
+}
+
 func loginRedirect(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vals := url.Values{}

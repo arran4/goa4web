@@ -2,6 +2,7 @@ package navigation
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 )
@@ -119,21 +120,81 @@ func (r *Registry) AdminSections() []common.AdminSection {
 	copy(entries, r.admin)
 	sort.Slice(entries, func(i, j int) bool { return entries[i].weight < entries[j].weight })
 
-	secMap := map[string][]common.IndexItem{}
-	order := []string{}
-	for _, e := range entries {
-		if _, ok := secMap[e.section]; !ok {
-			secMap[e.section] = []common.IndexItem{}
-			order = append(order, e.section)
-		}
-		secMap[e.section] = append(secMap[e.section], common.IndexItem{Name: e.name, Link: e.link})
+	type node struct {
+		Name        string
+		Link        string
+		Links       []common.IndexItem
+		SubSections []*node
 	}
 
-	sections := make([]common.AdminSection, 0, len(secMap))
-	for _, sec := range order {
-		sections = append(sections, common.AdminSection{Name: sec, Links: secMap[sec]})
+	var roots []*node
+
+	for _, e := range entries {
+		parts := strings.Split(e.section, " > ")
+
+		var current *node
+		// Root level
+		name := parts[0]
+		for _, n := range roots {
+			if n.Name == name {
+				current = n
+				break
+			}
+		}
+		if current == nil {
+			current = &node{Name: name}
+			roots = append(roots, current)
+		}
+
+		// Sub levels
+		for i := 1; i < len(parts); i++ {
+			name := parts[i]
+			var found *node
+			for _, n := range current.SubSections {
+				if n.Name == name {
+					found = n
+					break
+				}
+			}
+			if found == nil {
+				found = &node{Name: name}
+				current.SubSections = append(current.SubSections, found)
+			}
+			current = found
+		}
+
+		// Add item to leaf
+		current.Links = append(current.Links, common.IndexItem{Name: e.name, Link: e.link})
 	}
-	return sections
+
+	// Optimization/Merge pass + Conversion
+	var convert func([]*node) []common.AdminSection
+	convert = func(nodes []*node) []common.AdminSection {
+		var res []common.AdminSection
+		for _, n := range nodes {
+			// Merge logic
+			// Check if any link matches section name
+			finalLinks := []common.IndexItem{}
+			linkURL := n.Link
+			for _, l := range n.Links {
+				if l.Name == n.Name {
+					linkURL = l.Link
+				} else {
+					finalLinks = append(finalLinks, l)
+				}
+			}
+
+			res = append(res, common.AdminSection{
+				Name:        n.Name,
+				Link:        linkURL,
+				Links:       finalLinks,
+				SubSections: convert(n.SubSections),
+			})
+		}
+		return res
+	}
+
+	return convert(roots)
 }
 
 var defaultRegistry = NewRegistry()

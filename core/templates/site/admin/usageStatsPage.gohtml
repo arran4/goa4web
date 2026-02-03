@@ -105,8 +105,10 @@
     <tr><th>ID</th><th>User</th><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
     {{- range .UserMonthly }}
     <tr>
-        <td><a href="/admin/user/{{ .Idusers }}">{{ .Idusers }}</a></td>
-        <td>{{ if .Username.Valid }}<a href="/user/profile/{{ .Username.String }}">{{ .Username.String }}</a>{{ end }}</td>
+        {{- if .RowSpan }}
+        <td rowspan="{{ .RowSpan }}"><a href="/admin/user/{{ .Idusers }}">{{ .Idusers }}</a></td>
+        <td rowspan="{{ .RowSpan }}">{{ if .Username.Valid }}<a href="/user/profile/{{ .Username.String }}">{{ .Username.String }}</a>{{ end }}</td>
+        {{- end }}
         <td>{{ .Year }}</td><td>{{ .Month }}</td><td>{{ .Blogs }}</td><td>{{ .News }}</td><td>{{ .Comments }}</td><td>{{ .Images }}</td><td>{{ .Links }}</td><td>{{ .Writings }}</td>
     </tr>
     {{- end }}

@@ -341,6 +341,7 @@ func fixNotificationLinkAndGetData(cd *common.CoreData, link string) (string, st
 
 func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.PageTitle = "Notification"
 	if !cd.Config.NotificationsEnabled {
 		http.NotFound(w, r)
 		return
@@ -387,6 +388,12 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
+	}
+
+	if threadTitle != "" {
+		cd.PageTitle = fmt.Sprintf("Notification: %s", threadTitle)
+	} else if sectionTitle != "" {
+		cd.PageTitle = fmt.Sprintf("Notification: %s", sectionTitle)
 	}
 
 	data := struct {

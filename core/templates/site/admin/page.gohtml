@@ -8,16 +8,24 @@
     <ul>
         {{- if cd.Nav }}
             {{- range $s := cd.Nav.AdminSections }}
-            <li>{{ $s.Name }}
-                <ul>
-                    {{- range $l := $s.Links }}
-                    <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
-                    {{- end }}
-                </ul>
-            </li>
+            {{- template "adminSection" $s }}
             {{- end }}
         {{- end }}
     </ul>
+
+{{- define "adminSection" }}
+<li>
+    {{- if .Link }}<a href="{{ .Link }}">{{ .Name }}</a>{{ else }}{{ .Name }}{{ end }}
+    <ul>
+        {{- range $l := .Links }}
+        <li><a href="{{ $l.Link }}">{{ $l.Name }}</a></li>
+        {{- end }}
+        {{- range $s := .SubSections }}
+        {{- template "adminSection" $s }}
+        {{- end }}
+    </ul>
+</li>
+{{- end }}
 
     <h3>Site statistics</h3>
     {{ $stats := cd.AdminDashboardStats }}

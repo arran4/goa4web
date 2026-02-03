@@ -41,14 +41,14 @@ func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
 		}
 		var (
 			result  []*CategoryFAQs
-			current CategoryFAQs
+			current *CategoryFAQs
 		)
 		for _, row := range faqRows {
-			if current.Category == nil || current.Category.CategoryID.Int32 != row.CategoryID.Int32 {
-				if current.Category != nil && current.Category.CategoryID.Int32 != 0 {
-					result = append(result, &current)
+			if current == nil || current.Category.CategoryID.Int32 != row.CategoryID.Int32 {
+				if current != nil && current.Category.CategoryID.Int32 != 0 {
+					result = append(result, current)
 				}
-				current = CategoryFAQs{Category: row}
+				current = &CategoryFAQs{Category: row}
 			}
 			current.FAQs = append(current.FAQs, &FAQ{
 				CategoryID: int(row.CategoryID.Int32),
@@ -56,8 +56,8 @@ func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
 				Answer:     row.Answer.String,
 			})
 		}
-		if current.Category != nil && current.Category.CategoryID.Int32 != 0 {
-			result = append(result, &current)
+		if current != nil && current.Category.CategoryID.Int32 != 0 {
+			result = append(result, current)
 		}
 		return result, nil
 	})

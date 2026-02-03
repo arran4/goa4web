@@ -18,6 +18,11 @@ const (
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
+	type UserMonthlyUsageDisplay struct {
+		*db.UserMonthlyUsageRow
+		RowSpan int
+	}
+
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Usage Stats"
 	queries := cd.Queries()

@@ -58,6 +58,11 @@ type QuerierStub struct {
 	AdminListFailedEmailIDsErr     error
 	AdminListFailedEmailIDsFn      func(context.Context, AdminListFailedEmailIDsParams) ([]int32, error)
 
+	GetAllAnsweredFAQWithFAQCategoriesForUserCalls   []GetAllAnsweredFAQWithFAQCategoriesForUserParams
+	GetAllAnsweredFAQWithFAQCategoriesForUserReturns []*GetAllAnsweredFAQWithFAQCategoriesForUserRow
+	GetAllAnsweredFAQWithFAQCategoriesForUserErr     error
+	GetAllAnsweredFAQWithFAQCategoriesForUserFn      func(context.Context, GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
+
 	ListActiveBansReturns               []*BannedIp
 	ListActiveBansErr                   error
 	ListActiveBansCalls                 int

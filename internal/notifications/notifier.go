@@ -201,23 +201,12 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 	return nil
 }
 
-// NotificationPurgeWorker periodically removes old read notifications.
-func (n *Notifier) NotificationPurgeWorker(ctx context.Context, interval time.Duration) {
+// PurgeReadNotifications removes old read notifications.
+func (n *Notifier) PurgeReadNotifications(ctx context.Context, t time.Time) error {
 	if n.Queries == nil {
-		return
+		return nil
 	}
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			if err := n.Queries.AdminPurgeReadNotifications(ctx); err != nil {
-				log.Printf("purge notifications: %v", err)
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
+	return n.Queries.AdminPurgeReadNotifications(ctx)
 }
 
 // sendInternalNotification stores an internal notification for the user.

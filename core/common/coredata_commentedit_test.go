@@ -25,11 +25,36 @@ func TestCommentEditURLsPrivateForum(t *testing.T) {
 	cd.ForumBasePath = "/private"
 	cmt := &db.GetCommentsByThreadIdForUserRow{Idcomments: 42, IsOwner: true}
 
-	if got, want := cd.CommentEditURL(cmt), "?comment=42#edit"; got != want {
+	if got, want := cd.CommentEditURL(cmt), "?editComment=42#edit"; got != want {
 		t.Fatalf("CommentEditURL got %q, want %q", got, want)
 	}
 	if got, want := cd.CommentEditSaveURL(cmt), "/private/topic/30/thread/106/comment/42"; got != want {
 		t.Fatalf("CommentEditSaveURL got %q, want %q", got, want)
+	}
+}
+
+func TestCommentEditURLsAdminMode(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	cd := common.NewTestCoreData(t, queries)
+	common.WithUserRoles([]string{"administrator"})(cd)
+	cd.AdminMode = true
+	cd.SetCurrentSection("forum")
+	cd.SetCurrentThreadAndTopic(106, 30)
+	mock.ExpectQuery("SELECT 1 FROM grants").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	cmt := &db.GetCommentsByThreadIdForUserRow{Idcomments: 42, IsOwner: true}
+
+	got := cd.CommentEditURL(cmt)
+	// url.Values.Encode sorts by key: editComment comes before mode
+	want := "?editComment=42&mode=admin#edit"
+	if got != want {
+		t.Fatalf("CommentEditURL got %q, want %q", got, want)
 	}
 }
 

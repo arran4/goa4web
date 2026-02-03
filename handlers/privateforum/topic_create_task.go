@@ -153,3 +153,10 @@ func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string,
 	}
 	return string(TaskPrivateTopicCreate), evt.Path, nil
 }
+
+func (PrivateTopicCreateTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return []notif.GrantRequirement{{Section: "privateforum", Item: "topic", ItemID: data.TopicID, Action: "view"}}, nil
+	}
+	return nil, nil
+}

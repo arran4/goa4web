@@ -97,6 +97,23 @@ func (CreateThreadTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, strin
 	return string(TaskCreateThread), evt.Path, nil
 }
 
+func (CreateThreadTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		base := "/forum"
+		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
+			base = evt.Path[:idx]
+		}
+		section := strings.TrimPrefix(base, "/")
+		if section == "private" {
+			section = "privateforum"
+		} else if section == "" {
+			section = "forum"
+		}
+		return []notif.GrantRequirement{{Section: section, Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+	}
+	return nil, nil
+}
+
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Languages          []*db.Language

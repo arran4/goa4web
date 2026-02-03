@@ -70,6 +70,13 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 	return string(TaskReply), evt.Path, nil
 }
 
+func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+		return []notif.GrantRequirement{{Section: "forum", Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+	}
+	return nil, nil
+}
+
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, ok := core.GetSessionOrFail(w, r); !ok {
 		return handlers.SessionFetchFail{}

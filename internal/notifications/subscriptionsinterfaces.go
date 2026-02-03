@@ -106,6 +106,9 @@ type AutoSubscribeProvider interface {
 	// subscription. The event may provide additional context required to build
 	// the path.
 	AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error)
+	// AutoSubscribeGrants returns the permissions required to subscribe to the
+	// path.
+	AutoSubscribeGrants(evt eventbus.TaskEvent) ([]GrantRequirement, error)
 }
 
 // TargetUsersNotificationProvider indicates the notification should be delivered

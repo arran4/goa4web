@@ -54,9 +54,10 @@ type SubscriptionGroup struct {
 var Definitions = []Definition{
 	// Forum
 	{
-		Name:        "New Threads (Specific Topic)",
-		Description: "Notify when a new thread is created in this topic",
-		Pattern:     "create thread:/forum/topic/{topicid}*",
+		Name:                  "New Threads (Specific Topic)",
+		Description:           "Notify when a new thread is created in this topic",
+		Pattern:               "create thread:/forum/topic/{topicid}*",
+		SupportsAutoSubscribe: true,
 	},
 	{
 		Name:        "New Threads (All)",

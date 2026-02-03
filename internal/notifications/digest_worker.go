@@ -245,11 +245,11 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 	data := struct {
 		Notifications []*db.Notification
 		BaseURL       string
-		Title         string
+		DigestTitle   string
 	}{
 		Notifications: notifs,
 		BaseURL:       baseURL,
-		Title:         digestTitle,
+		DigestTitle:   digestTitle,
 	}
 
 	if err := n.renderAndQueueEmailFromTemplates(ctx, &userID, email, et, data); err != nil {

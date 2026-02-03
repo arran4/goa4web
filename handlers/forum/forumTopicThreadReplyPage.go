@@ -184,6 +184,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("thread reply side effects: %v", err)
 	}
 
+	if evt := cd.Event(); evt != nil {
+		evt.Data["URL"] = cd.AbsoluteURL(endUrl)
+	}
+
 	return handlers.RedirectHandler(endUrl)
 }
 

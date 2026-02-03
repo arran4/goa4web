@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/core/consts"
@@ -27,7 +28,10 @@ type DismissTask struct{ tasks.TaskString }
 var dismissTask = &DismissTask{TaskString: tasks.TaskString(TaskDismiss)}
 var _ tasks.Task = (*DismissTask)(nil)
 
-var commentAnchorRegexp = regexp.MustCompile(`#c(\d+)$`)
+var (
+	commentAnchorRegexp = regexp.MustCompile(`#c(\d+)$`)
+	threadPathRegexp    = regexp.MustCompile(`(?:/private)?/topic/(\d+)/thread/(\d+)`)
+)
 
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -245,6 +249,48 @@ func notificationsAtomPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func fixNotificationLinkAndGetData(cd *common.CoreData, link string) (string, string, string, error) {
+	if link == "" {
+		return "", "", "", nil
+	}
+
+	isBroken := strings.HasSuffix(link, "/reply")
+	matches := threadPathRegexp.FindStringSubmatch(link)
+
+	fixedLink := link
+	if isBroken {
+		fixedLink = strings.TrimSuffix(link, "/reply") + "#bottom"
+	}
+
+	if len(matches) < 3 {
+		return fixedLink, "", "", nil
+	}
+
+	topicID, _ := strconv.Atoi(matches[1])
+	threadID, _ := strconv.Atoi(matches[2])
+
+	threadTitle := ""
+	sectionTitle := "Forum"
+
+	topic, err := cd.ForumTopicByID(int32(topicID))
+	if err == nil && topic != nil {
+		if topic.Handler == "private" {
+			sectionTitle = "Private Forum"
+		}
+	}
+
+	thread, err := cd.ForumThreadByID(int32(threadID))
+	if err == nil && thread != nil {
+		if cmt, err := cd.CommentByID(thread.Firstpost); err == nil && cmt != nil {
+			if cmt.Text.Valid {
+				threadTitle = a4code.SnipTextWords(cmt.Text.String, 10)
+			}
+		}
+	}
+
+	return fixedLink, threadTitle, sectionTitle, nil
+}
+
 func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.Config.NotificationsEnabled {
@@ -276,6 +322,11 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		redirectURL = n.Link.String
 	}
 
+	fixedLink, threadTitle, sectionTitle, _ := fixNotificationLinkAndGetData(cd, redirectURL)
+	if fixedLink != "" {
+		redirectURL = fixedLink
+	}
+
 	replyPreview := ""
 	if redirectURL != "" {
 		if commentAnchorRegexp.MatchString(redirectURL) {
@@ -296,12 +347,16 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		RedirectURL  string
 		TaskName     string
 		ReplyPreview string
+		ThreadTitle  string
+		SectionTitle string
 	}{
 		Request:      r,
 		Notification: n,
 		RedirectURL:  redirectURL,
 		TaskName:     string(TaskDismiss),
 		ReplyPreview: replyPreview,
+		ThreadTitle:  threadTitle,
+		SectionTitle: sectionTitle,
 	}
 	UserNotificationOpenPage.Handle(w, r, data)
 }
@@ -363,8 +418,15 @@ func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
 			log.Printf("mark notification read: %v", err)
 		}
 	}
+	link := ""
 	if n.Link.Valid && n.Link.String != "" {
-		http.Redirect(w, r, n.Link.String, http.StatusSeeOther)
+		link = n.Link.String
+	}
+	if link != "" {
+		if strings.HasSuffix(link, "/reply") {
+			link = strings.TrimSuffix(link, "/reply") + "#bottom"
+		}
+		http.Redirect(w, r, link, http.StatusSeeOther)
 		return
 	}
 	http.Redirect(w, r, fmt.Sprintf("/usr/notifications/open/%d", n.ID), http.StatusSeeOther)

@@ -22,7 +22,9 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(req))
 
 	data := struct {
-		Groups []*subscriptions.SubscriptionGroup
+		Groups      []*subscriptions.SubscriptionGroup
+		AdminGroups []*subscriptions.SubscriptionGroup
+		IsAdminMode bool
 	}{
 		Groups: []*subscriptions.SubscriptionGroup{
 			{
@@ -42,6 +44,8 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 				},
 			},
 		},
+		AdminGroups: []*subscriptions.SubscriptionGroup{},
+		IsAdminMode: false,
 	}
 
 	var buf bytes.Buffer

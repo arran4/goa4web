@@ -21,6 +21,85 @@
     </div>
 
     {{ range .Groups }}
+        {{ template "subscriptionGroup" . }}
+    {{ end }}
+
+    {{ if .IsAdminMode }}
+        {{ if .AdminGroups }}
+            <hr>
+            <h2>Admin Subscriptions</h2>
+            {{ range .AdminGroups }}
+                {{ template "subscriptionGroup" . }}
+            {{ end }}
+        {{ end }}
+    {{ end }}
+
+    <p>
+        <input type="submit" value="Update Subscriptions" class="button">
+    </p>
+</form>
+
+<p>
+    <a href="/usr/subscriptions/add" class="button">Add Subscription</a>
+    <a href="/usr/subscriptions/threads" class="button">Manage Thread Subscriptions</a>
+</p>
+
+<script>
+    let lastChecked = null;
+
+    function selectSubs(btn, type, action) {
+        // Find the closest table
+        const table = btn.closest('table');
+        let inputs;
+        if (table) {
+            inputs = table.querySelectorAll('input[type="checkbox"]');
+        } else {
+            inputs = document.querySelectorAll('input[name="subs"]');
+        }
+
+        inputs.forEach(input => {
+            if (input.disabled) return;
+            // value is "pattern|type"
+            if (input.value.endsWith('|' + type)) {
+                if (action === 'all') input.checked = true;
+                else if (action === 'none') input.checked = false;
+                else if (action === 'invert') input.checked = !input.checked;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name="subs"]');
+        checkboxes.forEach(chk => {
+            chk.addEventListener('click', function(e) {
+                if (lastChecked && lastChecked !== this && e.shiftKey) {
+                    // Check if they are in the same table and same column (type)
+                    const thisType = this.value.split('|').pop();
+                    const lastType = lastChecked.value.split('|').pop();
+                    const thisTable = this.closest('table');
+                    const lastTable = lastChecked.closest('table');
+
+                    if (thisType === lastType && thisTable === lastTable) {
+                        const groupCheckboxes = Array.from(thisTable.querySelectorAll(`input[value$="|${thisType}"]`));
+                        const start = groupCheckboxes.indexOf(this);
+                        const end = groupCheckboxes.indexOf(lastChecked);
+
+                        if (start !== -1 && end !== -1) {
+                            const range = groupCheckboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+                            range.forEach(c => {
+                                if (!c.disabled) c.checked = this.checked;
+                            });
+                        }
+                    }
+                }
+                lastChecked = this;
+            });
+        });
+    });
+</script>
+{{ template "tail" $ }}
+
+{{ define "subscriptionGroup" }}
     {{ $group := . }}
     <div class="subscription-group">
         <h3>{{ .Name }}</h3>
@@ -81,12 +160,24 @@
                         {{ end }}
                     </td>
                     <td>
-                        <input type="checkbox" name="subs" value="{{ $pattern }}|internal" {{ if .HasMethod "internal" }}checked{{ end }}>
-                        <input type="hidden" name="presented_subs" value="{{ $pattern }}|internal">
+                        {{ if $group.Mandatory }}
+                            <input type="checkbox" checked disabled>
+                            <span style="font-size: 0.8em; color: gray;">(Mandatory)</span>
+                            <input type="hidden" name="presented_subs" value="{{ $pattern }}|internal">
+                        {{ else }}
+                            <input type="checkbox" name="subs" value="{{ $pattern }}|internal" {{ if .HasMethod "internal" }}checked{{ end }}>
+                            <input type="hidden" name="presented_subs" value="{{ $pattern }}|internal">
+                        {{ end }}
                     </td>
                     <td>
-                        <input type="checkbox" name="subs" value="{{ $pattern }}|email" {{ if .HasMethod "email" }}checked{{ end }}>
-                        <input type="hidden" name="presented_subs" value="{{ $pattern }}|email">
+                        {{ if $group.Mandatory }}
+                            <input type="checkbox" checked disabled>
+                            <span style="font-size: 0.8em; color: gray;">(Mandatory)</span>
+                            <input type="hidden" name="presented_subs" value="{{ $pattern }}|email">
+                        {{ else }}
+                            <input type="checkbox" name="subs" value="{{ $pattern }}|email" {{ if .HasMethod "email" }}checked{{ end }}>
+                            <input type="hidden" name="presented_subs" value="{{ $pattern }}|email">
+                        {{ end }}
                     </td>
                     {{ if $group.SupportsAutoSubscribe }}
                     <td>
@@ -106,66 +197,4 @@
         <p>No subscriptions.</p>
         {{ end }}
     </div>
-    {{ end }}
-
-    <p>
-        <input type="submit" value="Update Subscriptions" class="button">
-    </p>
-</form>
-
-<p>
-    <a href="/usr/subscriptions/add" class="button">Add Subscription</a>
-    <a href="/usr/subscriptions/threads" class="button">Manage Thread Subscriptions</a>
-</p>
-
-<script>
-    let lastChecked = null;
-
-    function selectSubs(btn, type, action) {
-        // Find the closest table
-        const table = btn.closest('table');
-        let inputs;
-        if (table) {
-            inputs = table.querySelectorAll('input[type="checkbox"]');
-        } else {
-            inputs = document.querySelectorAll('input[name="subs"]');
-        }
-
-        inputs.forEach(input => {
-            // value is "pattern|type"
-            if (input.value.endsWith('|' + type)) {
-                if (action === 'all') input.checked = true;
-                else if (action === 'none') input.checked = false;
-                else if (action === 'invert') input.checked = !input.checked;
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('input[name="subs"]');
-        checkboxes.forEach(chk => {
-            chk.addEventListener('click', function(e) {
-                if (lastChecked && lastChecked !== this && e.shiftKey) {
-                    // Check if they are in the same table and same column (type)
-                    const thisType = this.value.split('|').pop();
-                    const lastType = lastChecked.value.split('|').pop();
-                    const thisTable = this.closest('table');
-                    const lastTable = lastChecked.closest('table');
-
-                    if (thisType === lastType && thisTable === lastTable) {
-                        const groupCheckboxes = Array.from(thisTable.querySelectorAll(`input[value$="|${thisType}"]`));
-                        const start = groupCheckboxes.indexOf(this);
-                        const end = groupCheckboxes.indexOf(lastChecked);
-
-                        if (start !== -1 && end !== -1) {
-                            const range = groupCheckboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
-                            range.forEach(c => c.checked = this.checked);
-                        }
-                    }
-                }
-                lastChecked = this;
-            });
-        });
-    });
-</script>
-{{ template "tail" $ }}
+{{ end }}

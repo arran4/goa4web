@@ -12,6 +12,7 @@ type Definition struct {
 	Description           string
 	Pattern               string
 	IsAdminOnly           bool
+	Mandatory             bool
 	HideIfNone            bool
 	Upgrade               func(params map[string]string) string
 	Legacy                bool
@@ -218,12 +219,14 @@ var Definitions = []Definition{
 		Description: "Notify when a user requests a password reset",
 		Pattern:     "password reset:/auth/reset",
 		IsAdminOnly: true,
+		Mandatory:   true,
 	},
 	{
 		Name:        "Email Verification",
 		Description: "Notify when an email verification is requested",
 		Pattern:     "email verification:/auth/verify_email",
 		IsAdminOnly: true,
+		Mandatory:   true,
 	},
 	{
 		Name:        "User Approval",

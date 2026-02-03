@@ -119,7 +119,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	// threadRow and topicRow are provided by the RequireThreadAndTopic
 	// middleware.
 
-	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))
+	commentId := cd.SelectedCommentID()
 	data.Comments = commentRows
 
 	if r.Method == http.MethodPost {
@@ -129,7 +129,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 			}
 			if val := r.PostFormValue("text"); val != "" && commentId != 0 {
 				for _, c := range data.Comments {
-					if c.Idcomments == int32(commentId) {
+					if c.Idcomments == commentId {
 						c.Text.String = val
 						c.Text.Valid = true
 					}
@@ -154,7 +154,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
 	}
 	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CanEditComment(cmt) && commentId != 0 && int32(commentId) == cmt.Idcomments
+		return data.CanEditComment(cmt) && commentId != 0 && commentId == cmt.Idcomments
 	}
 	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
 		if cd.IsAdmin() && cd.IsAdminMode() {

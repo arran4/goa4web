@@ -41,18 +41,7 @@ func safeGo(fn func()) {
 func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus) {
 	log.Printf("Starting email worker")
 	safeGo(func() {
-		emailqueue.EmailQueueWorker(ctx, db.New(sdb), provider, dlqProvider, bus, time.Duration(cfg.EmailWorkerInterval)*time.Second, cfg)
-	})
-	log.Printf("Starting notification purger worker")
-	safeGo(func() {
-		n := notifications.New(
-			notifications.WithQueries(db.New(sdb)),
-			notifications.WithCustomQueries(db.New(sdb)),
-			notifications.WithEmailProvider(provider),
-			notifications.WithBus(bus),
-			notifications.WithConfig(cfg),
-		)
-		n.NotificationPurgeWorker(ctx, time.Hour)
+		emailqueue.StartEventListener(ctx, db.New(sdb), provider, dlqProvider, bus, cfg)
 	})
 	log.Printf("Starting generic scheduler and digest consumer")
 	safeGo(func() {
@@ -70,8 +59,28 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 
 		// Start generic scheduler
 		s := scheduler.New(q)
-		s.Register(notifications.SchedulerTaskName, n.ScheduleDigest)
-		s.Run(ctx, 30*time.Minute)
+		s.Register(scheduler.Task{
+			Name:    notifications.SchedulerTaskName,
+			Handler: n.ScheduleDigest,
+			Type:    scheduler.TaskTypeBackfill,
+		})
+		s.Register(scheduler.Task{
+			Name:     "notification_purge",
+			Handler:  n.PurgeReadNotifications,
+			Type:     scheduler.TaskTypePeriodic,
+			Interval: time.Hour,
+		})
+		s.Register(scheduler.Task{
+			Name: "email_queue_poll",
+			Handler: func(ctx context.Context, t time.Time) error {
+				emailqueue.ProcessPendingEmail(ctx, q, provider, dlqProvider, cfg)
+				return nil
+			},
+			Type:      scheduler.TaskTypePeriodic,
+			Interval:  time.Duration(cfg.EmailWorkerInterval) * time.Second,
+			Ephemeral: true,
+		})
+		s.Run(ctx, 1*time.Second)
 	})
 	log.Printf("Starting event bus logger worker")
 	safeGo(func() { logworker.Worker(ctx, bus) })

@@ -3,47 +3,35 @@ package emailqueue
 import (
 	"context"
 	"fmt"
-	"github.com/arran4/goa4web/config"
 	"log"
 	"net/mail"
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-// EmailQueueWorker sends pending emails ensuring a minimum delay between sends.
-// When a bus is provided the worker wakes up immediately when a new message is
-// queued by listening for EmailQueueEvent messages.
-func EmailQueueWorker(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, bus *eventbus.Bus, delay time.Duration, cfg *config.RuntimeConfig) {
+// StartEventListener listens for new messages queued by listening for EmailQueueEvent messages.
+// It processes them immediately.
+func StartEventListener(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, bus *eventbus.Bus, cfg *config.RuntimeConfig) {
 	if q == nil {
 		log.Printf("email queue worker disabled: queue configured=%v", q != nil)
 		return
 	}
-	var ch <-chan eventbus.Message
-	if bus != nil {
-		ch = bus.Subscribe(eventbus.EmailQueueMessageType)
+	if bus == nil {
+		return
 	}
+	ch := bus.Subscribe(eventbus.EmailQueueMessageType)
 	for {
-		if ProcessPendingEmail(ctx, q, provider, dlqProvider, cfg) {
-			log.Printf("email queue worker: waiting %s", delay)
-		}
-		if ch == nil {
-			select {
-			case <-time.After(delay):
-			case <-ctx.Done():
-				return
-			}
-		} else {
-			select {
-			case <-ch:
-			case <-time.After(delay):
-			case <-ctx.Done():
-				return
-			}
+		select {
+		case <-ch:
+			ProcessPendingEmail(ctx, q, provider, dlqProvider, cfg)
+		case <-ctx.Done():
+			return
 		}
 	}
 }

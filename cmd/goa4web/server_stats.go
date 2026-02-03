@@ -9,7 +9,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	adminhandlers "github.com/arran4/goa4web/handlers/admin"
+	"github.com/arran4/goa4web/internal/stats"
 )
 
 const (
@@ -61,9 +61,9 @@ func (c *serverStatsCmd) Run() error {
 		return fmt.Errorf("start time is after end time")
 	}
 
-	data := adminhandlers.BuildServerStatsData(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.tasksReg, c.rootCmd.dbReg, c.rootCmd.dlqReg, c.rootCmd.emailReg, c.rootCmd.routerReg)
+	data := stats.BuildServerStatsData(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.tasksReg, c.rootCmd.dbReg, c.rootCmd.dlqReg, c.rootCmd.emailReg, c.rootCmd.routerReg.Names())
 	uptime := data.Uptime.String()
-	if adminhandlers.StartTime.IsZero() {
+	if stats.StartTime.IsZero() {
 		uptime = "unknown"
 	}
 
@@ -96,16 +96,16 @@ func (c *serverStatsCmd) Run() error {
 }
 
 type serverStatsOutput struct {
-	Stats        adminhandlers.ServerStatsMetrics    `json:"stats"`
-	Uptime       string                              `json:"uptime"`
-	Registries   adminhandlers.ServerStatsRegistries `json:"registries"`
-	ConfigEnv    string                              `json:"config_env,omitempty"`
-	ConfigValues map[string]string                   `json:"config_values,omitempty"`
-	RangeStart   string                              `json:"range_start,omitempty"`
-	RangeEnd     string                              `json:"range_end,omitempty"`
+	Stats        stats.ServerStatsMetrics    `json:"stats"`
+	Uptime       string                      `json:"uptime"`
+	Registries   stats.ServerStatsRegistries `json:"registries"`
+	ConfigEnv    string                      `json:"config_env,omitempty"`
+	ConfigValues map[string]string           `json:"config_values,omitempty"`
+	RangeStart   string                      `json:"range_start,omitempty"`
+	RangeEnd     string                      `json:"range_end,omitempty"`
 }
 
-func renderServerStatsTable(data adminhandlers.ServerStatsData, uptime string, startAt *time.Time, endAt *time.Time) error {
+func renderServerStatsTable(data stats.ServerStatsData, uptime string, startAt *time.Time, endAt *time.Time) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "Metric\tValue")
 	fmt.Fprintf(w, "Uptime\t%s\n", uptime)

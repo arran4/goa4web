@@ -1,4 +1,4 @@
-package admin
+package stats
 
 import (
 	"encoding/json"
@@ -12,50 +12,12 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
 )
 
-// ServerStatsMetrics holds runtime and system usage metrics.
-type ServerStatsMetrics struct {
-	Goroutines                      int
-	Alloc                           uint64
-	TotalAlloc                      uint64
-	Sys                             uint64
-	HeapAlloc                       uint64
-	HeapSys                         uint64
-	NumGC                           uint32
-	NumCPU                          int
-	Arch                            string
-	DiskFree                        uint64
-	RAMFree                         uint64
-	AutoSubscribePreferenceFailures int64
-}
-
-// ServerStatsRegistries describes the registered component providers.
-type ServerStatsRegistries struct {
-	Tasks           []string
-	DBDrivers       []string
-	DLQProviders    []string
-	EmailProviders  []string
-	UploadProviders []string
-	RouterModules   []string
-}
-
-// ServerStatsData bundles stats and registry information for reporting.
-type ServerStatsData struct {
-	Stats        ServerStatsMetrics
-	Uptime       time.Duration
-	ConfigEnv    string
-	ConfigJSON   string
-	ConfigValues map[string]string
-	Registries   ServerStatsRegistries
-}
-
 // BuildServerStatsData assembles server metrics and configuration details.
-func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg *tasks.Registry, dbReg *dbdrivers.Registry, dlqReg *dlq.Registry, emailReg *email.Registry, routerReg *router.Registry) ServerStatsData {
+func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg *tasks.Registry, dbReg *dbdrivers.Registry, dlqReg *dlq.Registry, emailReg *email.Registry, routerModules []string) ServerStatsData {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -74,7 +36,7 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 			Arch:                            runtime.GOARCH,
 			DiskFree:                        diskFree,
 			RAMFree:                         ramFree,
-			AutoSubscribePreferenceFailures: stats.AutoSubscribePreferenceFailures.Load(),
+			AutoSubscribePreferenceFailures: AutoSubscribePreferenceFailures.Load(),
 		},
 	}
 
@@ -135,9 +97,7 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 	if emailReg != nil {
 		data.Registries.EmailProviders = emailReg.ProviderNames()
 	}
-	if routerReg != nil {
-		data.Registries.RouterModules = routerReg.Names()
-	}
+	data.Registries.RouterModules = routerModules
 	data.Registries.UploadProviders = upload.ProviderNames()
 
 	return data

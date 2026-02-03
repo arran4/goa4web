@@ -20,37 +20,98 @@ type mockQuerier struct {
 }
 
 func (m *mockQuerier) GetNotificationForLister(ctx context.Context, arg db.GetNotificationForListerParams) (*db.Notification, error) {
+	link := ""
+	if arg.ID == 124 {
+		link = "/topic/1/thread/1"
+	} else if arg.ID == 125 {
+		link = "/private/topic/2/thread/2"
+	}
 	return &db.Notification{
 		ID:      arg.ID,
 		Message: sql.NullString{String: "Test Notification Message", Valid: true},
-		Link:    sql.NullString{String: "", Valid: false},
+		Link:    sql.NullString{String: link, Valid: link != ""},
+	}, nil
+}
+
+func (m *mockQuerier) GetForumTopicByIdForUser(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+	handler := "forum"
+	if arg.Idforumtopic == 2 {
+		handler = "private"
+	}
+	return &db.GetForumTopicByIdForUserRow{
+		Idforumtopic: arg.Idforumtopic,
+		Handler:      handler,
+	}, nil
+}
+
+func (m *mockQuerier) GetThreadLastPosterAndPerms(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+	return &db.GetThreadLastPosterAndPermsRow{
+		Idforumthread: arg.ThreadID,
+		Firstpost:     100 + arg.ThreadID,
+	}, nil
+}
+
+func (m *mockQuerier) GetCommentByIdForUser(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+	text := "Thread Title 1"
+	if arg.ID == 102 {
+		text = "Thread Title 2"
+	}
+	return &db.GetCommentByIdForUserRow{
+		Idcomments: arg.ID,
+		Text:       sql.NullString{String: text, Valid: true},
 	}, nil
 }
 
 func TestUserNotificationOpenPage_SetsTitle(t *testing.T) {
-	q := &mockQuerier{}
+	tests := []struct {
+		name          string
+		notifID       string
+		expectedTitle string
+	}{
+		{
+			name:          "No Link",
+			notifID:       "123",
+			expectedTitle: "Notification",
+		},
+		{
+			name:          "With Link Public",
+			notifID:       "124",
+			expectedTitle: "Notification: Thread Title 1",
+		},
+		{
+			name:          "With Link Private",
+			notifID:       "125",
+			expectedTitle: "Notification: Thread Title 2",
+		},
+	}
 
-	req := httptest.NewRequest("GET", "/usr/notifications/open/123", nil)
-	req = mux.SetURLVars(req, map[string]string{"id": "123"})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			q := &mockQuerier{}
 
-	// Setup session
-	store := sessions.NewCookieStore([]byte("secret"))
-	core.Store = store
-	session, _ := store.New(req, "session")
-	session.Values["UID"] = int32(1)
-	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+			req := httptest.NewRequest("GET", "/usr/notifications/open/"+tt.notifID, nil)
+			req = mux.SetURLVars(req, map[string]string{"id": tt.notifID})
 
-	// Setup CoreData
-	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
-	cd.Config.NotificationsEnabled = true
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+			// Setup session
+			store := sessions.NewCookieStore([]byte("secret"))
+			core.Store = store
+			session, _ := store.New(req, "session")
+			session.Values["UID"] = int32(1)
+			ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 
-	rr := httptest.NewRecorder()
+			// Setup CoreData
+			cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+			cd.Config.NotificationsEnabled = true
+			ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+			req = req.WithContext(ctx)
 
-	userNotificationOpenPage(rr, req)
+			rr := httptest.NewRecorder()
 
-	if cd.PageTitle != "Notification" {
-		t.Errorf("Expected PageTitle to be 'Notification', got '%s'", cd.PageTitle)
+			userNotificationOpenPage(rr, req)
+
+			if cd.PageTitle != tt.expectedTitle {
+				t.Errorf("Expected PageTitle to be '%s', got '%s'", tt.expectedTitle, cd.PageTitle)
+			}
+		})
 	}
 }

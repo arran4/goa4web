@@ -390,6 +390,12 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if threadTitle != "" {
+		cd.PageTitle = fmt.Sprintf("Notification: %s", threadTitle)
+	} else if sectionTitle != "" {
+		cd.PageTitle = fmt.Sprintf("Notification: %s", sectionTitle)
+	}
+
 	data := struct {
 		Request      *http.Request
 		Notification *db.Notification

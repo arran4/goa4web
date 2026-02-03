@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/stats"
 )
 
 func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +21,11 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 		emailReg = h.Srv.EmailReg
 		routerReg = h.Srv.RouterReg
 	}
-	data := BuildServerStatsData(cd.Config, h.ConfigFile, cd.TasksReg, cd.DBRegistry(), dlqReg, emailReg, routerReg)
+	var routerModules []string
+	if routerReg != nil {
+		routerModules = routerReg.Names()
+	}
+	data := stats.BuildServerStatsData(cd.Config, h.ConfigFile, cd.TasksReg, cd.DBRegistry(), dlqReg, emailReg, routerModules)
 
 	AdminServerStatsPageTmpl.Handle(w, r, data)
 }

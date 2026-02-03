@@ -30,6 +30,7 @@ import (
 	csrfmw "github.com/arran4/goa4web/internal/middleware/csrf"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/gorilla/mux"
@@ -130,7 +131,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		op(o)
 	}
 
-	adminhandlers.StartTime = time.Now()
+	stats.StartTime = time.Now()
 
 	store := o.Store
 	if store == nil {
@@ -209,6 +210,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
+		server.WithConfigFile(ConfigFile),
 	)
 	share.RegisterShareRoutes(r, cfg, o.ShareSignSecret)
 

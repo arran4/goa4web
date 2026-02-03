@@ -1,4 +1,4 @@
-package admin
+package stats
 
 import (
 	"encoding/json"
@@ -12,8 +12,6 @@ import (
 	"github.com/arran4/goa4web/internal/dbdrivers"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
-	"github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
 )
@@ -55,7 +53,7 @@ type ServerStatsData struct {
 }
 
 // BuildServerStatsData assembles server metrics and configuration details.
-func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg *tasks.Registry, dbReg *dbdrivers.Registry, dlqReg *dlq.Registry, emailReg *email.Registry, routerReg *router.Registry) ServerStatsData {
+func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg *tasks.Registry, dbReg *dbdrivers.Registry, dlqReg *dlq.Registry, emailReg *email.Registry, routerModules []string) ServerStatsData {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -63,18 +61,18 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 
 	data := ServerStatsData{
 		Stats: ServerStatsMetrics{
-			Goroutines: runtime.NumGoroutine(),
-			Alloc:      mem.Alloc,
-			TotalAlloc: mem.TotalAlloc,
-			Sys:        mem.Sys,
-			HeapAlloc:  mem.HeapAlloc,
-			HeapSys:    mem.HeapSys,
-			NumGC:      mem.NumGC,
+			Goroutines:                      runtime.NumGoroutine(),
+			Alloc:                           mem.Alloc,
+			TotalAlloc:                      mem.TotalAlloc,
+			Sys:                             mem.Sys,
+			HeapAlloc:                       mem.HeapAlloc,
+			HeapSys:                         mem.HeapSys,
+			NumGC:                           mem.NumGC,
 			NumCPU:                          runtime.NumCPU(),
 			Arch:                            runtime.GOARCH,
 			DiskFree:                        diskFree,
 			RAMFree:                         ramFree,
-			AutoSubscribePreferenceFailures: stats.AutoSubscribePreferenceFailures.Load(),
+			AutoSubscribePreferenceFailures: AutoSubscribePreferenceFailures.Load(),
 		},
 	}
 
@@ -135,8 +133,8 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 	if emailReg != nil {
 		data.Registries.EmailProviders = emailReg.ProviderNames()
 	}
-	if routerReg != nil {
-		data.Registries.RouterModules = routerReg.Names()
+	if routerModules != nil {
+		data.Registries.RouterModules = routerModules
 	}
 	data.Registries.UploadProviders = upload.ProviderNames()
 

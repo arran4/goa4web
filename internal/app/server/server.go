@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -28,6 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/arran4/goa4web/workers"
@@ -38,6 +40,7 @@ type Server struct {
 	RouterReg       *router.Registry
 	Nav             *nav.Registry
 	Config          *config.RuntimeConfig
+	ConfigFile      string
 	Router          http.Handler
 	NotFoundHandler http.Handler
 	Store           *sessions.CookieStore
@@ -136,6 +139,9 @@ func WithQuerier(q db.Querier) Option { return func(s *Server) { s.Queries = q }
 
 // WithConfig supplies the runtime configuration.
 func WithConfig(cfg *config.RuntimeConfig) Option { return func(s *Server) { s.Config = cfg } }
+
+// WithConfigFile sets the config file path.
+func WithConfigFile(file string) Option { return func(s *Server) { s.ConfigFile = file } }
 
 // WithRouterRegistry sets the router registry.
 func WithRouterRegistry(r *router.Registry) Option { return func(s *Server) { s.RouterReg = r } }
@@ -362,6 +368,18 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 	}()
 	<-ctx.Done()
 	log.Printf("Shutting down server...")
+
+	var routerModules []string
+	if srv.RouterReg != nil {
+		routerModules = srv.RouterReg.Names()
+	}
+	data := stats.BuildServerStatsData(srv.Config, srv.ConfigFile, srv.TasksReg, srv.DBReg, srv.DLQReg, srv.EmailReg, routerModules)
+	if b, err := json.Marshal(data.Stats); err == nil {
+		log.Printf("Server stats on exit: %s", string(b))
+	} else {
+		log.Printf("Failed to marshal server stats: %v", err)
+	}
+
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {

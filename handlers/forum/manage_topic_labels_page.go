@@ -77,6 +77,15 @@ func ManageTopicLabelsPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Printf("list public labels: %v", err)
 	}
+
+	if priv, err := cd.TopicPrivateLabels(topicRow.Idforumtopic, 0); err == nil {
+		for _, l := range priv {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
+	} else {
+		log.Printf("list private labels: %v", err)
+	}
+
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 
 	data := struct {

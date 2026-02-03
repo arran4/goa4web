@@ -119,4 +119,7 @@ const (
 
 	// TaskRemoveTopicPublicLabel removes a public label from a topic.
 	TaskRemoveTopicPublicLabel tasks.TaskString = "Remove Topic Public Label"
+
+	// TaskSetTopicLabels replaces public and private labels on a topic.
+	TaskSetTopicLabels tasks.TaskString = "Set Topic Labels"
 )

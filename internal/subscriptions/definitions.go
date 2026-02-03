@@ -222,10 +222,24 @@ var Definitions = []Definition{
 		Mandatory:   true,
 	},
 	{
+		Name:        "Password Reset (Self)",
+		Description: "Notify when your password reset is requested",
+		Pattern:     "self:password reset:/auth/reset",
+		IsAdminOnly: false,
+		Mandatory:   true,
+	},
+	{
 		Name:        "Email Verification",
 		Description: "Notify when an email verification is requested",
 		Pattern:     "email verification:/auth/verify_email",
 		IsAdminOnly: true,
+		Mandatory:   false,
+	},
+	{
+		Name:        "Email Verification (Self)",
+		Description: "Notify when your email verification is requested",
+		Pattern:     "self:email verification:/auth/verify_email",
+		IsAdminOnly: false,
 		Mandatory:   true,
 	},
 	{
@@ -259,6 +273,9 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 		name := def.Name
 		if def.Legacy {
 			name += " (Legacy)"
+		}
+		if def.IsAdminOnly {
+			name += " (Admin)"
 		}
 		groups[def.Pattern] = &SubscriptionGroup{
 			Definition: def,

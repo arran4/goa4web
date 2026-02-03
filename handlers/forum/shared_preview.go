@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
 
@@ -74,7 +75,12 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
-	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
+	renderPublicSharedPreview(w, r, cd,
+		share.WithTitle(ogTitle),
+		share.WithBody(ogDescription),
+		share.WithSection("Public Forum Thread"),
+		share.WithGeneratorType("forum"),
+	)
 }
 
 // SharedTopicPreviewPage renders an OpenGraph preview for a forum topic.
@@ -110,24 +116,29 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 	ogDescription := topic.Description.String
 
-	renderPublicSharedPreview(w, r, cd, cd.ShareSignKey, ogTitle, ogDescription)
+	renderPublicSharedPreview(w, r, cd, share.WithTitle(ogTitle), share.WithBody(ogDescription), share.WithSection("Public Forum Topic"), share.WithGeneratorType("forum"))
 }
 
-func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, signKey string, title, desc string) {
-	if r.Method == http.MethodHead {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
+func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, ops ...interface{}) {
+	// Determine auth style: check if mux vars for ts/nonce are present
 	vars := mux.Vars(r)
 	usePathAuth := vars["ts"] != "" || vars["nonce"] != ""
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
+	imageURL, _ := share.MakeImageURLWithOptions(cd.AbsoluteURL(), cd.ShareSignKey, usePathAuth, ops...)
 
 	// If the user is viewing this, they are likely a guest (or the caller logic didn't redirect them).
 	// We want to redirect guests to login, then back to here.
 	redirectURL := "/login?return_url=" + url.QueryEscape(r.URL.RequestURI())
+
+	var title, desc string
+	for _, op := range ops {
+		switch v := op.(type) {
+		case share.WithTitle:
+			title = string(v)
+		case share.WithBody:
+			desc = string(v)
+		}
+	}
 
 	ogData := share.OpenGraphData{
 		Title:       title,
@@ -171,3 +182,5 @@ func getPrivateTopicTitle(ctx context.Context, queries db.Querier, topic *db.For
 	rest := names[:n-1]
 	return fmt.Sprintf("Private forum with %s & %s", strings.Join(rest, ", "), last), nil
 }
+
+const SharedPreviewLoginPageTmpl tasks.Template = "sharedPreviewLogin.gohtml"

@@ -16,6 +16,9 @@ type testGenOgImageCmd struct {
 	fs          *flag.FlagSet
 	Title       string
 	Description string
+	Type        string
+	Section     string
+	Body        string
 	OutputFile  string
 }
 
@@ -24,17 +27,38 @@ func parseTestGenOgImageCmd(parent *testCmd, args []string) (*testGenOgImageCmd,
 	c.fs = newFlagSet("gen-og-image")
 	c.fs.StringVar(&c.Title, "title", "GoA4Web", "The title to use in the image")
 	c.fs.StringVar(&c.Description, "description", "", "The description to use in the image")
+	c.fs.StringVar(&c.Type, "type", "default", "The generator type (default, forum)")
+	c.fs.StringVar(&c.Section, "section", "", "Section label (forum only)")
+	c.fs.StringVar(&c.Body, "body", "", "Body text (forum only)")
 	c.fs.StringVar(&c.OutputFile, "output", "og-image.png", "The output file")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
 	c.Description = strings.ReplaceAll(c.Description, "\\n", "\n")
+	c.Body = strings.ReplaceAll(c.Body, "\\n", "\n")
 	return c, nil
 }
 
 func (c *testGenOgImageCmd) Run() error {
-	img, err := share.GenerateImage(c.Title, c.Description)
+	var opts []interface{}
+	opts = append(opts, share.WithGeneratorType(c.Type))
+
+	if c.Title != "" {
+		opts = append(opts, share.WithTitle(c.Title))
+	}
+	if c.Description != "" {
+		opts = append(opts, share.WithDescription(c.Description))
+	}
+	if c.Section != "" {
+		opts = append(opts, share.WithSection(c.Section))
+	}
+	if c.Body != "" {
+		opts = append(opts, share.WithBody(c.Body))
+	}
+
+	// Generate
+	img, err := share.Generate(opts...)
 	if err != nil {
 		return fmt.Errorf("generate image: %w", err)
 	}
@@ -49,7 +73,7 @@ func (c *testGenOgImageCmd) Run() error {
 		return fmt.Errorf("encode png: %w", err)
 	}
 
-	c.rootCmd.Infof("Generated OG image for title %q at %s", c.Title, c.OutputFile)
+	c.rootCmd.Infof("Generated OG image for title %q (type: %s) at %s", c.Title, c.Type, c.OutputFile)
 	return nil
 }
 

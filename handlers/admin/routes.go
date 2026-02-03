@@ -188,7 +188,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	ar.HandleFunc("/comment/{comment}", handlers.TaskHandler(deleteCommentTask)).Methods("POST").MatcherFunc(deleteCommentTask.Matcher())
 	ar.HandleFunc("/comment/{comment}", handlers.TaskHandler(deactivateCommentTask)).Methods("POST").MatcherFunc(deactivateCommentTask.Matcher())
 	ar.HandleFunc("/comment/{comment}", handlers.TaskHandler(restoreCommentTask)).Methods("POST").MatcherFunc(restoreCommentTask.Matcher())
-	ar.HandleFunc("/ipbans", AdminIPBanPage).Methods("GET")
+	ar.HandleFunc("/ipbans", handlers.TaskHandler(&AdminIPBanPage{})).Methods("GET")
 	ar.HandleFunc("/ipbans/export", AdminIPBanExport).Methods("GET")
 	ar.HandleFunc("/ipbans", handlers.TaskHandler(addIPBanTask)).Methods("POST").MatcherFunc(addIPBanTask.Matcher())
 	ar.HandleFunc("/ipbans", handlers.TaskHandler(deleteIPBanTask)).Methods("POST").MatcherFunc(deleteIPBanTask.Matcher())

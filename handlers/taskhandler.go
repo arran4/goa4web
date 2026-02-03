@@ -46,6 +46,8 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			}
 		case http.HandlerFunc:
 			result(w, r)
+		case tasks.Page:
+			result.ServeHTTP(w, r)
 		case http.Handler:
 			result.ServeHTTP(w, r)
 		case SessionFetchFail:

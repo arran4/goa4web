@@ -148,7 +148,7 @@ func TestAdminPages_HaveTitlesAndBreadcrumbs(t *testing.T) {
 		},
 		{
 			name:          "IP Bans",
-			handler:       http.HandlerFunc(AdminIPBanPage),
+			handler:       &AdminIPBanPage{},
 			url:           "/admin/ipbans",
 			expectedTitle: "IP Bans",
 		},
@@ -167,67 +167,6 @@ func TestAdminPages_HaveTitlesAndBreadcrumbs(t *testing.T) {
 					t.Logf("Recovered from panic: %v", r)
 				}
 			}()
-
-			// The test now calls ServeHTTP directly on the handler, ensuring
-			// we are testing the handler implementation whether it is a struct
-			// or a function wrapped in http.HandlerFunc.
-			// Note: For Page structs, ServeHTTP populates PageTitle.
-			// For TaskHandler wrapped tasks, TaskHandler populates PageTitle.
-			// Since we are passing Page structs directly (without TaskHandler wrapper)
-			// we rely on their ServeHTTP to set the title.
-			// However, the breadcrumb logic in CoreData relies on either currentPage being set
-			// OR the event task being set.
-			// If we bypass TaskHandler, event task is not set.
-			// So we must manually set the current page if we want breadcrumbs to work via interface,
-			// OR the ServeHTTP method must set it.
-			// Let's check AdminAnnouncementsPage.ServeHTTP in pages_admin.go:
-			// It sets cd.PageTitle. It does NOT set cd.SetCurrentPage.
-			// So breadcrumbs won't work via interface unless we wrap it or set it manually.
-			// But wait, the previous code used handlers.TaskHandler(&AdminAnnouncementsPage{})
-			// which DOES set the current page because AdminAnnouncementsPage implements Task (Action returns self).
-			// If I change the test to use the struct directly as http.Handler, I lose the TaskHandler logic
-			// which bridges the gap.
-			// BUT the reviewer said "handler should be http.Handler not http.HandlerFunc".
-			// And "this should really be .Page OR http.Handler".
-			// If I use the struct directly, I am testing it as a Handler.
-			// The issue is that the PageTitle is set by ServeHTTP, but Breadcrumbs are set by CoreData logic
-			// which inspects cd.currentPage. Who sets cd.currentPage? TaskHandler.
-			// So if I test the Page struct directly, I am not testing the full breadcrumb integration unless
-			// the Page struct sets itself as current page in ServeHTTP.
-			// Currently it does not.
-			// So for this test to pass "HaveTitlesAndBreadcrumbs", I effectively need to simulate what TaskHandler does
-			// or wrap it.
-			// But the instruction is to use the Page struct instance directly.
-			// I will wrap it in the test loop to simulate the environment or update the test expectation.
-			// Actually, if I use `handlers.TaskHandler(&AdminAnnouncementsPage{})`, that IS an `http.Handler` (func).
-			// But the reviewer objected to `http.HandlerFunc` type in the struct definition?
-			// "handler should be http.Handler not http.HandlerFunc IMHO".
-			// So I change the struct field type to `http.Handler`.
-			// And I can still pass `handlers.TaskHandler(...)` because it returns a func which is a Handler.
-			// BUT the reviewer also said: "handler: (&AdminAnnouncementsPage{}).ServeHTTP" in the diff suggestion.
-			// Wait, the reviewer suggested: "+ handler: (&AdminAnnouncementsPage{}).ServeHTTP,"
-			// This is a method value, which matches `http.HandlerFunc`.
-			// The comment says "handler should be http.Handler not http.HandlerFunc IMHO".
-			// This implies they want the struct field to be `http.Handler` interface.
-			// And the value to be `&AdminAnnouncementsPage{}`.
-			// IF I do that, `ServeHTTP` is called.
-			// `ServeHTTP` on `AdminAnnouncementsPage` sets `PageTitle`.
-			// It DOES NOT set `CurrentPage`.
-			// So `cd.Breadcrumbs()` will fail to find the breadcrumb if it relies on `CurrentPage`.
-			// However, `AdminAnnouncementsPage` has a static `PageTitle`.
-			// The legacy breadcrumb logic in `breadcrumb.go` falls back to `cd.PageTitle` parsing?
-			// Let's check `core/common/breadcrumb.go`.
-			// It has `adminBreadcrumbs`.
-			// Case `strings.Contains(cd.PageTitle, "Announcements")`.
-			// Yes, it has a fallback.
-			// BUT we want to test the NEW interface driven logic.
-			// To test the new logic, `cd.currentPage` MUST be set.
-			// Who sets it? `TaskHandler`.
-			// So if we test `&AdminAnnouncementsPage{}` directly, we are bypassing the mechanism that enables the new feature.
-			// Unless we update `ServeHTTP` in `pages_admin.go` to set itself as current page?
-			// That would duplicate logic from `TaskHandler`.
-			// I will assume for this test, simply verifying `PageTitle` is sufficient if we assume `TaskHandler` works (which is tested elsewhere).
-			// OR I should manually set `cd.SetCurrentPage` in the test loop if the handler implements Page.
 
 			tt.handler.ServeHTTP(rr, req)
 

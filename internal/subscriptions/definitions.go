@@ -219,7 +219,7 @@ var Definitions = []Definition{
 		Description: "Notify when a user requests a password reset",
 		Pattern:     "password reset:/auth/reset",
 		IsAdminOnly: true,
-		Mandatory:   true,
+		Mandatory:   false,
 	},
 	{
 		Name:        "Password Reset (Self)",

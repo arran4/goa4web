@@ -2,6 +2,12 @@
 <div id="notification-open">
     <h3>Notification</h3>
     <p><strong>Date:</strong> {{ cd.FormatLocalTime .Notification.CreatedAt }}</p>
+    {{ if .SectionTitle }}
+    <p><strong>Section:</strong> {{ .SectionTitle }}</p>
+    {{ end }}
+    {{ if .ThreadTitle }}
+    <p><strong>Thread:</strong> {{ .ThreadTitle }}</p>
+    {{ end }}
     <p>{{ .Notification.Message.String }}</p>
 
     {{ if .ReplyPreview }}

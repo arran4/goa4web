@@ -51,8 +51,10 @@ type IndexItem struct {
 
 // AdminSection groups admin navigation links under a section heading.
 type AdminSection struct {
-	Name  string
-	Links []IndexItem
+	Name        string
+	Link        string
+	Links       []IndexItem
+	SubSections []AdminSection
 }
 
 // PageLink represents a numbered pagination link.

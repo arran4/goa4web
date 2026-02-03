@@ -431,3 +431,16 @@ func (s *QuerierStub) GetPendingEmailErrorCount(ctx context.Context, id int32) (
 	}
 	return ret, err
 }
+
+func (s *QuerierStub) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error) {
+	s.mu.Lock()
+	s.GetAllAnsweredFAQWithFAQCategoriesForUserCalls = append(s.GetAllAnsweredFAQWithFAQCategoriesForUserCalls, arg)
+	fn := s.GetAllAnsweredFAQWithFAQCategoriesForUserFn
+	ret := s.GetAllAnsweredFAQWithFAQCategoriesForUserReturns
+	err := s.GetAllAnsweredFAQWithFAQCategoriesForUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}

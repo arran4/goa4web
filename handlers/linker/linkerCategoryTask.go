@@ -14,6 +14,8 @@ import (
 type linkerCategoryTask struct {
 }
 
+var _ tasks.Task = (*linkerCategoryTask)(nil)
+
 const (
 	LinkerCategoryPageTmpl tasks.Template = "linker/categoryPage.gohtml"
 )

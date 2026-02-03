@@ -19,6 +19,8 @@ import (
 type blogsCommentTask struct {
 }
 
+var _ tasks.Task = (*blogsCommentTask)(nil)
+
 const (
 	BlogsCommentPageTmpl tasks.Template = "blogs/commentPage.gohtml"
 )

@@ -1,34 +1,85 @@
 package share
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"image"
-	"image/color"
-	"image/draw"
 	"image/png"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/arran4/go-pattern"
-
-	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
 	"github.com/gorilla/mux"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/gofont/goregular"
-	"golang.org/x/image/font/opentype"
-	"golang.org/x/image/math/fixed"
 )
+
+var (
+	generatorsMu sync.RWMutex
+	generators   = make(map[string]ImageGenerator)
+)
+
+func RegisterGenerator(g ImageGenerator) {
+	generatorsMu.Lock()
+	defer generatorsMu.Unlock()
+	generators[g.Name()] = g
+}
+
+func init() {
+	RegisterGenerator(&DefaultGenerator{})
+	// Alias for backward compatibility
+	RegisterGenerator(&AliasGenerator{
+		Target:        "sierpinski",
+		Alias:         "default",
+		RealGenerator: &DefaultGenerator{},
+	})
+	RegisterGenerator(&ForumGenerator{})
+}
+
+type AliasGenerator struct {
+	Target        string
+	Alias         string
+	RealGenerator ImageGenerator
+}
+
+func (a *AliasGenerator) Name() string { return a.Alias }
+func (a *AliasGenerator) Generate(options ...interface{}) (image.Image, error) {
+	return a.RealGenerator.Generate(options...)
+}
+
+func getGenerator(name string) (ImageGenerator, bool) {
+	generatorsMu.RLock()
+	defer generatorsMu.RUnlock()
+	g, ok := generators[name]
+	return g, ok
+}
+
+// Generate generates an image using the generator specified in options (or default).
+func Generate(options ...interface{}) (image.Image, error) {
+	genType := "default"
+	for _, opt := range options {
+		if v, ok := opt.(WithGeneratorType); ok {
+			genType = string(v)
+		}
+	}
+
+	gen, ok := getGenerator(genType)
+	if !ok {
+		// Fallback to default
+		gen, ok = getGenerator("default")
+		if !ok {
+			return nil, fmt.Errorf("generator not found: %s and default missing", genType)
+		}
+	}
+	return gen.Generate(options...)
+}
 
 // OpenGraphData contains the metadata for an OpenGraph preview page.
 type OpenGraphData struct {
@@ -168,7 +219,47 @@ func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opt
 	payload := imagePayload{
 		Title:       title,
 		Description: description,
+		Type:        "default",
 	}
+
+	return makeImageURLFromPayload(baseURL, payload, key, usePathAuth, opts...)
+}
+
+// MakeImageURLWithOptions allows creating an image URL with specific generator options.
+func MakeImageURLWithOptions(baseURL, key string, usePathAuth bool, options ...interface{}) (string, error) {
+	payload := imagePayload{
+		Type: "default",
+	}
+
+	var signOpts []sign.SignOption
+
+	// Pack options into payload or sign options
+	for _, opt := range options {
+		switch v := opt.(type) {
+		case WithGeneratorType:
+			payload.Type = string(v)
+		case WithTitle:
+			payload.Title = string(v)
+		case WithDescription:
+			payload.Description = string(v)
+		case WithSection:
+			payload.Section = string(v)
+		case WithAuthor:
+			payload.Author = string(v)
+		case WithHeader:
+			payload.Header = string(v)
+		case WithBody:
+			payload.Body = string(v)
+		// Sign Options
+		case sign.SignOption:
+			signOpts = append(signOpts, v)
+		}
+	}
+
+	return makeImageURLFromPayload(baseURL, payload, key, usePathAuth, signOpts...)
+}
+
+func makeImageURLFromPayload(baseURL string, payload imagePayload, key string, usePathAuth bool, opts ...sign.SignOption) (string, error) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("marshal payload: %w", err)
@@ -217,8 +308,13 @@ func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opt
 }
 
 type imagePayload struct {
+	Type        string `json:"y,omitempty"` // Generator Type
 	Title       string `json:"t"`
 	Description string `json:"d,omitempty"`
+	Section     string `json:"s,omitempty"`
+	Author      string `json:"a,omitempty"`
+	Header      string `json:"h,omitempty"`
+	Body        string `json:"b,omitempty"`
 }
 
 // OGImageHandler serves dynamically generated OpenGraph images.
@@ -241,32 +337,74 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	dataBytes, decodeErr := base64.RawURLEncoding.DecodeString(dataB64)
+
+	// Try unmarshal as JSON
+	var payload imagePayload
+	if decodeErr == nil {
+		if err := json.Unmarshal(dataBytes, &payload); err != nil {
+			// Fallback for legacy URLs: treat entire data as title
+			payload.Title = string(dataBytes)
+			payload.Type = "default"
+		}
+	}
+
 	signed, err := signutil.GetSignedData(r, h.signKey)
 	if err != nil {
 		log.Printf("Error getting signed data: %v", err)
+		if decodeErr == nil {
+			log.Printf("Request Details: Title: %q, Description: %q", payload.Title, payload.Description)
+		}
+		log.Printf("Request Context: IP: %s, UserAgent: %s", r.RemoteAddr, r.UserAgent())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	if !signed.Valid {
 		log.Printf("Invalid signature")
+		if decodeErr == nil {
+			log.Printf("Request Details: Title: %q, Description: %q", payload.Title, payload.Description)
+		}
+		log.Printf("Request Context: IP: %s, UserAgent: %s", r.RemoteAddr, r.UserAgent())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	dataBytes, err := base64.RawURLEncoding.DecodeString(dataB64)
-	if err != nil {
-		log.Printf("Error decoding data: %v", err)
+
+	if decodeErr != nil {
+		log.Printf("Error decoding data: %v", decodeErr)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// Try unmarshal as JSON
-	var payload imagePayload
-	if err := json.Unmarshal(dataBytes, &payload); err != nil {
-		// Fallback for legacy URLs: treat entire data as title
-		payload.Title = string(dataBytes)
+	// Construct options from payload
+	var options []interface{}
+	// Add generator type
+	if payload.Type != "" {
+		options = append(options, WithGeneratorType(payload.Type))
+	} else {
+		options = append(options, WithGeneratorType("default"))
 	}
 
-	img, err := GenerateImage(payload.Title, payload.Description)
+	if payload.Title != "" {
+		options = append(options, WithTitle(payload.Title))
+	}
+	if payload.Description != "" {
+		options = append(options, WithDescription(payload.Description))
+	}
+	if payload.Section != "" {
+		options = append(options, WithSection(payload.Section))
+	}
+	if payload.Author != "" {
+		options = append(options, WithAuthor(payload.Author))
+	}
+	if payload.Header != "" {
+		options = append(options, WithHeader(payload.Header))
+	}
+	if payload.Body != "" {
+		options = append(options, WithBody(payload.Body))
+	}
+
+	img, err := Generate(options...)
 	if err != nil {
 		log.Printf("Error generating image: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -278,109 +416,6 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-}
-
-func GenerateImage(title, description string) (image.Image, error) {
-	img := image.NewRGBA(image.Rect(0, 0, 1200, 630))
-
-	// Create Sierpinski Triangle pattern for background
-	st := &pattern.SierpinskiTriangle{}
-	st.SetBounds(img.Bounds())
-	st.SetFillColor(color.RGBA{R: 0x0b, G: 0x35, B: 0x13, A: 0xff})  // Dark green
-	st.SetSpaceColor(color.RGBA{R: 0x1a, G: 0x5e, B: 0x27, A: 0xff}) // Lighter green
-	draw.Draw(img, img.Bounds(), st, image.Point{}, draw.Src)
-
-	f, err := opentype.Parse(goregular.TTF)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing font: %w", err)
-	}
-	// Title Face
-	titleFace, err := opentype.NewFace(f, &opentype.FaceOptions{
-		Size:    64,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating title font face: %w", err)
-	}
-
-	// Description Face
-	descFace, err := opentype.NewFace(f, &opentype.FaceOptions{
-		Size:    40,
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating desc font face: %w", err)
-	}
-
-	logoBytes, err := templates.Asset("favicon.png")
-	if err != nil {
-		return nil, fmt.Errorf("error getting logo: %w", err)
-	}
-	logo, _, err := image.Decode(bytes.NewReader(logoBytes))
-	if err != nil {
-		return nil, fmt.Errorf("error decoding logo: %w", err)
-	}
-	drawImage := img
-	// draw logo centered
-	logoBounds := logo.Bounds()
-	logoPt := image.Point{
-		X: (1200 - logoBounds.Dx()) / 2,
-		Y: 50,
-	}
-	draw.Draw(drawImage, logo.Bounds().Add(logoPt), logo, image.Point{}, draw.Over)
-
-	// draw text centered
-	d := &font.Drawer{
-		Dst:  drawImage,
-		Src:  image.NewUniform(color.White),
-		Face: titleFace,
-		Dot:  fixed.Point26_6{},
-	}
-
-	// Draw Title
-	// Basic wrapping for Title if it's too long?
-	// For now, let's assume title fits on one line or accept truncation for simplicity unless requested explicitly.
-	// Actually, let's position it higher.
-	textWidth := d.MeasureString(title)
-	d.Dot.X = (fixed.I(1200) - textWidth) / 2
-	d.Dot.Y = fixed.I(300)
-	d.DrawString(title)
-
-	// Draw Description (Multi-line)
-	if description != "" {
-		// Try to parse description as a4code to strip tags
-		if root, err := a4code.ParseString(description); err == nil {
-			description = a4code.ToText(root)
-		} else {
-			// Fallback: minimal cleanup or just usage as is
-		}
-
-		d.Face = descFace
-		lines := strings.Split(description, "\n")
-		// Filter empty lines?? No, respect them.
-
-		startY := 400
-		lineHeight := 50
-
-		for i, line := range lines {
-			if startY+(i*lineHeight) > 600 {
-				break // Stop if out of bounds
-			}
-			// Snip if too long
-			if len(line) > 60 {
-				line = line[:57] + "..."
-			}
-
-			w := d.MeasureString(line)
-			d.Dot.X = (fixed.I(1200) - w) / 2
-			d.Dot.Y = fixed.I(startY + (i * lineHeight))
-			d.DrawString(line)
-		}
-	}
-
-	return img, nil
 }
 
 // SharedContentPreview generates a signed OpenGraph preview URL.

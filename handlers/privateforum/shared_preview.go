@@ -2,11 +2,12 @@ package privateforum
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -73,7 +74,12 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
-	renderSharedPreview(w, r, cd, ogTitle, ogDescription, fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID))
+	renderSharedPreview(w, r, cd, fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID),
+		share.WithTitle(ogTitle),
+		share.WithBody(ogDescription),
+		share.WithSection("Private Forum Thread"),
+		share.WithGeneratorType("forum"),
+	)
 }
 
 // SharedTopicPreviewPage renders an OpenGraph preview for a private forum topic.
@@ -82,10 +88,11 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// Verify signature
 	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
-		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
+		log.Printf("[Private Forum Share] Invalid signature for URL: %s", r.URL.String())
 		if cd.UserID != 0 {
 			vars := mux.Vars(r)
-			actualURL := fmt.Sprintf("/private/topic/%s", vars["topic"])
+			topicID, _ := strconv.Atoi(vars["topic"])
+			actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
@@ -97,7 +104,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	topicID, _ := strconv.Atoi(vars["topic"])
 
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/private/topic/%d", topicID)
+		actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
 		http.Redirect(w, r, actualURL, http.StatusFound)
 		return
 	}
@@ -112,10 +119,15 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	ogTitle := cd.GetPrivateTopicDisplayTitle(topic.Idforumtopic, topic.Title.String)
 	ogDescription := topic.Description.String
 
-	renderSharedPreview(w, r, cd, ogTitle, ogDescription, fmt.Sprintf("/private/topic/%d", topicID))
+	renderSharedPreview(w, r, cd, fmt.Sprintf("/private/topic/%d", topicID),
+		share.WithTitle(ogTitle),
+		share.WithBody(ogDescription),
+		share.WithSection("Private Forum Topic"),
+		share.WithGeneratorType("forum"),
+	)
 }
 
-func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, title, desc, redirectPath string) {
+func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, redirectPath string, ops ...interface{}) {
 
 	// Determine auth style: check if mux vars for ts/nonce are present
 	vars := mux.Vars(r)
@@ -125,9 +137,19 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	// Generate a fresh expiration for the image link.
 
 	// Calculate image URL with error handling
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(), title, desc, cd.ShareSignKey, usePathAuth)
+	imgURL, err := share.MakeImageURLWithOptions(cd.AbsoluteURL(), cd.ShareSignKey, usePathAuth, ops...)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
+	}
+
+	var title, desc string
+	for _, op := range ops {
+		switch v := op.(type) {
+		case share.WithTitle:
+			title = string(v)
+		case share.WithBody:
+			desc = string(v)
+		}
 	}
 
 	cd.OpenGraph = &common.OpenGraph{

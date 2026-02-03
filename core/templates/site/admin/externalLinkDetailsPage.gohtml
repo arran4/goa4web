@@ -1,0 +1,111 @@
+{{ template "head" $ }}
+<h2>External Link {{ .Link.ID }}</h2>
+
+{{ if .ResultSummary }}
+    <p class="alert alert-info"><strong>Action:</strong> {{ .ResultSummary }}</p>
+{{ end }}
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>System Info</h3>
+        <dl class="dl-horizontal">
+            <dt>ID</dt>
+            <dd>{{ .Link.ID }}</dd>
+
+            <dt>URL</dt>
+            <dd><a href="{{ .Link.Url }}" target="_blank">{{ .Link.Url }}</a></dd>
+
+            <dt>Clicks</dt>
+            <dd>{{ .Link.Clicks }}</dd>
+
+            <dt>Created</dt>
+            <dd>{{ cd.FormatLocalTime .Link.CreatedAt }}</dd>
+
+            <dt>Updated</dt>
+            <dd>{{ .Link.UpdatedAt }}</dd>
+
+            <dt>Updated By</dt>
+            <dd>{{ .Link.UpdatedBy.Int32 }}</dd>
+
+            <dt>Favicon Cache</dt>
+            <dd>{{ .Link.FaviconCache.String }}</dd>
+
+            <dt>Card Image Cache</dt>
+            <dd>{{ .Link.CardImageCache.String }}</dd>
+        </dl>
+    </div>
+    <div class="col-md-6">
+        {{ if .Link.CardImageCache.Valid }}
+        <h3>Cached Image</h3>
+        <a href="/images/cache/{{ .Link.CardImageCache.String }}" target="_blank">
+            <img src="/images/cache/{{ .Link.CardImageCache.String }}" class="img-responsive" style="max-height: 400px;" alt="Cached Image">
+        </a>
+        {{ end }}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <h3>Metadata</h3>
+        <form method="post">
+            {{ csrfField }}
+            <input type="hidden" name="id" value="{{ .Link.ID }}">
+
+            <div class="form-group">
+                <label for="card_title">Card Title</label>
+                <input type="text" id="card_title" name="card_title" value="{{ .Link.CardTitle.String }}" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="card_description">Card Description</label>
+                <textarea id="card_description" name="card_description" class="form-control" rows="3">{{ .Link.CardDescription.String }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="card_image">Card Image URL (Source)</label>
+                <input type="text" id="card_image" name="card_image" value="{{ .Link.CardImage.String }}" class="form-control">
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="card_duration">Card Duration</label>
+                        <input type="text" id="card_duration" name="card_duration" value="{{ .Link.CardDuration.String }}" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="card_upload_date">Card Upload Date</label>
+                        <input type="text" id="card_upload_date" name="card_upload_date" value="{{ .Link.CardUploadDate.String }}" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="card_author">Card Author</label>
+                        <input type="text" id="card_author" name="card_author" value="{{ .Link.CardAuthor.String }}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" name="task" value="Save" class="btn btn-success">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<div class="actions" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+    <form method="post" style="display: inline;">
+        {{ csrfField }}
+        <input type="hidden" name="id" value="{{ .Link.ID }}">
+        <button type="submit" name="task" value="Update" class="btn btn-warning">Refresh (Re-fetch from Source)</button>
+    </form>
+
+    <form method="post" style="display: inline; margin-left: 10px;">
+        {{ csrfField }}
+        <input type="hidden" name="id" value="{{ .Link.ID }}">
+        <button type="submit" name="task" value="Delete" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this link?');">Delete</button>
+    </form>
+
+    <a href="/admin/external-links" class="btn btn-default" style="margin-left: 10px;">Back to List</a>
+</div>
+
+{{ template "tail" $ }}

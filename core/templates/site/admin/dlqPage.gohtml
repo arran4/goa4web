@@ -1,5 +1,15 @@
 {{ template "head" $ }}
 <div>[<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]</div>
+<h2>Dead Letter Queue (DLQ)</h2>
+<div style="margin-bottom: 20px;">
+    <p>Monitor and manage failed background tasks and messages.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Review:</strong> Inspect error messages and raw payloads for failed tasks.</li>
+        <li><strong>Retry:</strong> Select items and click "reenlist" to re-queue them for processing.</li>
+        <li><strong>Delete:</strong> Remove items that cannot be recovered.</li>
+    </ul>
+</div>
 Configured providers: {{ .Providers }}<br />
 {{- if .FilePath }}File: {{ .FilePath }} ({{ .FileSize }} bytes{{- if .FileMod }}, updated {{ .FileMod }}{{- end }})<br />{{- end }}
 {{- if .DirPath }}Directory: {{ .DirPath }} ({{ .DirCount }} files{{- if .DirMod }}, updated {{ .DirMod }}{{- end }})<br />{{- end }}
@@ -62,7 +72,7 @@ Configured providers: {{ .Providers }}<br />
 {{- range .DirErrors }}
 <tr>
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
-    <td>{{ .ID }}</td>
+    <td><a href="/admin/dlq/{{ .Provider }}/{{ .ID }}">{{ .ID }}</a></td>
     <td>{{ .Size }}</td>
     <td>
         {{ if .Parsed }}
@@ -90,11 +100,12 @@ Configured providers: {{ .Providers }}<br />
     {{ csrfField }}
     <input type="hidden" name="provider" value="db">
 <table class="table table-bordered">
-<tr><th>Select</th><th>ID</th><th>Message</th><th>Created</th><th>Actions</th></tr>
+<tr><th>Select</th><th>ID</th><th>Size</th><th>Message</th><th>Created</th><th>Actions</th></tr>
 {{- range .Errors }}
 <tr>
     <td><input type="checkbox" name="id" value="{{ .ID }}"></td>
-    <td>{{ .ID }}</td>
+    <td><a href="/admin/dlq/{{ .Provider }}/{{ .ID }}">{{ .ID }}</a></td>
+    <td>{{ .Size }}</td>
     <td>
         {{ if .Parsed }}
             <div><strong>Error:</strong> {{ .Parsed.Error }}</div>

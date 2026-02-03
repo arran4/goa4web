@@ -105,6 +105,14 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				},
 			)
 		}
+		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "label", int32(tid)) {
+			items = append(items,
+				common.IndexItem{
+					Name: "Manage Labels",
+					Link: fmt.Sprintf("%s/topic/%s/labels", base, topicID),
+				},
+			)
+		}
 		if cd.UserID != 0 {
 			if tid, err := strconv.Atoi(topicID); err == nil {
 				if subscribedToTopic(cd, int32(tid)) {

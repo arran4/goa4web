@@ -228,3 +228,15 @@ WITH RECURSIVE board_path AS (
 SELECT board_path.idimageboard, board_path.title
 FROM board_path
 ORDER BY board_path.depth DESC;
+
+-- name: AdminListAllImagePosts :many
+SELECT i.idimagepost, i.thumbnail, i.fullimage, i.description, i.posted, i.file_size, u.username, b.title
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN imageboard b ON i.imageboard_idimageboard = b.idimageboard
+WHERE i.deleted_at IS NULL
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?;
+
+-- name: AdminCountAllImagePosts :one
+SELECT COUNT(*) FROM imagepost WHERE deleted_at IS NULL;

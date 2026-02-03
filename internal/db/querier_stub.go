@@ -567,6 +567,7 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDCalls   []sql.NullInt32
 	AdminListPrivateTopicParticipantsByTopicIDReturns []*AdminListPrivateTopicParticipantsByTopicIDRow
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
+	AdminListPrivateTopicParticipantsByTopicIDFn      func(context.Context, sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
 
 	AdminCreateForumCategoryCalls   []AdminCreateForumCategoryParams
 	AdminCreateForumCategoryReturns int64
@@ -665,6 +666,11 @@ type QuerierStub struct {
 	EnsureExternalLinkReturns sql.Result
 	EnsureExternalLinkErr     error
 	EnsureExternalLinkFn      func(context.Context, string) (sql.Result, error)
+
+	ListForumcategoryPathCalls   []int32
+	ListForumcategoryPathReturns []*ListForumcategoryPathRow
+	ListForumcategoryPathErr     error
+	ListForumcategoryPathFn      func(context.Context, int32) ([]*ListForumcategoryPathRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -1072,6 +1078,9 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.AdminListPrivateTopicParticipantsByTopicIDCalls = append(s.AdminListPrivateTopicParticipantsByTopicIDCalls, itemID)
+	if s.AdminListPrivateTopicParticipantsByTopicIDFn != nil {
+		return s.AdminListPrivateTopicParticipantsByTopicIDFn(ctx, itemID)
+	}
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
 }
 
@@ -1086,6 +1095,16 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ListForumcategoryPathCalls = append(s.ListForumcategoryPathCalls, categoryID)
+	if s.ListForumcategoryPathFn != nil {
+		return s.ListForumcategoryPathFn(ctx, categoryID)
+	}
+	return s.ListForumcategoryPathReturns, s.ListForumcategoryPathErr
 }
 
 func (s *QuerierStub) SystemGetDeadLetter(ctx context.Context, id int32) (*DeadLetter, error) {

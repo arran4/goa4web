@@ -1,5 +1,9 @@
 {{ template "head" $ }}
     <div>[<a href="/admin">Admin:</a> <a href="/admin/notifications">(This page/Refresh)</a>]</div>
+    <h2>System Notifications</h2>
+    <div style="margin-bottom: 20px;">
+        <p>View and manage system notifications sent to users.</p>
+    </div>
     <div>Total: {{ .Total }} Unread: {{ .Unread }}</div>
 <form method="post">
     {{ csrfField }}

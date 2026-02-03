@@ -1,0 +1,25 @@
+{{ template "head" $ }}
+<h2>Unmanaged Files - {{ .Path }}</h2>
+<p><a href="/admin/files">Back to Managed Files</a></p>
+{{ if .Parent }}<a href="/admin/files/unmanaged?path={{ .Parent }}">Parent</a><br>{{ end }}
+<table class="table table-bordered">
+<tr><th>Name<th>Size<th>Type<th>Mod Time<th>Actions</tr>
+{{ range .Entries }}
+<tr>
+<td>{{ if .IsDir }}<a href="/admin/files/unmanaged?path={{ .Path }}">{{ .Name }}/</a>{{ else }}{{ .Name }}{{ end }}</td>
+<td>{{ .Size }}</td>
+<td>{{ if .IsDir }}dir{{ else }}file{{ end }}</td>
+<td>{{ .ModTime }}</td>
+<td>
+  {{ if not .IsDir }}
+  {{ if .URL }}<a href="{{ .URL }}" target="_blank">view</a>{{ end }}
+  <form method="POST" action="/admin/files/delete" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this file?');">
+    <input type="hidden" name="path" value="{{ .Path }}">
+    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+  </form>
+  {{ end }}
+</td>
+</tr>
+{{ end }}
+</table>
+{{ template "tail" $ }}

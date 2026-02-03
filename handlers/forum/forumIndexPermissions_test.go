@@ -115,8 +115,8 @@ func TestCustomForumIndexCreateThread(t *testing.T) {
 	if !common.ContainsItem(cd.CustomIndexItems, "New Thread") {
 		t.Errorf("expected create thread item")
 	}
-	if len(q.SystemCheckGrantCalls) != 1 {
-		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if len(q.SystemCheckGrantCalls) != 2 {
+		t.Fatalf("expected 2 grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 
@@ -152,8 +152,8 @@ func TestCustomForumIndexCreateThreadDenied(t *testing.T) {
 	if common.ContainsItem(cd.CustomIndexItems, "New Thread") {
 		t.Errorf("unexpected create thread item")
 	}
-	if len(q.SystemCheckGrantCalls) != 1 {
-		t.Fatalf("expected 1 grant check, got %d", len(q.SystemCheckGrantCalls))
+	if len(q.SystemCheckGrantCalls) != 2 {
+		t.Fatalf("expected 2 grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 }
 

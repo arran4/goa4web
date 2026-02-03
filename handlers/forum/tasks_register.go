@@ -25,5 +25,8 @@ func RegisterTasks() []tasks.NamedTask {
 		removePrivateLabelTask,
 		markThreadReadTask,
 		setLabelsTask,
+		addTopicPublicLabelTask,
+		removeTopicPublicLabelTask,
+		setTopicLabelsTask,
 	}
 }

@@ -5,31 +5,7 @@ The following items need to be addressed to comply with `handlers/AGENTS.md`.
 ## Task Interface Compliance
 The following files define tasks that implement `Action` but are missing the compile-time check `var _ tasks.Task = (*Type)(nil)`.
 
-- [ ] handlers/user/userTask.go
-- [ ] handlers/auth/forgot_password_task.go
-- [ ] handlers/auth/email_association_request_task.go
-- [ ] handlers/bookmarks/bookmarksTask.go
-- [ ] handlers/imagebbs/imagebbsBoardTask.go
-- [ ] handlers/imagebbs/imagebbsTask.go
-- [ ] handlers/forum/forumThreadNewPage.go
-- [ ] handlers/forum/forumTopicThreadReplyPage.go
-- [ ] handlers/forum/thread_label_tasks.go
-- [ ] handlers/news/newsNewPostTask.go
-- [ ] handlers/news/newsPostTask.go
-- [ ] handlers/news/newsTask.go
-- [ ] handlers/news/newsReplyTask.go
-- [ ] handlers/news/label_tasks.go
-- [ ] handlers/blogs/blogsCommentTask.go
-- [ ] handlers/blogs/blogsBlogReplyPage.go
-- [ ] handlers/blogs/blogsTask.go
-- [ ] handlers/writings/writingsTask.go
-- [ ] handlers/privateforum/topic_create_task.go
-- [ ] handlers/privateforum/privateForumTask.go
-- [ ] handlers/linker/bulk_delete_task.go
-- [ ] handlers/linker/linkerCategoryTask.go
-- [ ] handlers/linker/linkerTask.go
-- [ ] handlers/linker/bulk_approve_task.go
-- [ ] handlers/search/searchTask.go
+- None.
 
 ## Test Structure Compliance
 The following test files do not appear to follow the required `t.Run("Happy Path", ...)` structure or are missing standard setup conventions.

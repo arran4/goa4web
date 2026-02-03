@@ -1,0 +1,38 @@
+{{ template "head" $ }}
+<div class="container mt-4">
+    <h1>Manage Labels for Topic: {{ .DisplayTitle }}</h1>
+
+    <div class="label-editor mb-4">
+        <form method="post" action="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}/labels" id="label-form">
+            {{ csrfField }}
+            <input type="hidden" name="task" value="Set Topic Labels"/>
+            <input type="hidden" name="back" value="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}"/>
+
+            <div class="mb-3">
+                {{ range .Labels }}
+                    {{ if eq .Type "public" }}
+                    <span class="label pill public">{{ .Name }}<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{{ .Name }}"/></span>
+                    {{ else if eq .Type "private" }}
+                    <span class="label pill private">{{ .Name }}<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{{ .Name }}"/></span>
+                    {{ end }}
+                {{ end }}
+            </div>
+
+            <div class="form-group">
+                 <label>Public Labels</label>
+                 <input type="text" class="form-control label-input" data-type="public" placeholder="Add public label (Space separated)"/>
+            </div>
+            <div class="form-group">
+                 <label>Private Labels</label>
+                 <input type="text" class="form-control label-input" data-type="private" placeholder="Add private label (Space separated)"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Labels</button>
+        </form>
+    </div>
+    <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
+
+    <div>
+        <a href="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}" class="btn btn-secondary">Back to Topic</a>
+    </div>
+</div>
+{{ template "tail" $ }}

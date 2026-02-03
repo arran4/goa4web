@@ -19,6 +19,17 @@ func (q *Queries) AdminApproveImagePost(ctx context.Context, idimagepost int32) 
 	return err
 }
 
+const adminCountAllImagePosts = `-- name: AdminCountAllImagePosts :one
+SELECT COUNT(*) FROM imagepost WHERE deleted_at IS NULL
+`
+
+func (q *Queries) AdminCountAllImagePosts(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, adminCountAllImagePosts)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const adminCreateImageBoard = `-- name: AdminCreateImageBoard :exec
 INSERT INTO imageboard (imageboard_idimageboard, title, description, approval_required) VALUES (?, ?, ?, ?)
 `
@@ -106,6 +117,64 @@ func (q *Queries) AdminGetImagePost(ctx context.Context, idimagepost int32) (*Ad
 		&i.Comments,
 	)
 	return &i, err
+}
+
+const adminListAllImagePosts = `-- name: AdminListAllImagePosts :many
+SELECT i.idimagepost, i.thumbnail, i.fullimage, i.description, i.posted, i.file_size, u.username, b.title
+FROM imagepost i
+LEFT JOIN users u ON i.users_idusers = u.idusers
+LEFT JOIN imageboard b ON i.imageboard_idimageboard = b.idimageboard
+WHERE i.deleted_at IS NULL
+ORDER BY i.posted DESC
+LIMIT ? OFFSET ?
+`
+
+type AdminListAllImagePostsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type AdminListAllImagePostsRow struct {
+	Idimagepost int32
+	Thumbnail   sql.NullString
+	Fullimage   sql.NullString
+	Description sql.NullString
+	Posted      sql.NullTime
+	FileSize    int32
+	Username    sql.NullString
+	Title       sql.NullString
+}
+
+func (q *Queries) AdminListAllImagePosts(ctx context.Context, arg AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllImagePosts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAllImagePostsRow
+	for rows.Next() {
+		var i AdminListAllImagePostsRow
+		if err := rows.Scan(
+			&i.Idimagepost,
+			&i.Thumbnail,
+			&i.Fullimage,
+			&i.Description,
+			&i.Posted,
+			&i.FileSize,
+			&i.Username,
+			&i.Title,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const adminListBoards = `-- name: AdminListBoards :many

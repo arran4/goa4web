@@ -35,13 +35,11 @@ func TestCoreData_PrivateForumTopics_LabelsBug(t *testing.T) {
 
 	// Setup ListContentPublicLabels to return a "Misapplied" label for item="thread" and itemID=1
 	// This ensures we are not calling it or using it.
-	q.ListContentPublicLabelsReturns = []*db.ListContentPublicLabelsRow{
-		{
-			Item:   "thread",
-			ItemID: 1,
-			Label:  "Misapplied",
-		},
-	}
+	q.AddContentPublicLabel(nil, db.AddContentPublicLabelParams{
+		Item:   "thread",
+		ItemID: 1,
+		Label:  "Misapplied",
+	})
 
 	// Stub GetPrivateTopicThreadsAndLabels to return a simple thread with no special labels (so Read and NotNew effectively if we assume default... wait)
 	// Default:

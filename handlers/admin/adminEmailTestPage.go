@@ -18,24 +18,26 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Email Tester"
 
 	emailKeys := map[string]bool{
-		config.EnvEmailProvider:      true,
-		config.EnvSMTPHost:           true,
-		config.EnvSMTPPort:           true,
-		config.EnvSMTPUser:           true,
-		config.EnvSMTPPass:           true,
-		config.EnvSMTPAuth:           true,
-		config.EnvEmailFrom:          true,
-		config.EnvJMAPEndpoint:       true,
-		config.EnvJMAPAccount:        true,
-		config.EnvJMAPIdentity:       true,
-		config.EnvJMAPUser:           true,
-		config.EnvJMAPPass:           true,
-		config.EnvSendGridKey:        true,
-		config.EnvAWSRegion:          true,
-		config.EnvSMTPStartTLS:       true,
-		config.EnvJMAPInsecure:       true,
-		config.EnvEmailSubjectPrefix: true,
-		config.EnvEmailSignOff:       true,
+		config.EnvEmailProvider:        true,
+		config.EnvSMTPHost:             true,
+		config.EnvSMTPPort:             true,
+		config.EnvSMTPUser:             true,
+		config.EnvSMTPPass:             true,
+		config.EnvSMTPAuth:             true,
+		config.EnvEmailFrom:            true,
+		config.EnvJMAPEndpoint:         true,
+		config.EnvJMAPAccount:          true,
+		config.EnvJMAPIdentity:         true,
+		config.EnvJMAPUser:             true,
+		config.EnvJMAPPass:             true,
+		config.EnvSendGridKey:          true,
+		config.EnvAWSRegion:            true,
+		config.EnvSMTPStartTLS:         true,
+		config.EnvJMAPInsecure:         true,
+		config.EnvEmailSubjectPrefix:   true,
+		config.EnvEmailSignOff:         true,
+		config.EnvJMAPEndpointOverride: true,
+		config.EnvJMAPDiscoveryRetries: true,
 	}
 
 	// Generate config text
@@ -71,6 +73,11 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 			options = append(options, OptionInfo{opt.Name, opt.Env, val, opt.Usage})
 		}
 	}
+	for _, opt := range config.IntOptions {
+		if emailKeys[opt.Env] {
+			options = append(options, OptionInfo{opt.Name, opt.Env, values[opt.Env], opt.Usage})
+		}
+	}
 
 	sort.Slice(options, func(i, j int) bool {
 		return options[i].Name < options[j].Name
@@ -94,23 +101,37 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		data.ToAddress = r.FormValue("to_address")
 		data.ConfigText = r.FormValue("config_text")
+		overwriteConfig := r.FormValue("overwrite_config") == "on"
 
-		// Reconstruct Config
-		tempConfig := config.NewRuntimeConfig()
-		*tempConfig = *cd.Config
+		var tempConfig *config.RuntimeConfig
 
-		// Parse config text
-		parsed := config.ParseEnvBytes([]byte(data.ConfigText))
+		if !overwriteConfig {
+			tempConfig = cd.Config
+		} else {
+			// Reconstruct Config
+			tempConfig = config.NewRuntimeConfig()
+			*tempConfig = *cd.Config
 
-		// Apply overrides
-		for _, opt := range config.StringOptions {
-			if val, ok := parsed[opt.Env]; ok {
-				*opt.Target(tempConfig) = val
+			// Parse config text
+			parsed := config.ParseEnvBytes([]byte(data.ConfigText))
+
+			// Apply overrides
+			for _, opt := range config.StringOptions {
+				if val, ok := parsed[opt.Env]; ok {
+					*opt.Target(tempConfig) = val
+				}
 			}
-		}
-		for _, opt := range config.BoolOptions {
-			if val, ok := parsed[opt.Env]; ok {
-				*opt.Target(tempConfig) = (val == "true")
+			for _, opt := range config.BoolOptions {
+				if val, ok := parsed[opt.Env]; ok {
+					*opt.Target(tempConfig) = (val == "true")
+				}
+			}
+			for _, opt := range config.IntOptions {
+				if val, ok := parsed[opt.Env]; ok {
+					if _, err := fmt.Sscanf(val, "%d", opt.Target(tempConfig)); err != nil {
+						// Ignore error or log it?
+					}
+				}
 			}
 		}
 

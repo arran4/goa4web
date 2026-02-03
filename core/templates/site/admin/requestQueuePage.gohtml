@@ -17,6 +17,9 @@
         <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/reject">
             {{ csrfField }}<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Reject">
         </form>
+        <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/dismiss">
+            {{ csrfField }}<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Dismiss">
+        </form>
         <form class="inline-form" method="post" action="/admin/request/{{ .ID }}/query">
             {{ csrfField }}<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Query">
         </form>

@@ -15,6 +15,8 @@ import (
 type newsTask struct {
 }
 
+var _ tasks.Task = (*newsTask)(nil)
+
 const (
 	NewsPageTmpl tasks.Template = "news/page.gohtml"
 )

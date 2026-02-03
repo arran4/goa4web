@@ -49,3 +49,24 @@ func UserCanCreateTopic(ctx context.Context, q db.Querier, section string, categ
 	log.Printf("UserCanCreateTopic error: uid=%d category=%d err=%v", uid, categoryID, err)
 	return false, err
 }
+
+// UserCanLabelTopic reports whether uid may add/remove labels on the topic.
+func UserCanLabelTopic(ctx context.Context, q db.Querier, section string, topicID, uid int32) (bool, error) {
+	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
+		ViewerID: uid,
+		Section:  section,
+		Item:     sql.NullString{String: "topic", Valid: true},
+		Action:   "label",
+		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err == nil {
+		return true, nil
+	}
+	if err == sql.ErrNoRows {
+		// Log removed to avoid spam, or keep debug logging if needed
+		return false, nil
+	}
+	log.Printf("UserCanLabelTopic error: uid=%d topic=%d err=%v", uid, topicID, err)
+	return false, err
+}

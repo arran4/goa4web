@@ -12,6 +12,9 @@
 </ul>
 <p>You have {{ len .Item.Notifications }} unread notifications.</p>
 <p><a href="{{ .Item.BaseURL }}/usr/notifications">View all notifications</a></p>
+{{ if .Item.LastSentAt.Valid }}
+<p style="color: #888; font-size: small;">Last digest sent at: {{ .Item.LastSentAt.Time.Format "2006-01-02 15:04" }}</p>
+{{ end }}
 -- body.gotxt --
 Here is your {{ .Item.DigestTitle }} of unread notifications:
 
@@ -22,5 +25,9 @@ Here is your {{ .Item.DigestTitle }} of unread notifications:
 
 You have {{ len .Item.Notifications }} unread notifications.
 Visit {{ .Item.BaseURL }}/usr/notifications to view them all.
+
+{{ if .Item.LastSentAt.Valid }}
+Last digest sent at: {{ .Item.LastSentAt.Time.Format "2006-01-02 15:04" }}
+{{ end }}
 -- subject.gotxt --
 Your {{ .Item.DigestTitle }}

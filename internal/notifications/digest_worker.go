@@ -231,6 +231,14 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 
 	et := NewEmailTemplates("digest")
 
+	pref, err := n.Queries.GetPreferenceForLister(ctx, userID)
+	var lastSentAt sql.NullTime
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("GetPreferenceForLister %d: %v", userID, err)
+	} else if err == nil {
+		lastSentAt = pref.LastDigestSentAt
+	}
+
 	baseURL := n.Config.BaseURL
 	baseURL = strings.TrimRight(baseURL, "/")
 
@@ -245,10 +253,12 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 	data := struct {
 		Notifications []*db.Notification
 		BaseURL       string
+		LastSentAt    sql.NullTime
 		DigestTitle   string
 	}{
 		Notifications: notifs,
 		BaseURL:       baseURL,
+		LastSentAt:    lastSentAt,
 		DigestTitle:   digestTitle,
 	}
 

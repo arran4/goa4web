@@ -60,6 +60,7 @@ func sampleEmailData() emailData {
 		"UserPermissionsURL": "https://example.com/perm",
 		"UserURL":            "https://example.com/user",
 		"Username":           "username",
+		"BaseURL":            "https://example.com",
 		"Notifications": []interface{}{
 			map[string]interface{}{
 				"Link":      map[string]interface{}{"Valid": true, "String": "/link"},
@@ -67,6 +68,7 @@ func sampleEmailData() emailData {
 				"CreatedAt": time.Now(),
 			},
 		},
+		"LastSentAt": map[string]interface{}{"Valid": true, "Time": time.Now()},
 		"BaseURL":     "https://example.com",
 		"DigestTitle": "Daily Digest",
 	}

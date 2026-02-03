@@ -16,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
@@ -86,7 +87,8 @@ type querierStub struct {
 	db.QuerierStub
 	mu sync.Mutex
 
-	SystemGetUserByIDFunc func(context.Context, int32) (*db.SystemGetUserByIDRow, error)
+	SystemGetUserByIDFunc    func(context.Context, int32) (*db.SystemGetUserByIDRow, error)
+	GetPreferenceForListerFn func(context.Context, int32) (*db.Preference, error)
 }
 
 func (q *querierStub) SystemGetUserByID(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
@@ -94,6 +96,13 @@ func (q *querierStub) SystemGetUserByID(ctx context.Context, id int32) (*db.Syst
 		return q.SystemGetUserByIDFunc(ctx, id)
 	}
 	return q.QuerierStub.SystemGetUserByID(ctx, id)
+}
+
+func (q *querierStub) GetPreferenceForLister(ctx context.Context, id int32) (*db.Preference, error) {
+	if q.GetPreferenceForListerFn != nil {
+		return q.GetPreferenceForListerFn(ctx, id)
+	}
+	return q.QuerierStub.GetPreferenceForLister(ctx, id)
 }
 
 type subscriberTestQuerier struct {
@@ -437,6 +446,40 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 	pattern := buildPatterns(tasks.TaskString("AutoSub"), "/forum/topic/7/thread/42")[0]
 	if q.InsertSubscriptionParams[0].Pattern != pattern {
 		t.Fatalf("expected pattern %s, got %s", pattern, q.InsertSubscriptionParams[0].Pattern)
+	}
+}
+
+func TestProcessEventAutoSubscribeMissingPreference(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.NewRuntimeConfig()
+	cfg.NotificationsEnabled = true
+
+	q := &querierStub{
+		GetPreferenceForListerFn: func(ctx context.Context, id int32) (*db.Preference, error) {
+			return nil, sql.ErrNoRows
+		},
+	}
+
+	n := New(WithQueries(q), WithConfig(cfg))
+
+	evt := eventbus.TaskEvent{
+		Path:   "/forum/topic/7/thread/42/reply",
+		UserID: 1,
+		Data: map[string]any{
+			postcountworker.EventKey: postcountworker.UpdateEventData{CommentID: 1, ThreadID: 42, TopicID: 7},
+		},
+		Outcome: eventbus.TaskOutcomeSuccess,
+	}
+
+	initialStats := stats.AutoSubscribePreferenceFailures.Load()
+
+	if err := n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"}); err != nil {
+		t.Fatalf("handleAutoSubscribe: %v", err)
+	}
+
+	finalStats := stats.AutoSubscribePreferenceFailures.Load()
+	if finalStats != initialStats+1 {
+		t.Fatalf("expected stats incremented, got %d -> %d", initialStats, finalStats)
 	}
 }
 

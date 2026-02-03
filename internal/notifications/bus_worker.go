@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -397,6 +398,10 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 	var email bool
 	pref, err := n.Queries.GetPreferenceForLister(ctx, evt.UserID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			stats.IncrementAutoSubscribePreferenceFailures()
+			return nil
+		}
 		return fmt.Errorf("get preference by user_id: %w", err)
 	}
 	auto = pref.AutoSubscribeReplies

@@ -14,13 +14,15 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/faq_templates"
 )
 
 // AdminCategoryPage displays information about a FAQ category including recent questions.
 func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
-		Latest   []*db.Faq
+		Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+		Latest    []*db.Faq
+		Templates []string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -54,9 +56,15 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		latest = latest[:5]
 	}
 
+	templates, err := faq_templates.List()
+	if err != nil {
+		handlers.RenderErrorPage(w, r, err)
+		return
+	}
+
 	cd.PageTitle = "FAQ Category"
 
-	data := Data{Category: cat, Latest: latest}
+	data := Data{Category: cat, Latest: latest, Templates: templates}
 	FaqAdminCategoryPageTmpl.Handle(w, r, data)
 }
 

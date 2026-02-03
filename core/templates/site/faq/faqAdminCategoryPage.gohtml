@@ -11,4 +11,14 @@
     {{- end }}
 </ul>
 {{- end }}
+
+{{- if .Templates }}
+<h2>Available Templates</h2>
+<ul>
+    {{- range .Templates }}
+    <li><a href="/admin/faq/templates?template={{ . }}&category={{ $.Category.ID }}">{{ . }}</a></li>
+    {{- end }}
+</ul>
+{{- end }}
+
 {{ template "tail" $ }}

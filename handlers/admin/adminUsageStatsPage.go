@@ -22,6 +22,11 @@ const (
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
+	type UserMonthlyUsageDisplay struct {
+		*db.UserMonthlyUsageRow
+		RowSpan int
+	}
+
 	type Data struct {
 		Errors            []string
 		ForumTopics       []*db.AdminForumTopicThreadCountsRow
@@ -32,7 +37,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 		Imageboards       []*db.AdminImageboardPostCountsRow
 		Users             []*db.AdminUserPostCountsRow
 		Monthly           []*db.MonthlyUsageRow
-		UserMonthly       []*db.UserMonthlyUsageRow
+		UserMonthly       []*UserMonthlyUsageDisplay
 		StartYear         int
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -181,13 +186,14 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("start user monthly usage counts")
 	wg.Add(1)
+	var rawUserMonthly []*db.UserMonthlyUsageRow
 	go func() {
 		defer func() {
 			log.Print("stop user monthly usage counts")
 			wg.Done()
 		}()
 		if rows, err := cq.UserMonthlyUsageCounts(ctx, int32(cd.Config.StatsStartYear)); err == nil {
-			data.UserMonthly = rows
+			rawUserMonthly = rows
 		} else {
 			addErr("user monthly usage counts", err)
 		}
@@ -195,6 +201,23 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("wait for goroutines")
 	wg.Wait()
+
+	if len(rawUserMonthly) > 0 {
+		var displayRows []*UserMonthlyUsageDisplay
+		blockStart := 0
+		for i, row := range rawUserMonthly {
+			displayRows = append(displayRows, &UserMonthlyUsageDisplay{UserMonthlyUsageRow: row})
+
+			if i > 0 && row.Idusers != rawUserMonthly[i-1].Idusers {
+				// End of previous block
+				displayRows[blockStart].RowSpan = i - blockStart
+				blockStart = i
+			}
+		}
+		// Last block
+		displayRows[blockStart].RowSpan = len(displayRows) - blockStart
+		data.UserMonthly = displayRows
+	}
 
 	ensureHandler := func(h string) {
 		for _, r := range data.ForumHandlers {

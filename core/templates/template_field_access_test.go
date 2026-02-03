@@ -32,8 +32,9 @@ func TestTemplateFieldAccess(t *testing.T) {
 		{
 			Name: "faq/faqAdminCategoryPage.gohtml",
 			Data: struct {
-				Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
-				Latest   []*db.Faq
+				Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+				Latest    []*db.Faq
+				Templates []string
 			}{
 				Category: &db.AdminGetFAQCategoryWithQuestionCountByIDRow{
 					ID:            1,
@@ -46,6 +47,7 @@ func TestTemplateFieldAccess(t *testing.T) {
 						Question: sql.NullString{String: "Question 1", Valid: true},
 					},
 				},
+				Templates: []string{"test"},
 			},
 		},
 		{

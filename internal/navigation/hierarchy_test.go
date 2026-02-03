@@ -1,8 +1,8 @@
 package navigation
 
 import (
-	"testing"
 	"github.com/arran4/goa4web/core/common"
+	"testing"
 )
 
 func TestAdminSectionsHierarchy(t *testing.T) {

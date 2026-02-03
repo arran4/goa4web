@@ -2,6 +2,8 @@ package stats
 
 import (
 	"time"
+
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // ServerStatsMetrics holds runtime and system usage metrics.
@@ -38,4 +40,19 @@ type ServerStatsData struct {
 	ConfigJSON   string
 	ConfigValues map[string]string
 	Registries   ServerStatsRegistries
+}
+
+// UsageStatsData holds the usage statistics.
+type UsageStatsData struct {
+	Errors            []string
+	ForumTopics       []*db.AdminForumTopicThreadCountsRow
+	ForumHandlers     []*db.AdminForumHandlerThreadCountsRow
+	ForumCategories   []*db.AdminForumCategoryThreadCountsRow
+	WritingCategories []*db.AdminWritingCategoryCountsRow
+	LinkerCategories  []*db.GetLinkerCategoryLinkCountsRow
+	Imageboards       []*db.AdminImageboardPostCountsRow
+	Users             []*db.AdminUserPostCountsRow
+	Monthly           []*db.MonthlyUsageRow
+	UserMonthly       []*db.UserMonthlyUsageRow
+	StartYear         int
 }

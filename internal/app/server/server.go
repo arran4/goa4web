@@ -385,6 +385,21 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 		log.Printf("Server stats error: %v", err)
 	}
 
+	if srv.DB != nil {
+		queries := db.New(srv.DB)
+		var q db.Querier = queries
+		customQueries, _ := q.(db.CustomQueries)
+		usageTimeout := 5 * time.Minute
+		ctx, cancel := context.WithTimeout(context.Background(), usageTimeout)
+		defer cancel()
+		usageData := stats.BuildUsageStatsData(ctx, queries, customQueries, srv.Config.StatsStartYear)
+		if b, err := json.Marshal(usageData); err == nil {
+			log.Printf("Usage stats: %s", string(b))
+		} else {
+			log.Printf("Usage stats error: %v", err)
+		}
+	}
+
 	return nil
 }
 

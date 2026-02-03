@@ -145,6 +145,7 @@ type Querier interface {
 	AdminListAllImagePosts(ctx context.Context, arg AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error)
 	AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error)
 	AdminListAllPrivateTopics(ctx context.Context) ([]*AdminListAllPrivateTopicsRow, error)
+	AdminListAllUploadedImages(ctx context.Context) ([]*AdminListAllUploadedImagesRow, error)
 	AdminListAllUserIDs(ctx context.Context) ([]int32, error)
 	// Result:
 	//   idusers (int)
@@ -278,6 +279,7 @@ type Querier interface {
 	AdminUpdateRole(ctx context.Context, arg AdminUpdateRoleParams) error
 	// admin task
 	AdminUpdateRolePublicProfileAllowed(ctx context.Context, arg AdminUpdateRolePublicProfileAllowedParams) error
+	AdminUpdateUploadedImagePath(ctx context.Context, arg AdminUpdateUploadedImagePathParams) error
 	AdminUpdateUserEmail(ctx context.Context, arg AdminUpdateUserEmailParams) error
 	AdminUpdateUserEmailDetails(ctx context.Context, arg AdminUpdateUserEmailDetailsParams) error
 	AdminUpdateUserRole(ctx context.Context, arg AdminUpdateUserRoleParams) error

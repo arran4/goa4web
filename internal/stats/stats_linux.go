@@ -1,6 +1,6 @@
 //go:build linux
 
-package admin
+package stats
 
 import "golang.org/x/sys/unix"
 

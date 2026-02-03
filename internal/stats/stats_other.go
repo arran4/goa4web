@@ -1,6 +1,6 @@
 //go:build !linux
 
-package admin
+package stats
 
 func getSystemStats() (uint64, uint64) {
 	return 0, 0

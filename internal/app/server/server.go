@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -28,6 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/websocket"
 	"github.com/arran4/goa4web/workers"
@@ -38,6 +40,7 @@ type Server struct {
 	RouterReg       *router.Registry
 	Nav             *nav.Registry
 	Config          *config.RuntimeConfig
+	ConfigFile      string
 	Router          http.Handler
 	NotFoundHandler http.Handler
 	Store           *sessions.CookieStore
@@ -136,6 +139,9 @@ func WithQuerier(q db.Querier) Option { return func(s *Server) { s.Queries = q }
 
 // WithConfig supplies the runtime configuration.
 func WithConfig(cfg *config.RuntimeConfig) Option { return func(s *Server) { s.Config = cfg } }
+
+// WithConfigFile sets the config file path.
+func WithConfigFile(path string) Option { return func(s *Server) { s.ConfigFile = path } }
 
 // WithRouterRegistry sets the router registry.
 func WithRouterRegistry(r *router.Registry) Option { return func(s *Server) { s.RouterReg = r } }
@@ -367,6 +373,18 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown error: %w", err)
 	}
+
+	modules := []string{}
+	if srv.RouterReg != nil {
+		modules = srv.RouterReg.Names()
+	}
+	data := stats.BuildServerStatsData(srv.Config, srv.ConfigFile, srv.TasksReg, srv.DBReg, srv.DLQReg, srv.EmailReg, modules)
+	if b, err := json.Marshal(data); err == nil {
+		log.Printf("Server stats: %s", string(b))
+	} else {
+		log.Printf("Server stats error: %v", err)
+	}
+
 	return nil
 }
 

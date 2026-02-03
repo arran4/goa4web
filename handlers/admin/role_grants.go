@@ -26,7 +26,7 @@ var GrantActionMap = map[string]GrantDefinition{
 	"forum|":              {Actions: []string{"search"}},
 	"forum|topic":         {Actions: []string{"see", "view", "reply", "post", "edit"}, RequireItemID: true},
 	"forum|thread":        {Actions: []string{"see", "view", "reply", "edit"}, RequireItemID: true},
-	"forum|comment":       {Actions: []string{"edit"}},
+	"forum|comment":       {Actions: []string{"edit"}}, // RequireItemID omitted to allow global grant for self-edits
 	"forum|category":      {Actions: []string{"see", "view", "post"}, RequireItemID: true},
 	"linker|":             {Actions: []string{"search"}},
 	"linker|category":     {Actions: []string{"see", "view", "post"}},

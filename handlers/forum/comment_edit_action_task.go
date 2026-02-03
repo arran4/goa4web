@@ -61,5 +61,10 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	if base == "" {
 		base = "/forum"
 	}
-	return handlers.RedirectHandler(fmt.Sprintf("%s/topic/%d/thread/%d#comment-%d", base, topicRow.Idforumtopic, threadRow.Idforumthread, commentID))
+	redirectURL := fmt.Sprintf("%s/topic/%d/thread/%d", base, topicRow.Idforumtopic, threadRow.Idforumthread)
+	if cd.IsAdminMode() {
+		redirectURL += "?mode=admin"
+	}
+	redirectURL += fmt.Sprintf("#comment-%d", commentID)
+	return handlers.RedirectHandler(redirectURL)
 }

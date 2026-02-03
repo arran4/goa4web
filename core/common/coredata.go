@@ -2244,7 +2244,12 @@ func (cd *CoreData) CommentEditURL(cmt *db.GetCommentsByThreadIdForUserRow) stri
 	case "writing":
 		return fmt.Sprintf("?editComment=%d#edit", cmt.Idcomments)
 	case "forum", "privateforum":
-		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
+		q := url.Values{}
+		q.Set("editComment", strconv.Itoa(int(cmt.Idcomments)))
+		if cd.IsAdminMode() {
+			q.Set("mode", "admin")
+		}
+		return "?" + q.Encode() + "#edit"
 	case "imagebbs":
 		return fmt.Sprintf("?comment=%d#edit", cmt.Idcomments)
 	case "linker":

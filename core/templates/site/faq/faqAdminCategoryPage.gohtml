@@ -1,22 +1,57 @@
 {{ template "head" $ }}
-<h1>{{ .Category.Name.String }}</h1>
-<p>Question count: {{ .Category.Questioncount }}</p>
-<p><a href="/admin/faq/categories/category/{{ .Category.ID }}/edit">Edit Category</a></p>
-<p><a href="/admin/faq/categories/category/{{ .Category.ID }}/questions">View Questions</a></p>
-{{- if .Latest }}
-<h2>Latest Questions</h2>
+<h1>FAQ Category: {{ .Category.Name.String }}</h1>
+<p>
+    <strong>ID:</strong> {{ .Category.ID }}<br>
+    <strong>Priority:</strong> {{ .Category.Priority }}<br>
+    <strong>Language ID:</strong> {{ .Category.LanguageID.Int32 }}<br>
+    <strong>Parent Category ID:</strong> {{ .Category.ParentCategoryID.Int32 }}<br>
+    <strong>Question Count:</strong> {{ .Category.Questioncount }}
+</p>
+
+<h3>Actions</h3>
 <ul>
-    {{- range .Latest }}
-    <li><a href="/admin/faq/question/{{ .ID }}/edit">{{ .Question }}</a></li>
-    {{- end }}
+    <li><a href="/admin/faq/categories/category/{{ .Category.ID }}/edit">Edit Category</a></li>
+    <li><a href="/admin/faq/categories/category/{{ .Category.ID }}/questions">View Questions (List View)</a></li>
 </ul>
+
+<h3>Grants</h3>
+<p><em>(Grants view not yet implemented)</em></p>
+
+{{- if .Latest }}
+<h2>Questions</h2>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Question</th>
+            <th>Answer Preview</th>
+            <th>Priority</th>
+            <th>Updated At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {{- range .Latest }}
+        <tr>
+            <td>{{ .ID }}</td>
+            <td><a href="/admin/faq/question/{{ .ID }}">{{ .Question.String }}</a></td>
+            <td>{{ if .Answer.Valid }}{{ left 50 .Answer.String }}...{{ end }}</td>
+            <td>{{ .Priority }}</td>
+            <td>{{ .UpdatedAt.Time }}</td>
+            <td>
+                <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a>
+            </td>
+        </tr>
+    {{- end }}
+    </tbody>
+</table>
 {{- end }}
 
 {{- if .Templates }}
 <h2>Available Templates</h2>
 <ul>
     {{- range .Templates }}
-    <li><a href="/admin/faq/templates?template={{ . }}&category={{ $.Category.ID }}">{{ . }}</a></li>
+    <li><a href="/admin/faq/question/create?template={{ . }}&category={{ $.Category.ID }}">{{ . }}</a></li>
     {{- end }}
 </ul>
 {{- end }}

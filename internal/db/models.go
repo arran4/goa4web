@@ -241,6 +241,7 @@ type Faq struct {
 	Question   sql.NullString
 	Priority   int32
 	DeletedAt  sql.NullTime
+	UpdatedAt  sql.NullTime
 }
 
 type FaqCategory struct {
@@ -249,6 +250,8 @@ type FaqCategory struct {
 	LanguageID       sql.NullInt32
 	Name             sql.NullString
 	DeletedAt        sql.NullTime
+	Priority         int32
+	UpdatedAt        sql.NullTime
 }
 
 type FaqRevision struct {

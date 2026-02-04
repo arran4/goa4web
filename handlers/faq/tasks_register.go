@@ -7,7 +7,7 @@ func RegisterTasks() []tasks.NamedTask {
 	return []tasks.NamedTask{
 		askTask,
 		removeQuestionTask,
-		renameCategoryTask,
+		updateCategoryTask,
 		deleteCategoryTask,
 		createCategoryTask,
 		editQuestionTask,

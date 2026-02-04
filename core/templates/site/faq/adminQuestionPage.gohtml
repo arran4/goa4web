@@ -1,0 +1,28 @@
+{{ template "head" $ }}
+<div class="breadcrumbs">
+    <a href="/admin/faq/categories">Categories</a>
+    {{ if .Category }}
+    &gt; <a href="/admin/faq/categories/category/{{ .Category.ID }}">{{ .Category.Name.String }}</a>
+    {{ else }}
+    &gt; Unassigned
+    {{ end }}
+    &gt; Question {{ .Faq.ID }}
+</div>
+
+<h1>Question: {{ .Faq.Question.String }}</h1>
+
+<p><strong>Priority:</strong> {{ .Faq.Priority }}</p>
+<p><strong>Author ID:</strong> {{ .Faq.AuthorID }}</p>
+<p><strong>Language ID:</strong> {{ .Faq.LanguageID.Int32 }}</p>
+<p><strong>Updated At:</strong> {{ .Faq.UpdatedAt.Time }}</p>
+
+<h3>Answer</h3>
+<div class="faq-answer">
+    {{ a4code2html .Faq.Answer.String }}
+</div>
+
+<p>
+    <a href="/admin/faq/question/{{ .Faq.ID }}/edit" class="button">Edit Question</a>
+</p>
+
+{{ template "tail" $ }}

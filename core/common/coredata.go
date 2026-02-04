@@ -1561,11 +1561,11 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 }
 
 // CreateFAQCategory adds a new FAQ category.
-func (cd *CoreData) CreateFAQCategory(name string) error {
+func (cd *CoreData) CreateFAQCategory(name string, priority int32) error {
 	if cd.queries == nil {
 		return nil
 	}
-	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}})
+	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}, Priority: priority})
 	return err
 }
 
@@ -1887,7 +1887,7 @@ func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) e
 
 // UpdateFAQQuestion updates a FAQ question, changing its text, answer and
 // category while recording a revision for the user.
-func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID, userID int32) error {
+func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID, userID int32, priority int32) error {
 	if cd.queries == nil {
 		return nil
 	}
@@ -1896,6 +1896,12 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID
 		Question:   sql.NullString{String: question, Valid: true},
 		CategoryID: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
 		ID:         faqID,
+	}); err != nil {
+		return err
+	}
+	if err := cd.queries.AdminUpdateFAQPriority(cd.ctx, db.AdminUpdateFAQPriorityParams{
+		Priority: priority,
+		ID:       faqID,
 	}); err != nil {
 		return err
 	}

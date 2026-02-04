@@ -1,14 +1,21 @@
 {{ define "adminQuestionTable" }}
 <table>
-<tr><th>Question</th><th>Category</th><th>Actions</th></tr>
+<tr><th>ID</th><th>Question</th><th>Category</th><th>Priority</th><th>Actions</th></tr>
 {{- range .Rows }}
 <tr>
-    <td>{{ .Question.String }}</td>
-    <td>{{ $cat := .CategoryID.Int32 }}{{ range $.Categories }}{{ if eq $cat .ID }}{{ .Name.String }}{{ end }}{{ end }}</td>
+    <td>{{ .ID }}</td>
+    <td><a href="/admin/faq/question/{{ .ID }}">{{ .Question.String }}</a></td>
+    <td>
+        {{ $cat := .CategoryID.Int32 }}
+        {{ if eq $cat 0 }}Unassigned{{ else }}
+            {{ range $.Categories }}{{ if eq $cat .ID }}{{ .Name.String }}{{ end }}{{ end }}
+        {{ end }}
+    </td>
+    <td>{{ .Priority }}</td>
     <td>
         <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a> |
         <a href="/admin/faq/revisions/{{ .ID }}">History</a>
-        <form method="post" action="" class="inline-form">
+        <form method="post" action="/admin/faq/questions" class="inline-form">
             {{ csrfField }}
             <input type="hidden" name="faq" value="{{ .ID }}">
             <input type="submit" name="task" value="Remove">

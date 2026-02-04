@@ -63,14 +63,17 @@ func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
 	})
 }
 
-// RenameFAQCategory updates the name of a FAQ category.
-func (cd *CoreData) RenameFAQCategory(id int32, name string) error {
+// UpdateFAQCategory updates a FAQ category.
+func (cd *CoreData) UpdateFAQCategory(id int32, name string, parentID int32, priority int32) error {
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	return cd.queries.AdminRenameFAQCategory(cd.ctx, db.AdminRenameFAQCategoryParams{
-		Name: sql.NullString{String: name, Valid: true},
-		ID:   id,
+	return cd.queries.AdminUpdateFAQCategory(cd.ctx, db.AdminUpdateFAQCategoryParams{
+		Name:             sql.NullString{String: name, Valid: true},
+		ParentCategoryID: sql.NullInt32{Int32: parentID, Valid: parentID != 0},
+		LanguageID:       sql.NullInt32{}, // Keeping it null for now as not passed
+		Priority:         priority,
+		ID:               id,
 	})
 }
 
@@ -81,6 +84,7 @@ type CreateFAQQuestionParams struct {
 	CategoryID int32
 	WriterID   int32
 	LanguageID int32
+	Priority   int32
 }
 
 // CreateFAQQuestion creates a FAQ question and its initial revision.
@@ -94,6 +98,7 @@ func (cd *CoreData) CreateFAQQuestion(p CreateFAQQuestionParams) (int64, error) 
 		CategoryID: sql.NullInt32{Int32: p.CategoryID, Valid: p.CategoryID != 0},
 		WriterID:   p.WriterID,
 		LanguageID: sql.NullInt32{Int32: p.LanguageID, Valid: p.LanguageID != 0},
+		Priority:   p.Priority,
 		GranteeID:  sql.NullInt32{Int32: p.WriterID, Valid: p.WriterID != 0},
 	})
 	if err != nil {

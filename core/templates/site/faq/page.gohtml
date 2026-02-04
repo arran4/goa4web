@@ -1,13 +1,18 @@
     {{ template "head" $ }}
-    {{ range $index, $categoryFAQs := (cd).AllAnsweredFAQ }}
-        <section class="faq-section">
-            <h2>Section: {{ $categoryFAQs.Category.Name.String }}</h2>
-            {{ range $index, $faq := $categoryFAQs.FAQs }}
-                <div class="faq-item">
-                    <h3 class="faq-question">Q: {{ $faq.Question | a4code2html }}</h3>
-                    <div class="faq-answer">A: {{ $faq.Answer | a4code2html }}</div>
-                </div>
-            {{ end }}
-        </section>
+    {{ $allFAQs := (cd).AllAnsweredFAQ }}
+    {{ if $allFAQs }}
+        {{ range $index, $categoryFAQs := $allFAQs }}
+            <section class="faq-section">
+                <h2>Section: {{ $categoryFAQs.Category.Name.String }}</h2>
+                {{ range $index, $faq := $categoryFAQs.FAQs }}
+                    <div class="faq-item">
+                        <h3 class="faq-question">Q: {{ $faq.Question | a4code2html }}</h3>
+                        <div class="faq-answer">A: {{ $faq.Answer | a4code2html }}</div>
+                    </div>
+                {{ end }}
+            </section>
+        {{ end }}
+    {{ else }}
+        <p>There are no questions at the moment.</p>
     {{ end }}
     {{ template "tail" $ }}

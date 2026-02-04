@@ -93,3 +93,8 @@ func AdminCreateQuestionPage(w http.ResponseWriter, r *http.Request) {
 	r = mux.SetURLVars(r, map[string]string{"id": "0"})
 	(&AdminQuestionEditPageTask{}).Page(w, r)
 }
+
+// AdminEditQuestionPage displays the edit form for a single FAQ entry.
+func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
+	(&AdminQuestionEditPageTask{}).Page(w, r)
+}

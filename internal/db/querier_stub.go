@@ -676,6 +676,26 @@ type QuerierStub struct {
 	ListForumcategoryPathReturns []*ListForumcategoryPathRow
 	ListForumcategoryPathErr     error
 	ListForumcategoryPathFn      func(context.Context, int32) ([]*ListForumcategoryPathRow, error)
+
+	AdminGetFAQActiveQuestionsCalls   int
+	AdminGetFAQActiveQuestionsReturns []*Faq
+	AdminGetFAQActiveQuestionsErr     error
+	AdminGetFAQActiveQuestionsFn      func(context.Context) ([]*Faq, error)
+
+	AdminGetFAQCategoriesCalls   int
+	AdminGetFAQCategoriesReturns []*FaqCategory
+	AdminGetFAQCategoriesErr     error
+	AdminGetFAQCategoriesFn      func(context.Context) ([]*FaqCategory, error)
+
+	AdminGetFAQUnansweredQuestionsCalls   int
+	AdminGetFAQUnansweredQuestionsReturns []*Faq
+	AdminGetFAQUnansweredQuestionsErr     error
+	AdminGetFAQUnansweredQuestionsFn      func(context.Context) ([]*Faq, error)
+
+	AdminGetFAQDismissedQuestionsCalls   int
+	AdminGetFAQDismissedQuestionsReturns []*AdminGetFAQDismissedQuestionsRow
+	AdminGetFAQDismissedQuestionsErr     error
+	AdminGetFAQDismissedQuestionsFn      func(context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {

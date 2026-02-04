@@ -444,3 +444,55 @@ func (s *QuerierStub) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Cont
 	}
 	return ret, err
 }
+
+func (s *QuerierStub) AdminGetFAQActiveQuestions(ctx context.Context) ([]*Faq, error) {
+	s.mu.Lock()
+	s.AdminGetFAQActiveQuestionsCalls++
+	fn := s.AdminGetFAQActiveQuestionsFn
+	ret := s.AdminGetFAQActiveQuestionsReturns
+	err := s.AdminGetFAQActiveQuestionsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminGetFAQCategories(ctx context.Context) ([]*FaqCategory, error) {
+	s.mu.Lock()
+	s.AdminGetFAQCategoriesCalls++
+	fn := s.AdminGetFAQCategoriesFn
+	ret := s.AdminGetFAQCategoriesReturns
+	err := s.AdminGetFAQCategoriesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, error) {
+	s.mu.Lock()
+	s.AdminGetFAQUnansweredQuestionsCalls++
+	fn := s.AdminGetFAQUnansweredQuestionsFn
+	ret := s.AdminGetFAQUnansweredQuestionsReturns
+	err := s.AdminGetFAQUnansweredQuestionsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error) {
+	s.mu.Lock()
+	s.AdminGetFAQDismissedQuestionsCalls++
+	fn := s.AdminGetFAQDismissedQuestionsFn
+	ret := s.AdminGetFAQDismissedQuestionsReturns
+	err := s.AdminGetFAQDismissedQuestionsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}

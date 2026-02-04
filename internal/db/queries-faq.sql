@@ -260,3 +260,10 @@ UPDATE faq SET category_id = sqlc.arg(new_category_id), updated_at = NOW() WHERE
 
 -- name: AdminMoveFAQChildren :exec
 UPDATE faq_categories SET parent_category_id = sqlc.arg(new_parent_id), updated_at = NOW() WHERE parent_category_id = sqlc.arg(old_parent_id);
+
+-- name: AdminGetFAQActiveQuestions :many
+SELECT *
+FROM faq
+WHERE answer IS NOT NULL
+  AND category_id IS NOT NULL
+  AND deleted_at IS NULL;

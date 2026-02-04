@@ -2,6 +2,35 @@
 <h4>{{ if eq .Faq.ID 0 }}Create FAQ Entry{{ else }}Edit FAQ Entry{{ end }}</h4>
 <form method="post" action="/admin/faq/questions">
 {{ csrfField }}
+{{ if .Templates }}
+<script>
+var templateData = {{ .TemplateData | toJSON }};
+function applyTemplate() {
+    var select = document.getElementById('template-selector');
+    var val = select.value;
+    if (val && templateData[val]) {
+        if (confirm("Replace content with template?")) {
+            document.getElementById('question').value = templateData[val].Question;
+            document.getElementById('answer').value = templateData[val].Answer;
+        }
+    }
+}
+</script>
+<label>Template:
+<select id="template-selector" onchange="applyTemplate()">
+    <option value="">Select a template...</option>
+    {{- range .Templates }}
+    <option value="{{ . }}">{{ . }}</option>
+    {{- end }}
+</select>
+</label><br>
+{{ end }}
+Question: <br>
+<textarea id="question" name="question" cols="80" rows="15">{{ .Faq.Question.String }}</textarea><br>
+<button type="button" class="preview-a4code" data-target="question" data-container="preview-container-question" data-preview-url="/faq/preview">Preview Question</button>
+<div class="form-group hidden" id="preview-container-question">
+    <div class="preview-box"></div>
+</div>
 <div class="form-group">
     <label for="question">Question:</label><br>
     <textarea id="question" name="question" cols="80" rows="5">{{ .Faq.Question.String }}</textarea><br>

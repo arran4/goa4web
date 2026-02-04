@@ -4,7 +4,17 @@
 {{- range .Rows }}
 <tr>
     <td>{{ .ID }}</td>
-    <td><a href="/admin/faq/question/{{ .ID }}">{{ .Question.String }}</a></td>
+    <td>
+        <a href="/admin/faq/question/{{ .ID }}">{{ .Question.String | truncateWords 20 }}</a>
+        <details>
+            <summary>Preview</summary>
+            <div>
+                <strong>Q:</strong> {{ .Question.String | a4code2html }}
+                <hr>
+                <strong>A:</strong> {{ .Answer.String | a4code2html }}
+            </div>
+        </details>
+    </td>
     <td>
         {{ $cat := .CategoryID.Int32 }}
         {{ if eq $cat 0 }}<a href="/admin/faq/questions?category=0">Unassigned</a>{{ else }}

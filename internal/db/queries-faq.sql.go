@@ -69,6 +69,46 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, id int32) error {
 	return err
 }
 
+const adminGetFAQActiveQuestions = `-- name: AdminGetFAQActiveQuestions :many
+SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at
+FROM faq
+WHERE answer IS NOT NULL
+  AND category_id IS NOT NULL
+  AND deleted_at IS NULL
+`
+
+func (q *Queries) AdminGetFAQActiveQuestions(ctx context.Context) ([]*Faq, error) {
+	rows, err := q.db.QueryContext(ctx, adminGetFAQActiveQuestions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Faq
+	for rows.Next() {
+		var i Faq
+		if err := rows.Scan(
+			&i.ID,
+			&i.CategoryID,
+			&i.LanguageID,
+			&i.AuthorID,
+			&i.Answer,
+			&i.Question,
+			&i.Priority,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminGetFAQByID = `-- name: AdminGetFAQByID :one
 SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at FROM faq WHERE id = ?
 `
@@ -944,46 +984,6 @@ FROM faq
 
 func (q *Queries) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error) {
 	rows, err := q.db.QueryContext(ctx, systemGetFAQQuestions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Faq
-	for rows.Next() {
-		var i Faq
-		if err := rows.Scan(
-			&i.ID,
-			&i.CategoryID,
-			&i.LanguageID,
-			&i.AuthorID,
-			&i.Answer,
-			&i.Question,
-			&i.Priority,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const adminGetFAQActiveQuestions = `-- name: AdminGetFAQActiveQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at
-FROM faq
-WHERE answer IS NOT NULL
-  AND category_id IS NOT NULL
-  AND deleted_at IS NULL
-`
-
-func (q *Queries) AdminGetFAQActiveQuestions(ctx context.Context) ([]*Faq, error) {
-	rows, err := q.db.QueryContext(ctx, adminGetFAQActiveQuestions)
 	if err != nil {
 		return nil, err
 	}

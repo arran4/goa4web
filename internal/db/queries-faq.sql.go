@@ -635,8 +635,7 @@ ORDER BY c.id, f.id
 `
 
 type GetAllAnsweredFAQWithFAQCategoriesForUserParams struct {
-	ViewerID int32
-	UserID   sql.NullInt32
+	UserID int32
 }
 
 type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
@@ -652,9 +651,9 @@ type GetAllAnsweredFAQWithFAQCategoriesForUserRow struct {
 
 func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllAnsweredFAQWithFAQCategoriesForUser,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.UserID,
+		arg.UserID,
+		arg.UserID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -720,8 +719,7 @@ WHERE answer IS NOT NULL
 `
 
 type GetFAQAnsweredQuestionsParams struct {
-	ViewerID int32
-	UserID   sql.NullInt32
+	UserID int32
 }
 
 type GetFAQAnsweredQuestionsRow struct {
@@ -735,9 +733,9 @@ type GetFAQAnsweredQuestionsRow struct {
 
 func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnsweredQuestionsParams) ([]*GetFAQAnsweredQuestionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFAQAnsweredQuestions,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.UserID,
+		arg.UserID,
+		arg.UserID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -801,9 +799,8 @@ WHERE faq.id = ?
 `
 
 type GetFAQByIDParams struct {
-	ViewerID int32
-	FaqID    int32
-	UserID   sql.NullInt32
+	UserID int32
+	FaqID  int32
 }
 
 type GetFAQByIDRow struct {
@@ -817,10 +814,10 @@ type GetFAQByIDRow struct {
 
 func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*GetFAQByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getFAQByID,
-		arg.ViewerID,
+		arg.UserID,
 		arg.FaqID,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.UserID,
+		arg.UserID,
 		arg.UserID,
 	)
 	var i GetFAQByIDRow
@@ -868,9 +865,8 @@ WHERE faq.category_id = ?
 `
 
 type GetFAQQuestionsByCategoryParams struct {
-	ViewerID   int32
+	UserID     int32
 	CategoryID sql.NullInt32
-	UserID     sql.NullInt32
 }
 
 type GetFAQQuestionsByCategoryRow struct {
@@ -884,10 +880,10 @@ type GetFAQQuestionsByCategoryRow struct {
 
 func (q *Queries) GetFAQQuestionsByCategory(ctx context.Context, arg GetFAQQuestionsByCategoryParams) ([]*GetFAQQuestionsByCategoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFAQQuestionsByCategory,
-		arg.ViewerID,
+		arg.UserID,
 		arg.CategoryID,
-		arg.ViewerID,
-		arg.ViewerID,
+		arg.UserID,
+		arg.UserID,
 		arg.UserID,
 	)
 	if err != nil {

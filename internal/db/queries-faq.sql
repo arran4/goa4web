@@ -5,7 +5,7 @@ WHERE category_id IS NULL OR answer IS NULL;
 
 -- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(user_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -16,11 +16,11 @@ WHERE answer IS NOT NULL
       OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(user_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(user_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -115,7 +115,7 @@ SELECT * FROM faq_categories WHERE id = ?;
 
 -- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(user_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.id AS category_id, c.name, f.id AS faq_id, f.category_id, f.language_id, f.author_id, f.answer, f.question
 FROM faq f
@@ -127,11 +127,11 @@ WHERE c.id IS NOT NULL
       OR f.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(user_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = f.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(user_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -160,7 +160,7 @@ SELECT * FROM faq WHERE id = ?;
 
 -- name: GetFAQByID :one
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(user_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -171,11 +171,11 @@ WHERE faq.id = sqlc.arg(faq_id)
       OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(user_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(user_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -219,7 +219,7 @@ SELECT * FROM faq WHERE category_id = ? ORDER BY priority DESC, id DESC;
 
 -- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(user_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -230,11 +230,11 @@ WHERE faq.category_id = sqlc.arg(category_id)
       OR language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(user_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = faq.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(user_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (

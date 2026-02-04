@@ -29,7 +29,8 @@ func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
 			return nil, nil
 		}
 		faqRows, err := cd.queries.GetAllAnsweredFAQWithFAQCategoriesForUser(cd.ctx, db.GetAllAnsweredFAQWithFAQCategoriesForUserParams{
-			UserID: cd.UserID,
+			ViewerID: cd.UserID,
+			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

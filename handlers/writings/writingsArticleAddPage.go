@@ -1,7 +1,6 @@
 package writings
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -31,7 +30,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 
 	languageRows, err := cd.Languages()
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data.Languages = languageRows
@@ -60,7 +59,7 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	articleId, err := cd.CreateWriting(int32(categoryId), int32(languageId), title, abstract, body, private)
 	if err != nil {
 		log.Printf("insertWriting Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	if articleId == 0 {

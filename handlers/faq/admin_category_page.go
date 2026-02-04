@@ -42,14 +42,14 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 			return
 		default:
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}
 
 	latest, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -90,14 +90,14 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 			return
 		default:
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}
 
 	cats, err := queries.AdminGetFAQCategories(r.Context())
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -131,14 +131,14 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 			return
 		default:
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}
 
 	questions, err := queries.AdminGetFAQQuestionsByCategory(r.Context(), sql.NullInt32{Int32: int32(id), Valid: true})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

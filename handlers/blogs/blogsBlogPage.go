@@ -37,7 +37,7 @@ func BlogPage(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			log.Printf("BlogPost: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

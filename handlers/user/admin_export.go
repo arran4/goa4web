@@ -41,7 +41,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Printf("current user: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -54,19 +54,19 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	pref, err := queries.GetPreferenceForLister(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("load preference: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	langs, err := queries.GetUserLanguages(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("load languages: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	perms, err := queries.GetPermissionsByUserID(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("load permissions: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -101,7 +101,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("fetch categories: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	catMap := make(map[int32]string)
@@ -112,7 +112,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	writings, err := queries.AdminGetAllWritingsByAuthor(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch writings: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	type writingExport struct {
@@ -127,19 +127,19 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	blogs, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch blogs: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	threads, err := queries.AdminGetThreadsStartedByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch threads: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	comments, err := queries.AdminGetAllCommentsByUser(r.Context(), int32(uid))
 	if err != nil {
 		log.Printf("fetch comments: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

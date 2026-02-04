@@ -54,14 +54,14 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	if err != nil || threadRow == nil {
 		log.Printf("current thread: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
 		log.Printf("current topic: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

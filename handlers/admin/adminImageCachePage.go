@@ -30,7 +30,7 @@ func AdminImageCachePage(w http.ResponseWriter, r *http.Request) {
 	entries, totalSize, err := listImageCacheEntries(cd.Config.ImageCacheDir)
 	if err != nil {
 		log.Printf("list image cache: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

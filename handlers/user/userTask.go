@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -42,7 +41,7 @@ func (t *userTask) Get(w http.ResponseWriter, r *http.Request) {
 		session, err := core.GetSession(r)
 		if err != nil {
 			log.Printf("get session: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		_ = middleware.RedirectToLogin(w, r, session)

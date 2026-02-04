@@ -78,7 +78,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("count sent emails: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 
@@ -115,7 +115,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Printf("count unsent emails: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 
@@ -145,7 +145,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Printf("list emails: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

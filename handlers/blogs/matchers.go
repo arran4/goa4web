@@ -3,7 +3,6 @@ package blogs
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
@@ -49,7 +48,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 				http.NotFound(w, r)
 			default:
 				log.Printf("Error: %s", err)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+				handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			}
 			return
 		}

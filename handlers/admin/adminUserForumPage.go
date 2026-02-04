@@ -28,7 +28,7 @@ func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	rows, err := queries.AdminGetThreadsStartedByUserWithTopic(r.Context(), cpu.Idusers)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum threads by %s", user.Username.String)

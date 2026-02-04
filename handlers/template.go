@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -29,7 +28,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any
 		}
 		if err2 := TaskErrorAcknowledgementPageTmpl.TemplateExecute(w, r, errData); err2 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return err
 	}

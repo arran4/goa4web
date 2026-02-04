@@ -40,7 +40,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	id := cd.SelectedRoleID()
 	emailRows, err := queries.GetVerifiedUserEmails(r.Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	emailsByUser := make(map[int32][]string)
@@ -50,7 +50,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 
 	users, err := queries.AdminListUsersByRoleID(r.Context(), id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	roleUsers := make([]*roleUser, 0, len(users))
@@ -64,7 +64,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 
 	groups, err := buildGrantGroups(r.Context(), cd, id)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

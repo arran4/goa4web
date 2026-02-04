@@ -57,7 +57,7 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("question not found"))
 			return
 		default:
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}
@@ -65,7 +65,7 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 	if faq.CategoryID.Valid {
 		category, err = queries.AdminGetFAQCategory(r.Context(), faq.CategoryID.Int32)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

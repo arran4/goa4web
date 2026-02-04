@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
@@ -21,7 +20,7 @@ func AdminCommentsPage(w http.ResponseWriter, r *http.Request) {
 		Offset: 0,
 	})
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data := struct {

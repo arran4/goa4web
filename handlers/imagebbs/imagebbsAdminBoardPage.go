@@ -111,7 +111,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 	boards, err := cd.ImageBoards()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("imageBoards error: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

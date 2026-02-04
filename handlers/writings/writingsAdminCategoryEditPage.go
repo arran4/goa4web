@@ -28,13 +28,13 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		if err == sql.ErrNoRows {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
 		} else {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}
 	all, err := cd.WritingCategories()
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Category %d", cid)

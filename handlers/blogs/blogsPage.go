@@ -70,14 +70,14 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	feed, err := FeedGen(r, queries, int(uid), username)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/rss+xml")
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }
@@ -110,12 +110,12 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	feed, err := FeedGen(r, queries, int(u.Idusers), username)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }

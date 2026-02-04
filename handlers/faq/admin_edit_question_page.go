@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/internal/faq_templates"
 	"net/http"
 	"strconv"
 
@@ -12,12 +12,14 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/faq_templates"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
 
-// AdminEditQuestionPage displays the edit form for a single FAQ entry.
-func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
+type AdminQuestionEditPageTask struct {
+}
+
+func (t *AdminQuestionEditPageTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -89,5 +91,5 @@ const AdminQuestionEditPageTmpl tasks.Template = "faq/adminQuestionEditPage.goht
 // display the form for creating a new FAQ entry.
 func AdminCreateQuestionPage(w http.ResponseWriter, r *http.Request) {
 	r = mux.SetURLVars(r, map[string]string{"id": "0"})
-	AdminEditQuestionPage(w, r)
+	(&AdminQuestionEditPageTask{}).Page(w, r)
 }

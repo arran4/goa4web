@@ -15,14 +15,7 @@ import (
 // UpdateCategoryTask updates a category.
 type UpdateCategoryTask struct{ tasks.TaskString }
 
-var updateCategoryTask = &UpdateCategoryTask{TaskString: TaskRenameCategory} // Keeping TaskRenameCategory string for now or should I change it?
-// The route matcher uses TaskRenameCategory. If I change variable name, I should check handlers/faq/routes.go.
-// I will update TaskString constant if I can find where it is defined. It is likely in `tasks` package or `faq` package (unexported).
-// `TaskRenameCategory` is likely a constant in this package (I saw `renameCategoryTask` using `TaskRenameCategory`).
-// Let's assume it is defined in `handlers/faq/tasks.go` or similar (if exists) or just unexported in this package.
-// I'll stick to `TaskRenameCategory` for the task string for compatibility unless I change `routes.go` matcher too.
-// Wait, `handlers/faq/routes.go` matches `renameCategoryTask.Matcher()`.
-// I will rename the variable `renameCategoryTask` to `updateCategoryTask` in `update_category_task.go` and update `routes.go`.
+var updateCategoryTask = &UpdateCategoryTask{TaskString: TaskRenameCategory}
 
 var _ tasks.Task = (*UpdateCategoryTask)(nil)
 

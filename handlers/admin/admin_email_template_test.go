@@ -107,13 +107,12 @@ func newEmailReg() *email.Registry {
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
-	cfg.Silent = true
 	cfg.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
 	p := testhelpers.Must(reg.ProviderFromConfig(cfg))
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(p))
+	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithEmailProvider(p), common.WithSilence(true))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
@@ -128,7 +127,6 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
-	cfg.Silent = true
 	cfg.EmailProvider = "log"
 
 	queries := &emailTemplateQueries{
@@ -147,7 +145,7 @@ func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
 	reg := newEmailReg()
 	p := testhelpers.Must(reg.ProviderFromConfig(cfg))
-	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithEmailProvider(p))
+	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithEmailProvider(p), common.WithSilence(true))
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)

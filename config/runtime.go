@@ -178,9 +178,6 @@ type RuntimeConfig struct {
 	StartupMediaCheckThresholdPercent int
 	// SkipStartupMediaCheck skips the startup media check entirely.
 	SkipStartupMediaCheck bool
-
-	// Silent suppresses embedded template mode logging.
-	Silent bool
 }
 
 // Option configures RuntimeConfig values.

@@ -78,8 +78,7 @@ func New(opts ...Option) *Notifier {
 
 func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
-		silent := n.Silent || (n.Config != nil && n.Config.Silent)
-		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(silent))
+		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(n.Silent))
 	})
 	return n.noteTmpls
 }
@@ -106,16 +105,14 @@ func defaultFuncs() map[string]any {
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
-		silent := n.Silent || (n.Config != nil && n.Config.Silent)
-		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(silent))
+		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(n.Silent))
 	})
 	return n.emailTextTmpls
 }
 
 func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	n.emailHTMLOnce.Do(func() {
-		silent := n.Silent || (n.Config != nil && n.Config.Silent)
-		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(silent))
+		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(n.Silent))
 	})
 	return n.emailHTMLTmpls
 }

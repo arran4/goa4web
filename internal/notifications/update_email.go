@@ -13,8 +13,8 @@ import (
 
 // GetUpdateEmailText returns the update email text template after applying any
 // database overrides.
-func GetUpdateEmailText(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig) string {
-	tmpls := coretemplates.GetCompiledEmailTextTemplates(common.GetTemplateFuncs(), coretemplates.WithDir(cfg.TemplatesDir), coretemplates.WithSilence(cfg.Silent))
+func GetUpdateEmailText(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, silent bool) string {
+	tmpls := coretemplates.GetCompiledEmailTextTemplates(common.GetTemplateFuncs(), coretemplates.WithDir(cfg.TemplatesDir), coretemplates.WithSilence(silent))
 	b, err := renderTemplate[*ttemplate.Template](ctx, q, EmailTextTemplateFilenameGenerator("updateEmail"), nil, tmpls, TextTemplatesNew)
 	if err != nil {
 		return ""

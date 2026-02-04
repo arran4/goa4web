@@ -14,8 +14,8 @@ func TestReplyTemplatesCompile(t *testing.T) {
 	// Ensure the ReplyTask exposes templates that actually exist so users
 	// receive notification emails when someone responds.
 	et, _ := replyTask.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
-	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Fatalf("missing html template %s", et.HTML)
 	}
@@ -26,7 +26,7 @@ func TestReplyTemplatesCompile(t *testing.T) {
 		t.Fatalf("missing subject template %s", et.Subject)
 	}
 
-	nt := templates.GetCompiledNotificationTemplates(handlertest.GetTemplateFuncs())
+	nt := templates.GetCompiledNotificationTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
 	it := replyTask.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 	if nt.Lookup(*it) == nil {
 		t.Fatalf("missing notification template %s", *it)

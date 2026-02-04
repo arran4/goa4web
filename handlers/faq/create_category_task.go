@@ -3,6 +3,7 @@ package faq
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -23,9 +24,10 @@ func (CreateCategoryTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 
 func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("cname")
+	priority, _ := strconv.Atoi(r.PostFormValue("priority"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	if err := cd.CreateFAQCategory(text); err != nil {
+	if err := cd.CreateFAQCategory(text, int32(priority)); err != nil {
 		return fmt.Errorf("create category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 

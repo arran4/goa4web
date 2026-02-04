@@ -56,7 +56,12 @@ func setupTest(t *testing.T) (*db.QuerierStub, *eventbus.Bus, *notifications.Not
 	cfg.NotificationsEnabled = true
 	cfg.AdminNotify = true
 	cfg.EmailFrom = "test@example.com"
-	n := notifications.New(notifications.WithQueries(qs), notifications.WithConfig(cfg))
+	n := notifications.New(notifications.WithQueries(qs), notifications.WithConfig(cfg), notifications.WithSilence(true))
+	qs.ListSubscribersForPatternsReturn = map[string][]int32{
+		"notify:/admin/*": {99},
+		"add:/admin/*":    {99},
+		"delete:/admin/*": {99},
+	}
 	cdlq := &captureDLQ{}
 	n.RegisterSync(bus, cdlq)
 	store := sessions.NewCookieStore([]byte("test"))

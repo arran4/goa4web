@@ -130,6 +130,7 @@ func TestForumReply(t *testing.T) {
 	}
 	qs.ListSubscribersForPatternsReturn = map[string][]int32{
 		fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID): {subscriberUID, missingEmailUID},
+		"notify:/admin/*": {adminUID},
 	}
 	qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
 		replierUID:    {AutoSubscribeReplies: true},
@@ -166,7 +167,7 @@ func TestForumReply(t *testing.T) {
 	cfg.BaseURL = "http://example.com"
 
 	mockProvider := &MockEmailProvider{}
-	n := notifications.New(
+	n := notifications.New(notifications.WithSilence(true),
 		notifications.WithQueries(qs),
 		notifications.WithConfig(cfg),
 		notifications.WithEmailProvider(mockProvider),

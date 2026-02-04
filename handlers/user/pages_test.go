@@ -1,6 +1,7 @@
 package user_test
 
 import (
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
 
@@ -38,7 +39,7 @@ var allPages = []tasks.Template{
 
 func TestAllRegisteredPagesExist(t *testing.T) {
 	for _, p := range allPages {
-		if !p.Exists() {
+		if !p.Exists(templates.WithSilence(true)) {
 			t.Errorf("Page template missing: %s", p)
 		}
 	}

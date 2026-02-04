@@ -24,7 +24,7 @@ func stubFuncs() template.FuncMap {
 }
 
 func TestPageTemplatesRender(t *testing.T) {
-	tmpl := templates.GetCompiledSiteTemplates(stubFuncs())
+	tmpl := templates.GetCompiledSiteTemplates(stubFuncs(), templates.WithSilence(true))
 	req := httptest.NewRequest("GET", "/", nil)
 
 	type adminStats struct {

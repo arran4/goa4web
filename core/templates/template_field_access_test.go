@@ -80,7 +80,7 @@ func TestTemplateFieldAccess(t *testing.T) {
 	}
 
 	// Load templates
-	tpl := templates.GetCompiledSiteTemplates(funcs)
+	tpl := templates.GetCompiledSiteTemplates(funcs, templates.WithSilence(true))
 
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {

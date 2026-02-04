@@ -58,6 +58,9 @@ func (r *dummyProvider) TestConfig(ctx context.Context) error { return nil }
 func TestNotifierNotifyAdmins(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	q.SystemGetUserByEmailRow = &db.SystemGetUserByEmailRow{Idusers: 1, Email: "a@test", Username: sql.NullString{String: "a", Valid: true}}
+	q.ListSubscribersForPatternsReturn = map[string][]int32{
+		"notify:/admin/*": {1},
+	}
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailEnabled = true
 	cfg.AdminNotify = true

@@ -1,6 +1,7 @@
 package linker
 
 import (
+	"github.com/arran4/goa4web/core/templates"
 	"testing"
 
 	"github.com/arran4/goa4web/internal/tasks"
@@ -21,7 +22,7 @@ func TestLinkerTasksTemplatesRequiredExist(t *testing.T) {
 				t.Fatalf("RequiredTemplates returned no templates; expected at least one")
 			}
 			for _, name := range req {
-				if !name.Exists() {
+				if !name.Exists(templates.WithSilence(true)) {
 					t.Fatalf("missing template: %s", name)
 				}
 			}

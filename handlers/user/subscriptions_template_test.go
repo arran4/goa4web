@@ -19,10 +19,12 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 	// Funcs might rely on context value for cd
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(req))
+	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(req), templates.WithSilence(true))
 
 	data := struct {
-		Groups []*subscriptions.SubscriptionGroup
+		Groups      []*subscriptions.SubscriptionGroup
+		AdminGroups []*subscriptions.SubscriptionGroup
+		IsAdminMode bool
 	}{
 		Groups: []*subscriptions.SubscriptionGroup{
 			{
@@ -42,6 +44,8 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 				},
 			},
 		},
+		AdminGroups: []*subscriptions.SubscriptionGroup{},
+		IsAdminMode: false,
 	}
 
 	var buf bytes.Buffer

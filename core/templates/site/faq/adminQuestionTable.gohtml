@@ -1,10 +1,11 @@
 {{ define "adminQuestionTable" }}
 <table>
-<tr><th>Question</th><th>Category</th><th>Actions</th></tr>
+<tr><th>ID</th><th>Question</th><th>Category</th><th><a href="/admin/faq/categories/category/0/questions">Priority</a></th><th>Actions</th></tr>
 {{- range .Rows }}
 <tr>
+    <td>{{ .ID }}</td>
     <td>
-        {{ .Question.String | truncateWords 20 }}
+        <a href="/admin/faq/question/{{ .ID }}">{{ .Question.String | truncateWords 20 }}</a>
         <details>
             <summary>Preview</summary>
             <div>
@@ -14,11 +15,17 @@
             </div>
         </details>
     </td>
-    <td>{{ $cat := .CategoryID.Int32 }}{{ range $.Categories }}{{ if eq $cat .ID }}{{ .Name.String }}{{ end }}{{ end }}</td>
+    <td>
+        {{ $cat := .CategoryID.Int32 }}
+        {{ if eq $cat 0 }}<a href="/admin/faq/questions?category=0">Unassigned</a>{{ else }}
+            {{ range $.Categories }}{{ if eq $cat .ID }}<a href="/admin/faq/categories/category/{{ .ID }}">{{ .Name.String }}</a>{{ end }}{{ end }}
+        {{ end }}
+    </td>
+    <td>{{ .Priority }}</td>
     <td>
         <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a> |
         <a href="/admin/faq/revisions/{{ .ID }}">History</a>
-        <form method="post" action="" class="inline-form">
+        <form method="post" action="/admin/faq/questions" class="inline-form">
             {{ csrfField }}
             <input type="hidden" name="faq" value="{{ .ID }}">
             <input type="submit" name="task" value="Remove">

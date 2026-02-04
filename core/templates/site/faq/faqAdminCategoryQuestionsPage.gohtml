@@ -1,17 +1,25 @@
 {{ template "head" $ }}
 <h1>Questions in {{ .Category.Name.String }}</h1>
 <table>
-    <tr>
-        <th>ID</th>
-        <th>Question</th>
-        <th>Options</th>
-    </tr>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Question</th>
+            <th>Priority</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
     {{- range .Questions }}
     <tr>
-        <td><a href="/admin/faq/question/{{ .ID }}/edit">{{ .ID }}</a></td>
-        <td>{{ .Question }}</td>
-        <td><a href="/admin/faq/question/{{ .ID }}/edit">Edit</a></td>
+        <td>{{ .ID }}</td>
+        <td><a href="/admin/faq/question/{{ .ID }}">{{ .Question.String }}</a></td>
+        <td>{{ .Priority }}</td>
+        <td>
+            <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a>
+        </td>
     </tr>
     {{- end }}
+    </tbody>
 </table>
 {{ template "tail" $ }}

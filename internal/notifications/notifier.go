@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Notifier dispatches updates via email and internal notifications.
@@ -34,10 +35,16 @@ type Notifier struct {
 	emailHTMLOnce  sync.Once
 	emailHTMLTmpls *htemplate.Template
 	CustomQueries  db.CustomQueries
+	Silent         bool
 }
 
 // Option configures a Notifier instance.
 type Option func(*Notifier)
+
+// WithSilence suppresses embedded template mode logging.
+func WithSilence(silent bool) Option {
+	return func(n *Notifier) { n.Silent = silent }
+}
 
 // WithQueries sets the db.Queries dependency.
 func WithQueries(q db.Querier) Option { return func(n *Notifier) { n.Queries = q } }
@@ -71,7 +78,7 @@ func New(opts ...Option) *Notifier {
 
 func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
-		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
+		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(n.Silent))
 	})
 	return n.noteTmpls
 }
@@ -98,14 +105,14 @@ func defaultFuncs() map[string]any {
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
-		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
+		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(n.Silent))
 	})
 	return n.emailTextTmpls
 }
 
 func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	n.emailHTMLOnce.Do(func() {
-		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
+		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(n.Silent))
 	})
 	return n.emailHTMLTmpls
 }
@@ -144,16 +151,35 @@ func (n *Notifier) adminEmails(ctx context.Context) []string {
 
 // NotifyAdmins sends a generic update notice to administrator accounts.
 func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data EmailData) error {
-	return n.notifyAdmins(ctx, et, nil, data, "", 0)
+	return n.notifyAdmins(ctx, et, nil, data, "", 0, nil)
 }
 
-func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string, actorID int32) error {
+func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string, actorID int32, evt *eventbus.TaskEvent) error {
 	if n.Queries == nil {
 		return nil
 	}
 	if n.Config != nil && !n.Config.AdminNotify {
 		return nil
 	}
+
+	patterns := []string{"notify:/admin/*"}
+	if evt != nil {
+		name := ""
+		if tn, ok := evt.Task.(tasks.Name); ok {
+			name = tn.Name()
+		}
+		patterns = append(patterns, buildPatterns(tasks.TaskString(name), evt.Path)...)
+	}
+
+	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
+	if err != nil {
+		log.Printf("collect admin email subs: %v", err)
+	}
+	internalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "internal")
+	if err != nil {
+		log.Printf("collect admin internal subs: %v", err)
+	}
+
 	for _, addr := range n.adminEmails(ctx) {
 		var uid *int32
 		if u, err := n.Queries.SystemGetUserByEmail(ctx, addr); err == nil {
@@ -167,12 +193,33 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 			continue
 		}
 
-		if et != nil {
+		// Subscription check
+		if uid != nil {
+			// Check if subscribed. Note: notifyAdmins logic implies "if et != nil" try to send email.
+			// If we enforce subscriptions, we check emailSubs for email, internalSubs for internal.
+			// But for legacy compatibility with env var admins (uid == nil), we might default to send?
+			// If uid == nil, we can't check DB. So we assume yes?
+			// The original code iterated adminEmails which includes env vars.
+		}
+
+		shouldSendEmail := true
+		shouldSendInternal := true
+
+		if uid != nil {
+			if emailSubs != nil {
+				_, shouldSendEmail = emailSubs[*uid]
+			}
+			if internalSubs != nil {
+				_, shouldSendInternal = internalSubs[*uid]
+			}
+		}
+
+		if et != nil && shouldSendEmail {
 			if err := n.renderAndQueueEmailFromTemplates(ctx, uid, addr, et, data, WithAdmin()); err != nil {
 				return err
 			}
 		}
-		if nt != nil {
+		if nt != nil && shouldSendInternal {
 			// Internal notifications expect data wrapped in .Item and .Path
 			renderData := struct {
 				Path string

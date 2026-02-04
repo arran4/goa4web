@@ -94,7 +94,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
 		if et, send := tp.AdminEmailTemplate(evt); send {
-			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path, evt.UserID); err != nil {
+			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path, evt.UserID, &evt); err != nil {
 				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
 				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW), &evt); dlqErr != nil {
 					return dlqErr
@@ -160,7 +160,37 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 }
 
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
-	if et, send := tp.SelfEmailTemplate(evt); send {
+	name := ""
+	if tn, ok := evt.Task.(tasks.Name); ok {
+		name = tn.Name()
+	}
+	patterns := buildPatterns(tasks.TaskString("self:"+name), evt.Path)
+
+	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
+	if err != nil {
+		log.Printf("collect self email subs: %v", err)
+	}
+	internalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "internal")
+	if err != nil {
+		log.Printf("collect self internal subs: %v", err)
+	}
+
+	var shouldSendEmail, shouldSendInternal bool
+
+	if emailSubs != nil {
+		// If map exists, check if user is in it. If not, don't send.
+		// NOTE: This assumes opt-in logic for "self:" patterns.
+		// If no "self:" definition exists, buildPatterns returns "self:taskname...".
+		// If user hasn't subscribed, we skip.
+		// This requires "Mandatory" definitions to ensure the user IS subscribed.
+		_, shouldSendEmail = emailSubs[evt.UserID]
+	}
+
+	if internalSubs != nil {
+		_, shouldSendInternal = internalSubs[evt.UserID]
+	}
+
+	if et, send := tp.SelfEmailTemplate(evt); send && shouldSendEmail {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
 			emails, err := n.Queries.SystemListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
@@ -183,7 +213,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			}
 		}
 	}
-	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
+	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil && shouldSendInternal {
 		user, err := n.Queries.SystemGetUserByID(ctx, evt.UserID)
 		if err != nil {
 			return fmt.Errorf("getting user %d for self-notification: %w", evt.UserID, err)

@@ -107,7 +107,9 @@ type NavigationProvider interface {
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
-	AdminMode         bool
+	AdminMode bool
+	// Silent suppresses embedded template mode logging.
+	Silent            bool
 	AtomFeedURL       string
 	PublicAtomFeedURL string
 	AutoRefresh       string
@@ -1211,6 +1213,9 @@ func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name strin
 	if cd.Config != nil && cd.Config.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cd.Config.TemplatesDir))
 	}
+	if cd.Silent {
+		opts = append(opts, templates.WithSilence(true))
+	}
 	return templates.GetCompiledSiteTemplates(cd.Funcs(r), opts...).ExecuteTemplate(w, name, data)
 }
 
@@ -1561,11 +1566,11 @@ func (cd *CoreData) LinkerCategoryCounts() ([]*db.GetLinkerCategoryLinkCountsRow
 }
 
 // CreateFAQCategory adds a new FAQ category.
-func (cd *CoreData) CreateFAQCategory(name string) error {
+func (cd *CoreData) CreateFAQCategory(name string, priority int32) error {
 	if cd.queries == nil {
 		return nil
 	}
-	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}})
+	_, err := cd.queries.AdminCreateFAQCategory(cd.ctx, db.AdminCreateFAQCategoryParams{Name: sql.NullString{String: name, Valid: name != ""}, Priority: priority})
 	return err
 }
 
@@ -1887,7 +1892,7 @@ func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) e
 
 // UpdateFAQQuestion updates a FAQ question, changing its text, answer and
 // category while recording a revision for the user.
-func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID, userID int32) error {
+func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID, userID int32, priority int32) error {
 	if cd.queries == nil {
 		return nil
 	}
@@ -1896,6 +1901,12 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID
 		Question:   sql.NullString{String: question, Valid: true},
 		CategoryID: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
 		ID:         faqID,
+	}); err != nil {
+		return err
+	}
+	if err := cd.queries.AdminUpdateFAQPriority(cd.ctx, db.AdminUpdateFAQPriorityParams{
+		Priority: priority,
+		ID:       faqID,
 	}); err != nil {
 		return err
 	}
@@ -3006,6 +3017,11 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 	return func(p *db.GetPublicWritingsParams) { p.Limit = l }
 }
 
+// WithSilence suppresses embedded template mode logging.
+func WithSilence(silent bool) CoreOption {
+	return func(cd *CoreData) { cd.Silent = silent }
+}
+
 // Admin request helpers
 
 // Admin user profile helpers
@@ -3018,6 +3034,9 @@ func defaultNotificationTemplate(name string, cd *CoreData) string {
 	var opts []templates.Option
 	if cfg != nil && cfg.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+	}
+	if cd.Silent {
+		opts = append(opts, templates.WithSilence(true))
 	}
 
 	funcs := cd.Funcs(nil)

@@ -492,7 +492,14 @@ func TestProcessEventSelfNotifyWithUserIDTemplate(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = true
 
-	q := &querierStub{}
+	q := &querierStub{
+		QuerierStub: db.QuerierStub{
+			ListSubscribersForPatternsReturn: map[string][]int32{
+				"self:selfnotify:/*":                   {123},
+				"self:selfnotify:/user/password-reset": {123},
+			},
+		},
+	}
 	q.SystemGetTemplateOverrideFn = func(ctx context.Context, name string) (string, error) {
 		if name == "notifications/password_reset.gotxt" {
 			return "Password reset for {{.User.Username.String}} ({{.User.Email.String}}, UID: {{.User.Idusers}})", nil

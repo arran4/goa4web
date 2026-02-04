@@ -52,9 +52,6 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
 		return
 	}
-	if len(latest) > 5 {
-		latest = latest[:5]
-	}
 
 	templates, err := faq_templates.List()
 	if err != nil {
@@ -62,7 +59,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cd.PageTitle = "FAQ Category"
+	cd.PageTitle = "FAQ Category: " + cat.Name.String
 
 	data := Data{Category: cat, Latest: latest, Templates: templates}
 	FaqAdminCategoryPageTmpl.Handle(w, r, data)
@@ -73,7 +70,8 @@ const FaqAdminCategoryPageTmpl tasks.Template = "faq/faqAdminCategoryPage.gohtml
 // AdminCategoryEditPage shows a form to rename or delete a FAQ category.
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+		Category   *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+		Categories []*db.FaqCategory
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -97,8 +95,14 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	cats, err := queries.AdminGetFAQCategories(r.Context())
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+
 	cd.PageTitle = "Edit FAQ Category"
-	data := Data{Category: cat}
+	data := Data{Category: cat, Categories: cats}
 	FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 

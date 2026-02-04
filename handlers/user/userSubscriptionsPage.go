@@ -27,7 +27,12 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 
 	groups := subscriptions.GetUserSubscriptions(dbSubs)
 
-	var filteredGroups []*subscriptions.SubscriptionGroup
+	mode := r.URL.Query().Get("mode")
+	isAdminMode := mode == "admin" && cd.IsAdmin()
+
+	var regularGroups []*subscriptions.SubscriptionGroup
+	var adminGroups []*subscriptions.SubscriptionGroup
+
 	for _, g := range groups {
 		if g.Definition.IsAdminOnly && !cd.IsAdmin() {
 			continue
@@ -41,64 +46,71 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 				Parameters: []subscriptions.Parameter{},
 			})
 		}
-		filteredGroups = append(filteredGroups, g)
+
+		if g.Definition.IsAdminOnly {
+			adminGroups = append(adminGroups, g)
+		} else {
+			regularGroups = append(regularGroups, g)
+		}
 	}
 
-	for _, g := range filteredGroups {
-		for _, inst := range g.Instances {
-			for i, p := range inst.Parameters {
-				if p.Resolved != "" {
-					continue
-				}
-				if p.Key == "topicid" {
-					if id, err := strconv.Atoi(p.Value); err == nil {
-						topic, err := cd.Queries().GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-							ViewerID:      cd.UserID,
-							Idforumtopic:  int32(id),
-							ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-						})
-						if err == nil {
-							title := topic.Title.String
-							if topic.Handler == "private" {
-								parts, _ := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-									TopicID:  sql.NullInt32{Int32: topic.Idforumtopic, Valid: true},
-									ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-								})
-								var names []string
-								for _, p := range parts {
-									if p.Idusers != cd.UserID {
-										names = append(names, p.Username.String)
-									}
-								}
-								namesTitle := strings.Join(names, ", ")
-								if len(names) > 0 && (title == "" || strings.HasPrefix(title, "Private chat with")) {
-									title = fmt.Sprintf("Private chat with %s", namesTitle)
-								} else if len(names) > 0 {
-									title = fmt.Sprintf("%s (%s)", namesTitle, title)
-								}
-								inst.Parameters[i].Link = fmt.Sprintf("/private/topic/%d", id)
-							} else {
-								inst.Parameters[i].Link = fmt.Sprintf("/forum/topic/%d", id)
-							}
-							inst.Parameters[i].Resolved = title
-						}
+	resolveLinks := func(groups []*subscriptions.SubscriptionGroup) {
+		for _, g := range groups {
+			for _, inst := range g.Instances {
+				for i, p := range inst.Parameters {
+					if p.Resolved != "" {
+						continue
 					}
-				} else if p.Key == "threadid" {
-					if id, err := strconv.Atoi(p.Value); err == nil {
-						// Ensure the user has permission to view the thread
-						_, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-							ViewerID:      cd.UserID,
-							ThreadID:      int32(id),
-							ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-						})
-						if err == nil {
-							thread, err := cd.Queries().AdminGetForumThreadById(r.Context(), int32(id))
+					if p.Key == "topicid" {
+						if id, err := strconv.Atoi(p.Value); err == nil {
+							topic, err := cd.Queries().GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
+								ViewerID:      cd.UserID,
+								Idforumtopic:  int32(id),
+								ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+							})
 							if err == nil {
-								inst.Parameters[i].Resolved = thread.Title
-								if thread.TopicHandler == "private" {
-									inst.Parameters[i].Link = fmt.Sprintf("/private/topic/%d/thread/%d", thread.Idforumtopic, id)
+								title := topic.Title.String
+								if topic.Handler == "private" {
+									parts, _ := cd.Queries().ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
+										TopicID:  sql.NullInt32{Int32: topic.Idforumtopic, Valid: true},
+										ViewerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+									})
+									var names []string
+									for _, p := range parts {
+										if p.Idusers != cd.UserID {
+											names = append(names, p.Username.String)
+										}
+									}
+									namesTitle := strings.Join(names, ", ")
+									if len(names) > 0 && (title == "" || strings.HasPrefix(title, "Private chat with")) {
+										title = fmt.Sprintf("Private chat with %s", namesTitle)
+									} else if len(names) > 0 {
+										title = fmt.Sprintf("%s (%s)", namesTitle, title)
+									}
+									inst.Parameters[i].Link = fmt.Sprintf("/private/topic/%d", id)
 								} else {
-									inst.Parameters[i].Link = fmt.Sprintf("/forum/topic/%d/thread/%d", thread.Idforumtopic, id)
+									inst.Parameters[i].Link = fmt.Sprintf("/forum/topic/%d", id)
+								}
+								inst.Parameters[i].Resolved = title
+							}
+						}
+					} else if p.Key == "threadid" {
+						if id, err := strconv.Atoi(p.Value); err == nil {
+							// Ensure the user has permission to view the thread
+							_, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+								ViewerID:      cd.UserID,
+								ThreadID:      int32(id),
+								ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+							})
+							if err == nil {
+								thread, err := cd.Queries().AdminGetForumThreadById(r.Context(), int32(id))
+								if err == nil {
+									inst.Parameters[i].Resolved = thread.Title
+									if thread.TopicHandler == "private" {
+										inst.Parameters[i].Link = fmt.Sprintf("/private/topic/%d/thread/%d", thread.Idforumtopic, id)
+									} else {
+										inst.Parameters[i].Link = fmt.Sprintf("/forum/topic/%d/thread/%d", thread.Idforumtopic, id)
+									}
 								}
 							}
 						}
@@ -108,10 +120,17 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	resolveLinks(regularGroups)
+	resolveLinks(adminGroups)
+
 	data := struct {
-		Groups []*subscriptions.SubscriptionGroup
+		Groups      []*subscriptions.SubscriptionGroup
+		AdminGroups []*subscriptions.SubscriptionGroup
+		IsAdminMode bool
 	}{
-		Groups: filteredGroups,
+		Groups:      regularGroups,
+		AdminGroups: adminGroups,
+		IsAdminMode: isAdminMode,
 	}
 	UserSubscriptionsPage.Handle(w, r, data)
 }

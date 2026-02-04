@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/faq_templates"
 	"github.com/gorilla/mux"
 )
 
@@ -44,13 +45,35 @@ func AdminEditQuestionPage(w http.ResponseWriter, r *http.Request) {
 		faq = &db.Faq{ID: 0}
 	}
 	cats, _ := queries.AdminGetFAQCategories(r.Context())
+	type TemplateContent struct {
+		Question string
+		Answer   string
+	}
 	type Data struct {
-		Faq        *db.Faq
-		Categories []*db.FaqCategory
+		Faq          *db.Faq
+		Categories   []*db.FaqCategory
+		Templates    []string
+		TemplateData map[string]TemplateContent
+	}
+	templates, _ := faq_templates.List()
+	templateData := make(map[string]TemplateContent)
+	for _, t := range templates {
+		content, err := faq_templates.Get(t)
+		if err == nil {
+			q, a, err := faq_templates.ParseTemplateContent(content)
+			if err == nil {
+				templateData[t] = TemplateContent{
+					Question: q,
+					Answer:   a,
+				}
+			}
+		}
 	}
 	data := Data{
-		Faq:        faq,
-		Categories: cats,
+		Faq:          faq,
+		Categories:   cats,
+		Templates:    templates,
+		TemplateData: templateData,
 	}
 	if id != 0 {
 		cd.PageTitle = fmt.Sprintf("Edit FAQ %d", id)

@@ -3,7 +3,17 @@
 <tr><th>Question</th><th>Category</th><th>Actions</th></tr>
 {{- range .Rows }}
 <tr>
-    <td>{{ .Question.String }}</td>
+    <td>
+        {{ .Question.String }}
+        <details>
+            <summary>Preview</summary>
+            <div>
+                <strong>Q:</strong> {{ .Question.String | a4code2html }}
+                <hr>
+                <strong>A:</strong> {{ .Answer.String | a4code2html }}
+            </div>
+        </details>
+    </td>
     <td>{{ $cat := .CategoryID.Int32 }}{{ range $.Categories }}{{ if eq $cat .ID }}{{ .Name.String }}{{ end }}{{ end }}</td>
     <td>
         <a href="/admin/faq/question/{{ .ID }}/edit">Edit</a> |

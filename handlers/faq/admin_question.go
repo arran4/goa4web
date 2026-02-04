@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/faq_templates"
 	"net/http"
 	"strconv"
 )
@@ -21,6 +22,7 @@ type AdminQuestions struct {
 	DismissedQuestions  []*db.AdminGetFAQDismissedQuestionsRow
 	Category            *db.FaqCategory
 	Categories          []*db.FaqCategory
+	Templates           []string
 }
 
 func (p *AdminQuestions) TemplateName() string {
@@ -31,7 +33,7 @@ func (p *AdminQuestion) TemplateName() string {
 	return "faq/adminQuestion.gohtml"
 }
 
-func (p *AdminQuestions) Load(ctx context.Context, d *db.Queries, r *http.Request) error {
+func (p *AdminQuestions) Load(ctx context.Context, d db.Querier, r *http.Request) error {
 	var err error
 	cid := r.URL.Query().Get("category")
 	if len(cid) > 0 {
@@ -48,26 +50,12 @@ func (p *AdminQuestions) Load(ctx context.Context, d *db.Queries, r *http.Reques
 			p.Questions, err = d.AdminGetFAQQuestionsByCategory(ctx, sql.NullInt32{Int32: cat.ID, Valid: true})
 		}
 	} else {
-		var answeredRows []*db.GetFAQAnsweredQuestionsRow
-		answeredRows, err = d.GetFAQAnsweredQuestions(ctx, db.GetFAQAnsweredQuestionsParams{
-			ViewerID: p.UserID,
-			UserID:   sql.NullInt32{Int32: p.UserID, Valid: true},
-		})
-		if err == nil {
-			p.Questions = make([]*db.Faq, len(answeredRows))
-			for i, r := range answeredRows {
-				p.Questions[i] = &db.Faq{
-					ID:         r.ID,
-					CategoryID: r.CategoryID,
-					LanguageID: r.LanguageID,
-					AuthorID:   r.AuthorID,
-					Answer:     r.Answer,
-					Question:   r.Question,
-					// Priority missing from row, defaulted to 0
-				}
-			}
-		}
+		p.Questions, err = d.AdminGetFAQActiveQuestions(ctx)
 	}
+	if err != nil {
+		return err
+	}
+	p.Templates, err = faq_templates.List()
 	if err != nil {
 		return err
 	}
@@ -86,7 +74,7 @@ func (p *AdminQuestions) Load(ctx context.Context, d *db.Queries, r *http.Reques
 	return nil
 }
 
-func (p *AdminQuestion) Load(ctx context.Context, d *db.Queries, r *http.Request) error {
+func (p *AdminQuestion) Load(ctx context.Context, d db.Querier, r *http.Request) error {
 	var err error
 	id := r.URL.Query().Get("id")
 	if len(id) > 0 {

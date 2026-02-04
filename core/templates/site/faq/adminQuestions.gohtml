@@ -8,6 +8,17 @@
 <h4>Dismissed Questions</h4>
 {{ template "adminQuestionTable" (dict "Rows" .DismissedQuestions "Categories" .Categories) }}
 
+<h4>Create Question from Template</h4>
+{{ if .Templates }}
+<ul>
+{{- range .Templates }}
+    <li><a href="/admin/faq/templates?template={{ . }}">{{ . }}</a></li>
+{{- end }}
+</ul>
+{{ else }}
+<p>No templates available.</p>
+{{ end }}
+
 <p><a href="/admin/faq/question/0/edit">Create New Question</a></p>
 
 {{ template "tail" $ }}

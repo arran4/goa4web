@@ -58,6 +58,26 @@ type QuerierStub struct {
 	AdminListFailedEmailIDsErr     error
 	AdminListFailedEmailIDsFn      func(context.Context, AdminListFailedEmailIDsParams) ([]int32, error)
 
+	AdminGetFAQActiveQuestionsCalls   int
+	AdminGetFAQActiveQuestionsReturns []*Faq
+	AdminGetFAQActiveQuestionsErr     error
+	AdminGetFAQActiveQuestionsFn      func(context.Context) ([]*Faq, error)
+
+	AdminGetFAQCategoriesCalls   int
+	AdminGetFAQCategoriesReturns []*FaqCategory
+	AdminGetFAQCategoriesErr     error
+	AdminGetFAQCategoriesFn      func(context.Context) ([]*FaqCategory, error)
+
+	AdminGetFAQUnansweredQuestionsCalls   int
+	AdminGetFAQUnansweredQuestionsReturns []*Faq
+	AdminGetFAQUnansweredQuestionsErr     error
+	AdminGetFAQUnansweredQuestionsFn      func(context.Context) ([]*Faq, error)
+
+	AdminGetFAQDismissedQuestionsCalls   int
+	AdminGetFAQDismissedQuestionsReturns []*AdminGetFAQDismissedQuestionsRow
+	AdminGetFAQDismissedQuestionsErr     error
+	AdminGetFAQDismissedQuestionsFn      func(context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
+
 	GetAllAnsweredFAQWithFAQCategoriesForUserCalls   []GetAllAnsweredFAQWithFAQCategoriesForUserParams
 	GetAllAnsweredFAQWithFAQCategoriesForUserReturns []*GetAllAnsweredFAQWithFAQCategoriesForUserRow
 	GetAllAnsweredFAQWithFAQCategoriesForUserErr     error

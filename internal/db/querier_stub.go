@@ -583,6 +583,10 @@ type QuerierStub struct {
 	AdminUpdateForumCategoryErr   error
 	AdminUpdateForumCategoryFn    func(context.Context, AdminUpdateForumCategoryParams) error
 
+	AdminUpdateFAQCalls []AdminUpdateFAQParams
+	AdminUpdateFAQErr   error
+	AdminUpdateFAQFn    func(context.Context, AdminUpdateFAQParams) error
+
 	AdminCountForumTopicsCalls   int
 	AdminCountForumTopicsReturns int64
 	AdminCountForumTopicsErr     error

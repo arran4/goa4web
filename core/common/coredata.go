@@ -1896,17 +1896,12 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID
 	if cd.queries == nil {
 		return nil
 	}
-	if err := cd.queries.AdminUpdateFAQQuestionAnswer(cd.ctx, db.AdminUpdateFAQQuestionAnswerParams{
+	if err := cd.queries.AdminUpdateFAQ(cd.ctx, db.AdminUpdateFAQParams{
 		Answer:     sql.NullString{String: answer, Valid: true},
 		Question:   sql.NullString{String: question, Valid: true},
 		CategoryID: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
+		Priority:   priority,
 		ID:         faqID,
-	}); err != nil {
-		return err
-	}
-	if err := cd.queries.AdminUpdateFAQPriority(cd.ctx, db.AdminUpdateFAQPriorityParams{
-		Priority: priority,
-		ID:       faqID,
 	}); err != nil {
 		return err
 	}

@@ -33,6 +33,11 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !cd.HasGrant("faq", "category", "edit", int32(id)) {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
+		return
+	}
+
 	queries := cd.Queries()
 
 	cat, err := queries.AdminGetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
@@ -82,6 +87,11 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !cd.HasGrant("faq", "category", "edit", int32(id)) {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
+		return
+	}
+
 	queries := cd.Queries()
 	cat, err := queries.AdminGetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
 	if err != nil {
@@ -123,6 +133,11 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !cd.HasGrant("faq", "category", "edit", int32(id)) {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
+		return
+	}
+
 	queries := cd.Queries()
 	cat, err := queries.AdminGetFAQCategoryWithQuestionCountByID(r.Context(), int32(id))
 	if err != nil {
@@ -152,6 +167,12 @@ const FaqAdminCategoryQuestionsPageTmpl tasks.Template = "faq/faqAdminCategoryQu
 // AdminNewCategoryPage displays a form to create a new FAQ category.
 func AdminNewCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	if !cd.HasGrant("faq", "category", "create", 0) {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
+		return
+	}
+
 	cd.PageTitle = "New FAQ Category"
 	FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
 }

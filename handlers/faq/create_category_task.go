@@ -27,6 +27,10 @@ func (CreateCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	priority, _ := strconv.Atoi(r.PostFormValue("priority"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
+	if !cd.HasGrant("faq", "category", "create", 0) {
+		return fmt.Errorf("permission denied %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("permission denied")))
+	}
+
 	if err := cd.CreateFAQCategory(text, int32(priority)); err != nil {
 		return fmt.Errorf("create category fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

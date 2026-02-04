@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/tasks"
 	"testing"
 
@@ -37,7 +38,7 @@ func TestPagesExist(t *testing.T) {
 
 	for _, page := range pages {
 		t.Run(string(page), func(t *testing.T) {
-			assert.True(t, page.Exists(), "Page %s should exist", page)
+			assert.True(t, page.Exists(templates.WithSilence(true)), "Page %s should exist", page)
 		})
 	}
 }

@@ -107,6 +107,7 @@ func newEmailReg() *email.Registry {
 
 func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
+	cfg.Silent = true
 	cfg.EmailProvider = ""
 
 	req := httptest.NewRequest("POST", "/admin/email/template", nil)
@@ -127,6 +128,7 @@ func TestAdminEmailTemplateTestAction_NoProvider(t *testing.T) {
 
 func TestAdminEmailTemplateTestAction_WithProvider(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
+	cfg.Silent = true
 	cfg.EmailProvider = "log"
 
 	queries := &emailTemplateQueries{
@@ -230,7 +232,7 @@ func TestNotifyAdminsEnv(t *testing.T) {
 	}
 
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithQueries(q), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
+	n := notif.New(notif.WithSilence(true), notif.WithQueries(q), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
@@ -257,7 +259,7 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 	defer os.Unsetenv(config.EnvAdminNotify)
 	cfg.AdminEmails = "a@test.com"
 	rec := &recordAdminMail{}
-	n := notif.New(notif.WithEmailProvider(rec), notif.WithConfig(cfg))
+	n := notif.New(notif.WithSilence(true), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
 	n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
 	if len(rec.to) != 0 {
 		t.Fatalf("expected 0 mails, got %d", len(rec.to))

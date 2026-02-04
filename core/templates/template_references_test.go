@@ -22,22 +22,22 @@ func TestAllTemplateReferencesAreSatisfied(t *testing.T) {
 	f["lower"] = func(s string) string { return s }
 
 	t.Run("site html", func(t *testing.T) {
-		tpl := templates.GetCompiledSiteTemplates(f)
+		tpl := templates.GetCompiledSiteTemplates(f, templates.WithSilence(true))
 		assertAllRefsSatisfiedHTML(t, tpl)
 	})
 
 	t.Run("email html", func(t *testing.T) {
-		tpl := templates.GetCompiledEmailHtmlTemplates(f)
+		tpl := templates.GetCompiledEmailHtmlTemplates(f, templates.WithSilence(true))
 		assertAllRefsSatisfiedHTML(t, tpl)
 	})
 
 	t.Run("notifications text", func(t *testing.T) {
-		tpl := templates.GetCompiledNotificationTemplates(f)
+		tpl := templates.GetCompiledNotificationTemplates(f, templates.WithSilence(true))
 		assertAllRefsSatisfiedText(t, tpl)
 	})
 
 	t.Run("email text", func(t *testing.T) {
-		tpl := templates.GetCompiledEmailTextTemplates(f)
+		tpl := templates.GetCompiledEmailTextTemplates(f, templates.WithSilence(true))
 		assertAllRefsSatisfiedText(t, tpl)
 	})
 }

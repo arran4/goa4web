@@ -95,8 +95,8 @@ func sampleEmailData() emailData {
 
 func TestEmailTemplatesExecute(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
-	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs)
-	textT := templates.GetCompiledEmailTextTemplates(funcs)
+	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs, templates.WithSilence(true))
+	textT := templates.GetCompiledEmailTextTemplates(funcs, templates.WithSilence(true))
 	data := sampleEmailData()
 
 	for _, tmpl := range htmlT.Templates() {

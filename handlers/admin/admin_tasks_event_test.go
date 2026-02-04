@@ -56,7 +56,7 @@ func setupTest(t *testing.T) (*db.QuerierStub, *eventbus.Bus, *notifications.Not
 	cfg.NotificationsEnabled = true
 	cfg.AdminNotify = true
 	cfg.EmailFrom = "test@example.com"
-	n := notifications.New(notifications.WithQueries(qs), notifications.WithConfig(cfg))
+	n := notifications.New(notifications.WithSilence(true), notifications.WithQueries(qs), notifications.WithConfig(cfg))
 	cdlq := &captureDLQ{}
 	n.RegisterSync(bus, cdlq)
 	store := sessions.NewCookieStore([]byte("test"))

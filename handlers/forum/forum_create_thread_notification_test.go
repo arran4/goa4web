@@ -98,7 +98,7 @@ func TestCreateThreadNotificationLink(t *testing.T) {
 	cfg.AdminNotify = true
 
 	mockProvider := &MockEmailProvider{}
-	n := notifications.New(
+	n := notifications.New(notifications.WithSilence(true),
 		notifications.WithQueries(qs),
 		notifications.WithConfig(cfg),
 		notifications.WithEmailProvider(mockProvider),

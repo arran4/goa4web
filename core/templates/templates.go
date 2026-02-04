@@ -38,15 +38,34 @@ func SetDir(dir string) {
 }
 
 type config struct {
-	Dir string
+	Dir    string
+	Silent bool
 }
 
-type Option func(*config)
+type Option interface {
+	Apply(*config)
+}
+
+type funcOption func(*config)
+
+func (f funcOption) Apply(c *config) {
+	f(c)
+}
 
 func WithDir(dir string) Option {
-	return func(c *config) {
+	return funcOption(func(c *config) {
 		c.Dir = dir
-	}
+	})
+}
+
+type silentOption bool
+
+func (s silentOption) Apply(c *config) {
+	c.Silent = bool(s)
+}
+
+func WithSilence(silent bool) Option {
+	return silentOption(silent)
 }
 
 // newCfg creates a new config, applying the package-level templateDir if set.
@@ -55,7 +74,7 @@ func newCfg(opts ...Option) *config {
 		Dir: templateDir,
 	}
 	for _, o := range opts {
-		o(cfg)
+		o.Apply(cfg)
 	}
 	return cfg
 }
@@ -140,7 +159,9 @@ func getAssetContent(name string, cfg *config) ([]byte, error) {
 
 func getFS(sub string, cfg *config) fs.FS {
 	if cfg.Dir == "" {
-		log.Println("Embedded Template Mode")
+		if !cfg.Silent {
+			log.Println("Embedded Template Mode")
+		}
 		f, err := fs.Sub(embeddedFS, sub)
 		if err != nil {
 			panic(err)

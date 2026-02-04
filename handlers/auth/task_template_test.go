@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/arran4/goa4web/core/templates"
 	"testing"
 
 	"github.com/arran4/goa4web/internal/tasks"
@@ -22,7 +23,7 @@ func TestAuthTasksTemplatesExist(t *testing.T) {
 				t.Errorf("RequiredTemplates returned no templates")
 			}
 			for _, p := range req {
-				if !p.Exists() {
+				if !p.Exists(templates.WithSilence(true)) {
 					t.Errorf("missing template: %s", p)
 				}
 			}

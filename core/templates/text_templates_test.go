@@ -16,8 +16,8 @@ var textTemplates embed.FS
 
 func TestParseGoTxtTemplates(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
-	emailTemplates := templates.GetCompiledEmailTextTemplates(funcs)
-	notificationTemplates := templates.GetCompiledNotificationTemplates(funcs)
+	emailTemplates := templates.GetCompiledEmailTextTemplates(funcs, templates.WithSilence(true))
+	notificationTemplates := templates.GetCompiledNotificationTemplates(funcs, templates.WithSilence(true))
 
 	err := fs.WalkDir(textTemplates, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -51,15 +51,15 @@ func TestParseGoTxtTemplates(t *testing.T) {
 
 func TestAnnouncementTemplatesExist(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
-	nt := templates.GetCompiledNotificationTemplates(funcs)
+	nt := templates.GetCompiledNotificationTemplates(funcs, templates.WithSilence(true))
 	if nt.Lookup("announcement.gotxt") == nil {
 		t.Fatalf("missing announcement notification template")
 	}
-	et := templates.GetCompiledEmailHtmlTemplates(funcs)
+	et := templates.GetCompiledEmailHtmlTemplates(funcs, templates.WithSilence(true))
 	if et.Lookup("announcementEmail.gohtml") == nil {
 		t.Fatalf("missing announcement email html template")
 	}
-	tt := templates.GetCompiledEmailTextTemplates(funcs)
+	tt := templates.GetCompiledEmailTextTemplates(funcs, templates.WithSilence(true))
 	if tt.Lookup("announcementEmail.gotxt") == nil {
 		t.Fatalf("missing announcement email text template")
 	}
@@ -67,8 +67,8 @@ func TestAnnouncementTemplatesExist(t *testing.T) {
 
 func TestAllEmailTemplatesComplete(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
-	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs)
-	textT := templates.GetCompiledEmailTextTemplates(funcs)
+	htmlT := templates.GetCompiledEmailHtmlTemplates(funcs, templates.WithSilence(true))
+	textT := templates.GetCompiledEmailTextTemplates(funcs, templates.WithSilence(true))
 
 	type trio struct{ html, text, subj bool }
 	m := map[string]*trio{}

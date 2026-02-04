@@ -35,10 +35,16 @@ type Notifier struct {
 	emailHTMLOnce  sync.Once
 	emailHTMLTmpls *htemplate.Template
 	CustomQueries  db.CustomQueries
+	Silent         bool
 }
 
 // Option configures a Notifier instance.
 type Option func(*Notifier)
+
+// WithSilence suppresses embedded template mode logging.
+func WithSilence(silent bool) Option {
+	return func(n *Notifier) { n.Silent = silent }
+}
 
 // WithQueries sets the db.Queries dependency.
 func WithQueries(q db.Querier) Option { return func(n *Notifier) { n.Queries = q } }
@@ -72,7 +78,8 @@ func New(opts ...Option) *Notifier {
 
 func (n *Notifier) notificationTemplates() *ttemplate.Template {
 	n.noteOnce.Do(func() {
-		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
+		silent := n.Silent || (n.Config != nil && n.Config.Silent)
+		n.noteTmpls = templates.GetCompiledNotificationTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(silent))
 	})
 	return n.noteTmpls
 }
@@ -99,14 +106,16 @@ func defaultFuncs() map[string]any {
 
 func (n *Notifier) emailTextTemplates() *ttemplate.Template {
 	n.emailTextOnce.Do(func() {
-		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
+		silent := n.Silent || (n.Config != nil && n.Config.Silent)
+		n.emailTextTmpls = templates.GetCompiledEmailTextTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(silent))
 	})
 	return n.emailTextTmpls
 }
 
 func (n *Notifier) emailHTMLTemplates() *htemplate.Template {
 	n.emailHTMLOnce.Do(func() {
-		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir))
+		silent := n.Silent || (n.Config != nil && n.Config.Silent)
+		n.emailHTMLTmpls = templates.GetCompiledEmailHtmlTemplates(defaultFuncs(), templates.WithDir(n.Config.TemplatesDir), templates.WithSilence(silent))
 	})
 	return n.emailHTMLTmpls
 }

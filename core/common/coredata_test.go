@@ -390,8 +390,8 @@ func TestSelectedQuestionFromCategory(t *testing.T) {
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
 
-	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question", "priority", "deleted_at"}).
-		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{}, 0, sql.NullTime{})
+	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question", "priority", "deleted_at", "updated_at"}).
+		AddRow(1, 2, 0, 0, sql.NullString{}, sql.NullString{}, 0, sql.NullTime{}, sql.NullTime{})
 	mock.ExpectQuery("SELECT id, category_id").WithArgs(int32(1)).WillReturnRows(row)
 	mock.ExpectExec("UPDATE faq SET deleted_at").WithArgs(int32(1)).WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -414,8 +414,8 @@ func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
 
-	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question", "priority"}).
-		AddRow(1, 3, 0, 0, sql.NullString{}, sql.NullString{}, 0)
+	row := sqlmock.NewRows([]string{"id", "category_id", "language_id", "author_id", "answer", "question", "priority", "deleted_at", "updated_at"}).
+		AddRow(1, 3, 0, 0, sql.NullString{}, sql.NullString{}, 0, sql.NullTime{}, sql.NullTime{})
 	mock.ExpectQuery("SELECT id, category_id").WithArgs(int32(1)).WillReturnRows(row)
 
 	if err := cd.SelectedQuestionFromCategory(1, 2); err == nil {

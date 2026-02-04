@@ -1,10 +1,8 @@
 package faq
 
 import (
+	"context"
 	"database/sql"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/faq_templates"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/faq_templates"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -27,6 +26,12 @@ type AdminQuestions struct {
 	Categories          []*db.FaqCategory
 	Templates           []string
 }
+
+type AdminQuestion struct {
+	common.CoreData
+	Question *db.Faq
+}
+
 // AdminQuestionPage displays a single FAQ question.
 func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -56,7 +61,7 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-  	var category *db.FaqCategory
+	var category *db.FaqCategory
 	if faq.CategoryID.Valid {
 		category, err = queries.AdminGetFAQCategory(r.Context(), faq.CategoryID.Int32)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {

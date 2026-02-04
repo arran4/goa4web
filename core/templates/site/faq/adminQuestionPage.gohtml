@@ -12,7 +12,7 @@
 <h1>Question: {{ .Faq.Question.String }}</h1>
 
 <p><strong><a href="/admin/faq/categories/category/{{ if .Category }}{{ .Category.ID }}{{ else }}0{{ end }}/questions">Priority</a>:</strong> {{ .Faq.Priority }}</p>
-<p><strong>Author:</strong> {{ if .Author }}<a href="/user/{{ .Author.Username.String }}">{{ .Author.Username.String }}</a>{{ else }}Unknown ({{ .Faq.AuthorID }}){{ end }}</p>
+<p><strong>Author:</strong> {{ if .Author }}<a href="/user/profile/{{ .Author.Username.String }}">{{ .Author.Username.String }}</a>{{ else }}Unknown ({{ .Faq.AuthorID }}){{ end }}</p>
 <p><strong>Language:</strong> {{ if .Language }}{{ .Language }}{{ else }}ID: {{ .Faq.LanguageID.Int32 }}{{ end }}</p>
 <p><strong>Updated At:</strong> {{ if .Faq.UpdatedAt.Valid }}{{ .Faq.UpdatedAt.Time.Format "2006-01-02 15:04:05 UTC" }} / {{ formatLocalTime .Faq.UpdatedAt.Time }}{{ else }}N/A{{ end }}</p>
 <p><strong>Public Link:</strong> <a href="/faq#question-{{ .Faq.ID }}">View in FAQ</a></p>

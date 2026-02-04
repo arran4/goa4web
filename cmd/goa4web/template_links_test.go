@@ -124,6 +124,9 @@ func TestTemplateLinks(t *testing.T) {
 				if idx := strings.Index(urlPath, "?"); idx != -1 {
 					urlPath = urlPath[:idx]
 				}
+				if idx := strings.Index(urlPath, "#"); idx != -1 {
+					urlPath = urlPath[:idx]
+				}
 
 				variants := []string{"1", "dummy", "a", "user", "queue"}
 				matched := false

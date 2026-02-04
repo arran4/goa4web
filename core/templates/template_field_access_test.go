@@ -20,13 +20,15 @@ func TestTemplateFieldAccess(t *testing.T) {
 		{
 			Name: "faq/faqAdminCategoryEditPage.gohtml",
 			Data: struct {
-				Category *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+				Category   *db.AdminGetFAQCategoryWithQuestionCountByIDRow
+				Categories []*db.FaqCategory
 			}{
 				Category: &db.AdminGetFAQCategoryWithQuestionCountByIDRow{
 					ID:            1,
 					Name:          sql.NullString{String: "Test Category", Valid: true},
 					Questioncount: 5,
 				},
+				Categories: []*db.FaqCategory{},
 			},
 		},
 		{

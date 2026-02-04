@@ -12,9 +12,10 @@
 <h1>Question: {{ .Faq.Question.String }}</h1>
 
 <p><strong>Priority:</strong> {{ .Faq.Priority }}</p>
-<p><strong>Author ID:</strong> {{ .Faq.AuthorID }}</p>
+<p><strong>Author:</strong> {{ if .Author }}<a href="/user/{{ .Author.Username.String }}">{{ .Author.Username.String }}</a>{{ else }}Unknown ({{ .Faq.AuthorID }}){{ end }}</p>
 <p><strong>Language ID:</strong> {{ .Faq.LanguageID.Int32 }}</p>
 <p><strong>Updated At:</strong> {{ .Faq.UpdatedAt.Time }}</p>
+<p><strong>Public Link:</strong> <a href="/faq#question-{{ .Faq.ID }}">View in FAQ</a></p>
 
 <h3>Answer</h3>
 <div class="faq-answer">

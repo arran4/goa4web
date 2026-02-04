@@ -20,6 +20,7 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Faq      *db.Faq
 		Category *db.FaqCategory
+		Author   *db.SystemGetUserByIDRow
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -52,8 +53,10 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	author := cd.UserByID(faq.AuthorID)
+
 	cd.PageTitle = fmt.Sprintf("FAQ: %s", faq.Question.String)
-	data := Data{Faq: faq, Category: category}
+	data := Data{Faq: faq, Category: category, Author: author}
 	AdminQuestionPageTmpl.Handle(w, r, data)
 }
 

@@ -81,6 +81,18 @@ func (s *QuerierStub) SystemDeletePasswordResetsByUser(ctx context.Context, user
 	return ret, err
 }
 
+func (s *QuerierStub) AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error {
+	s.mu.Lock()
+	s.AdminUpdateFAQCalls = append(s.AdminUpdateFAQCalls, arg)
+	fn := s.AdminUpdateFAQFn
+	err := s.AdminUpdateFAQErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
 func (s *QuerierStub) AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error) {
 	s.mu.Lock()
 	s.AdminCountPasswordResetsCalls = append(s.AdminCountPasswordResetsCalls, arg)

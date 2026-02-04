@@ -471,6 +471,31 @@ func (q *Queries) AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQ
 	return err
 }
 
+const adminUpdateFAQ = `-- name: AdminUpdateFAQ :exec
+UPDATE faq
+SET answer = ?, question = ?, category_id = ?, priority = ?, updated_at = NOW()
+WHERE id = ?
+`
+
+type AdminUpdateFAQParams struct {
+	Answer     sql.NullString
+	Question   sql.NullString
+	CategoryID sql.NullInt32
+	Priority   int32
+	ID         int32
+}
+
+func (q *Queries) AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateFAQ,
+		arg.Answer,
+		arg.Question,
+		arg.CategoryID,
+		arg.Priority,
+		arg.ID,
+	)
+	return err
+}
+
 const adminUpdateFAQQuestionAnswer = `-- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
 SET answer = ?, question = ?, category_id = ?, updated_at = NOW()

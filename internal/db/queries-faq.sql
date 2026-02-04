@@ -251,6 +251,11 @@ WHERE faq.category_id = sqlc.arg(category_id)
 -- name: AdminUpdateFAQPriority :exec
 UPDATE faq SET priority = ?, updated_at = NOW() WHERE id = ?;
 
+-- name: AdminUpdateFAQ :exec
+UPDATE faq
+SET answer = ?, question = ?, category_id = ?, priority = ?, updated_at = NOW()
+WHERE id = ?;
+
 -- name: AdminCreateFAQ :execresult
 INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
 VALUES (?, ?, ?, ?, ?, ?);

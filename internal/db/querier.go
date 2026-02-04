@@ -263,6 +263,7 @@ type Querier interface {
 	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error
 	AdminUpdateFAQCategory(ctx context.Context, arg AdminUpdateFAQCategoryParams) error
 	AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQPriorityParams) error
 	AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error

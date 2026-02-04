@@ -74,6 +74,9 @@ func TestCreateThreadNotificationLink(t *testing.T) {
 		creatorUID: {AutoSubscribeReplies: true},
 	}
 	qs.AdminListAdministratorEmailsReturns = []string{"admin@example.com"}
+	qs.ListSubscribersForPatternsReturn = map[string][]int32{
+		"notify:/admin/*": {adminUID},
+	}
 
 	// Mocks for HasGrant/UserCanCreateThread checks
 	qs.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {

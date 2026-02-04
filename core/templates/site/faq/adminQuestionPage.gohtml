@@ -1,0 +1,63 @@
+{{ template "head" $ }}
+<div class="breadcrumbs">
+    <a href="/admin/faq/categories">Categories</a>
+    {{ if .Category }}
+    &gt; <a href="/admin/faq/categories/category/{{ .Category.ID }}">{{ .Category.Name.String }}</a>
+    {{ else }}
+    &gt; Unassigned
+    {{ end }}
+    &gt; Question {{ .Faq.ID }}
+</div>
+
+<h1>Question: {{ .Faq.Question.String }}</h1>
+
+<p><strong><a href="/admin/faq/categories/category/{{ if .Category }}{{ .Category.ID }}{{ else }}0{{ end }}/questions">Priority</a>:</strong> {{ .Faq.Priority }}</p>
+<p><strong>Author:</strong> {{ if .Author }}<a href="/user/{{ .Author.Username.String }}">{{ .Author.Username.String }}</a>{{ else }}Unknown ({{ .Faq.AuthorID }}){{ end }}</p>
+<p><strong>Language:</strong> {{ if .Language }}{{ .Language }}{{ else }}ID: {{ .Faq.LanguageID.Int32 }}{{ end }}</p>
+<p><strong>Updated At:</strong> {{ if .Faq.UpdatedAt.Valid }}{{ .Faq.UpdatedAt.Time.Format "2006-01-02 15:04:05 UTC" }} / {{ formatLocalTime .Faq.UpdatedAt.Time }}{{ else }}N/A{{ end }}</p>
+<p><strong>Public Link:</strong> <a href="/faq#question-{{ .Faq.ID }}">View in FAQ</a></p>
+
+<h3>Answer</h3>
+<div class="tab-container">
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event, 'Preview')">Preview</button>
+        <button class="tab-button" onclick="openTab(event, 'Raw')">Raw</button>
+    </div>
+    <div id="Preview" class="tab-content" style="display: block;">
+        <div class="faq-answer">
+            {{ a4code2html .Faq.Answer.String }}
+        </div>
+    </div>
+    <div id="Raw" class="tab-content" style="display: none;">
+        <pre>{{ .Faq.Answer.String }}</pre>
+    </div>
+</div>
+
+<script>
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tab-button");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+</script>
+<style>
+.tab-container { margin-top: 10px; border: 1px solid #ccc; padding: 10px; }
+.tabs { overflow: hidden; border-bottom: 1px solid #ccc; margin-bottom: 10px; }
+.tab-button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; }
+.tab-button:hover { background-color: #ddd; }
+.tab-button.active { background-color: #ccc; }
+</style>
+
+<p>
+    <a href="/admin/faq/question/{{ .Faq.ID }}/edit" class="button">Edit Question</a>
+</p>
+
+{{ template "tail" $ }}

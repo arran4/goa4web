@@ -27,6 +27,7 @@ func (CreateQuestionTask) Match(r *http.Request, m *mux.RouteMatch) bool {
 func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 	question := r.PostFormValue("question")
 	answer := r.PostFormValue("answer")
+	priority, _ := strconv.Atoi(r.PostFormValue("priority"))
 	category, err := strconv.Atoi(r.PostFormValue("category"))
 	if err != nil {
 		return fmt.Errorf("category parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -48,6 +49,7 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CategoryID: int32(category),
 		WriterID:   uid,
 		LanguageID: 1,
+		Priority:   int32(priority),
 	}); err != nil {
 		return fmt.Errorf("insert faq fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

@@ -3,7 +3,26 @@
 <form method="post" action="/admin/faq/categories">
 {{ csrfField }}
 <input type="hidden" name="cid" value="{{ .Category.ID }}">
-<input name="cname" value="{{ .Category.Name.String }}">
+<div class="form-group">
+    <label for="cname">Name:</label>
+    <input id="cname" name="cname" value="{{ .Category.Name.String }}">
+</div>
+<div class="form-group">
+    <label for="priority">Priority:</label>
+    <input id="priority" name="priority" type="number" value="{{ .Category.Priority }}">
+</div>
+<div class="form-group">
+    <label for="parent_id">Parent Category:</label>
+    <select id="parent_id" name="parent_id">
+        <option value="0">None</option>
+        {{- $currentParent := .Category.ParentCategoryID.Int32 }}
+        {{- range .Categories }}
+            {{- if ne .ID $.Category.ID }}
+            <option value="{{ .ID }}" {{ if eq .ID $currentParent }}selected{{ end }}>{{ .Name.String }}</option>
+            {{- end }}
+        {{- end }}
+    </select>
+</div>
 <p>
     <input type="submit" name="task" value="Rename Category">
     <input type="submit" name="task" value="Delete Category">

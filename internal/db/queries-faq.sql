@@ -45,20 +45,20 @@ FROM faq;
 
 -- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
-SET name = ?
+SET name = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminUpdateFAQCategory :exec
 UPDATE faq_categories
-SET name = ?, parent_category_id = ?, language_id = ?
+SET name = ?, parent_category_id = ?, language_id = ?, priority = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminDeleteFAQCategory :exec
-UPDATE faq_categories SET deleted_at = NOW()
+UPDATE faq_categories SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminCreateFAQCategory :execresult
-INSERT INTO faq_categories (name, parent_category_id, language_id) VALUES (?, ?, ?);
+INSERT INTO faq_categories (name, parent_category_id, language_id, priority) VALUES (?, ?, ?, ?);
 
 -- name: CreateFAQQuestionForWriter :exec
 INSERT INTO faq (question, author_id, language_id)
@@ -76,8 +76,8 @@ WHERE EXISTS (
 );
 
 -- name: InsertFAQQuestionForWriter :execresult
-INSERT INTO faq (question, answer, category_id, author_id, language_id)
-SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.narg(language_id)
+INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
+SELECT sqlc.arg(question), sqlc.arg(answer), sqlc.arg(category_id), sqlc.arg(writer_id), sqlc.narg(language_id), sqlc.arg(priority)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'faq'
@@ -92,11 +92,11 @@ WHERE EXISTS (
 
 -- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?
+SET answer = ?, question = ?, category_id = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminDeleteFAQ :exec
-UPDATE faq SET deleted_at = NOW()
+UPDATE faq SET deleted_at = NOW(), updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminGetFAQCategories :many
@@ -147,11 +147,12 @@ WHERE c.id IS NOT NULL
 ORDER BY c.id, f.id;
 
 -- name: AdminGetFAQCategoriesWithQuestionCount :many
-SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
+SELECT c.id, c.parent_category_id, c.language_id, c.name, c.priority, c.updated_at, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.deleted_at IS NULL
-GROUP BY c.id, c.parent_category_id, c.language_id, c.name;
+GROUP BY c.id, c.parent_category_id, c.language_id, c.name, c.priority, c.updated_at
+ORDER BY c.priority DESC, c.name ASC;
 
 
 -- name: AdminGetFAQByID :one
@@ -207,14 +208,14 @@ WHERE EXISTS (
 SELECT * FROM faq_revisions WHERE faq_id = ? ORDER BY id DESC;
 
 -- name: AdminGetFAQCategoryWithQuestionCountByID :one
-SELECT c.id, c.parent_category_id, c.language_id, c.name, COUNT(f.id) AS QuestionCount
+SELECT c.id, c.parent_category_id, c.language_id, c.name, c.priority, c.updated_at, COUNT(f.id) AS QuestionCount
 FROM faq_categories c
 LEFT JOIN faq f ON f.category_id = c.id
 WHERE c.id = ?
-GROUP BY c.id, c.parent_category_id, c.language_id, c.name;
+GROUP BY c.id, c.parent_category_id, c.language_id, c.name, c.priority, c.updated_at;
 
 -- name: AdminGetFAQQuestionsByCategory :many
-SELECT * FROM faq WHERE category_id = ?;
+SELECT * FROM faq WHERE category_id = ? ORDER BY priority DESC, id DESC;
 
 -- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
@@ -248,14 +249,14 @@ WHERE faq.category_id = sqlc.arg(category_id)
   );
 
 -- name: AdminUpdateFAQPriority :exec
-UPDATE faq SET priority = ? WHERE id = ?;
+UPDATE faq SET priority = ?, updated_at = NOW() WHERE id = ?;
 
 -- name: AdminCreateFAQ :execresult
 INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: AdminMoveFAQContent :exec
-UPDATE faq SET category_id = sqlc.arg(new_category_id) WHERE category_id = sqlc.arg(old_category_id);
+UPDATE faq SET category_id = sqlc.arg(new_category_id), updated_at = NOW() WHERE category_id = sqlc.arg(old_category_id);
 
 -- name: AdminMoveFAQChildren :exec
-UPDATE faq_categories SET parent_category_id = sqlc.arg(new_parent_id) WHERE parent_category_id = sqlc.arg(old_parent_id);
+UPDATE faq_categories SET parent_category_id = sqlc.arg(new_parent_id), updated_at = NOW() WHERE parent_category_id = sqlc.arg(old_parent_id);

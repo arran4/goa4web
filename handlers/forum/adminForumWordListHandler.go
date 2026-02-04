@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
@@ -31,7 +30,7 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

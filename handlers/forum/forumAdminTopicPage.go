@@ -37,7 +37,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("AdminTopicPage: Error fetching topic %d: %v", tid, err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Topic %d", tid)
@@ -110,19 +110,19 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("AdminTopicEditFormPage: Error fetching topic %d: %v", tid, err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	categories, err := cd.ForumCategories()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	roles, err := cd.AllRoles()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Forum Topic %d", tid)

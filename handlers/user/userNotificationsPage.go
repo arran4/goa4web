@@ -61,7 +61,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		count, err = cd.Queries().GetUnreadNotificationCountForLister(r.Context(), cd.UserID)
 	}
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -248,13 +248,13 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 	notifs, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: limit, Offset: 0})
 	if err != nil {
 		log.Printf("notify feed: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }
@@ -286,13 +286,13 @@ func notificationsAtomPage(w http.ResponseWriter, r *http.Request) {
 	notifs, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: limit, Offset: 0})
 	if err != nil {
 		log.Printf("notify feed: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }

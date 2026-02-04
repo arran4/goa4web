@@ -33,7 +33,7 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd.SetCurrentBlog(int32(blogID))
 	cd.PageTitle = "Admin Edit Blog"
 	if _, err := cd.Languages(); err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	labels, _ := cd.BlogAuthorLabels(int32(blogID))

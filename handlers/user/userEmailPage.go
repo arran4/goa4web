@@ -2,7 +2,6 @@ package user
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -71,7 +70,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	session, err := core.GetSession(r)
 	if err != nil {
 		log.Printf("get session: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	uid, _ := session.Values["UID"].(int32)

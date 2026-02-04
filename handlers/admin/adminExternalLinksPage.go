@@ -30,7 +30,7 @@ func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.AdminListExternalLinks(r.Context(), db.AdminListExternalLinksParams{Limit: 200, Offset: 0})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list external links: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	if query != "" {

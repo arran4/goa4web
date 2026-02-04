@@ -37,7 +37,7 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 		default:
 			log.Printf("SystemGetUserByUsername Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}
@@ -52,7 +52,7 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("GetLinkerItemsByUserDescending Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

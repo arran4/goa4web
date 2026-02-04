@@ -3,7 +3,6 @@ package linker
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -35,7 +34,7 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getAllLinkerCategories Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

@@ -32,7 +32,7 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 		Offset:   0,
 	})
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Links by %s", user.Username.String)

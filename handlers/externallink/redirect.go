@@ -177,6 +177,6 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 	}
 }

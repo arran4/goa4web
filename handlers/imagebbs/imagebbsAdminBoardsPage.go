@@ -3,7 +3,6 @@ package imagebbs
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -42,7 +41,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	boards, err := queries.AdminListBoards(r.Context(), db.AdminListBoardsParams{Limit: limit + 1, Offset: int32((page - 1) * limit)})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("listBoards error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	nextPage := 0

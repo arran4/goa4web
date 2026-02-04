@@ -37,7 +37,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	var posts []*db.ListImagePostsByBoardForListerRow
@@ -51,7 +51,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("feed query error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		posts = append(posts, rows...)
@@ -59,7 +59,7 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	feed := cd.ImageBBSFeed(r, "ImageBBS", 0, posts)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }
@@ -85,7 +85,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query boards error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	var posts []*db.ListImagePostsByBoardForListerRow
@@ -99,7 +99,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("feed query error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		posts = append(posts, rows...)
@@ -107,7 +107,7 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	feed := cd.ImageBBSFeed(r, "ImageBBS", 0, posts)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }
@@ -134,7 +134,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	title := fmt.Sprintf("Board %d", bid)
@@ -157,7 +157,7 @@ func BoardRssPage(w http.ResponseWriter, r *http.Request) {
 	feed := cd.ImageBBSFeed(r, title, bid, rows)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }
@@ -184,7 +184,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	title := fmt.Sprintf("Board %d", bid)
@@ -207,7 +207,7 @@ func BoardAtomPage(w http.ResponseWriter, r *http.Request) {
 	feed := cd.ImageBBSFeed(r, title, bid, rows)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }

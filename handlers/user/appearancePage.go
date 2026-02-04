@@ -22,7 +22,7 @@ func userAppearancePage(w http.ResponseWriter, r *http.Request) {
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get preference: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	customCSS := ""
@@ -73,12 +73,12 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 				PageSize: 15, // Default
 			}); err != nil {
 				log.Printf("insert preference: %v", err)
-				return fmt.Errorf("Internal Server Error")
+				return common.ErrInternalServerError
 			}
 			// Load it again (or fake it, but simpler to just proceed)
 		} else {
 			log.Printf("check preference: %v", err)
-			return fmt.Errorf("Internal Server Error")
+			return common.ErrInternalServerError
 		}
 	}
 
@@ -87,7 +87,7 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CustomCss: sql.NullString{String: customCSS, Valid: customCSS != ""},
 	}); err != nil {
 		log.Printf("update custom css: %v", err)
-		return fmt.Errorf("Internal Server Error")
+		return common.ErrInternalServerError
 	}
 
 	// Update cached preference object in place so the re-rendered page sees the new value

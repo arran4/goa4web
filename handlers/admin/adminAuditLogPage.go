@@ -3,7 +3,6 @@ package admin
 import (
 	"database/sql"
 	"encoding/csv"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -109,7 +108,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		rows, err := queries.AdminListAuditLogs(r.Context(), listParams)
 		if err != nil {
 			log.Printf("list audit logs for export: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		writeAuditLogCSV(w, rows)
@@ -119,7 +118,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.AdminListAuditLogs(r.Context(), listParams)
 	if err != nil {
 		log.Printf("list audit logs: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -172,7 +171,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("list audit log summary: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data.Summary = summaryRows

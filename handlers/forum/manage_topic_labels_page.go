@@ -59,7 +59,7 @@ func ManageTopicLabelsPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Printf("ForumTopicByID Error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}

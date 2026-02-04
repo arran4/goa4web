@@ -43,7 +43,7 @@ func AdminUnmanagedFilesPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		default:
 			log.Printf("readdir: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}

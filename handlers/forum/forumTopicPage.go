@@ -3,7 +3,6 @@ package forum
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -76,7 +75,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	if err != nil {
 		log.Printf("getAllForumCategories Error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	topicRow, err := cd.ForumTopicByID(int32(topicId))
@@ -86,7 +85,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		} else {
 			log.Printf("showTableTopics Error: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}

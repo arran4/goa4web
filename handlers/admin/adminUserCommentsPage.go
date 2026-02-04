@@ -20,7 +20,7 @@ func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := cd.AdminCommentsByUser(cpu.Idusers); err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Comments by %s", cpu.Username.String)

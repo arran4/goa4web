@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -29,7 +28,7 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 	rows, err := cd.Queries().AdminListTopicsWithUserGrantsNoRoles(r.Context(), true)
 	if err != nil {
 		log.Printf("list topics with user grants: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	topics := make([]*maintenanceTopic, 0, len(rows))

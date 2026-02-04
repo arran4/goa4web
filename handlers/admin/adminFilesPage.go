@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -31,7 +30,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	total, err := queries.AdminCountAllImagePosts(r.Context())
 	if err != nil {
 		log.Printf("count images: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -41,7 +40,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("list images: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

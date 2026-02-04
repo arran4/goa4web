@@ -68,7 +68,7 @@ func AdminTemplatesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	languages, err := cd.Languages()
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	authors, err := cd.AdminListUsers()

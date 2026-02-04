@@ -168,7 +168,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		if tn, ok := evt.Task.(tasks.Name); ok {
 			name = tn.Name()
 		}
-		patterns = buildPatterns(tasks.TaskString(name), evt.Path)
+		patterns = append(patterns, buildPatterns(tasks.TaskString(name), evt.Path)...)
 	}
 
 	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")

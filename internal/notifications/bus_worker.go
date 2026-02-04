@@ -175,8 +175,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 		log.Printf("collect self internal subs: %v", err)
 	}
 
-	shouldSendEmail := true
-	shouldSendInternal := true
+	var shouldSendEmail, shouldSendInternal bool
 
 	if emailSubs != nil {
 		// If map exists, check if user is in it. If not, don't send.
@@ -185,22 +184,10 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 		// If user hasn't subscribed, we skip.
 		// This requires "Mandatory" definitions to ensure the user IS subscribed.
 		_, shouldSendEmail = emailSubs[evt.UserID]
-	} else {
-		// If collectSubscribers returns nil/empty map, it means no one is subscribed.
-		// Since we want mandatory subscriptions to be present, absence means no send.
-		shouldSendEmail = false
 	}
-	// Exception: If no subscriptions found at all, maybe fallback to send?
-	// But we want to control it.
-	// Actually collectSubscribers returns empty map if no one.
-	// We only want to enforce subscription if the pattern is "known" (has definition).
-	// But notifier doesn't know definitions.
-	// If we enforce it, we MUST ensure the subscription is inserted.
 
 	if internalSubs != nil {
 		_, shouldSendInternal = internalSubs[evt.UserID]
-	} else {
-		shouldSendInternal = false
 	}
 
 	if et, send := tp.SelfEmailTemplate(evt); send && shouldSendEmail {

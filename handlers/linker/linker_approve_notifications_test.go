@@ -104,6 +104,7 @@ func TestLinkerApprove(t *testing.T) {
 	}
 	qs.ListSubscribersForPatternsReturn = map[string][]int32{
 		"approve:/admin/queue": {subscriberUID},
+		"notify:/admin/*":      {adminUID},
 	}
 	qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
 		moderatorUID: {AutoSubscribeReplies: true},

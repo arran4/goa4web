@@ -129,6 +129,7 @@ func TestNewsReply(t *testing.T) {
 	}
 	qs.ListSubscribersForPatternsReturn = map[string][]int32{
 		fmt.Sprintf("reply:/news/news/%d", postID): {subscriberUID},
+		"notify:/admin/*":                          {adminUID},
 	}
 	qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
 		replierUID: {AutoSubscribeReplies: true},

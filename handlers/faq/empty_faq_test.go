@@ -2,10 +2,10 @@ package faq_test
 
 import (
 	"bytes"
+	"html/template"
+	"net/http/httptest"
 	"strings"
 	"testing"
-	"net/http/httptest"
-	"html/template"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"

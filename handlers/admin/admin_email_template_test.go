@@ -99,6 +99,15 @@ func (q *notifyAdminsQueries) InsertPendingEmail(_ context.Context, arg db.Inser
 	return nil
 }
 
+func (q *notifyAdminsQueries) ListSubscribersForPatterns(ctx context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
+	for _, p := range arg.Patterns {
+		if p == "notify:/admin/*" {
+			return []int32{1, 2}, nil
+		}
+	}
+	return nil, nil
+}
+
 func newEmailReg() *email.Registry {
 	r := email.NewRegistry()
 	logProv.Register(r)

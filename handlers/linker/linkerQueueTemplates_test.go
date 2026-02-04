@@ -10,8 +10,8 @@ import (
 
 func checkQueueEmailTemplates(t *testing.T, prefix string) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
-	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
 	if htmlTmpls.Lookup(notif.EmailHTMLTemplateFilenameGenerator(prefix)) == nil {
 		t.Errorf("missing html template %s.gohtml", prefix)
 	}

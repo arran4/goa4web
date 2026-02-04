@@ -108,6 +108,8 @@ type CoreData struct {
 	a4codeMapper func(tag, val string) string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode         bool
+	// Silent suppresses embedded template mode logging.
+	Silent            bool
 	AtomFeedURL       string
 	PublicAtomFeedURL string
 	AutoRefresh       string
@@ -1210,6 +1212,9 @@ func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name strin
 	var opts []templates.Option
 	if cd.Config != nil && cd.Config.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cd.Config.TemplatesDir))
+	}
+	if cd.Silent {
+		opts = append(opts, templates.WithSilence(true))
 	}
 	return templates.GetCompiledSiteTemplates(cd.Funcs(r), opts...).ExecuteTemplate(w, name, data)
 }
@@ -3006,6 +3011,11 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 	return func(p *db.GetPublicWritingsParams) { p.Limit = l }
 }
 
+// WithSilence suppresses embedded template mode logging.
+func WithSilence(silent bool) CoreOption {
+	return func(cd *CoreData) { cd.Silent = silent }
+}
+
 // Admin request helpers
 
 // Admin user profile helpers
@@ -3018,6 +3028,9 @@ func defaultNotificationTemplate(name string, cd *CoreData) string {
 	var opts []templates.Option
 	if cfg != nil && cfg.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+	}
+	if cd.Silent {
+		opts = append(opts, templates.WithSilence(true))
 	}
 
 	funcs := cd.Funcs(nil)

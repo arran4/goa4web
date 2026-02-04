@@ -73,7 +73,7 @@ func TestCreateThreadLabels(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.NotificationsEnabled = false // Disable notifications for this test
 
-	n := notifications.New(
+	n := notifications.New(notifications.WithSilence(true),
 		notifications.WithQueries(qs),
 		notifications.WithConfig(cfg),
 	)

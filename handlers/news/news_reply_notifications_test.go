@@ -167,7 +167,7 @@ func TestNewsReply(t *testing.T) {
 	cfg.BaseURL = "http://example.com"
 
 	mockProvider := &mockEmailProvider{}
-	n := notifications.New(
+	n := notifications.New(notifications.WithSilence(true),
 		notifications.WithQueries(qs),
 		notifications.WithConfig(cfg),
 		notifications.WithEmailProvider(mockProvider),

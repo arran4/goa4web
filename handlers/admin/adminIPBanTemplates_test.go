@@ -12,8 +12,8 @@ import (
 
 func checkIPBanEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs())
-	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs())
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
+	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}

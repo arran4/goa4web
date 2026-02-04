@@ -15,8 +15,8 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	funcs := map[string]any{
 		"truncateWords": func(i int, s string) string { return s },
 	}
-	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(funcs)
-	textTmpls := templates.GetCompiledEmailTextTemplates(funcs)
+	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(funcs, templates.WithSilence(true))
+	textTmpls := templates.GetCompiledEmailTextTemplates(funcs, templates.WithSilence(true))
 	if htmlTmpls.Lookup(et.HTML) == nil {
 		t.Errorf("missing html template %s", et.HTML)
 	}
@@ -32,7 +32,7 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 	if name == nil {
 		return
 	}
-	nt := templates.GetCompiledNotificationTemplates(handlertest.GetTemplateFuncs())
+	nt := templates.GetCompiledNotificationTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))
 	if nt.Lookup(*name) == nil {
 		t.Errorf("missing notification template %s", *name)
 	}

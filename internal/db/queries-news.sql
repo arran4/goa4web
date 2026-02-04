@@ -52,6 +52,8 @@ WHERE idsiteNews = ?;
 -- name: GetNewsPostByIdWithWriterIdAndThreadCommentCount :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
@@ -73,6 +75,8 @@ LIMIT 1;
 -- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s
@@ -106,6 +110,8 @@ ORDER BY s.occurred DESC;
 -- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username AS writerName, u.idusers as writerId, s.idsiteNews, s.forumthread_id, s.language_id, s.users_idusers, s.news, s.occurred, s.timezone, th.comments as Comments
 FROM site_news s

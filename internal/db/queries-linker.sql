@@ -22,8 +22,9 @@ ORDER BY lc.position
 
 -- name: GetAllLinkerCategoriesForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -124,8 +125,9 @@ ORDER BY l.listed DESC;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -164,8 +166,9 @@ LIMIT ? OFFSET ?;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -195,8 +198,9 @@ LIMIT ? OFFSET ?;
 
 -- name: GetLinkerItemsByUserDescendingForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -233,8 +237,9 @@ WHERE l.id = ?;
 
 -- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser :one
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -269,8 +274,9 @@ WHERE l.id IN (sqlc.slice(linkerIds));
 
 -- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -326,8 +332,9 @@ LIMIT ? OFFSET ?;
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id

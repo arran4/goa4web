@@ -45,6 +45,8 @@ WHERE idblogs = ?;
 -- name: ListBlogEntriesForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner
@@ -82,6 +84,8 @@ LIMIT ? OFFSET ?;
 -- name: ListBlogEntriesByAuthorForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner,
@@ -121,6 +125,8 @@ LIMIT ? OFFSET ?;
 -- name: ListBlogEntriesByIDsForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone
 FROM blogs b
@@ -153,6 +159,8 @@ LIMIT ? OFFSET ?;
 -- name: GetBlogEntryForListerByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT b.idblogs, b.forumthread_id, b.users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
        b.users_idusers = sqlc.arg(lister_id) AS is_owner,
@@ -188,6 +196,8 @@ LIMIT 1;
 -- name: ListBlogIDsBySearchWordFirstForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
@@ -220,6 +230,8 @@ WHERE swl.word = ?
 -- name: ListBlogIDsBySearchWordNextForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.blog_id
 FROM blogs_search cs
@@ -255,6 +267,8 @@ WHERE swl.word = ?
 -- name: ListBloggersForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b
@@ -288,6 +302,8 @@ LIMIT ? OFFSET ?;
 -- name: ListBloggersSearchForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username, COUNT(b.idblogs) AS count
 FROM blogs b

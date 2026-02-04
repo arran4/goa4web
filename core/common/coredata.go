@@ -107,7 +107,7 @@ type NavigationProvider interface {
 type CoreData struct {
 	a4codeMapper func(tag, val string) string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
-	AdminMode         bool
+	AdminMode bool
 	// Silent suppresses embedded template mode logging.
 	Silent            bool
 	AtomFeedURL       string

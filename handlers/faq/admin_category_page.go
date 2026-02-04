@@ -23,6 +23,8 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 		Latest    []*db.Faq
 		Templates []string
+		Grants    []*db.SearchGrantsRow
+		Roles     []*db.Role
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -64,9 +66,25 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	grants, err := queries.SearchGrants(r.Context(), db.SearchGrantsParams{
+		Section: sql.NullString{String: "faq", Valid: true},
+		Item:    sql.NullString{String: "category", Valid: true},
+		ItemID:  sql.NullInt32{Int32: int32(id), Valid: true},
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		return
+	}
+
+	roles, err := cd.AllRoles()
+	if err != nil {
+		handlers.RenderErrorPage(w, r, err)
+		return
+	}
+
 	cd.PageTitle = "FAQ Category: " + cat.Name.String
 
-	data := Data{Category: cat, Latest: latest, Templates: templates}
+	data := Data{Category: cat, Latest: latest, Templates: templates, Grants: grants, Roles: roles}
 	FaqAdminCategoryPageTmpl.Handle(w, r, data)
 }
 

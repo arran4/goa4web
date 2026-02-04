@@ -33,4 +33,10 @@ const (
 
 	// TaskCreateFromTemplate creates an FAQ entry from a template.
 	TaskCreateFromTemplate = "Create from Template"
+
+	// TaskAddCategoryGrant adds a grant to a category.
+	TaskAddCategoryGrant = "Add Category Grant"
+
+	// TaskRemoveCategoryGrant removes a grant from a category.
+	TaskRemoveCategoryGrant = "Remove Category Grant"
 )

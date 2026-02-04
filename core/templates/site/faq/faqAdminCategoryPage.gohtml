@@ -15,7 +15,77 @@
 </ul>
 
 <h3>Grants</h3>
-<p><em>(Grants view not yet implemented)</em></p>
+<table class="table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Target</th>
+        <th>Action</th>
+        <th>Created</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{- range .Grants }}
+        <tr>
+            <td>{{ .ID }}</td>
+            <td>
+                {{- if .Username.Valid }}User: {{ .Username.String }}{{ end }}
+                {{- if .RoleName.Valid }}Role: {{ .RoleName.String }}{{ end }}
+            </td>
+            <td>{{ .Action }}</td>
+            <td>{{ .CreatedAt.Time }}</td>
+            <td>
+                <form method="post" action="">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Remove Category Grant">
+                    <input type="hidden" name="grant_id" value="{{ .ID }}">
+                    <input type="hidden" name="category_id" value="{{ $.Category.ID }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+    {{- else }}
+        <tr><td colspan="5">No grants found.</td></tr>
+    {{- end }}
+    </tbody>
+</table>
+
+<h4>Add Grant</h4>
+<form method="post" action="" class="form-inline">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Add Category Grant">
+    <input type="hidden" name="category_id" value="{{ .Category.ID }}">
+
+    <div class="form-group">
+        <label>Role:
+            <select name="role" class="form-control">
+                <option value="">-- Select Role --</option>
+                {{- range .Roles }}
+                    <option value="{{ .Name }}">{{ .Name }}</option>
+                {{- end }}
+            </select>
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label>Or User: <input type="text" name="username" placeholder="Username" class="form-control"></label>
+    </div>
+
+    <div class="form-group">
+        <label>Action:
+            <select name="action" class="form-control">
+                <option value="see">See</option>
+                <option value="edit">Edit</option>
+                <option value="delete">Delete</option>
+                <option value="create">Create</option>
+                <option value="post">Post (Ask)</option>
+            </select>
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Grant</button>
+</form>
 
 {{- if .Latest }}
 <h2>Questions</h2>

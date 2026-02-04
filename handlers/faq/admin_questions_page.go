@@ -1,11 +1,14 @@
 package faq
 
 import (
+	"database/sql"
 	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -20,7 +23,18 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	questions, err := queries.SystemGetFAQQuestions(r.Context())
+	var questions []*db.Faq
+	catID := r.URL.Query().Get("category")
+	if catID != "" {
+		if catID == "0" {
+			questions, err = queries.AdminGetFAQUnansweredQuestions(r.Context())
+		} else {
+			cid, _ := strconv.Atoi(catID)
+			questions, err = queries.AdminGetFAQQuestionsByCategory(r.Context(), sql.NullInt32{Int32: int32(cid), Valid: true})
+		}
+	} else {
+		questions, err = queries.SystemGetFAQQuestions(r.Context())
+	}
 	if err != nil {
 		handlers.RenderErrorPage(w, r, err)
 		return

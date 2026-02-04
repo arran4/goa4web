@@ -21,6 +21,7 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 		Faq      *db.Faq
 		Category *db.FaqCategory
 		Author   *db.SystemGetUserByIDRow
+		Language string
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -55,8 +56,20 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 
 	author := cd.UserByID(faq.AuthorID)
 
+	var languageName string
+	if faq.LanguageID.Valid {
+		if langs, err := cd.Languages(); err == nil {
+			for _, l := range langs {
+				if l.ID == faq.LanguageID.Int32 {
+					languageName = l.Nameof.String
+					break
+				}
+			}
+		}
+	}
+
 	cd.PageTitle = fmt.Sprintf("FAQ: %s", faq.Question.String)
-	data := Data{Faq: faq, Category: category, Author: author}
+	data := Data{Faq: faq, Category: category, Author: author, Language: languageName}
 	AdminQuestionPageTmpl.Handle(w, r, data)
 }
 

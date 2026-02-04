@@ -72,7 +72,9 @@ LIMIT ? OFFSET ?;
 
 -- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT th.*, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th
@@ -165,7 +167,9 @@ ORDER BY th.lastaddition DESC;
 
 -- name: GetThreadBySectionThreadIDForReplier :one
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(replier_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(replier_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT th.*
 FROM forumthread th

@@ -163,6 +163,8 @@ func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg Admin
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
@@ -231,6 +233,8 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstPa
 const linkerSearchNext = `-- name: LinkerSearchNext :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.linker_id
 FROM linker_search cs
@@ -310,6 +314,8 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 const listCommentIDsBySearchWordFirstForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -391,6 +397,8 @@ func (q *Queries) ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx 
 const listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -462,6 +470,8 @@ func (q *Queries) ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(c
 const listCommentIDsBySearchWordNextForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -553,6 +563,8 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx c
 const listCommentIDsBySearchWordNextForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.comment_id
 FROM comments_search cs
@@ -635,6 +647,8 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ct
 const listSiteNewsSearchFirstForLister = `-- name: ListSiteNewsSearchFirstForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -703,6 +717,8 @@ func (q *Queries) ListSiteNewsSearchFirstForLister(ctx context.Context, arg List
 const listSiteNewsSearchNextForLister = `-- name: ListSiteNewsSearchNextForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.site_news_id
 FROM site_news_search cs
@@ -782,6 +798,8 @@ func (q *Queries) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListS
 const listWritingSearchFirstForLister = `-- name: ListWritingSearchFirstForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs
@@ -850,6 +868,8 @@ func (q *Queries) ListWritingSearchFirstForLister(ctx context.Context, arg ListW
 const listWritingSearchNextForLister = `-- name: ListWritingSearchNextForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT DISTINCT cs.writing_id
 FROM writing_search cs

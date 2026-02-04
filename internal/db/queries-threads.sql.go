@@ -380,7 +380,9 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 
 const getThreadBySectionThreadIDForReplier = `-- name: GetThreadBySectionThreadIDForReplier :one
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at
 FROM forumthread th
@@ -446,7 +448,9 @@ func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg 
 
 const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, lu.username AS LastPosterUsername, fcu.idusers AS firstpostuserid
 FROM forumthread th

@@ -12,6 +12,7 @@ type Definition struct {
 	Description           string
 	Pattern               string
 	IsAdminOnly           bool
+	Mandatory             bool
 	HideIfNone            bool
 	Upgrade               func(params map[string]string) string
 	Legacy                bool
@@ -219,12 +220,28 @@ var Definitions = []Definition{
 		Description: "Notify when a user requests a password reset",
 		Pattern:     "password reset:/auth/reset",
 		IsAdminOnly: true,
+		Mandatory:   false,
+	},
+	{
+		Name:        "Password Reset (Self)",
+		Description: "Notify when your password reset is requested",
+		Pattern:     "self:password reset:/auth/reset",
+		IsAdminOnly: false,
+		Mandatory:   true,
 	},
 	{
 		Name:        "Email Verification",
 		Description: "Notify when an email verification is requested",
 		Pattern:     "email verification:/auth/verify_email",
 		IsAdminOnly: true,
+		Mandatory:   false,
+	},
+	{
+		Name:        "Email Verification (Self)",
+		Description: "Notify when your email verification is requested",
+		Pattern:     "self:email verification:/auth/verify_email",
+		IsAdminOnly: false,
+		Mandatory:   true,
 	},
 	{
 		Name:        "User Approval",
@@ -257,6 +274,9 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 		name := def.Name
 		if def.Legacy {
 			name += " (Legacy)"
+		}
+		if def.IsAdminOnly {
+			name += " (Admin)"
 		}
 		groups[def.Pattern] = &SubscriptionGroup{
 			Definition: def,

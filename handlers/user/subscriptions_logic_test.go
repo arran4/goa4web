@@ -27,6 +27,7 @@ func TestUserSubscriptionsPage_AdminOptionsVisibility(t *testing.T) {
 	tests := []struct {
 		name           string
 		adminMode      bool
+		queryMode      string
 		hasAdminRole   bool
 		expectAdminOps bool
 	}{
@@ -40,7 +41,7 @@ func TestUserSubscriptionsPage_AdminOptionsVisibility(t *testing.T) {
 			name:           "Non-Admin User, AdminMode=True (Exploit Attempt)",
 			adminMode:      true,
 			hasAdminRole:   false,
-			expectAdminOps: false, // Should match verify bug fix
+			expectAdminOps: false,
 		},
 		{
 			name:           "Admin User, AdminMode=False",
@@ -78,7 +79,11 @@ func TestUserSubscriptionsPage_AdminOptionsVisibility(t *testing.T) {
 			cd.AdminMode = tt.adminMode
 
 			// Create request with CoreData
-			req := httptest.NewRequest("GET", "/usr/subscriptions", nil)
+			url := "/usr/subscriptions"
+			if tt.queryMode != "" {
+				url += "?mode=" + tt.queryMode
+			}
+			req := httptest.NewRequest("GET", url, nil)
 			ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 			req = req.WithContext(ctx)
 			w := httptest.NewRecorder()
@@ -92,22 +97,25 @@ func TestUserSubscriptionsPage_AdminOptionsVisibility(t *testing.T) {
 			}
 
 			dataStruct, ok := capturedData.(struct {
-				Groups []*subscriptions.SubscriptionGroup
+				Groups      []*subscriptions.SubscriptionGroup
+				AdminGroups []*subscriptions.SubscriptionGroup
+				IsAdminMode bool
 			})
 			if !ok {
 				t.Fatalf("Data is not the expected struct type, got %T", capturedData)
 			}
 
-			foundAdminOnly := false
-			for _, g := range dataStruct.Groups {
-				if g.Definition.IsAdminOnly {
-					foundAdminOnly = true
-					break
-				}
+			// Check if AdminGroups has content
+			hasAdminGroups := len(dataStruct.AdminGroups) > 0
+			if hasAdminGroups != tt.expectAdminOps {
+				t.Errorf("Expected AdminGroups presence to be %v, got %v", tt.expectAdminOps, hasAdminGroups)
 			}
 
-			if foundAdminOnly != tt.expectAdminOps {
-				t.Errorf("Expected Admin Options visibility to be %v, got %v", tt.expectAdminOps, foundAdminOnly)
+			// Ensure Groups (regular) does NOT have admin ops
+			for _, g := range dataStruct.Groups {
+				if g.Definition.IsAdminOnly {
+					t.Errorf("Found admin subscription %s in regular Groups", g.Name)
+				}
 			}
 		})
 	}

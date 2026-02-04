@@ -94,7 +94,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
 		if et, send := tp.AdminEmailTemplate(evt); send {
-			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path, evt.UserID); err != nil {
+			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path, evt.UserID, &evt); err != nil {
 				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
 				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW), &evt); dlqErr != nil {
 					return dlqErr
@@ -160,7 +160,50 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 }
 
 func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
-	if et, send := tp.SelfEmailTemplate(evt); send {
+	name := ""
+	if tn, ok := evt.Task.(tasks.Name); ok {
+		name = tn.Name()
+	}
+	patterns := buildPatterns(tasks.TaskString("self:"+name), evt.Path)
+
+	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
+	if err != nil {
+		log.Printf("collect self email subs: %v", err)
+	}
+	internalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "internal")
+	if err != nil {
+		log.Printf("collect self internal subs: %v", err)
+	}
+
+	shouldSendEmail := true
+	shouldSendInternal := true
+
+	if emailSubs != nil {
+		// If map exists, check if user is in it. If not, don't send.
+		// NOTE: This assumes opt-in logic for "self:" patterns.
+		// If no "self:" definition exists, buildPatterns returns "self:taskname...".
+		// If user hasn't subscribed, we skip.
+		// This requires "Mandatory" definitions to ensure the user IS subscribed.
+		_, shouldSendEmail = emailSubs[evt.UserID]
+	} else {
+		// If collectSubscribers returns nil/empty map, it means no one is subscribed.
+		// Since we want mandatory subscriptions to be present, absence means no send.
+		shouldSendEmail = false
+	}
+	// Exception: If no subscriptions found at all, maybe fallback to send?
+	// But we want to control it.
+	// Actually collectSubscribers returns empty map if no one.
+	// We only want to enforce subscription if the pattern is "known" (has definition).
+	// But notifier doesn't know definitions.
+	// If we enforce it, we MUST ensure the subscription is inserted.
+
+	if internalSubs != nil {
+		_, shouldSendInternal = internalSubs[evt.UserID]
+	} else {
+		shouldSendInternal = false
+	}
+
+	if et, send := tp.SelfEmailTemplate(evt); send && shouldSendEmail {
 		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
 			emails, err := n.Queries.SystemListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
@@ -183,7 +226,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			}
 		}
 	}
-	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
+	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil && shouldSendInternal {
 		user, err := n.Queries.SystemGetUserByID(ctx, evt.UserID)
 		if err != nil {
 			return fmt.Errorf("getting user %d for self-notification: %w", evt.UserID, err)

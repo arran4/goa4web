@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/subscriptions"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -48,6 +49,10 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 		// Validate that no placeholders remain
 		if strings.Contains(pattern, "{") && strings.Contains(pattern, "}") {
 			return fmt.Errorf("invalid parameters %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("missing required parameters")))
+		}
+
+		if def, _ := subscriptions.MatchDefinition(pattern); def != nil && def.IsAdminOnly && !cd.IsAdmin() {
+			return fmt.Errorf("permission denied %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("cannot add admin subscription")))
 		}
 
 		methods := []string{}
@@ -101,6 +106,15 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 
 			want := wanted[p]
 			has := have[p]
+
+			if def, _ := subscriptions.MatchDefinition(pattern); def != nil {
+				if def.IsAdminOnly && !cd.IsAdmin() {
+					continue
+				}
+				if def.Mandatory {
+					want = true
+				}
+			}
 
 			if want && !has {
 				if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method}); err != nil {

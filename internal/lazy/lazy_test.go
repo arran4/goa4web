@@ -2,12 +2,19 @@ package lazy_test
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
 	"github.com/arran4/goa4web/internal/lazy"
-	"github.com/arran4/goa4web/internal/testhelpers"
 )
+
+func must[T any](v T, err error) T {
+	if err != nil {
+		panic(fmt.Sprintf("Must failed: %v", err))
+	}
+	return v
+}
 
 func TestValueLoadOnce(t *testing.T) {
 	var v lazy.Value[int]
@@ -70,11 +77,11 @@ func TestMapFetchCaching(t *testing.T) {
 		return int(id * 2), nil
 	}
 	var mu sync.Mutex
-	v := testhelpers.Must(lazy.Map(&m, &mu, 1, fetch))
+	v := must(lazy.Map(&m, &mu, 1, fetch))
 	if v != 2 {
 		t.Fatalf("got %v", v)
 	}
-	v = testhelpers.Must(lazy.Map(&m, &mu, 1, fetch))
+	v = must(lazy.Map(&m, &mu, 1, fetch))
 	if v != 2 || calls != 1 {
 		t.Fatalf("cached %v calls=%d", v, calls)
 	}
@@ -134,11 +141,11 @@ func TestMapRefresh(t *testing.T) {
 	calls := 0
 	fetch := func(int32) (int, error) { calls++; return calls, nil }
 	var mu sync.Mutex
-	v := testhelpers.Must(lazy.Map(&m, &mu, 1, fetch))
+	v := must(lazy.Map(&m, &mu, 1, fetch))
 	if v != 1 {
 		t.Fatalf("first=%d", v)
 	}
-	v = testhelpers.Must(lazy.Map(&m, &mu, 1, fetch, lazy.Refresh[int]()))
+	v = must(lazy.Map(&m, &mu, 1, fetch, lazy.Refresh[int]()))
 	if v != 2 {
 		t.Fatalf("refresh=%d", v)
 	}

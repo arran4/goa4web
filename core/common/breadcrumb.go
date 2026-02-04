@@ -12,12 +12,22 @@ type Breadcrumb struct {
 	Link  string
 }
 
+// HasBreadcrumbs defines the interface for tasks that provide their own breadcrumbs.
+type HasBreadcrumbs interface {
+	Breadcrumbs() []Breadcrumb
+}
+
 // Breadcrumbs builds the breadcrumb trail for the current section based on
 // selection information stored on CoreData. It returns nil if no breadcrumbs
 // are applicable.
 func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 	if cd == nil || cd.queries == nil {
 		return nil
+	}
+	if cd.event != nil && cd.event.Task != nil {
+		if t, ok := cd.event.Task.(HasBreadcrumbs); ok {
+			return t.Breadcrumbs()
+		}
 	}
 	var (
 		crumbs []Breadcrumb

@@ -4,7 +4,7 @@
 {{- range .Rows }}
 <tr>
     <td>
-        {{ .Question.String }}
+        {{ .Question.String | truncateWords 20 }}
         <details>
             <summary>Preview</summary>
             <div>

@@ -82,7 +82,12 @@ func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := cd.SetPrivateLabelStatus("news", int32(postID), false, false); err != nil {
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	target := r.FormValue("redirect")
+	if r.FormValue("ajax") == "1" {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		})
+	}
+	target := r.PostFormValue("redirect")
 	if target == "" {
 		target = r.Header.Get("Referer")
 	}

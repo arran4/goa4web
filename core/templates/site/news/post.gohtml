@@ -28,9 +28,9 @@
             {{ if $labels }}<section class="label-bar">
                 <span class="labels">
                 {{ range $labels }}
-                    <span class="label pill {{ .Type }}" title="{{ .Type }} label">{{ .Name }}
+                    <span class="label pill {{ .Type }}" title="{{ .Type }} label" id="label-{{ $post.Idsitenews }}-{{ .Name }}">{{ .Name }}
                     {{ if eq .Name "unread" }}
-                        <a href="/news/{{ $post.Idsitenews }}/labels?task=Mark+Thread+Read" title="Dismiss unread">(x)</a>
+                        <a href="/news/{{ $post.Idsitenews }}/labels?task=Mark+Thread+Read" onclick="dismissUnread(event, this.href, 'label-{{ $post.Idsitenews }}-{{ .Name }}'); return false;" title="Dismiss unread">(x)</a>
                     {{ end }}
                     </span>
                 {{ end }}

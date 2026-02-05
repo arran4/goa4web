@@ -3,6 +3,8 @@ package news
 import (
 	"context"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/core/common"
@@ -17,7 +19,12 @@ func TestMarkReadTaskRedirect(t *testing.T) {
 	task := &MarkReadTask{}
 
 	redirectURL := "/some/where"
-	req := httptest.NewRequest("GET", "/news/123/labels?task=Mark+Thread+Read&redirect="+redirectURL, nil)
+
+	form := url.Values{}
+	form.Add("redirect", redirectURL)
+
+	req := httptest.NewRequest("POST", "/news/123/labels?task=Mark+Thread+Read", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// Add context
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

@@ -537,3 +537,29 @@ function foldLongQuotes(container) {
         }
     });
 }
+
+function dismissUnread(event, url, targetId) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const separator = url.includes('?') ? '&' : '?';
+    const fetchUrl = url + separator + 'ajax=1';
+
+    fetch(fetchUrl)
+        .then(response => {
+            if (response.ok) {
+                const element = document.getElementById(targetId);
+                if (element) {
+                    element.remove();
+                }
+            } else {
+                console.error('Failed to dismiss unread status');
+            }
+        })
+        .catch(error => {
+            console.error('Error dismissing unread status:', error);
+        });
+    return false;
+}

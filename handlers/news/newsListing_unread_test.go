@@ -100,6 +100,11 @@ func TestNewsListingDismissLink(t *testing.T) {
         t.Errorf("Expected dismiss link %q not found in output:\n%s", expectedLink, out)
     }
 
+    expectedOnclick := "dismissUnread(event, this.href, 'label-123-unread')"
+    if !strings.Contains(out, expectedOnclick) {
+        t.Errorf("Expected onclick %q not found in output:\n%s", expectedOnclick, out)
+    }
+
     if !strings.Contains(out, "(x)") {
          t.Errorf("Expected dismiss text '(x)' not found in output")
     }

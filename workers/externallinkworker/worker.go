@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -42,8 +43,8 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 				continue
 			}
 
-			_ = a4code.Walk(root, func(n a4code.Node) error {
-				link, ok := n.(*a4code.Link)
+			_ = ast.Walk(root, func(n ast.Node) error {
+				link, ok := n.(*ast.Link)
 				if !ok {
 					return nil
 				}

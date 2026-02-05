@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
@@ -3072,8 +3073,8 @@ func sanitizeCodeImages(text string) string {
 	if err != nil {
 		return text
 	}
-	root.Transform(func(n a4code.Node) (a4code.Node, error) {
-		if t, ok := n.(*a4code.Image); ok {
+	root.Transform(func(n ast.Node) (ast.Node, error) {
+		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
 		}
 		return n, nil
@@ -3187,10 +3188,10 @@ func (cd *CoreData) RecordThreadImages(threadID int32, text string) error {
 	return cd.recordThreadImages(threadID, paths)
 }
 
-func imagePathsFromA4Code(root *a4code.Root) ([]string, error) {
+func imagePathsFromA4Code(root *ast.Root) ([]string, error) {
 	refs := map[string]struct{}{}
-	if err := a4code.Walk(root, func(n a4code.Node) error {
-		if t, ok := n.(*a4code.Image); ok {
+	if err := ast.Walk(root, func(n ast.Node) error {
+		if t, ok := n.(*ast.Image); ok {
 			ref := strings.TrimSpace(t.Src)
 			if ref != "" {
 				refs[ref] = struct{}{}

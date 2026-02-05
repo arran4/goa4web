@@ -28,7 +28,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	rows, err := queries.AdminGetAllBlogEntriesByUser(r.Context(), cpu.Idusers)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Blogs by %s", user.Username.String)

@@ -3,7 +3,6 @@ package writings
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"sort"
@@ -30,7 +29,7 @@ func AdminWritingsPage(w http.ResponseWriter, r *http.Request) {
 		return isAdmin || role == "content writer"
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data.UserRoles = userRoles

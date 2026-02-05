@@ -3,7 +3,6 @@ package admin
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -24,7 +23,7 @@ func AdminRolesPage(w http.ResponseWriter, r *http.Request) {
 	roles, err := cd.AllRoles()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("list roles: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data := Data{Roles: roles}

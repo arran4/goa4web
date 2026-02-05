@@ -181,6 +181,8 @@ func (q *Queries) ListUploadedImagePathsByUser(ctx context.Context, arg ListUplo
 const listUploadedImagesByUserForLister = `-- name: ListUploadedImagesByUserForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT ui.iduploadedimage, ui.users_idusers, ui.path, ui.width, ui.height, ui.file_size, ui.uploaded
 FROM uploaded_images ui

@@ -31,7 +31,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	topics, err := cd.ForumTopics(int32(cid))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum Category %d", cid)

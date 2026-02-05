@@ -106,7 +106,7 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 
 	grants, err := queries.SearchGrants(r.Context(), params)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	rows := groupSearchGrants(r.Context(), grants)
@@ -131,7 +131,7 @@ func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	var filtered []*db.Grant
@@ -161,7 +161,7 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 	}
 	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	var g *db.Grant

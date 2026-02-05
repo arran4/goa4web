@@ -264,8 +264,9 @@ func (q *Queries) GetAllLinkerCategories(ctx context.Context) ([]*LinkerCategory
 
 const getAllLinkerCategoriesForUser = `-- name: GetAllLinkerCategoriesForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -401,8 +402,9 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -496,8 +498,9 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -594,8 +597,9 @@ func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTi
 
 const getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow = `-- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -1003,8 +1007,9 @@ func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(
 
 const getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser = `-- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser :one
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -1143,8 +1148,9 @@ func (q *Queries) GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendin
 
 const getLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser = `-- name: GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id
@@ -1311,8 +1317,9 @@ func (q *Queries) GetLinkerItemsByUserDescending(ctx context.Context, arg GetLin
 
 const getLinkerItemsByUserDescendingForUser = `-- name: GetLinkerItemsByUserDescendingForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur
-    WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 ),
 grants_for_viewer AS (
     SELECT g.section, g.item, g.action, g.item_id

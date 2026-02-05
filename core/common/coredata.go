@@ -33,7 +33,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
-	"github.com/arran4/goa4web/internal/lazy"
+	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -2657,8 +2657,7 @@ func (cd *CoreData) VisibleWritingCategories() ([]*db.WritingCategory, error) {
 			return nil, nil
 		}
 		rows, err := cd.queries.ListWritingCategoriesForLister(cd.ctx, db.ListWritingCategoriesForListerParams{
-			ListerID:      cd.UserID,
-			ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

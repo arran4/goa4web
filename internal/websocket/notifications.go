@@ -142,7 +142,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Printf("list subscriptions: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, corecommon.ErrInternalServerError)
 		return
 	}
 	if h.Config.LogFlags&config.LogFlagDebug != 0 {

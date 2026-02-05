@@ -12,7 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/lazy"
+	"github.com/arran4/go-be-lazy"
 )
 
 const (

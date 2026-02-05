@@ -36,7 +36,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	cats, err := cd.ForumCategories()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Edit Forum Category %d", cid)

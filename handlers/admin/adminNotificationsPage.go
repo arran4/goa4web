@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -33,7 +32,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	items, err := queries.AdminListRecentNotifications(r.Context(), 50)
 	if err != nil {
 		log.Printf("recent notifications: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	ids := make([]int32, 0, len(items))

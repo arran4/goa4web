@@ -22,7 +22,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	cats, err := queries.GetAllForumCategories(r.Context(), db.GetAllForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data := struct {

@@ -25,7 +25,7 @@ func adminUserGrantsPage(w http.ResponseWriter, r *http.Request) {
 	roles := cd.CurrentProfileRoles()
 	groups, err := buildGrantGroupsForUser(r.Context(), cd, user.Idusers)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

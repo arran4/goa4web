@@ -3,7 +3,6 @@ package middleware
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/netip"
@@ -52,7 +51,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				w.WriteHeader(http.StatusInternalServerError)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+				handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 				return
 			}
 			addr, parseErr := netip.ParseAddr(ip)

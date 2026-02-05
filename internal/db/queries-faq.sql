@@ -6,6 +6,8 @@ WHERE category_id IS NULL OR answer IS NULL;
 -- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(user_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -116,6 +118,8 @@ SELECT * FROM faq_categories WHERE id = ?;
 -- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(user_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.id AS category_id, c.name, f.id AS faq_id, f.category_id, f.language_id, f.author_id, f.answer, f.question
 FROM faq f
@@ -161,6 +165,8 @@ SELECT * FROM faq WHERE id = ?;
 -- name: GetFAQByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(user_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -220,6 +226,8 @@ SELECT * FROM faq WHERE category_id = ? ORDER BY priority DESC, id DESC;
 -- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(user_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq

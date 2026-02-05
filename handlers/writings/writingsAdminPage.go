@@ -3,7 +3,6 @@ package writings
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -29,7 +28,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	userRoles, err := admincommon.LoadUserRoleInfo(r.Context(), queries, nil)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("LoadUserRoleInfo Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data.Users = userRoles

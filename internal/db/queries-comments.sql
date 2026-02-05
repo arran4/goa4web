@@ -1,6 +1,8 @@
 -- name: GetCommentByIdForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.*, pu.Username,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner
@@ -63,6 +65,8 @@ WHERE c.Idcomments=?;
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
@@ -119,6 +123,8 @@ WHERE EXISTS (
 -- name: GetCommentsByThreadIdForUser :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner

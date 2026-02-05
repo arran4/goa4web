@@ -1,8 +1,6 @@
 module github.com/arran4/goa4web
 
-go 1.24.0
-
-toolchain go1.24.9
+go 1.25.5
 
 require (
 	filippo.io/csrf v0.2.1
@@ -23,6 +21,7 @@ require (
 )
 
 require (
+	github.com/arran4/go-be-lazy v0.1.0
 	github.com/arran4/go-pattern v0.0.6
 	github.com/arran4/golang-wordwrap v0.0.4
 	github.com/chzyer/readline v1.5.1

@@ -2,7 +2,6 @@ package writings
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -46,7 +45,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
 		log.Printf("ListGrants: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	for _, g := range grants {

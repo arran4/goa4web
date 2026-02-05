@@ -111,7 +111,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			log.Printf("get image thread fail: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

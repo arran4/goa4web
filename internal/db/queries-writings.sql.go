@@ -234,6 +234,8 @@ func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingF
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_category_id, w.title, w.published, w.timezone, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
@@ -424,6 +426,8 @@ func (q *Queries) GetWritingCategoryById(ctx context.Context, idwritingcategory 
 const getWritingForListerByID = `-- name: GetWritingForListerByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_category_id, w.title, w.published, w.timezone, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.idusers AS WriterId, u.Username AS WriterUsername
 FROM writing w
@@ -525,6 +529,8 @@ func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (i
 const listPublicWritingsByUserForLister = `-- name: ListPublicWritingsByUserForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_category_id, w.title, w.published, w.timezone, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
@@ -633,6 +639,8 @@ func (q *Queries) ListPublicWritingsByUserForLister(ctx context.Context, arg Lis
 const listPublicWritingsInCategoryForLister = `-- name: ListPublicWritingsInCategoryForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_category_id, w.title, w.published, w.timezone, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.Username,
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
@@ -741,6 +749,8 @@ func (q *Queries) ListPublicWritingsInCategoryForLister(ctx context.Context, arg
 const listWritersForLister = `-- name: ListWritersForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
@@ -817,6 +827,8 @@ func (q *Queries) ListWritersForLister(ctx context.Context, arg ListWritersForLi
 const listWritersSearchForLister = `-- name: ListWritersSearchForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username, COUNT(w.idwriting) AS count
 FROM writing w
@@ -897,6 +909,8 @@ func (q *Queries) ListWritersSearchForLister(ctx context.Context, arg ListWriter
 const listWritingCategoriesForLister = `-- name: ListWritingCategoriesForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
 FROM writing_category wc
@@ -913,12 +927,11 @@ WHERE EXISTS (
 `
 
 type ListWritingCategoriesForListerParams struct {
-	ListerID      int32
-	ListerMatchID sql.NullInt32
+	ListerID sql.NullInt32
 }
 
 func (q *Queries) ListWritingCategoriesForLister(ctx context.Context, arg ListWritingCategoriesForListerParams) ([]*WritingCategory, error) {
-	rows, err := q.db.QueryContext(ctx, listWritingCategoriesForLister, arg.ListerID, arg.ListerMatchID)
+	rows, err := q.db.QueryContext(ctx, listWritingCategoriesForLister, arg.ListerID, arg.ListerID)
 	if err != nil {
 		return nil, err
 	}
@@ -991,6 +1004,8 @@ func (q *Queries) ListWritingcategoryPath(ctx context.Context, categoryID int32)
 const listWritingsByIDsForLister = `-- name: ListWritingsByIDsForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_category_id, w.title, w.published, w.timezone, w.writing, w.abstract, w.private, w.deleted_at, w.last_index, u.idusers AS WriterId, u.username AS WriterUsername
 FROM writing w

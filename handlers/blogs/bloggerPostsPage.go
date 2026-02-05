@@ -27,7 +27,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 		default:
 			log.Printf("BloggerProfile: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}

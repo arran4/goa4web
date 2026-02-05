@@ -73,7 +73,7 @@ func AdminRoleTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		diffs, err := roletemplates.BuildTemplateDiff(r.Context(), cd.Queries(), tmpl)
 		if err != nil {
 			log.Printf("build role template diff: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 
@@ -98,7 +98,7 @@ func AdminRoleTemplatesPage(w http.ResponseWriter, r *http.Request) {
 			groups, err := buildGrantGroupsFromGrants(r.Context(), cd, grants)
 			if err != nil && err != sql.ErrNoRows {
 				log.Printf("build role template grant preview: %v", err)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+				handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 				return
 			}
 			rolePreviews = append(rolePreviews, RolePreview{Role: role, GrantGroups: groups})

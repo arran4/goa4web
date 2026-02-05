@@ -35,21 +35,21 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get preference: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
 	userLangs, err := queries.GetUserLanguages(r.Context(), cd.UserID)
 	if err != nil {
 		log.Printf("Error getting user languages: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
 	langs, err := cd.Languages()
 	if err != nil {
 		log.Printf("Error getting languages: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

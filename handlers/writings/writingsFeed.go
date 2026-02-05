@@ -81,12 +81,12 @@ func RssPage(w http.ResponseWriter, r *http.Request) {
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }
@@ -106,12 +106,12 @@ func AtomPage(w http.ResponseWriter, r *http.Request) {
 	feed, err := feedGen(r, cd)
 	if err != nil {
 		log.Printf("FeedGen Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("Feed write Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 }

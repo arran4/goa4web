@@ -31,7 +31,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	total, err := queries.AdminCountForumCategories(r.Context(), db.AdminCountForumCategoriesParams{ViewerID: cd.UserID})
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -41,7 +41,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("AdminListForumCategoriesWithCounts: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

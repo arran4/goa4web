@@ -3,7 +3,6 @@ package search
 import (
 	"database/sql"
 	_ "embed"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -58,7 +57,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("download") != "" {
 		rows, err := queries.AdminCompleteWordList(r.Context())
 		if err != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -81,7 +80,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	if letter != "" {
 		totalCount, err = queries.AdminCountWordListByPrefix(r.Context(), letter)
 		if err != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		prefRows, err2 := queries.AdminWordListWithCountsByPrefix(r.Context(), db.AdminWordListWithCountsByPrefixParams{
@@ -90,7 +89,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 			Offset: int32(offset),
 		})
 		if err2 != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		for _, r := range prefRows {
@@ -99,7 +98,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		totalCount, err = queries.AdminCountWordList(r.Context())
 		if err != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		allRows, err2 := queries.AdminWordListWithCounts(r.Context(), db.AdminWordListWithCountsParams{
@@ -107,7 +106,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 			Offset: int32(offset),
 		})
 		if err2 != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		for _, r := range allRows {
@@ -148,7 +147,7 @@ func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.AdminCompleteWordList(r.Context())
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 

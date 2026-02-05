@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
@@ -15,7 +14,7 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Users"
 	if _, err := cd.AdminListUsers(); err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	AdminUserListPageTmpl.Handle(w, r, struct{}{})

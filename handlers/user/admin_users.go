@@ -84,7 +84,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		log.Printf("list users: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -181,7 +181,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	urow := cd.CurrentProfileUser()
 	if urow == nil {
 		log.Printf("adminUserEditFormPage: user not found")
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data := struct {

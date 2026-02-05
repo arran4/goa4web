@@ -94,6 +94,8 @@ UPDATE imagepost SET deleted_at = NOW() WHERE idimagepost = ?;
 -- name: ListBoardsByParentIDForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
@@ -114,6 +116,8 @@ LIMIT ? OFFSET ?;
 -- name: ListBoardsForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
@@ -132,6 +136,8 @@ LIMIT ? OFFSET ?;
 -- name: ListImagePostsByPosterForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
@@ -156,6 +162,8 @@ LIMIT ? OFFSET ?;
 -- name: ListImagePostsByBoardForLister :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i
@@ -179,6 +187,8 @@ LIMIT ? OFFSET ?;
 -- name: GetImagePostByIDForLister :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT i.*, u.username, th.comments
 FROM imagepost i

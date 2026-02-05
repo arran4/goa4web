@@ -21,13 +21,13 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.AdminListPendingUsers(r.Context())
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("list pending users: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	emailRows, err := queries.GetVerifiedUserEmails(r.Context())
 	if err != nil {
 		log.Printf("list pending user emails: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	emailsByUser := db.EmailsByUserID(emailRows)

@@ -33,7 +33,7 @@ func AdminTopicGrantsPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("buildTopicGrantGroups: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	data := Data{

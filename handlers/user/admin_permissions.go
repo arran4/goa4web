@@ -42,7 +42,7 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	rows, err := queries.GetPermissionsByUserID(r.Context(), id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("get permissions: %v", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	sort.Slice(rows, func(i, j int) bool {

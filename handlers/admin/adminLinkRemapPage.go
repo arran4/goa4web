@@ -28,7 +28,7 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 		rows, err := q.GetAllSiteNewsForIndex(r.Context())
 		if err != nil {
 			log.Printf("list news: %v", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 		var buf bytes.Buffer

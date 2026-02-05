@@ -782,7 +782,9 @@ func (q *Queries) GetAllForumTopics(ctx context.Context, arg GetAllForumTopicsPa
 
 const getAllForumTopicsByCategoryIdForUserWithLastPosterName = `-- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -914,7 +916,9 @@ func (q *Queries) GetForumCategoryById(ctx context.Context, arg GetForumCategory
 
 const getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText = `-- name: GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText :many
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
@@ -1024,7 +1028,9 @@ func (q *Queries) GetForumTopicById(ctx context.Context, idforumtopic int32) (*F
 
 const getForumTopicByIdForUser = `-- name: GetForumTopicByIdForUser :one
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -1162,7 +1168,9 @@ func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTo
 
 const getForumTopicsForUser = `-- name: GetForumTopicsForUser :many
 WITH role_ids AS (
-    SELECT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at, lu.username AS LastPosterUsername
 FROM forumtopic t

@@ -248,6 +248,8 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int32) (*Commen
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.Username,
        c.users_idusers = ? AS is_owner
@@ -330,6 +332,8 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner,
@@ -557,6 +561,8 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ? AS is_owner

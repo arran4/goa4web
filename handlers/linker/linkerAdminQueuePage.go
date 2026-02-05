@@ -3,7 +3,6 @@ package linker
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -49,7 +48,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, sql.ErrNoRows):
 		default:
 			log.Printf("getAllLinkerQueuedItemsWithUserAndLinkerCategoryDetails Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}
@@ -126,7 +125,7 @@ func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 		ID:          int32(qid),
 	}); err != nil {
 		log.Printf("updateLinkerQueuedItem Error: %s", err)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	handlers.TaskDoneAutoRefreshPage(w, r)

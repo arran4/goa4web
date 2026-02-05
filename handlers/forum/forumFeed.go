@@ -95,7 +95,7 @@ func handleTopicFeed(w http.ResponseWriter, r *http.Request, feedType string) {
 			log.Printf("GetForumTopicByIdForUser error: %s", err)
 		}
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Forum - %s Feed", topic.Title.String)
@@ -103,7 +103,7 @@ func handleTopicFeed(w http.ResponseWriter, r *http.Request, feedType string) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("feed query error: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -112,14 +112,14 @@ func handleTopicFeed(w http.ResponseWriter, r *http.Request, feedType string) {
 		if err := feed.WriteRss(w); err != nil {
 			log.Printf("feed write error: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	} else {
 		if err := feed.WriteAtom(w); err != nil {
 			log.Printf("feed write error: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}

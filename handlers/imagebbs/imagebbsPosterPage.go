@@ -30,7 +30,7 @@ func PosterPage(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 		default:
 			log.Printf("ImageBBSPoster Error: %s", err)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
 		return
 	}

@@ -3,7 +3,6 @@ package common
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,7 +26,7 @@ func (cd *CoreData) SearchLinker(r *http.Request) error {
 	ftbn, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{Valid: true, String: linkerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
-		return fmt.Errorf("Internal Server Error")
+		return ErrInternalServerError
 	}
 
 	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.Idforumtopic}, uid)
@@ -55,7 +54,7 @@ func (cd *CoreData) SearchWritings(r *http.Request) error {
 	ftbn, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{Valid: true, String: writingTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
-		return fmt.Errorf("Internal Server Error")
+		return ErrInternalServerError
 	}
 
 	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.Idforumtopic}, uid)
@@ -83,7 +82,7 @@ func (cd *CoreData) SearchBlogs(r *http.Request) error {
 	ftbn, err := cd.queries.SystemGetForumTopicByTitle(cd.ctx, sql.NullString{Valid: true, String: bloggerTopicName})
 	if err != nil {
 		log.Printf("findForumTopicByTitle Error: %s", err)
-		return fmt.Errorf("Internal Server Error")
+		return ErrInternalServerError
 	}
 
 	comments, emptyWords, noResults, err := cd.forumCommentSearchInRestrictedTopic(r, []int32{ftbn.Idforumtopic}, uid)
@@ -195,7 +194,7 @@ func (cd *CoreData) linkerSearch(r *http.Request, uid int32) ([]*db.GetLinkerIte
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("LinkersSearchFirst Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			linkerIDs = ids
@@ -209,7 +208,7 @@ func (cd *CoreData) linkerSearch(r *http.Request, uid int32) ([]*db.GetLinkerIte
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("LinkersSearchNext Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			linkerIDs = ids
@@ -223,7 +222,7 @@ func (cd *CoreData) linkerSearch(r *http.Request, uid int32) ([]*db.GetLinkerIte
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getLinkers Error: %s", err)
-			return nil, false, false, fmt.Errorf("Internal Server Error")
+			return nil, false, false, ErrInternalServerError
 		}
 	}
 
@@ -248,7 +247,7 @@ func (cd *CoreData) writingSearch(r *http.Request, uid int32) ([]*db.ListWriting
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("writingSearchFirst Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			writingsIDs = ids
@@ -262,7 +261,7 @@ func (cd *CoreData) writingSearch(r *http.Request, uid int32) ([]*db.ListWriting
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("writingSearchNext Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			writingsIDs = ids
@@ -285,7 +284,7 @@ func (cd *CoreData) writingSearch(r *http.Request, uid int32) ([]*db.ListWriting
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getWritings Error: %s", err)
-			return nil, false, false, fmt.Errorf("Internal Server Error")
+			return nil, false, false, ErrInternalServerError
 		}
 	}
 
@@ -309,7 +308,7 @@ func (cd *CoreData) blogSearch(r *http.Request, uid int32) ([]*db.Blog, bool, bo
 			})
 			if err != nil {
 				log.Printf("ListBlogIDsBySearchWordFirstForLister Error: %s", err)
-				return nil, false, false, fmt.Errorf("Internal Server Error")
+				return nil, false, false, ErrInternalServerError
 			}
 			blogIDs = ids
 		} else {
@@ -321,7 +320,7 @@ func (cd *CoreData) blogSearch(r *http.Request, uid int32) ([]*db.Blog, bool, bo
 			})
 			if err != nil {
 				log.Printf("ListBlogIDsBySearchWordNextForLister Error: %s", err)
-				return nil, false, false, fmt.Errorf("Internal Server Error")
+				return nil, false, false, ErrInternalServerError
 			}
 			blogIDs = ids
 		}
@@ -342,7 +341,7 @@ func (cd *CoreData) blogSearch(r *http.Request, uid int32) ([]*db.Blog, bool, bo
 	})
 	if err != nil {
 		log.Printf("getBlogEntriesByIdsDescending Error: %s", err)
-		return nil, false, false, fmt.Errorf("Internal Server Error")
+		return nil, false, false, ErrInternalServerError
 	}
 	blogs := make([]*db.Blog, 0, len(rows))
 	for _, r := range rows {
@@ -377,7 +376,7 @@ func (cd *CoreData) forumCommentSearchNotInRestrictedTopic(r *http.Request, uid 
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			commentIDs = ids
@@ -391,7 +390,7 @@ func (cd *CoreData) forumCommentSearchNotInRestrictedTopic(r *http.Request, uid 
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			commentIDs = ids
@@ -409,7 +408,7 @@ func (cd *CoreData) forumCommentSearchNotInRestrictedTopic(r *http.Request, uid 
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getCommentsByIds Error: %s", err)
-			return nil, false, false, fmt.Errorf("Internal Server Error")
+			return nil, false, false, ErrInternalServerError
 		}
 	}
 
@@ -435,7 +434,7 @@ func (cd *CoreData) forumCommentSearchInRestrictedTopic(r *http.Request, forumTo
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("ListCommentIDsBySearchWordFirstForListerInRestrictedTopic Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			commentIDs = ids
@@ -450,7 +449,7 @@ func (cd *CoreData) forumCommentSearchInRestrictedTopic(r *http.Request, forumTo
 			if err != nil {
 				if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("ListCommentIDsBySearchWordNextForListerInRestrictedTopic Error: %s", err)
-					return nil, false, false, fmt.Errorf("Internal Server Error")
+					return nil, false, false, ErrInternalServerError
 				}
 			}
 			commentIDs = ids
@@ -468,7 +467,7 @@ func (cd *CoreData) forumCommentSearchInRestrictedTopic(r *http.Request, forumTo
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("getCommentsByIds Error: %s", err)
-			return nil, false, false, fmt.Errorf("Internal Server Error")
+			return nil, false, false, ErrInternalServerError
 		}
 	}
 

@@ -603,6 +603,8 @@ func (q *Queries) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQ
 const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.id AS category_id, c.name, f.id AS faq_id, f.category_id, f.language_id, f.author_id, f.answer, f.question
 FROM faq f
@@ -690,6 +692,8 @@ func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context,
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -771,6 +775,8 @@ func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, arg GetFAQAnswere
 const getFAQByID = `-- name: GetFAQByID :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq
@@ -838,6 +844,8 @@ func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*GetFAQ
 const getFAQQuestionsByCategory = `-- name: GetFAQQuestionsByCategory :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT faq.id, faq.category_id, faq.language_id, faq.author_id, faq.answer, faq.question
 FROM faq

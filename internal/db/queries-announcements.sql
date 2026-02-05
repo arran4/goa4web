@@ -20,6 +20,8 @@ UPDATE site_announcements SET active = ? WHERE id = ?;
 -- name: GetActiveAnnouncementWithNewsForLister :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT a.id, n.idsiteNews, n.news
 FROM site_announcements a

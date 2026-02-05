@@ -37,6 +37,8 @@ func TestTemplateFieldAccess(t *testing.T) {
 				Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 				Latest    []*db.Faq
 				Templates []string
+				Grants    []*db.SearchGrantsRow
+				Roles     []*db.Role
 			}{
 				Category: &db.AdminGetFAQCategoryWithQuestionCountByIDRow{
 					ID:            1,
@@ -50,6 +52,8 @@ func TestTemplateFieldAccess(t *testing.T) {
 					},
 				},
 				Templates: []string{"test"},
+				Grants:    []*db.SearchGrantsRow{},
+				Roles:     []*db.Role{},
 			},
 		},
 		{

@@ -121,12 +121,6 @@ func (RemoveCategoryGrantTask) Action(w http.ResponseWriter, r *http.Request) an
 		return fmt.Errorf("grant id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	vars := mux.Vars(r)
-	categoryID, _ := strconv.Atoi(vars["id"])
-	if categoryID == 0 {
-		categoryID, _ = strconv.Atoi(r.PostFormValue("category_id"))
-	}
-
 	if err := cd.Queries().AdminDeleteGrant(r.Context(), int32(grantID)); err != nil {
 		return fmt.Errorf("delete grant fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

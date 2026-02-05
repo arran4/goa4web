@@ -38,15 +38,16 @@ func (AddCategoryGrantTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !cd.HasGrant("faq", "category", "edit", int32(categoryID)) {
-		return fmt.Errorf("permission denied %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("permission denied")))
-	}
-
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	username := r.PostFormValue("username")
 	role := r.PostFormValue("role")
+
+	if username == "" && role == "" {
+		return fmt.Errorf("username or role required %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("username or role required")))
+	}
+
 	actions := r.Form["action"]
 	if len(actions) == 0 {
 		val := r.PostFormValue("action")
@@ -124,10 +125,6 @@ func (RemoveCategoryGrantTask) Action(w http.ResponseWriter, r *http.Request) an
 	categoryID, _ := strconv.Atoi(vars["id"])
 	if categoryID == 0 {
 		categoryID, _ = strconv.Atoi(r.PostFormValue("category_id"))
-	}
-
-	if !cd.HasGrant("faq", "category", "edit", int32(categoryID)) {
-		return fmt.Errorf("permission denied %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("permission denied")))
 	}
 
 	if err := cd.Queries().AdminDeleteGrant(r.Context(), int32(grantID)); err != nil {

@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/lazy"
+	"github.com/arran4/go-be-lazy"
 )
 
 // BlogPost returns the currently requested blog entry.

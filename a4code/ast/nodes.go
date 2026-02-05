@@ -77,6 +77,10 @@ func (t *Text) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(t, op)
 }
 
+func (t *Text) String() string {
+	return t.Value
+}
+
 // Bold text.
 type Bold struct {
 	BaseNode
@@ -89,6 +93,10 @@ func (b *Bold) AddChild(n Node)      { b.Children = append(b.Children, n) }
 
 func (b *Bold) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(b, op)
+}
+
+func (b *Bold) String() string {
+	return "[b"
 }
 
 // Italic text.
@@ -105,6 +113,10 @@ func (i *Italic) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(i, op)
 }
 
+func (i *Italic) String() string {
+	return "[i"
+}
+
 // Underline text.
 type Underline struct {
 	BaseNode
@@ -117,6 +129,10 @@ func (u *Underline) AddChild(n Node)      { u.Children = append(u.Children, n) }
 
 func (u *Underline) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(u, op)
+}
+
+func (u *Underline) String() string {
+	return "[u"
 }
 
 // Superscript text.
@@ -133,6 +149,10 @@ func (s *Sup) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(s, op)
 }
 
+func (s *Sup) String() string {
+	return "[sup"
+}
+
 // Subscript text.
 type Sub struct {
 	BaseNode
@@ -145,6 +165,10 @@ func (s *Sub) AddChild(n Node)      { s.Children = append(s.Children, n) }
 
 func (s *Sub) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(s, op)
+}
+
+func (s *Sub) String() string {
+	return "[sub"
 }
 
 // Link to a URL.
@@ -162,6 +186,10 @@ func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(l, op)
 }
 
+func (l *Link) String() string {
+	return "[a=" + l.Href // simplified, assumes no complex escaping needed for basic stringer
+}
+
 // Image embeds an image.
 type Image struct {
 	BaseNode
@@ -172,6 +200,10 @@ func (*Image) isNode() {}
 
 func (i *Image) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(i, op)
+}
+
+func (i *Image) String() string {
+	return "[img=" + i.Src // simplified
 }
 
 // Code block.
@@ -188,6 +220,10 @@ func (c *Code) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(c, op)
 }
 
+func (c *Code) String() string {
+	return "[code]" + c.Value + "[/code]"
+}
+
 // Quote node.
 type Quote struct {
 	BaseNode
@@ -200,6 +236,10 @@ func (q *Quote) AddChild(n Node)      { q.Children = append(q.Children, n) }
 
 func (q *Quote) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(q, op)
+}
+
+func (q *Quote) String() string {
+	return "[quote"
 }
 
 // QuoteOf node.
@@ -217,6 +257,10 @@ func (q *QuoteOf) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(q, op)
 }
 
+func (q *QuoteOf) String() string {
+	return "[quoteof " + q.Name // simplified
+}
+
 // Spoiler node.
 type Spoiler struct {
 	BaseNode
@@ -229,6 +273,10 @@ func (s *Spoiler) AddChild(n Node)      { s.Children = append(s.Children, n) }
 
 func (s *Spoiler) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(s, op)
+}
+
+func (s *Spoiler) String() string {
+	return "[spoiler"
 }
 
 // Indent node.
@@ -245,6 +293,10 @@ func (i *Indent) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(i, op)
 }
 
+func (i *Indent) String() string {
+	return "[indent"
+}
+
 // HR node.
 type HR struct {
 	BaseNode
@@ -254,6 +306,10 @@ func (*HR) isNode() {}
 
 func (h *HR) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(h, op)
+}
+
+func (h *HR) String() string {
+	return "[hr]"
 }
 
 // Custom element for unrecognised tags.
@@ -269,4 +325,8 @@ func (c *Custom) AddChild(n Node)      { c.Children = append(c.Children, n) }
 
 func (c *Custom) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(c, op)
+}
+
+func (c *Custom) String() string {
+	return "[" + c.Tag
 }

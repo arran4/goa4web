@@ -191,42 +191,39 @@ func normaliseSimpleBB(in string) string {
 	return out.String()
 }
 
-// openTag returns the opening tag for a node in bracket syntax, e.g. [b], [i], [a=...]
+// openTag returns the opening tag for a node in bracket syntax, e.g. [b, [i, [a=...
 func openTag(n ast.Node) string {
 	switch t := n.(type) {
 	case *ast.Bold:
-		return "[b]"
+		return "[b"
 	case *ast.Italic:
-		return "[i]"
+		return "[i"
 	case *ast.Underline:
-		return "[u]"
+		return "[u"
 	case *ast.Sup:
-		return "[sup]"
+		return "[sup"
 	case *ast.Sub:
-		return "[sub]"
+		return "[sub"
 	case *ast.Link:
 		var b bytes.Buffer
 		b.WriteString("[a=")
 		escapeArg(&b, t.Href)
-		b.WriteString("]")
 		return b.String()
 	case *ast.Quote:
-		return "[quote]"
+		return "[quote"
 	case *ast.QuoteOf:
 		var b bytes.Buffer
 		b.WriteString("[quoteof ")
 		escapeArg(&b, t.Name)
-		b.WriteString("]")
 		return b.String()
 	case *ast.Spoiler:
-		return "[spoiler]"
+		return "[spoiler"
 	case *ast.Indent:
-		return "[indent]"
+		return "[indent"
 	case *ast.Custom:
 		var b bytes.Buffer
 		b.WriteByte('[')
 		b.WriteString(t.Tag)
-		b.WriteByte(']')
 		return b.String()
 	default:
 		return ""
@@ -237,29 +234,10 @@ func openTag(n ast.Node) string {
 // For nodes that are not containers or do not require explicit closing, returns an empty string.
 func closeTag(n ast.Node) string {
 	switch n.(type) {
-	case *ast.Bold:
-		return "[/b]"
-	case *ast.Italic:
-		return "[/i]"
-	case *ast.Underline:
-		return "[/u]"
-	case *ast.Sup:
-		return "[/sup]"
-	case *ast.Sub:
-		return "[/sub]"
-	case *ast.Link:
-		return "[/a]"
-	case *ast.Quote:
-		return "[/quote]"
-	case *ast.QuoteOf:
-		return "[/quoteof]"
-	case *ast.Spoiler:
-		return "[/spoiler]"
-	case *ast.Indent:
-		return "[/indent]"
+	case *ast.Bold, *ast.Italic, *ast.Underline, *ast.Sup, *ast.Sub, *ast.Link, *ast.Quote, *ast.QuoteOf, *ast.Spoiler, *ast.Indent:
+		return "]"
 	case *ast.Custom:
-		// do our best and assume symmetrical closing
-		return "[/" + strings.TrimPrefix(strings.TrimSpace(nTag(n)), "/") + "]"
+		return "]"
 	default:
 		return ""
 	}

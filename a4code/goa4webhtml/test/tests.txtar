@@ -1,0 +1,4 @@
+-- simple.txt --
+[b]Bold[/b]
+-- simple.expect.txt --
+<strong data-start-pos="0" data-end-pos="8"><span data-start-pos="3" data-end-pos="7">Bold</span></strong>

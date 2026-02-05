@@ -1,4 +1,17 @@
+{{ define "newsPostLabels" }}
+<span id="news-labels-{{ .PostID }}" class="labels" data-timestamp="{{ now.Unix }}">
+    {{ range .Labels }}
+        <span class="label pill {{ .Type }}" title="{{ .Type }} label">{{ .Name }}
+        {{ if eq .Name "unread" }}
+             <a href="/news/{{ $.PostID }}/labels?task=Mark+Thread+Read" onclick="replaceContent(event, this.href, 'news-labels-{{ $.PostID }}'); return false;" title="Dismiss unread">(x)</a>
+        {{ end }}
+        </span>
+    {{ end }}
+</span>
+{{ end }}
+
 {{ define "newsPost" }}
+    {{ $post := . }}
     <article class="thread">
         <header class="thread-header">{{ cd.LocalTimeIn .Occurred.Time .Timezone.String }}</header>
         <div class="thread-content">{{ .News.String | a4code2html }}<br>-<br>{{ .Writername.String }}
@@ -24,7 +37,9 @@
                 </a>]
             {{ end }}
             {{ $labels := cd.NewsLabels .Idsitenews .UsersIdusers }}
-            {{ if $labels }}<section class="label-bar">{{ template "topicLabels" $labels }}</section>{{ end }}
+            {{ if $labels }}<section class="label-bar">
+                {{ template "newsPostLabels" (dict "PostID" .Idsitenews "Labels" $labels) }}
+            </section>{{ end }}
         </div>
     </article>
 {{ end }}

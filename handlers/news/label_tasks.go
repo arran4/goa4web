@@ -12,6 +12,7 @@ import (
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
+	"log"
 )
 
 // SetLabelsTask replaces private labels on a news item.
@@ -81,6 +82,19 @@ func (MarkReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if err := cd.SetPrivateLabelStatus("news", int32(postID), false, false); err != nil {
 		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if r.FormValue("ajax") == "1" {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			labels := cd.NewsLabels(int32(postID), cd.UserID)
+			data := map[string]any{
+				"PostID": int32(postID),
+				"Labels": labels,
+			}
+			if err := cd.ExecuteSiteTemplate(w, r, "newsPostLabels", data); err != nil {
+				log.Printf("render newsPostLabels: %v", err)
+			}
+		})
 	}
 	target := r.PostFormValue("redirect")
 	if target == "" {

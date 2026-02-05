@@ -50,7 +50,7 @@ func TestNewsListingDismissLink(t *testing.T) {
     funcMap := template.FuncMap{
         "cd":          func() *mockCD { return &mockCD{labels: []templates.TopicLabel{{Name: "unread", Type: "private"}}} },
         "csrfField":   func() template.HTML { return "" },
-        "now":         func() time.Time { return time.Unix(0, 0) },
+        "now":         func() time.Time { return time.Unix(1000, 0) },
         "a4code2html": func(s string) template.HTML { return template.HTML(s) },
         "add":         func(a, b int) int { return a + b },
         "since":       func(time.Time, time.Time) string { return "" },
@@ -100,12 +100,20 @@ func TestNewsListingDismissLink(t *testing.T) {
         t.Errorf("Expected dismiss link %q not found in output:\n%s", expectedLink, out)
     }
 
-    expectedOnclick := "dismissUnread(event, this.href, 'label-123-unread')"
+    expectedOnclick := "replaceContent(event, this.href, 'news-labels-123')"
     if !strings.Contains(out, expectedOnclick) {
         t.Errorf("Expected onclick %q not found in output:\n%s", expectedOnclick, out)
     }
 
     if !strings.Contains(out, "(x)") {
          t.Errorf("Expected dismiss text '(x)' not found in output")
+    }
+
+    if !strings.Contains(out, `data-timestamp="1000"`) {
+        t.Errorf("Expected data-timestamp=\"1000\" not found")
+    }
+
+    if !strings.Contains(out, `id="news-labels-123"`) {
+        t.Errorf("Expected id=\"news-labels-123\" not found")
     }
 }

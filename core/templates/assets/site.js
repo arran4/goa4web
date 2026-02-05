@@ -538,7 +538,7 @@ function foldLongQuotes(container) {
     });
 }
 
-function dismissUnread(event, url, targetId) {
+function replaceContent(event, url, targetId) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -550,16 +550,27 @@ function dismissUnread(event, url, targetId) {
     fetch(fetchUrl)
         .then(response => {
             if (response.ok) {
-                const element = document.getElementById(targetId);
-                if (element) {
-                    element.remove();
+                return response.text();
+            }
+            throw new Error('Network response was not ok');
+        })
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newElement = doc.body.firstElementChild;
+            const currentElement = document.getElementById(targetId);
+
+            if (currentElement && newElement) {
+                const currentTs = parseInt(currentElement.dataset.timestamp || '0', 10);
+                const newTs = parseInt(newElement.dataset.timestamp || '0', 10);
+
+                if (newTs > currentTs) {
+                    currentElement.replaceWith(newElement);
                 }
-            } else {
-                console.error('Failed to dismiss unread status');
             }
         })
         .catch(error => {
-            console.error('Error dismissing unread status:', error);
+            console.error('Error replacing content:', error);
         });
     return false;
 }

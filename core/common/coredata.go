@@ -1912,7 +1912,6 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID
 		Answer:       sql.NullString{String: answer, Valid: true},
 		Timezone:     sql.NullString{String: cd.Location().String(), Valid: true},
 		UserID:       sql.NullInt32{Int32: userID, Valid: true},
-		ViewerID:     userID,
 	}); err != nil {
 		log.Printf("insert faq revision: %v", err)
 	}

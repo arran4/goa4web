@@ -29,8 +29,7 @@ func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
 			return nil, nil
 		}
 		faqRows, err := cd.queries.GetAllAnsweredFAQWithFAQCategoriesForUser(cd.ctx, db.GetAllAnsweredFAQWithFAQCategoriesForUserParams{
-			ViewerID: cd.UserID,
-			UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			UserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -115,7 +114,6 @@ func (cd *CoreData) CreateFAQQuestion(p CreateFAQQuestionParams) (int64, error) 
 		Answer:       sql.NullString{String: p.Answer, Valid: p.Answer != ""},
 		Timezone:     sql.NullString{String: cd.Location().String(), Valid: true},
 		UserID:       sql.NullInt32{Int32: p.WriterID, Valid: p.WriterID != 0},
-		ViewerID:     p.WriterID,
 	}); err != nil {
 		return 0, err
 	}

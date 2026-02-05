@@ -23,6 +23,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
@@ -33,7 +34,6 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
-	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 

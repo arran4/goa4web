@@ -6,8 +6,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/go-be-lazy"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 // ForumCategories loads all forum categories once.

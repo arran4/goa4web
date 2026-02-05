@@ -2658,8 +2658,7 @@ func (cd *CoreData) VisibleWritingCategories() ([]*db.WritingCategory, error) {
 			return nil, nil
 		}
 		rows, err := cd.queries.ListWritingCategoriesForLister(cd.ctx, db.ListWritingCategoriesForListerParams{
-			ListerID:      cd.UserID,
-			ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+			ListerID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

@@ -966,9 +966,9 @@ WHERE EXISTS (
       AND (g.item = 'question' OR g.item IS NULL)
       AND g.action = 'post'
       AND g.active = 1
-      AND (g.user_id = sqlc.narg(user_id) OR g.user_id IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(user_id)
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
       ))
 )
 `

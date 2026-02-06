@@ -106,8 +106,8 @@ func TestErrorHandlers_CacheControl(t *testing.T) {
 		return nil
 	}
 
-	t.Run("RenderPermissionDenied", func(t *testing.T) {
-		t.Run("Happy Path", func(t *testing.T) {
+	t.Run("Happy Path", func(t *testing.T) {
+		t.Run("RenderPermissionDenied", func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -120,10 +120,8 @@ func TestErrorHandlers_CacheControl(t *testing.T) {
 				t.Errorf("expected Cache-Control: no-cache, got %q", cc)
 			}
 		})
-	})
 
-	t.Run("RenderNotFoundOrLogin", func(t *testing.T) {
-		t.Run("Happy Path", func(t *testing.T) {
+		t.Run("RenderNotFoundOrLogin", func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
 			cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))

@@ -74,9 +74,9 @@ func (cd *CoreData) GetPrivateTopicParticipants(topicID int32) ([]string, error)
 // PrivateTopic represents a private conversation with a computed title.
 type PrivateTopic struct {
 	*db.ListPrivateTopicsByUserIDRow
-	DisplayTitle string
-	Labels       []templates.TopicLabel
-	Participants []string
+	DisplayTitle       string
+	Labels             []templates.TopicLabel
+	ParticipantsString string
 }
 
 // PrivateForumTopics returns private forum topics visible to the current user.
@@ -191,7 +191,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				}
 			}
 
-			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, Participants: participants})
+			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, ParticipantsString: strings.Join(participants, ", ")})
 		}
 		return pts, nil
 	})

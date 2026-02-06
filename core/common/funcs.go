@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -125,11 +126,35 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"toJSON":                    ToJSON,
 		"version":                   func() string { return goa4web.Version },
 		"lower":                     strings.ToLower,
-		"participants": func(item any) []string {
-			if pt, ok := item.(*PrivateTopic); ok {
-				return pt.Participants
+		"default": func(def any, item any) any {
+			switch v := item.(type) {
+			case sql.NullString:
+				if v.Valid && v.String != "" {
+					return v.String
+				}
+			case string:
+				if v != "" {
+					return v
+				}
+			case *string:
+				if v != nil && *v != "" {
+					return *v
+				}
+			case sql.NullInt32:
+				if v.Valid {
+					return v.Int32
+				}
+			case sql.NullInt64:
+				if v.Valid {
+					return v.Int64
+				}
+			case nil:
+				// returns default
+			default:
+				// For unknown types, if they are not nil, return them
+				return item
 			}
-			return nil
+			return def
 		},
 	}
 

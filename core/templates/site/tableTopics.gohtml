@@ -26,8 +26,8 @@
                 <a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if $isAdmin }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
-                {{- $participants := participants . }}
-                {{- if $participants }}<br><small>Participants: {{ range $i, $p := $participants }}{{ if $i }}, {{ end }}{{ $p }}{{ end }}</small>{{ end }}
+                {{- $participants := default "" .ParticipantsString }}
+                {{- if $participants }}<br><small>Participants: {{ $participants }}</small>{{ end }}
             </div>
                 <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ if ne .Lastposter cd.UserID }}<strong>{{ .Lastposterusername.String }}</strong>{{ else }}{{ .Lastposterusername.String }}{{ end }}</div>
                 <div class="threads-replies">{{ .Threads.Int32 }}<br>{{ .Comments.Int32 }}</div>

@@ -12,6 +12,12 @@ jobs:
       matrix:
         go-version: [1.25.x]
         os: [ubuntu-latest]
+        tags:
+          - 'nosqlite'
+          - 'nosqlite,s3'
+          - 'nosqlite,sendgrid'
+          - 'nosqlite,ses'
+          - 'nosqlite,s3,sendgrid,ses'
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -22,6 +28,6 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: v1.64
-        args: --build-tags 'nosqlite,sendgrid'
+        args: --build-tags '${{ matrix.tags }}'
     - name: Vet
-      run: go vet -tags 'nosqlite,sendgrid' ./...
+      run: go vet -tags '${{ matrix.tags }}' ./...

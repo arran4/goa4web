@@ -48,10 +48,61 @@ type QuerierStub struct {
 	AdminListSentEmailsErr     error
 	AdminListSentEmailsFn      func(context.Context, AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error)
 
+	AdminCountAllImagePostsCalls   int
+	AdminCountAllImagePostsReturns int64
+	AdminCountAllImagePostsErr     error
+	AdminCountAllImagePostsFn      func(context.Context) (int64, error)
+
+	AdminListAllImagePostsCalls   []AdminListAllImagePostsParams
+	AdminListAllImagePostsReturns []*AdminListAllImagePostsRow
+	AdminListAllImagePostsErr     error
+	AdminListAllImagePostsFn      func(context.Context, AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error)
+
+	GetImagePostInfoByPathCalls   []GetImagePostInfoByPathParams
+	GetImagePostInfoByPathRow     *GetImagePostInfoByPathRow
+	GetImagePostInfoByPathErr     error
+	GetImagePostInfoByPathFn      func(context.Context, GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
+
+	AdminScrubCommentCalls []AdminScrubCommentParams
+	AdminScrubCommentErr   error
+	AdminScrubCommentFn    func(context.Context, AdminScrubCommentParams) error
+
+	AdminArchiveCommentCalls []AdminArchiveCommentParams
+	AdminArchiveCommentErr   error
+	AdminArchiveCommentFn    func(context.Context, AdminArchiveCommentParams) error
+
+	AdminIsCommentDeactivatedCalls   []int32
+	AdminIsCommentDeactivatedReturns bool
+	AdminIsCommentDeactivatedErr     error
+	AdminIsCommentDeactivatedFn      func(context.Context, int32) (bool, error)
+
+	AdminRestoreCommentCalls []AdminRestoreCommentParams
+	AdminRestoreCommentErr   error
+	AdminRestoreCommentFn    func(context.Context, AdminRestoreCommentParams) error
+
+	AdminListDeactivatedCommentsCalls   []AdminListDeactivatedCommentsParams
+	AdminListDeactivatedCommentsReturns []*AdminListDeactivatedCommentsRow
+	AdminListDeactivatedCommentsErr     error
+	AdminListDeactivatedCommentsFn      func(context.Context, AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error)
+
+	AdminMarkCommentRestoredCalls []int32
+	AdminMarkCommentRestoredErr   error
+	AdminMarkCommentRestoredFn    func(context.Context, int32) error
+
 	AdminListSentEmailIDsCalls   []AdminListSentEmailIDsParams
 	AdminListSentEmailIDsReturns []int32
 	AdminListSentEmailIDsErr     error
 	AdminListSentEmailIDsFn      func(context.Context, AdminListSentEmailIDsParams) ([]int32, error)
+
+	AdminListRequestCommentsCalls   []int32
+	AdminListRequestCommentsReturns []*AdminRequestComment
+	AdminListRequestCommentsErr     error
+	AdminListRequestCommentsFn      func(context.Context, int32) ([]*AdminRequestComment, error)
+
+	AdminGetRequestByIDCalls   []int32
+	AdminGetRequestByIDReturns *AdminRequestQueue
+	AdminGetRequestByIDErr     error
+	AdminGetRequestByIDFn      func(context.Context, int32) (*AdminRequestQueue, error)
 
 	AdminListFailedEmailIDsCalls   []AdminListFailedEmailIDsParams
 	AdminListFailedEmailIDsReturns []int32
@@ -405,6 +456,11 @@ type QuerierStub struct {
 	GetCommentByIdForUserRow   *GetCommentByIdForUserRow
 	GetCommentByIdForUserErr   error
 	GetCommentByIdForUserFn    func(context.Context, GetCommentByIdForUserParams) (*GetCommentByIdForUserRow, error)
+
+	GetCommentsByIdsForUserWithThreadInfoCalls   []GetCommentsByIdsForUserWithThreadInfoParams
+	GetCommentsByIdsForUserWithThreadInfoReturns []*GetCommentsByIdsForUserWithThreadInfoRow
+	GetCommentsByIdsForUserWithThreadInfoErr     error
+	GetCommentsByIdsForUserWithThreadInfoFn      func(context.Context, GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error)
 
 	CreateCommentInSectionForCommenterCalls  []CreateCommentInSectionForCommenterParams
 	CreateCommentInSectionForCommenterFn     func(context.Context, CreateCommentInSectionForCommenterParams) (int64, error)

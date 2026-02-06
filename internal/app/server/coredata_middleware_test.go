@@ -29,7 +29,7 @@ type sessionInsert struct {
 	userID    int32
 }
 
-func (s *sessionManagerStub) InsertSession(_ context.Context, sessionID string, userID int32) error {
+func (s *sessionManagerStub) InsertSession(_ context.Context, sessionID string, userID int32, branchName string) error {
 	s.inserted = append(s.inserted, sessionInsert{sessionID: sessionID, userID: userID})
 	return nil
 }

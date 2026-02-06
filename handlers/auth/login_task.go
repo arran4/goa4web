@@ -53,6 +53,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
+	branchName := r.PostFormValue("branch_name")
 
 	queries := cd.Queries()
 
@@ -129,6 +130,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return handlers.SessionFetchFail{}
 	}
 	session.Values["UID"] = int32(row.Idusers)
+	session.Values["BranchName"] = branchName
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 

@@ -86,7 +86,7 @@ type NotFoundLink struct {
 // information. Implementations may persist session metadata in a database or
 // other storage while exposing a storage-agnostic API to CoreData.
 type SessionManager interface {
-	InsertSession(ctx context.Context, sessionID string, userID int32) error
+	InsertSession(ctx context.Context, sessionID string, userID int32, branchName string) error
 	DeleteSessionByID(ctx context.Context, sessionID string) error
 }
 

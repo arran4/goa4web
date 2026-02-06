@@ -495,6 +495,7 @@ type SearchwordlistHasLinker struct {
 type Session struct {
 	SessionID    string
 	UsersIdusers int32
+	BranchName   sql.NullString
 	CreatedAt    time.Time
 }
 

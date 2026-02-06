@@ -267,7 +267,11 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 
 	if session.ID != "" && sm != nil {
 		if uid != 0 {
-			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
+			var branchName string
+			if v, ok := session.Values["BranchName"].(string); ok {
+				branchName = v
+			}
+			if err := sm.InsertSession(r.Context(), session.ID, uid, branchName); err != nil {
 				log.Printf("insert session: %v", err)
 			}
 		} else {

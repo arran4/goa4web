@@ -487,6 +487,7 @@ CREATE TABLE IF NOT EXISTS `dead_letters` (
 CREATE TABLE IF NOT EXISTS `sessions` (
   `session_id` varchar(128) NOT NULL,
   `users_idusers` int NOT NULL,
+  `branch_name` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`session_id`),
   KEY `sessions_user_idx` (`users_idusers`)
@@ -766,5 +767,5 @@ CREATE TABLE scheduler_state (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (83)
+INSERT INTO `schema_version` (`version`) VALUES (84)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

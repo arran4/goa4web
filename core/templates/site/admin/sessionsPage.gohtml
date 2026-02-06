@@ -8,11 +8,12 @@
     </ul>
 </div>
 <table class="table table-bordered">
-    <tr><th>Session ID</th><th>User ID</th><th>Username</th><th>Delete</th></tr>
+    <tr><th>Session ID</th><th>User ID</th><th>Branch Name</th><th>Username</th><th>Delete</th></tr>
     {{- range cd.AdminSessions }}
     <tr>
         <td>{{ .SessionID }}</td>
         <td>{{ .UsersIdusers }}</td>
+        <td>{{ .BranchName.String }}</td>
         <td>{{ .Username.String }}</td>
         <td>
             <form method="POST" action="/admin/sessions/delete">

@@ -16,7 +16,7 @@ All handler tests **MUST** adhere to the following structure to ensure consisten
 
 Use `t.Run()` to encapsulate logical test sections. The "Happy Path" **MUST** be explicitly defined.
 
-If a test function covers **only** the happy path (e.g., verifying a complex flow without error branches), the function itself **SHOULD** be named `TestHappyPath<Feature>`. In this case, side effects (emails, notifications, etc.) **MUST** be verified in nested `t.Run` blocks within the happy path.
+If a test function covers **only** the happy path (e.g., verifying a complex flow without error branches), the function itself **SHOULD** be named `TestHappyPath<Feature>`. In this case, the test function itself implicitly represents the happy path scope, so a top-level `t.Run("Happy Path", ...)` block is optional. However, side effects (emails, notifications, etc.) **MUST** be verified in distinct, nested `t.Run` blocks.
 
 ```go
 func TestHandlerName(t *testing.T) {

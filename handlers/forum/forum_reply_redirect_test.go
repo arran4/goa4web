@@ -23,7 +23,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestForumReplyRedirect(t *testing.T) {
+func TestHappyPathForumReplyRedirect(t *testing.T) {
 	replierUID := int32(1)
 	topicID := int32(5)
 	threadID := int32(42)
@@ -125,7 +125,9 @@ func TestForumReplyRedirect(t *testing.T) {
 
 	// Expectation: currently it redirects to #c6 (index)
 	expectedUrl := "/forum/topic/5/thread/42#c6"
-	if string(redirect) != expectedUrl {
-		t.Errorf("Expected redirect to %q, got %q", expectedUrl, string(redirect))
-	}
+	t.Run("Redirect URL", func(t *testing.T) {
+		if string(redirect) != expectedUrl {
+			t.Errorf("Expected redirect to %q, got %q", expectedUrl, string(redirect))
+		}
+	})
 }

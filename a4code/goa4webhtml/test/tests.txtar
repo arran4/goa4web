@@ -14,3 +14,7 @@
 [quoteof "User"]Text[/quoteof]
 -- provider_quoteof.expect.txt --
 <blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-start-pos="0" data-end-pos="27"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="16" data-end-pos="20">Text</span></div></blockquote>
+-- provider_quoteof_multi.txt --
+[quoteof "User1"]Text1 [quoteof "User2"]Text2[/quoteof][/quoteof]
+-- provider_quoteof_multi.expect.txt --
+<blockquote class="a4code-block a4code-quoteof user-color-User1 quote-color-0" data-start-pos="0" data-end-pos="66"><div class="quote-header">Quote of User1:</div><div class="quote-body"><span data-start-pos="17" data-end-pos="23">Text1 </span><blockquote class="a4code-block a4code-quoteof user-color-User2 quote-color-1" data-start-pos="23" data-end-pos="56"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="40" data-end-pos="45">Text2</span></div></blockquote></div></blockquote>

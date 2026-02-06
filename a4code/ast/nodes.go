@@ -1,6 +1,9 @@
 package ast
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Node represents a parsed element of markup.
 type Node interface {
@@ -53,6 +56,14 @@ func transformChildren(n Node, op func(Node) (Node, error)) (Node, error) {
 	return op(n)
 }
 
+func joinChildren(children []Node) string {
+	var b strings.Builder
+	for _, c := range children {
+		b.WriteString(c.String())
+	}
+	return b.String()
+}
+
 // Root is the top level node of a document.
 type Root struct {
 	BaseNode
@@ -69,7 +80,7 @@ func (r *Root) childrenPtr() *[]Node { return &r.Children }
 func (r *Root) AddChild(n Node)     { r.Children = append(r.Children, n) }
 
 func (r *Root) String() string {
-	return ""
+	return joinChildren(r.Children)
 }
 
 // Text contains plain text content.
@@ -103,7 +114,9 @@ func (b *Bold) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (b *Bold) String() string {
-	return "[b"
+	return "[b" + joinChildren(b.Children) + "]" // Assuming implicit close or handled by parser for roundtrip, but String() is often debug or raw content representation.
+	// Actually, based on previous feedback "children?", the user implies recursively printing children.
+	// Simple concatenation for now.
 }
 
 // Italic text.
@@ -121,7 +134,7 @@ func (i *Italic) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (i *Italic) String() string {
-	return "[i"
+	return "[i" + joinChildren(i.Children) + "]"
 }
 
 // Underline text.
@@ -139,7 +152,7 @@ func (u *Underline) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (u *Underline) String() string {
-	return "[u"
+	return "[u" + joinChildren(u.Children) + "]"
 }
 
 // Superscript text.
@@ -157,7 +170,7 @@ func (s *Sup) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (s *Sup) String() string {
-	return "[sup"
+	return "[sup" + joinChildren(s.Children) + "]"
 }
 
 // Subscript text.
@@ -175,7 +188,7 @@ func (s *Sub) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (s *Sub) String() string {
-	return "[sub"
+	return "[sub" + joinChildren(s.Children) + "]"
 }
 
 // Link to a URL.
@@ -194,7 +207,7 @@ func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (l *Link) String() string {
-	return "[a=" + l.Href // simplified, assumes no complex escaping needed for basic stringer
+	return "[a=" + l.Href + joinChildren(l.Children) + "]"
 }
 
 // Image embeds an image.
@@ -210,7 +223,7 @@ func (i *Image) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (i *Image) String() string {
-	return "[img=" + i.Src // simplified
+	return "[img=" + i.Src + "]"
 }
 
 // Code block.
@@ -246,7 +259,7 @@ func (q *Quote) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (q *Quote) String() string {
-	return "[quote"
+	return "[quote" + joinChildren(q.Children) + "]"
 }
 
 // QuoteOf node.
@@ -265,7 +278,7 @@ func (q *QuoteOf) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (q *QuoteOf) String() string {
-	return "[quoteof " + q.Name // simplified
+	return "[quoteof " + q.Name + joinChildren(q.Children) + "]"
 }
 
 // Spoiler node.
@@ -283,7 +296,7 @@ func (s *Spoiler) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (s *Spoiler) String() string {
-	return "[spoiler"
+	return "[spoiler" + joinChildren(s.Children) + "]"
 }
 
 // Indent node.
@@ -301,7 +314,7 @@ func (i *Indent) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (i *Indent) String() string {
-	return "[indent"
+	return "[indent" + joinChildren(i.Children) + "]"
 }
 
 // HR node.
@@ -335,5 +348,5 @@ func (c *Custom) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (c *Custom) String() string {
-	return "[" + c.Tag
+	return "[" + c.Tag + joinChildren(c.Children) + "]"
 }

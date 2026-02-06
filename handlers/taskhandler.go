@@ -20,6 +20,16 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			v.SetEventTask(t)
 		}
 		result := t.Action(w, r)
+
+		if v := r.Context().Value(consts.KeyCoreData).(*common.CoreData); v != nil {
+			if pt, ok := result.(tasks.HasPageTitle); ok {
+				v.PageTitle = pt.PageTitle()
+			}
+			if p, ok := result.(tasks.Page); ok {
+				v.SetCurrentPage(p)
+			}
+		}
+
 		switch result := result.(type) {
 		case RedirectHandler:
 			// Use 303 See Other so POST actions redirect to a GET of the target resource.
@@ -36,6 +46,8 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 			}
 		case http.HandlerFunc:
 			result(w, r)
+		case tasks.Page:
+			result.ServeHTTP(w, r)
 		case http.Handler:
 			result.ServeHTTP(w, r)
 		case SessionFetchFail:
@@ -64,6 +76,17 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		default:
 			RenderErrorPage(w, r, fmt.Errorf("%s", http.StatusText(http.StatusInternalServerError)))
 		}
+	}
+}
+
+// PageHandler wraps a Page to handle the request, setting the page title and current page
+func PageHandler(p tasks.Page) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if v := r.Context().Value(consts.KeyCoreData).(*common.CoreData); v != nil {
+			v.PageTitle = p.PageTitle()
+			v.SetCurrentPage(p)
+		}
+		p.ServeHTTP(w, r)
 	}
 }
 

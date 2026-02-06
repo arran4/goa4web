@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
@@ -49,7 +50,7 @@ func TestHappyPathAdminUserProfilePage_UserFound(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminUserProfilePage(rr, req)
+	handlers.TaskHandler(&AdminUserProfileTask{})(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)

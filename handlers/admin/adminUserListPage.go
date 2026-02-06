@@ -1,23 +1,40 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
-	"github.com/arran4/goa4web/core/consts"
-
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func adminUserListPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserListPage struct{}
+
+func (p *AdminUserListPage) Action(w http.ResponseWriter, r *http.Request) any {
+	return p
+}
+
+func (p *AdminUserListPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Users"
 	if _, err := cd.AdminListUsers(); err != nil {
-		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
-	AdminUserListPageTmpl.Handle(w, r, struct{}{})
+	AdminUserListPageTmpl.Handler(struct{}{}).ServeHTTP(w, r)
 }
+
+func (p *AdminUserListPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+	return "Users", "/admin/user", &AdminPage{}
+}
+
+func (p *AdminUserListPage) PageTitle() string {
+	return "Users"
+}
+
+var _ tasks.Page = (*AdminUserListPage)(nil)
+var _ tasks.Task = (*AdminUserListPage)(nil)
+var _ http.Handler = (*AdminUserListPage)(nil)
 
 const AdminUserListPageTmpl tasks.Template = "admin/userList.gohtml"

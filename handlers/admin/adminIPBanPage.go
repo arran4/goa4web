@@ -6,20 +6,20 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/core/consts"
-
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
+type AdminIPBanPage struct{}
+
+func (p *AdminIPBanPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Bans           []*db.BannedIp
 		Error          string
@@ -48,6 +48,17 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 	data.Bans = rows
 	AdminIPBanPageTmpl.Handle(w, r, data)
 }
+
+func (p *AdminIPBanPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+	return "IP Bans", "/admin/ipbans", &AdminPage{}
+}
+
+func (p *AdminIPBanPage) PageTitle() string {
+	return "IP Bans"
+}
+
+var _ tasks.Page = (*AdminIPBanPage)(nil)
+var _ http.Handler = (*AdminIPBanPage)(nil)
 
 // AdminIPBanExport streams the current banned IP list as CSV.
 func AdminIPBanExport(w http.ResponseWriter, r *http.Request) {

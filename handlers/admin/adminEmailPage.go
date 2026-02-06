@@ -3,8 +3,6 @@ package admin
 import (
 	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
-	"log"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -16,10 +14,12 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminEmailPage handles queue, failed, and sent email views.
-func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
+type AdminEmailPage struct{}
+
+func (p *AdminEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
@@ -77,8 +77,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 			RoleName:      filters.RoleParam(),
 		})
 		if err != nil {
-			log.Printf("count sent emails: %v", err)
-			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			handlers.RenderErrorPage(w, r, err)
 			return
 		}
 
@@ -114,8 +113,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 			RoleName:      filters.RoleParam(),
 		})
 		if err != nil {
-			log.Printf("count unsent emails: %v", err)
-			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			handlers.RenderErrorPage(w, r, err)
 			return
 		}
 
@@ -144,8 +142,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Printf("list emails: %v", err)
-		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 
@@ -232,7 +229,18 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = r.URL.Path + "?" + prevVals.Encode()
 	}
 
-	AdminEmailPageTmpl.Handle(w, r, data)
+	AdminEmailPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminEmailPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+	return "Email", "/admin/email/queue", &AdminPage{}
+}
+
+func (p *AdminEmailPage) PageTitle() string {
+	return "Email"
+}
+
+var _ tasks.Page = (*AdminEmailPage)(nil)
+var _ http.Handler = (*AdminEmailPage)(nil)
 
 const AdminEmailPageTmpl tasks.Template = "admin/emailPage.gohtml"

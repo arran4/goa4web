@@ -1,19 +1,26 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"os"
 	"sort"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-
-	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request) {
+type AdminSiteSettingsPage struct {
+	ConfigFile string
+}
+
+func (p *AdminSiteSettingsPage) Action(w http.ResponseWriter, r *http.Request) any {
+	return p
+}
+
+func (p *AdminSiteSettingsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Site Settings"
 	cd.FeedsEnabled = cd.Config.FeedsEnabled
@@ -24,7 +31,7 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 	examples := config.ExamplesMap()
 	flags := config.NameMap()
 
-	fileVals, _ := config.LoadAppConfigFile(core.OSFS{}, h.ConfigFile)
+	fileVals, _ := config.LoadAppConfigFile(core.OSFS{}, p.ConfigFile)
 	hide := map[string]struct{}{
 		config.EnvDBConn:              {},
 		config.EnvSMTPPass:            {},
@@ -83,11 +90,23 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 		ConfigFile string
 		Config     []detail
 	}{
-		ConfigFile: h.ConfigFile,
+		ConfigFile: p.ConfigFile,
 		Config:     cfg,
 	}
 
-	AdminSiteSettingsPageTmpl.Handle(w, r, data)
+	AdminSiteSettingsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminSiteSettingsPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+	return "Site Settings", "/admin/settings", &AdminPage{}
+}
+
+func (p *AdminSiteSettingsPage) PageTitle() string {
+	return "Site Settings"
+}
+
+var _ tasks.Page = (*AdminSiteSettingsPage)(nil)
+var _ tasks.Task = (*AdminSiteSettingsPage)(nil)
+var _ http.Handler = (*AdminSiteSettingsPage)(nil)
 
 const AdminSiteSettingsPageTmpl tasks.Template = "admin/siteSettingsPage.gohtml"

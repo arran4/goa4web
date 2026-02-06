@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -124,31 +125,31 @@ func TestAdminBreadcrumbsLogic(t *testing.T) {
 func TestAdminPages_HaveTitlesAndBreadcrumbs(t *testing.T) {
 	tests := []struct {
 		name          string
-		handler       http.HandlerFunc
+		handler       http.Handler
 		url           string
 		expectedTitle string
 	}{
 		{
 			name:          "Announcements",
-			handler:       AdminAnnouncementsPage,
+			handler:       http.HandlerFunc(handlers.PageHandler(&AdminAnnouncementsPage{})),
 			url:           "/admin/announcements",
 			expectedTitle: "Admin Announcements",
 		},
 		{
 			name:          "Email Queue",
-			handler:       AdminEmailPage,
+			handler:       http.HandlerFunc(handlers.PageHandler(&AdminEmailPage{})),
 			url:           "/admin/email/queue",
 			expectedTitle: "Email Queue",
 		},
 		{
 			name:          "Comments",
-			handler:       AdminCommentsPage,
+			handler:       http.HandlerFunc(handlers.PageHandler(&AdminCommentsPage{})),
 			url:           "/admin/comments",
 			expectedTitle: "Comments",
 		},
 		{
 			name:          "IP Bans",
-			handler:       AdminIPBanPage,
+			handler:       http.HandlerFunc(handlers.PageHandler(&AdminIPBanPage{})),
 			url:           "/admin/ipbans",
 			expectedTitle: "IP Bans",
 		},
@@ -168,7 +169,7 @@ func TestAdminPages_HaveTitlesAndBreadcrumbs(t *testing.T) {
 				}
 			}()
 
-			tt.handler(rr, req)
+			tt.handler.ServeHTTP(rr, req)
 
 			if cd.PageTitle == "" {
 				t.Errorf("PageTitle was not set")

@@ -94,12 +94,7 @@ func TestHappyPathEditCommentTask(t *testing.T) {
 
 func TestHappyPathDeactivateCommentTask(t *testing.T) {
 	queries := testhelpers.NewQuerierStub()
-	queries.AdminIsCommentDeactivatedFn = func(_ context.Context, id int32) (bool, error) {
-		if id != 33 {
-			return false, sql.ErrNoRows
-		}
-		return false, nil
-	}
+	queries.AdminIsCommentDeactivatedReturns = false
 	queries.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 		Idcomments:    33,
 		ForumthreadID: 2,
@@ -118,6 +113,9 @@ func TestHappyPathDeactivateCommentTask(t *testing.T) {
 	if err, ok := deactivateCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
+	if len(queries.AdminIsCommentDeactivatedCalls) != 1 || queries.AdminIsCommentDeactivatedCalls[0] != 33 {
+		t.Fatalf("expected IsDeactivated call for 33, got %v", queries.AdminIsCommentDeactivatedCalls)
+	}
 	if len(queries.AdminArchiveCommentCalls) != 1 || queries.AdminArchiveCommentCalls[0].Idcomments != 33 {
 		t.Fatalf("unexpected archive args: %#v", queries.AdminArchiveCommentCalls)
 	}
@@ -128,12 +126,7 @@ func TestHappyPathDeactivateCommentTask(t *testing.T) {
 
 func TestHappyPathRestoreCommentTask(t *testing.T) {
 	queries := testhelpers.NewQuerierStub()
-	queries.AdminIsCommentDeactivatedFn = func(_ context.Context, id int32) (bool, error) {
-		if id != 44 {
-			return false, sql.ErrNoRows
-		}
-		return true, nil
-	}
+	queries.AdminIsCommentDeactivatedReturns = true
 	queries.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 		Idcomments:    44,
 		ForumthreadID: 2,
@@ -151,21 +144,21 @@ func TestHappyPathRestoreCommentTask(t *testing.T) {
 		Idcomments: 44,
 		Text:       sql.NullString{String: "body", Valid: true},
 	}}
-	var restoredIDs []int32
-	queries.AdminMarkCommentRestoredFn = func(_ context.Context, id int32) error {
-		restoredIDs = append(restoredIDs, id)
-		return nil
-	}
 
 	rr, req := setupCommentTest(t, 44, nil, queries)
 	if err, ok := restoreCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
+	if len(queries.AdminIsCommentDeactivatedCalls) != 1 || queries.AdminIsCommentDeactivatedCalls[0] != 44 {
+		t.Fatalf("expected IsDeactivated call for 44, got %v", queries.AdminIsCommentDeactivatedCalls)
+	}
+	if len(queries.AdminListDeactivatedCommentsCalls) != 1 {
+		t.Fatalf("expected AdminListDeactivatedComments call")
+	}
 	if len(queries.AdminRestoreCommentCalls) != 1 || queries.AdminRestoreCommentCalls[0].Idcomments != 44 || queries.AdminRestoreCommentCalls[0].Text.String != "body" {
 		t.Fatalf("unexpected restore args: %#v", queries.AdminRestoreCommentCalls)
 	}
-
-	if len(restoredIDs) != 1 || restoredIDs[0] != 44 {
-		t.Fatalf("unexpected restored ids: %#v", restoredIDs)
+	if len(queries.AdminMarkCommentRestoredCalls) != 1 || queries.AdminMarkCommentRestoredCalls[0] != 44 {
+		t.Fatalf("unexpected restored ids: %#v", queries.AdminMarkCommentRestoredCalls)
 	}
 }

@@ -125,6 +125,12 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"toJSON":                    ToJSON,
 		"version":                   func() string { return goa4web.Version },
 		"lower":                     strings.ToLower,
+		"participants": func(item any) []string {
+			if pt, ok := item.(*PrivateTopic); ok {
+				return pt.Participants
+			}
+			return nil
+		},
 	}
 
 	if r != nil {

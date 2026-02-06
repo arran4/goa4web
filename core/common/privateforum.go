@@ -51,11 +51,32 @@ func (cd *CoreData) GetPrivateTopicDisplayTitle(topicID int32, originalTitle str
 	return strings.Join(names, ", ")
 }
 
+// GetPrivateTopicParticipants returns the list of participants (excluding viewer) for a private topic.
+func (cd *CoreData) GetPrivateTopicParticipants(topicID int32) ([]string, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	parts, err := cd.queries.AdminListPrivateTopicParticipantsByTopicID(cd.ctx, sql.NullInt32{Int32: topicID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, p := range parts {
+		if p.Username.Valid {
+			if cd.UserID == 0 || p.Idusers != cd.UserID {
+				names = append(names, p.Username.String)
+			}
+		}
+	}
+	return names, nil
+}
+
 // PrivateTopic represents a private conversation with a computed title.
 type PrivateTopic struct {
 	*db.ListPrivateTopicsByUserIDRow
 	DisplayTitle string
 	Labels       []templates.TopicLabel
+	Participants []string
 }
 
 // PrivateForumTopics returns private forum topics visible to the current user.
@@ -77,8 +98,17 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 		var pts []*PrivateTopic
 		for _, t := range tops {
 			title := t.Title.String
+			var participants []string
 			if t.Title.Valid {
-				title = cd.GetPrivateTopicDisplayTitle(t.Idforumtopic, t.Title.String)
+				if strings.HasPrefix(t.Title.String, PrivateTopicDefaultTitlePrefix) {
+					title = cd.GetPrivateTopicDisplayTitle(t.Idforumtopic, t.Title.String)
+				} else {
+					if p, err := cd.GetPrivateTopicParticipants(t.Idforumtopic); err == nil {
+						participants = p
+					} else {
+						log.Printf("get participants: %v", err)
+					}
+				}
 			}
 			var labels []templates.TopicLabel
 
@@ -161,7 +191,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				}
 			}
 
-			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels})
+			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, Participants: participants})
 		}
 		return pts, nil
 	})

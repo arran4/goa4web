@@ -26,7 +26,7 @@ jobs:
       - name: Go Vet
         run: go vet -tags '${{ matrix.tags }}' ./...
       - name: Golangci Lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.1.6
+          version: v2.8.0
           args: --build-tags '${{ matrix.tags }}'

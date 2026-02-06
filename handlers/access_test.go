@@ -18,24 +18,29 @@ func TestRequireRole(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}, fmt.Errorf("administrator role required"), "administrator")
 
-	req := httptest.NewRequest("GET", "/", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	t.Run("Unhappy Path - Forbidden", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	rr := httptest.NewRecorder()
-	h(rr, req)
-	if rr.Code != http.StatusForbidden {
-		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Code)
-	}
-	if !strings.Contains(rr.Body.String(), "administrator role required") {
-		t.Fatalf("expected body to contain error message, got %q", rr.Body.String())
-	}
+		rr := httptest.NewRecorder()
+		h(rr, req)
+		if rr.Code != http.StatusForbidden {
+			t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Code)
+		}
+		if !strings.Contains(rr.Body.String(), "administrator role required") {
+			t.Fatalf("expected body to contain error message, got %q", rr.Body.String())
+		}
+	})
 
-	cd = common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-	rr = httptest.NewRecorder()
-	h(rr, req)
-	if rr.Code != http.StatusOK {
-		t.Fatalf("expected %d got %d", http.StatusOK, rr.Code)
-	}
+	t.Run("Happy Path", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+		rr := httptest.NewRecorder()
+		h(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected %d got %d", http.StatusOK, rr.Code)
+		}
+	})
 }

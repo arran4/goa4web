@@ -82,18 +82,20 @@ func TestRequireRole_CacheControl(t *testing.T) {
 }
 
 func TestDisableCaching(t *testing.T) {
-	rr := httptest.NewRecorder()
-	DisableCaching(rr)
+	t.Run("Happy Path", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		DisableCaching(rr)
 
-	if got := rr.Header().Get("Cache-Control"); got != "no-cache, no-store, must-revalidate" {
-		t.Errorf("Cache-Control = %q; want no-cache, no-store, must-revalidate", got)
-	}
-	if got := rr.Header().Get("Pragma"); got != "no-cache" {
-		t.Errorf("Pragma = %q; want no-cache", got)
-	}
-	if got := rr.Header().Get("Expires"); got != "0" {
-		t.Errorf("Expires = %q; want 0", got)
-	}
+		if got := rr.Header().Get("Cache-Control"); got != "no-cache, no-store, must-revalidate" {
+			t.Errorf("Cache-Control = %q; want no-cache, no-store, must-revalidate", got)
+		}
+		if got := rr.Header().Get("Pragma"); got != "no-cache" {
+			t.Errorf("Pragma = %q; want no-cache", got)
+		}
+		if got := rr.Header().Get("Expires"); got != "0" {
+			t.Errorf("Expires = %q; want 0", got)
+		}
+	})
 }
 
 func TestErrorHandlers_CacheControl(t *testing.T) {
@@ -104,31 +106,33 @@ func TestErrorHandlers_CacheControl(t *testing.T) {
 		return nil
 	}
 
-	t.Run("RenderPermissionDenied", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/", nil)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-		rr := httptest.NewRecorder()
+	t.Run("Happy Path", func(t *testing.T) {
+		t.Run("RenderPermissionDenied", func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/", nil)
+			cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+			rr := httptest.NewRecorder()
 
-		RenderPermissionDenied(rr, req)
+			RenderPermissionDenied(rr, req)
 
-		cc := rr.Header().Get("Cache-Control")
-		if !strings.Contains(cc, "no-cache") {
-			t.Errorf("expected Cache-Control: no-cache, got %q", cc)
-		}
-	})
+			cc := rr.Header().Get("Cache-Control")
+			if !strings.Contains(cc, "no-cache") {
+				t.Errorf("expected Cache-Control: no-cache, got %q", cc)
+			}
+		})
 
-	t.Run("RenderNotFoundOrLogin", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/", nil)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-		rr := httptest.NewRecorder()
+		t.Run("RenderNotFoundOrLogin", func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/", nil)
+			cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+			rr := httptest.NewRecorder()
 
-		RenderNotFoundOrLogin(rr, req)
+			RenderNotFoundOrLogin(rr, req)
 
-		cc := rr.Header().Get("Cache-Control")
-		if !strings.Contains(cc, "no-cache") {
-			t.Errorf("expected Cache-Control: no-cache, got %q", cc)
-		}
+			cc := rr.Header().Get("Cache-Control")
+			if !strings.Contains(cc, "no-cache") {
+				t.Errorf("expected Cache-Control: no-cache, got %q", cc)
+			}
+		})
 	})
 }

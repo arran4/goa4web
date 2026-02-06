@@ -16,41 +16,17 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-type requestPageQueries struct {
-	db.Querier
-	requestID int32
-	request   *db.AdminRequestQueue
-}
-
-func (q *requestPageQueries) AdminGetRequestByID(_ context.Context, id int32) (*db.AdminRequestQueue, error) {
-	if id != q.requestID {
-		return nil, fmt.Errorf("unexpected request id: %d", id)
-	}
-	return q.request, nil
-}
-
-func (q *requestPageQueries) SystemGetUserByID(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
-	return &db.SystemGetUserByIDRow{
-		Idusers:  id,
-		Username: sql.NullString{String: "testuser", Valid: true},
-	}, nil
-}
-
-func (q *requestPageQueries) AdminListUserEmails(ctx context.Context, id int32) ([]*db.UserEmail, error) {
-	return []*db.UserEmail{}, nil
-}
-
-func (q *requestPageQueries) AdminListRequestComments(ctx context.Context, id int32) ([]*db.AdminRequestComment, error) {
-	return []*db.AdminRequestComment{}, nil
-}
-
-func TestAdminRequestPage_RequestFound(t *testing.T) {
+func TestHappyPathAdminRequestPage_RequestFound(t *testing.T) {
 	requestID := 5
-	queries := &requestPageQueries{
-		requestID: int32(requestID),
-		request: &db.AdminRequestQueue{
+	queries := testhelpers.NewQuerierStub()
+	queries.AdminGetRequestByIDFn = func(_ context.Context, id int32) (*db.AdminRequestQueue, error) {
+		if id != int32(requestID) {
+			return nil, fmt.Errorf("unexpected request id: %d", id)
+		}
+		return &db.AdminRequestQueue{
 			ID:             int32(requestID),
 			UsersIdusers:   7,
 			ChangeTable:    "tbl",
@@ -61,8 +37,14 @@ func TestAdminRequestPage_RequestFound(t *testing.T) {
 			Status:         "pending",
 			CreatedAt:      time.Now(),
 			ActedAt:        sql.NullTime{},
-		},
+		}, nil
 	}
+	queries.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
+		Idusers:  7,
+		Username: sql.NullString{String: "testuser", Valid: true},
+	}
+	queries.AdminListUserEmailsReturns = []*db.UserEmail{}
+	queries.AdminListRequestCommentsReturns = []*db.AdminRequestComment{}
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/request/%d", requestID), nil)
 	req = mux.SetURLVars(req, map[string]string{"request": strconv.Itoa(requestID)})
@@ -83,12 +65,15 @@ func TestAdminRequestPage_RequestFound(t *testing.T) {
 	}
 }
 
-func TestAdminRequestPage_UserEmailsRequest(t *testing.T) {
+func TestHappyPathAdminRequestPage_UserEmailsRequest(t *testing.T) {
 	requestID := 5
 	userID := int32(7)
-	queries := &requestPageQueries{
-		requestID: int32(requestID),
-		request: &db.AdminRequestQueue{
+	queries := testhelpers.NewQuerierStub()
+	queries.AdminGetRequestByIDFn = func(_ context.Context, id int32) (*db.AdminRequestQueue, error) {
+		if id != int32(requestID) {
+			return nil, fmt.Errorf("unexpected request id: %d", id)
+		}
+		return &db.AdminRequestQueue{
 			ID:             int32(requestID),
 			UsersIdusers:   userID,
 			ChangeTable:    "user_emails",
@@ -99,8 +84,14 @@ func TestAdminRequestPage_UserEmailsRequest(t *testing.T) {
 			Status:         "pending",
 			CreatedAt:      time.Now(),
 			ActedAt:        sql.NullTime{},
-		},
+		}, nil
 	}
+	queries.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
+		Idusers:  userID,
+		Username: sql.NullString{String: "testuser", Valid: true},
+	}
+	queries.AdminListUserEmailsReturns = []*db.UserEmail{}
+	queries.AdminListRequestCommentsReturns = []*db.AdminRequestComment{}
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/admin/request/%d", requestID), nil)
 	req = mux.SetURLVars(req, map[string]string{"request": strconv.Itoa(requestID)})

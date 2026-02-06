@@ -15,44 +15,21 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-type filesQueries struct {
-	db.Querier
-	images []*db.AdminListAllImagePostsRow
-	count  int64
-	// map path -> row for GetImagePostInfoByPath
-	managedFiles map[string]*db.GetImagePostInfoByPathRow
-}
-
-func (q *filesQueries) AdminListAllImagePosts(ctx context.Context, arg db.AdminListAllImagePostsParams) ([]*db.AdminListAllImagePostsRow, error) {
-	return q.images, nil
-}
-
-func (q *filesQueries) AdminCountAllImagePosts(ctx context.Context) (int64, error) {
-	return q.count, nil
-}
-
-func (q *filesQueries) GetImagePostInfoByPath(ctx context.Context, arg db.GetImagePostInfoByPathParams) (*db.GetImagePostInfoByPathRow, error) {
-	if q.managedFiles != nil {
-		if row, ok := q.managedFiles[arg.Fullimage.String]; ok {
-			return row, nil
-		}
-	}
-	return nil, sql.ErrNoRows
-}
-
-func TestAdminFilesPage(t *testing.T) {
+func TestHappyPathAdminFilesPage(t *testing.T) {
 	now := time.Now()
-	queries := &filesQueries{
-		count: 1,
-		images: []*db.AdminListAllImagePostsRow{{
-			Idimagepost: 123,
-			Fullimage:   sql.NullString{Valid: true, String: "/imagebbs/images/test.jpg"},
-			Description: sql.NullString{Valid: true, String: "Test Image"},
-			Posted:      sql.NullTime{Valid: true, Time: now},
-		}},
+	queries := testhelpers.NewQuerierStub()
+	queries.AdminCountAllImagePostsFn = func(_ context.Context) (int64, error) {
+		return 1, nil
 	}
+	queries.AdminListAllImagePostsReturns = []*db.AdminListAllImagePostsRow{{
+		Idimagepost: 123,
+		Fullimage:   sql.NullString{Valid: true, String: "/imagebbs/images/test.jpg"},
+		Description: sql.NullString{Valid: true, String: "Test Image"},
+		Posted:      sql.NullTime{Valid: true, Time: now},
+	}}
 
 	req := httptest.NewRequest("GET", "/admin/files", nil)
 	ctx := req.Context()
@@ -78,7 +55,7 @@ func TestAdminFilesPage(t *testing.T) {
 	}
 }
 
-func TestAdminUnmanagedFilesPage(t *testing.T) {
+func TestHappyPathAdminUnmanagedFilesPage(t *testing.T) {
 	// Create temp dir
 	tmpDir := t.TempDir()
 
@@ -91,14 +68,19 @@ func TestAdminUnmanagedFilesPage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	queries := &filesQueries{
-		managedFiles: map[string]*db.GetImagePostInfoByPathRow{
-			"/imagebbs/images/managed.jpg": {
-				Idimagepost: 1,
-				Title:       sql.NullString{Valid: true, String: "Board"},
-				Username:    sql.NullString{Valid: true, String: "User"},
-			},
+	queries := testhelpers.NewQuerierStub()
+	managedFiles := map[string]*db.GetImagePostInfoByPathRow{
+		"/imagebbs/images/managed.jpg": {
+			Idimagepost: 1,
+			Title:       sql.NullString{Valid: true, String: "Board"},
+			Username:    sql.NullString{Valid: true, String: "User"},
 		},
+	}
+	queries.GetImagePostInfoByPathFn = func(_ context.Context, arg db.GetImagePostInfoByPathParams) (*db.GetImagePostInfoByPathRow, error) {
+		if row, ok := managedFiles[arg.Fullimage.String]; ok {
+			return row, nil
+		}
+		return nil, sql.ErrNoRows
 	}
 
 	req := httptest.NewRequest("GET", "/admin/files/unmanaged", nil)

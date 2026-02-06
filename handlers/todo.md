@@ -13,16 +13,16 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/access_cache_test.go
 - [x] handlers/access_test.go
 - [x] handlers/admin/adminAnyoneGrantsPage_test.go
-- [ ] handlers/admin/adminCommentPage_test.go
-- [ ] handlers/admin/adminCommentTasks_test.go
-- [ ] handlers/admin/adminFilesPage_test.go
-- [ ] handlers/admin/adminGrantsAvailablePage_test.go
-- [ ] handlers/admin/adminGrantsPage_test.go
-- [ ] handlers/admin/adminIPBanTemplates_test.go
-- [ ] handlers/admin/adminLinksToolsPage_test.go
-- [ ] handlers/admin/adminRequestQueuePage_test.go
-- [ ] handlers/admin/adminUserGrantsPage_test.go
-- [ ] handlers/admin/adminUserProfilePage_test.go
+- [x] handlers/admin/adminCommentPage_test.go
+- [x] handlers/admin/adminCommentTasks_test.go
+- [x] handlers/admin/adminFilesPage_test.go
+- [x] handlers/admin/adminGrantsAvailablePage_test.go
+- [x] handlers/admin/adminGrantsPage_test.go
+- [x] handlers/admin/adminIPBanTemplates_test.go
+- [x] handlers/admin/adminLinksToolsPage_test.go
+- [x] handlers/admin/adminRequestQueuePage_test.go
+- [x] handlers/admin/adminUserGrantsPage_test.go
+- [x] handlers/admin/adminUserProfilePage_test.go
 - [ ] handlers/admin/adminUserWritingsPage_test.go
 - [ ] handlers/admin/admin_breadcrumbs_test.go
 - [ ] handlers/admin/admin_email_tasks_test.go

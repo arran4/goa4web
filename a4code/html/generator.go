@@ -12,15 +12,23 @@ import (
 
 type Generator struct {
 	Depth int
+	Self  ast.Generator
 }
 
 func NewGenerator() *Generator {
 	return &Generator{}
 }
 
+func (g *Generator) self() ast.Generator {
+	if g.Self != nil {
+		return g.Self
+	}
+	return g
+}
+
 func (g *Generator) Root(w io.Writer, n *ast.Root) error {
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -51,7 +59,7 @@ func (g *Generator) Text(w io.Writer, t *ast.Text) error {
 func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
 	fmt.Fprintf(w, `<strong data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -62,7 +70,7 @@ func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
 func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
 	fmt.Fprintf(w, `<i data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -73,7 +81,7 @@ func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
 func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
 	fmt.Fprintf(w, `<u data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -84,7 +92,7 @@ func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
 func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
 	fmt.Fprintf(w, `<sup data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -95,7 +103,7 @@ func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
 func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
 	fmt.Fprintf(w, `<sub data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -109,7 +117,7 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 		io.WriteString(w, safe)
 		fmt.Fprintf(w, `" target="_BLANK" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 		for _, c := range n.Children {
-			if err := ast.Generate(w, c, g); err != nil {
+			if err := ast.Generate(w, c, g.self()); err != nil {
 				return err
 			}
 		}
@@ -118,7 +126,7 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 		fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 		io.WriteString(w, safe)
 		for _, c := range n.Children {
-			if err := ast.Generate(w, c, g); err != nil {
+			if err := ast.Generate(w, c, g.self()); err != nil {
 				return err
 			}
 		}
@@ -147,7 +155,7 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, n.Start, n.End)
 	io.WriteString(w, "<div class=\"quote-body\">")
 
-	childGen := &Generator{Depth: g.Depth + 1}
+	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {
 			return err
@@ -166,7 +174,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	io.WriteString(w, ":</div>")
 	io.WriteString(w, "<div class=\"quote-body\">")
 
-	childGen := &Generator{Depth: g.Depth + 1}
+	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {
 			return err
@@ -180,7 +188,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
 	fmt.Fprintf(w, `<span class="spoiler" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -191,7 +199,7 @@ func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
 func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 	fmt.Fprintf(w, `<div class="a4code-block a4code-indent" data-start-pos="%d" data-end-pos="%d"><div>`, n.Start, n.End)
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
@@ -209,7 +217,7 @@ func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
 	io.WriteString(w, "[")
 	io.WriteString(w, htmlEscape(n.Tag))
 	for _, ch := range n.Children {
-		if err := ast.Generate(w, ch, g); err != nil {
+		if err := ast.Generate(w, ch, g.self()); err != nil {
 			return err
 		}
 	}

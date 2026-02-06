@@ -1,50 +1,40 @@
 -- simple.txt --
 [b Bold]
 -- simple.expect.txt --
-<strong data-start-pos="0" data-end-pos="5"><span data-start-pos="0" data-end-pos="5"> Bold</span></strong><span data-start-pos="5" data-end-pos="6"><br />
-</span>
+<strong data-start-pos="0" data-end-pos="5"><span data-start-pos="0" data-end-pos="5"> Bold</span></strong>
 -- simple_nested.txt --
 [b Bold [i Italic]]
 -- simple_nested.expect.txt --
-<strong data-start-pos="0" data-end-pos="13"><span data-start-pos="0" data-end-pos="6"> Bold </span><i data-start-pos="6" data-end-pos="13"><span data-start-pos="6" data-end-pos="13"> Italic</span></i></strong><span data-start-pos="13" data-end-pos="14"><br />
-</span>
+<strong data-start-pos="0" data-end-pos="13"><span data-start-pos="0" data-end-pos="6"> Bold </span><i data-start-pos="6" data-end-pos="13"><span data-start-pos="6" data-end-pos="13"> Italic</span></i></strong>
 -- link.txt --
 [a=http://example.com Link]
 -- link.expect.txt --
-<a href="http://example.com" target="_BLANK" data-start-pos="0" data-end-pos="5"><span data-start-pos="0" data-end-pos="5"> Link</span></a><span data-start-pos="5" data-end-pos="6"><br />
-</span>
+<a href="http://example.com" target="_BLANK" data-start-pos="0" data-end-pos="5"><span data-start-pos="0" data-end-pos="5"> Link</span></a>
 -- image.txt --
 [img=http://example.com/image.jpg]
 -- image.expect.txt --
-<img src="http://example.com/image.jpg" data-start-pos="0" data-end-pos="0" /><span data-start-pos="0" data-end-pos="1"><br />
-</span>
+<img src="http://example.com/image.jpg" data-start-pos="0" data-end-pos="0" />
 -- code.txt --
 [code]func[/code]
 -- code.expect.txt --
-<pre class="a4code-block a4code-code" data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4">func</span></pre><span data-start-pos="4" data-end-pos="5"><br />
-</span>
+<pre class="a4code-block a4code-code" data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4">func</span></pre>
 -- quote.txt --
 [quote Q]
 -- quote.expect.txt --
-<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="2"><div class="quote-body"><span data-start-pos="0" data-end-pos="2"> Q</span></div></blockquote><span data-start-pos="2" data-end-pos="3"><br />
-</span>
+<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="2"><div class="quote-body"><span data-start-pos="0" data-end-pos="2"> Q</span></div></blockquote>
 -- quoteof.txt --
 [quoteof "User" Q]
 -- quoteof.expect.txt --
-<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="2"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="2"> Q</span></div></blockquote><span data-start-pos="2" data-end-pos="3"><br />
-</span>
+<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="2"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="2"> Q</span></div></blockquote>
 -- spoiler.txt --
 [spoiler S]
 -- spoiler.expect.txt --
-<span class="spoiler" data-start-pos="0" data-end-pos="2"><span data-start-pos="0" data-end-pos="2"> S</span></span><span data-start-pos="2" data-end-pos="3"><br />
-</span>
+<span class="spoiler" data-start-pos="0" data-end-pos="2"><span data-start-pos="0" data-end-pos="2"> S</span></span>
 -- indent.txt --
 [indent I]
 -- indent.expect.txt --
-<div class="a4code-block a4code-indent" data-start-pos="0" data-end-pos="2"><div><span data-start-pos="0" data-end-pos="2"> I</span></div></div><span data-start-pos="2" data-end-pos="3"><br />
-</span>
+<div class="a4code-block a4code-indent" data-start-pos="0" data-end-pos="2"><div><span data-start-pos="0" data-end-pos="2"> I</span></div></div>
 -- hr.txt --
 [hr]
 -- hr.expect.txt --
-<hr data-start-pos="0" data-end-pos="0" /><span data-start-pos="0" data-end-pos="1"><br />
-</span>
+<hr data-start-pos="0" data-end-pos="0" />

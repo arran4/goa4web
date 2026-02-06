@@ -51,12 +51,17 @@ func TestGenerator(t *testing.T) {
 			}
 		}
 
-		for name, input := range inputs {
+		for name, inputRaw := range inputs {
 			t.Run(name, func(t *testing.T) {
+				// Trim trailing newline from input to avoid implicit Text node generation
+				input := strings.TrimSuffix(inputRaw, "\n")
+
 				expect, ok := expects[name]
 				if !ok {
 					t.Fatalf("No expectation found for %s", name)
 				}
+				// Expectation might also have a trailing newline from txtar, trim it to match exact output
+				expect = strings.TrimSuffix(expect, "\n")
 
 				root, err := a4code.ParseString(input)
 				if err != nil {
@@ -64,7 +69,7 @@ func TestGenerator(t *testing.T) {
 				}
 
 				var buf bytes.Buffer
-				// Use mocked providers for specific tests
+				// Use mocked providers for specific tests via With... options
 				var opts []interface{}
 				if strings.Contains(name, "provider_link") {
 					opts = append(opts, goa4webhtml.WithLinkProvider(&mockLinkProvider{}))

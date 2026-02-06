@@ -45,6 +45,7 @@ func NewGenerator(opts ...interface{}) *Generator {
 	g := &Generator{
 		Generator: html.NewGenerator(),
 	}
+	g.Generator.Self = g // Set Self reference for recursion to use overrides
 	for _, opt := range opts {
 		switch v := opt.(type) {
 		case Option:

@@ -44,12 +44,14 @@ func TestGenerator(t *testing.T) {
 			}
 		}
 
-		for name, input := range inputs {
+		for name, inputRaw := range inputs {
 			t.Run(name, func(t *testing.T) {
+				input := strings.TrimSuffix(inputRaw, "\n")
 				expect, ok := expects[name]
 				if !ok {
 					t.Fatalf("No expectation found for %s", name)
 				}
+				expect = strings.TrimSuffix(expect, "\n")
 
 				root, err := a4code.ParseString(input)
 				if err != nil {

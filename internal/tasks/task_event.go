@@ -51,17 +51,3 @@ func (t TaskString) Matcher() mux.MatcherFunc {
 var _ TaskMatcher = (TaskString)("")
 var _ Name = (TaskString)("")
 var _ Task = (TaskString)("")
-
-type HasBreadcrumb interface {
-	Breadcrumb() (name, link string, parent HasBreadcrumb)
-}
-
-type HasPageTitle interface {
-	PageTitle() string
-}
-
-type Page interface {
-	HasBreadcrumb
-	HasPageTitle
-	http.Handler
-}

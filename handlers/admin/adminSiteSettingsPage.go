@@ -97,7 +97,7 @@ func (p *AdminSiteSettingsPage) ServeHTTP(w http.ResponseWriter, r *http.Request
 	AdminSiteSettingsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
 
-func (p *AdminSiteSettingsPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminSiteSettingsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "Site Settings", "/admin/settings", &AdminPage{}
 }
 
@@ -105,7 +105,7 @@ func (p *AdminSiteSettingsPage) PageTitle() string {
 	return "Site Settings"
 }
 
-var _ tasks.Page = (*AdminSiteSettingsPage)(nil)
+var _ common.Page = (*AdminSiteSettingsPage)(nil)
 var _ tasks.Task = (*AdminSiteSettingsPage)(nil)
 var _ http.Handler = (*AdminSiteSettingsPage)(nil)
 

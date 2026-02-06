@@ -33,7 +33,7 @@ func (p *AdminRolesPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	AdminRolesPageTmpl.Handler(data).ServeHTTP(w, r)
 }
 
-func (p *AdminRolesPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminRolesPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "Roles", "/admin/roles", &AdminPage{}
 }
 
@@ -41,7 +41,7 @@ func (p *AdminRolesPage) PageTitle() string {
 	return "Admin Roles"
 }
 
-var _ tasks.Page = (*AdminRolesPage)(nil)
+var _ common.Page = (*AdminRolesPage)(nil)
 var _ tasks.Task = (*AdminRolesPage)(nil)
 var _ http.Handler = (*AdminRolesPage)(nil)
 

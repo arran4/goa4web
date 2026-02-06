@@ -33,7 +33,7 @@ func (p *AdminAnnouncementsPage) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	AdminAnnouncementsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
 
-func (p *AdminAnnouncementsPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminAnnouncementsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "Announcements", "/admin/announcements", &AdminPage{}
 }
 
@@ -41,7 +41,7 @@ func (p *AdminAnnouncementsPage) PageTitle() string {
 	return "Admin Announcements"
 }
 
-var _ tasks.Page = (*AdminAnnouncementsPage)(nil)
+var _ common.Page = (*AdminAnnouncementsPage)(nil)
 var _ http.Handler = (*AdminAnnouncementsPage)(nil)
 
 const AdminAnnouncementsPageTmpl tasks.Template = "admin/announcementsPage.gohtml"

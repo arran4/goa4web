@@ -20,7 +20,7 @@ type AdminUserProfilePage struct {
 	Data     any
 }
 
-func (p *AdminUserProfilePage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminUserProfilePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	title := fmt.Sprintf("User %d", p.UserID)
 	if p.UserName != "" {
 		title = fmt.Sprintf("User %s", p.UserName)
@@ -39,7 +39,7 @@ func (p *AdminUserProfilePage) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	AdminUserProfilePageTmpl.Handler(p.Data).ServeHTTP(w, r)
 }
 
-var _ tasks.Page = (*AdminUserProfilePage)(nil)
+var _ common.Page = (*AdminUserProfilePage)(nil)
 var _ http.Handler = (*AdminUserProfilePage)(nil)
 
 type AdminUserProfileTask struct{}

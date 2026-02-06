@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Breadcrumb represents a single navigation step.
@@ -26,7 +24,7 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 		return buildBreadcrumbs(hb)
 	}
 	if cd.event != nil && cd.event.Task != nil {
-		if hb, ok := cd.event.Task.(tasks.HasBreadcrumb); ok {
+		if hb, ok := cd.event.Task.(HasBreadcrumb); ok {
 			return buildBreadcrumbs(hb)
 		}
 	}
@@ -58,7 +56,7 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 	return crumbs
 }
 
-func buildBreadcrumbs(hb tasks.HasBreadcrumb) []Breadcrumb {
+func buildBreadcrumbs(hb HasBreadcrumb) []Breadcrumb {
 	var crumbs []Breadcrumb
 	for hb != nil {
 		title, link, parent := hb.Breadcrumb()

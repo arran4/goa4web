@@ -18,7 +18,7 @@ type AdminRolePage struct {
 	Data     any
 }
 
-func (p *AdminRolePage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminRolePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return fmt.Sprintf("Role %s", p.RoleName), "", &AdminRolesPage{}
 }
 

@@ -25,7 +25,7 @@ func (p *AdminPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	AdminPageTmpl.Handler(struct{}{}).ServeHTTP(w, r)
 }
 
-func (p *AdminPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "Admin", "/admin", nil
 }
 
@@ -34,7 +34,7 @@ func (p *AdminPage) PageTitle() string {
 }
 
 // Ensure interface implementation
-var _ tasks.Page = (*AdminPage)(nil)
+var _ common.Page = (*AdminPage)(nil)
 var _ tasks.Task = (*AdminPage)(nil)
 var _ http.Handler = (*AdminPage)(nil)
 

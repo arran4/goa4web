@@ -49,7 +49,7 @@ func (p *AdminIPBanPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	AdminIPBanPageTmpl.Handle(w, r, data)
 }
 
-func (p *AdminIPBanPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminIPBanPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "IP Bans", "/admin/ipbans", &AdminPage{}
 }
 
@@ -57,7 +57,7 @@ func (p *AdminIPBanPage) PageTitle() string {
 	return "IP Bans"
 }
 
-var _ tasks.Page = (*AdminIPBanPage)(nil)
+var _ common.Page = (*AdminIPBanPage)(nil)
 var _ http.Handler = (*AdminIPBanPage)(nil)
 
 // AdminIPBanExport streams the current banned IP list as CSV.

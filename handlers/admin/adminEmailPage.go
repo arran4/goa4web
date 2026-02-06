@@ -232,7 +232,7 @@ func (p *AdminEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	AdminEmailPageTmpl.Handler(data).ServeHTTP(w, r)
 }
 
-func (p *AdminEmailPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminEmailPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "Email", "/admin/email/queue", &AdminPage{}
 }
 
@@ -240,7 +240,7 @@ func (p *AdminEmailPage) PageTitle() string {
 	return "Email"
 }
 
-var _ tasks.Page = (*AdminEmailPage)(nil)
+var _ common.Page = (*AdminEmailPage)(nil)
 var _ http.Handler = (*AdminEmailPage)(nil)
 
 const AdminEmailPageTmpl tasks.Template = "admin/emailPage.gohtml"

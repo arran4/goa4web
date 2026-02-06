@@ -67,7 +67,7 @@ func (p *AdminExternalLinksPage) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	AdminExternalLinksPageTmpl.Handler(data).ServeHTTP(w, r)
 }
 
-func (p *AdminExternalLinksPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminExternalLinksPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "External Links", "/admin/external-links", &AdminPage{}
 }
 
@@ -75,7 +75,7 @@ func (p *AdminExternalLinksPage) PageTitle() string {
 	return "External Links"
 }
 
-var _ tasks.Page = (*AdminExternalLinksPage)(nil)
+var _ common.Page = (*AdminExternalLinksPage)(nil)
 var _ tasks.Task = (*AdminExternalLinksPage)(nil)
 var _ http.Handler = (*AdminExternalLinksPage)(nil)
 
@@ -84,7 +84,7 @@ type AdminExternalLinkDetailsPage struct {
 	Data   any
 }
 
-func (p *AdminExternalLinkDetailsPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminExternalLinkDetailsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return fmt.Sprintf("Link %d", p.LinkID), "", &AdminExternalLinksPage{}
 }
 
@@ -96,7 +96,7 @@ func (p *AdminExternalLinkDetailsPage) ServeHTTP(w http.ResponseWriter, r *http.
 	AdminExternalLinkDetailsPageTmpl.Handler(p.Data).ServeHTTP(w, r)
 }
 
-var _ tasks.Page = (*AdminExternalLinkDetailsPage)(nil)
+var _ common.Page = (*AdminExternalLinkDetailsPage)(nil)
 var _ http.Handler = (*AdminExternalLinkDetailsPage)(nil)
 
 type AdminExternalLinkDetailsTask struct{}

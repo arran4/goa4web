@@ -33,7 +33,7 @@ func (p *AdminCommentsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	AdminCommentsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
 
-func (p *AdminCommentsPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminCommentsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return "Comments", "/admin/comments", &AdminPage{}
 }
 
@@ -41,7 +41,7 @@ func (p *AdminCommentsPage) PageTitle() string {
 	return "Comments"
 }
 
-var _ tasks.Page = (*AdminCommentsPage)(nil)
+var _ common.Page = (*AdminCommentsPage)(nil)
 var _ http.Handler = (*AdminCommentsPage)(nil)
 
 const AdminCommentsPageTmpl tasks.Template = "admin/commentsPage.gohtml"
@@ -51,7 +51,7 @@ type AdminCommentPage struct {
 	Data      any
 }
 
-func (p *AdminCommentPage) Breadcrumb() (string, string, tasks.HasBreadcrumb) {
+func (p *AdminCommentPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
 	return fmt.Sprintf("Comment %d", p.CommentID), "", &AdminCommentsPage{}
 }
 
@@ -63,7 +63,7 @@ func (p *AdminCommentPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	AdminCommentPageTmpl.Handler(p.Data).ServeHTTP(w, r)
 }
 
-var _ tasks.Page = (*AdminCommentPage)(nil)
+var _ common.Page = (*AdminCommentPage)(nil)
 var _ http.Handler = (*AdminCommentPage)(nil)
 
 type AdminCommentTask struct{}

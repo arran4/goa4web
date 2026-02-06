@@ -10,9 +10,9 @@ The following files define tasks that implement `Action` but are missing the com
 ## Test Structure Compliance
 The following test files do not appear to follow the required `t.Run("Happy Path", ...)` structure or are missing standard setup conventions.
 
-- [ ] handlers/access_cache_test.go
-- [ ] handlers/access_test.go
-- [ ] handlers/admin/adminAnyoneGrantsPage_test.go
+- [x] handlers/access_cache_test.go
+- [x] handlers/access_test.go
+- [x] handlers/admin/adminAnyoneGrantsPage_test.go
 - [ ] handlers/admin/adminCommentPage_test.go
 - [ ] handlers/admin/adminCommentTasks_test.go
 - [ ] handlers/admin/adminFilesPage_test.go

@@ -3,6 +3,7 @@ package goa4webhtml_test
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"io/fs"
 	"strings"
 	"testing"
@@ -15,6 +16,12 @@ import (
 
 //go:embed tests.txtar
 var testData embed.FS
+
+type mockLinkProvider struct{}
+
+func (m *mockLinkProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (htmlOpen string, htmlClose string, consumeImmediate bool) {
+	return fmt.Sprintf(`<custom-link href="%s">`, url), "</custom-link>", false
+}
 
 func TestGenerator(t *testing.T) {
 	fs.WalkDir(testData, ".", func(path string, d fs.DirEntry, err error) error {
@@ -57,7 +64,23 @@ func TestGenerator(t *testing.T) {
 				}
 
 				var buf bytes.Buffer
-				gen := goa4webhtml.NewGenerator()
+				// Use mocked providers for specific tests
+				var opts []goa4webhtml.Option
+				if strings.Contains(name, "provider_link") {
+					opts = append(opts, goa4webhtml.WithLinkProvider(&mockLinkProvider{}))
+				}
+				if strings.Contains(name, "provider_image") {
+					opts = append(opts, goa4webhtml.WithImageMapper(func(tag, val string) string {
+						return "/mapped/" + val
+					}))
+				}
+				if strings.Contains(name, "provider_quoteof") {
+					opts = append(opts, goa4webhtml.WithUserColorMapper(func(username string) string {
+						return "user-color-" + username
+					}))
+				}
+
+				gen := goa4webhtml.NewGenerator(opts...)
 				if err := ast.Generate(&buf, root, gen); err != nil {
 					t.Fatalf("Generate error: %v", err)
 				}

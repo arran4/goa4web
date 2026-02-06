@@ -2,3 +2,15 @@
 [b]Bold[/b]
 -- simple.expect.txt --
 <strong data-start-pos="0" data-end-pos="8"><span data-start-pos="3" data-end-pos="7">Bold</span></strong>
+-- provider_link.txt --
+[a=http://example.com]Link[/a]
+-- provider_link.expect.txt --
+<custom-link href="http://example.com"><span data-start-pos="22" data-end-pos="26">Link</span></custom-link>
+-- provider_image.txt --
+[img=image.jpg]
+-- provider_image.expect.txt --
+<img src="/mapped/image.jpg" data-start-pos="0" data-end-pos="15" />
+-- provider_quoteof.txt --
+[quoteof "User"]Text[/quoteof]
+-- provider_quoteof.expect.txt --
+<blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-start-pos="0" data-end-pos="27"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="16" data-end-pos="20">Text</span></div></blockquote>

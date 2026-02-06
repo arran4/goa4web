@@ -1,7 +1,10 @@
 package ast
 
+import "fmt"
+
 // Node represents a parsed element of markup.
 type Node interface {
+	fmt.Stringer
 	isNode()
 	Transform(op func(Node) (Node, error)) (Node, error)
 	SetPos(start, end int)
@@ -64,6 +67,10 @@ func (r *Root) Transform(op func(Node) (Node, error)) (Node, error) {
 
 func (r *Root) childrenPtr() *[]Node { return &r.Children }
 func (r *Root) AddChild(n Node)     { r.Children = append(r.Children, n) }
+
+func (r *Root) String() string {
+	return ""
+}
 
 // Text contains plain text content.
 type Text struct {

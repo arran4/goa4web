@@ -106,31 +106,35 @@ func TestErrorHandlers_CacheControl(t *testing.T) {
 		return nil
 	}
 
-	t.Run("Happy Path - RenderPermissionDenied", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/", nil)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-		rr := httptest.NewRecorder()
+	t.Run("RenderPermissionDenied", func(t *testing.T) {
+		t.Run("Happy Path", func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/", nil)
+			cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+			rr := httptest.NewRecorder()
 
-		RenderPermissionDenied(rr, req)
+			RenderPermissionDenied(rr, req)
 
-		cc := rr.Header().Get("Cache-Control")
-		if !strings.Contains(cc, "no-cache") {
-			t.Errorf("expected Cache-Control: no-cache, got %q", cc)
-		}
+			cc := rr.Header().Get("Cache-Control")
+			if !strings.Contains(cc, "no-cache") {
+				t.Errorf("expected Cache-Control: no-cache, got %q", cc)
+			}
+		})
 	})
 
-	t.Run("Happy Path - RenderNotFoundOrLogin", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/", nil)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-		rr := httptest.NewRecorder()
+	t.Run("RenderNotFoundOrLogin", func(t *testing.T) {
+		t.Run("Happy Path", func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/", nil)
+			cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
+			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+			rr := httptest.NewRecorder()
 
-		RenderNotFoundOrLogin(rr, req)
+			RenderNotFoundOrLogin(rr, req)
 
-		cc := rr.Header().Get("Cache-Control")
-		if !strings.Contains(cc, "no-cache") {
-			t.Errorf("expected Cache-Control: no-cache, got %q", cc)
-		}
+			cc := rr.Header().Get("Cache-Control")
+			if !strings.Contains(cc, "no-cache") {
+				t.Errorf("expected Cache-Control: no-cache, got %q", cc)
+			}
+		})
 	})
 }

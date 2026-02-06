@@ -11,7 +11,7 @@ import (
 )
 
 const adminListSessions = `-- name: AdminListSessions :many
-SELECT s.session_id, s.users_idusers, s.branch_name, u.username
+SELECT s.session_id, s.users_idusers, u.username
 FROM sessions s
 LEFT JOIN users u ON u.idusers = s.users_idusers
 ORDER BY s.session_id
@@ -20,7 +20,6 @@ ORDER BY s.session_id
 type AdminListSessionsRow struct {
 	SessionID    string
 	UsersIdusers int32
-	BranchName   sql.NullString
 	Username     sql.NullString
 }
 
@@ -33,12 +32,7 @@ func (q *Queries) AdminListSessions(ctx context.Context) ([]*AdminListSessionsRo
 	var items []*AdminListSessionsRow
 	for rows.Next() {
 		var i AdminListSessionsRow
-		if err := rows.Scan(
-			&i.SessionID,
-			&i.UsersIdusers,
-			&i.BranchName,
-			&i.Username,
-		); err != nil {
+		if err := rows.Scan(&i.SessionID, &i.UsersIdusers, &i.Username); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -62,18 +56,17 @@ func (q *Queries) SystemDeleteSessionByID(ctx context.Context, sessionID string)
 }
 
 const systemInsertSession = `-- name: SystemInsertSession :exec
-INSERT INTO sessions (session_id, users_idusers, branch_name)
-VALUES (?, ?, ?)
-ON DUPLICATE KEY UPDATE users_idusers = VALUES(users_idusers), branch_name = VALUES(branch_name)
+INSERT INTO sessions (session_id, users_idusers)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE users_idusers = VALUES(users_idusers)
 `
 
 type SystemInsertSessionParams struct {
 	SessionID    string
 	UsersIdusers int32
-	BranchName   sql.NullString
 }
 
 func (q *Queries) SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error {
-	_, err := q.db.ExecContext(ctx, systemInsertSession, arg.SessionID, arg.UsersIdusers, arg.BranchName)
+	_, err := q.db.ExecContext(ctx, systemInsertSession, arg.SessionID, arg.UsersIdusers)
 	return err
 }

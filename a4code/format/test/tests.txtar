@@ -1,15 +1,15 @@
 -- simple.txt --
-[b]Bold[/b]
+[b Bold]
 -- simple.expect.txt --
-[b]Bold[/b]
+[b Bold]
 -- simple_nested.txt --
-[b]Bold [i]Italic[/i][/b]
+[b Bold [i Italic]]
 -- simple_nested.expect.txt --
-[b]Bold [i]Italic[/i][/b]
+[b Bold [i Italic]]
 -- link.txt --
-[a=http://example.com]Link[/a]
+[a=http://example.com Link]
 -- link.expect.txt --
-[a=http://example.com]Link[/a]
+[a=http://example.com Link]
 -- image.txt --
 [img=http://example.com/image.jpg]
 -- image.expect.txt --
@@ -27,21 +27,21 @@ func main() {
 }
 [/code]
 -- quote.txt --
-[quote]Quoted text[/quote]
+[quote Quoted text]
 -- quote.expect.txt --
-[quote]Quoted text[/quote]
+[quote Quoted text]
 -- quoteof.txt --
-[quoteof "User"]Quoted text[/quoteof]
+[quoteof "User" Quoted text]
 -- quoteof.expect.txt --
-[quoteof "User"]Quoted text[/quoteof]
+[quoteof "User" Quoted text]
 -- spoiler.txt --
-[spoiler]Secret[/spoiler]
+[spoiler Secret]
 -- spoiler.expect.txt --
-[spoiler]Secret[/spoiler]
+[spoiler Secret]
 -- indent.txt --
-[indent]Indented[/indent]
+[indent Indented]
 -- indent.expect.txt --
-[indent]Indented[/indent]
+[indent Indented]
 -- hr.txt --
 [hr]
 -- hr.expect.txt --

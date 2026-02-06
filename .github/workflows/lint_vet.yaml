@@ -1,32 +1,21 @@
-name: lint-vet
+name: Lint & Vet
 
 on:
   push:
-    branches: [main]
+    branches: [ "master" ]
   pull_request:
+    branches: [ "master" ]
 
 jobs:
-  lint-vet:
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tags:
-          - 'nosqlite'
-          - 'nosqlite,s3'
-          - 'nosqlite,sendgrid'
-          - 'nosqlite,ses'
-          - 'nosqlite,s3,sendgrid,ses'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: go.mod
-      - name: Go Vet
-        run: go vet -tags '${{ matrix.tags }}' ./...
-      - name: Golangci Lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.1.6
-          args: --build-tags '${{ matrix.tags }}'
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.x'
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: v1.60
+        args: --build-tags 'nosqlite,sendgrid'

@@ -84,7 +84,7 @@ func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
-	io.WriteString(w, "\n---\n")
+	io.WriteString(w, "---\n")
 	return nil
 }
 

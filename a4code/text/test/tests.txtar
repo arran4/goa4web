@@ -13,11 +13,9 @@
 -- image.txt --
 [img=http://example.com/image.jpg]
 -- image.expect.txt --
-
 -- code.txt --
 [code]func[/code]
 -- code.expect.txt --
-
 -- quote.txt --
 [quote Q]
 -- quote.expect.txt --
@@ -37,3 +35,5 @@
 -- hr.txt --
 [hr]
 -- hr.expect.txt --
+
+---

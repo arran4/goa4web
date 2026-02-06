@@ -65,7 +65,7 @@ func TestGenerator(t *testing.T) {
 
 				var buf bytes.Buffer
 				// Use mocked providers for specific tests
-				var opts []goa4webhtml.Option
+				var opts []interface{}
 				if strings.Contains(name, "provider_link") {
 					opts = append(opts, goa4webhtml.WithLinkProvider(&mockLinkProvider{}))
 				}

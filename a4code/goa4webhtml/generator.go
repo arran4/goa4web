@@ -41,12 +41,25 @@ func WithUserColorMapper(ucm UserColorMapper) Option {
 	return func(g *Generator) { g.UserColorMapper = ucm }
 }
 
-func NewGenerator(opts ...Option) *Generator {
+func NewGenerator(opts ...interface{}) *Generator {
 	g := &Generator{
 		Generator: html.NewGenerator(),
 	}
 	for _, opt := range opts {
-		opt(g)
+		switch v := opt.(type) {
+		case Option:
+			v(g)
+		case LinkProvider:
+			g.LinkProvider = v
+		case ImageMapper:
+			g.ImageMapper = v
+		case UserColorMapper:
+			g.UserColorMapper = v
+		case func(tag, val string) string:
+			g.ImageMapper = v
+		case func(username string) string:
+			g.UserColorMapper = v
+		}
 	}
 	return g
 }

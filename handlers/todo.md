@@ -23,11 +23,11 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/admin/adminRequestQueuePage_test.go
 - [x] handlers/admin/adminUserGrantsPage_test.go
 - [x] handlers/admin/adminUserProfilePage_test.go
-- [ ] handlers/admin/adminUserWritingsPage_test.go
-- [ ] handlers/admin/admin_breadcrumbs_test.go
-- [ ] handlers/admin/admin_email_tasks_test.go
-- [ ] handlers/admin/admin_email_template_test.go
-- [ ] handlers/admin/admin_password_reset_cleanup_tasks_test.go
+- [x] handlers/admin/adminUserWritingsPage_test.go
+- [x] handlers/admin/admin_breadcrumbs_test.go
+- [x] handlers/admin/admin_email_tasks_test.go
+- [x] handlers/admin/admin_email_template_test.go
+- [x] handlers/admin/admin_password_reset_cleanup_tasks_test.go
 - [ ] handlers/admin/admin_tasks_event_test.go
 - [ ] handlers/admin/admin_tasks_test.go
 - [ ] handlers/admin/admin_user_generate_link_test.go

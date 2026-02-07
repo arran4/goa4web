@@ -109,6 +109,52 @@ type QuerierStub struct {
 	AdminListFailedEmailIDsErr     error
 	AdminListFailedEmailIDsFn      func(context.Context, AdminListFailedEmailIDsParams) ([]int32, error)
 
+	AdminListAllCommentsWithThreadInfoCalls   []AdminListAllCommentsWithThreadInfoParams
+	AdminListAllCommentsWithThreadInfoReturns []*AdminListAllCommentsWithThreadInfoRow
+	AdminListAllCommentsWithThreadInfoErr     error
+	AdminListAllCommentsWithThreadInfoFn      func(context.Context, AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
+
+	AdminGetAllWritingsByAuthorCalls   []int32
+	AdminGetAllWritingsByAuthorReturns []*AdminGetAllWritingsByAuthorRow
+	AdminGetAllWritingsByAuthorErr     error
+	AdminGetAllWritingsByAuthorFn      func(context.Context, int32) ([]*AdminGetAllWritingsByAuthorRow, error)
+
+	AdminGetUserEmailByIDCalls   []int32
+	AdminGetUserEmailByIDReturns *UserEmail
+	AdminGetUserEmailByIDErr     error
+	AdminGetUserEmailByIDFn      func(context.Context, int32) (*UserEmail, error)
+
+	InsertUserEmailCalls []InsertUserEmailParams
+	InsertUserEmailErr   error
+	InsertUserEmailFn    func(context.Context, InsertUserEmailParams) error
+
+	AdminDeleteUserEmailCalls []int32
+	AdminDeleteUserEmailErr   error
+	AdminDeleteUserEmailFn    func(context.Context, int32) error
+
+	AdminUpdateUserEmailDetailsCalls []AdminUpdateUserEmailDetailsParams
+	AdminUpdateUserEmailDetailsErr   error
+	AdminUpdateUserEmailDetailsFn    func(context.Context, AdminUpdateUserEmailDetailsParams) error
+
+	SystemUpdateVerificationCodeCalls []SystemUpdateVerificationCodeParams
+	SystemUpdateVerificationCodeErr   error
+	SystemUpdateVerificationCodeFn    func(context.Context, SystemUpdateVerificationCodeParams) error
+
+	AdminListRecentNotificationsCalls   []int32
+	AdminListRecentNotificationsReturns []*Notification
+	AdminListRecentNotificationsErr     error
+	AdminListRecentNotificationsFn      func(context.Context, int32) ([]*Notification, error)
+
+	AdminListAnnouncementsWithNewsCalls   int
+	AdminListAnnouncementsWithNewsReturns []*AdminListAnnouncementsWithNewsRow
+	AdminListAnnouncementsWithNewsErr     error
+	AdminListAnnouncementsWithNewsFn      func(context.Context) ([]*AdminListAnnouncementsWithNewsRow, error)
+
+	ListBannedIpsCalls   int
+	ListBannedIpsReturns []*BannedIp
+	ListBannedIpsErr     error
+	ListBannedIpsFn      func(context.Context) ([]*BannedIp, error)
+
 	GetAllAnsweredFAQWithFAQCategoriesForUserCalls   []GetAllAnsweredFAQWithFAQCategoriesForUserParams
 	GetAllAnsweredFAQWithFAQCategoriesForUserReturns []*GetAllAnsweredFAQWithFAQCategoriesForUserRow
 	GetAllAnsweredFAQWithFAQCategoriesForUserErr     error
@@ -435,6 +481,7 @@ type QuerierStub struct {
 
 	ListSubscribersForPatternsParams []ListSubscribersForPatternsParams
 	ListSubscribersForPatternsReturn map[string][]int32
+	ListSubscribersForPatternsFn     func(context.Context, ListSubscribersForPatternsParams) ([]int32, error)
 
 	GetPreferenceForListerParams []int32
 	GetPreferenceForListerReturn map[int32]*Preference
@@ -2046,6 +2093,9 @@ func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSu
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListSubscribersForPatternsParams = append(s.ListSubscribersForPatternsParams, arg)
+	if s.ListSubscribersForPatternsFn != nil {
+		return s.ListSubscribersForPatternsFn(ctx, arg)
+	}
 	// Flatten returns for all patterns or just return a default set
 	var ret []int32
 	if s.ListSubscribersForPatternsReturn != nil {

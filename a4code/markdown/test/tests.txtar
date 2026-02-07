@@ -42,3 +42,10 @@ func
 [hr]
 -- hr.expect.txt --
 ---
+
+-- hr_inline.txt --
+Text[hr]
+-- hr_inline.expect.txt --
+Text
+---
+

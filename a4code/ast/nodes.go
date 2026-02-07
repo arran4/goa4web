@@ -77,7 +77,7 @@ func (r *Root) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (r *Root) childrenPtr() *[]Node { return &r.Children }
-func (r *Root) AddChild(n Node)     { r.Children = append(r.Children, n) }
+func (r *Root) AddChild(n Node)      { r.Children = append(r.Children, n) }
 
 func (r *Root) String() string {
 	return joinChildren(r.Children)

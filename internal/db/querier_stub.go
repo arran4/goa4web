@@ -58,10 +58,10 @@ type QuerierStub struct {
 	AdminListAllImagePostsErr     error
 	AdminListAllImagePostsFn      func(context.Context, AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error)
 
-	GetImagePostInfoByPathCalls   []GetImagePostInfoByPathParams
-	GetImagePostInfoByPathRow     *GetImagePostInfoByPathRow
-	GetImagePostInfoByPathErr     error
-	GetImagePostInfoByPathFn      func(context.Context, GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
+	GetImagePostInfoByPathCalls []GetImagePostInfoByPathParams
+	GetImagePostInfoByPathRow   *GetImagePostInfoByPathRow
+	GetImagePostInfoByPathErr   error
+	GetImagePostInfoByPathFn    func(context.Context, GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
 
 	AdminScrubCommentCalls []AdminScrubCommentParams
 	AdminScrubCommentErr   error

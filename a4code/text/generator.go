@@ -6,6 +6,22 @@ import (
 	"github.com/arran4/goa4web/a4code/ast"
 )
 
+type SmartWriter struct {
+	w        io.Writer
+	lastByte byte
+}
+
+func (sw *SmartWriter) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+	n, err = sw.w.Write(p)
+	if n > 0 {
+		sw.lastByte = p[n-1]
+	}
+	return
+}
+
 type Generator struct{}
 
 func NewGenerator() *Generator {
@@ -13,8 +29,9 @@ func NewGenerator() *Generator {
 }
 
 func (g *Generator) Root(w io.Writer, n *ast.Root) error {
+	sw := &SmartWriter{w: w, lastByte: '\n'}
 	for _, c := range n.Children {
-		if err := ast.Generate(w, c, g); err != nil {
+		if err := ast.Generate(sw, c, g); err != nil {
 			return err
 		}
 	}
@@ -84,6 +101,11 @@ func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
+	if sw, ok := w.(*SmartWriter); ok {
+		if sw.lastByte != '\n' {
+			io.WriteString(w, "\n")
+		}
+	}
 	io.WriteString(w, "---\n")
 	return nil
 }

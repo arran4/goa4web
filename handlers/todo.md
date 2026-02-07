@@ -170,27 +170,27 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/search/search_tasks_test.go
 - [ ] handlers/share/opengraph_test.go
 - [ ] handlers/template_render_test.go
-- [ ] handlers/user/addEmailTask_expiry_test.go
-- [ ] handlers/user/addEmailTask_invalid_test.go
-- [ ] handlers/user/admin_permissions_test.go
-- [ ] handlers/user/admin_user_routes_test.go
-- [ ] handlers/user/appearancePage_test.go
-- [ ] handlers/user/notification_fix_test.go
-- [ ] handlers/user/notification_open_test.go
-- [ ] handlers/user/notifications_feed_test.go
-- [ ] handlers/user/pages_test.go
-- [ ] handlers/user/subscriptions_logic_test.go
-- [ ] handlers/user/subscriptions_template_test.go
-- [ ] handlers/user/subscriptions_update_test.go
-- [ ] handlers/user/timezone_utils_test.go
-- [ ] handlers/user/userEmailPage_event_test.go
-- [ ] handlers/user/userEmailPage_test.go
-- [ ] handlers/user/userEmailVerify_test.go
-- [ ] handlers/user/userPublicSettingPage_test.go
-- [ ] handlers/user/user_lang_page_test.go
-- [ ] handlers/user/user_paging_test.go
-- [ ] handlers/user/user_tasks_test.go
-- [ ] handlers/user/user_test.go
+- [x] handlers/user/addEmailTask_expiry_test.go
+- [x] handlers/user/addEmailTask_invalid_test.go
+- [x] handlers/user/admin_permissions_test.go
+- [x] handlers/user/admin_user_routes_test.go
+- [x] handlers/user/appearancePage_test.go
+- [x] handlers/user/notification_fix_test.go
+- [x] handlers/user/notification_open_test.go
+- [x] handlers/user/notifications_feed_test.go
+- [x] handlers/user/pages_test.go
+- [x] handlers/user/subscriptions_logic_test.go
+- [x] handlers/user/subscriptions_template_test.go
+- [x] handlers/user/subscriptions_update_test.go
+- [x] handlers/user/timezone_utils_test.go
+- [x] handlers/user/userEmailPage_event_test.go
+- [x] handlers/user/userEmailPage_test.go
+- [x] handlers/user/userEmailVerify_test.go
+- [x] handlers/user/userPublicSettingPage_test.go
+- [x] handlers/user/user_lang_page_test.go
+- [x] handlers/user/user_paging_test.go
+- [x] handlers/user/user_tasks_test.go
+- [x] handlers/user/user_test.go
 - [ ] handlers/writings/matchers_test.go
 - [ ] handlers/writings/pages_test.go
 - [ ] handlers/writings/permissions_test.go

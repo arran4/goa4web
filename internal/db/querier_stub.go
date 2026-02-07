@@ -803,6 +803,11 @@ type QuerierStub struct {
 	AdminGetFAQDismissedQuestionsReturns []*AdminGetFAQDismissedQuestionsRow
 	AdminGetFAQDismissedQuestionsErr     error
 	AdminGetFAQDismissedQuestionsFn      func(context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
+
+	AdminListTopicsWithUserGrantsNoRolesCalls   []interface{}
+	AdminListTopicsWithUserGrantsNoRolesReturns []*AdminListTopicsWithUserGrantsNoRolesRow
+	AdminListTopicsWithUserGrantsNoRolesErr     error
+	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -1227,6 +1232,16 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListTopicsWithUserGrantsNoRolesCalls = append(s.AdminListTopicsWithUserGrantsNoRolesCalls, includeAdmin)
+	if s.AdminListTopicsWithUserGrantsNoRolesFn != nil {
+		return s.AdminListTopicsWithUserGrantsNoRolesFn(ctx, includeAdmin)
+	}
+	return s.AdminListTopicsWithUserGrantsNoRolesReturns, s.AdminListTopicsWithUserGrantsNoRolesErr
 }
 
 func (s *QuerierStub) ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error) {

@@ -77,23 +77,23 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/blogs/blogs_tasks_test.go
 - [ ] handlers/blogs/pages_test.go
 - [ ] handlers/blogs/routes_test.go
-- [ ] handlers/bookmarks/mine_test.go
-- [ ] handlers/errorpage_test.go
-- [ ] handlers/externallink/redirect_test.go
-- [ ] handlers/externallink/tasks_test.go
-- [ ] handlers/faq/admin_questions_test.go
-- [ ] handlers/faq/admin_templates_page_test.go
-- [ ] handlers/faq/ask_test.go
-- [ ] handlers/faq/empty_faq_test.go
-- [ ] handlers/faq/faqIndexPermissions_test.go
-- [ ] handlers/faq/faqTemplates_test.go
-- [ ] handlers/faq/page_test.go
-- [ ] handlers/faq/pages_test.go
-- [ ] handlers/forum/admin_topic_edit_template_test.go
-- [ ] handlers/forum/api_test.go
-- [ ] handlers/forum/auto_subscribe_grants_test.go
-- [ ] handlers/forum/category_prune_test.go
-- [ ] handlers/forum/comments/matchers_test.go
+- [x] handlers/bookmarks/mine_test.go
+- [x] handlers/errorpage_test.go
+- [x] handlers/externallink/redirect_test.go
+- [x] handlers/externallink/tasks_test.go
+- [x] handlers/faq/admin_questions_test.go
+- [x] handlers/faq/admin_templates_page_test.go
+- [x] handlers/faq/ask_test.go
+- [x] handlers/faq/empty_faq_test.go
+- [x] handlers/faq/faqIndexPermissions_test.go
+- [x] handlers/faq/faqTemplates_test.go
+- [x] handlers/faq/page_test.go
+- [x] handlers/faq/pages_test.go
+- [x] handlers/forum/admin_topic_edit_template_test.go
+- [x] handlers/forum/api_test.go
+- [x] handlers/forum/auto_subscribe_grants_test.go
+- [x] handlers/forum/category_prune_test.go
+- [x] handlers/forum/comments/matchers_test.go
 - [ ] handlers/forum/forumAdminCategoryCreatePage_test.go
 - [ ] handlers/forum/forumAdminCategoryEditPage_submit_test.go
 - [ ] handlers/forum/forumAdminTemplates_test.go
@@ -115,14 +115,14 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/forum/thread_label_tasks_test.go
 - [ ] handlers/forum/topic_grants_build_test.go
 - [ ] handlers/forum/topic_thread_reply_cancel_task_test.go
-- [ ] handlers/imagebbs/auto_subscribe_test.go
-- [ ] handlers/imagebbs/imagebbsAdminPermissions_test.go
-- [ ] handlers/imagebbs/imagebbsBoardPage_test.go
-- [ ] handlers/imagebbs/imagebbsFeed_test.go
-- [ ] handlers/imagebbs/imagebbsTemplates_test.go
-- [ ] handlers/imagebbs/imagebbs_reply_notifications_test.go
-- [ ] handlers/imagebbs/imagebbs_tasks_test.go
-- [ ] handlers/imagebbs/pages_test.go
+- [x] handlers/imagebbs/auto_subscribe_test.go
+- [x] handlers/imagebbs/imagebbsAdminPermissions_test.go
+- [x] handlers/imagebbs/imagebbsBoardPage_test.go
+- [x] handlers/imagebbs/imagebbsFeed_test.go
+- [x] handlers/imagebbs/imagebbsTemplates_test.go
+- [x] handlers/imagebbs/imagebbs_reply_notifications_test.go
+- [x] handlers/imagebbs/imagebbs_tasks_test.go
+- [x] handlers/imagebbs/pages_test.go
 - [x] handlers/images/routes_test.go
 - [x] handlers/languages/delete_language_task_test.go
 - [x] handlers/languages/languagesTemplates_test.go
@@ -156,20 +156,20 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/news/routes_test.go
 - [ ] handlers/news/search_test.go
 - [ ] handlers/pages_test.go
-- [ ] handlers/privateforum/api_test.go
-- [ ] handlers/privateforum/auto_subscribe_test.go
-- [ ] handlers/privateforum/labels_test.go
-- [ ] handlers/privateforum/page_test.go
-- [ ] handlers/privateforum/pages_test.go
-- [ ] handlers/privateforum/privateforum_tasks_test.go
-- [ ] handlers/privateforum/repro_test.go
-- [ ] handlers/privateforum/topic_page_test.go
-- [ ] handlers/redirect_test.go
-- [ ] handlers/search/pages_test.go
-- [ ] handlers/search/permissions_test.go
-- [ ] handlers/search/search_tasks_test.go
-- [ ] handlers/share/opengraph_test.go
-- [ ] handlers/template_render_test.go
+- [x] handlers/privateforum/api_test.go
+- [x] handlers/privateforum/auto_subscribe_test.go
+- [x] handlers/privateforum/labels_test.go
+- [x] handlers/privateforum/page_test.go
+- [x] handlers/privateforum/pages_test.go
+- [x] handlers/privateforum/privateforum_tasks_test.go
+- [x] handlers/privateforum/repro_test.go
+- [x] handlers/privateforum/topic_page_test.go
+- [x] handlers/redirect_test.go
+- [x] handlers/search/pages_test.go
+- [x] handlers/search/permissions_test.go
+- [x] handlers/search/search_tasks_test.go
+- [x] handlers/share/opengraph_test.go
+- [x] handlers/template_render_test.go
 - [ ] handlers/user/addEmailTask_expiry_test.go
 - [ ] handlers/user/addEmailTask_invalid_test.go
 - [ ] handlers/user/admin_permissions_test.go

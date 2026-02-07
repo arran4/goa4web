@@ -396,6 +396,30 @@ type QuerierStub struct {
 
 	UpdateExternalLinkMetadataCalls []UpdateExternalLinkMetadataParams
 	UpdateExternalLinkMetadataErr   error
+	UpdateExternalLinkMetadataFn    func(context.Context, UpdateExternalLinkMetadataParams) error
+
+	CreateExternalLinkCalls              []string
+	CreateExternalLinkReturns            sql.Result
+	CreateExternalLinkErr                error
+	CreateExternalLinkFn                 func(context.Context, string) (sql.Result, error)
+
+	GetExternalLinkCalls                 []string
+	GetExternalLinkReturns               *ExternalLink
+	GetExternalLinkErr                   error
+	GetExternalLinkFn                    func(context.Context, string) (*ExternalLink, error)
+
+	GetExternalLinkByIDCalls             []int32
+	GetExternalLinkByIDReturns           *ExternalLink
+	GetExternalLinkByIDErr               error
+	GetExternalLinkByIDFn                func(context.Context, int32) (*ExternalLink, error)
+
+	SystemRegisterExternalLinkClickCalls []string
+	SystemRegisterExternalLinkClickErr   error
+	SystemRegisterExternalLinkClickFn    func(context.Context, string) error
+
+	UpdateExternalLinkImageCacheCalls    []UpdateExternalLinkImageCacheParams
+	UpdateExternalLinkImageCacheErr      error
+	UpdateExternalLinkImageCacheFn       func(context.Context, UpdateExternalLinkImageCacheParams) error
 
 	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
 	AdminInsertRequestCommentErr   error
@@ -2363,15 +2387,28 @@ func (s *QuerierStub) AdminInsertRequestQueue(ctx context.Context, arg AdminInse
 	}
 	return ret, nil
 }
-func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
-	return nil
+func (s *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.UpdateExternalLinkImageCacheCalls = append(s.UpdateExternalLinkImageCacheCalls, arg)
+	fn := s.UpdateExternalLinkImageCacheFn
+	err := s.UpdateExternalLinkImageCacheErr
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 func (s *QuerierStub) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.UpdateExternalLinkMetadataCalls = append(s.UpdateExternalLinkMetadataCalls, arg)
-	return s.UpdateExternalLinkMetadataErr
+	fn := s.UpdateExternalLinkMetadataFn
+	err := s.UpdateExternalLinkMetadataErr
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
@@ -2385,6 +2422,77 @@ func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg G
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) CreateExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	s.mu.Lock()
+	s.CreateExternalLinkCalls = append(s.CreateExternalLinkCalls, url)
+	fn := s.CreateExternalLinkFn
+	ret := s.CreateExternalLinkReturns
+	err := s.CreateExternalLinkErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, url)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		return FakeSQLResult{}, nil
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
+	s.mu.Lock()
+	s.GetExternalLinkCalls = append(s.GetExternalLinkCalls, url)
+	fn := s.GetExternalLinkFn
+	ret := s.GetExternalLinkReturns
+	err := s.GetExternalLinkErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, url)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if ret == nil {
+		// Simulate not found if not configured?
+		// For consistency with other methods, we might return nil, nil if nothing configured?
+		// Or errors.New("GetExternalLink not stubbed")?
+		// Many stubs return (nil, nil) or whatever is in Returns (which is nil).
+		// But in tests we usually check for sql.ErrNoRows if we want to simulate missing.
+		return nil, nil // Or sql.ErrNoRows?
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
+	s.mu.Lock()
+	s.GetExternalLinkByIDCalls = append(s.GetExternalLinkByIDCalls, id)
+	fn := s.GetExternalLinkByIDFn
+	ret := s.GetExternalLinkByIDReturns
+	err := s.GetExternalLinkByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (s *QuerierStub) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
+	s.mu.Lock()
+	s.SystemRegisterExternalLinkClickCalls = append(s.SystemRegisterExternalLinkClickCalls, url)
+	fn := s.SystemRegisterExternalLinkClickFn
+	err := s.SystemRegisterExternalLinkClickErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, url)
+	}
+	return err
 }
 
 func (s *QuerierStub) AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error) {

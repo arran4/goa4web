@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestPage_NoAccess(t *testing.T) {
+func TestUnhappyPathPage_NoAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	cd.ShareSignKey = "secret"
 	req := httptest.NewRequest(http.MethodGet, "/private", nil)
@@ -31,7 +31,7 @@ func TestPage_NoAccess(t *testing.T) {
 	}
 }
 
-func TestPage_Access(t *testing.T) {
+func TestHappyPathPage_Access(t *testing.T) {
 	queries := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
 	cd.ShareSignKey = "secret"
@@ -53,7 +53,7 @@ func TestPage_Access(t *testing.T) {
 	}
 }
 
-func TestPage_SeeNoCreate(t *testing.T) {
+func TestHappyPathPage_SeeNoCreate(t *testing.T) {
 	q := testhelpers.NewQuerierStub(
 		testhelpers.WithDefaultGrantAllowed(true),
 		testhelpers.WithGrants(map[string]bool{
@@ -82,7 +82,7 @@ func TestPage_SeeNoCreate(t *testing.T) {
 	}
 }
 
-func TestPage_AdminLinks(t *testing.T) {
+func TestHappyPathPage_AdminLinks(t *testing.T) {
 	queries := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
 	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{{IsAdmin: true}}
 	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())

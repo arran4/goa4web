@@ -156,20 +156,20 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/news/routes_test.go
 - [ ] handlers/news/search_test.go
 - [ ] handlers/pages_test.go
-- [ ] handlers/privateforum/api_test.go
-- [ ] handlers/privateforum/auto_subscribe_test.go
-- [ ] handlers/privateforum/labels_test.go
-- [ ] handlers/privateforum/page_test.go
-- [ ] handlers/privateforum/pages_test.go
-- [ ] handlers/privateforum/privateforum_tasks_test.go
-- [ ] handlers/privateforum/repro_test.go
-- [ ] handlers/privateforum/topic_page_test.go
-- [ ] handlers/redirect_test.go
-- [ ] handlers/search/pages_test.go
-- [ ] handlers/search/permissions_test.go
-- [ ] handlers/search/search_tasks_test.go
-- [ ] handlers/share/opengraph_test.go
-- [ ] handlers/template_render_test.go
+- [x] handlers/privateforum/api_test.go
+- [x] handlers/privateforum/auto_subscribe_test.go
+- [x] handlers/privateforum/labels_test.go
+- [x] handlers/privateforum/page_test.go
+- [x] handlers/privateforum/pages_test.go
+- [x] handlers/privateforum/privateforum_tasks_test.go
+- [x] handlers/privateforum/repro_test.go
+- [x] handlers/privateforum/topic_page_test.go
+- [x] handlers/redirect_test.go
+- [x] handlers/search/pages_test.go
+- [x] handlers/search/permissions_test.go
+- [x] handlers/search/search_tasks_test.go
+- [x] handlers/share/opengraph_test.go
+- [x] handlers/template_render_test.go
 - [ ] handlers/user/addEmailTask_expiry_test.go
 - [ ] handlers/user/addEmailTask_invalid_test.go
 - [ ] handlers/user/admin_permissions_test.go

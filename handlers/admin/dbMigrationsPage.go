@@ -12,8 +12,9 @@ import (
 	"github.com/arran4/goa4web/migrations"
 )
 
-// AdminDBMigrationsPage shows the database migrations.
-func (h *Handlers) AdminDBMigrationsPage(w http.ResponseWriter, r *http.Request) {
+type AdminDBMigrationsPage struct{}
+
+func (p *AdminDBMigrationsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Database Migrations"
 
@@ -59,8 +60,19 @@ func (h *Handlers) AdminDBMigrationsPage(w http.ResponseWriter, r *http.Request)
 		SelectedFile: selectedFile,
 		Content:      content,
 	}
-	AdminDBMigrationsPageTmpl.Handle(w, r, data)
+	AdminDBMigrationsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminDBMigrationsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Database Migrations", "/admin/db/migrations", &AdminDBStatusPage{}
+}
+
+func (p *AdminDBMigrationsPage) PageTitle() string {
+	return "Database Migrations"
+}
+
+var _ common.Page = (*AdminDBMigrationsPage)(nil)
+var _ http.Handler = (*AdminDBMigrationsPage)(nil)
 
 // AdminDBMigrationsPageTmpl renders the database migrations page.
 const AdminDBMigrationsPageTmpl tasks.Template = "admin/dbMigrationsPage.gohtml"

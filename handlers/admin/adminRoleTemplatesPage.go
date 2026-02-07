@@ -14,8 +14,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminRoleTemplatesPage lists role templates and shows diffs against current roles.
-func AdminRoleTemplatesPage(w http.ResponseWriter, r *http.Request) {
+type AdminRoleTemplatesPage struct{}
+
+func (p *AdminRoleTemplatesPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type TemplateListItem struct {
 		Name        string
 		Description string
@@ -115,8 +116,19 @@ func AdminRoleTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		Templates: items,
 		Selected:  detail,
 	}
-	AdminRoleTemplatesPageTmpl.Handle(w, r, data)
+	AdminRoleTemplatesPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminRoleTemplatesPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Role Templates", "/admin/roles/templates", &AdminRolesPage{}
+}
+
+func (p *AdminRoleTemplatesPage) PageTitle() string {
+	return "Role Templates"
+}
+
+var _ common.Page = (*AdminRoleTemplatesPage)(nil)
+var _ http.Handler = (*AdminRoleTemplatesPage)(nil)
 
 func templateGrantsToDB(grants []roletemplates.GrantDef) []*db.Grant {
 	out := make([]*db.Grant, 0, len(grants))

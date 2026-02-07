@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserLinkerPage lists linker posts created by a user.
-func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserLinkerPage struct{}
+
+func (p *AdminUserLinkerPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
@@ -43,7 +44,18 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Links: rows,
 	}
-	AdminUserLinkerPageTmpl.Handle(w, r, data)
+	AdminUserLinkerPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserLinkerPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Links", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserLinkerPage) PageTitle() string {
+	return "User Links"
+}
+
+var _ common.Page = (*AdminUserLinkerPage)(nil)
+var _ http.Handler = (*AdminUserLinkerPage)(nil)
 
 const AdminUserLinkerPageTmpl tasks.Template = "admin/userLinkerPage.gohtml"

@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserWritingsPage lists all writings authored by a user.
-func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserWritingsPage struct{}
+
+func (p *AdminUserWritingsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
@@ -39,7 +40,18 @@ func adminUserWritingsPage(w http.ResponseWriter, r *http.Request) {
 		User:     &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Writings: rows,
 	}
-	AdminUserWritingsPageTmpl.Handle(w, r, data)
+	AdminUserWritingsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserWritingsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Writings", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserWritingsPage) PageTitle() string {
+	return "User Writings"
+}
+
+var _ common.Page = (*AdminUserWritingsPage)(nil)
+var _ http.Handler = (*AdminUserWritingsPage)(nil)
 
 const AdminUserWritingsPageTmpl tasks.Template = "admin/userWritingsPage.gohtml"

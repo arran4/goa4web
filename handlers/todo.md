@@ -206,3 +206,17 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/writings/writingsWriterListPage_test.go
 - [ ] handlers/writings/writings_reply_notifications_test.go
 - [ ] handlers/writings/writings_tasks_test.go
+
+## Breadcrumb/Page Interface Compliance
+The following packages need to be updated to use the `Page` interface for breadcrumb generation.
+
+- [ ] handlers/blogs
+- [ ] handlers/faq
+- [ ] handlers/forum
+- [ ] handlers/imagebbs
+- [ ] handlers/languages
+- [ ] handlers/linker
+- [ ] handlers/news
+- [ ] handlers/search
+- [ ] handlers/user
+- [ ] handlers/writings

@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserGrantsPage shows direct grants for a user and allows editing.
-func adminUserGrantsPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserGrantsPage struct{}
+
+func (p *AdminUserGrantsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	user := cd.CurrentProfileUser()
@@ -39,7 +40,18 @@ func adminUserGrantsPage(w http.ResponseWriter, r *http.Request) {
 		GrantGroups: groups,
 	}
 
-	AdminUserGrantsPageTmpl.Handle(w, r, data)
+	AdminUserGrantsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserGrantsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Grants", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserGrantsPage) PageTitle() string {
+	return "User Grants"
+}
+
+var _ common.Page = (*AdminUserGrantsPage)(nil)
+var _ http.Handler = (*AdminUserGrantsPage)(nil)
 
 const AdminUserGrantsPageTmpl tasks.Template = "admin/userGrantsPage.gohtml"

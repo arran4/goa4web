@@ -10,12 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/internal/tasks"
-
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 const AdminPasswordResetListPageTmpl tasks.Template = "admin/passwordResetList.gohtml"
@@ -34,7 +33,9 @@ type AdminPasswordResetListPageData struct {
 	SummaryMessage string
 }
 
-func adminPasswordResetListPage(w http.ResponseWriter, r *http.Request) {
+type AdminPasswordResetListPage struct{}
+
+func (p *AdminPasswordResetListPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Resets"
 
@@ -123,7 +124,7 @@ func adminPasswordResetListPage(w http.ResponseWriter, r *http.Request) {
 
 	summaryMessage := passwordResetSummaryMessage(r.URL.Query())
 
-	AdminPasswordResetListPageTmpl.Handle(w, r, &AdminPasswordResetListPageData{
+	AdminPasswordResetListPageTmpl.Handler(&AdminPasswordResetListPageData{
 		Rows:           rows,
 		Status:         status,
 		UserFilter:     userFilter,
@@ -135,8 +136,19 @@ func adminPasswordResetListPage(w http.ResponseWriter, r *http.Request) {
 		FiltersQuery:   filtersQuery,
 		ReturnURL:      returnURL,
 		SummaryMessage: summaryMessage,
-	})
+	}).ServeHTTP(w, r)
 }
+
+func (p *AdminPasswordResetListPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Password Resets", "/admin/password_resets", &AdminPage{}
+}
+
+func (p *AdminPasswordResetListPage) PageTitle() string {
+	return "Password Resets"
+}
+
+var _ common.Page = (*AdminPasswordResetListPage)(nil)
+var _ http.Handler = (*AdminPasswordResetListPage)(nil)
 
 func resolvePasswordResetUser(ctx context.Context, queries db.Querier, raw string) (int32, error) {
 	if id, err := strconv.Atoi(raw); err == nil {

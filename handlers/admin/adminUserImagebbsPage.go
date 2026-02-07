@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserImagebbsPage lists image board posts by a user.
-func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserImagebbsPage struct{}
+
+func (p *AdminUserImagebbsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
@@ -43,7 +44,18 @@ func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
 		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Posts: rows,
 	}
-	AdminUserImagebbsPageTmpl.Handle(w, r, data)
+	AdminUserImagebbsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserImagebbsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "ImageBBS", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserImagebbsPage) PageTitle() string {
+	return "User Images"
+}
+
+var _ common.Page = (*AdminUserImagebbsPage)(nil)
+var _ http.Handler = (*AdminUserImagebbsPage)(nil)
 
 const AdminUserImagebbsPageTmpl tasks.Template = "admin/userImagebbsPage.gohtml"

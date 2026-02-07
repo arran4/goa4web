@@ -8,8 +8,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminTemplateExportPage displays the template export form.
-func AdminTemplateExportPage(w http.ResponseWriter, r *http.Request) {
+type AdminTemplateExportPage struct{}
+
+func (p *AdminTemplateExportPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Template Export"
 
@@ -21,8 +22,19 @@ func AdminTemplateExportPage(w http.ResponseWriter, r *http.Request) {
 		SelectedFormat: "zip",
 	}
 
-	AdminTemplateExportPageTmpl.Handle(w, r, data)
+	AdminTemplateExportPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminTemplateExportPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Template Export", "/admin/templates/export", &AdminEmailTemplatePage{}
+}
+
+func (p *AdminTemplateExportPage) PageTitle() string {
+	return "Template Export"
+}
+
+var _ common.Page = (*AdminTemplateExportPage)(nil)
+var _ http.Handler = (*AdminTemplateExportPage)(nil)
 
 // AdminTemplateExportPageTmpl renders the template export page.
 const AdminTemplateExportPageTmpl tasks.Template = "admin/templateExportPage.gohtml"

@@ -16,12 +16,15 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminConfigExplainPage shows configuration sources for the current runtime config.
-func (h *Handlers) AdminConfigExplainPage(w http.ResponseWriter, r *http.Request) {
+type AdminConfigExplainPage struct {
+	ConfigFile string
+}
+
+func (p *AdminConfigExplainPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Config Explain"
 
-	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, h.ConfigFile)
+	fileVals, err := config.LoadAppConfigFile(core.OSFS{}, p.ConfigFile)
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("load config file: %w", err))
 		return
@@ -30,7 +33,7 @@ func (h *Handlers) AdminConfigExplainPage(w http.ResponseWriter, r *http.Request
 	values := config.ValuesMap(*cd.Config)
 	infos := configexplain.Explain(configexplain.Inputs{
 		FileValues: fileVals,
-		ConfigFile: h.ConfigFile,
+		ConfigFile: p.ConfigFile,
 		Values:     values,
 		Getenv:     os.Getenv,
 	})
@@ -60,12 +63,23 @@ func (h *Handlers) AdminConfigExplainPage(w http.ResponseWriter, r *http.Request
 		ConfigFile string
 		Options    []configexplain.OptionInfo
 	}{
-		ConfigFile: h.ConfigFile,
+		ConfigFile: p.ConfigFile,
 		Options:    filtered,
 	}
 
-	AdminConfigExplainPageTmpl.Handle(w, r, data)
+	AdminConfigExplainPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminConfigExplainPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Config Explain", "/admin/config/explain", &AdminPage{}
+}
+
+func (p *AdminConfigExplainPage) PageTitle() string {
+	return "Config Explain"
+}
+
+var _ common.Page = (*AdminConfigExplainPage)(nil)
+var _ http.Handler = (*AdminConfigExplainPage)(nil)
 
 // AdminConfigExplainPageTmpl renders the configuration explain admin page.
 const AdminConfigExplainPageTmpl tasks.Template = "admin/configExplainPage.gohtml"

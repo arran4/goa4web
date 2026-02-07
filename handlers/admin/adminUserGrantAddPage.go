@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strings"
 
@@ -10,10 +9,12 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserGrantAddPage displays a multi-step form for creating a new grant for a user.
-func adminUserGrantAddPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserGrantAddPage struct{}
+
+func (p *AdminUserGrantAddPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	user := cd.CurrentProfileUser()
@@ -95,7 +96,18 @@ func adminUserGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminUserGrantAddPageTmpl.Handle(w, r, data)
+	AdminUserGrantAddPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserGrantAddPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Add Grant", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserGrantAddPage) PageTitle() string {
+	return "Add User Grant"
+}
+
+var _ common.Page = (*AdminUserGrantAddPage)(nil)
+var _ http.Handler = (*AdminUserGrantAddPage)(nil)
 
 const AdminUserGrantAddPageTmpl tasks.Template = "admin/adminUserGrantAddPage.gohtml"

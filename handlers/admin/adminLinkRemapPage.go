@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 	"regexp"
@@ -12,10 +11,12 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminLinkRemapPage displays site news URLs for remapping.
-func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
+type AdminLinkRemapPage struct{}
+
+func (p *AdminLinkRemapPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		CSV string
 	}
@@ -46,7 +47,18 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 		wcsv.Flush()
 		data.CSV = buf.String()
 	}
-	AdminLinkRemapPageTmpl.Handle(w, r, data)
+	AdminLinkRemapPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminLinkRemapPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Link Remap", "/admin/link-remap", &AdminPage{}
+}
+
+func (p *AdminLinkRemapPage) PageTitle() string {
+	return "Link Remap"
+}
+
+var _ common.Page = (*AdminLinkRemapPage)(nil)
+var _ http.Handler = (*AdminLinkRemapPage)(nil)
 
 const AdminLinkRemapPageTmpl tasks.Template = "admin/linkRemapPage.gohtml"

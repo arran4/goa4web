@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserForumPage lists forum threads started by a user.
-func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserForumPage struct{}
+
+func (p *AdminUserForumPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
@@ -39,7 +40,18 @@ func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
 		User:    &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Threads: rows,
 	}
-	AdminUserForumPageTmpl.Handle(w, r, data)
+	AdminUserForumPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserForumPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Forum Threads", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserForumPage) PageTitle() string {
+	return "User Forum Threads"
+}
+
+var _ common.Page = (*AdminUserForumPage)(nil)
+var _ http.Handler = (*AdminUserForumPage)(nil)
 
 const AdminUserForumPageTmpl tasks.Template = "admin/userForumPage.gohtml"

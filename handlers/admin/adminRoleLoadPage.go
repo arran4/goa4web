@@ -21,8 +21,11 @@ const (
 	roleSQLUploadMaxBytes = 2 * 1024 * 1024
 )
 
-// AdminRoleLoadPage handles uploading and applying role SQL in the admin UI.
-func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
+type AdminRoleLoadPage struct {
+	DBPool *sql.DB
+}
+
+func (p *AdminRoleLoadPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		RoleName       string
 		ParsedRoleName string
@@ -43,7 +46,7 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, roleSQLUploadMaxBytes)
 		if err := r.ParseMultipartForm(roleSQLUploadMaxBytes); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("invalid upload: %w", err).Error())
-			AdminRoleLoadPageTmpl.Handle(w, r, data)
+			AdminRoleLoadPageTmpl.Handler(data).ServeHTTP(w, r)
 			return
 		}
 
@@ -117,9 +120,9 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if r.PostFormValue("apply") != "" && len(data.Errors) == 0 {
-			if h.DBPool == nil {
+			if p.DBPool == nil {
 				data.Errors = append(data.Errors, "database connection unavailable")
-			} else if err := roles.ApplyRoleSQL(r.Context(), roleName, sqlData, h.DBPool); err != nil {
+			} else if err := roles.ApplyRoleSQL(r.Context(), roleName, sqlData, p.DBPool); err != nil {
 				data.Errors = append(data.Errors, err.Error())
 			} else {
 				data.Applied = true
@@ -127,8 +130,19 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminRoleLoadPageTmpl.Handle(w, r, data)
+	AdminRoleLoadPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminRoleLoadPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Role SQL Loader", "/admin/roles/load", &AdminRolesPage{}
+}
+
+func (p *AdminRoleLoadPage) PageTitle() string {
+	return "Load Role SQL"
+}
+
+var _ common.Page = (*AdminRoleLoadPage)(nil)
+var _ http.Handler = (*AdminRoleLoadPage)(nil)
 
 func diffGrantKeys(current []*db.Grant, desired []*db.Grant) ([]string, []string) {
 	currentMap := make(map[string]struct{}, len(current))

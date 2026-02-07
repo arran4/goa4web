@@ -41,8 +41,9 @@ type shareToolsData struct {
 	Errors           []string
 }
 
-// AdminShareToolsPage renders a tool for generating signed share URLs.
-func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
+type AdminShareToolsPage struct{}
+
+func (p *AdminShareToolsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Share Tools"
 
@@ -53,7 +54,7 @@ func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		AdminShareToolsPageTmpl.Handle(w, r, data)
+		AdminShareToolsPageTmpl.Handler(data).ServeHTTP(w, r)
 		return
 	}
 
@@ -116,8 +117,19 @@ func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminShareToolsPageTmpl.Handle(w, r, data)
+	AdminShareToolsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminShareToolsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Share Tools", "/admin/share/tools", &AdminPage{}
+}
+
+func (p *AdminShareToolsPage) PageTitle() string {
+	return "Share Tools"
+}
+
+var _ common.Page = (*AdminShareToolsPage)(nil)
+var _ http.Handler = (*AdminShareToolsPage)(nil)
 
 func shareToolsResourceList() ([]shareToolsResourceOption, map[string]shareToolsResource) {
 	resources := []shareToolsResource{

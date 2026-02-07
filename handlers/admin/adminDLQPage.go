@@ -53,7 +53,9 @@ type DisplayError struct {
 	Provider string
 }
 
-func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
+type AdminDLQPage struct{}
+
+func (p *AdminDLQPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Dead Letter Queue"
 
@@ -179,13 +181,26 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminDLQPageTmpl.Handle(w, r, data)
+	AdminDLQPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminDLQPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Dead Letter Queue", "/admin/dlq", &AdminPage{}
+}
+
+func (p *AdminDLQPage) PageTitle() string {
+	return "Dead Letter Queue"
+}
+
+var _ common.Page = (*AdminDLQPage)(nil)
+var _ http.Handler = (*AdminDLQPage)(nil)
 
 const AdminDLQPageTmpl tasks.Template = "admin/dlqPage.gohtml"
 const AdminDLQDetailsPageTmpl tasks.Template = "admin/dlqDetailsPage.gohtml"
 
-func AdminDLQDetailsPage(w http.ResponseWriter, r *http.Request) {
+type AdminDLQDetailsPage struct{}
+
+func (p *AdminDLQDetailsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Dead Letter Queue Details"
 	queries := cd.Queries()
@@ -240,8 +255,19 @@ func AdminDLQDetailsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminDLQDetailsPageTmpl.Handle(w, r, data)
+	AdminDLQDetailsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminDLQDetailsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Dead Letter Queue Details", "", &AdminDLQPage{}
+}
+
+func (p *AdminDLQDetailsPage) PageTitle() string {
+	return "Dead Letter Queue Details"
+}
+
+var _ common.Page = (*AdminDLQDetailsPage)(nil)
+var _ http.Handler = (*AdminDLQDetailsPage)(nil)
 
 func (DeleteDLQTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

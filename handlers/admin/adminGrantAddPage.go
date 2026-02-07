@@ -11,8 +11,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminGrantAddPage displays a multi-step form for creating a new grant.
-func adminGrantAddPage(w http.ResponseWriter, r *http.Request) {
+type AdminGrantAddPage struct{}
+
+func (p *AdminGrantAddPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Grant"
 	queries := cd.Queries()
@@ -72,7 +73,18 @@ func adminGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		GrantItemLookup: itemOptions,
 	}
 
-	AdminGrantAddPageTmpl.Handle(w, r, data)
+	AdminGrantAddPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminGrantAddPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Add Grant", "/admin/grant/add", &AdminPage{}
+}
+
+func (p *AdminGrantAddPage) PageTitle() string {
+	return "Add Grant"
+}
+
+var _ common.Page = (*AdminGrantAddPage)(nil)
+var _ http.Handler = (*AdminGrantAddPage)(nil)
 
 const AdminGrantAddPageTmpl tasks.Template = "admin/grantAddPage.gohtml"

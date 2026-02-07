@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"net/mail"
 	"sort"
@@ -11,9 +10,12 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
+type AdminEmailTestPage struct{}
+
+func (p *AdminEmailTestPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Email Tester"
 
@@ -158,7 +160,18 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminEmailTestPageTmpl.Handle(w, r, data)
+	AdminEmailTestPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminEmailTestPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Email Tester", "/admin/email/test", &AdminPage{}
+}
+
+func (p *AdminEmailTestPage) PageTitle() string {
+	return "Email Tester"
+}
+
+var _ common.Page = (*AdminEmailTestPage)(nil)
+var _ http.Handler = (*AdminEmailTestPage)(nil)
 
 const AdminEmailTestPageTmpl tasks.Template = "admin/emailTestPage.gohtml"

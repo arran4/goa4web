@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserBlogsPage lists all blog posts authored by a user.
-func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserBlogsPage struct{}
+
+func (p *AdminUserBlogsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
@@ -39,7 +40,18 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Blogs: rows,
 	}
-	AdminUserBlogsPageTmpl.Handle(w, r, data)
+	AdminUserBlogsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserBlogsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Blogs", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserBlogsPage) PageTitle() string {
+	return "User Blogs"
+}
+
+var _ common.Page = (*AdminUserBlogsPage)(nil)
+var _ http.Handler = (*AdminUserBlogsPage)(nil)
 
 const AdminUserBlogsPageTmpl tasks.Template = "admin/userBlogsPage.gohtml"

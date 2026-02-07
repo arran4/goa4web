@@ -36,31 +36,33 @@ func (q *deleteLanguageQueries) GetPermissionsByUserID(ctx context.Context, idus
 	return []*db.GetPermissionsByUserIDRow{{Name: "administrator", IsAdmin: true}}, nil
 }
 
-func TestDeleteLanguageTask_PreventDeletion(t *testing.T) {
-	queries := &deleteLanguageQueries{
-		languages:   []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
-		usageCounts: &db.AdminLanguageUsageCountsRow{Comments: 1},
-	}
+func TestDeleteLanguageTask(t *testing.T) {
+	t.Run("Unhappy Path - Prevent Deletion", func(t *testing.T) {
+		queries := &deleteLanguageQueries{
+			languages:   []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
+			usageCounts: &db.AdminLanguageUsageCountsRow{Comments: 1},
+		}
 
-	form := url.Values{}
-	form.Set("cid", "1")
+		form := url.Values{}
+		form.Set("cid", "1")
 
-	req := httptest.NewRequest("POST", "/admin/languages/language/1/edit", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req := httptest.NewRequest("POST", "/admin/languages/language/1/edit", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	cfg := config.NewRuntimeConfig()
-	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
-	cd.UserID = 1
-	cd.AdminMode = true
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
+		cfg := config.NewRuntimeConfig()
+		cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
+		cd.UserID = 1
+		cd.AdminMode = true
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
+		rr := httptest.NewRecorder()
 
-	result := deleteLanguageTask.Action(rr, req)
-	if result == nil {
-		t.Fatalf("expected error, got nil")
-	}
-	if _, ok := result.(error); !ok {
-		t.Fatalf("expected error result, got %T", result)
-	}
+		result := deleteLanguageTask.Action(rr, req)
+		if result == nil {
+			t.Fatalf("expected error, got nil")
+		}
+		if _, ok := result.(error); !ok {
+			t.Fatalf("expected error result, got %T", result)
+		}
+	})
 }

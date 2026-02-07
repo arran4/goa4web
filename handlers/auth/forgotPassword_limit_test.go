@@ -18,8 +18,8 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestHappyPathForgotPasswordRateLimit(t *testing.T) {
-	t.Run("Rate Limit Reached", func(t *testing.T) {
+func TestForgotPasswordTask_Action(t *testing.T) {
+	t.Run("Unhappy Path - Rate Limit Reached", func(t *testing.T) {
 		q := testhelpers.NewQuerierStub()
 		now := time.Now()
 
@@ -77,10 +77,8 @@ func TestHappyPathForgotPasswordRateLimit(t *testing.T) {
 			t.Fatalf("unexpected delete of reset id")
 		}
 	})
-}
 
-func TestHappyPathForgotPasswordReplaceOld(t *testing.T) {
-	t.Run("Happy Path Replace Old", func(t *testing.T) {
+	t.Run("Happy Path - Replace Old", func(t *testing.T) {
 		q := testhelpers.NewQuerierStub()
 
 		q.SystemGetLoginRow = &db.SystemGetLoginRow{

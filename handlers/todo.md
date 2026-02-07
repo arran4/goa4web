@@ -77,8 +77,8 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/blogs/blogs_tasks_test.go
 - [ ] handlers/blogs/pages_test.go
 - [ ] handlers/blogs/routes_test.go
-- [ ] handlers/bookmarks/mine_test.go
-- [ ] handlers/errorpage_test.go
+- [x] handlers/bookmarks/mine_test.go
+- [x] handlers/errorpage_test.go
 - [x] handlers/externallink/redirect_test.go
 - [x] handlers/externallink/tasks_test.go
 - [ ] handlers/faq/admin_questions_test.go

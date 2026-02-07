@@ -9,8 +9,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminDBSchemaPage shows the database schema.
-func (h *Handlers) AdminDBSchemaPage(w http.ResponseWriter, r *http.Request) {
+type AdminDBSchemaPage struct{}
+
+func (p *AdminDBSchemaPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Database Schema"
 
@@ -19,8 +20,19 @@ func (h *Handlers) AdminDBSchemaPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Schema: string(database.SchemaMySQL),
 	}
-	AdminDBSchemaPageTmpl.Handle(w, r, data)
+	AdminDBSchemaPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminDBSchemaPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Database Schema", "/admin/db/schema", &AdminDBStatusPage{}
+}
+
+func (p *AdminDBSchemaPage) PageTitle() string {
+	return "Database Schema"
+}
+
+var _ common.Page = (*AdminDBSchemaPage)(nil)
+var _ http.Handler = (*AdminDBSchemaPage)(nil)
 
 // AdminDBSchemaPageTmpl renders the database schema page.
 const AdminDBSchemaPageTmpl tasks.Template = "admin/dbSchemaPage.gohtml"

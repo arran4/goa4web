@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/stats"
-
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -18,7 +17,9 @@ const (
 	usageTimeout = 5 * time.Minute
 )
 
-func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
+type AdminUsageStatsPage struct{}
+
+func (p *AdminUsageStatsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type UserMonthlyUsageDisplay struct {
 		*db.UserMonthlyUsageRow
 		RowSpan int
@@ -33,7 +34,18 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	data := stats.BuildUsageStatsData(ctx, queries, cd.CustomQueries(), cd.Config.StatsStartYear)
 
-	AdminUsageStatsPageTmpl.Handle(w, r, data)
+	AdminUsageStatsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUsageStatsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Usage Stats", "/admin/usage", &AdminPage{}
+}
+
+func (p *AdminUsageStatsPage) PageTitle() string {
+	return "Usage Stats"
+}
+
+var _ common.Page = (*AdminUsageStatsPage)(nil)
+var _ http.Handler = (*AdminUsageStatsPage)(nil)
 
 const AdminUsageStatsPageTmpl tasks.Template = "admin/usageStatsPage.gohtml"

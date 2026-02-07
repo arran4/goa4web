@@ -3,7 +3,6 @@ package admin
 import (
 	"database/sql"
 	"encoding/csv"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,40 +16,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func copyValues(v url.Values) url.Values {
-	c := make(url.Values, len(v))
-	for k, vals := range v {
-		c[k] = append([]string(nil), vals...)
-	}
-	return c
-}
+type AdminAuditLogPage struct{}
 
-const (
-	// auditLogDateLayout defines the date-only format accepted by the audit log filters.
-	auditLogDateLayout = "2006-01-02"
-	// auditLogDateTimeLayout defines the datetime format accepted by the audit log filters.
-	auditLogDateTimeLayout = "2006-01-02T15:04"
-)
-
-func parseAuditLogTime(value string, isEnd bool) (sql.NullTime, string) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return sql.NullTime{}, ""
-	}
-	if parsed, err := time.ParseInLocation(auditLogDateTimeLayout, value, time.Local); err == nil {
-		return sql.NullTime{Time: parsed, Valid: true}, value
-	}
-	if parsed, err := time.ParseInLocation(auditLogDateLayout, value, time.Local); err == nil {
-		if isEnd {
-			parsed = parsed.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
-		}
-		return sql.NullTime{Time: parsed, Valid: true}, parsed.Format(auditLogDateTimeLayout)
-	}
-	return sql.NullTime{}, value
-}
-
-// AdminAuditLogPage shows recent admin actions with basic filtering.
-func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
+func (p *AdminAuditLogPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Rows       []*db.AdminListAuditLogsRow
 		User       string
@@ -107,8 +75,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	if query.Get("export") == "csv" {
 		rows, err := queries.AdminListAuditLogs(r.Context(), listParams)
 		if err != nil {
-			log.Printf("list audit logs for export: %v", err)
-			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			handlers.RenderErrorPage(w, r, err)
 			return
 		}
 		writeAuditLogCSV(w, rows)
@@ -117,8 +84,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := queries.AdminListAuditLogs(r.Context(), listParams)
 	if err != nil {
-		log.Printf("list audit logs: %v", err)
-		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 
@@ -170,13 +136,55 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 		EndTime:   endTime,
 	})
 	if err != nil {
-		log.Printf("list audit log summary: %v", err)
-		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 	data.Summary = summaryRows
 
-	AdminAuditLogPageTmpl.Handle(w, r, data)
+	AdminAuditLogPageTmpl.Handler(data).ServeHTTP(w, r)
+}
+
+func (p *AdminAuditLogPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Audit Log", "/admin/audit", &AdminPage{}
+}
+
+func (p *AdminAuditLogPage) PageTitle() string {
+	return "Admin Audit Log"
+}
+
+var _ common.Page = (*AdminAuditLogPage)(nil)
+var _ http.Handler = (*AdminAuditLogPage)(nil)
+
+func copyValues(v url.Values) url.Values {
+	c := make(url.Values, len(v))
+	for k, vals := range v {
+		c[k] = append([]string(nil), vals...)
+	}
+	return c
+}
+
+const (
+	// auditLogDateLayout defines the date-only format accepted by the audit log filters.
+	auditLogDateLayout = "2006-01-02"
+	// auditLogDateTimeLayout defines the datetime format accepted by the audit log filters.
+	auditLogDateTimeLayout = "2006-01-02T15:04"
+)
+
+func parseAuditLogTime(value string, isEnd bool) (sql.NullTime, string) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return sql.NullTime{}, ""
+	}
+	if parsed, err := time.ParseInLocation(auditLogDateTimeLayout, value, time.Local); err == nil {
+		return sql.NullTime{Time: parsed, Valid: true}, value
+	}
+	if parsed, err := time.ParseInLocation(auditLogDateLayout, value, time.Local); err == nil {
+		if isEnd {
+			parsed = parsed.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+		}
+		return sql.NullTime{Time: parsed, Valid: true}, parsed.Format(auditLogDateTimeLayout)
+	}
+	return sql.NullTime{}, value
 }
 
 const AdminAuditLogPageTmpl tasks.Template = "admin/auditLogPage.gohtml"

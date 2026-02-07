@@ -8,8 +8,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminDBRestorePage renders the database restore page.
-func AdminDBRestorePage(w http.ResponseWriter, r *http.Request) {
+type AdminDBRestorePage struct{}
+
+func (p *AdminDBRestorePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Database Restore"
 
@@ -21,8 +22,19 @@ func AdminDBRestorePage(w http.ResponseWriter, r *http.Request) {
 		TaskName: string(TaskDBRestore),
 	}
 
-	AdminDBRestorePageTmpl.Handle(w, r, data)
+	AdminDBRestorePageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminDBRestorePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Database Restore", "/admin/db/restore", &AdminPage{}
+}
+
+func (p *AdminDBRestorePage) PageTitle() string {
+	return "Database Restore"
+}
+
+var _ common.Page = (*AdminDBRestorePage)(nil)
+var _ http.Handler = (*AdminDBRestorePage)(nil)
 
 // AdminDBRestorePageTmpl renders the admin database restore page.
 const AdminDBRestorePageTmpl tasks.Template = "admin/dbRestorePage.gohtml"

@@ -1,22 +1,19 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core/consts"
-
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
-
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminPageSizePage allows administrators to adjust pagination limits.
-// The change only affects the in-memory configuration. Update the
-// configuration file separately to persist the values.
-func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
+type AdminPageSizePage struct{}
+
+func (p *AdminPageSizePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Page Size"
 	if r.Method == http.MethodPost {
@@ -37,7 +34,7 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 			Back:     "/admin/page-size",
 			Messages: []string{"Pagination settings updated in memory. Update the configuration file to persist."},
 		}
-		RunTaskPageTmpl.Handle(w, r, data)
+		RunTaskPageTmpl.Handler(data).ServeHTTP(w, r)
 		return
 	}
 
@@ -50,8 +47,19 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max:     cd.Config.PageSizeMax,
 		Default: cd.Config.PageSizeDefault,
 	}
-	AdminPageSizePageTmpl.Handle(w, r, data)
+	AdminPageSizePageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminPageSizePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Pagination", "/admin/page-size", &AdminSiteSettingsPage{} // Assuming pagination is under settings
+}
+
+func (p *AdminPageSizePage) PageTitle() string {
+	return "Page Size"
+}
+
+var _ common.Page = (*AdminPageSizePage)(nil)
+var _ http.Handler = (*AdminPageSizePage)(nil)
 
 const AdminPageSizePageTmpl tasks.Template = "admin/pageSizePage.gohtml"
 

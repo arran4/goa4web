@@ -7,15 +7,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arran4/goa4web/core/consts"
-
 	"github.com/arran4/goa4web/core/common"
-
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func AdminUnmanagedFilesPage(w http.ResponseWriter, r *http.Request) {
+type AdminUnmanagedFilesPage struct{}
+
+func (p *AdminUnmanagedFilesPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Unmanaged Files"
 	type Data struct {
@@ -62,8 +62,19 @@ func AdminUnmanagedFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries: unmanaged,
 	}
 
-	AdminUnmanagedFilesPageTmpl.Handle(w, r, data)
+	AdminUnmanagedFilesPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUnmanagedFilesPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Unmanaged Files", "/admin/files/unmanaged", &AdminFilesPage{}
+}
+
+func (p *AdminUnmanagedFilesPage) PageTitle() string {
+	return "Unmanaged Files"
+}
+
+var _ common.Page = (*AdminUnmanagedFilesPage)(nil)
+var _ http.Handler = (*AdminUnmanagedFilesPage)(nil)
 
 // AdminUnmanagedFilesPageTmpl renders the admin unmanaged files page.
 const AdminUnmanagedFilesPageTmpl tasks.Template = "admin/adminUnmanagedFilesPage.gohtml"

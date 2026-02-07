@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,15 +13,18 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminDBStatusPage shows the database schema version and maintenance actions.
-func (h *Handlers) AdminDBStatusPage(w http.ResponseWriter, r *http.Request) {
+type AdminDBStatusPage struct {
+	DBPool *sql.DB
+}
+
+func (p *AdminDBStatusPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Database Status"
-	if h.DBPool == nil {
+	if p.DBPool == nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("database not available"))
 		return
 	}
-	currentVersion, err := dbstart.SchemaVersion(r.Context(), h.DBPool)
+	currentVersion, err := dbstart.SchemaVersion(r.Context(), p.DBPool)
 	if err != nil {
 		log.Printf("db status schema version: %v", err)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("internal server error"))
@@ -37,11 +41,22 @@ func (h *Handlers) AdminDBStatusPage(w http.ResponseWriter, r *http.Request) {
 		CurrentVersion:  currentVersion,
 		ExpectedVersion: expectedVersion,
 		VersionMatches:  currentVersion == expectedVersion,
-		SeedAllowed:     cd.HasAdminRole() && h.DBPool != nil,
+		SeedAllowed:     cd.HasAdminRole() && p.DBPool != nil,
 		SeedTask:        string(TaskDBSeed),
 	}
-	AdminDBStatusPageTmpl.Handle(w, r, data)
+	AdminDBStatusPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminDBStatusPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Database Status", "/admin/db/status", &AdminPage{}
+}
+
+func (p *AdminDBStatusPage) PageTitle() string {
+	return "Database Status"
+}
+
+var _ common.Page = (*AdminDBStatusPage)(nil)
+var _ http.Handler = (*AdminDBStatusPage)(nil)
 
 // AdminDBStatusPageTmpl renders the database status page.
 const AdminDBStatusPageTmpl tasks.Template = "admin/dbStatusPage.gohtml"

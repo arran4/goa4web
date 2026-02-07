@@ -20,8 +20,11 @@ type configAsCLIFormat struct {
 	Command     string
 }
 
-// AdminConfigAsCLIPage renders configuration output for CLI formats.
-func (h *Handlers) AdminConfigAsCLIPage(w http.ResponseWriter, r *http.Request) {
+type AdminConfigAsCLIPage struct {
+	ConfigFile string
+}
+
+func (p *AdminConfigAsCLIPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Config Export"
 	cd.FeedsEnabled = cd.Config.FeedsEnabled
@@ -47,11 +50,11 @@ func (h *Handlers) AdminConfigAsCLIPage(w http.ResponseWriter, r *http.Request) 
 	var output string
 	switch format {
 	case "dotenv":
-		output, err = configformat.FormatAsEnvFile(cd.Config, h.ConfigFile, cd.DBRegistry(), opts)
+		output, err = configformat.FormatAsEnvFile(cd.Config, p.ConfigFile, cd.DBRegistry(), opts)
 	case "json":
-		output, err = configformat.FormatAsJSON(cd.Config, h.ConfigFile)
+		output, err = configformat.FormatAsJSON(cd.Config, p.ConfigFile)
 	default:
-		output, err = configformat.FormatAsCLI(cd.Config, h.ConfigFile)
+		output, err = configformat.FormatAsCLI(cd.Config, p.ConfigFile)
 	}
 	if err != nil {
 		http.Error(w, fmt.Sprintf("format output: %v", err), http.StatusInternalServerError)
@@ -91,8 +94,19 @@ func (h *Handlers) AdminConfigAsCLIPage(w http.ResponseWriter, r *http.Request) 
 		Extended: opts.Extended,
 	}
 
-	AdminConfigAsCLIPageTmpl.Handle(w, r, data)
+	AdminConfigAsCLIPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminConfigAsCLIPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Config Export", "/admin/config/as-cli", &AdminPage{}
+}
+
+func (p *AdminConfigAsCLIPage) PageTitle() string {
+	return "Config Export"
+}
+
+var _ common.Page = (*AdminConfigAsCLIPage)(nil)
+var _ http.Handler = (*AdminConfigAsCLIPage)(nil)
 
 func buildConfigAsArgs(r *http.Request) []string {
 	if values, ok := r.URL.Query()["extended"]; ok && len(values) > 0 {

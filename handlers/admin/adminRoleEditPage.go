@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminRoleEditFormPage shows a form to update a role.
-func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
+type AdminRoleEditFormPage struct{}
+
+func (p *AdminRoleEditFormPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	role, err := cd.SelectedRole()
@@ -33,8 +34,19 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Role        *db.Role
 		GrantGroups []GrantGroup
 	}{Role: role, GrantGroups: groups}
-	AdminRoleEditPageTmpl.Handle(w, r, data)
+	AdminRoleEditPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminRoleEditFormPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Edit Role", "", &AdminRolesPage{} // Or AdminRolePage if we can pass ID
+}
+
+func (p *AdminRoleEditFormPage) PageTitle() string {
+	return "Edit Role"
+}
+
+var _ common.Page = (*AdminRoleEditFormPage)(nil)
+var _ http.Handler = (*AdminRoleEditFormPage)(nil)
 
 const AdminRoleEditPageTmpl tasks.Template = "admin/roleEditPage.gohtml"
 

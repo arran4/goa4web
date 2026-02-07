@@ -90,8 +90,9 @@ func readSubscriptionTemplateFile(file multipart.File) (string, error) {
 	return string(data), nil
 }
 
-// AdminSubscriptionTemplatesPage lists embedded subscription templates and their parsed patterns.
-func AdminSubscriptionTemplatesPage(w http.ResponseWriter, r *http.Request) {
+type AdminSubscriptionTemplatesPage struct{}
+
+func (p *AdminSubscriptionTemplatesPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Subscription Templates"
 	if errMsg := r.URL.Query().Get("error"); errMsg != "" {
@@ -171,8 +172,19 @@ func AdminSubscriptionTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		Upload:    upload,
 	}
 
-	AdminSubscriptionTemplatesPageTmpl.Handle(w, r, data)
+	AdminSubscriptionTemplatesPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminSubscriptionTemplatesPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Subscription Templates", "/admin/subscriptions/templates", &AdminNotificationsPage{}
+}
+
+func (p *AdminSubscriptionTemplatesPage) PageTitle() string {
+	return "Subscription Templates"
+}
+
+var _ common.Page = (*AdminSubscriptionTemplatesPage)(nil)
+var _ http.Handler = (*AdminSubscriptionTemplatesPage)(nil)
 
 // AdminSubscriptionTemplatesPageTmpl renders the admin subscription templates page.
 const AdminSubscriptionTemplatesPageTmpl tasks.Template = "admin/subscriptionTemplatesPage.gohtml"

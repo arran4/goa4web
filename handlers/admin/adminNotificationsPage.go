@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -10,9 +9,12 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
+type AdminNotificationsPage struct{}
+
+func (p *AdminNotificationsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Notifications []*db.Notification
 		Total         int
@@ -60,7 +62,18 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	AdminNotificationsPageTmpl.Handle(w, r, data)
+	AdminNotificationsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminNotificationsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Notifications", "/admin/notifications", &AdminPage{}
+}
+
+func (p *AdminNotificationsPage) PageTitle() string {
+	return "Notifications"
+}
+
+var _ common.Page = (*AdminNotificationsPage)(nil)
+var _ http.Handler = (*AdminNotificationsPage)(nil)
 
 const AdminNotificationsPageTmpl tasks.Template = "admin/notificationsPage.gohtml"

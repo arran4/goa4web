@@ -1,13 +1,13 @@
 package admin
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 type maintenanceTopic struct {
@@ -15,10 +15,9 @@ type maintenanceTopic struct {
 	Title string
 }
 
-// AdminMaintenancePage lists forum topics that only have user grants and can
-// be converted to the private handler. The page exposes once off maintenance
-// tasks used to migrate old data.
-func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
+type AdminMaintenancePage struct{}
+
+func (p *AdminMaintenancePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Topics   []*maintenanceTopic
 		TaskName string
@@ -40,7 +39,18 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 		topics = append(topics, &maintenanceTopic{ID: row.Idforumtopic, Title: title})
 	}
 	data := Data{Topics: topics, TaskName: string(TaskForumTopicConvertPrivate)}
-	AdminMaintenancePageTmpl.Handle(w, r, data)
+	AdminMaintenancePageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminMaintenancePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Maintenance", "/admin/maintenance", &AdminPage{}
+}
+
+func (p *AdminMaintenancePage) PageTitle() string {
+	return "Once Off & Maintenance"
+}
+
+var _ common.Page = (*AdminMaintenancePage)(nil)
+var _ http.Handler = (*AdminMaintenancePage)(nil)
 
 const AdminMaintenancePageTmpl tasks.Template = "admin/maintenancePage.gohtml"

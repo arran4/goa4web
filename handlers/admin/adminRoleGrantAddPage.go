@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // ItemOption represents a selectable item in the add grant form.
@@ -18,8 +18,9 @@ type ItemOption struct {
 	Label string
 }
 
-// adminRoleGrantAddPage displays a multi-step form for creating a new grant.
-func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
+type AdminRoleGrantAddPage struct{}
+
+func (p *AdminRoleGrantAddPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	role, err := cd.SelectedRole()
@@ -101,7 +102,18 @@ func adminRoleGrantAddPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminRoleGrantAddPageTmpl.Handle(w, r, data)
+	AdminRoleGrantAddPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminRoleGrantAddPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Add Grant", "", &AdminRolesPage{} // Or AdminRolePage if we can pass ID
+}
+
+func (p *AdminRoleGrantAddPage) PageTitle() string {
+	return "Add Grant"
+}
+
+var _ common.Page = (*AdminRoleGrantAddPage)(nil)
+var _ http.Handler = (*AdminRoleGrantAddPage)(nil)
 
 const AdminRoleGrantAddPageTmpl tasks.Template = "admin/adminRoleGrantAddPage.gohtml"

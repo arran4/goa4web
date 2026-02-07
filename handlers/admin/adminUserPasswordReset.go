@@ -328,7 +328,9 @@ func (UserGenerateResetLinkTask) AuditRecord(data map[string]any) string {
 	return "password reset link generated"
 }
 
-func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserResetPasswordConfirmPage struct{}
+
+func (p *AdminUserResetPasswordConfirmPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Reset Password"
 	cd.LoadSelectionsFromRequest(r)
@@ -344,5 +346,16 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		User: &db.User{Idusers: user.Idusers, Username: user.Username},
 		Back: fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
-	TemplateUserResetPasswordConfirmPage.Handle(w, r, data)
+	TemplateUserResetPasswordConfirmPage.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserResetPasswordConfirmPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Reset Password", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserResetPasswordConfirmPage) PageTitle() string {
+	return "Reset Password"
+}
+
+var _ common.Page = (*AdminUserResetPasswordConfirmPage)(nil)
+var _ http.Handler = (*AdminUserResetPasswordConfirmPage)(nil)

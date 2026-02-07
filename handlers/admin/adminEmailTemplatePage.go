@@ -75,8 +75,9 @@ func gatherTaskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 	return infos
 }
 
-// AdminEmailTemplatePage provides template listing and editing.
-func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
+type AdminEmailTemplatePage struct{}
+
+func (p *AdminEmailTemplatePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Email Templates"
 	name := r.URL.Query().Get("name")
@@ -85,14 +86,25 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 			*common.CoreData
 			Infos []taskTemplateInfo
 		}{cd, gatherTaskTemplateInfos(cd.TasksReg)}
-		AdminEmailTemplateListPageTmpl.Handle(w, r, data)
+		AdminEmailTemplateListPageTmpl.Handler(data).ServeHTTP(w, r)
 		return
 	}
 	errMsg := r.URL.Query().Get("error")
 	cd.SetCurrentNotificationTemplate(name, errMsg)
 	cd.SetCurrentError(errMsg)
-	AdminEmailTemplateEditPageTmpl.Handle(w, r, struct{}{})
+	AdminEmailTemplateEditPageTmpl.Handler(struct{}{}).ServeHTTP(w, r)
 }
+
+func (p *AdminEmailTemplatePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Email Templates", "/admin/email/template", &AdminPage{}
+}
+
+func (p *AdminEmailTemplatePage) PageTitle() string {
+	return "Email Templates"
+}
+
+var _ common.Page = (*AdminEmailTemplatePage)(nil)
+var _ http.Handler = (*AdminEmailTemplatePage)(nil)
 
 const AdminEmailTemplateListPageTmpl tasks.Template = "admin/emailTemplateListPage.gohtml"
 

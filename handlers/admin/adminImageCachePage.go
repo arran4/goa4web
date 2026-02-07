@@ -22,8 +22,9 @@ type ImageCacheEntry struct {
 	Size int64
 }
 
-// AdminImageCachePage lists cached images and offers bulk maintenance actions.
-func AdminImageCachePage(w http.ResponseWriter, r *http.Request) {
+type AdminImageCachePage struct{}
+
+func (p *AdminImageCachePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Image Cache"
 
@@ -63,8 +64,19 @@ func AdminImageCachePage(w http.ResponseWriter, r *http.Request) {
 		TaskDelete: string(TaskImageCacheDelete),
 	}
 
-	AdminImageCachePageTmpl.Handle(w, r, data)
+	AdminImageCachePageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminImageCachePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Image Cache", "/admin/images/cache", &AdminFilesPage{}
+}
+
+func (p *AdminImageCachePage) PageTitle() string {
+	return "Image Cache"
+}
+
+var _ common.Page = (*AdminImageCachePage)(nil)
+var _ http.Handler = (*AdminImageCachePage)(nil)
 
 func listImageCacheEntries(dir string) ([]ImageCacheEntry, int64, error) {
 	if dir == "" {

@@ -13,7 +13,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
+type AdminFilesPage struct{}
+
+func (p *AdminFilesPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Managed Files"
 	queries := cd.Queries()
@@ -84,7 +86,18 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = r.URL.Path + "?" + prevVals.Encode()
 	}
 
-	AdminFilesPageTmpl.Handle(w, r, data)
+	AdminFilesPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminFilesPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Files", "/admin/files", &AdminPage{}
+}
+
+func (p *AdminFilesPage) PageTitle() string {
+	return "Managed Files"
+}
+
+var _ common.Page = (*AdminFilesPage)(nil)
+var _ http.Handler = (*AdminFilesPage)(nil)
 
 const AdminFilesPageTmpl tasks.Template = "admin/adminFilesPage.gohtml"

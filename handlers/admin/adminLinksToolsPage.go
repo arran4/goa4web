@@ -14,8 +14,9 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// AdminLinksToolsPage renders the admin link signing utilities page.
-func AdminLinksToolsPage(w http.ResponseWriter, r *http.Request) {
+type AdminLinksToolsPage struct{}
+
+func (p *AdminLinksToolsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Link Signing Tools"
 
@@ -97,8 +98,19 @@ func AdminLinksToolsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminLinksToolsPageTmpl.Handle(w, r, data)
+	AdminLinksToolsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminLinksToolsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Link Tools", "/admin/links/tools", &AdminPage{}
+}
+
+func (p *AdminLinksToolsPage) PageTitle() string {
+	return "Link Signing Tools"
+}
+
+var _ common.Page = (*AdminLinksToolsPage)(nil)
+var _ http.Handler = (*AdminLinksToolsPage)(nil)
 
 // AdminLinksToolsPageTmpl renders the link signing tools page.
 const AdminLinksToolsPageTmpl tasks.Template = "admin/linksToolsPage.gohtml"

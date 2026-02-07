@@ -21,7 +21,9 @@ import (
 // AdminImageCacheDetailsPageTmpl renders the admin image cache details page.
 const AdminImageCacheDetailsPageTmpl tasks.Template = "admin/imageCacheDetailsPage.gohtml"
 
-func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
+type AdminImageCacheDetailsPage struct{}
+
+func (p *AdminImageCacheDetailsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	id := mux.Vars(r)["id"]
 
@@ -141,8 +143,19 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 		OwnerName:    ownerName,
 	}
 
-	AdminImageCacheDetailsPageTmpl.Handle(w, r, data)
+	AdminImageCacheDetailsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminImageCacheDetailsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Image Cache Details", "", &AdminImageCachePage{}
+}
+
+func (p *AdminImageCacheDetailsPage) PageTitle() string {
+	return "Image Cache Details"
+}
+
+var _ common.Page = (*AdminImageCacheDetailsPage)(nil)
+var _ http.Handler = (*AdminImageCacheDetailsPage)(nil)
 
 func getCachePath(dir, id string) (string, error) {
 	if !intimages.ValidID(id) {

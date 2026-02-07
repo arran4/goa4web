@@ -2,32 +2,62 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
+type AdminRequestQueuePage struct{}
+
+func (p *AdminRequestQueuePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Requests"
-	AdminRequestQueuePageTmpl.Handle(w, r, struct{}{})
+	AdminRequestQueuePageTmpl.Handler(struct{}{}).ServeHTTP(w, r)
 }
+
+func (p *AdminRequestQueuePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Requests", "/admin/requests", &AdminPage{}
+}
+
+func (p *AdminRequestQueuePage) PageTitle() string {
+	return "Admin Requests"
+}
+
+var _ common.Page = (*AdminRequestQueuePage)(nil)
+var _ http.Handler = (*AdminRequestQueuePage)(nil)
 
 const AdminRequestQueuePageTmpl tasks.Template = "admin/requestQueuePage.gohtml"
 
-func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
+type AdminRequestArchivePage struct{}
+
+func (p *AdminRequestArchivePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Request Archive"
-	AdminRequestArchivePageTmpl.Handle(w, r, struct{}{})
+	AdminRequestArchivePageTmpl.Handler(struct{}{}).ServeHTTP(w, r)
 }
+
+func (p *AdminRequestArchivePage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Request Archive", "/admin/requests/archive", &AdminRequestQueuePage{}
+}
+
+func (p *AdminRequestArchivePage) PageTitle() string {
+	return "Request Archive"
+}
+
+var _ common.Page = (*AdminRequestArchivePage)(nil)
+var _ http.Handler = (*AdminRequestArchivePage)(nil)
 
 const AdminRequestArchivePageTmpl tasks.Template = "admin/requestArchivePage.gohtml"
 
-func adminRequestPage(w http.ResponseWriter, r *http.Request) {
+type AdminRequestPage struct {
+	RequestID int32
+}
+
+func (p *AdminRequestPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	id := cd.CurrentRequestID()
@@ -39,10 +69,33 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		cd.SetCurrentProfileUserID(req.UsersIdusers)
 	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
-	AdminRequestPageTmpl.Handle(w, r, struct{}{})
+	AdminRequestPageTmpl.Handler(struct{}{}).ServeHTTP(w, r)
 }
 
+func (p *AdminRequestPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return fmt.Sprintf("Request %d", p.RequestID), "", &AdminRequestQueuePage{}
+}
+
+func (p *AdminRequestPage) PageTitle() string {
+	return fmt.Sprintf("Request %d", p.RequestID)
+}
+
+var _ common.Page = (*AdminRequestPage)(nil)
+var _ http.Handler = (*AdminRequestPage)(nil)
+
 const AdminRequestPageTmpl tasks.Template = "admin/requestPage.gohtml"
+
+type AdminRequestTask struct{}
+
+func (t *AdminRequestTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+	id := cd.CurrentRequestID()
+	if id == 0 {
+		return handlers.ErrNotFound
+	}
+	return &AdminRequestPage{RequestID: id}
+}
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

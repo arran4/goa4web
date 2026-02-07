@@ -2,17 +2,18 @@ package admin
 
 import (
 	"fmt"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// adminUserSubscriptionsPage lists subscription patterns of a user.
-func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
+type AdminUserSubscriptionsPage struct{}
+
+func (p *AdminUserSubscriptionsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cpu := cd.CurrentProfileUser()
@@ -39,7 +40,18 @@ func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		User: &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Subs: rows,
 	}
-	AdminUserSubscriptionsPageTmpl.Handle(w, r, data)
+	AdminUserSubscriptionsPageTmpl.Handler(data).ServeHTTP(w, r)
 }
+
+func (p *AdminUserSubscriptionsPage) Breadcrumb() (string, string, common.HasBreadcrumb) {
+	return "Subscriptions", "", &AdminUserProfilePage{}
+}
+
+func (p *AdminUserSubscriptionsPage) PageTitle() string {
+	return "User Subscriptions"
+}
+
+var _ common.Page = (*AdminUserSubscriptionsPage)(nil)
+var _ http.Handler = (*AdminUserSubscriptionsPage)(nil)
 
 const AdminUserSubscriptionsPageTmpl tasks.Template = "admin/userSubscriptionsPage.gohtml"

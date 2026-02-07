@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestAdminTemplatesPageRender(t *testing.T) {
+func TestHappyPathAdminTemplatesPageRender(t *testing.T) {
 	// 1. Setup Data
 	languages := []*db.Language{
 		{ID: 1, Nameof: sql.NullString{String: "English", Valid: true}},

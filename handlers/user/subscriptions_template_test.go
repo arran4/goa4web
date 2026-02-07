@@ -1,4 +1,4 @@
-package user_test
+package user
 
 import (
 	"bytes"
@@ -14,55 +14,57 @@ import (
 )
 
 func TestSubscriptionsTemplateRender(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
-	cd := &common.CoreData{Config: config.NewRuntimeConfig()}
-	// Funcs might rely on context value for cd
-	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	t.Run("Happy Path", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		cd := &common.CoreData{Config: config.NewRuntimeConfig()}
+		// Funcs might rely on context value for cd
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(req), templates.WithSilence(true))
+		tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(req), templates.WithSilence(true))
 
-	data := struct {
-		Groups      []*subscriptions.SubscriptionGroup
-		AdminGroups []*subscriptions.SubscriptionGroup
-		IsAdminMode bool
-	}{
-		Groups: []*subscriptions.SubscriptionGroup{
-			{
-				Definition: &subscriptions.Definition{
-					Name:        "Test Sub",
-					Description: "Test Desc",
-					Pattern:     "test:/test/*",
-				},
-				Instances: []*subscriptions.SubscriptionInstance{
-					{
-						Original: "test:/test/1",
-						Methods:  []string{"internal"},
-						Parameters: []subscriptions.Parameter{
-							{Key: "id", Value: "1"},
+		data := struct {
+			Groups      []*subscriptions.SubscriptionGroup
+			AdminGroups []*subscriptions.SubscriptionGroup
+			IsAdminMode bool
+		}{
+			Groups: []*subscriptions.SubscriptionGroup{
+				{
+					Definition: &subscriptions.Definition{
+						Name:        "Test Sub",
+						Description: "Test Desc",
+						Pattern:     "test:/test/*",
+					},
+					Instances: []*subscriptions.SubscriptionInstance{
+						{
+							Original: "test:/test/1",
+							Methods:  []string{"internal"},
+							Parameters: []subscriptions.Parameter{
+								{Key: "id", Value: "1"},
+							},
 						},
 					},
 				},
 			},
-		},
-		AdminGroups: []*subscriptions.SubscriptionGroup{},
-		IsAdminMode: false,
-	}
+			AdminGroups: []*subscriptions.SubscriptionGroup{},
+			IsAdminMode: false,
+		}
 
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "user/subscriptions.gohtml", data); err != nil {
-		t.Fatalf("render user/subscriptions.gohtml: %v", err)
-	}
+		var buf bytes.Buffer
+		if err := tmpl.ExecuteTemplate(&buf, "user/subscriptions.gohtml", data); err != nil {
+			t.Fatalf("render user/subscriptions.gohtml: %v", err)
+		}
 
-	if !bytes.Contains(buf.Bytes(), []byte("<form method=\"post\" action=\"/usr/subscriptions/update\">")) {
-		t.Errorf("Expected form tag not found")
-	}
-	// Check for the checkbox with correct value
-	expectedValue := "test:/test/1|internal"
-	if !bytes.Contains(buf.Bytes(), []byte(expectedValue)) {
-		t.Errorf("Expected checkbox value %q not found", expectedValue)
-	}
-	// Check for hidden presented input
-	if !bytes.Contains(buf.Bytes(), []byte("name=\"presented_subs\" value=\"test:/test/1|internal\"")) {
-		t.Errorf("Expected hidden presented input not found")
-	}
+		if !bytes.Contains(buf.Bytes(), []byte("<form method=\"post\" action=\"/usr/subscriptions/update\">")) {
+			t.Errorf("Expected form tag not found")
+		}
+		// Check for the checkbox with correct value
+		expectedValue := "test:/test/1|internal"
+		if !bytes.Contains(buf.Bytes(), []byte(expectedValue)) {
+			t.Errorf("Expected checkbox value %q not found", expectedValue)
+		}
+		// Check for hidden presented input
+		if !bytes.Contains(buf.Bytes(), []byte("name=\"presented_subs\" value=\"test:/test/1|internal\"")) {
+			t.Errorf("Expected hidden presented input not found")
+		}
+	})
 }

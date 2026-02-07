@@ -35,7 +35,7 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 	}
 }
 
-func TestNewsTemplatesExist(t *testing.T) {
+func TestHappyPathNewsTemplatesExist(t *testing.T) {
 	subs := []notif.SubscribersNotificationTemplateProvider{
 		newPostTask,
 		replyTask,

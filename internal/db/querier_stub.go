@@ -701,6 +701,10 @@ type QuerierStub struct {
 	AdminUpdateForumCategoryErr   error
 	AdminUpdateForumCategoryFn    func(context.Context, AdminUpdateForumCategoryParams) error
 
+	AdminUpdateWritingCategoryCalls []AdminUpdateWritingCategoryParams
+	AdminUpdateWritingCategoryErr   error
+	AdminUpdateWritingCategoryFn    func(context.Context, AdminUpdateWritingCategoryParams) error
+
 	AdminUpdateFAQCalls []AdminUpdateFAQParams
 	AdminUpdateFAQErr   error
 	AdminUpdateFAQFn    func(context.Context, AdminUpdateFAQParams) error
@@ -1363,6 +1367,18 @@ func (s *QuerierStub) AdminUpdateForumCategory(ctx context.Context, arg AdminUpd
 	s.AdminUpdateForumCategoryCalls = append(s.AdminUpdateForumCategoryCalls, arg)
 	fn := s.AdminUpdateForumCategoryFn
 	err := s.AdminUpdateForumCategoryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error {
+	s.mu.Lock()
+	s.AdminUpdateWritingCategoryCalls = append(s.AdminUpdateWritingCategoryCalls, arg)
+	fn := s.AdminUpdateWritingCategoryFn
+	err := s.AdminUpdateWritingCategoryErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

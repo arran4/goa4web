@@ -191,18 +191,18 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/user/user_paging_test.go
 - [ ] handlers/user/user_tasks_test.go
 - [ ] handlers/user/user_test.go
-- [ ] handlers/writings/matchers_test.go
-- [ ] handlers/writings/pages_test.go
-- [ ] handlers/writings/permissions_test.go
-- [ ] handlers/writings/reply_task_test.go
-- [ ] handlers/writings/templates_test.go
-- [ ] handlers/writings/writing_category_change_task_test.go
-- [ ] handlers/writings/writingsAdminCategoriesPage_test.go
-- [ ] handlers/writings/writingsAdminCategoryEditPage_test.go
-- [ ] handlers/writings/writingsAdminCategoryGrantsPage_test.go
-- [ ] handlers/writings/writingsArticlePage_test.go
-- [ ] handlers/writings/writingsFeed_test.go
-- [ ] handlers/writings/writingsTemplates_test.go
-- [ ] handlers/writings/writingsWriterListPage_test.go
-- [ ] handlers/writings/writings_reply_notifications_test.go
-- [ ] handlers/writings/writings_tasks_test.go
+- [x] handlers/writings/matchers_test.go
+- [x] handlers/writings/pages_test.go
+- [x] handlers/writings/permissions_test.go
+- [x] handlers/writings/reply_task_test.go
+- [x] handlers/writings/templates_test.go
+- [x] handlers/writings/writing_category_change_task_test.go
+- [x] handlers/writings/writingsAdminCategoriesPage_test.go
+- [x] handlers/writings/writingsAdminCategoryEditPage_test.go
+- [x] handlers/writings/writingsAdminCategoryGrantsPage_test.go
+- [x] handlers/writings/writingsArticlePage_test.go
+- [x] handlers/writings/writingsFeed_test.go
+- [x] handlers/writings/writingsTemplates_test.go
+- [x] handlers/writings/writingsWriterListPage_test.go
+- [x] handlers/writings/writings_reply_notifications_test.go
+- [x] handlers/writings/writings_tasks_test.go

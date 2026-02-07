@@ -64,12 +64,12 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/auth/registerPage_test.go
 - [x] handlers/auth/task_template_test.go
 - [x] handlers/auth/verify_password_task_test.go
-- [ ] handlers/blogs/auto_subscribe_test.go
-- [ ] handlers/blogs/bloggerListPage_search_test.go
-- [ ] handlers/blogs/blogsAdminBlogCommentsPage_test.go
-- [ ] handlers/blogs/blogsAdminBlogPage_test.go
-- [ ] handlers/blogs/blogsAutoSubscribe_test.go
-- [ ] handlers/blogs/blogsBlogAddPage_test.go
+- [x] handlers/blogs/auto_subscribe_test.go
+- [x] handlers/blogs/bloggerListPage_search_test.go
+- [x] handlers/blogs/blogsAdminBlogCommentsPage_test.go
+- [x] handlers/blogs/blogsAdminBlogPage_test.go
+- [x] handlers/blogs/blogsAutoSubscribe_test.go
+- [x] handlers/blogs/blogsBlogAddPage_test.go
 - [ ] handlers/blogs/blogsBloggersBloggerPage_test.go
 - [ ] handlers/blogs/blogsIndexPermissions_test.go
 - [ ] handlers/blogs/blogsPage_test.go

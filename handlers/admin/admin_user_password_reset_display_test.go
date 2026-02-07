@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestUserPasswordResetIncludesPasswordInMessages(t *testing.T) {
+func TestHappyPathUserPasswordResetIncludesPasswordInMessages(t *testing.T) {
 	qs := testhelpers.NewQuerierStub()
 	qs.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
 		Idusers:  42,

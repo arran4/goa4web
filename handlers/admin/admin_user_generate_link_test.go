@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestUserGenerateResetLink(t *testing.T) {
+func TestHappyPathUserGenerateResetLink(t *testing.T) {
 	qs := testhelpers.NewQuerierStub()
 	qs.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
 		Idusers:  42,

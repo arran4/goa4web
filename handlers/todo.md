@@ -28,21 +28,21 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/admin/admin_email_tasks_test.go
 - [x] handlers/admin/admin_email_template_test.go
 - [x] handlers/admin/admin_password_reset_cleanup_tasks_test.go
-- [ ] handlers/admin/admin_tasks_event_test.go
-- [ ] handlers/admin/admin_tasks_test.go
-- [ ] handlers/admin/admin_user_generate_link_test.go
-- [ ] handlers/admin/admin_user_password_reset_display_test.go
-- [ ] handlers/admin/admin_user_password_reset_test.go
-- [ ] handlers/admin/announcementTemplates_test.go
-- [ ] handlers/admin/api_matcher_test.go
-- [ ] handlers/admin/api_test.go
-- [ ] handlers/admin/dismiss_request_task_test.go
-- [ ] handlers/admin/email_bulk_tasks_test.go
-- [ ] handlers/admin/global_grant_create_task_test.go
-- [ ] handlers/admin/grants_routes_test.go
-- [ ] handlers/admin/maintenancePage_test.go
-- [ ] handlers/admin/netutil_test.go
-- [ ] handlers/admin/pages_test.go
+- [x] handlers/admin/admin_tasks_event_test.go
+- [x] handlers/admin/admin_tasks_test.go
+- [x] handlers/admin/admin_user_generate_link_test.go
+- [x] handlers/admin/admin_user_password_reset_display_test.go
+- [x] handlers/admin/admin_user_password_reset_test.go
+- [x] handlers/admin/announcementTemplates_test.go
+- [x] handlers/admin/api_matcher_test.go
+- [x] handlers/admin/api_test.go
+- [x] handlers/admin/dismiss_request_task_test.go
+- [x] handlers/admin/email_bulk_tasks_test.go
+- [x] handlers/admin/global_grant_create_task_test.go
+- [x] handlers/admin/grants_routes_test.go
+- [x] handlers/admin/maintenancePage_test.go
+- [x] handlers/admin/netutil_test.go
+- [x] handlers/admin/pages_test.go
 - [ ] handlers/admin/reload_shutdown_test.go
 - [ ] handlers/admin/role_grant_create_task_test.go
 - [ ] handlers/admin/role_grants_build_test.go

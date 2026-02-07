@@ -53,17 +53,17 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/admin/user_subscription_tasks_test.go
 - [x] handlers/auth/cache_test.go
 - [x] handlers/auth/forgotPassword_event_test.go
-- [ ] handlers/auth/forgotPassword_limit_test.go
-- [ ] handlers/auth/forgotPassword_no_email_test.go
-- [ ] handlers/auth/forgotPassword_test.go
-- [ ] handlers/auth/loginPage_test.go
-- [ ] handlers/auth/login_task_test.go
-- [ ] handlers/auth/pages_test.go
-- [ ] handlers/auth/password_reset_flow_test.go
-- [ ] handlers/auth/redirectBackPageHandler_test.go
-- [ ] handlers/auth/registerPage_test.go
-- [ ] handlers/auth/task_template_test.go
-- [ ] handlers/auth/verify_password_task_test.go
+- [x] handlers/auth/forgotPassword_limit_test.go
+- [x] handlers/auth/forgotPassword_no_email_test.go
+- [x] handlers/auth/forgotPassword_test.go
+- [x] handlers/auth/loginPage_test.go
+- [x] handlers/auth/login_task_test.go
+- [x] handlers/auth/pages_test.go
+- [x] handlers/auth/password_reset_flow_test.go
+- [x] handlers/auth/redirectBackPageHandler_test.go
+- [x] handlers/auth/registerPage_test.go
+- [x] handlers/auth/task_template_test.go
+- [x] handlers/auth/verify_password_task_test.go
 - [ ] handlers/blogs/auto_subscribe_test.go
 - [ ] handlers/blogs/bloggerListPage_search_test.go
 - [ ] handlers/blogs/blogsAdminBlogCommentsPage_test.go

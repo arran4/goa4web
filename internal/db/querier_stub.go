@@ -489,6 +489,21 @@ type QuerierStub struct {
 	InsertSubscriptionParams         []InsertSubscriptionParams
 	DeleteSubscriptionParams         []DeleteSubscriptionForSubscriberParams
 	DeleteSubscriptionErr            error
+
+	SystemInsertLoginAttemptCalls []SystemInsertLoginAttemptParams
+	SystemInsertLoginAttemptErr   error
+	SystemInsertLoginAttemptFn    func(context.Context, SystemInsertLoginAttemptParams) error
+
+	SystemCountRecentLoginAttemptsCalls   []SystemCountRecentLoginAttemptsParams
+	SystemCountRecentLoginAttemptsReturns int64
+	SystemCountRecentLoginAttemptsErr     error
+	SystemCountRecentLoginAttemptsFn      func(context.Context, SystemCountRecentLoginAttemptsParams) (int64, error)
+
+	SystemInsertUserCalls   []sql.NullString
+	SystemInsertUserReturns int64
+	SystemInsertUserErr     error
+	SystemInsertUserFn      func(context.Context, sql.NullString) (int64, error)
+
 	CreateFAQQuestionForWriterCalls  []CreateFAQQuestionForWriterParams
 	CreateFAQQuestionForWriterErr    error
 	CreateFAQQuestionForWriterFn     func(context.Context, CreateFAQQuestionForWriterParams) error
@@ -1243,6 +1258,44 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error {
+	s.mu.Lock()
+	s.SystemInsertLoginAttemptCalls = append(s.SystemInsertLoginAttemptCalls, arg)
+	fn := s.SystemInsertLoginAttemptFn
+	err := s.SystemInsertLoginAttemptErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error) {
+	s.mu.Lock()
+	s.SystemCountRecentLoginAttemptsCalls = append(s.SystemCountRecentLoginAttemptsCalls, arg)
+	fn := s.SystemCountRecentLoginAttemptsFn
+	ret := s.SystemCountRecentLoginAttemptsReturns
+	err := s.SystemCountRecentLoginAttemptsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error) {
+	s.mu.Lock()
+	s.SystemInsertUserCalls = append(s.SystemInsertUserCalls, username)
+	fn := s.SystemInsertUserFn
+	ret := s.SystemInsertUserReturns
+	err := s.SystemInsertUserErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, username)
 	}
 	return ret, err
 }

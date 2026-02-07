@@ -55,7 +55,7 @@ func TestAdminAddEmailTask(t *testing.T) {
 		}
 
 		if rr.Code != http.StatusFound {
-             // ...
+			// ...
 		}
 	})
 }

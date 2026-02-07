@@ -27,7 +27,7 @@ var (
 	sessionName = "test-session"
 )
 
-func TestBlogsBloggerPostsPage(t *testing.T) {
+func TestHappyPathBlogsBloggerPostsPage(t *testing.T) {
 	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("blogs", "entry", "see"))
 	store = sessions.NewCookieStore([]byte("test"))
 	core.Store = store
@@ -83,7 +83,7 @@ func TestBlogsBloggerPostsPage(t *testing.T) {
 	}
 }
 
-func TestBlogsRssPageWritesRSS(t *testing.T) {
+func TestHappyPathBlogsRssPageWritesRSS(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	q.SystemGetUserByUsernameRow = &db.SystemGetUserByUsernameRow{
 		Idusers:                1,
@@ -135,7 +135,7 @@ func TestBlogsRssPageWritesRSS(t *testing.T) {
 	}
 }
 
-func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
+func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
@@ -147,7 +147,7 @@ func TestBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	}
 }
 
-func TestBlogsBlogEditPage_Unauthorized(t *testing.T) {
+func TestUnhappyPathBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)

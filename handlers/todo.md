@@ -70,13 +70,13 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/blogs/blogsAdminBlogPage_test.go
 - [x] handlers/blogs/blogsAutoSubscribe_test.go
 - [x] handlers/blogs/blogsBlogAddPage_test.go
-- [ ] handlers/blogs/blogsBloggersBloggerPage_test.go
-- [ ] handlers/blogs/blogsIndexPermissions_test.go
-- [ ] handlers/blogs/blogsPage_test.go
-- [ ] handlers/blogs/blogs_reply_notifications_test.go
-- [ ] handlers/blogs/blogs_tasks_test.go
-- [ ] handlers/blogs/pages_test.go
-- [ ] handlers/blogs/routes_test.go
+- [x] handlers/blogs/blogsBloggersBloggerPage_test.go
+- [x] handlers/blogs/blogsIndexPermissions_test.go
+- [x] handlers/blogs/blogsPage_test.go
+- [x] handlers/blogs/blogs_reply_notifications_test.go
+- [x] handlers/blogs/blogs_tasks_test.go
+- [x] handlers/blogs/pages_test.go
+- [x] handlers/blogs/routes_test.go
 - [ ] handlers/bookmarks/mine_test.go
 - [ ] handlers/errorpage_test.go
 - [ ] handlers/externallink/redirect_test.go

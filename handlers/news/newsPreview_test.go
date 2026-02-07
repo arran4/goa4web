@@ -18,80 +18,84 @@ import (
 )
 
 func TestPreviewRoute(t *testing.T) {
-	r := mux.NewRouter()
-	navReg := navpkg.NewRegistry()
-	cfg := &config.RuntimeConfig{}
+	t.Run("Happy Path", func(t *testing.T) {
+		r := mux.NewRouter()
+		navReg := navpkg.NewRegistry()
+		cfg := &config.RuntimeConfig{}
 
-	RegisterRoutes(r, cfg, navReg)
+		RegisterRoutes(r, cfg, navReg)
 
-	// Middleware to inject CoreData
-	mw := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cd := common.NewCoreData(r.Context(), testhelpers.NewQuerierStub(), cfg)
-			ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
+		// Middleware to inject CoreData
+		mw := func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				cd := common.NewCoreData(r.Context(), testhelpers.NewQuerierStub(), cfg)
+				ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
+				next.ServeHTTP(w, r.WithContext(ctx))
+			})
+		}
 
-	ts := httptest.NewServer(mw(r))
-	defer ts.Close()
+		ts := httptest.NewServer(mw(r))
+		defer ts.Close()
 
-	// Test /news/preview
-	url := ts.URL + "/news/preview"
-	req, err := http.NewRequest("POST", url, strings.NewReader("[b Bold]"))
-	if err != nil {
-		t.Fatal(err)
-	}
+		// Test /news/preview
+		url := ts.URL + "/news/preview"
+		req, err := http.NewRequest("POST", url, strings.NewReader("[b Bold]"))
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", resp.StatusCode)
-	}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
 
-	bodyBuf := new(bytes.Buffer)
-	bodyBuf.ReadFrom(resp.Body)
-	body := bodyBuf.String()
+		bodyBuf := new(bytes.Buffer)
+		bodyBuf.ReadFrom(resp.Body)
+		body := bodyBuf.String()
 
-	if !strings.Contains(body, "<strong>Bold</strong>") {
-		t.Errorf("Expected '<strong>Bold</strong>', got %q", body)
-	}
-	if !strings.Contains(body, "<article class=\"thread\">") {
-		t.Errorf("Expected article frame, got %q", body)
-	}
+		if !strings.Contains(body, "<strong>Bold</strong>") {
+			t.Errorf("Expected '<strong>Bold</strong>', got %q", body)
+		}
+		if !strings.Contains(body, "<article class=\"thread\">") {
+			t.Errorf("Expected article frame, got %q", body)
+		}
+	})
 }
 
 func TestPreviewHandler(t *testing.T) {
-	req, err := http.NewRequest("POST", "/preview", strings.NewReader("[b Bold]"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Run("Happy Path", func(t *testing.T) {
+		req, err := http.NewRequest("POST", "/preview", strings.NewReader("[b Bold]"))
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// Inject CoreData
-	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), &config.RuntimeConfig{})
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+		// Inject CoreData
+		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), &config.RuntimeConfig{})
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
 
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(PreviewPage)
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(PreviewPage)
 
-	handler.ServeHTTP(rr, req)
+		handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-	expected := "<strong>Bold</strong>"
-	if !strings.Contains(rr.Body.String(), expected) {
-		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
-	}
-	if !strings.Contains(rr.Body.String(), "<article class=\"thread\">") {
-		t.Errorf("Expected article frame, got %q", rr.Body.String())
-	}
+		expected := "<strong>Bold</strong>"
+		if !strings.Contains(rr.Body.String(), expected) {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+		if !strings.Contains(rr.Body.String(), "<article class=\"thread\">") {
+			t.Errorf("Expected article frame, got %q", rr.Body.String())
+		}
+	})
 }

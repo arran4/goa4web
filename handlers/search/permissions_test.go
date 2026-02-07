@@ -50,7 +50,11 @@ func TestCanSearch(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		runName := "Happy Path"
+		if !tc.want {
+			runName = "Unhappy Path"
+		}
+		t.Run(runName+" - "+tc.name, func(t *testing.T) {
 			if got := common.CanSearch(tc.cd, "news"); got != tc.want {
 				t.Fatalf("CanSearch() = %v, want %v", got, tc.want)
 			}

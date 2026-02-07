@@ -16,7 +16,12 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestRequiredGrantAllowed(t *testing.T) {
+func TestRequiredGrant(t *testing.T) {
+	t.Run("Allowed", requiredGrantAllowed)
+	t.Run("Denied", requiredGrantDenied)
+}
+
+func requiredGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	q := testhelpers.NewQuerierStub()
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
@@ -31,7 +36,7 @@ func TestRequiredGrantAllowed(t *testing.T) {
 	}
 }
 
-func TestRequiredGrantDenied(t *testing.T) {
+func requiredGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/add", nil)
 	q := testhelpers.NewQuerierStub()
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
@@ -46,7 +51,12 @@ func TestRequiredGrantDenied(t *testing.T) {
 	}
 }
 
-func TestRequireGrantAllowed(t *testing.T) {
+func TestRequireGrantForPath(t *testing.T) {
+	t.Run("Allowed", requireGrantAllowed)
+	t.Run("Denied", requireGrantDenied)
+}
+
+func requireGrantAllowed(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/1/edit", nil)
 	q := testhelpers.NewQuerierStub()
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
@@ -77,7 +87,7 @@ func TestRequireGrantAllowed(t *testing.T) {
 	}
 }
 
-func TestRequireGrantDenied(t *testing.T) {
+func requireGrantDenied(t *testing.T) {
 	req := httptest.NewRequest("GET", "/news/2/edit", nil)
 	q := testhelpers.NewQuerierStub()
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {

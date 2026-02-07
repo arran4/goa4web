@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestEditRouteRegistered(t *testing.T) {
+func TestHappyPathEditRouteRegistered(t *testing.T) {
 	r := mux.NewRouter()
 	navReg := navpkg.NewRegistry()
 	RegisterRoutes(r, config.NewRuntimeConfig(), navReg)

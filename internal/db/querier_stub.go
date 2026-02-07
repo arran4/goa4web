@@ -759,6 +759,11 @@ type QuerierStub struct {
 	ListBloggersForListerErr     error
 	ListBloggersForListerFn      func(ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
 
+	ListBloggersSearchForListerCalls   []ListBloggersSearchForListerParams
+	ListBloggersSearchForListerReturns []*ListBloggersSearchForListerRow
+	ListBloggersSearchForListerErr     error
+	ListBloggersSearchForListerFn      func(ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error)
+
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
 	ListWritersForListerErr     error
@@ -1491,6 +1496,19 @@ func (s *QuerierStub) ListBloggersForLister(ctx context.Context, arg ListBlogger
 	fn := s.ListBloggersForListerFn
 	ret := s.ListBloggersForListerReturns
 	err := s.ListBloggersForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBloggersSearchForLister(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error) {
+	s.mu.Lock()
+	s.ListBloggersSearchForListerCalls = append(s.ListBloggersSearchForListerCalls, arg)
+	fn := s.ListBloggersSearchForListerFn
+	ret := s.ListBloggersSearchForListerReturns
+	err := s.ListBloggersSearchForListerErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)

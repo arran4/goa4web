@@ -18,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestAdminBlogPage_UsesURLParam(t *testing.T) {
+func TestHappyPathAdminBlogPage_UsesURLParam(t *testing.T) {
 	blogID := int32(7)
 	now := time.Now()
 	queries := testhelpers.NewQuerierStub()

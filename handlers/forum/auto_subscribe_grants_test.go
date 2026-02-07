@@ -7,7 +7,7 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
-func TestCreateThreadTaskAutoSubscribeGrants(t *testing.T) {
+func TestHappyPathCreateThreadTaskAutoSubscribeGrants(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{
@@ -31,7 +31,7 @@ func TestCreateThreadTaskAutoSubscribeGrants(t *testing.T) {
 	}
 }
 
-func TestReplyTaskAutoSubscribeGrants(t *testing.T) {
+func TestHappyPathReplyTaskAutoSubscribeGrants(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{

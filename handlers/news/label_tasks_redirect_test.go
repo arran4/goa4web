@@ -7,45 +7,49 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 )
 
 func TestMarkReadTaskRedirect(t *testing.T) {
-	cd := &common.CoreData{}
+	t.Run("Happy Path", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig())
 
-	task := &MarkReadTask{}
+		task := &MarkReadTask{}
 
-	redirectURL := "/some/where"
+		redirectURL := "/some/where"
 
-	form := url.Values{}
-	form.Add("redirect", redirectURL)
+		form := url.Values{}
+		form.Add("redirect", redirectURL)
 
-	req := httptest.NewRequest("POST", "/news/123/labels?task=Mark+Thread+Read", strings.NewReader(form.Encode()))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req := httptest.NewRequest("POST", "/news/123/labels?task=Mark+Thread+Read", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Add context
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+		// Add context
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
 
-	// Add vars using gorilla mux
-	vars := map[string]string{
-		"news": "123",
-	}
-	req = mux.SetURLVars(req, vars)
+		// Add vars using gorilla mux
+		vars := map[string]string{
+			"news": "123",
+		}
+		req = mux.SetURLVars(req, vars)
 
-	w := httptest.NewRecorder()
+		w := httptest.NewRecorder()
 
-	res := task.Action(w, req)
+		res := task.Action(w, req)
 
-	redirectHandler, ok := res.(handlers.RefreshDirectHandler)
-	if !ok {
-		t.Fatalf("Expected handlers.RefreshDirectHandler, got %T", res)
-	}
+		redirectHandler, ok := res.(handlers.RefreshDirectHandler)
+		if !ok {
+			t.Fatalf("Expected handlers.RefreshDirectHandler, got %T", res)
+		}
 
-	if redirectHandler.TargetURL != redirectURL {
-		t.Errorf("Expected TargetURL to be %q, got %q", redirectURL, redirectHandler.TargetURL)
-	}
+		if redirectHandler.TargetURL != redirectURL {
+			t.Errorf("Expected TargetURL to be %q, got %q", redirectURL, redirectHandler.TargetURL)
+		}
+	})
 }

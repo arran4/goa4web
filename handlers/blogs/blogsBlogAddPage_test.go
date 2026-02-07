@@ -23,7 +23,7 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-func TestBlogTemplatesExist(t *testing.T) {
+func TestHappyPathBlogTemplatesExist(t *testing.T) {
 	prefixes := []string{
 		"blogAddEmail",
 		"adminNotificationBlogAddEmail",

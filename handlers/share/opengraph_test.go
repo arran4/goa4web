@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 
 const testKey = "test-secret-key-for-og-images"
 
-func TestMakeImageURL_QueryAuth(t *testing.T) {
+func TestHappyPathMakeImageURL_QueryAuth(t *testing.T) {
 	baseURL := "http://example.com"
 	title := "Test Title"
 
@@ -61,7 +61,7 @@ func TestMakeImageURL_QueryAuth(t *testing.T) {
 	}
 }
 
-func TestMakeImageURL_PathAuth(t *testing.T) {
+func TestHappyPathMakeImageURL_PathAuth(t *testing.T) {
 	baseURL := "http://example.com"
 	title := "Test Title"
 
@@ -120,7 +120,7 @@ func TestMakeImageURL_PathAuth(t *testing.T) {
 	}
 }
 
-func TestMakeImageURL_WithExpiry(t *testing.T) {
+func TestHappyPathMakeImageURL_WithExpiry(t *testing.T) {
 	baseURL := "http://example.com"
 	title := "Test Title"
 
@@ -141,7 +141,7 @@ func TestMakeImageURL_WithExpiry(t *testing.T) {
 	}
 }
 
-func TestOGImageHandler(t *testing.T) {
+func TestHappyPathOGImageHandler(t *testing.T) {
 	handler := share.NewOGImageHandler(testKey)
 
 	// Generate a valid signed URL
@@ -177,7 +177,7 @@ func TestOGImageHandler(t *testing.T) {
 	}
 }
 
-func TestOGImageHandler_InvalidSignature(t *testing.T) {
+func TestUnhappyPathOGImageHandler_InvalidSignature(t *testing.T) {
 	handler := share.NewOGImageHandler(testKey)
 
 	// Request without signature
@@ -195,7 +195,7 @@ func TestOGImageHandler_InvalidSignature(t *testing.T) {
 	}
 }
 
-func TestOGImageHandler_WrongKey(t *testing.T) {
+func TestUnhappyPathOGImageHandler_WrongKey(t *testing.T) {
 	handler := share.NewOGImageHandler("wrong-key")
 
 	// Generate URL with correct key
@@ -218,7 +218,7 @@ func TestOGImageHandler_WrongKey(t *testing.T) {
 	}
 }
 
-func TestVerifyAndGetPath_WithQueryParams(t *testing.T) {
+func TestHappyPathVerifyAndGetPath_WithQueryParams(t *testing.T) {
 	// Test that additional query params are preserved
 	path := "/api/og-image/data"
 	extraQuery := "baz=qux&foo=bar"
@@ -246,7 +246,7 @@ func TestVerifyAndGetPath_WithQueryParams(t *testing.T) {
 	}
 }
 
-func TestVerifyAndGetPath_MixedAuth(t *testing.T) {
+func TestHappyPathVerifyAndGetPath_MixedAuth(t *testing.T) {
 	key := "test-key"
 	ts := time.Now().Add(1 * time.Hour).Unix()
 
@@ -275,7 +275,7 @@ func TestVerifyAndGetPath_MixedAuth(t *testing.T) {
 	}
 }
 
-func TestVerifyAndGetPath_MixedAuth_Expired(t *testing.T) {
+func TestUnhappyPathVerifyAndGetPath_MixedAuth_Expired(t *testing.T) {
 	key := "test-key"
 	// Expired 1 hour ago
 	ts := time.Now().Add(-1 * time.Hour).Unix()
@@ -301,7 +301,7 @@ func TestVerifyAndGetPath_MixedAuth_Expired(t *testing.T) {
 	}
 }
 
-func TestShareRoutes_MixedAuth(t *testing.T) {
+func TestHappyPathShareRoutes_MixedAuth(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := &config.RuntimeConfig{} // Minimal config
 	shareKey := "test-key"

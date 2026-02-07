@@ -24,60 +24,62 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestCommentsPageAllowsGlobalViewGrant(t *testing.T) {
-	queries := testhelpers.NewQuerierStub()
-	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-		ID:         1,
-		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
-		AuthorID:   2,
-		CategoryID: sql.NullInt32{Int32: 1, Valid: true},
-		ThreadID:   1,
-		Title:      sql.NullString{String: "t", Valid: true},
-		Url:        sql.NullString{String: "http://u", Valid: true},
-		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-		Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
-		Username:   sql.NullString{String: "bob", Valid: true},
-		Title_2:    sql.NullString{String: "cat", Valid: true},
-	}
-	queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
-	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
-		Idforumthread:          1,
-		Firstpost:              1,
-		Lastposter:             1,
-		ForumtopicIdforumtopic: 1,
-		Comments:               sql.NullInt32{Int32: 0, Valid: true},
-		Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
-		Locked:                 sql.NullBool{Bool: false, Valid: true},
-	}
-	queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
-		{Name: "administrator", IsAdmin: true},
-	}
-	store := sessions.NewCookieStore([]byte("t"))
-	core.Store = store
-	core.SessionName = "test-session"
+func TestCommentsPage(t *testing.T) {
+	t.Run("Happy Path - Allows Global View Grant", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+		queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		}
+		queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Comments:               sql.NullInt32{Int32: 0, Valid: true},
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Locked:                 sql.NullBool{Bool: false, Valid: true},
+		}
+		queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
+			{Name: "administrator", IsAdmin: true},
+		}
+		store := sessions.NewCookieStore([]byte("t"))
+		core.Store = store
+		core.SessionName = "test-session"
 
-	req := httptest.NewRequest("GET", "/linker/comments/1", nil)
-	req = mux.SetURLVars(req, map[string]string{"link": "1"})
-	w := httptest.NewRecorder()
-	sess := testhelpers.Must(store.Get(req, core.SessionName))
-	sess.Values["UID"] = int32(2)
-	sess.Save(req, w)
-	for _, c := range w.Result().Cookies() {
-		req.AddCookie(c)
-	}
-	ctx := req.Context()
-	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
-	cd.UserID = 2
-	cd.AdminMode = true
-	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+		req := httptest.NewRequest("GET", "/linker/comments/1", nil)
+		req = mux.SetURLVars(req, map[string]string{"link": "1"})
+		w := httptest.NewRecorder()
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
+		sess.Values["UID"] = int32(2)
+		sess.Save(req, w)
+		for _, c := range w.Result().Cookies() {
+			req.AddCookie(c)
+		}
+		ctx := req.Context()
+		cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"administrator"}))
+		cd.UserID = 2
+		cd.AdminMode = true
+		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
 
-	rr := httptest.NewRecorder()
-	CommentsPage(rr, req)
+		rr := httptest.NewRecorder()
+		CommentsPage(rr, req)
 
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status=%d", rr.Code)
-	}
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status=%d", rr.Code)
+		}
+	})
 }
 
 func newCommentsPageRequest(t *testing.T, queries db.Querier, roles []string, userID int32) (*httptest.ResponseRecorder, *http.Request, *common.CoreData) {
@@ -120,7 +122,13 @@ func writeTempCommentsTemplate(t *testing.T, content string) string {
 	return dir
 }
 
-func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
+func TestCommentsPageEditControls(t *testing.T) {
+	t.Run("Use Edit Grant", commentsPageEditControlsUseEditGrant)
+	t.Run("Require Grant Not Role", commentsPageEditControlsRequireGrantNotRole)
+	t.Run("Allow Admin Mode", commentsPageEditControlsAllowAdminMode)
+}
+
+func commentsPageEditControlsUseEditGrant(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, "{{ if .CanEdit }}EDIT_CONTROLS{{ end }}")
 
 	queries := testhelpers.NewQuerierStub()
@@ -176,7 +184,7 @@ func TestCommentsPageEditControlsUseEditGrant(t *testing.T) {
 	}
 }
 
-func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
+func commentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, `CanEdit: {{.CanEdit}}`)
 
 	queries := testhelpers.NewQuerierStub()
@@ -254,7 +262,7 @@ func TestCommentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 	}
 }
 
-func TestCommentsPageEditControlsAllowAdminMode(t *testing.T) {
+func commentsPageEditControlsAllowAdminMode(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, `{{ range .Comments }}{{ call $.AdminURL . }}{{ end }}`)
 
 	t.Logf("Templates in site: %v", templates.ListSiteTemplateNames())

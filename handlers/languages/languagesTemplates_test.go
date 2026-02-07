@@ -36,15 +36,17 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestLanguageTaskTemplates(t *testing.T) {
-	admins := []notif.AdminEmailTemplateProvider{
-		renameLanguageTask,
-		deleteLanguageTask,
-		createLanguageTask,
-	}
-	for _, a := range admins {
-		if et, _ := a.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
-			requireEmailTemplates(t, et)
+	t.Run("Happy Path", func(t *testing.T) {
+		admins := []notif.AdminEmailTemplateProvider{
+			renameLanguageTask,
+			deleteLanguageTask,
+			createLanguageTask,
 		}
-		requireNotificationTemplate(t, a.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
-	}
+		for _, a := range admins {
+			if et, _ := a.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+				requireEmailTemplates(t, et)
+			}
+			requireNotificationTemplate(t, a.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		}
+	})
 }

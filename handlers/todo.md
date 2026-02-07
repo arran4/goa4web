@@ -123,21 +123,21 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/imagebbs/imagebbs_reply_notifications_test.go
 - [ ] handlers/imagebbs/imagebbs_tasks_test.go
 - [ ] handlers/imagebbs/pages_test.go
-- [ ] handlers/images/routes_test.go
-- [ ] handlers/languages/delete_language_task_test.go
-- [ ] handlers/languages/languagesTemplates_test.go
-- [ ] handlers/languages/rename_language_task_test.go
-- [ ] handlers/linker/linkerAdminLinkViewPage_test.go
-- [ ] handlers/linker/linkerCommentsPage_test.go
-- [ ] handlers/linker/linkerPage_test.go
-- [ ] handlers/linker/linkerQueueTemplates_test.go
-- [ ] handlers/linker/linkerTemplates_test.go
-- [ ] handlers/linker/linker_approve_notifications_test.go
-- [ ] handlers/linker/linker_tasks_test.go
-- [ ] handlers/linker/pages_test.go
-- [ ] handlers/linker/permissions_test.go
-- [ ] handlers/logutils_test.go
-- [ ] handlers/matchers_test.go
+- [x] handlers/images/routes_test.go
+- [x] handlers/languages/delete_language_task_test.go
+- [x] handlers/languages/languagesTemplates_test.go
+- [x] handlers/languages/rename_language_task_test.go
+- [x] handlers/linker/linkerAdminLinkViewPage_test.go
+- [x] handlers/linker/linkerCommentsPage_test.go
+- [x] handlers/linker/linkerPage_test.go
+- [x] handlers/linker/linkerQueueTemplates_test.go
+- [x] handlers/linker/linkerTemplates_test.go
+- [x] handlers/linker/linker_approve_notifications_test.go
+- [x] handlers/linker/linker_tasks_test.go
+- [x] handlers/linker/pages_test.go
+- [x] handlers/linker/permissions_test.go
+- [x] handlers/logutils_test.go
+- [x] handlers/matchers_test.go
 - [ ] handlers/news/auto_subscribe_test.go
 - [ ] handlers/news/label_tasks_ajax_test.go
 - [ ] handlers/news/label_tasks_redirect_test.go

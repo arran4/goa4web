@@ -81,14 +81,14 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/errorpage_test.go
 - [ ] handlers/externallink/redirect_test.go
 - [ ] handlers/externallink/tasks_test.go
-- [ ] handlers/faq/admin_questions_test.go
-- [ ] handlers/faq/admin_templates_page_test.go
-- [ ] handlers/faq/ask_test.go
-- [ ] handlers/faq/empty_faq_test.go
-- [ ] handlers/faq/faqIndexPermissions_test.go
-- [ ] handlers/faq/faqTemplates_test.go
-- [ ] handlers/faq/page_test.go
-- [ ] handlers/faq/pages_test.go
+- [x] handlers/faq/admin_questions_test.go
+- [x] handlers/faq/admin_templates_page_test.go
+- [x] handlers/faq/ask_test.go
+- [x] handlers/faq/empty_faq_test.go
+- [x] handlers/faq/faqIndexPermissions_test.go
+- [x] handlers/faq/faqTemplates_test.go
+- [x] handlers/faq/page_test.go
+- [x] handlers/faq/pages_test.go
 - [ ] handlers/forum/admin_topic_edit_template_test.go
 - [ ] handlers/forum/api_test.go
 - [ ] handlers/forum/auto_subscribe_grants_test.go

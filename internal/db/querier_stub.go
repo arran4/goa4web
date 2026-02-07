@@ -398,28 +398,28 @@ type QuerierStub struct {
 	UpdateExternalLinkMetadataErr   error
 	UpdateExternalLinkMetadataFn    func(context.Context, UpdateExternalLinkMetadataParams) error
 
-	CreateExternalLinkCalls              []string
-	CreateExternalLinkReturns            sql.Result
-	CreateExternalLinkErr                error
-	CreateExternalLinkFn                 func(context.Context, string) (sql.Result, error)
+	CreateExternalLinkCalls   []string
+	CreateExternalLinkReturns sql.Result
+	CreateExternalLinkErr     error
+	CreateExternalLinkFn      func(context.Context, string) (sql.Result, error)
 
-	GetExternalLinkCalls                 []string
-	GetExternalLinkReturns               *ExternalLink
-	GetExternalLinkErr                   error
-	GetExternalLinkFn                    func(context.Context, string) (*ExternalLink, error)
+	GetExternalLinkCalls   []string
+	GetExternalLinkReturns *ExternalLink
+	GetExternalLinkErr     error
+	GetExternalLinkFn      func(context.Context, string) (*ExternalLink, error)
 
-	GetExternalLinkByIDCalls             []int32
-	GetExternalLinkByIDReturns           *ExternalLink
-	GetExternalLinkByIDErr               error
-	GetExternalLinkByIDFn                func(context.Context, int32) (*ExternalLink, error)
+	GetExternalLinkByIDCalls   []int32
+	GetExternalLinkByIDReturns *ExternalLink
+	GetExternalLinkByIDErr     error
+	GetExternalLinkByIDFn      func(context.Context, int32) (*ExternalLink, error)
 
 	SystemRegisterExternalLinkClickCalls []string
 	SystemRegisterExternalLinkClickErr   error
 	SystemRegisterExternalLinkClickFn    func(context.Context, string) error
 
-	UpdateExternalLinkImageCacheCalls    []UpdateExternalLinkImageCacheParams
-	UpdateExternalLinkImageCacheErr      error
-	UpdateExternalLinkImageCacheFn       func(context.Context, UpdateExternalLinkImageCacheParams) error
+	UpdateExternalLinkImageCacheCalls []UpdateExternalLinkImageCacheParams
+	UpdateExternalLinkImageCacheErr   error
+	UpdateExternalLinkImageCacheFn    func(context.Context, UpdateExternalLinkImageCacheParams) error
 
 	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
 	AdminInsertRequestCommentErr   error
@@ -510,9 +510,9 @@ type QuerierStub struct {
 	GetPreferenceForListerParams []int32
 	GetPreferenceForListerReturn map[int32]*Preference
 
-	InsertSubscriptionParams         []InsertSubscriptionParams
-	DeleteSubscriptionParams         []DeleteSubscriptionForSubscriberParams
-	DeleteSubscriptionErr            error
+	InsertSubscriptionParams []InsertSubscriptionParams
+	DeleteSubscriptionParams []DeleteSubscriptionForSubscriberParams
+	DeleteSubscriptionErr    error
 
 	SystemInsertLoginAttemptCalls []SystemInsertLoginAttemptParams
 	SystemInsertLoginAttemptErr   error

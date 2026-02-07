@@ -19,7 +19,7 @@ import (
 )
 
 func TestManageTopicLabelsPage(t *testing.T) {
-	t.Run("renders correctly for authorized user", func(t *testing.T) {
+	t.Run("Happy Path - Authorized User", func(t *testing.T) {
 		topicID := int32(1)
 		queries := testhelpers.NewQuerierStub()
 
@@ -103,7 +103,7 @@ func TestManageTopicLabelsPage(t *testing.T) {
 		}
 	})
 
-	t.Run("denies access for unauthorized user", func(t *testing.T) {
+	t.Run("Unhappy Path - Unauthorized User", func(t *testing.T) {
 		topicID := int32(1)
 		queries := testhelpers.NewQuerierStub()
 

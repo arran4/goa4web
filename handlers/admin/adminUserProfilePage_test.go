@@ -15,31 +15,22 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-type userProfileQueries struct {
-	db.QuerierStub
-	userID int32
-	user   *db.SystemGetUserByIDRow
-}
-
-func (q *userProfileQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
-	if id != q.userID {
-		return nil, fmt.Errorf("unexpected user id: %d", id)
-	}
-	return q.user, nil
-}
-
-func TestAdminUserProfilePage_UserFound(t *testing.T) {
+func TestHappyPathAdminUserProfilePage_UserFound(t *testing.T) {
 	userID := 22
-	queries := &userProfileQueries{
-		userID: int32(userID),
-		user: &db.SystemGetUserByIDRow{
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemGetUserByIDFn = func(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+		if id != int32(userID) {
+			return nil, fmt.Errorf("unexpected user id: %d", id)
+		}
+		return &db.SystemGetUserByIDRow{
 			Idusers:                int32(userID),
 			Email:                  sql.NullString{String: "u@example.com", Valid: true},
 			Username:               sql.NullString{String: "u", Valid: true},
 			PublicProfileEnabledAt: sql.NullTime{},
-		},
+		}, nil
 	}
 	queries.AdminListUserEmailsReturns = []*db.UserEmail{}
 	queries.AdminUserPostCountsByIDReturns = &db.AdminUserPostCountsByIDRow{}

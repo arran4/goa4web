@@ -38,8 +38,8 @@ func TestMarkReadTaskAjax(t *testing.T) {
 	}
 
 	// Just verify it doesn't crash on execution with nil queries
-    // We expect it to try rendering a template, which might fail or do nothing if setup is incomplete,
-    // but the key behavior is returning the handler func.
+	// We expect it to try rendering a template, which might fail or do nothing if setup is incomplete,
+	// but the key behavior is returning the handler func.
 	handlerFunc(w, req)
 
 	if w.Code != http.StatusOK {

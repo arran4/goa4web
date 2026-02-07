@@ -23,7 +23,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestCreateThreadNotificationLink(t *testing.T) {
+func TestHappyPathCreateThreadNotificationLink(t *testing.T) {
 	creatorUID := int32(1)
 	adminUID := int32(99)
 	topicID := int32(5)
@@ -160,17 +160,19 @@ func TestCreateThreadNotificationLink(t *testing.T) {
 		t.Errorf("sync process error: %s", cdlq.lastError)
 	}
 
-	// Check the notifications created
-	foundAdminNotification := false
-	for _, call := range qs.SystemCreateNotificationCalls {
-		if call.RecipientID == adminUID {
-			foundAdminNotification = true
-			if call.Link.String != createdThreadPath {
-				t.Errorf("Expected admin notification link to be %q, got %q", createdThreadPath, call.Link.String)
+	t.Run("Admin Notification", func(t *testing.T) {
+		// Check the notifications created
+		foundAdminNotification := false
+		for _, call := range qs.SystemCreateNotificationCalls {
+			if call.RecipientID == adminUID {
+				foundAdminNotification = true
+				if call.Link.String != createdThreadPath {
+					t.Errorf("Expected admin notification link to be %q, got %q", createdThreadPath, call.Link.String)
+				}
 			}
 		}
-	}
-	if !foundAdminNotification {
-		t.Fatal("Did not find admin notification")
-	}
+		if !foundAdminNotification {
+			t.Fatal("Did not find admin notification")
+		}
+	})
 }

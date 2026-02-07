@@ -23,7 +23,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestCreateThreadLabels(t *testing.T) {
+func TestHappyPathCreateThreadLabels(t *testing.T) {
 	creatorUID := int32(1)
 	topicID := int32(5)
 	newThreadID := int32(100)
@@ -120,43 +120,47 @@ func TestCreateThreadLabels(t *testing.T) {
 
 	task.Action(rr, req)
 
-	// Verify labels were added
-	if len(qs.AddContentPublicLabelCalls) != 2 {
-		t.Errorf("Expected 2 public label calls, got %d", len(qs.AddContentPublicLabelCalls))
-	} else {
-		// The order isn't guaranteed by map iteration in SetPublicLabels if it iterates a map,
-		// but SetThreadPublicLabels iterates the input slice if there are no existing labels.
-		// Wait, SetPublicLabels fetches existing, calculates have/want, then adds/removes.
-		// Since it's a new thread, there are no existing labels.
-		// "want" is a map. So order is random.
-		labels := make(map[string]bool)
-		for _, call := range qs.AddContentPublicLabelCalls {
-			if call.ItemID != newThreadID {
-				t.Errorf("Expected ItemID %d, got %d", newThreadID, call.ItemID)
+	t.Run("Public Labels", func(t *testing.T) {
+		// Verify labels were added
+		if len(qs.AddContentPublicLabelCalls) != 2 {
+			t.Errorf("Expected 2 public label calls, got %d", len(qs.AddContentPublicLabelCalls))
+		} else {
+			// The order isn't guaranteed by map iteration in SetPublicLabels if it iterates a map,
+			// but SetThreadPublicLabels iterates the input slice if there are no existing labels.
+			// Wait, SetPublicLabels fetches existing, calculates have/want, then adds/removes.
+			// Since it's a new thread, there are no existing labels.
+			// "want" is a map. So order is random.
+			labels := make(map[string]bool)
+			for _, call := range qs.AddContentPublicLabelCalls {
+				if call.ItemID != newThreadID {
+					t.Errorf("Expected ItemID %d, got %d", newThreadID, call.ItemID)
+				}
+				if call.Item != "thread" {
+					t.Errorf("Expected Item 'thread', got %s", call.Item)
+				}
+				labels[call.Label] = true
 			}
-			if call.Item != "thread" {
-				t.Errorf("Expected Item 'thread', got %s", call.Item)
+			if !labels["pub-label-1"] {
+				t.Error("Missing pub-label-1")
 			}
-			labels[call.Label] = true
+			if !labels["pub-label-2"] {
+				t.Error("Missing pub-label-2")
+			}
 		}
-		if !labels["pub-label-1"] {
-			t.Error("Missing pub-label-1")
-		}
-		if !labels["pub-label-2"] {
-			t.Error("Missing pub-label-2")
-		}
-	}
+	})
 
-	foundPrivateLabel := false
-	for _, call := range qs.AddContentPrivateLabelCalls {
-		if call.ItemID == newThreadID && call.Item == "thread" && call.Label == "priv-label-1" {
-			foundPrivateLabel = true
-			if call.UserID != creatorUID {
-				t.Errorf("Expected UserID %d, got %d", creatorUID, call.UserID)
+	t.Run("Private Labels", func(t *testing.T) {
+		foundPrivateLabel := false
+		for _, call := range qs.AddContentPrivateLabelCalls {
+			if call.ItemID == newThreadID && call.Item == "thread" && call.Label == "priv-label-1" {
+				foundPrivateLabel = true
+				if call.UserID != creatorUID {
+					t.Errorf("Expected UserID %d, got %d", creatorUID, call.UserID)
+				}
 			}
 		}
-	}
-	if !foundPrivateLabel {
-		t.Error("Missing priv-label-1")
-	}
+		if !foundPrivateLabel {
+			t.Error("Missing priv-label-1")
+		}
+	})
 }

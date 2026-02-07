@@ -3,112 +3,60 @@ package admin
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-type grantsPageQueries struct {
-	db.Querier
-	grants []*db.Grant
-	userID int32
-	user   *db.SystemGetUserByIDRow
-	roleID int32
-	role   *db.Role
-}
-
-func (q *grantsPageQueries) ListGrants(context.Context) ([]*db.Grant, error) {
-	return q.grants, nil
-}
-
-func (q *grantsPageQueries) SearchGrants(context.Context, db.SearchGrantsParams) ([]*db.SearchGrantsRow, error) {
-	var rows []*db.SearchGrantsRow
-	for _, g := range q.grants {
-		username := sql.NullString{}
-		if g.UserID.Valid && g.UserID.Int32 == q.userID {
-			username = q.user.Username
-		}
-		roleName := sql.NullString{}
-		if g.RoleID.Valid && g.RoleID.Int32 == q.roleID {
-			roleName = sql.NullString{String: q.role.Name, Valid: true}
-		}
-		rows = append(rows, &db.SearchGrantsRow{
-			ID:        g.ID,
-			CreatedAt: g.CreatedAt,
-			UpdatedAt: g.UpdatedAt,
-			UserID:    g.UserID,
-			RoleID:    g.RoleID,
-			Section:   g.Section,
-			Item:      g.Item,
-			RuleType:  g.RuleType,
-			ItemID:    g.ItemID,
-			ItemRule:  g.ItemRule,
-			Action:    g.Action,
-			Extra:     g.Extra,
-			Active:    g.Active,
-			Username:  username,
-			RoleName:  roleName,
-		})
-	}
-	return rows, nil
-}
-
-func (q *grantsPageQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
-	if id != q.userID {
-		return nil, fmt.Errorf("unexpected user id: %d", id)
-	}
-	return q.user, nil
-}
-
-func (q *grantsPageQueries) AdminGetRoleByID(_ context.Context, id int32) (*db.Role, error) {
-	if id != q.roleID {
-		return nil, fmt.Errorf("unexpected role id: %d", id)
-	}
-	return q.role, nil
-}
-
-func TestAdminGrantsPageGroupsActions(t *testing.T) {
-	queries := &grantsPageQueries{
-		userID: 5,
-		roleID: 7,
-		grants: []*db.Grant{
-			{
-				ID:       1,
-				UserID:   sql.NullInt32{Int32: 5, Valid: true},
-				RoleID:   sql.NullInt32{Int32: 7, Valid: true},
-				Section:  "forum",
-				Item:     sql.NullString{String: "topic", Valid: true},
-				RuleType: "allow",
-				ItemID:   sql.NullInt32{Int32: 42, Valid: true},
-				Action:   "search",
-				Active:   true,
-			},
-			{
-				ID:       2,
-				UserID:   sql.NullInt32{Int32: 5, Valid: true},
-				RoleID:   sql.NullInt32{Int32: 7, Valid: true},
-				Section:  "forum",
-				Item:     sql.NullString{String: "topic", Valid: true},
-				RuleType: "allow",
-				ItemID:   sql.NullInt32{Int32: 42, Valid: true},
-				Action:   "view",
-				Active:   true,
-			},
+func TestHappyPathAdminGrantsPageGroupsActions(t *testing.T) {
+	queries := testhelpers.NewQuerierStub()
+	queries.SearchGrantsReturns = []*db.SearchGrantsRow{
+		{
+			ID:       1,
+			UserID:   sql.NullInt32{Int32: 5, Valid: true},
+			RoleID:   sql.NullInt32{Int32: 7, Valid: true},
+			Section:  "forum",
+			Item:     sql.NullString{String: "topic", Valid: true},
+			RuleType: "allow",
+			ItemID:   sql.NullInt32{Int32: 42, Valid: true},
+			Action:   "search",
+			Active:   true,
+			Username: sql.NullString{String: "bob", Valid: true},
+			RoleName: sql.NullString{String: "admin", Valid: true},
+			CreatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+			UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		},
-		user: &db.SystemGetUserByIDRow{
-			Idusers:                5,
-			Username:               sql.NullString{String: "bob", Valid: true},
-			PublicProfileEnabledAt: sql.NullTime{},
+		{
+			ID:       2,
+			UserID:   sql.NullInt32{Int32: 5, Valid: true},
+			RoleID:   sql.NullInt32{Int32: 7, Valid: true},
+			Section:  "forum",
+			Item:     sql.NullString{String: "topic", Valid: true},
+			RuleType: "allow",
+			ItemID:   sql.NullInt32{Int32: 42, Valid: true},
+			Action:   "view",
+			Active:   true,
+			Username: sql.NullString{String: "bob", Valid: true},
+			RoleName: sql.NullString{String: "admin", Valid: true},
+			CreatedAt: sql.NullTime{Time: time.Now(), Valid: true},
+			UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		},
-		role: &db.Role{Name: "admin", CanLogin: true, IsAdmin: false, PrivateLabels: true},
 	}
+	// Note: SystemGetUserByID and AdminGetRoleByID are not needed if SearchGrants returns the username/rolename.
+	// But just in case the handler calls them for some reason (e.g. breadcrumbs or something, though unlikely for list page):
+	// The original test stubbed them but only returned if ID matched, implying they might be called.
+	// But wait, the original stub implementation of SearchGrants *used* them to populate the row.
+	// If the handler calls SearchGrants, it gets the rows.
+	// If the handler calls AdminGetRoleByID (e.g. if filtering by role), it might need it.
+	// But here we are listing all grants.
 
 	req := httptest.NewRequest("GET", "/admin/grants", nil)
 	ctx := req.Context()

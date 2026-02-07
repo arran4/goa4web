@@ -37,6 +37,8 @@ func RegisterAdminRoutes(ar *mux.Router) {
 	farq.HandleFunc("/categories", AdminCategoriesPage).Methods("GET")
 	farq.HandleFunc("/categories/new", AdminNewCategoryPage).Methods("GET")
 	farq.HandleFunc("/categories/category/{id:[0-9]+}", AdminCategoryPage).Methods("GET")
+	farq.HandleFunc("/categories/category/{id:[0-9]+}", handlers.TaskHandler(addCategoryGrantTask)).Methods("POST").MatcherFunc(addCategoryGrantTask.Matcher())
+	farq.HandleFunc("/categories/category/{id:[0-9]+}", handlers.TaskHandler(removeCategoryGrantTask)).Methods("POST").MatcherFunc(removeCategoryGrantTask.Matcher())
 	farq.HandleFunc("/categories/category/{id:[0-9]+}/edit", AdminCategoryEditPage).Methods("GET")
 	farq.HandleFunc("/categories/category/{id:[0-9]+}/questions", AdminCategoryQuestionsPage).Methods("GET")
 	farq.HandleFunc("/categories", handlers.TaskHandler(updateCategoryTask)).Methods("POST").MatcherFunc(updateCategoryTask.Matcher())

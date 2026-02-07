@@ -3,15 +3,17 @@ package a4code
 import (
 	"strings"
 	"testing"
+
+	"github.com/arran4/goa4web/a4code/ast"
 )
 
 func TestParseToHTML(t *testing.T) {
 	input := "[b Bold [i Italic]] plain"
-	ast, err := Parse(strings.NewReader(input))
+	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	got := ToHTML(ast)
+	got := ToHTML(tree)
 	// [b (vis 0)
 	//  Bold (space + Bold + space = 6). vis 0-6.
 	// [i (vis 6)
@@ -27,11 +29,11 @@ func TestParseToHTML(t *testing.T) {
 
 func TestParseImage(t *testing.T) {
 	input := "[img=image.jpg]"
-	ast, err := Parse(strings.NewReader(input))
+	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	got := ToHTML(ast)
+	got := ToHTML(tree)
 	// [img] is 0-width in visible space.
 	want := `<img src="image.jpg" data-start-pos="0" data-end-pos="0" />`
 	if got != want {
@@ -63,7 +65,7 @@ func TestParseNodes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse nodes error: %v", err)
 	}
-	root := &Root{Children: nodes}
+	root := &ast.Root{Children: nodes}
 	got := ToHTML(root)
 	// [b foo] -> " foo" (4)
 	// [i bar] -> " bar" (4)
@@ -78,11 +80,11 @@ func TestOffsets(t *testing.T) {
 	// vis 0-3.
 	// Inner content: foo.
 	input := "[code]foo[/code]"
-	ast, err := Parse(strings.NewReader(input))
+	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	got := ToHTML(ast)
+	got := ToHTML(tree)
 	want := `<pre class="a4code-block a4code-code" data-start-pos="0" data-end-pos="3"><span data-start-pos="0" data-end-pos="3">foo</span></pre>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -91,11 +93,11 @@ func TestOffsets(t *testing.T) {
 
 func TestQuoteHTML(t *testing.T) {
 	input := "[quote Outer [quote Nested]]"
-	ast, err := Parse(strings.NewReader(input))
+	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	got := ToHTML(ast)
+	got := ToHTML(tree)
 	want := `<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><blockquote class="a4code-block a4code-quote quote-color-1" data-start-pos="7" data-end-pos="14"><div class="quote-body"><span data-start-pos="7" data-end-pos="14"> Nested</span></div></blockquote></div></blockquote>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -104,11 +106,11 @@ func TestQuoteHTML(t *testing.T) {
 
 func TestQuoteOfHTML(t *testing.T) {
 	input := `[quoteof "User" Outer [quoteof "User2" Nested]]`
-	ast, err := Parse(strings.NewReader(input))
+	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	got := ToHTML(ast)
+	got := ToHTML(tree)
 	want := `<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><blockquote class="a4code-block a4code-quoteof quote-color-1" data-start-pos="7" data-end-pos="14"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="7" data-end-pos="14"> Nested</span></div></blockquote></div></blockquote>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)

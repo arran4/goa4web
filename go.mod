@@ -14,10 +14,10 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	golang.org/x/crypto v0.45.0
+	golang.org/x/crypto v0.47.0
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
-	golang.org/x/net v0.47.0
-	golang.org/x/term v0.37.0
+	golang.org/x/net v0.49.0
+	golang.org/x/term v0.39.0
 )
 
 require (
@@ -30,7 +30,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.7.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/image v0.35.0
-	golang.org/x/sys v0.38.0
+	golang.org/x/sys v0.40.0
 )
 
 require (
@@ -50,5 +50,6 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

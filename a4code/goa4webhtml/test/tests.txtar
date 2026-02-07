@@ -1,0 +1,20 @@
+-- simple.txt --
+[b Bold]
+-- simple.expect.txt --
+<strong data-start-pos="0" data-end-pos="5"><span data-start-pos="0" data-end-pos="5"> Bold</span></strong>
+-- provider_link.txt --
+[a=http://example.com Link]
+-- provider_link.expect.txt --
+<custom-link href="http://example.com"><span data-start-pos="0" data-end-pos="5"> Link</span></custom-link>
+-- provider_image.txt --
+[img=image.jpg]
+-- provider_image.expect.txt --
+<img src="/mapped/image.jpg" data-start-pos="0" data-end-pos="0" />
+-- provider_quoteof.txt --
+[quoteof "User" Text]
+-- provider_quoteof.expect.txt --
+<blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-start-pos="0" data-end-pos="5"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="5"> Text</span></div></blockquote>
+-- provider_quoteof_multi.txt --
+[quoteof "User1" Text1 [quoteof "User2" Text2]]
+-- provider_quoteof_multi.expect.txt --
+<blockquote class="a4code-block a4code-quoteof user-color-User1 quote-color-0" data-start-pos="0" data-end-pos="13"><div class="quote-header">Quote of User1:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Text1 </span><blockquote class="a4code-block a4code-quoteof user-color-User2 quote-color-1" data-start-pos="7" data-end-pos="13"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="7" data-end-pos="13"> Text2</span></div></blockquote></div></blockquote>

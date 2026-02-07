@@ -2,6 +2,8 @@ package a4code
 
 import (
 	"testing"
+
+	"github.com/arran4/goa4web/a4code/ast"
 )
 
 func TestQuote(t *testing.T) {
@@ -10,16 +12,16 @@ func TestQuote(t *testing.T) {
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
-	ast, err := ParseString(got)
+	tree, err := ParseString(got)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 1 {
+	if len(tree.Children) < 1 {
 		t.Fatalf("no nodes parsed")
 	}
-	q, ok := ast.Children[0].(*QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
-		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+		t.Fatalf("expected QuoteOf node, got %T", tree.Children[0])
 	}
 	if q.Name != "bob" {
 		t.Errorf("quote name = %q", q.Name)
@@ -27,7 +29,7 @@ func TestQuote(t *testing.T) {
 	if len(q.Children) < 1 {
 		t.Fatalf("expected child text")
 	}
-	tnode, ok := q.Children[0].(*Text)
+	tnode, ok := q.Children[0].(*ast.Text)
 	if !ok || tnode.Value != " hello" {
 		t.Errorf("quote text = %#v", q.Children[0])
 	}
@@ -40,20 +42,20 @@ func TestQuoteFullParagraphs(t *testing.T) {
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
-	ast, err := ParseString(got)
+	tree, err := ParseString(got)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 2 {
-		t.Fatalf("expected at least 2 nodes, got %d", len(ast.Children))
+	if len(tree.Children) < 2 {
+		t.Fatalf("expected at least 2 nodes, got %d", len(tree.Children))
 	}
-	q1, _ := ast.Children[0].(*QuoteOf)
-	q2, _ := ast.Children[2].(*QuoteOf)
+	q1, _ := tree.Children[0].(*ast.QuoteOf)
+	q2, _ := tree.Children[2].(*ast.QuoteOf)
 	if q1 == nil || q2 == nil {
-		t.Fatalf("parse result types: %T %T", ast.Children[0], ast.Children[2])
+		t.Fatalf("parse result types: %T %T", tree.Children[0], tree.Children[2])
 	}
-	t1 := q1.Children[0].(*Text)
-	t2 := q2.Children[0].(*Text)
+	t1 := q1.Children[0].(*ast.Text)
+	t2 := q2.Children[0].(*ast.Text)
 	if t1.Value != " foo" || t2.Value != " bar" {
 		t.Errorf("quote texts = %q %q", t1.Value, t2.Value)
 	}
@@ -66,21 +68,21 @@ func TestQuoteFullEscaping(t *testing.T) {
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
-	ast, err := ParseString(got)
+	tree, err := ParseString(got)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 1 {
+	if len(tree.Children) < 1 {
 		t.Fatalf("no nodes parsed")
 	}
-	q, ok := ast.Children[0].(*QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
-		t.Fatalf("expected QuoteOf, got %T", ast.Children[0])
+		t.Fatalf("expected QuoteOf, got %T", tree.Children[0])
 	}
 	if len(q.Children) < 2 {
 		t.Fatalf("unexpected children %v", q.Children)
 	}
-	tnode := q.Children[0].(*Text)
+	tnode := q.Children[0].(*ast.Text)
 	if tnode.Value != " see " {
 		t.Errorf("quote text = %q", tnode.Value)
 	}
@@ -93,21 +95,21 @@ func TestQuoteFullImage(t *testing.T) {
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
-	ast, err := ParseString(got)
+	tree, err := ParseString(got)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 1 {
+	if len(tree.Children) < 1 {
 		t.Fatalf("no nodes parsed")
 	}
-	q, ok := ast.Children[0].(*QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
-		t.Fatalf("expected QuoteOf, got %T", ast.Children[0])
+		t.Fatalf("expected QuoteOf, got %T", tree.Children[0])
 	}
 	if len(q.Children) < 2 {
 		t.Fatalf("unexpected children %v", q.Children)
 	}
-	if _, ok := q.Children[1].(*Image); !ok {
+	if _, ok := q.Children[1].(*ast.Image); !ok {
 		t.Fatalf("expected Image node, got %T", q.Children[1])
 	}
 }
@@ -122,16 +124,16 @@ func TestQuoteTrim(t *testing.T) {
 
 func TestQuoteOfWithSpaces(t *testing.T) {
 	input := `[quoteof "Arran on messenger" https://github.com/nao1215/sqly]`
-	ast, err := ParseString(input)
+	tree, err := ParseString(input)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 1 {
+	if len(tree.Children) < 1 {
 		t.Fatalf("no nodes parsed")
 	}
-	q, ok := ast.Children[0].(*QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
-		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+		t.Fatalf("expected QuoteOf node, got %T", tree.Children[0])
 	}
 	wantName := "Arran on messenger"
 	if q.Name != wantName {
@@ -141,16 +143,16 @@ func TestQuoteOfWithSpaces(t *testing.T) {
 
 func TestQuoteOfWithSpacesAndEscapedQuote(t *testing.T) {
 	input := `[quoteof "Arran \"The Man\" on messenger" https://github.com/nao1215/sqly]`
-	ast, err := ParseString(input)
+	tree, err := ParseString(input)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 1 {
+	if len(tree.Children) < 1 {
 		t.Fatalf("no nodes parsed")
 	}
-	q, ok := ast.Children[0].(*QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
-		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+		t.Fatalf("expected QuoteOf node, got %T", tree.Children[0])
 	}
 	wantName := `Arran "The Man" on messenger`
 	if q.Name != wantName {
@@ -165,16 +167,16 @@ func TestQuoteRoundTripComplexName(t *testing.T) {
 	encoded := QuoteText(name, text)
 
 	// Parse back
-	ast, err := ParseString(encoded)
+	tree, err := ParseString(encoded)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if len(ast.Children) < 1 {
+	if len(tree.Children) < 1 {
 		t.Fatalf("no nodes parsed")
 	}
-	q, ok := ast.Children[0].(*QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
-		t.Fatalf("expected QuoteOf node, got %T", ast.Children[0])
+		t.Fatalf("expected QuoteOf node, got %T", tree.Children[0])
 	}
 
 	if q.Name != name {

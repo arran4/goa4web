@@ -43,16 +43,16 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [x] handlers/admin/maintenancePage_test.go
 - [x] handlers/admin/netutil_test.go
 - [x] handlers/admin/pages_test.go
-- [ ] handlers/admin/reload_shutdown_test.go
-- [ ] handlers/admin/role_grant_create_task_test.go
-- [ ] handlers/admin/role_grants_build_test.go
-- [ ] handlers/admin/role_grants_editor_test.go
-- [ ] handlers/admin/save_template_task_test.go
-- [ ] handlers/admin/server_shutdown_task_test.go
-- [ ] handlers/admin/user_grants_build_test.go
-- [ ] handlers/admin/user_subscription_tasks_test.go
-- [ ] handlers/auth/cache_test.go
-- [ ] handlers/auth/forgotPassword_event_test.go
+- [x] handlers/admin/reload_shutdown_test.go
+- [x] handlers/admin/role_grant_create_task_test.go
+- [x] handlers/admin/role_grants_build_test.go
+- [x] handlers/admin/role_grants_editor_test.go
+- [x] handlers/admin/save_template_task_test.go
+- [x] handlers/admin/server_shutdown_task_test.go
+- [x] handlers/admin/user_grants_build_test.go
+- [x] handlers/admin/user_subscription_tasks_test.go
+- [x] handlers/auth/cache_test.go
+- [x] handlers/auth/forgotPassword_event_test.go
 - [ ] handlers/auth/forgotPassword_limit_test.go
 - [ ] handlers/auth/forgotPassword_no_email_test.go
 - [ ] handlers/auth/forgotPassword_test.go

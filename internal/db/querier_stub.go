@@ -808,6 +808,19 @@ type QuerierStub struct {
 	AdminListTopicsWithUserGrantsNoRolesReturns []*AdminListTopicsWithUserGrantsNoRolesRow
 	AdminListTopicsWithUserGrantsNoRolesErr     error
 	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
+
+	AdminCreateGrantCalls   []AdminCreateGrantParams
+	AdminCreateGrantReturns int64
+	AdminCreateGrantErr     error
+	AdminCreateGrantFn      func(context.Context, AdminCreateGrantParams) (int64, error)
+
+	UpdateSubscriptionByIDForSubscriberCalls []UpdateSubscriptionByIDForSubscriberParams
+	UpdateSubscriptionByIDForSubscriberErr   error
+	UpdateSubscriptionByIDForSubscriberFn    func(context.Context, UpdateSubscriptionByIDForSubscriberParams) error
+
+	DeleteSubscriptionByIDForSubscriberCalls []DeleteSubscriptionByIDForSubscriberParams
+	DeleteSubscriptionByIDForSubscriberErr   error
+	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {

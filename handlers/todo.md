@@ -115,14 +115,14 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/forum/thread_label_tasks_test.go
 - [ ] handlers/forum/topic_grants_build_test.go
 - [ ] handlers/forum/topic_thread_reply_cancel_task_test.go
-- [ ] handlers/imagebbs/auto_subscribe_test.go
-- [ ] handlers/imagebbs/imagebbsAdminPermissions_test.go
-- [ ] handlers/imagebbs/imagebbsBoardPage_test.go
-- [ ] handlers/imagebbs/imagebbsFeed_test.go
-- [ ] handlers/imagebbs/imagebbsTemplates_test.go
-- [ ] handlers/imagebbs/imagebbs_reply_notifications_test.go
-- [ ] handlers/imagebbs/imagebbs_tasks_test.go
-- [ ] handlers/imagebbs/pages_test.go
+- [x] handlers/imagebbs/auto_subscribe_test.go
+- [x] handlers/imagebbs/imagebbsAdminPermissions_test.go
+- [x] handlers/imagebbs/imagebbsBoardPage_test.go
+- [x] handlers/imagebbs/imagebbsFeed_test.go
+- [x] handlers/imagebbs/imagebbsTemplates_test.go
+- [x] handlers/imagebbs/imagebbs_reply_notifications_test.go
+- [x] handlers/imagebbs/imagebbs_tasks_test.go
+- [x] handlers/imagebbs/pages_test.go
 - [ ] handlers/images/routes_test.go
 - [ ] handlers/languages/delete_language_task_test.go
 - [ ] handlers/languages/languagesTemplates_test.go

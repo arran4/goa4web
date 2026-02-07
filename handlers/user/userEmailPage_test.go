@@ -34,9 +34,13 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestTestMailTemplatesExist(t *testing.T) {
-	requireEmailTemplates(t, "testEmail")
+	t.Run("Happy Path", func(t *testing.T) {
+		requireEmailTemplates(t, "testEmail")
+	})
 }
 
 func TestAddEmailTaskTemplates(t *testing.T) {
-	requireEmailTemplates(t, "verifyEmail")
+	t.Run("Happy Path", func(t *testing.T) {
+		requireEmailTemplates(t, "verifyEmail")
+	})
 }

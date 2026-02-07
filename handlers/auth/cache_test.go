@@ -14,7 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func TestAuthPages_CacheControl(t *testing.T) {
+func TestHappyPathAuthPages_CacheControl(t *testing.T) {
 	// Save original tasks.Handle and restore it after the test
 	originalHandle := tasks.Handle
 	defer func() {

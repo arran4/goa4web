@@ -751,3 +751,40 @@ func (s *QuerierStub) AdminListAllCommentsWithThreadInfo(ctx context.Context, ar
 	s.AdminListAllCommentsWithThreadInfoCalls = append(s.AdminListAllCommentsWithThreadInfoCalls, arg)
 	return s.AdminListAllCommentsWithThreadInfoReturns, s.AdminListAllCommentsWithThreadInfoErr
 }
+
+func (s *QuerierStub) AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error) {
+	s.mu.Lock()
+	s.AdminCreateGrantCalls = append(s.AdminCreateGrantCalls, arg)
+	fn := s.AdminCreateGrantFn
+	ret := s.AdminCreateGrantReturns
+	err := s.AdminCreateGrantErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error {
+	s.mu.Lock()
+	s.UpdateSubscriptionByIDForSubscriberCalls = append(s.UpdateSubscriptionByIDForSubscriberCalls, arg)
+	fn := s.UpdateSubscriptionByIDForSubscriberFn
+	err := s.UpdateSubscriptionByIDForSubscriberErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error {
+	s.mu.Lock()
+	s.DeleteSubscriptionByIDForSubscriberCalls = append(s.DeleteSubscriptionByIDForSubscriberCalls, arg)
+	fn := s.DeleteSubscriptionByIDForSubscriberFn
+	err := s.DeleteSubscriptionByIDForSubscriberErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}

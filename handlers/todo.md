@@ -89,11 +89,11 @@ The following test files do not appear to follow the required `t.Run("Happy Path
 - [ ] handlers/faq/faqTemplates_test.go
 - [ ] handlers/faq/page_test.go
 - [ ] handlers/faq/pages_test.go
-- [ ] handlers/forum/admin_topic_edit_template_test.go
-- [ ] handlers/forum/api_test.go
-- [ ] handlers/forum/auto_subscribe_grants_test.go
-- [ ] handlers/forum/category_prune_test.go
-- [ ] handlers/forum/comments/matchers_test.go
+- [x] handlers/forum/admin_topic_edit_template_test.go
+- [x] handlers/forum/api_test.go
+- [x] handlers/forum/auto_subscribe_grants_test.go
+- [x] handlers/forum/category_prune_test.go
+- [x] handlers/forum/comments/matchers_test.go
 - [ ] handlers/forum/forumAdminCategoryCreatePage_test.go
 - [ ] handlers/forum/forumAdminCategoryEditPage_submit_test.go
 - [ ] handlers/forum/forumAdminTemplates_test.go

@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/gorilla/mux"
 )
 
 // DisableCaching sets headers to prevent caching of the response.
@@ -63,5 +66,29 @@ func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 		RenderErrorPage(w, r, ErrNotFound)
 	} else {
 		RenderPermissionDenied(w, r)
+	}
+}
+
+// RequireGrantForPage checks if the user has the required grant before rendering the page.
+// The itemID is extracted from the URL parameter specified by 'param'.
+func RequireGrantForPage(section, item, action, param string, p tasks.Page) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		val := vars[param]
+		if val == "" {
+			RenderErrorPage(w, r, ErrNotFound)
+			return
+		}
+		id, err := strconv.Atoi(val)
+		if err != nil {
+			RenderErrorPage(w, r, ErrNotFound)
+			return
+		}
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !cd.HasGrant(section, item, action, int32(id)) {
+			RenderErrorPage(w, r, ErrForbidden)
+			return
+		}
+		p.Get(w, r)
 	}
 }

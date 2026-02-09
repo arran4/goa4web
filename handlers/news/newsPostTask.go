@@ -25,12 +25,13 @@ type newsPostTask struct {
 }
 
 var _ tasks.Task = (*newsPostTask)(nil)
+var _ tasks.Page = (*newsPostTask)(nil)
 
 const (
 	NewsPostPageTmpl tasks.Template = "news/postPage.gohtml"
 )
 
-func NewNewsPostTask() tasks.Task {
+func NewNewsPostTask() *newsPostTask {
 	return &newsPostTask{}
 }
 

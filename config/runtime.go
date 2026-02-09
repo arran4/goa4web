@@ -362,8 +362,8 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 					addr = "127.0.0.1:3306"
 				}
 
-				// Very basic parsing, might need 'net.SplitHostPort'
-				host, port, err := splitHostPort(addr)
+				// mysql.ParseDSN defaults Addr to 127.0.0.1:3306 if empty for TCP
+				host, port, err := net.SplitHostPort(addr)
 				if err == nil {
 					if cfg.DBHost != "" && host != cfg.DBHost {
 						log.Fatalf("DB_CONN host (%s) contradicts DB_HOST (%s)", host, cfg.DBHost)
@@ -466,6 +466,3 @@ func UpdatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
 	normalizeRuntimeConfig(cfg)
 }
 
-func splitHostPort(addr string) (string, string, error) {
-	return net.SplitHostPort(addr)
-}

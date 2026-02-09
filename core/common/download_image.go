@@ -2,7 +2,7 @@ package common
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	_ "image/gif"  // Register format
 	_ "image/jpeg" // Register format
@@ -36,7 +36,7 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 		return "", fmt.Errorf("empty body")
 	}
 
-	hash := fmt.Sprintf("%x", sha1.Sum(body))
+	hash := fmt.Sprintf("%x", sha256.Sum256(body))
 	// Try to get extension from URL path
 	u, err := url.Parse(imgURL)
 	if err != nil {

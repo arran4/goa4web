@@ -65,3 +65,30 @@ func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 		RenderPermissionDenied(w, r)
 	}
 }
+
+// EnforceGrant wraps a handler and denies the request if the caller lacks the specified grant.
+// resolveItemID extracts the target item ID from the request; if nil, 0 is used.
+func EnforceGrant(section, item, action string, resolveItemID func(r *http.Request) int32) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			if !ok || cd == nil {
+				// Should not happen if CoreData middleware is present
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			var itemID int32
+			if resolveItemID != nil {
+				itemID = resolveItemID(r)
+			}
+
+			if !cd.HasGrant(section, item, action, itemID) {
+				w.WriteHeader(http.StatusForbidden)
+				RenderErrorPage(w, r, ErrForbidden)
+				return
+			}
+			next(w, r)
+		}
+	}
+}

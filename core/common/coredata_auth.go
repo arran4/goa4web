@@ -1,7 +1,6 @@
 package common
 
 import (
-	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
@@ -231,9 +230,6 @@ func verifyPassword(pw, storedHash, alg string) bool {
 		}
 		hash := pbkdf2.Key([]byte(pw), salt, iter, 32, sha256.New)
 		return storedHash == hex.EncodeToString(hash)
-	case "md5", "":
-		sum := md5.Sum([]byte(pw))
-		return storedHash == hex.EncodeToString(sum[:])
 	default:
 		return false
 	}

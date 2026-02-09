@@ -115,15 +115,6 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("user role %w", err)
 	}
 
-	if row.PasswdAlgorithm.String == "" || row.PasswdAlgorithm.String == "md5" {
-		newHash, newAlg, err := HashPassword(password)
-		if err == nil {
-			if err := queries.InsertPassword(r.Context(), db.InsertPasswordParams{UsersIdusers: row.Idusers, Passwd: newHash, PasswdAlgorithm: sql.NullString{String: newAlg, Valid: true}}); err != nil {
-				log.Printf("insert password: %v", err)
-			}
-		}
-	}
-
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return handlers.SessionFetchFail{}

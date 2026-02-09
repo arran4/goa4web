@@ -26,11 +26,12 @@ func TestLoginTask_Action(t *testing.T) {
 	t.Run("Happy Path - Pending Reset Prompt", func(t *testing.T) {
 		q := testhelpers.NewQuerierStub()
 		pwHash, alg, _ := HashPassword("newpw")
+		oldHash, oldAlg, _ := HashPassword("oldpw")
 		q.SystemGetLoginFn = func(ctx context.Context, username sql.NullString) (*db.SystemGetLoginRow, error) {
 			return &db.SystemGetLoginRow{
 				Idusers:         1,
-				Passwd:          sql.NullString{String: "oldhash", Valid: true},
-				PasswdAlgorithm: sql.NullString{String: "md5", Valid: true},
+				Passwd:          sql.NullString{String: oldHash, Valid: true},
+				PasswdAlgorithm: sql.NullString{String: oldAlg, Valid: true},
 				Username:        sql.NullString{String: "bob", Valid: true},
 			}, nil
 		}
@@ -142,12 +143,13 @@ func TestLoginTask_Action(t *testing.T) {
 
 	t.Run("Unhappy Path - Invalid Password", func(t *testing.T) {
 		q := testhelpers.NewQuerierStub()
+		pwHash, alg, _ := HashPassword("correctpw")
 		q.GetPasswordResetByUserErr = sql.ErrNoRows
 		q.SystemGetLoginFn = func(ctx context.Context, username sql.NullString) (*db.SystemGetLoginRow, error) {
 			return &db.SystemGetLoginRow{
 				Idusers:         1,
-				Passwd:          sql.NullString{String: "7c4f29407893c334a6cb7a87bf045c0d", Valid: true},
-				PasswdAlgorithm: sql.NullString{String: "md5", Valid: true},
+				Passwd:          sql.NullString{String: pwHash, Valid: true},
+				PasswdAlgorithm: sql.NullString{String: alg, Valid: true},
 				Username:        sql.NullString{String: "bob", Valid: true},
 			}, nil
 		}
@@ -178,12 +180,13 @@ func TestLoginTask_Action(t *testing.T) {
 
 	t.Run("Unhappy Path - Invalid Password Preserves Back Data", func(t *testing.T) {
 		q := testhelpers.NewQuerierStub()
+		pwHash, alg, _ := HashPassword("correctpw")
 		q.GetPasswordResetByUserErr = sql.ErrNoRows
 		q.SystemGetLoginFn = func(ctx context.Context, username sql.NullString) (*db.SystemGetLoginRow, error) {
 			return &db.SystemGetLoginRow{
 				Idusers:         1,
-				Passwd:          sql.NullString{String: "7c4f29407893c334a6cb7a87bf045c0d", Valid: true},
-				PasswdAlgorithm: sql.NullString{String: "md5", Valid: true},
+				Passwd:          sql.NullString{String: pwHash, Valid: true},
+				PasswdAlgorithm: sql.NullString{String: alg, Valid: true},
 				Username:        sql.NullString{String: "bob", Valid: true},
 			}, nil
 		}

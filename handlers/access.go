@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -63,5 +66,32 @@ func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 		RenderErrorPage(w, r, ErrNotFound)
 	} else {
 		RenderPermissionDenied(w, r)
+	}
+}
+
+// EnforceGrant ensures that the user has the required grant for the item identified by the URL parameter.
+func EnforceGrant(h http.HandlerFunc, section, item, action, param string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		idStr, ok := vars[param]
+		if !ok {
+			RenderErrorPage(w, r, ErrNotFound)
+			return
+		}
+		id, err := strconv.Atoi(idStr)
+		if err != nil || id == 0 {
+			RenderErrorPage(w, r, ErrNotFound)
+			return
+		}
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok || cd == nil {
+			RenderErrorPage(w, r, common.ErrInternalServerError)
+			return
+		}
+		if !cd.HasGrant(section, item, action, int32(id)) {
+			RenderErrorPage(w, r, ErrForbidden)
+			return
+		}
+		h(w, r)
 	}
 }

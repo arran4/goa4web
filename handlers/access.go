@@ -54,6 +54,27 @@ func RequireRole(h http.HandlerFunc, err error, roles ...string) http.HandlerFun
 	}
 }
 
+// EnforceGrant wraps h and denies the request if the caller lacks the specified grant.
+// If err is nil, a generic Forbidden error is used.
+func EnforceGrant(h http.HandlerFunc, err error, section, item, action string, itemID int32) http.HandlerFunc {
+	if err == nil {
+		err = ErrForbidden
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		DisableCaching(w)
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok || cd == nil {
+			RenderPermissionDenied(w, r)
+			return
+		}
+		if !cd.HasGrant(section, item, action, itemID) {
+			RenderErrorPage(w, r, err)
+			return
+		}
+		h(w, r)
+	}
+}
+
 // RenderNotFoundOrLogin renders the 404 page if the user is logged in,
 // otherwise it renders the permission denied (login) page.
 func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {

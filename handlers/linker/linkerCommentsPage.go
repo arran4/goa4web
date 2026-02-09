@@ -80,13 +80,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	canReply := cd.HasGrant("linker", "link", "reply", link.ID)
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		canReply ||
-		cd.SelectedThreadCanReply()) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
 
 	data.IsReplyable = canReply
 
@@ -228,11 +221,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		cd.HasGrant("linker", "link", "reply", link.ID)) {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return nil
-	}
 
 	var pthid int32 = link.ThreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{

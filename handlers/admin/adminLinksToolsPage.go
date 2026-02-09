@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,10 +90,16 @@ func AdminLinksToolsPage(w http.ResponseWriter, r *http.Request) {
 				data.VerifyError = fmt.Sprintf("link sign secret: %v", err)
 			} else if data.VerifyURL == "" || data.VerifySig == "" {
 				data.VerifyError = "URL and signature are required."
-			} else if err := sign.Verify(data.VerifyURL, data.VerifySig, key, sign.WithExpiryTimestamp(data.VerifyTS)); err == nil {
-				data.VerifyResult = "valid"
 			} else {
-				data.VerifyResult = "invalid"
+				tsInt, err := strconv.ParseInt(data.VerifyTS, 10, 64)
+				if err == nil {
+					err = sign.Verify(data.VerifyURL, data.VerifySig, key, sign.WithExpiry(time.Unix(tsInt, 0)))
+				}
+				if err == nil {
+					data.VerifyResult = "valid"
+				} else {
+					data.VerifyResult = "invalid"
+				}
 			}
 		}
 	}

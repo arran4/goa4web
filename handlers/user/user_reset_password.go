@@ -46,7 +46,11 @@ func (UserResetPasswordTask) Action(w http.ResponseWriter, r *http.Request) any 
 	data := "link:" + path
 
 	// Verify signature
-	if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithExpiryTimestamp(ts)); err != nil {
+	tsInt, err := strconv.ParseInt(ts, 10, 64)
+	if err != nil {
+		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("invalid timestamp: %w", err))
+	}
+	if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithExpiry(time.Unix(tsInt, 0))); err != nil {
 		return handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("invalid or expired link: %w", err))
 	}
 
@@ -125,7 +129,13 @@ func UserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	path := fmt.Sprintf("/user/%d/reset?code=%s", id, code)
 	data := "link:" + path
 
-	if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithExpiryTimestamp(ts)); err != nil {
+	tsInt, err := strconv.ParseInt(ts, 10, 64)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid timestamp"))
+		return
+	}
+
+	if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithExpiry(time.Unix(tsInt, 0))); err != nil {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid or expired link"))
 		return
 	}

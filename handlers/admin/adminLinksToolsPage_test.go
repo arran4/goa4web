@@ -77,7 +77,7 @@ func TestHappyPathAdminLinksToolsPageVerify(t *testing.T) {
 	ts := time.Now().Add(1 * time.Hour).Unix()
 	tsStr := strconv.FormatInt(ts, 10)
 	urlToVerify := "https://example.com/resource"
-	sig := sign.Sign(urlToVerify, cfg.LinkSignSecret, sign.WithExpiryTimestamp(tsStr))
+	sig := sign.Sign(urlToVerify, cfg.LinkSignSecret, sign.WithExpiry(time.Unix(ts, 0)))
 
 	form := url.Values{}
 	form.Set("action", "verify")

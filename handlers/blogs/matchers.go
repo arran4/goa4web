@@ -92,3 +92,34 @@ func RequireBlogEditGrant() mux.MatcherFunc {
 		return cd.HasGrant("blogs", "entry", "edit", int32(blogID))
 	}
 }
+
+// RequireBlogCommentAccess ensures the requester has view or reply access to the blog entry.
+func RequireBlogCommentAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		cd.LoadSelectionsFromRequest(r)
+
+		blog, err := cd.BlogPost()
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			} else {
+				log.Printf("BlogPost: %v", err)
+				handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			}
+			return
+		}
+
+		if _, err := cd.BlogCommentThread(); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("BlogCommentThread: %v", err)
+		}
+
+		if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
+			cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) ||
+			cd.SelectedThreadCanReply()) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

@@ -64,14 +64,6 @@ func (t *blogsCommentTask) Get(w http.ResponseWriter, r *http.Request) {
 		log.Printf("BlogCommentThread: %v", err)
 	}
 
-	if !(cd.HasGrant("blogs", "entry", "view", blog.Idblogs) ||
-		cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) ||
-		cd.SelectedThreadCanReply()) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
 	data := Data{BackURL: r.URL.RequestURI()}
 	replyType := r.URL.Query().Get("type")
 	commentId, _ := strconv.Atoi(r.URL.Query().Get("comment"))

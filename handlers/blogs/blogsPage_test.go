@@ -18,6 +18,7 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
@@ -141,7 +142,7 @@ func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	BlogAddPage(rr, req)
+	handlers.EnforceGrant("blogs", "entry", "post", 0)(http.HandlerFunc(BlogAddPage)).ServeHTTP(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}

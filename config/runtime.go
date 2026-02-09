@@ -137,6 +137,9 @@ type RuntimeConfig struct {
 	// LinkSignSecretFile specifies the path to the external link signing key.
 	LinkSignSecretFile string
 
+	// LinkAllowedHosts holds a comma-separated list of allowed hostnames for external links.
+	LinkAllowedHosts string
+
 	// ShareSignSecret is used to sign share URLs.
 	ShareSignSecret string
 	// ShareSignSecretFile specifies the path to the share signing key.

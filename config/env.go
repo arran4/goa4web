@@ -165,6 +165,9 @@ const (
 	// EnvLinkSignSecretFile specifies the file containing the link signing key.
 	EnvLinkSignSecretFile = "LINK_SIGN_SECRET_FILE"
 
+	// EnvLinkAllowedHosts provides a comma-separated list of allowed hostnames for external links.
+	EnvLinkAllowedHosts = "LINK_ALLOWED_HOSTS"
+
 	// EnvShareSignSecret provides the signing key for share URLs.
 	EnvShareSignSecret = "SHARE_SIGN_SECRET"
 	// EnvShareSignSecretFile specifies the file containing the share signing key.

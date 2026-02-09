@@ -84,6 +84,7 @@ var StringOptions = []StringOption{
 	{"image-sign-secret-file", EnvImageSignSecretFile, "The path to a file containing the image signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageSignSecretFile }},
 	{"link-sign-secret", EnvLinkSignSecret, "The secret key used to sign external link URLs.", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkSignSecret }},
 	{"link-sign-secret-file", EnvLinkSignSecretFile, "The path to a file containing the external link signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkSignSecretFile }},
+	{"link-allowed-hosts", EnvLinkAllowedHosts, "A comma-separated list of allowed hostnames that will not be signed.", "", nil, "", func(c *RuntimeConfig) *string { return &c.LinkAllowedHosts }},
 	{"share-sign-secret", EnvShareSignSecret, "The secret key used to sign share URLs.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecret }},
 	{"share-sign-secret-file", EnvShareSignSecretFile, "The path to a file containing the share signing key.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ShareSignSecretFile }},
 	{"admin-api-secret", EnvAdminAPISecret, "The secret key used to sign administrator API tokens.", "", nil, "", func(c *RuntimeConfig) *string { return &c.AdminAPISecret }},

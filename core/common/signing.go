@@ -126,8 +126,17 @@ func (cd *CoreData) MapLinkURL(tag, val string) string {
 	}
 
 	// Check if it's an allowed host
-	// For now, always sign external links
-	// TODO: Add hostname checking if needed
+	if cd.Config != nil && cd.Config.LinkAllowedHosts != "" {
+		u, err := url.Parse(val)
+		if err == nil {
+			hostname := u.Hostname()
+			for _, allowed := range strings.Split(cd.Config.LinkAllowedHosts, ",") {
+				if strings.EqualFold(strings.TrimSpace(allowed), hostname) {
+					return val
+				}
+			}
+		}
+	}
 
 	return cd.SignLinkURL(val)
 }

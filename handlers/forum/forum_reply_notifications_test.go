@@ -317,7 +317,6 @@ func TestHappyPathForumReply(t *testing.T) {
 		})
 
 		t.Run("Auto Subscribe Path", func(t *testing.T) {
-			// TODO: add subscription-chaining checks (topic -> thread) once modeled in the reply task.
 			actionName, path, err := task.AutoSubscribePath(*evt)
 			if err != nil {
 				t.Errorf("AutoSubscribePath error: %v", err)
@@ -327,6 +326,19 @@ func TestHappyPathForumReply(t *testing.T) {
 			}
 			if path != "/forum/topic/5/thread/42" {
 				t.Errorf("expected path /forum/topic/5/thread/42, got %q", path)
+			}
+
+			reqs, err := task.AutoSubscribeGrants(*evt)
+			if err != nil {
+				t.Errorf("AutoSubscribeGrants error: %v", err)
+			}
+			if len(reqs) != 1 {
+				t.Errorf("expected 1 grant requirement, got %d", len(reqs))
+			} else {
+				req := reqs[0]
+				if req.Section != "forum" || req.Item != "thread" || req.ItemID != threadID || req.Action != "view" {
+					t.Errorf("unexpected grant requirement: %+v", req)
+				}
 			}
 		})
 	})

@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -357,13 +356,8 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 
 			if (cfg.DBHost != "" || cfg.DBPort != "") && (conf.Net == "tcp" || conf.Net == "") {
 				// Parse Addr which is host:port
-				addr := conf.Addr
-				if addr == "" {
-					addr = "127.0.0.1:3306"
-				}
-
-				// Very basic parsing, might need 'net.SplitHostPort'
-				host, port, err := splitHostPort(addr)
+				// mysql.ParseDSN defaults Addr to 127.0.0.1:3306 if empty for TCP
+				host, port, err := net.SplitHostPort(conf.Addr)
 				if err == nil {
 					if cfg.DBHost != "" && host != cfg.DBHost {
 						log.Fatalf("DB_CONN host (%s) contradicts DB_HOST (%s)", host, cfg.DBHost)
@@ -376,32 +370,24 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		}
 	} else if cfg.DBHost != "" || cfg.DBUser != "" || cfg.DBName != "" {
 		// Construct DB_CONN from components if DB_CONN is missing
-		// Default to tcp
-		user := cfg.DBUser
-		pass := cfg.DBPass
-		host := cfg.DBHost
-		port := cfg.DBPort
-		dbname := cfg.DBName
+		c := mysql.NewConfig()
+		c.User = cfg.DBUser
+		c.Passwd = cfg.DBPass
+		c.Net = "tcp"
 
+		host := cfg.DBHost
 		if host == "" {
 			host = "127.0.0.1"
 		}
+		port := cfg.DBPort
 		if port == "" {
 			port = "3306"
 		}
+		c.Addr = net.JoinHostPort(host, port)
+		c.DBName = cfg.DBName
+		c.ParseTime = true
 
-		// Format: user:password@tcp(host:port)/dbname
-		// Need to handle missing user/pass
-		auth := ""
-		if user != "" {
-			auth = user
-			if pass != "" {
-				auth += ":" + pass
-			}
-			auth += "@"
-		}
-
-		cfg.DBConn = fmt.Sprintf("%stcp(%s:%s)/%s?parseTime=true", auth, host, port, dbname)
+		cfg.DBConn = c.FormatDSN()
 	}
 
 	if cfg.ExternalURL != "" {
@@ -466,6 +452,3 @@ func UpdatePaginationConfig(cfg *RuntimeConfig, min, max, def int) {
 	normalizeRuntimeConfig(cfg)
 }
 
-func splitHostPort(addr string) (string, string, error) {
-	return net.SplitHostPort(addr)
-}

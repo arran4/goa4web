@@ -4,6 +4,9 @@ package db
 func EmailsByUserID(rows []*GetVerifiedUserEmailsRow) map[int32][]string {
 	emails := make(map[int32][]string, len(rows))
 	for _, row := range rows {
+		if row == nil {
+			continue
+		}
 		emails[row.UserID] = append(emails[row.UserID], row.Email)
 	}
 	return emails

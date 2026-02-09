@@ -184,6 +184,7 @@ AND (sqlc.narg('role_name') IS NULL OR r.name LIKE sqlc.narg('role_name'))
 ORDER BY g.id;
 
 -- name: GetPermissionByID :one
+-- Gets a specific user role assignment by its primary key (iduser_roles).
 SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username
 FROM user_roles ur
 JOIN users u ON u.idusers = ur.users_idusers

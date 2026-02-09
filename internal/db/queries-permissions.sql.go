@@ -161,6 +161,7 @@ type GetPermissionByIDRow struct {
 	Username     sql.NullString
 }
 
+// Gets a specific user role assignment by its primary key (iduser_roles).
 func (q *Queries) GetPermissionByID(ctx context.Context, iduserRoles int32) (*GetPermissionByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getPermissionByID, iduserRoles)
 	var i GetPermissionByIDRow

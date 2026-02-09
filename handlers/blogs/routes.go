@@ -39,7 +39,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 	br.HandleFunc("/blog/{blog}", BlogPage).Methods("GET")
 	br.HandleFunc("/blog/{blog}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
-	br.HandleFunc("/blog/{blog}/comments", BlogsCommentPage).Methods("GET", "POST")
+	br.Handle("/blog/{blog}/comments", RequireBlogCommentAccess(http.HandlerFunc(BlogsCommentPage))).Methods("GET", "POST")
 	br.HandleFunc("/blog/{blog}/reply", handlers.TaskHandler(replyBlogTask)).Methods("POST").MatcherFunc(replyBlogTask.Matcher())
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())

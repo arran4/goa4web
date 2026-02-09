@@ -67,12 +67,22 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 			return fmt.Errorf("no methods selected %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("please select at least one notification method")))
 		}
 
+		var inserts []db.InsertSubscriptionParams
 		for _, m := range methods {
-			if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: m}); err != nil {
-				// We return the error here to inform the user if something went wrong (e.g. database error).
-				// While this might surface "Duplicate entry" errors, it's better than failing silently.
-				log.Printf("insert sub: %v", err)
-				return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			inserts = append(inserts, db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: m})
+		}
+
+		if q, ok := queries.(*db.Queries); ok {
+			if err := q.BatchInsertSubscriptions(r.Context(), inserts); err != nil {
+				log.Printf("batch insert sub: %v", err)
+				return fmt.Errorf("batch insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+		} else {
+			for _, p := range inserts {
+				if err := queries.InsertSubscription(r.Context(), p); err != nil {
+					log.Printf("insert sub: %v", err)
+					return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+				}
 			}
 		}
 
@@ -88,6 +98,9 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 	for _, s := range existing {
 		have[s.Pattern+"|"+s.Method] = true
 	}
+
+	var inserts []db.InsertSubscriptionParams
+	var deletes []db.DeleteSubscriptionForSubscriberParams
 
 	// New generic logic based on presented_subs
 	presented := r.PostForm["presented_subs"]
@@ -117,15 +130,9 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 			}
 
 			if want && !has {
-				if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method}); err != nil {
-					log.Printf("insert sub: %v", err)
-					return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-				}
+				inserts = append(inserts, db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method})
 			} else if !want && has {
-				if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: pattern, Method: method}); err != nil {
-					log.Printf("delete sub: %v", err)
-					return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-				}
+				deletes = append(deletes, db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: pattern, Method: method})
 			}
 		}
 	} else {
@@ -136,18 +143,36 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 				want := r.PostFormValue(key) != ""
 				hkey := opt.Pattern + "|" + m
 				if want && !have[hkey] {
-					if err := queries.InsertSubscription(r.Context(), db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m}); err != nil {
-						log.Printf("insert sub: %v", err)
-						return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-					}
+					inserts = append(inserts, db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m})
 				} else if !want && have[hkey] {
 					// Only delete if it matches one of the options in userSubscriptionOptions
 					// This prevents deleting custom subscriptions added via the "Add" form
-					if err := queries.DeleteSubscriptionForSubscriber(r.Context(), db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m}); err != nil {
-						log.Printf("delete sub: %v", err)
-						return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-					}
+					deletes = append(deletes, db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m})
 				}
+			}
+		}
+	}
+
+	if q, ok := queries.(*db.Queries); ok {
+		if err := q.BatchInsertSubscriptions(r.Context(), inserts); err != nil {
+			log.Printf("batch insert sub: %v", err)
+			return fmt.Errorf("batch insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+		if err := q.BatchDeleteSubscriptions(r.Context(), deletes); err != nil {
+			log.Printf("batch delete sub: %v", err)
+			return fmt.Errorf("batch delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+	} else {
+		for _, p := range inserts {
+			if err := queries.InsertSubscription(r.Context(), p); err != nil {
+				log.Printf("insert sub: %v", err)
+				return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
+		}
+		for _, p := range deletes {
+			if err := queries.DeleteSubscriptionForSubscriber(r.Context(), p); err != nil {
+				log.Printf("delete sub: %v", err)
+				return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
 	}

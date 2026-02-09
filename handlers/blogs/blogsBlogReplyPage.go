@@ -135,10 +135,6 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !cd.HasGrant("blogs", "entry", "reply", blog.Idblogs) {
-		return handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)
-	}
-
 	var pthid int32
 	if blog.ForumthreadID.Valid {
 		pthid = blog.ForumthreadID.Int32

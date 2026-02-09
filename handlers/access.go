@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -76,6 +79,39 @@ func EnforceGrant(section, item, action string, itemID int32) func(http.Handler)
 				return
 			}
 			if !cd.HasGrant(section, item, action, itemID) {
+				if cd.UserID != 0 {
+					RenderErrorPage(w, r, ErrForbidden)
+				} else {
+					RenderPermissionDenied(w, r)
+				}
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// EnforceGrantFromPath wraps h and denies the request if the caller lacks the specified grant for the item ID extracted from the URL path.
+func EnforceGrantFromPath(section, item, action, param string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			if cd == nil {
+				RenderErrorPage(w, r, common.ErrInternalServerError)
+				return
+			}
+			vars := mux.Vars(r)
+			val := vars[param]
+			if val == "" {
+				RenderErrorPage(w, r, ErrNotFound)
+				return
+			}
+			id, err := strconv.Atoi(val)
+			if err != nil {
+				RenderErrorPage(w, r, ErrNotFound)
+				return
+			}
+			if !cd.HasGrant(section, item, action, int32(id)) {
 				if cd.UserID != 0 {
 					RenderErrorPage(w, r, ErrForbidden)
 				} else {

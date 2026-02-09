@@ -101,12 +101,6 @@ func (EditBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Blog"
-	blog := cd.CurrentBlogLoaded()
-	if blog == nil || !(cd.HasGrant("blogs", "entry", "edit-any", 0) || cd.HasGrant("blogs", "entry", "edit", blog.Idblogs)) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
 	type Data struct {
 		Languages          []*db.Language
 		Blog               *db.GetBlogEntryForListerByIDRow

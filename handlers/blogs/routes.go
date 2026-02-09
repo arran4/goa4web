@@ -21,13 +21,22 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	br.Use(handlers.IndexMiddleware(BlogsMiddlewareIndex), handlers.SectionMiddleware("blogs"))
+
+	enforceGrant := func(action string) func(http.Handler) http.Handler {
+		return handlers.EnforceGrant("blogs", "entry", action, 0)
+	}
+
+	enforceGrantFromPath := func(action, param string) func(http.Handler) http.Handler {
+		return handlers.EnforceGrantFromPath("blogs", "entry", action, param)
+	}
+
 	br.HandleFunc("/rss", RssPage).Methods("GET")
 	br.HandleFunc("/atom", AtomPage).Methods("GET")
 	br.HandleFunc("", Page).Methods("GET")
 	br.HandleFunc("/", Page).Methods("GET")
 	br.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
-	br.Handle("/add", handlers.EnforceGrant("blogs", "entry", "post", 0)(http.HandlerFunc(addBlogTask.Page))).Methods("GET")
-	br.Handle("/add", handlers.EnforceGrant("blogs", "entry", "post", 0)(http.HandlerFunc(handlers.TaskHandler(addBlogTask)))).Methods("POST").MatcherFunc(addBlogTask.Matcher())
+	br.Handle("/add", enforceGrant("post")(http.HandlerFunc(addBlogTask.Page))).Methods("GET")
+	br.Handle("/add", enforceGrant("post")(http.HandlerFunc(handlers.TaskHandler(addBlogTask)))).Methods("POST").MatcherFunc(addBlogTask.Matcher())
 	br.HandleFunc("/bloggers", BloggerListPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}", BloggerPostsPage).Methods("GET")
 	br.HandleFunc("/blogger/{username}/", BloggerPostsPage).Methods("GET")
@@ -37,10 +46,10 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/shared/blog/{blog}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 	br.HandleFunc("/shared/blog/{blog}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
-	br.HandleFunc("/blog/{blog}", BlogPage).Methods("GET")
-	br.HandleFunc("/blog/{blog}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
-	br.HandleFunc("/blog/{blog}/comments", BlogsCommentPage).Methods("GET", "POST")
-	br.HandleFunc("/blog/{blog}/reply", handlers.TaskHandler(replyBlogTask)).Methods("POST").MatcherFunc(replyBlogTask.Matcher())
+	br.Handle("/blog/{blog}", enforceGrantFromPath("see", "blog")(http.HandlerFunc(BlogPage))).Methods("GET")
+	br.Handle("/blog/{blog}", enforceGrantFromPath("see", "blog")(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods("POST")
+	br.Handle("/blog/{blog}/comments", enforceGrantFromPath("see", "blog")(http.HandlerFunc(BlogsCommentPage))).Methods("GET", "POST")
+	br.Handle("/blog/{blog}/reply", enforceGrantFromPath("reply", "blog")(http.HandlerFunc(handlers.TaskHandler(replyBlogTask)))).Methods("POST").MatcherFunc(replyBlogTask.Matcher())
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
 	br.Handle("/blog/{blog}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	br.Handle("/blog/{blog}/edit", RequireBlogAuthor(http.HandlerFunc(editBlogTask.Page))).Methods("GET").MatcherFunc(RequireBlogEditGrant())

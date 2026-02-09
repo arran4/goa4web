@@ -27,10 +27,14 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	ibr.PathPrefix("/images/").Handler(http.StripPrefix("/imagebbs/images/", http.FileServer(http.Dir(bbsDir))))
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.rss", BoardRssPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", ImagebbsBoardPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}", handlers.TaskHandler(uploadImageTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(uploadImageTask.Matcher())
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", BoardThreadPage).Methods("GET")
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
+
+	br := ibr.PathPrefix("/board/{boardno:[0-9]+}").Subrouter()
+	br.Use(CheckBoardAccess)
+	br.HandleFunc("", ImagebbsBoardPage).Methods("GET")
+	br.HandleFunc("", handlers.TaskHandler(uploadImageTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(uploadImageTask.Matcher())
+	br.HandleFunc("/thread/{thread}", BoardThreadPage).Methods("GET")
+	br.HandleFunc("/thread/{thread}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
+
 	ibr.HandleFunc("", ImagebbsPage).Methods("GET")
 	ibr.HandleFunc("/", ImagebbsPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")

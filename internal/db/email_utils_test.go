@@ -47,6 +47,16 @@ func TestEmailsByUserID(t *testing.T) {
 				2: {"user2@example.com"},
 			},
 		},
+		{
+			name: "Nil element in rows",
+			rows: []*GetVerifiedUserEmailsRow{
+				{UserID: 1, Email: "user1@example.com"},
+				nil,
+			},
+			expected: map[int32][]string{
+				1: {"user1@example.com"},
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -54,12 +54,6 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("linker", "link", "view", link.ID) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
 	data.Link = link
 	if link.Title.Valid {
 		cd.PageTitle = fmt.Sprintf("Link: %s", link.Title.String)

@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/gorilla/mux"
 )
 
 // DisableCaching sets headers to prevent caching of the response.
@@ -63,5 +65,34 @@ func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 		RenderErrorPage(w, r, ErrNotFound)
 	} else {
 		RenderPermissionDenied(w, r)
+	}
+}
+
+// EnforceGrant wraps a handler and enforces that the caller has the specified grant
+// for the item identified by the path parameter. If the parameter is missing or invalid,
+// a 404 error is returned. If the grant is missing, a 403 error is returned.
+func EnforceGrant(h http.HandlerFunc, section, item, action, param string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		val, ok := vars[param]
+		if !ok || val == "" {
+			RenderErrorPage(w, r, ErrNotFound)
+			return
+		}
+		id, err := strconv.Atoi(val)
+		if err != nil || id == 0 {
+			RenderErrorPage(w, r, ErrNotFound)
+			return
+		}
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok || cd == nil {
+			RenderErrorPage(w, r, common.ErrInternalServerError)
+			return
+		}
+		if !cd.HasGrant(section, item, action, int32(id)) {
+			RenderErrorPage(w, r, ErrForbidden)
+			return
+		}
+		h(w, r)
 	}
 }

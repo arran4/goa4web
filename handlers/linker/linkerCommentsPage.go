@@ -48,11 +48,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		CanEdit:     false,
 		IsReplyable: true,
 	}
-	vars := mux.Vars(r)
-	linkId := 0
-	if lid, err := strconv.Atoi(vars["link"]); err == nil {
-		linkId = lid
-	}
 	session, ok := core.GetSessionOrFail(w, r)
 	if !ok {
 		return
@@ -62,11 +57,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
-		ViewerID:     cd.UserID,
-		ID:           int32(linkId),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	link, err := cd.CurrentLinkerItem(r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -80,13 +71,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	canReply := cd.HasGrant("linker", "link", "reply", link.ID)
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		canReply ||
-		cd.SelectedThreadCanReply()) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
 
 	data.IsReplyable = canReply
 
@@ -209,11 +193,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
-		ViewerID:     cd.UserID,
-		ID:           int32(linkId),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	link, err := cd.CurrentLinkerItem(r)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -226,12 +206,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return nil
 		}
-	}
-
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		cd.HasGrant("linker", "link", "reply", link.ID)) {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return nil
 	}
 
 	var pthid int32 = link.ThreadID

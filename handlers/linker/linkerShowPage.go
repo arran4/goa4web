@@ -29,12 +29,9 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	data := Data{
 		SelectedLanguageId: int(cd.PreferredLanguageID(cd.Config.DefaultLanguage)),
 	}
-	vars := mux.Vars(r)
-	linkId, _ := strconv.Atoi(vars["link"])
 
 	languageRows, err := cd.Languages()
 	if err != nil {
@@ -43,20 +40,10 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
-		ViewerID:     cd.UserID,
-		ID:           int32(linkId),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	link, err := cd.CurrentLinkerItem(r)
 	if err != nil {
 		log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
-		return
-	}
-
-	if !cd.HasGrant("linker", "link", "view", link.ID) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 

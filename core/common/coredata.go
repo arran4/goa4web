@@ -164,6 +164,7 @@ type CoreData struct {
 	// Keep this sorted
 	adminLatestNews                  lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
 	adminLinkerItemRows              map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]
+	linkerItems                      map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]
 	adminRequest                     map[int32]*lazy.Value[*db.AdminRequestQueue]
 	adminRequestComments             map[int32]*lazy.Value[[]*db.AdminRequestComment]
 	adminRequests                    map[string]*lazy.Value[[]*db.AdminRequestQueue]

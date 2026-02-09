@@ -41,7 +41,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	wr.HandleFunc("/shared/article/{writing}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 	wr.HandleFunc("/shared/article/{writing}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
-	wr.HandleFunc("/article/{writing}", ArticlePage).Methods("GET")
+	wr.Handle("/article/{writing}", RequireWritingView(http.HandlerFunc(ArticlePage))).Methods("GET")
 	wr.HandleFunc("/article/{writing}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(replyTask.Matcher())
 	wr.Handle("/article/{writing}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
 	wr.Handle("/article/{writing}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())

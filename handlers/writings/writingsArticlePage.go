@@ -40,7 +40,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Writing"
-	cd.LoadSelectionsFromRequest(r)
 	writing, err := cd.Article()
 	if err != nil {
 		log.Printf("get writing: %v", err)
@@ -50,12 +49,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	if writing == nil {
 		log.Printf("get writing: no writing found")
 		handlers.RenderErrorPage(w, r, fmt.Errorf("No writing found"))
-		return
-	}
-	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
-	if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	dateSuffix := ""

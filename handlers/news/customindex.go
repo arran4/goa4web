@@ -118,10 +118,12 @@ func NewsCustomIndexItems(cd *common.CoreData, r *http.Request, post *db.GetNews
 		vars := mux.Vars(r)
 		if newsID := vars["news"]; newsID != "" {
 			if nid, err := strconv.Atoi(newsID); err == nil {
-				// TODO: Fetch post if not provided to get author ID?
-				// For now, if post is nil, we can't fully support unread check suppression for author.
-				// But NewsCustomIndexItems is usually called with post if available.
-				if hasNewsUnread(cd, int32(nid), 0) {
+				authorID := int32(0)
+				// Fetch post if not provided to get author ID
+				if p, err := cd.NewsPostByID(int32(nid)); err == nil && p != nil && p.Idusers.Valid {
+					authorID = p.Idusers.Int32
+				}
+				if hasNewsUnread(cd, int32(nid), authorID) {
 					redirect := r.URL.RequestURI()
 					items = append(items, common.IndexItem{
 						Name: "Mark as read",

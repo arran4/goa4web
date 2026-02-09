@@ -146,34 +146,6 @@ func (q *Queries) GetLoginRoleForUser(ctx context.Context, usersIdusers int32) (
 	return column_1, err
 }
 
-const getPermissionByID = `-- name: GetPermissionByID :one
-SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username
-FROM user_roles ur
-JOIN users u ON u.idusers = ur.users_idusers
-JOIN roles r ON ur.role_id = r.id
-WHERE ur.iduser_roles = ?
-`
-
-type GetPermissionByIDRow struct {
-	IduserRoles  int32
-	UsersIdusers int32
-	Name         string
-	Username     sql.NullString
-}
-
-// Gets a specific user role assignment by its primary key (iduser_roles).
-func (q *Queries) GetPermissionByID(ctx context.Context, iduserRoles int32) (*GetPermissionByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getPermissionByID, iduserRoles)
-	var i GetPermissionByIDRow
-	err := row.Scan(
-		&i.IduserRoles,
-		&i.UsersIdusers,
-		&i.Name,
-		&i.Username,
-	)
-	return &i, err
-}
-
 const getPermissionsByUserID = `-- name: GetPermissionsByUserID :many
 SELECT ur.iduser_roles, ur.users_idusers, ur.role_id, r.name, r.is_admin
 FROM user_roles ur
@@ -298,6 +270,34 @@ func (q *Queries) GetUserRole(ctx context.Context, usersIdusers int32) (string, 
 	var role string
 	err := row.Scan(&role)
 	return role, err
+}
+
+const getUserRoleByID = `-- name: GetUserRoleByID :one
+SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username
+FROM user_roles ur
+JOIN users u ON u.idusers = ur.users_idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.iduser_roles = ?
+`
+
+type GetUserRoleByIDRow struct {
+	IduserRoles  int32
+	UsersIdusers int32
+	Name         string
+	Username     sql.NullString
+}
+
+// Gets a specific user role assignment by its primary key (iduser_roles).
+func (q *Queries) GetUserRoleByID(ctx context.Context, id int32) (*GetUserRoleByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserRoleByID, id)
+	var i GetUserRoleByIDRow
+	err := row.Scan(
+		&i.IduserRoles,
+		&i.UsersIdusers,
+		&i.Name,
+		&i.Username,
+	)
+	return &i, err
 }
 
 const getUserRoles = `-- name: GetUserRoles :many

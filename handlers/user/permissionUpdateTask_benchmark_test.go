@@ -13,7 +13,7 @@ func BenchmarkRoleInfoByPermID(b *testing.B) {
 	targetID := int32(5000)
 
 	// Mock the single row return for the optimized query
-	row := &db.GetPermissionByIDRow{
+	row := &db.GetUserRoleByIDRow{
 		IduserRoles:  targetID,
 		UsersIdusers: int32(targetID * 10),
 		Name:         fmt.Sprintf("role-%d", targetID),
@@ -21,7 +21,7 @@ func BenchmarkRoleInfoByPermID(b *testing.B) {
 	}
 
 	q := &db.QuerierStub{
-		GetPermissionByIDRow: row,
+		GetUserRoleByIDRow: row,
 	}
 
 	ctx := context.Background()

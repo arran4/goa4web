@@ -17,6 +17,7 @@ type Definition struct {
 	Upgrade               func(params map[string]string) string
 	Legacy                bool
 	SupportsAutoSubscribe bool
+	compiledRegex         *regexp.Regexp
 }
 
 // Parameter represents a single parameter in a subscription pattern.
@@ -368,20 +369,31 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 	return result
 }
 
+func init() {
+	for i := range Definitions {
+		Definitions[i].compiledRegex = compilePattern(Definitions[i].Pattern)
+	}
+}
+
 // MatchDefinition attempts to match a pattern string against known definitions.
 // Returns the definition and extracted parameters (if any).
 func MatchDefinition(pattern string) (*Definition, map[string]string) {
 	for i := range Definitions {
 		def := &Definitions[i]
-		if params, ok := matchPattern(def.Pattern, pattern); ok {
+		re := def.compiledRegex
+		if re == nil {
+			re = compilePattern(def.Pattern)
+		}
+		if params, ok := matchWithRegex(re, pattern); ok {
 			return def, params
 		}
 	}
 	return nil, nil
 }
 
-// matchPattern checks if 'pattern' matches 'template' (which may contain {param}).
-func matchPattern(template, pattern string) (map[string]string, bool) {
+var paramRegex = regexp.MustCompile(`\{([a-zA-Z0-9]+)\}`)
+
+func compilePattern(template string) *regexp.Regexp {
 	// Convert template to regex
 	regexStr := regexp.QuoteMeta(template)
 
@@ -390,7 +402,6 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	regexStr = strings.ReplaceAll(regexStr, "\\}", "}")
 
 	// Replace {name} with (?P<name>[^/*]+)
-	paramRegex := regexp.MustCompile(`\{([a-zA-Z0-9]+)\}`)
 	regexStr = paramRegex.ReplaceAllString(regexStr, `(?P<$1>[^/*]+)`)
 
 	// Handle standard wildcard *
@@ -398,8 +409,11 @@ func matchPattern(template, pattern string) (map[string]string, bool) {
 	regexStr = strings.ReplaceAll(regexStr, "\\*", ".*")
 
 	regexStr = "^" + regexStr + "$"
-	re := regexp.MustCompile(regexStr)
+	return regexp.MustCompile(regexStr)
+}
 
+// matchWithRegex checks if 'pattern' matches the compiled regex.
+func matchWithRegex(re *regexp.Regexp, pattern string) (map[string]string, bool) {
 	match := re.FindStringSubmatch(pattern)
 	if match == nil {
 		return nil, false

@@ -146,9 +146,16 @@ func hasThreadUnread(cd *common.CoreData, threadID string) bool {
 	if err != nil {
 		return false
 	}
-	// TODO: Pass author ID. For now passing 0 to keep default behavior (showing unread) if author is unknown.
-	// This function is deprecated/wrapper, so less critical.
-	labels, err := cd.ThreadPrivateLabels(int32(tid), 0)
+	var authorID int32
+	if thread, err := cd.ForumThreadByID(int32(tid)); err == nil && thread != nil {
+		if thread.Firstpostuserid.Valid {
+			authorID = thread.Firstpostuserid.Int32
+		}
+	} else if err != nil {
+		log.Printf("fetch thread %d: %v", tid, err)
+	}
+
+	labels, err := cd.ThreadPrivateLabels(int32(tid), authorID)
 	if err != nil {
 		log.Printf("thread private labels: %v", err)
 		return false

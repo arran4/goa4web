@@ -963,7 +963,7 @@ func (q *Queries) GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinker
 }
 
 const getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending = `-- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
-SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, l.deleted_at, u.username, lc.title
 FROM linker l
 JOIN users u ON l.author_id = u.idusers
 JOIN linker_category lc ON l.category_id = lc.id
@@ -981,6 +981,7 @@ type GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow struct {
 	Description sql.NullString
 	Listed      sql.NullTime
 	Timezone    sql.NullString
+	DeletedAt   sql.NullTime
 	Username    sql.NullString
 	Title_2     sql.NullString
 }
@@ -999,6 +1000,7 @@ func (q *Queries) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(
 		&i.Description,
 		&i.Listed,
 		&i.Timezone,
+		&i.DeletedAt,
 		&i.Username,
 		&i.Title_2,
 	)

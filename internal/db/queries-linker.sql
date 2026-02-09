@@ -229,7 +229,7 @@ ORDER BY l.listed DESC
 LIMIT ? OFFSET ?;
 
 -- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
-SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
+SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, l.deleted_at, u.username, lc.title
 FROM linker l
 JOIN users u ON l.author_id = u.idusers
 JOIN linker_category lc ON l.category_id = lc.id

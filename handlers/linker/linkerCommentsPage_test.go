@@ -22,12 +22,13 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCommentsPage(t *testing.T) {
 	t.Run("Happy Path - Allows Global View Grant", func(t *testing.T) {
 		queries := testhelpers.NewQuerierStub()
-		queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow{
 			ID:         1,
 			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
 			AuthorID:   2,
@@ -132,7 +133,7 @@ func commentsPageEditControlsUseEditGrant(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, "{{ if .CanEdit }}EDIT_CONTROLS{{ end }}")
 
 	queries := testhelpers.NewQuerierStub()
-	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow{
 		ID:       1,
 		ThreadID: 1,
 		Title:    sql.NullString{String: "Link Title", Valid: true},
@@ -188,7 +189,7 @@ func commentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 	dir := writeTempCommentsTemplate(t, `CanEdit: {{.CanEdit}}`)
 
 	queries := testhelpers.NewQuerierStub()
-	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow{
 		ID:         1,
 		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
 		AuthorID:   2,
@@ -273,7 +274,7 @@ func commentsPageEditControlsAllowAdminMode(t *testing.T) {
 	commentID := int32(100)
 
 	queries := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
-	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow{
 		ID:         int32(linkID),
 		LanguageID: sql.NullInt32{Int32: 1, Valid: true},
 		AuthorID:   userID,
@@ -323,4 +324,74 @@ func commentsPageEditControlsAllowAdminMode(t *testing.T) {
 	if !strings.Contains(body, expectedAdminURL) {
 		t.Errorf("expected admin URL %q in body, got: %q", expectedAdminURL, body)
 	}
+}
+
+func TestCommentsPage_AccessControl_Repro(t *testing.T) {
+	t.Run("Reply Grant Should Allow Access Even If View Is Missing", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+
+		// Mock GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending to return a valid item (listed, not deleted).
+		queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow{
+			ID:         1,
+			LanguageID: sql.NullInt32{Int32: 1, Valid: true},
+			AuthorID:   2,
+			CategoryID: sql.NullInt32{Int32: 1, Valid: true},
+			ThreadID:   1,
+			Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true}, // Must be valid/listed
+			Title:      sql.NullString{String: "t", Valid: true},
+			Url:        sql.NullString{String: "http://u", Valid: true},
+			Timezone:   sql.NullString{String: time.Local.String(), Valid: true},
+			Username:   sql.NullString{String: "bob", Valid: true},
+			Title_2:    sql.NullString{String: "cat", Valid: true},
+		}
+
+		// Other mocks needed for the page to render (after permission check passes)
+		queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+			Idforumthread:          1,
+			Firstpost:              1,
+			Lastposter:             1,
+			ForumtopicIdforumtopic: 1,
+			Comments:               sql.NullInt32{Int32: 0, Valid: true},
+			Lastaddition:           sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+			Locked:                 sql.NullBool{Bool: false, Valid: true},
+		}
+
+		// Setup grants: Allow reply, Deny view.
+		queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.Action == "reply" {
+				return 1, nil
+			}
+			// Deny view
+			if arg.Action == "view" {
+				return 0, sql.ErrNoRows
+			}
+
+			return 0, sql.ErrNoRows
+		}
+
+		store := sessions.NewCookieStore([]byte("t"))
+		core.Store = store
+		core.SessionName = "test-session"
+
+		req := httptest.NewRequest("GET", "/linker/comments/1", nil)
+		req = mux.SetURLVars(req, map[string]string{"link": "1"})
+		w := httptest.NewRecorder()
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
+		sess.Values["UID"] = int32(2)
+		sess.Save(req, w)
+
+		ctx := req.Context()
+		cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess))
+		cd.UserID = 2
+		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
+
+		// Apply middleware to verify access control
+		handler := RequireLinkViewOrReply(http.HandlerFunc(CommentsPage))
+		handler.ServeHTTP(w, req)
+
+		// Expecting 200 OK now
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
 }

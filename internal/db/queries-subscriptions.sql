@@ -33,3 +33,7 @@ DELETE FROM subscriptions WHERE users_idusers = sqlc.arg(subscriber_id) AND id =
 -- name: UpdateSubscriptionByIDForSubscriber :exec
 UPDATE subscriptions SET pattern = sqlc.arg(pattern), method = sqlc.arg(method)
 WHERE users_idusers = sqlc.arg(subscriber_id) AND id = sqlc.arg(id);
+
+-- name: DeleteSubscriptionsByIDs :exec
+DELETE FROM subscriptions
+WHERE users_idusers = sqlc.arg(subscriber_id) AND id IN (sqlc.slice(ids));

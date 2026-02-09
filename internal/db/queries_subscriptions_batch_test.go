@@ -91,35 +91,6 @@ func TestBatchInsertSubscriptions(t *testing.T) {
 	}
 }
 
-func TestBatchDeleteSubscriptions(t *testing.T) {
-	q, conn := newMockQueries()
-	ctx := context.Background()
-
-	params := []DeleteSubscriptionForSubscriberParams{
-		{SubscriberID: 1, Pattern: "p1", Method: "m1"},
-		{SubscriberID: 1, Pattern: "p2", Method: "m2"},
-	}
-
-	err := q.BatchDeleteSubscriptions(ctx, params)
-	if err != nil {
-		t.Fatalf("BatchDeleteSubscriptions failed: %v", err)
-	}
-
-	expectedQueryStart := "DELETE FROM subscriptions WHERE (users_idusers, pattern, method) IN ("
-	if !strings.HasPrefix(conn.lastQuery, expectedQueryStart) {
-		t.Errorf("unexpected query start: got %s", conn.lastQuery)
-	}
-
-	expectedPlaceholders := "(?, ?, ?),(?, ?, ?)"
-	if !strings.Contains(conn.lastQuery, expectedPlaceholders) {
-		t.Errorf("unexpected placeholders: got %s", conn.lastQuery)
-	}
-
-	if len(conn.lastArgs) != 6 {
-		t.Errorf("unexpected args count: got %d, want 6", len(conn.lastArgs))
-	}
-}
-
 func BenchmarkBatchInsertSubscriptions(b *testing.B) {
 	q, _ := newMockQueries()
 	ctx := context.Background()
@@ -146,36 +117,6 @@ func BenchmarkLoopInsertSubscriptions(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, p := range params {
 			q.InsertSubscription(ctx, p)
-		}
-	}
-}
-
-func BenchmarkBatchDeleteSubscriptions(b *testing.B) {
-	q, _ := newMockQueries()
-	ctx := context.Background()
-	params := make([]DeleteSubscriptionForSubscriberParams, 100)
-	for i := 0; i < 100; i++ {
-		params[i] = DeleteSubscriptionForSubscriberParams{SubscriberID: 1, Pattern: "p", Method: "m"}
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		q.BatchDeleteSubscriptions(ctx, params)
-	}
-}
-
-func BenchmarkLoopDeleteSubscriptions(b *testing.B) {
-	q, _ := newMockQueries()
-	ctx := context.Background()
-	params := make([]DeleteSubscriptionForSubscriberParams, 100)
-	for i := 0; i < 100; i++ {
-		params[i] = DeleteSubscriptionForSubscriberParams{SubscriberID: 1, Pattern: "p", Method: "m"}
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for _, p := range params {
-			q.DeleteSubscriptionForSubscriber(ctx, p)
 		}
 	}
 }

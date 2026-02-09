@@ -319,6 +319,7 @@ type Querier interface {
 	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
 	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
+	DeleteSubscriptionsByIDs(ctx context.Context, arg DeleteSubscriptionsByIDsParams) error
 	DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int32) error
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
 	DeleteUserLanguagesForUser(ctx context.Context, userID int32) error

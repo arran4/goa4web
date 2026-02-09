@@ -94,13 +94,13 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 		log.Printf("list subs: %v", err)
 		return fmt.Errorf("list subscriptions fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	have := make(map[string]bool)
+	have := make(map[string]int32)
 	for _, s := range existing {
-		have[s.Pattern+"|"+s.Method] = true
+		have[s.Pattern+"|"+s.Method] = s.ID
 	}
 
 	var inserts []db.InsertSubscriptionParams
-	var deletes []db.DeleteSubscriptionForSubscriberParams
+	var deleteIDs []int32
 
 	// New generic logic based on presented_subs
 	presented := r.PostForm["presented_subs"]
@@ -118,7 +118,7 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 			pattern, method := parts[0], parts[1]
 
 			want := wanted[p]
-			has := have[p]
+			id, has := have[p]
 
 			if def, _ := subscriptions.MatchDefinition(pattern); def != nil {
 				if def.IsAdminOnly && !cd.IsAdmin() {
@@ -132,7 +132,7 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 			if want && !has {
 				inserts = append(inserts, db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: pattern, Method: method})
 			} else if !want && has {
-				deletes = append(deletes, db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: pattern, Method: method})
+				deleteIDs = append(deleteIDs, id)
 			}
 		}
 	} else {
@@ -142,12 +142,13 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 				key := opt.Path + "_" + m
 				want := r.PostFormValue(key) != ""
 				hkey := opt.Pattern + "|" + m
-				if want && !have[hkey] {
+				_, has := have[hkey]
+				if want && !has {
 					inserts = append(inserts, db.InsertSubscriptionParams{UsersIdusers: uid, Pattern: opt.Pattern, Method: m})
-				} else if !want && have[hkey] {
+				} else if !want && has {
 					// Only delete if it matches one of the options in userSubscriptionOptions
 					// This prevents deleting custom subscriptions added via the "Add" form
-					deletes = append(deletes, db.DeleteSubscriptionForSubscriberParams{SubscriberID: uid, Pattern: opt.Pattern, Method: m})
+					deleteIDs = append(deleteIDs, have[hkey])
 				}
 			}
 		}
@@ -158,9 +159,11 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 			log.Printf("batch insert sub: %v", err)
 			return fmt.Errorf("batch insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		if err := q.BatchDeleteSubscriptions(r.Context(), deletes); err != nil {
-			log.Printf("batch delete sub: %v", err)
-			return fmt.Errorf("batch delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		if len(deleteIDs) > 0 {
+			if err := q.DeleteSubscriptionsByIDs(r.Context(), db.DeleteSubscriptionsByIDsParams{SubscriberID: uid, Ids: deleteIDs}); err != nil {
+				log.Printf("batch delete sub: %v", err)
+				return fmt.Errorf("batch delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+			}
 		}
 	} else {
 		for _, p := range inserts {
@@ -169,8 +172,8 @@ func (UpdateSubscriptionsTask) Action(w http.ResponseWriter, r *http.Request) an
 				return fmt.Errorf("insert subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
 		}
-		for _, p := range deletes {
-			if err := queries.DeleteSubscriptionForSubscriber(r.Context(), p); err != nil {
+		for _, id := range deleteIDs {
+			if err := queries.DeleteSubscriptionByIDForSubscriber(r.Context(), db.DeleteSubscriptionByIDForSubscriberParams{SubscriberID: uid, ID: id}); err != nil {
 				log.Printf("delete sub: %v", err)
 				return fmt.Errorf("delete subscription fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}

@@ -40,6 +40,32 @@ func (q *Queries) DeleteSubscriptionForSubscriber(ctx context.Context, arg Delet
 	return err
 }
 
+const deleteSubscriptionsByIDs = `-- name: DeleteSubscriptionsByIDs :exec
+DELETE FROM subscriptions
+WHERE users_idusers = ? AND id IN (/*SLICE:ids*/?)
+`
+
+type DeleteSubscriptionsByIDsParams struct {
+	SubscriberID int32
+	Ids          []int32
+}
+
+func (q *Queries) DeleteSubscriptionsByIDs(ctx context.Context, arg DeleteSubscriptionsByIDsParams) error {
+	query := deleteSubscriptionsByIDs
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.SubscriberID)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
 const insertSubscription = `-- name: InsertSubscription :exec
 INSERT INTO subscriptions (users_idusers, pattern, method)
 VALUES (?, ?, ?)

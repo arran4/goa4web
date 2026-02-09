@@ -34,7 +34,7 @@ func TestUpdateSubscriptionsTask_MandatoryProtection(t *testing.T) {
 			{
 				name: "Mandatory sub removal attempt",
 				existing: []*db.ListSubscriptionsByUserRow{
-					{Pattern: mandatoryPattern, Method: "internal"},
+					{ID: 1, Pattern: mandatoryPattern, Method: "internal"},
 				},
 				presented:    []string{mandatoryPattern + "|internal"},
 				subs:         []string{}, // Empty, implying user unchecked it
@@ -43,7 +43,7 @@ func TestUpdateSubscriptionsTask_MandatoryProtection(t *testing.T) {
 			{
 				name: "Normal sub removal",
 				existing: []*db.ListSubscriptionsByUserRow{
-					{Pattern: "post:/blog/*", Method: "internal"},
+					{ID: 2, Pattern: "post:/blog/*", Method: "internal"},
 				},
 				presented:      []string{"post:/blog/*|internal"},
 				subs:           []string{},
@@ -111,19 +111,40 @@ func TestUpdateSubscriptionsTask_MandatoryProtection(t *testing.T) {
 
 				// Verify Delete
 				if tt.expectDelete {
+					// Map expected pattern to ID
+					var expectedID int32
+					for _, s := range tt.existing {
+						if s.Pattern == tt.expectedDelete {
+							expectedID = s.ID
+							break
+						}
+					}
+
 					found := false
+					// Check DeleteSubscriptionByIDForSubscriberCalls (fallback for mocks)
+					for _, call := range q.DeleteSubscriptionByIDForSubscriberCalls {
+						if call.ID == expectedID {
+							found = true
+							break
+						}
+					}
+					// Also check DeleteSubscriptionParams (old method, if fallback logic changes)
 					for _, call := range q.DeleteSubscriptionParams {
 						if call.Pattern == tt.expectedDelete {
 							found = true
 							break
 						}
 					}
+
 					if !found {
-						t.Errorf("Expected delete call for %s, but not found", tt.expectedDelete)
+						t.Errorf("Expected delete call for %s (ID %d), but not found", tt.expectedDelete, expectedID)
 					}
 				} else {
 					if len(q.DeleteSubscriptionParams) > 0 {
-						t.Errorf("Unexpected delete calls: %v", q.DeleteSubscriptionParams)
+						t.Errorf("Unexpected delete calls (pattern): %v", q.DeleteSubscriptionParams)
+					}
+					if len(q.DeleteSubscriptionByIDForSubscriberCalls) > 0 {
+						t.Errorf("Unexpected delete calls (ID): %v", q.DeleteSubscriptionByIDForSubscriberCalls)
 					}
 				}
 

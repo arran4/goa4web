@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -376,32 +375,24 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		}
 	} else if cfg.DBHost != "" || cfg.DBUser != "" || cfg.DBName != "" {
 		// Construct DB_CONN from components if DB_CONN is missing
-		// Default to tcp
-		user := cfg.DBUser
-		pass := cfg.DBPass
-		host := cfg.DBHost
-		port := cfg.DBPort
-		dbname := cfg.DBName
+		conf := mysql.NewConfig()
+		conf.User = cfg.DBUser
+		conf.Passwd = cfg.DBPass
+		conf.DBName = cfg.DBName
+		conf.Net = "tcp"
+		conf.ParseTime = true
 
+		host := cfg.DBHost
 		if host == "" {
 			host = "127.0.0.1"
 		}
+		port := cfg.DBPort
 		if port == "" {
 			port = "3306"
 		}
+		conf.Addr = net.JoinHostPort(host, port)
 
-		// Format: user:password@tcp(host:port)/dbname
-		// Need to handle missing user/pass
-		auth := ""
-		if user != "" {
-			auth = user
-			if pass != "" {
-				auth += ":" + pass
-			}
-			auth += "@"
-		}
-
-		cfg.DBConn = fmt.Sprintf("%stcp(%s:%s)/%s?parseTime=true", auth, host, port, dbname)
+		cfg.DBConn = conf.FormatDSN()
 	}
 
 	if cfg.ExternalURL != "" {

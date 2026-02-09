@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/handlers/share"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
@@ -41,7 +42,10 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.HandleFunc("/shared/news/{news}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 	nr.HandleFunc("/shared/news/{news}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
-	nr.HandleFunc("/news/{news}", handlers.RequireGrantForPage("news", "post", "view", "news", NewNewsPostTask())).Methods("GET")
+	requireAccess := func(action string, p tasks.Page) http.HandlerFunc {
+		return handlers.RequireGrantForPage("news", "post", action, "news", p)
+	}
+	nr.HandleFunc("/news/{news}", requireAccess("view", NewNewsPostTask())).Methods("GET")
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(editTask.Page))).Methods("GET").MatcherFunc(editGrant)
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(handlers.TaskHandler(editTask)))).Methods("POST").MatcherFunc(editGrant).MatcherFunc(editTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())

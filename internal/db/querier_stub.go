@@ -198,6 +198,11 @@ type QuerierStub struct {
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
 
+	SystemGetUsersByIDsCalls   [][]int32
+	SystemGetUsersByIDsReturns []*SystemGetUsersByIDsRow
+	SystemGetUsersByIDsErr     error
+	SystemGetUsersByIDsFn      func(context.Context, []int32) ([]*SystemGetUsersByIDsRow, error)
+
 	SystemGetUserByEmailRow   *SystemGetUserByEmailRow
 	SystemGetUserByEmailErr   error
 	SystemGetUserByEmailCalls []string
@@ -2315,6 +2320,20 @@ func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*Sy
 		return nil, errors.New("SystemGetUserByID not stubbed")
 	}
 	return s.SystemGetUserByIDRow, nil
+}
+
+// SystemGetUsersByIDs records the call and returns the configured response.
+func (s *QuerierStub) SystemGetUsersByIDs(ctx context.Context, ids []int32) ([]*SystemGetUsersByIDsRow, error) {
+	s.mu.Lock()
+	s.SystemGetUsersByIDsCalls = append(s.SystemGetUsersByIDsCalls, ids)
+	fn := s.SystemGetUsersByIDsFn
+	ret := s.SystemGetUsersByIDsReturns
+	err := s.SystemGetUsersByIDsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, ids)
+	}
+	return ret, err
 }
 
 // SystemGetUserByEmail records the call and returns the configured response.

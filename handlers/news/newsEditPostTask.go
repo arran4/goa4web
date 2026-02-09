@@ -25,6 +25,7 @@ type EditTask struct{ tasks.TaskString }
 var editTask = &EditTask{TaskString: TaskEdit}
 
 var _ tasks.Task = (*EditTask)(nil)
+var _ tasks.Page = (*EditTask)(nil)
 var _ tasks.TemplatesRequired = (*EditTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*EditTask)(nil)
@@ -47,6 +48,8 @@ func (EditTask) RequiredTemplates() []tasks.Template {
 }
 
 func (EditTask) Page(w http.ResponseWriter, r *http.Request) { newsEditFormPage(w, r) }
+
+func (EditTask) Get(w http.ResponseWriter, r *http.Request) { newsEditFormPage(w, r) }
 
 func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {
@@ -102,11 +105,6 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "/news", err)
-		return
-	}
-	if !cd.HasGrant("news", "post", "edit", post.Idsitenews) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	langs, err := cd.Languages()

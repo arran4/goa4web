@@ -41,7 +41,7 @@ func TestNewsPostAccessControl(t *testing.T) {
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
 
-		// Expect 403 Forbidden (RequireNewsPostView returns styled error page)
+		// Expect 403 (RequireNewsPostView returns styled error page)
 		if rr.Code != http.StatusForbidden {
 			t.Errorf("Expected 403 Forbidden (denied by wrapper), got %d", rr.Code)
 		}

@@ -569,10 +569,10 @@ type QuerierStub struct {
 	GetUserEmailByIDErr     error
 	GetUserEmailByIDFn      func(context.Context, int32) (*UserEmail, error)
 
-	GetUserEmailByCodeCalls   []sql.NullString
-	GetUserEmailByCodeRow     *UserEmail
-	GetUserEmailByCodeErr     error
-	GetUserEmailByCodeFn      func(context.Context, sql.NullString) (*UserEmail, error)
+	GetUserEmailByCodeCalls []sql.NullString
+	GetUserEmailByCodeRow   *UserEmail
+	GetUserEmailByCodeErr   error
+	GetUserEmailByCodeFn    func(context.Context, sql.NullString) (*UserEmail, error)
 
 	GetPublicProfileRoleForUserCalls   []int32
 	GetPublicProfileRoleForUserReturns int32

@@ -6,7 +6,6 @@ import (
 
 // Legacy compatibility functions for old code that hasn't been migrated yet
 
-
 // WithExpiryTime creates an expiry option from time.Time
 func WithExpiryTime(t time.Time) SignOption {
 	return WithExpiry(t)

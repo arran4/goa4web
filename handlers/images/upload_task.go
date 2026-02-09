@@ -57,7 +57,8 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	id := fmt.Sprintf("%x", sha256.Sum256(data))
+	hash := sha256.Sum256(data)
+	id := fmt.Sprintf("%x", hash[:20])
 	ext, err := intimages.CleanExtension(header.Filename)
 	if err != nil {
 		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))

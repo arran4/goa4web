@@ -36,7 +36,8 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 		return "", fmt.Errorf("empty body")
 	}
 
-	hash := fmt.Sprintf("%x", sha256.Sum256(body))
+	hashBytes := sha256.Sum256(body)
+	hash := fmt.Sprintf("%x", hashBytes[:20])
 	// Try to get extension from URL path
 	u, err := url.Parse(imgURL)
 	if err != nil {

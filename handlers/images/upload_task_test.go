@@ -116,8 +116,8 @@ func TestUploadImageTask_Action_SecurityFix(t *testing.T) {
 
 	t.Logf("Generated ID: %s", id)
 
-	// SHA256 length is 64
-	assert.Equal(t, 64, len(id), "Expected SHA256 hash length (64) after fix")
+	// Truncated SHA256 length is 40 (20 bytes hex encoded)
+	assert.Equal(t, 40, len(id), "Expected truncated SHA256 hash length (40)")
 
 	// Also verify UploaderID
 	assert.Equal(t, int32(123), capturedUploaderID)

@@ -404,6 +404,7 @@ type Querier interface {
 	GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error)
 	GetPendingPassword(ctx context.Context, userID int32) (*PendingPassword, error)
 	GetPendingPasswordByCode(ctx context.Context, verificationCode string) (*PendingPassword, error)
+	GetPermissionByID(ctx context.Context, iduserRoles int32) (*GetPermissionByIDRow, error)
 	// Lists the role names granted to a user.
 	GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
 	GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)

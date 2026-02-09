@@ -182,3 +182,10 @@ AND (sqlc.narg('active') IS NULL OR g.active = sqlc.narg('active'))
 AND (sqlc.narg('username') IS NULL OR u.username LIKE sqlc.narg('username'))
 AND (sqlc.narg('role_name') IS NULL OR r.name LIKE sqlc.narg('role_name'))
 ORDER BY g.id;
+
+-- name: GetPermissionByID :one
+SELECT ur.iduser_roles, ur.users_idusers, r.name, u.username
+FROM user_roles ur
+JOIN users u ON u.idusers = ur.users_idusers
+JOIN roles r ON ur.role_id = r.id
+WHERE ur.iduser_roles = ?;

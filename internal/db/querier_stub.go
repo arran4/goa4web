@@ -757,6 +757,16 @@ type QuerierStub struct {
 	GetPermissionsByUserIDCalls   []int32
 	GetPermissionsByUserIDFn      func(int32) ([]*GetPermissionsByUserIDRow, error)
 
+	GetPermissionsWithUsersCalls   []GetPermissionsWithUsersParams
+	GetPermissionsWithUsersReturns []*GetPermissionsWithUsersRow
+	GetPermissionsWithUsersErr     error
+	GetPermissionsWithUsersFn      func(context.Context, GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
+
+	GetPermissionByIDCalls []int32
+	GetPermissionByIDRow   *GetPermissionByIDRow
+	GetPermissionByIDErr   error
+	GetPermissionByIDFn    func(context.Context, int32) (*GetPermissionByIDRow, error)
+
 	GetThreadBySectionThreadIDForReplierCalls  []GetThreadBySectionThreadIDForReplierParams
 	GetThreadBySectionThreadIDForReplierReturn *Forumthread
 	GetThreadBySectionThreadIDForReplierErr    error
@@ -2228,6 +2238,32 @@ func (s *QuerierStub) GetPermissionsByUserID(ctx context.Context, idusers int32)
 		return fn(idusers)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error) {
+	s.mu.Lock()
+	s.GetPermissionsWithUsersCalls = append(s.GetPermissionsWithUsersCalls, arg)
+	fn := s.GetPermissionsWithUsersFn
+	ret := s.GetPermissionsWithUsersReturns
+	err := s.GetPermissionsWithUsersErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) GetPermissionByID(ctx context.Context, iduserRoles int32) (*GetPermissionByIDRow, error) {
+	s.mu.Lock()
+	s.GetPermissionByIDCalls = append(s.GetPermissionByIDCalls, iduserRoles)
+	fn := s.GetPermissionByIDFn
+	row := s.GetPermissionByIDRow
+	err := s.GetPermissionByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, iduserRoles)
+	}
+	return row, err
 }
 
 func (s *QuerierStub) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error) {

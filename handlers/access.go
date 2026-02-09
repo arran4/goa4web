@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -48,6 +51,23 @@ func RequireRole(h http.HandlerFunc, err error, roles ...string) http.HandlerFun
 		if !common.Allowed(r, roles...) {
 			w.WriteHeader(http.StatusForbidden)
 			RenderErrorPage(w, r, err)
+			return
+		}
+		h(w, r)
+	}
+}
+
+// EnforceGrantFromPath wraps h and denies the request if the caller lacks the specified grant
+// for the item ID extracted from the URL path parameter.
+func EnforceGrantFromPath(h http.HandlerFunc, section, item, action, param string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		vars := mux.Vars(r)
+		idStr := vars[param]
+		id, _ := strconv.Atoi(idStr)
+
+		if !cd.HasGrant(section, item, action, int32(id)) {
+			RenderErrorPage(w, r, ErrForbidden)
 			return
 		}
 		h(w, r)

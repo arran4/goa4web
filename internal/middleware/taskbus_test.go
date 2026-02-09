@@ -24,7 +24,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req := httptest.NewRequest("POST", "/admin/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec := httptest.NewRecorder()
-	ch := bus.Subscribe(eventbus.TaskMessageType)
+	ch, _ := bus.Subscribe(eventbus.TaskMessageType)
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
@@ -45,7 +45,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
-	ch = bus.Subscribe(eventbus.TaskMessageType)
+	ch, _ = bus.Subscribe(eventbus.TaskMessageType)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
@@ -68,7 +68,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
-	ch = bus.Subscribe(eventbus.TaskMessageType)
+	ch, _ = bus.Subscribe(eventbus.TaskMessageType)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	failureHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
@@ -93,7 +93,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	req = httptest.NewRequest("POST", "/p", strings.NewReader("task=Add"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()
-	ch = bus.Subscribe(eventbus.TaskMessageType)
+	ch, _ = bus.Subscribe(eventbus.TaskMessageType)
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
@@ -158,7 +158,7 @@ func TestTaskEventQueue(t *testing.T) {
 
 	bus = eventbus.NewBus()
 	mw.SetBus(bus)
-	ch := bus.Subscribe(eventbus.TaskMessageType)
+	ch, _ := bus.Subscribe(eventbus.TaskMessageType)
 	mw.Flush(context.Background())
 
 	select {

@@ -16,33 +16,39 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	if q == nil || bus == nil {
 		return
 	}
-	ch := bus.Subscribe(eventbus.TaskMessageType)
+	ch, ack := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg := <-ch:
-			evt, ok := msg.(eventbus.TaskEvent)
+		case msg, ok := <-ch:
 			if !ok {
-				continue
+				return
 			}
-			named, ok := evt.Task.(tasks.Name)
-			if evt.UserID == 0 || !ok {
-				continue
-			}
-			aud, ok := evt.Task.(tasks.AuditableTask)
-			if !ok {
-				continue
-			}
-			details := aud.AuditRecord(evt.Data)
-			data, _ := json.Marshal(evt.Data)
-			if err := q.InsertAuditLog(ctx, db.InsertAuditLogParams{
-				UsersIdusers: evt.UserID,
-				Action:       named.Name(),
-				Path:         evt.Path,
-				Details:      sql.NullString{String: details, Valid: details != ""},
-				Data:         sql.NullString{String: string(data), Valid: len(data) > 0},
-			}); err != nil {
-				log.Printf("insert audit log: %v", err)
-			}
+			func() {
+				defer ack()
+				evt, ok := msg.(eventbus.TaskEvent)
+				if !ok {
+					return
+				}
+				named, ok := evt.Task.(tasks.Name)
+				if evt.UserID == 0 || !ok {
+					return
+				}
+				aud, ok := evt.Task.(tasks.AuditableTask)
+				if !ok {
+					return
+				}
+				details := aud.AuditRecord(evt.Data)
+				data, _ := json.Marshal(evt.Data)
+				if err := q.InsertAuditLog(ctx, db.InsertAuditLogParams{
+					UsersIdusers: evt.UserID,
+					Action:       named.Name(),
+					Path:         evt.Path,
+					Details:      sql.NullString{String: details, Valid: details != ""},
+					Data:         sql.NullString{String: string(data), Valid: len(data) > 0},
+				}); err != nil {
+					log.Printf("insert audit log: %v", err)
+				}
+			}()
 		case <-ctx.Done():
 			return
 		}

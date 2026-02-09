@@ -74,6 +74,7 @@ type Bus struct {
 	mu          sync.RWMutex
 	subscribers []subscriber
 	closed      bool
+	wg          sync.WaitGroup
 	SyncPublish func(Message) // Optional hook for synchronous delivery (mostly for tests)
 }
 
@@ -87,7 +88,9 @@ func NewBus() *Bus {
 
 // Subscribe registers a new subscriber for the provided message types.
 // If no types are supplied the subscriber receives all messages.
-func (b *Bus) Subscribe(types ...MessageType) <-chan Message {
+// It returns a read-only channel for messages and an acknowledge function
+// that must be called after each message is processed.
+func (b *Bus) Subscribe(types ...MessageType) (<-chan Message, func()) {
 	ch := make(chan Message, 1)
 	set := make(map[MessageType]struct{}, len(types))
 	for _, t := range types {
@@ -96,7 +99,7 @@ func (b *Bus) Subscribe(types ...MessageType) <-chan Message {
 	b.mu.Lock()
 	b.subscribers = append(b.subscribers, subscriber{ch: ch, types: set})
 	b.mu.Unlock()
-	return ch
+	return ch, func() { b.wg.Done() }
 }
 
 // Publish dispatches an event to all current subscribers.
@@ -115,48 +118,47 @@ func (b *Bus) Publish(msg Message) error {
 		}
 	}
 	b.mu.RLock()
+	defer b.mu.RUnlock()
 	if b.closed {
-		b.mu.RUnlock()
 		return ErrBusClosed
 	}
-	subs := append([]subscriber(nil), b.subscribers...)
-	b.mu.RUnlock()
-	for _, s := range subs {
+	for _, s := range b.subscribers {
 		if len(s.types) > 0 {
 			if _, ok := s.types[msg.Type()]; !ok {
 				continue
 			}
 		}
+		b.wg.Add(1)
 		select {
 		case s.ch <- msg:
 		default:
+			b.wg.Done()
 		}
 	}
 	return nil
 }
-
-const drainInterval = 10 * time.Millisecond // wait time between draining checks
 
 // Shutdown waits for all queued events to be processed and
 // prevents any new events from being published.
 func (b *Bus) Shutdown(ctx context.Context) error {
 	b.mu.Lock()
 	b.closed = true
-	subs := append([]subscriber(nil), b.subscribers...)
-	b.mu.Unlock()
-	for _, s := range subs {
-		ch := s.ch
-		for {
-			if len(ch) == 0 {
-				break
-			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(drainInterval)
-			}
-		}
+	// Close all subscriber channels to signal consumers to stop.
+	for _, s := range b.subscribers {
+		close(s.ch)
 	}
-	return nil
+	b.mu.Unlock()
+
+	done := make(chan struct{})
+	go func() {
+		b.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

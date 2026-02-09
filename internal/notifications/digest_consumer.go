@@ -21,13 +21,17 @@ func (c *DigestConsumer) Run(ctx context.Context) {
 	if c.notifier == nil || c.notifier.Bus == nil {
 		return
 	}
-	ch := c.notifier.Bus.Subscribe(eventbus.DigestRunMessageType)
+	ch, ack := c.notifier.Bus.Subscribe(eventbus.DigestRunMessageType)
 	for {
 		select {
-		case msg := <-ch:
+		case msg, ok := <-ch:
+			if !ok {
+				return
+			}
 			if evt, ok := msg.(eventbus.DigestRunEvent); ok {
 				c.notifier.ProcessDigestForTime(ctx, evt.Time)
 			}
+			ack()
 		case <-ctx.Done():
 			return
 		}

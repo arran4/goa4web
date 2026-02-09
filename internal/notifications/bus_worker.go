@@ -51,17 +51,19 @@ func (n *Notifier) BusWorker(ctx context.Context, bus *eventbus.Bus, q dlq.DLQ) 
 	if bus == nil || n.Queries == nil {
 		return
 	}
-	ch := bus.Subscribe(eventbus.TaskMessageType)
+	ch, ack := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg := <-ch:
-			evt, ok := msg.(eventbus.TaskEvent)
+		case msg, ok := <-ch:
 			if !ok {
-				continue
+				return
 			}
-			if err := n.ProcessEvent(ctx, evt, q); err != nil {
-				log.Printf("process event: %v", err)
+			if evt, ok := msg.(eventbus.TaskEvent); ok {
+				if err := n.ProcessEvent(ctx, evt, q); err != nil {
+					log.Printf("process event: %v", err)
+				}
 			}
+			ack()
 		case <-ctx.Done():
 			return
 		}

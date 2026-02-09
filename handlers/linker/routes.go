@@ -38,7 +38,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	lr.Handle("/comments/{link}", RequireLinkViewOrReply(http.HandlerFunc(handlers.TaskHandler(replyTaskEvent)))).Methods("POST").MatcherFunc(replyTaskEvent.Matcher())
 	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(commentEditAction)))).Methods("POST").MatcherFunc(commentEditAction.Matcher())
 	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST")
-	lr.HandleFunc("/show/{link}", ShowPage).Methods("GET")
+	lr.Handle("/show/{link}", RequireLinkViewOrReply(http.HandlerFunc(ShowPage))).Methods("GET")
 	lr.HandleFunc("/suggest", SuggestPage).Methods("GET")
 	lr.HandleFunc("/suggest", handlers.TaskHandler(suggestTask)).Methods("POST").MatcherFunc(suggestTask.Matcher())
 

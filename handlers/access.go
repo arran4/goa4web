@@ -65,3 +65,15 @@ func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 		RenderPermissionDenied(w, r)
 	}
 }
+
+// EnforceGrant wraps h and denies the request if the caller lacks the specified grant.
+func EnforceGrant(section, item, action string, itemID int32, h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd == nil || !cd.HasGrant(section, item, action, itemID) {
+			RenderErrorPage(w, r, ErrForbidden)
+			return
+		}
+		h(w, r)
+	}
+}

@@ -31,15 +31,17 @@ func TestNewBus(t *testing.T) {
 func TestSubscribe(t *testing.T) {
 	bus := NewBus()
 
-	// Test subscribe all
-	ch1 := bus.Subscribe()
-	require.NotNil(t, ch1)
-	assert.Equal(t, 1, cap(ch1))
+	t.Run("SubscribeAll", func(t *testing.T) {
+		ch1 := bus.Subscribe()
+		require.NotNil(t, ch1)
+		assert.Equal(t, 1, cap(ch1))
+	})
 
-	// Test subscribe specific type
-	ch2 := bus.Subscribe(TaskMessageType)
-	require.NotNil(t, ch2)
-	assert.Equal(t, 1, cap(ch2))
+	t.Run("SubscribeSpecific", func(t *testing.T) {
+		ch2 := bus.Subscribe(TaskMessageType)
+		require.NotNil(t, ch2)
+		assert.Equal(t, 1, cap(ch2))
+	})
 }
 
 func TestPublish(t *testing.T) {
@@ -58,61 +60,63 @@ func TestPublish(t *testing.T) {
 		Time: time.Now(),
 	}
 
-	// Publish TaskEvent
-	err := bus.Publish(taskMsg)
-	require.NoError(t, err)
+	t.Run("PublishTaskEvent", func(t *testing.T) {
+		err := bus.Publish(taskMsg)
+		require.NoError(t, err)
 
-	// Verify chAll received taskMsg
-	select {
-	case msg := <-chAll:
-		assert.Equal(t, taskMsg, msg)
-	case <-time.After(100 * time.Millisecond):
-		t.Fatal("chAll did not receive taskMsg")
-	}
+		// Verify chAll received taskMsg
+		select {
+		case msg := <-chAll:
+			assert.Equal(t, taskMsg, msg)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("chAll did not receive taskMsg")
+		}
 
-	// Verify chTask received taskMsg
-	select {
-	case msg := <-chTask:
-		assert.Equal(t, taskMsg, msg)
-	case <-time.After(100 * time.Millisecond):
-		t.Fatal("chTask did not receive taskMsg")
-	}
+		// Verify chTask received taskMsg
+		select {
+		case msg := <-chTask:
+			assert.Equal(t, taskMsg, msg)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("chTask did not receive taskMsg")
+		}
 
-	// Verify chEmail did NOT receive taskMsg
-	select {
-	case msg := <-chEmail:
-		t.Fatalf("chEmail received unexpected message: %v", msg)
-	default:
-		// OK
-	}
+		// Verify chEmail did NOT receive taskMsg
+		select {
+		case msg := <-chEmail:
+			t.Fatalf("chEmail received unexpected message: %v", msg)
+		default:
+			// OK
+		}
+	})
 
-	// Publish EmailQueueEvent
-	err = bus.Publish(emailMsg)
-	require.NoError(t, err)
+	t.Run("PublishEmailQueueEvent", func(t *testing.T) {
+		err := bus.Publish(emailMsg)
+		require.NoError(t, err)
 
-	// Verify chAll received emailMsg
-	select {
-	case msg := <-chAll:
-		assert.Equal(t, emailMsg, msg)
-	case <-time.After(100 * time.Millisecond):
-		t.Fatal("chAll did not receive emailMsg")
-	}
+		// Verify chAll received emailMsg
+		select {
+		case msg := <-chAll:
+			assert.Equal(t, emailMsg, msg)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("chAll did not receive emailMsg")
+		}
 
-	// Verify chEmail received emailMsg
-	select {
-	case msg := <-chEmail:
-		assert.Equal(t, emailMsg, msg)
-	case <-time.After(100 * time.Millisecond):
-		t.Fatal("chEmail did not receive emailMsg")
-	}
+		// Verify chEmail received emailMsg
+		select {
+		case msg := <-chEmail:
+			assert.Equal(t, emailMsg, msg)
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("chEmail did not receive emailMsg")
+		}
 
-	// Verify chTask did NOT receive emailMsg
-	select {
-	case msg := <-chTask:
-		t.Fatalf("chTask received unexpected message: %v", msg)
-	default:
-		// OK
-	}
+		// Verify chTask did NOT receive emailMsg
+		select {
+		case msg := <-chTask:
+			t.Fatalf("chTask received unexpected message: %v", msg)
+		default:
+			// OK
+		}
+	})
 }
 
 func TestPublish_NonBlocking(t *testing.T) {

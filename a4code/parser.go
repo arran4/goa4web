@@ -140,7 +140,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			p := stack[len(stack)-1]
 			// We need to access children list to update block status
 			// We assume AddChild appends to children
-			children := getChildren(p)
+			children := p.GetChildren()
 			updateBlockStatus(children, t, isBlockContext(p.(ast.Node)))
 			p.AddChild(t)
 		}
@@ -165,7 +165,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					// When popping n, we need to add it to the new top of stack
 					if len(stack) > 0 {
 						p := stack[len(stack)-1]
-						children := getChildren(p)
+						children := p.GetChildren()
 						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 						p.AddChild(n)
 					}
@@ -208,7 +208,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 
 				if len(stack) > 0 {
 					p := stack[len(stack)-1]
-					children := getChildren(p)
+					children := p.GetChildren()
 					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 					p.AddChild(n)
 				}
@@ -242,37 +242,6 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			buf.WriteByte(ch)
 		}
 	}
-}
-
-// Helper to extract children from known Container types
-func getChildren(c ast.Container) []ast.Node {
-	switch t := c.(type) {
-	case *ast.Root:
-		return t.Children
-	case *ast.Bold:
-		return t.Children
-	case *ast.Italic:
-		return t.Children
-	case *ast.Underline:
-		return t.Children
-	case *ast.Sup:
-		return t.Children
-	case *ast.Sub:
-		return t.Children
-	case *ast.Link:
-		return t.Children
-	case *ast.Quote:
-		return t.Children
-	case *ast.QuoteOf:
-		return t.Children
-	case *ast.Spoiler:
-		return t.Children
-	case *ast.Indent:
-		return t.Children
-	case *ast.Custom:
-		return t.Children
-	}
-	return nil
 }
 
 // Parse reads markup from r and returns the root node.
@@ -364,7 +333,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := getChildren(p)
+			children := p.GetChildren()
 			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}
@@ -401,7 +370,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := getChildren(p)
+			children := p.GetChildren()
 			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}
@@ -430,7 +399,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := getChildren(p)
+			children := p.GetChildren()
 			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}

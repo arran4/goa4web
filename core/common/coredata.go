@@ -105,6 +105,9 @@ type NavigationProvider interface {
 // No package-level pagination constants as runtime config provides these values.
 
 type CoreData struct {
+	// marks records which template sections have been rendered to avoid
+	// duplicate output when re-rendering after an error.
+	marks        map[string]struct{}
 	a4codeMapper func(tag, val string) string
 	// AdminMode indicates whether admin-only UI elements should be displayed.
 	AdminMode bool
@@ -1532,11 +1535,11 @@ func (cd *CoreData) LinkerLinksByCategoryID(id int32, ops ...lazy.Option[[]*db.G
 // calls return false. It is used to avoid re-rendering template sections
 // when streaming pages after an error.
 func (cd *CoreData) Marked(key string) bool {
-	if cd.cache.marks == nil {
-		cd.cache.marks = map[string]struct{}{}
+	if cd.marks == nil {
+		cd.marks = map[string]struct{}{}
 	}
-	_, marked := cd.cache.marks[key]
-	cd.cache.marks[key] = struct{}{}
+	_, marked := cd.marks[key]
+	cd.marks[key] = struct{}{}
 	return !marked
 }
 

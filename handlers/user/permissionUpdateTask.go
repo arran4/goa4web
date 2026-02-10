@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"

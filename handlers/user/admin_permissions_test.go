@@ -83,10 +83,11 @@ func TestPermissionUserAllowTask(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		select {
-		case msg := <-ch:
-			e, ok := msg.(eventbus.TaskEvent)
+		case env := <-ch:
+			env.Ack()
+			e, ok := env.Msg.(eventbus.TaskEvent)
 			if !ok {
-				t.Fatalf("wrong message type %T", msg)
+				t.Fatalf("wrong message type %T", env.Msg)
 			}
 			if e.Data["Username"] != "bob" || e.Data["Permission"] != "moderator" {
 				t.Fatalf("unexpected event data: %+v", e.Data)

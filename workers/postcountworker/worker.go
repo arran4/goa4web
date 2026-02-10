@@ -22,14 +22,14 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q PostUpdateQuerier) {
 	if bus == nil || q == nil {
 		return
 	}
-	ch, ack := bus.Subscribe(eventbus.TaskMessageType)
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg, ok := <-ch:
+		case env, ok := <-ch:
 			if !ok {
 				return
 			}
-			evt, ok := msg.(eventbus.TaskEvent)
+			evt, ok := env.Msg.(eventbus.TaskEvent)
 			if ok {
 				data, ok := evt.Data[EventKey].(UpdateEventData)
 				if ok {
@@ -38,7 +38,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q PostUpdateQuerier) {
 					}
 				}
 			}
-			ack()
+			env.Ack()
 		case <-ctx.Done():
 			return
 		}

@@ -15,7 +15,7 @@ func BenchmarkShutdown(b *testing.B) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		// Subscribe
-		ch, ack := bus.Subscribe(TaskMessageType)
+		ch := bus.Subscribe(TaskMessageType)
 
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -29,10 +29,10 @@ func BenchmarkShutdown(b *testing.B) {
 				select {
 				case <-ctx.Done():
 					return
-				case _, ok := <-ch:
+				case env, ok := <-ch:
                     if !ok { return }
                     // Consumed immediately
-                    ack()
+                    env.Ack()
 				}
 			}
 		}()

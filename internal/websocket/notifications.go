@@ -156,16 +156,16 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	defer conn.Close()
 
-	ch, ack := h.Bus.Subscribe(eventbus.TaskMessageType)
+	ch := h.Bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg, ok := <-ch:
+		case env, ok := <-ch:
 			if !ok {
 				return
 			}
 			shouldReturn := func() bool {
-				defer ack()
-				evt, ok := msg.(eventbus.TaskEvent)
+				defer env.Ack()
+				evt, ok := env.Msg.(eventbus.TaskEvent)
 				if !ok {
 					return false
 				}

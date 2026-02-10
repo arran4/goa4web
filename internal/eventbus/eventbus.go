@@ -29,6 +29,20 @@ type Message interface {
 	Type() MessageType
 }
 
+// Envelope wraps a Message with an acknowledgement function.
+type Envelope struct {
+	Msg Message
+	ack func()
+}
+
+// Ack signals that the message has been processed.
+// It is safe to call multiple times; subsequent calls are no-ops.
+func (e *Envelope) Ack() {
+	if e.ack != nil {
+		e.ack()
+	}
+}
+
 // TaskEvent represents a task or notification that occurred in the application.
 type TaskEvent struct {
 	Path    string         // Path or URI describing the event source
@@ -65,7 +79,7 @@ func (DigestRunEvent) Type() MessageType { return DigestRunMessageType }
 
 // Bus provides a simple publish/subscribe mechanism for events.
 type subscriber struct {
-	ch    chan Message
+	ch    chan Envelope
 	types map[MessageType]struct{}
 }
 
@@ -88,10 +102,9 @@ func NewBus() *Bus {
 
 // Subscribe registers a new subscriber for the provided message types.
 // If no types are supplied the subscriber receives all messages.
-// It returns a read-only channel for messages and an acknowledge function
-// that must be called after each message is processed.
-func (b *Bus) Subscribe(types ...MessageType) (<-chan Message, func()) {
-	ch := make(chan Message, 1)
+// It returns a read-only channel of Envelopes. Consumers must call Ack() on each envelope.
+func (b *Bus) Subscribe(types ...MessageType) <-chan Envelope {
+	ch := make(chan Envelope, 1)
 	set := make(map[MessageType]struct{}, len(types))
 	for _, t := range types {
 		set[t] = struct{}{}
@@ -99,7 +112,7 @@ func (b *Bus) Subscribe(types ...MessageType) (<-chan Message, func()) {
 	b.mu.Lock()
 	b.subscribers = append(b.subscribers, subscriber{ch: ch, types: set})
 	b.mu.Unlock()
-	return ch, func() { b.wg.Done() }
+	return ch
 }
 
 // Publish dispatches an event to all current subscribers.
@@ -128,11 +141,28 @@ func (b *Bus) Publish(msg Message) error {
 				continue
 			}
 		}
+
 		b.wg.Add(1)
+
+		// Create a separate once per subscriber/message to properly handle drop/send
+		var once sync.Once
+		ack := func() {
+			once.Do(func() {
+				b.wg.Done()
+			})
+		}
+
+		env := Envelope{
+			Msg: msg,
+			ack: ack,
+		}
+
 		select {
-		case s.ch <- msg:
+		case s.ch <- env:
 		default:
-			b.wg.Done()
+			// If channel is full, we drop but must decrease WG immediately
+			// effectively auto-acking the dropped message.
+			ack()
 		}
 	}
 	return nil

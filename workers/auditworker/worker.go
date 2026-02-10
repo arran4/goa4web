@@ -16,16 +16,16 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	if q == nil || bus == nil {
 		return
 	}
-	ch, ack := bus.Subscribe(eventbus.TaskMessageType)
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg, ok := <-ch:
+		case env, ok := <-ch:
 			if !ok {
 				return
 			}
 			func() {
-				defer ack()
-				evt, ok := msg.(eventbus.TaskEvent)
+				defer env.Ack()
+				evt, ok := env.Msg.(eventbus.TaskEvent)
 				if !ok {
 					return
 				}

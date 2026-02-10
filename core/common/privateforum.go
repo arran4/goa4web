@@ -66,7 +66,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
 		return nil, nil
 	}
-	return cd.privateForumTopics.Load(func() ([]*PrivateTopic, error) {
+	return cd.cache.privateForumTopics.Load(func() ([]*PrivateTopic, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}

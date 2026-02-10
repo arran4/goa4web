@@ -128,7 +128,7 @@ func TestHappyPathPage_AdminLinks(t *testing.T) {
 }
 
 func cachePrivateTopics(cd *common.CoreData, topics []*common.PrivateTopic) {
-	v := reflect.ValueOf(cd).Elem().FieldByName("privateForumTopics")
+	v := reflect.ValueOf(cd).Elem().FieldByName("cache").FieldByName("privateForumTopics")
 	ptr := reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
 	method := ptr.Addr().MethodByName("Set")
 	if !method.IsValid() {

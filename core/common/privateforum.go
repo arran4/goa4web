@@ -190,3 +190,10 @@ func (cd *CoreData) GrantPrivateForumTopic(topicID int32, uid, rid sql.NullInt32
 		Extra:    sql.NullString{},
 	})
 }
+
+// WithPrivateForumTopics preloads private forum topics for testing.
+func WithPrivateForumTopics(topics []*PrivateTopic) CoreOption {
+	return func(cd *CoreData) {
+		cd.cache.privateForumTopics.Set(topics)
+	}
+}

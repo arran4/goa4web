@@ -194,8 +194,10 @@ func (s *Sub) String() string {
 // Link to a URL.
 type Link struct {
 	BaseNode
-	Href     string
-	Children []Node
+	Href             string
+	Children         []Node
+	IsBlock          bool
+	IsImmediateClose bool
 }
 
 func (*Link) isNode()                {}

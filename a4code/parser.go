@@ -193,6 +193,7 @@ func Parse(r io.Reader) (*ast.Root, error) {
 	} else {
 		root.SetPos(0, 0)
 	}
+	ast.DetermineLinkProperties(root)
 	return root, nil
 }
 

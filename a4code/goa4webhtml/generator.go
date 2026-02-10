@@ -67,8 +67,7 @@ func NewGenerator(opts ...interface{}) *Generator {
 
 func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 	if g.LinkProvider != nil {
-		// TODO: Determine isBlock and isImmediateClose if possible from AST, otherwise assume inline defaults
-		htmlOpen, htmlClose, _ := g.LinkProvider.RenderLink(n.Href, false, false)
+		htmlOpen, htmlClose, _ := g.LinkProvider.RenderLink(n.Href, n.IsBlock, n.IsImmediateClose)
 		if _, err := io.WriteString(w, htmlOpen); err != nil {
 			return err
 		}

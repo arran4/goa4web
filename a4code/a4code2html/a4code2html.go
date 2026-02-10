@@ -407,8 +407,20 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 					return err
 				}
 
+				isImmediateClose := false
 				p, err := r.Peek(1)
 				if err == nil && len(p) > 0 && p[0] == ']' {
+					isImmediateClose = true
+				} else {
+					p, err := r.Peek(2)
+					if err == nil && len(p) >= 2 && p[0] == ' ' && p[1] == ']' {
+						if _, err := r.ReadByte(); err == nil {
+							isImmediateClose = true
+						}
+					}
+				}
+
+				if isImmediateClose {
 					// Case [link url]
 					// Default legacy behavior without metadata provider: just print original
 					if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {

@@ -959,6 +959,11 @@ type QuerierStub struct {
 	DeleteSubscriptionByIDForSubscriberCalls []DeleteSubscriptionByIDForSubscriberParams
 	DeleteSubscriptionByIDForSubscriberErr   error
 	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
+
+	GetUserRoleByIDCalls []int32
+	GetUserRoleByIDRow   *GetUserRoleByIDRow
+	GetUserRoleByIDErr   error
+	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -1395,6 +1400,22 @@ func (s *QuerierStub) SystemCreateUserRole(ctx context.Context, arg SystemCreate
 		return fn(ctx, arg)
 	}
 	return err
+}
+
+func (s *QuerierStub) GetUserRoleByID(ctx context.Context, id int32) (*GetUserRoleByIDRow, error) {
+	s.mu.Lock()
+	s.GetUserRoleByIDCalls = append(s.GetUserRoleByIDCalls, id)
+	fn := s.GetUserRoleByIDFn
+	row := s.GetUserRoleByIDRow
+	err := s.GetUserRoleByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return row, nil
 }
 
 func (s *QuerierStub) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {

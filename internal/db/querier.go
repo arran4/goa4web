@@ -429,6 +429,8 @@ type Querier interface {
 	// Result:
 	//   role (string)
 	GetUserRole(ctx context.Context, usersIdusers int32) (string, error)
+	// Gets a specific user role assignment by its primary key (iduser_roles).
+	GetUserRoleByID(ctx context.Context, id int32) (*GetUserRoleByIDRow, error)
 	// This query selects permissions information for admin users.
 	//   iduser_roles (int)
 	//   role (string)

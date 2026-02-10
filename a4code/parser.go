@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"io"
 	"iter"
-	"slices"
 	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -64,6 +63,53 @@ func (s *scanner) UnreadByte() error {
 	return err
 }
 
+func isBlockContext(n ast.Node) bool {
+	switch n.(type) {
+	case *ast.Root, *ast.Quote, *ast.QuoteOf, *ast.Spoiler, *ast.Indent:
+		return true
+	}
+	return false
+}
+
+func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bool) {
+	if len(children) > 0 {
+		prev := children[len(children)-1]
+		if l, ok := prev.(*ast.Link); ok && l.IsBlock {
+			// Check if newChild starts with newline
+			startsNewline := false
+			if txt, ok := newChild.(*ast.Text); ok {
+				if strings.HasPrefix(txt.Value, "\n") {
+					startsNewline = true
+				}
+			}
+			if !startsNewline {
+				l.IsBlock = false
+			}
+		}
+	}
+
+	if isContextBlock {
+		if l, ok := newChild.(*ast.Link); ok {
+			// Check previous sibling
+			prevIsNewline := false
+			if len(children) == 0 {
+				prevIsNewline = true
+			} else {
+				if txt, ok := children[len(children)-1].(*ast.Text); ok {
+					if strings.HasSuffix(txt.Value, "\n") {
+						prevIsNewline = true
+					}
+				}
+			}
+			if prevIsNewline {
+				l.IsBlock = true
+			} else {
+				l.IsBlock = false
+			}
+		}
+	}
+}
+
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	br := bufio.NewReader(r)
 	s := &scanner{r: br, pos: 0}
@@ -91,7 +137,12 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 		textStart = -1
 		buf.Reset()
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(t)
+			p := stack[len(stack)-1]
+			// We need to access children list to update block status
+			// We assume AddChild appends to children
+			children := getChildren(p)
+			updateBlockStatus(children, t, isBlockContext(p.(ast.Node)))
+			p.AddChild(t)
 		}
 		return yield(t, len(stack)+1)
 	}
@@ -110,8 +161,13 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 						start, _ := nNode.GetPos()
 						nNode.SetPos(start, visiblePos)
 					}
+
+					// When popping n, we need to add it to the new top of stack
 					if len(stack) > 0 {
-						stack[len(stack)-1].AddChild(n)
+						p := stack[len(stack)-1]
+						children := getChildren(p)
+						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+						p.AddChild(n)
 					}
 					if !yield(n, len(stack)+1) {
 					}
@@ -143,8 +199,18 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					start, _ := nNode.GetPos()
 					nNode.SetPos(start, visiblePos)
 				}
+
+				if l, ok := n.(*ast.Link); ok {
+					if len(l.Children) == 0 {
+						l.IsImmediateClose = true
+					}
+				}
+
 				if len(stack) > 0 {
-					stack[len(stack)-1].AddChild(n)
+					p := stack[len(stack)-1]
+					children := getChildren(p)
+					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+					p.AddChild(n)
 				}
 				if !yield(n, len(stack)+1) {
 					return
@@ -178,22 +244,60 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	}
 }
 
+// Helper to extract children from known Container types
+func getChildren(c ast.Container) []ast.Node {
+	switch t := c.(type) {
+	case *ast.Root:
+		return t.Children
+	case *ast.Bold:
+		return t.Children
+	case *ast.Italic:
+		return t.Children
+	case *ast.Underline:
+		return t.Children
+	case *ast.Sup:
+		return t.Children
+	case *ast.Sub:
+		return t.Children
+	case *ast.Link:
+		return t.Children
+	case *ast.Quote:
+		return t.Children
+	case *ast.QuoteOf:
+		return t.Children
+	case *ast.Spoiler:
+		return t.Children
+	case *ast.Indent:
+		return t.Children
+	case *ast.Custom:
+		return t.Children
+	}
+	return nil
+}
+
 // Parse reads markup from r and returns the root node.
 func Parse(r io.Reader) (*ast.Root, error) {
-	nodes := slices.Collect(Stream(r, WithDepth(1)))
-	root := &ast.Root{Children: nodes}
+	// Reimplement Stream collection manually to handle Root-level block logic
+	var nodes []ast.Node
+	root := &ast.Root{} // Temporary root to check context logic
+
+	for n := range Stream(r, WithDepth(1)) {
+		// Update block status for Root children
+		updateBlockStatus(nodes, n, true) // Root is always block context
+		nodes = append(nodes, n)
+	}
+
+	root.Children = nodes
 	// Calculate root range based on children
 	if len(nodes) > 0 {
 		start, _ := nodes[0].GetPos()
 		_, end := nodes[len(nodes)-1].GetPos()
 		// Since we track visiblePos now, start/end are consistent.
-		// If there are gaps (not possible if stream is continuous), this might be weird,
-		// but visiblePos is continuous.
 		root.SetPos(start, end)
 	} else {
 		root.SetPos(0, 0)
 	}
-	ast.DetermineLinkProperties(root)
+	// No need to call DetermineLinkProperties anymore
 	return root, nil
 }
 
@@ -204,7 +308,18 @@ func ParseString(s string) (*ast.Root, error) {
 
 // ParseNodesReader parses r and returns only the top-level nodes.
 func ParseNodesReader(r io.Reader) ([]ast.Node, error) {
-	return slices.Collect(Stream(r, WithDepth(1))), nil
+	// ParseNodesReader usually returns independent nodes.
+	// But Parse uses this logic too via Stream.
+	// We should duplicate the manual collection if we want block logic here too?
+	// ParseNodesReader is used by ParseNodes, which is used in tests.
+	// If we want consistent behavior, we should use similar logic.
+
+	var nodes []ast.Node
+	for n := range Stream(r, WithDepth(1)) {
+		updateBlockStatus(nodes, n, true) // Treat as root context for block logic
+		nodes = append(nodes, n)
+	}
+	return nodes, nil
 }
 
 // ParseNodes parses s and returns only the top-level nodes.
@@ -248,7 +363,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n := &ast.Image{Src: raw}
 		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := getChildren(p)
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	case "a", "link", "url":
@@ -282,7 +400,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		visiblePos += contentLen
 
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := getChildren(p)
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	case "quoteof":
@@ -308,7 +429,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := getChildren(p)
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	default:

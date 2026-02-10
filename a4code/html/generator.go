@@ -6,6 +6,7 @@ import (
 	"html"
 	"io"
 	"net/url"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
 )
@@ -116,9 +117,13 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 		fmt.Fprintf(w, `<a href="`)
 		io.WriteString(w, safe)
 		fmt.Fprintf(w, `" target="_BLANK" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
-		for _, c := range n.Children {
-			if err := ast.Generate(w, c, g.self()); err != nil {
-				return err
+		if isEffectivelyEmpty(n.Children) {
+			io.WriteString(w, safe)
+		} else {
+			for _, c := range n.Children {
+				if err := ast.Generate(w, c, g.self()); err != nil {
+					return err
+				}
 			}
 		}
 		io.WriteString(w, "</a>")
@@ -262,4 +267,20 @@ func SanitizeURL(raw string) (string, bool) {
 	default:
 		return html.EscapeString(raw), false
 	}
+}
+
+func isEffectivelyEmpty(children []ast.Node) bool {
+	if len(children) == 0 {
+		return true
+	}
+	for _, c := range children {
+		if t, ok := c.(*ast.Text); ok {
+			if strings.TrimSpace(t.Value) != "" {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	return true
 }

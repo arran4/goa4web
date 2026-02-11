@@ -19,7 +19,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestHappyPathForgotPasswordEventData(t *testing.T) {
+func TestForgotPasswordEventData(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	q.SystemGetLoginRow = &db.SystemGetLoginRow{
 		Idusers:         1,
@@ -55,6 +55,12 @@ func TestHappyPathForgotPasswordEventData(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
+	}
+	if _, ok := evt.Data["Username"]; !ok {
+		t.Fatalf("missing Username data")
+	}
+	if _, ok := evt.Data["Code"]; !ok {
+		t.Fatalf("missing Code data")
 	}
 	if _, ok := evt.Data["Username"]; !ok {
 		t.Fatalf("missing Username data")

@@ -12,42 +12,58 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
+type userLangPageQueries struct {
+	db.Querier
+	languages []*db.Language
+	userLangs []*db.UserLanguage
+	pref      *db.Preference
+	prefErr   error
+}
+
+func (q *userLangPageQueries) GetPreferenceForLister(_ context.Context, _ int32) (*db.Preference, error) {
+	if q.prefErr != nil {
+		return nil, q.prefErr
+	}
+	return q.pref, nil
+}
+
+func (q *userLangPageQueries) GetUserLanguages(_ context.Context, _ int32) ([]*db.UserLanguage, error) {
+	return q.userLangs, nil
+}
+
+func (q *userLangPageQueries) SystemListLanguages(_ context.Context) ([]*db.Language, error) {
+	return q.languages, nil
+}
+
+func (q *userLangPageQueries) GetPermissionsByUserID(_ context.Context, _ int32) ([]*db.GetPermissionsByUserIDRow, error) {
+	return []*db.GetPermissionsByUserIDRow{}, nil
+}
+
 func TestUserLangPage(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		queries := testhelpers.NewQuerierStub()
-		queries.SystemListLanguagesReturns = []*db.Language{
+	queries := &userLangPageQueries{
+		languages: []*db.Language{
 			{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}},
-		}
+		},
+		prefErr: sql.ErrNoRows,
+	}
 
-		queries.GetUserLanguagesFn = func(ctx context.Context, id int32) ([]*db.UserLanguage, error) {
-			return nil, nil // Or mocked langs
-		}
+	req := httptest.NewRequest("GET", "/usr/lang", nil)
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
+	cd.UserID = 1
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		queries.GetPreferenceForListerFn = func(ctx context.Context, id int32) (*db.Preference, error) {
-			return nil, sql.ErrNoRows
-		}
+	rr := httptest.NewRecorder()
+	userLangPage(rr, req)
 
-		queries.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{}
-
-		req := httptest.NewRequest("GET", "/usr/lang", nil)
-		ctx := req.Context()
-		cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{}))
-		cd.UserID = 1
-		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-
-		rr := httptest.NewRecorder()
-		userLangPage(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-		// simple check for content
-		if !strings.Contains(rr.Body.String(), "Save languages") {
-			t.Errorf("Expected body to contain 'Save languages', got %s", rr.Body.String())
-		}
-	})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	// simple check for content
+	if !strings.Contains(rr.Body.String(), "Save languages") {
+		t.Errorf("Expected body to contain 'Save languages', got %s", rr.Body.String())
+	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHappyPathAdminTemplatesExist(t *testing.T) {
+func TestAdminTemplatesExist(t *testing.T) {
 	pages := []tasks.Template{
 		AdminAuditLogPageTmpl,
 		AdminCommentPageTmpl,

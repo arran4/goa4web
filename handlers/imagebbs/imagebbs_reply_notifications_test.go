@@ -66,7 +66,7 @@ func (m *mockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 
 func (m *mockEmailProvider) TestConfig(ctx context.Context) error { return nil }
 
-func TestHappyPathImageBbsReply(t *testing.T) {
+func TestImageBbsReply(t *testing.T) {
 	replierUID := int32(1)
 	subscriberUID := int32(2)
 	boardID := int32(9)
@@ -184,73 +184,63 @@ func TestHappyPathImageBbsReply(t *testing.T) {
 	req = req.WithContext(ctx)
 	req = mux.SetURLVars(req, map[string]string{"board": "9"})
 
-	t.Run("Page Execution", func(t *testing.T) {
-		rr := httptest.NewRecorder()
-		replyTask.Action(rr, req)
-	})
+	rr := httptest.NewRecorder()
+	replyTask.Action(rr, req)
 
-	t.Run("Event Bus Verification", func(t *testing.T) {
-		bus.Publish(*evt)
+	bus.Publish(*evt)
 
-		if cdlq.lastError != "" {
-			t.Errorf("sync process error: %s", cdlq.lastError)
-		}
-	})
+	if cdlq.lastError != "" {
+		t.Errorf("sync process error: %s", cdlq.lastError)
+	}
 
-	t.Run("Notification Verification", func(t *testing.T) {
-		var subscriberNotif string
-		for _, call := range qs.SystemCreateNotificationCalls {
-			if call.RecipientID == subscriberUID {
-				subscriberNotif = call.Message.String
-			}
+	var subscriberNotif string
+	for _, call := range qs.SystemCreateNotificationCalls {
+		if call.RecipientID == subscriberUID {
+			subscriberNotif = call.Message.String
 		}
+	}
 
-		expectedSubscriberNotif := fmt.Sprintf("New reply in %q by replier\n", ImageBBSTopicName)
-		if subscriberNotif != expectedSubscriberNotif {
-			t.Errorf("expected subscriber notif %q, got %q", expectedSubscriberNotif, subscriberNotif)
-		}
-	})
+	expectedSubscriberNotif := fmt.Sprintf("New reply in %q by replier\n", ImageBBSTopicName)
+	if subscriberNotif != expectedSubscriberNotif {
+		t.Errorf("expected subscriber notif %q, got %q", expectedSubscriberNotif, subscriberNotif)
+	}
 
-	t.Run("Email Verification", func(t *testing.T) {
-		for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
-		}
+	for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
+	}
 
-		if len(mockProvider.sentMessages) != 1 {
-			t.Fatalf("expected 1 email sent, got %d", len(mockProvider.sentMessages))
-		}
+	if len(mockProvider.sentMessages) != 1 {
+		t.Fatalf("expected 1 email sent, got %d", len(mockProvider.sentMessages))
+	}
 
-		msg, err := mail.ReadMessage(strings.NewReader(string(mockProvider.sentMessages[0])))
-		if err != nil {
-			t.Fatalf("parse email: %v", err)
-		}
-		if msg.Header.Get("Subject") != "[goa4web] New reply in "+ImageBBSTopicName {
-			t.Errorf("subscriber email subject mismatch: %s", msg.Header.Get("Subject"))
-		}
-		subBody := getEmailBody(t, msg)
-		expectedSubBody := fmt.Sprintf(
-			"Hi subscriber,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\nhttp://example.com/imagebbss/imagebbs/9/comments\n\n\nManage notifications: http://example.com/usr/subscriptions",
-			ImageBBSTopicName,
-			threadID,
-			fixedTime.Format(consts.DisplayDateTimeFormat),
-			6,
-		)
-		if subBody != expectedSubBody {
-			t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
-		}
-	})
+	msg, err := mail.ReadMessage(strings.NewReader(string(mockProvider.sentMessages[0])))
+	if err != nil {
+		t.Fatalf("parse email: %v", err)
+	}
+	if msg.Header.Get("Subject") != "[goa4web] New reply in "+ImageBBSTopicName {
+		t.Errorf("subscriber email subject mismatch: %s", msg.Header.Get("Subject"))
+	}
+	subBody := getEmailBody(t, msg)
+	expectedSubBody := fmt.Sprintf(
+		"Hi subscriber,\n\nA new reply was posted in %q (thread #%d) on %s.\nThere are now %d comments in the discussion.\n\nView it here:\nhttp://example.com/imagebbss/imagebbs/9/comments\n\n\nManage notifications: http://example.com/usr/subscriptions",
+		ImageBBSTopicName,
+		threadID,
+		fixedTime.Format(consts.DisplayDateTimeFormat),
+		6,
+	)
+	if subBody != expectedSubBody {
+		t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
+	}
 
-	t.Run("AutoSubscribe Verification", func(t *testing.T) {
-		actionName, path, err := replyTask.AutoSubscribePath(*evt)
-		if err != nil {
-			t.Errorf("AutoSubscribePath error: %v", err)
-		}
-		if actionName != "Reply" {
-			t.Errorf("expected action name Reply, got %q", actionName)
-		}
-		if path != "/imagebbss/imagebbs/9/comments" {
-			t.Errorf("expected path /imagebbss/imagebbs/9/comments, got %q", path)
-		}
-	})
+	actionName, path, err := replyTask.AutoSubscribePath(*evt)
+	if err != nil {
+		t.Errorf("AutoSubscribePath error: %v", err)
+	}
+	if actionName != "Reply" {
+		t.Errorf("expected action name Reply, got %q", actionName)
+	}
+	if path != "/imagebbss/imagebbs/9/comments" {
+		t.Errorf("expected path /imagebbss/imagebbs/9/comments, got %q", path)
+	}
 }
 
 func getEmailBody(t *testing.T, msg *mail.Message) string {

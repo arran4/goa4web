@@ -7,7 +7,7 @@ import (
 )
 
 // Ensure reply tasks auto subscribe commenters so they know about further discussion.
-func TestHappyPathBlogsAutoSubscribeTasks(t *testing.T) {
+func TestBlogsAutoSubscribeTasks(t *testing.T) {
 	// list tasks so future interface checks can reuse this structure
 	tests := []struct {
 		name string

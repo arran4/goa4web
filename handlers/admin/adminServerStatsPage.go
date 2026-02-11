@@ -3,9 +3,9 @@ package admin
 import (
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/router"
@@ -14,7 +14,7 @@ import (
 )
 
 type AdminServerStatsPage struct {
-	Srv        *core.Server
+	Srv        *server.Server
 	ConfigFile string
 }
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestHappyPathEditTaskTemplatesRequiredExist(t *testing.T) {
+func TestEditTaskTemplatesRequiredExist(t *testing.T) {
 	var task EditTask
 	req := task.RequiredTemplates()
 	if len(req) == 0 {

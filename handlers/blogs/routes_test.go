@@ -9,7 +9,7 @@ import (
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
-func TestHappyPathRegisterRoutesRegistersAdminLink(t *testing.T) {
+func TestRegisterRoutesRegistersAdminLink(t *testing.T) {
 	r := mux.NewRouter()
 	navReg := navpkg.NewRegistry()
 	RegisterRoutes(r, config.NewRuntimeConfig(), navReg)

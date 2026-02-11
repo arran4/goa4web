@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestHappyPathImagebbsFeed(t *testing.T) {
+func TestImagebbsFeed(t *testing.T) {
 	rows := []*db.ListImagePostsByBoardForListerRow{
 		{
 			Idimagepost:   1,

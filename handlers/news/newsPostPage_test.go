@@ -21,82 +21,78 @@ import (
 )
 
 func TestNewsPostNewActionPage_InvalidForms(t *testing.T) {
-	t.Run("Unhappy Path - Invalid Forms", func(t *testing.T) {
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
 
-		cases := []url.Values{
-			{"text": {"hi"}},
-			{"language": {"1"}},
-			{"language": {"1"}, "text": {"hi"}, "foo": {"bar"}},
+	cases := []url.Values{
+		{"text": {"hi"}},
+		{"language": {"1"}},
+		{"language": {"1"}, "text": {"hi"}, "foo": {"bar"}},
+	}
+	for _, form := range cases {
+		req := httptest.NewRequest("POST", "/news", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
+		sess.Values["UID"] = int32(1)
+		w := httptest.NewRecorder()
+		sess.Save(req, w)
+		for _, c := range w.Result().Cookies() {
+			req.AddCookie(c)
 		}
-		for _, form := range cases {
-			req := httptest.NewRequest("POST", "/news", strings.NewReader(form.Encode()))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			sess := testhelpers.Must(store.Get(req, core.SessionName))
-			sess.Values["UID"] = int32(1)
-			w := httptest.NewRecorder()
-			sess.Save(req, w)
-			for _, c := range w.Result().Cookies() {
-				req.AddCookie(c)
-			}
-			ctx := req.Context()
-			ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
-			req = req.WithContext(ctx)
+		ctx := req.Context()
+		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
+		req = req.WithContext(ctx)
 
-			rr := httptest.NewRecorder()
-			handlers.TaskHandler(newPostTask)(rr, req)
-			if rr.Code != http.StatusOK {
-				t.Errorf("form=%v status=%d", form, rr.Code)
-			}
-			if req.URL.RawQuery == "" {
-				t.Errorf("query not set")
-			}
-			if !strings.Contains(rr.Body.String(), "<a href=") {
-				t.Errorf("body=%q", rr.Body.String())
-			}
+		rr := httptest.NewRecorder()
+		handlers.TaskHandler(newPostTask)(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
-	})
+		if req.URL.RawQuery == "" {
+			t.Errorf("query not set")
+		}
+		if !strings.Contains(rr.Body.String(), "<a href=") {
+			t.Errorf("body=%q", rr.Body.String())
+		}
+	}
 }
 
 func TestNewsPostEditActionPage_InvalidForms(t *testing.T) {
-	t.Run("Unhappy Path - Invalid Forms", func(t *testing.T) {
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
 
-		cases := []url.Values{
-			{"text": {"hi"}},
-			{"language": {"1"}},
-			{"language": {"1"}, "text": {"hi"}, "foo": {"bar"}},
+	cases := []url.Values{
+		{"text": {"hi"}},
+		{"language": {"1"}},
+		{"language": {"1"}, "text": {"hi"}, "foo": {"bar"}},
+	}
+	for _, form := range cases {
+		req := httptest.NewRequest("POST", "/news/1", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req = mux.SetURLVars(req, map[string]string{"post": "1"})
+		sess := testhelpers.Must(store.Get(req, core.SessionName))
+		sess.Values["UID"] = int32(1)
+		w := httptest.NewRecorder()
+		sess.Save(req, w)
+		for _, c := range w.Result().Cookies() {
+			req.AddCookie(c)
 		}
-		for _, form := range cases {
-			req := httptest.NewRequest("POST", "/news/1", strings.NewReader(form.Encode()))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			req = mux.SetURLVars(req, map[string]string{"post": "1"})
-			sess := testhelpers.Must(store.Get(req, core.SessionName))
-			sess.Values["UID"] = int32(1)
-			w := httptest.NewRecorder()
-			sess.Save(req, w)
-			for _, c := range w.Result().Cookies() {
-				req.AddCookie(c)
-			}
-			ctx := req.Context()
-			ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
-			req = req.WithContext(ctx)
+		ctx := req.Context()
+		ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
+		req = req.WithContext(ctx)
 
-			rr := httptest.NewRecorder()
-			handlers.TaskHandler(editTask)(rr, req)
-			if rr.Code != http.StatusOK {
-				t.Errorf("form=%v status=%d", form, rr.Code)
-			}
-			if req.URL.RawQuery == "" {
-				t.Errorf("query not set")
-			}
-			if !strings.Contains(rr.Body.String(), "<a href=") {
-				t.Errorf("body=%q", rr.Body.String())
-			}
+		rr := httptest.NewRecorder()
+		handlers.TaskHandler(editTask)(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Errorf("form=%v status=%d", form, rr.Code)
 		}
-	})
+		if req.URL.RawQuery == "" {
+			t.Errorf("query not set")
+		}
+		if !strings.Contains(rr.Body.String(), "<a href=") {
+			t.Errorf("body=%q", rr.Body.String())
+		}
+	}
 }

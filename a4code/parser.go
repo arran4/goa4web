@@ -7,8 +7,6 @@ import (
 	"iter"
 	"slices"
 	"strings"
-
-	"github.com/arran4/goa4web/a4code/ast"
 )
 
 type streamOptions struct {
@@ -26,14 +24,14 @@ func WithDepth(d int) StreamOption { return func(o *streamOptions) { o.maxDepth 
 func WithAllNodes() StreamOption { return func(o *streamOptions) { o.maxDepth = -1 } }
 
 // Stream parses markup from r and yields nodes according to the provided options.
-func Stream(r io.Reader, opts ...StreamOption) iter.Seq[ast.Node] {
+func Stream(r io.Reader, opts ...StreamOption) iter.Seq[Node] {
 	o := streamOptions{maxDepth: -1}
 	for _, op := range opts {
 		op(&o)
 	}
 
-	return func(yield func(ast.Node) bool) {
-		internalYield := func(n ast.Node, level int) bool {
+	return func(yield func(Node) bool) {
+		internalYield := func(n Node, level int) bool {
 			if o.maxDepth == -1 || level <= o.maxDepth {
 				yield(n)
 			}
@@ -64,10 +62,10 @@ func (s *scanner) UnreadByte() error {
 	return err
 }
 
-func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
+func streamImpl(r io.Reader, yield func(Node, int) bool) {
 	br := bufio.NewReader(r)
 	s := &scanner{r: br, pos: 0}
-	var stack []ast.Container
+	var stack []parent
 	var buf bytes.Buffer
 
 	// visiblePos tracks the byte offset in the "visible" text (content of Text and Code nodes).
@@ -81,7 +79,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			textStart = -1
 			return true
 		}
-		t := &ast.Text{Value: buf.String()}
+		t := &Text{Value: buf.String()}
 		// Text node range is current visiblePos to visiblePos + len
 		start := visiblePos
 		end := visiblePos + len(t.Value)
@@ -91,7 +89,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 		textStart = -1
 		buf.Reset()
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(t)
+			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), t)
 		}
 		return yield(t, len(stack)+1)
 	}
@@ -105,15 +103,15 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				for len(stack) > 0 {
 					n := stack[len(stack)-1]
 					stack = stack[:len(stack)-1]
-					if nNode, ok := n.(ast.Node); ok {
+					if nNode, ok := n.(Node); ok {
 						nNode.SetPos(nNode.GetPos())
 						start, _ := nNode.GetPos()
 						nNode.SetPos(start, visiblePos)
 					}
 					if len(stack) > 0 {
-						stack[len(stack)-1].AddChild(n)
+						*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n.(Node))
 					}
-					if !yield(n, len(stack)+1) {
+					if !yield(n.(Node), len(stack)+1) {
 					}
 				}
 				return
@@ -139,14 +137,14 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			if len(stack) > 0 {
 				n := stack[len(stack)-1]
 				stack = stack[:len(stack)-1]
-				if nNode, ok := n.(ast.Node); ok {
+				if nNode, ok := n.(Node); ok {
 					start, _ := nNode.GetPos()
 					nNode.SetPos(start, visiblePos)
 				}
 				if len(stack) > 0 {
-					stack[len(stack)-1].AddChild(n)
+					*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n.(Node))
 				}
-				if !yield(n, len(stack)+1) {
+				if !yield(n.(Node), len(stack)+1) {
 					return
 				}
 			}
@@ -179,9 +177,9 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 }
 
 // Parse reads markup from r and returns the root node.
-func Parse(r io.Reader) (*ast.Root, error) {
+func Parse(r io.Reader) (*Root, error) {
 	nodes := slices.Collect(Stream(r, WithDepth(1)))
-	root := &ast.Root{Children: nodes}
+	root := &Root{Children: nodes}
 	// Calculate root range based on children
 	if len(nodes) > 0 {
 		start, _ := nodes[0].GetPos()
@@ -197,42 +195,42 @@ func Parse(r io.Reader) (*ast.Root, error) {
 }
 
 // ParseString parses markup from s and returns the root node.
-func ParseString(s string) (*ast.Root, error) {
+func ParseString(s string) (*Root, error) {
 	return Parse(strings.NewReader(s))
 }
 
 // ParseNodesReader parses r and returns only the top-level nodes.
-func ParseNodesReader(r io.Reader) ([]ast.Node, error) {
+func ParseNodesReader(r io.Reader) ([]Node, error) {
 	return slices.Collect(Stream(r, WithDepth(1))), nil
 }
 
 // ParseNodes parses s and returns only the top-level nodes.
-func ParseNodes(s string) ([]ast.Node, error) {
+func ParseNodes(s string) ([]Node, error) {
 	return ParseNodesReader(strings.NewReader(s))
 }
 
-func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int) ([]ast.Container, int, error) {
+func parseCommand(s *scanner, stack []parent, depth int, yield func(Node, int) bool, startPos int, visiblePos int) ([]parent, int, error) {
 	cmd, err := getNext(s, true)
 	if err != nil && err != io.EOF {
 		return stack, visiblePos, err
 	}
 
-	createNode := func(n ast.Container) {
+	createNode := func(n Node) {
 		n.SetPos(startPos, 0) // End will be set when popped
-		stack = append(stack, n)
+		stack = append(stack, n.(parent))
 	}
 
 	switch strings.ToLower(cmd) {
 	case "*", "b", "bold":
-		createNode(&ast.Bold{})
+		createNode(&Bold{})
 	case "/", "i", "italic":
-		createNode(&ast.Italic{})
+		createNode(&Italic{})
 	case "_", "u", "underline":
-		createNode(&ast.Underline{})
+		createNode(&Underline{})
 	case "^", "p", "power", "sup":
-		createNode(&ast.Sup{})
+		createNode(&Sup{})
 	case ".", "s", "sub":
-		createNode(&ast.Sub{})
+		createNode(&Sub{})
 	case "img", "image":
 		skipArgPrefix(s)
 		raw, err := getNext(s, false)
@@ -244,10 +242,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 				s.UnreadByte()
 			}
 		}
-		n := &ast.Image{Src: raw}
+		n := &Image{Src: raw}
 		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
 		yield(n, depth)
 	case "a", "link", "url":
@@ -256,7 +254,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
-		n := &ast.Link{Href: raw}
+		n := &Link{Href: raw}
 		createNode(n)
 	case "code":
 		skipArgPrefix(s)
@@ -275,13 +273,13 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		innerStart := visiblePos
 		innerEnd := visiblePos + contentLen
 
-		n := &ast.Code{Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
+		n := &Code{Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
 		n.SetPos(startPos, innerEnd) // Code node includes content
 
 		visiblePos += contentLen
 
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
 		yield(n, depth)
 	case "quoteof":
@@ -290,16 +288,16 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
-		n := &ast.QuoteOf{Name: name}
+		n := &QuoteOf{Name: name}
 		createNode(n)
 	case "quote", "q":
-		createNode(&ast.Quote{})
+		createNode(&Quote{})
 	case "spoiler", "sp":
-		createNode(&ast.Spoiler{})
+		createNode(&Spoiler{})
 	case "indent":
-		createNode(&ast.Indent{})
+		createNode(&Indent{})
 	case "hr":
-		n := &ast.HR{}
+		n := &HR{}
 		if ch, err := s.ReadByte(); err == nil {
 			if ch != ']' {
 				s.UnreadByte()
@@ -307,12 +305,12 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			*stack[len(stack)-1].childrenPtr() = append(*stack[len(stack)-1].childrenPtr(), n)
 		}
 		yield(n, depth)
 	default:
 		// Custom tag
-		n := &ast.Custom{Tag: cmd}
+		n := &Custom{Tag: cmd}
 		createNode(n)
 	}
 	return stack, visiblePos, nil

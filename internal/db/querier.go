@@ -429,8 +429,6 @@ type Querier interface {
 	// Result:
 	//   role (string)
 	GetUserRole(ctx context.Context, usersIdusers int32) (string, error)
-	// Gets a specific user role assignment by its primary key (iduser_roles).
-	GetUserRoleByID(ctx context.Context, id int32) (*GetUserRoleByIDRow, error)
 	// This query selects permissions information for admin users.
 	//   iduser_roles (int)
 	//   role (string)
@@ -591,7 +589,6 @@ type Querier interface {
 	SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
 	SystemGetUserByID(ctx context.Context, idusers int32) (*SystemGetUserByIDRow, error)
 	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
-	SystemGetUsersByIDs(ctx context.Context, ids []int32) ([]*SystemGetUsersByIDsRow, error)
 	SystemGetWritingByID(ctx context.Context, idwriting int32) (int32, error)
 	SystemIncrementPendingEmailError(ctx context.Context, id int32) error
 	// System query only used internally

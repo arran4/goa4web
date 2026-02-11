@@ -24,15 +24,13 @@ func checkQueueEmailTemplates(t *testing.T, prefix string) {
 }
 
 func TestLinkerQueueTemplatesExist(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		prefixes := []string{
-			"linkerApprovedEmail",
-			"linkerRejectedEmail",
-			"adminNotificationLinkerApprovedEmail",
-			"adminNotificationLinkerRejectedEmail",
-		}
-		for _, p := range prefixes {
-			checkQueueEmailTemplates(t, p)
-		}
-	})
+	prefixes := []string{
+		"linkerApprovedEmail",
+		"linkerRejectedEmail",
+		"adminNotificationLinkerApprovedEmail",
+		"adminNotificationLinkerRejectedEmail",
+	}
+	for _, p := range prefixes {
+		checkQueueEmailTemplates(t, p)
+	}
 }

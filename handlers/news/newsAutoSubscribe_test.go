@@ -8,7 +8,7 @@ import (
 
 // Test tasks that should auto subscribe implement the interface so
 // readers get updates when threads continue.
-func TestHappyPathNewsAutoSubscribeTasks(t *testing.T) {
+func TestNewsAutoSubscribeTasks(t *testing.T) {
 	// group tasks under test for easy extension
 	tests := []struct {
 		name string

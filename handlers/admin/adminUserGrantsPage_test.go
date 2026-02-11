@@ -45,7 +45,7 @@ func TestHappyPathAdminUserGrantsPage_UserIDInjected(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminUserGrantsPage(rr, req)
+	(&AdminUserGrantsPage{}).ServeHTTP(rr, req)
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}

@@ -46,85 +46,83 @@ func TestLinkerFeed(t *testing.T) {
 	}
 }
 func TestLinkerApproveAddsToSearch(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		linkerID := int64(7)
-		queries := newLinkerIndexRecorder(linkerID, &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-			ID:          int32(linkerID),
-			Title:       sql.NullString{String: "Foo", Valid: true},
-			Description: sql.NullString{String: "Bar baz", Valid: true},
-			Username:    sql.NullString{String: "alice", Valid: true},
-		})
-
-		bus := eventbus.NewBus()
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		go searchworker.Worker(ctx, bus, queries)
-
-		req := httptest.NewRequest("POST", "/admin/queue?qid=3", nil)
-		evt := &eventbus.TaskEvent{Data: map[string]any{}}
-		cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
-		cd.SetEvent(evt)
-		cd.SetEventTask(AdminApproveTask)
-		ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctxreq)
-		rr := httptest.NewRecorder()
-		if err := AdminApproveTask.Action(rr, req); err != nil {
-			t.Fatalf("action: %v", err)
-		}
-
-		time.Sleep(10 * time.Millisecond)
-
-		if data, ok := evt.Data[searchworker.EventKey].(searchworker.IndexEventData); !ok {
-			t.Fatalf("expected index data in event")
-		} else {
-			if data.Type != searchworker.TypeLinker {
-				t.Fatalf("index type = %q, want %q", data.Type, searchworker.TypeLinker)
-			}
-			if data.ID != int32(linkerID) {
-				t.Fatalf("index id = %d, want %d", data.ID, linkerID)
-			}
-			if data.Text != "Foo Bar baz" {
-				t.Fatalf("index text = %q", data.Text)
-			}
-		}
-
-		if err := bus.Publish(*evt); err != nil {
-			t.Fatalf("publish: %v", err)
-		}
-
-		select {
-		case <-queries.indexed:
-		case <-time.After(time.Second):
-			t.Fatal("timed out waiting for index updates")
-		}
-
-		cancel()
-		_ = bus.Shutdown(context.Background())
-
-		if got := queries.queuedIDs(); len(got) != 1 || got[0] != 3 {
-			t.Fatalf("queued IDs = %v", got)
-		}
-
-		if got := queries.createdWords(); !slicesEqual(got, []string{"bar", "baz", "foo"}) {
-			t.Fatalf("created words = %v", got)
-		}
-
-		calls := queries.searchCalls()
-		if len(calls) != 3 {
-			t.Fatalf("search calls = %v", calls)
-		}
-		for word, count := range map[string]int32{"foo": 1, "bar": 1, "baz": 1} {
-			if params, ok := calls[word]; !ok {
-				t.Fatalf("missing search call for %s", word)
-			} else if params.LinkerID != int32(linkerID) || params.WordCount != count {
-				t.Fatalf("search params for %s = %+v", word, params)
-			}
-		}
-
-		if got := queries.lastIndexIDs(); len(got) != 1 || got[0] != int32(linkerID) {
-			t.Fatalf("last index updates = %v", got)
-		}
+	linkerID := int64(7)
+	queries := newLinkerIndexRecorder(linkerID, &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:          int32(linkerID),
+		Title:       sql.NullString{String: "Foo", Valid: true},
+		Description: sql.NullString{String: "Bar baz", Valid: true},
+		Username:    sql.NullString{String: "alice", Valid: true},
 	})
+
+	bus := eventbus.NewBus()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go searchworker.Worker(ctx, bus, queries)
+
+	req := httptest.NewRequest("POST", "/admin/queue?qid=3", nil)
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	cd.SetEvent(evt)
+	cd.SetEventTask(AdminApproveTask)
+	ctxreq := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctxreq)
+	rr := httptest.NewRecorder()
+	if err := AdminApproveTask.Action(rr, req); err != nil {
+		t.Fatalf("action: %v", err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+
+	if data, ok := evt.Data[searchworker.EventKey].(searchworker.IndexEventData); !ok {
+		t.Fatalf("expected index data in event")
+	} else {
+		if data.Type != searchworker.TypeLinker {
+			t.Fatalf("index type = %q, want %q", data.Type, searchworker.TypeLinker)
+		}
+		if data.ID != int32(linkerID) {
+			t.Fatalf("index id = %d, want %d", data.ID, linkerID)
+		}
+		if data.Text != "Foo Bar baz" {
+			t.Fatalf("index text = %q", data.Text)
+		}
+	}
+
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish: %v", err)
+	}
+
+	select {
+	case <-queries.indexed:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for index updates")
+	}
+
+	cancel()
+	_ = bus.Shutdown(context.Background())
+
+	if got := queries.queuedIDs(); len(got) != 1 || got[0] != 3 {
+		t.Fatalf("queued IDs = %v", got)
+	}
+
+	if got := queries.createdWords(); !slicesEqual(got, []string{"bar", "baz", "foo"}) {
+		t.Fatalf("created words = %v", got)
+	}
+
+	calls := queries.searchCalls()
+	if len(calls) != 3 {
+		t.Fatalf("search calls = %v", calls)
+	}
+	for word, count := range map[string]int32{"foo": 1, "bar": 1, "baz": 1} {
+		if params, ok := calls[word]; !ok {
+			t.Fatalf("missing search call for %s", word)
+		} else if params.LinkerID != int32(linkerID) || params.WordCount != count {
+			t.Fatalf("search params for %s = %+v", word, params)
+		}
+	}
+
+	if got := queries.lastIndexIDs(); len(got) != 1 || got[0] != int32(linkerID) {
+		t.Fatalf("last index updates = %v", got)
+	}
 }
 
 type linkerIndexRecorder struct {

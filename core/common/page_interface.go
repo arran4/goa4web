@@ -11,7 +11,5 @@ type HasPageTitle interface {
 }
 
 type Page interface {
-	HasBreadcrumb
-	HasPageTitle
 	http.Handler
 }

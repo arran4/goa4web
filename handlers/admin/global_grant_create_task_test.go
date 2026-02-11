@@ -17,24 +17,22 @@ type globalGrantQueries struct{ db.Querier }
 
 // TestGlobalGrantCreateTask_ItemIDRequired verifies missing item_id errors.
 func TestGlobalGrantCreateTask_ItemIDRequired(t *testing.T) {
-	t.Run("Unhappy Path", func(t *testing.T) {
-		body := url.Values{
-			"section": {"forum"},
-			"item":    {"topic"},
-			"action":  {"see"},
-		}
-		req := httptest.NewRequest("POST", "/admin/grant", strings.NewReader(body.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	body := url.Values{
+		"section": {"forum"},
+		"item":    {"topic"},
+		"action":  {"see"},
+	}
+	req := httptest.NewRequest("POST", "/admin/grant", strings.NewReader(body.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		cd := common.NewCoreData(context.Background(), &globalGrantQueries{}, config.NewRuntimeConfig())
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	cd := common.NewCoreData(context.Background(), &globalGrantQueries{}, config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		rr := httptest.NewRecorder()
-		if res := globalGrantCreateTask.Action(rr, req); res == nil {
-			t.Fatalf("expected error, got nil")
-		} else if err, ok := res.(error); !ok || err == nil {
-			t.Fatalf("expected error, got %v", res)
-		}
-	})
+	rr := httptest.NewRecorder()
+	if res := globalGrantCreateTask.Action(rr, req); res == nil {
+		t.Fatalf("expected error, got nil")
+	} else if err, ok := res.(error); !ok || err == nil {
+		t.Fatalf("expected error, got %v", res)
+	}
 }

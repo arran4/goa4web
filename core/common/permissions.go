@@ -15,8 +15,8 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 		return true
 	}
 	if cd.queries == nil {
-		if cd.cache.testGrants != nil {
-			for _, g := range cd.cache.testGrants {
+		if cd.testGrants != nil {
+			for _, g := range cd.testGrants {
 				if g.Section == section && g.Action == action &&
 					(!g.Item.Valid || g.Item.String == item || g.Item.String == "") &&
 					(!g.ItemID.Valid || g.ItemID.Int32 == itemID || g.ItemID.Int32 == 0) &&

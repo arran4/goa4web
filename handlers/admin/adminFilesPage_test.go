@@ -38,7 +38,7 @@ func TestHappyPathAdminFilesPage(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	AdminFilesPage(rr, req)
+	(&AdminFilesPage{}).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
@@ -92,7 +92,7 @@ func TestHappyPathAdminUnmanagedFilesPage(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	AdminUnmanagedFilesPage(rr, req)
+	(&AdminUnmanagedFilesPage{}).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)

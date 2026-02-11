@@ -1,17 +1,10 @@
 package a4code
 
-import (
-	"bytes"
-
-	"github.com/arran4/goa4web/a4code/ast"
-	"github.com/arran4/goa4web/a4code/html"
-)
+import "bytes"
 
 // ToHTML converts a node tree to HTML.
-func ToHTML(n ast.Node) string {
+func ToHTML(n Node) string {
 	var buf bytes.Buffer
-	if err := ast.Generate(&buf, n, html.NewGenerator()); err != nil {
-		return ""
-	}
+	n.html(&buf, 0)
 	return buf.String()
 }

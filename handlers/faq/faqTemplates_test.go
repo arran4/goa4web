@@ -36,7 +36,7 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 	}
 }
 
-func TestHappyPathAskTaskTemplatesCompile(t *testing.T) {
+func TestAskTaskTemplatesCompile(t *testing.T) {
 	var task AskTask
 	if et, _ := task.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
 		requireEmailTemplates(t, et)
@@ -44,7 +44,7 @@ func TestHappyPathAskTaskTemplatesCompile(t *testing.T) {
 	requireNotificationTemplate(t, task.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
 }
 
-func TestHappyPathAdminNotificationFaqAskEmailIncludesLink(t *testing.T) {
+func TestAdminNotificationFaqAskEmailIncludesLink(t *testing.T) {
 	url := "http://example.com/admin/faq/questions"
 	data := notif.EmailData{URL: url, Item: map[string]any{"Question": "test?"}}
 	textTmpls := templates.GetCompiledEmailTextTemplates(handlertest.GetTemplateFuncs(), templates.WithSilence(true))

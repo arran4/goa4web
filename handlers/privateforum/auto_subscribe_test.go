@@ -8,13 +8,13 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
-func TestHappyPathPrivateTopicCreateTaskAutoSubscribe(t *testing.T) {
+func TestPrivateTopicCreateTaskAutoSubscribe(t *testing.T) {
 	if _, ok := interface{}(privateTopicCreateTask).(notif.AutoSubscribeProvider); !ok {
 		t.Fatalf("PrivateTopicCreateTask should implement AutoSubscribeProvider so creators follow replies")
 	}
 }
 
-func TestHappyPathPrivateTopicCreateTaskAutoSubscribePath(t *testing.T) {
+func TestPrivateTopicCreateTaskAutoSubscribePath(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{

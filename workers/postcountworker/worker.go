@@ -25,20 +25,17 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q PostUpdateQuerier) {
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case env, ok := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
 			if !ok {
-				return
+				continue
 			}
-			evt, ok := env.Msg.(eventbus.TaskEvent)
+			data, ok := evt.Data[EventKey].(UpdateEventData)
 			if ok {
-				data, ok := evt.Data[EventKey].(UpdateEventData)
-				if ok {
-					if err := PostUpdate(ctx, q, data.ThreadID, data.TopicID); err != nil {
-						log.Printf("post count update: %v", err)
-					}
+				if err := PostUpdate(ctx, q, data.ThreadID, data.TopicID); err != nil {
+					log.Printf("post count update: %v", err)
 				}
 			}
-			env.Ack()
 		case <-ctx.Done():
 			return
 		}

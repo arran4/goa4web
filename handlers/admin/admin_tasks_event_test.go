@@ -81,7 +81,7 @@ func createRequest(ctx context.Context, method, url string, body string, sess *s
 	return req
 }
 
-func TestHappyPathAddIPBanTaskEventData(t *testing.T) {
+func TestAddIPBanTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 
@@ -121,22 +121,20 @@ func TestHappyPathAddIPBanTaskEventData(t *testing.T) {
 		t.Errorf("expected IP '192.168.1.1', got %v", evt.Data["IP"])
 	}
 
-	t.Run("Notifications", func(t *testing.T) {
-		// Verify Admin Notification logic
-		found := false
-		for _, call := range qs.SystemCreateNotificationCalls {
-			if strings.Contains(call.Message.String, "adminuser") && strings.Contains(call.Message.String, "192.168.1.1") {
-				found = true
-				break
-			}
+	// Verify Admin Notification logic
+	found := false
+	for _, call := range qs.SystemCreateNotificationCalls {
+		if strings.Contains(call.Message.String, "adminuser") && strings.Contains(call.Message.String, "192.168.1.1") {
+			found = true
+			break
 		}
-		if !found {
-			t.Errorf("Admin notification not found")
-		}
-	})
+	}
+	if !found {
+		t.Errorf("Admin notification not found")
+	}
 }
 
-func TestHappyPathDeleteIPBanTaskEventData(t *testing.T) {
+func TestDeleteIPBanTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 
@@ -176,21 +174,19 @@ func TestHappyPathDeleteIPBanTaskEventData(t *testing.T) {
 		t.Errorf("expected IP '192.168.1.1', got %v", evt.Data["IP"])
 	}
 
-	t.Run("Notifications", func(t *testing.T) {
-		found := false
-		for _, call := range qs.SystemCreateNotificationCalls {
-			if strings.Contains(call.Message.String, "adminuser") && strings.Contains(call.Message.String, "removed ban") {
-				found = true
-				break
-			}
+	found := false
+	for _, call := range qs.SystemCreateNotificationCalls {
+		if strings.Contains(call.Message.String, "adminuser") && strings.Contains(call.Message.String, "removed ban") {
+			found = true
+			break
 		}
-		if !found {
-			t.Errorf("Admin notification not found")
-		}
-	})
+	}
+	if !found {
+		t.Errorf("Admin notification not found")
+	}
 }
 
-func TestHappyPathAddAnnouncementTaskEventData(t *testing.T) {
+func TestAddAnnouncementTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 
@@ -230,23 +226,21 @@ func TestHappyPathAddAnnouncementTaskEventData(t *testing.T) {
 		t.Errorf("expected NewsID 100, got %v", evt.Data["NewsID"])
 	}
 
-	t.Run("Notifications", func(t *testing.T) {
-		found := false
-		for _, call := range qs.SystemCreateNotificationCalls {
-			msg := call.Message.String
-			// Template announcement: "Announcement updated by {{.Item.Username}}"
-			if strings.Contains(msg, "Announcement updated by adminuser") {
-				found = true
-				break
-			}
+	found := false
+	for _, call := range qs.SystemCreateNotificationCalls {
+		msg := call.Message.String
+		// Template announcement: "Announcement updated by {{.Item.Username}}"
+		if strings.Contains(msg, "Announcement updated by adminuser") {
+			found = true
+			break
 		}
-		if !found {
-			t.Errorf("Admin notification not found. Calls: %v", qs.SystemCreateNotificationCalls)
-		}
-	})
+	}
+	if !found {
+		t.Errorf("Admin notification not found. Calls: %v", qs.SystemCreateNotificationCalls)
+	}
 }
 
-func TestHappyPathDeleteAnnouncementTaskEventData(t *testing.T) {
+func TestDeleteAnnouncementTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 
@@ -286,23 +280,21 @@ func TestHappyPathDeleteAnnouncementTaskEventData(t *testing.T) {
 		t.Errorf("expected AnnouncementID 101, got %v", evt.Data["AnnouncementID"])
 	}
 
-	t.Run("Notifications", func(t *testing.T) {
-		found := false
-		for _, call := range qs.SystemCreateNotificationCalls {
-			msg := call.Message.String
-			// Template announcement: "Announcement updated by {{.Item.Username}}"
-			if strings.Contains(msg, "Announcement updated by adminuser") {
-				found = true
-				break
-			}
+	found := false
+	for _, call := range qs.SystemCreateNotificationCalls {
+		msg := call.Message.String
+		// Template announcement: "Announcement updated by {{.Item.Username}}"
+		if strings.Contains(msg, "Announcement updated by adminuser") {
+			found = true
+			break
 		}
-		if !found {
-			t.Errorf("Admin notification not found. Calls: %+v", qs.SystemCreateNotificationCalls)
-		}
-	})
+	}
+	if !found {
+		t.Errorf("Admin notification not found. Calls: %+v", qs.SystemCreateNotificationCalls)
+	}
 }
 
-func TestHappyPathUserPasswordResetTaskEventData(t *testing.T) {
+func TestUserPasswordResetTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 	targetID := int32(2)
@@ -360,24 +352,22 @@ func TestHappyPathUserPasswordResetTaskEventData(t *testing.T) {
 		t.Errorf("expected Username 'targetuser', got %v", evt.Data["Username"])
 	}
 
-	t.Run("Notifications", func(t *testing.T) {
-		found := false
-		for _, call := range qs.SystemCreateNotificationCalls {
-			if call.RecipientID == targetID {
-				msg := call.Message.String
-				if strings.Contains(msg, "reset your password") {
-					found = true
-					break
-				}
+	found := false
+	for _, call := range qs.SystemCreateNotificationCalls {
+		if call.RecipientID == targetID {
+			msg := call.Message.String
+			if strings.Contains(msg, "reset your password") {
+				found = true
+				break
 			}
 		}
-		if !found {
-			t.Errorf("Target user notification not found")
-		}
-	})
+	}
+	if !found {
+		t.Errorf("Target user notification not found")
+	}
 }
 
-func TestHappyPathServerShutdownTaskEventData(t *testing.T) {
+func TestServerShutdownTaskEventData(t *testing.T) {
 	qs, bus, _, cdlq, store := setupTest(t)
 	uid := int32(1)
 

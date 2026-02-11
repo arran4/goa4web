@@ -13,12 +13,13 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	corelanguage "github.com/arran4/goa4web/core/language"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 type AdminReloadConfigPage struct {
 	ConfigFile string
-	Srv        *core.Server
+	Srv        *server.Server
 	DBPool     *sql.DB
 }
 

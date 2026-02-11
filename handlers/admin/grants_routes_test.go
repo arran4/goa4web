@@ -10,7 +10,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestHappyPathRegisterRoutesRegistersGrantsLink(t *testing.T) {
+func TestRegisterRoutesRegistersGrantsLink(t *testing.T) {
 	h := New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
@@ -28,7 +28,7 @@ func TestHappyPathRegisterRoutesRegistersGrantsLink(t *testing.T) {
 	t.Fatalf("Grants link not registered")
 }
 
-func TestHappyPathRegisterRoutesRegistersGrantAdd(t *testing.T) {
+func TestRegisterRoutesRegistersGrantAdd(t *testing.T) {
 	h := New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
@@ -55,7 +55,7 @@ func TestHappyPathRegisterRoutesRegistersGrantAdd(t *testing.T) {
 	}
 }
 
-func TestHappyPathRegisterRoutesRegistersGrantCreate(t *testing.T) {
+func TestRegisterRoutesRegistersGrantCreate(t *testing.T) {
 	h := New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()

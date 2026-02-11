@@ -28,7 +28,7 @@ func TestHappyPathAdminLinksToolsPage(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	AdminLinksToolsPage(rr, req)
+	(&AdminLinksToolsPage{}).ServeHTTP(rr, req)
 
 	if rr.Result().StatusCode != http.StatusOK {
 		t.Fatalf("status=%d", rr.Result().StatusCode)
@@ -55,7 +55,7 @@ func TestHappyPathAdminLinksToolsPageSign(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	AdminLinksToolsPage(rr, req)
+	(&AdminLinksToolsPage{}).ServeHTTP(rr, req)
 
 	body := rr.Body.String()
 	if rr.Result().StatusCode != http.StatusOK {
@@ -77,7 +77,7 @@ func TestHappyPathAdminLinksToolsPageVerify(t *testing.T) {
 	ts := time.Now().Add(1 * time.Hour).Unix()
 	tsStr := strconv.FormatInt(ts, 10)
 	urlToVerify := "https://example.com/resource"
-	sig := sign.Sign(urlToVerify, cfg.LinkSignSecret, sign.WithExpiryTimeUnix(ts))
+	sig := sign.Sign(urlToVerify, cfg.LinkSignSecret, sign.WithExpiryTimestamp(tsStr))
 
 	form := url.Values{}
 	form.Set("action", "verify")
@@ -91,7 +91,7 @@ func TestHappyPathAdminLinksToolsPageVerify(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
-	AdminLinksToolsPage(rr, req)
+	(&AdminLinksToolsPage{}).ServeHTTP(rr, req)
 
 	body := rr.Body.String()
 	if rr.Result().StatusCode != http.StatusOK {

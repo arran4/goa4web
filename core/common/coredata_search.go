@@ -33,17 +33,17 @@ func (cd *CoreData) SearchLinker(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	cd.cache.searchComments = comments
-	cd.cache.searchCommentsNoResults = emptyWords
-	cd.cache.searchCommentsEmptyWords = noResults
+	cd.searchComments = comments
+	cd.searchCommentsNoResults = emptyWords
+	cd.searchCommentsEmptyWords = noResults
 
 	links, emptyWords2, noResults2, err := cd.linkerSearch(r, uid)
 	if err != nil {
 		return err
 	}
-	cd.cache.searchLinkerItems = links
-	cd.cache.searchLinkerNoResults = emptyWords2
-	cd.cache.searchLinkerEmptyWords = noResults2
+	cd.searchLinkerItems = links
+	cd.searchLinkerNoResults = emptyWords2
+	cd.searchLinkerEmptyWords = noResults2
 	return nil
 }
 
@@ -61,17 +61,17 @@ func (cd *CoreData) SearchWritings(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	cd.cache.searchComments = comments
-	cd.cache.searchCommentsNoResults = emptyWords
-	cd.cache.searchCommentsEmptyWords = noResults
+	cd.searchComments = comments
+	cd.searchCommentsNoResults = emptyWords
+	cd.searchCommentsEmptyWords = noResults
 
 	writings, emptyWords2, noResults2, err := cd.writingSearch(r, uid)
 	if err != nil {
 		return err
 	}
-	cd.cache.searchWritings = writings
-	cd.cache.searchWritingsNoResults = emptyWords2
-	cd.cache.searchWritingsEmptyWords = noResults2
+	cd.searchWritings = writings
+	cd.searchWritingsNoResults = emptyWords2
+	cd.searchWritingsEmptyWords = noResults2
 	return nil
 }
 
@@ -89,17 +89,17 @@ func (cd *CoreData) SearchBlogs(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	cd.cache.searchComments = comments
-	cd.cache.searchCommentsNoResults = emptyWords
-	cd.cache.searchCommentsEmptyWords = noResults
+	cd.searchComments = comments
+	cd.searchCommentsNoResults = emptyWords
+	cd.searchCommentsEmptyWords = noResults
 
 	blogs, emptyWords2, noResults2, err := cd.blogSearch(r, uid)
 	if err != nil {
 		return err
 	}
-	cd.cache.searchBlogs = blogs
-	cd.cache.searchBlogsNoResults = emptyWords2
-	cd.cache.searchBlogsEmptyWords = noResults2
+	cd.searchBlogs = blogs
+	cd.searchBlogsNoResults = emptyWords2
+	cd.searchBlogsEmptyWords = noResults2
 	return nil
 }
 
@@ -110,70 +110,70 @@ func (cd *CoreData) SearchForum(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	cd.cache.searchComments = comments
-	cd.cache.searchCommentsNoResults = emptyWords
-	cd.cache.searchCommentsEmptyWords = noResults
+	cd.searchComments = comments
+	cd.searchCommentsNoResults = emptyWords
+	cd.searchCommentsEmptyWords = noResults
 	return nil
 }
 
 // SearchComments returns forum comment search results.
 func (cd *CoreData) SearchComments() []*db.GetCommentsByIdsForUserWithThreadInfoRow {
-	return cd.cache.searchComments
+	return cd.searchComments
 }
 
 // SearchCommentsNoResults reports whether the comment search had no matches.
 func (cd *CoreData) SearchCommentsNoResults() bool {
-	return cd.cache.searchCommentsNoResults
+	return cd.searchCommentsNoResults
 }
 
 // SearchCommentsEmptyWords reports whether the comment search lacked words.
 func (cd *CoreData) SearchCommentsEmptyWords() bool {
-	return cd.cache.searchCommentsEmptyWords
+	return cd.searchCommentsEmptyWords
 }
 
 // SearchLinkerItems returns linker search results.
 func (cd *CoreData) SearchLinkerItems() []*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow {
-	return cd.cache.searchLinkerItems
+	return cd.searchLinkerItems
 }
 
 // SearchLinkerNoResults reports whether the linker search found nothing.
 func (cd *CoreData) SearchLinkerNoResults() bool {
-	return cd.cache.searchLinkerNoResults
+	return cd.searchLinkerNoResults
 }
 
 // SearchLinkerEmptyWords reports whether the linker search lacked words.
 func (cd *CoreData) SearchLinkerEmptyWords() bool {
-	return cd.cache.searchLinkerEmptyWords
+	return cd.searchLinkerEmptyWords
 }
 
 // SearchWritingsResults returns writing search results.
 func (cd *CoreData) SearchWritingsResults() []*db.ListWritingsByIDsForListerRow {
-	return cd.cache.searchWritings
+	return cd.searchWritings
 }
 
 // SearchWritingsNoResults reports whether the writing search found nothing.
 func (cd *CoreData) SearchWritingsNoResults() bool {
-	return cd.cache.searchWritingsNoResults
+	return cd.searchWritingsNoResults
 }
 
 // SearchWritingsEmptyWords reports whether the writing search lacked words.
 func (cd *CoreData) SearchWritingsEmptyWords() bool {
-	return cd.cache.searchWritingsEmptyWords
+	return cd.searchWritingsEmptyWords
 }
 
 // SearchBlogsResults returns blog search results.
 func (cd *CoreData) SearchBlogsResults() []*db.Blog {
-	return cd.cache.searchBlogs
+	return cd.searchBlogs
 }
 
 // SearchBlogsNoResults reports whether the blog search found nothing.
 func (cd *CoreData) SearchBlogsNoResults() bool {
-	return cd.cache.searchBlogsNoResults
+	return cd.searchBlogsNoResults
 }
 
 // SearchBlogsEmptyWords reports whether the blog search lacked words.
 func (cd *CoreData) SearchBlogsEmptyWords() bool {
-	return cd.cache.searchBlogsEmptyWords
+	return cd.searchBlogsEmptyWords
 }
 
 func (cd *CoreData) linkerSearch(r *http.Request, uid int32) ([]*db.GetLinkerItemsByIdsWithPosterUsernameAndCategoryTitleDescendingRow, bool, bool, error) {

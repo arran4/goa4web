@@ -16,7 +16,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestHappyPathRequireImagebbsGrantWithBoard(t *testing.T) {
+func TestRequireImagebbsGrantWithBoard(t *testing.T) {
 	allow := true
 	queries := testhelpers.NewQuerierStub()
 	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
@@ -51,7 +51,7 @@ func TestHappyPathRequireImagebbsGrantWithBoard(t *testing.T) {
 	}
 }
 
-func TestHappyPathRequireImagebbsGrantWithPost(t *testing.T) {
+func TestRequireImagebbsGrantWithPost(t *testing.T) {
 	allow := true
 	queries := testhelpers.NewQuerierStub()
 	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
@@ -96,66 +96,64 @@ func TestHappyPathRequireImagebbsGrantWithPost(t *testing.T) {
 	}
 }
 
-func TestApprovePostTask(t *testing.T) {
-	t.Run("Unhappy Path - Denies Without Grant", func(t *testing.T) {
-		allow := false
-		queries := testhelpers.NewQuerierStub()
-		queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			if allow {
-				return 1, nil
-			}
-			return 0, sql.ErrNoRows
+func TestApprovePostTaskDeniesWithoutGrant(t *testing.T) {
+	allow := false
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if allow {
+			return 1, nil
 		}
-		queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
-			Idimagepost:            12,
-			ImageboardIdimageboard: sql.NullInt32{Int32: 9, Valid: true},
-		}
-		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
-		cd.UserID = 77
+		return 0, sql.ErrNoRows
+	}
+	queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
+		Idimagepost:            12,
+		ImageboardIdimageboard: sql.NullInt32{Int32: 9, Valid: true},
+	}
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd.UserID = 77
 
-		req := httptest.NewRequest("POST", "/admin/imagebbs/approve/12", nil)
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-		req = mux.SetURLVars(req, map[string]string{"post": "12"})
+	req := httptest.NewRequest("POST", "/admin/imagebbs/approve/12", nil)
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	req = mux.SetURLVars(req, map[string]string{"post": "12"})
 
-		if _, ok := approvePostTask.Action(httptest.NewRecorder(), req).(http.HandlerFunc); !ok {
-			t.Fatalf("expected forbidden handler when grant is missing")
-		}
-		if len(queries.AdminApproveImagePostCalls) != 0 {
-			t.Fatalf("expected no approval calls, got %d", len(queries.AdminApproveImagePostCalls))
-		}
-	})
+	if _, ok := approvePostTask.Action(httptest.NewRecorder(), req).(http.HandlerFunc); !ok {
+		t.Fatalf("expected forbidden handler when grant is missing")
+	}
+	if len(queries.AdminApproveImagePostCalls) != 0 {
+		t.Fatalf("expected no approval calls, got %d", len(queries.AdminApproveImagePostCalls))
+	}
+}
 
-	t.Run("Happy Path - Allows With Grant", func(t *testing.T) {
-		allow := true
-		queries := testhelpers.NewQuerierStub()
-		queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			if allow {
-				return 1, nil
-			}
-			return 0, sql.ErrNoRows
+func TestApprovePostTaskAllowsWithGrant(t *testing.T) {
+	allow := true
+	queries := testhelpers.NewQuerierStub()
+	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		if allow {
+			return 1, nil
 		}
-		queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
-			Idimagepost:            4,
-			ImageboardIdimageboard: sql.NullInt32{Int32: 2, Valid: true},
-		}
-		queries.AdminApproveImagePostFn = func(context.Context, int32) error {
-			return nil
-		}
-		cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
-		cd.UserID = 15
+		return 0, sql.ErrNoRows
+	}
+	queries.AdminGetImagePostRow = &db.AdminGetImagePostRow{
+		Idimagepost:            4,
+		ImageboardIdimageboard: sql.NullInt32{Int32: 2, Valid: true},
+	}
+	queries.AdminApproveImagePostFn = func(context.Context, int32) error {
+		return nil
+	}
+	cd := common.NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	cd.UserID = 15
 
-		req := httptest.NewRequest("POST", "/admin/imagebbs/approve/4", nil)
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-		req = mux.SetURLVars(req, map[string]string{"post": "4"})
+	req := httptest.NewRequest("POST", "/admin/imagebbs/approve/4", nil)
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	req = mux.SetURLVars(req, map[string]string{"post": "4"})
 
-		if result := approvePostTask.Action(httptest.NewRecorder(), req); result != nil {
-			t.Fatalf("unexpected result %v", result)
-		}
-		if len(queries.AdminApproveImagePostCalls) != 1 {
-			t.Fatalf("expected one approval call, got %d", len(queries.AdminApproveImagePostCalls))
-		}
-		if got := queries.AdminApproveImagePostCalls[0]; got != 4 {
-			t.Fatalf("expected approval call for 4, got %d", got)
-		}
-	})
+	if result := approvePostTask.Action(httptest.NewRecorder(), req); result != nil {
+		t.Fatalf("unexpected result %v", result)
+	}
+	if len(queries.AdminApproveImagePostCalls) != 1 {
+		t.Fatalf("expected one approval call, got %d", len(queries.AdminApproveImagePostCalls))
+	}
+	if got := queries.AdminApproveImagePostCalls[0]; got != 4 {
+		t.Fatalf("expected approval call for 4, got %d", got)
+	}
 }

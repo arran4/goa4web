@@ -18,175 +18,173 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestRequireCommentAuthor(t *testing.T) {
-	t.Run("Happy Path - Allows Author", func(t *testing.T) {
-		commentID := int32(3)
-		threadID := int32(5)
-		userID := int32(7)
+func TestRequireCommentAuthor_AllowsAuthor(t *testing.T) {
+	commentID := int32(3)
+	threadID := int32(5)
+	userID := int32(7)
 
-		q := testhelpers.NewQuerierStub()
-		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
-			Idcomments:    commentID,
-			ForumthreadID: threadID,
-			UsersIdusers:  userID,
-			IsOwner:       true,
-		}
+	q := testhelpers.NewQuerierStub()
+	q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments:    commentID,
+		ForumthreadID: threadID,
+		UsersIdusers:  userID,
+		IsOwner:       true,
+	}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "3"})
+	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
+	req = mux.SetURLVars(req, map[string]string{"comment": "3"})
 
-		sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": userID}}
-		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
+	sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": userID}}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
 
-		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
-		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		called := false
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			called = true
-		})
-
-		RequireCommentAuthor(handler).ServeHTTP(rr, req)
-
-		if !called {
-			t.Fatalf("expected downstream handler to be called")
-		}
-		if rr.Code != http.StatusOK {
-			t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
-		}
-
-		if len(q.GetCommentByIdForUserCalls) != 1 {
-			t.Fatalf("expected one comment lookup, got %d", len(q.GetCommentByIdForUserCalls))
-		}
-		want := db.GetCommentByIdForUserParams{
-			ViewerID: userID,
-			ID:       commentID,
-			UserID:   sql.NullInt32{Int32: userID, Valid: true},
-		}
-		if got := q.GetCommentByIdForUserCalls[0]; got != want {
-			t.Fatalf("unexpected comment lookup params: %#v", got)
-		}
-		if len(q.SystemCheckGrantCalls) != 0 {
-			t.Fatalf("unexpected grant checks: %v", q.SystemCheckGrantCalls)
-		}
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
 	})
 
-	t.Run("Happy Path - Allows Grant Holder", func(t *testing.T) {
-		commentID := int32(9)
-		threadID := int32(10)
-		authorID := int32(11)
-		adminID := int32(12)
+	RequireCommentAuthor(handler).ServeHTTP(rr, req)
 
-		q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "thread", "edit-any"))
-		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
-			Idcomments:    commentID,
-			ForumthreadID: threadID,
-			UsersIdusers:  authorID,
-			IsOwner:       false,
-		}
+	if !called {
+		t.Fatalf("expected downstream handler to be called")
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
+	}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "9"})
+	if len(q.GetCommentByIdForUserCalls) != 1 {
+		t.Fatalf("expected one comment lookup, got %d", len(q.GetCommentByIdForUserCalls))
+	}
+	want := db.GetCommentByIdForUserParams{
+		ViewerID: userID,
+		ID:       commentID,
+		UserID:   sql.NullInt32{Int32: userID, Valid: true},
+	}
+	if got := q.GetCommentByIdForUserCalls[0]; got != want {
+		t.Fatalf("unexpected comment lookup params: %#v", got)
+	}
+	if len(q.SystemCheckGrantCalls) != 0 {
+		t.Fatalf("unexpected grant checks: %v", q.SystemCheckGrantCalls)
+	}
+}
 
-		sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
-		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
+func TestRequireCommentAuthor_AllowsGrantHolder(t *testing.T) {
+	commentID := int32(9)
+	threadID := int32(10)
+	authorID := int32(11)
+	adminID := int32(12)
 
-		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
-		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "thread", "edit-any"))
+	q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments:    commentID,
+		ForumthreadID: threadID,
+		UsersIdusers:  authorID,
+		IsOwner:       false,
+	}
 
-		called := false
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			called = true
-		})
+	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9", nil)
+	req = mux.SetURLVars(req, map[string]string{"comment": "9"})
 
-		RequireCommentAuthor(handler).ServeHTTP(rr, req)
+	sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
 
-		if !called {
-			t.Fatalf("expected downstream handler to be called")
-		}
-		if rr.Code != http.StatusOK {
-			t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
-		}
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		if len(q.GetCommentByIdForUserCalls) != 1 {
-			t.Fatalf("expected one comment lookup, got %d", len(q.GetCommentByIdForUserCalls))
-		}
-		want := db.GetCommentByIdForUserParams{
-			ViewerID: adminID,
-			ID:       commentID,
-			UserID:   sql.NullInt32{Int32: adminID, Valid: true},
-		}
-		if got := q.GetCommentByIdForUserCalls[0]; got != want {
-			t.Fatalf("unexpected comment lookup params: %#v", got)
-		}
-		if len(q.SystemCheckGrantCalls) != 1 {
-			t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
-		}
-		if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "thread", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: threadID, Valid: true}) {
-			t.Fatalf("unexpected grant params: %#v", got)
-		}
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
 	})
 
-	t.Run("Happy Path - Allows Admin Mode", func(t *testing.T) {
-		commentID := int32(13)
-		threadID := int32(15)
-		authorID := int32(16)
-		adminID := int32(17)
+	RequireCommentAuthor(handler).ServeHTTP(rr, req)
 
-		q := testhelpers.NewQuerierStub()
-		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
-			Idcomments:    commentID,
-			ForumthreadID: threadID,
-			UsersIdusers:  authorID,
-			IsOwner:       false,
-		}
-		q.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
-			{Name: "administrator", IsAdmin: true},
-		}
+	if !called {
+		t.Fatalf("expected downstream handler to be called")
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
+	}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "13"})
+	if len(q.GetCommentByIdForUserCalls) != 1 {
+		t.Fatalf("expected one comment lookup, got %d", len(q.GetCommentByIdForUserCalls))
+	}
+	want := db.GetCommentByIdForUserParams{
+		ViewerID: adminID,
+		ID:       commentID,
+		UserID:   sql.NullInt32{Int32: adminID, Valid: true},
+	}
+	if got := q.GetCommentByIdForUserCalls[0]; got != want {
+		t.Fatalf("unexpected comment lookup params: %#v", got)
+	}
+	if len(q.SystemCheckGrantCalls) != 1 {
+		t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
+	}
+	if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "thread", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: threadID, Valid: true}) {
+		t.Fatalf("unexpected grant params: %#v", got)
+	}
+}
 
-		sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
-		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
-		cd.AdminMode = true
+func TestRequireCommentAuthor_AllowsAdminMode(t *testing.T) {
+	commentID := int32(13)
+	threadID := int32(15)
+	authorID := int32(16)
+	adminID := int32(17)
 
-		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
-		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	q := testhelpers.NewQuerierStub()
+	q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
+		Idcomments:    commentID,
+		ForumthreadID: threadID,
+		UsersIdusers:  authorID,
+		IsOwner:       false,
+	}
+	q.GetPermissionsByUserIDReturns = []*db.GetPermissionsByUserIDRow{
+		{Name: "administrator", IsAdmin: true},
+	}
 
-		called := false
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			called = true
-		})
+	req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
+	req = mux.SetURLVars(req, map[string]string{"comment": "13"})
 
-		RequireCommentAuthor(handler).ServeHTTP(rr, req)
+	sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
+	cd.AdminMode = true
 
-		if !called {
-			t.Fatalf("expected downstream handler to be called")
-		}
-		if rr.Code != http.StatusOK {
-			t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
-		}
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		if len(q.GetCommentByIdForUserCalls) != 1 {
-			t.Fatalf("expected one comment lookup, got %d", len(q.GetCommentByIdForUserCalls))
-		}
-		want := db.GetCommentByIdForUserParams{
-			ViewerID: adminID,
-			ID:       commentID,
-			UserID:   sql.NullInt32{Int32: adminID, Valid: true},
-		}
-		if got := q.GetCommentByIdForUserCalls[0]; got != want {
-			t.Fatalf("unexpected comment lookup params: %#v", got)
-		}
-		if len(q.SystemCheckGrantCalls) != 0 {
-			t.Fatalf("unexpected grant checks: %v", q.SystemCheckGrantCalls)
-		}
+	called := false
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
 	})
+
+	RequireCommentAuthor(handler).ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("expected downstream handler to be called")
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
+	}
+
+	if len(q.GetCommentByIdForUserCalls) != 1 {
+		t.Fatalf("expected one comment lookup, got %d", len(q.GetCommentByIdForUserCalls))
+	}
+	want := db.GetCommentByIdForUserParams{
+		ViewerID: adminID,
+		ID:       commentID,
+		UserID:   sql.NullInt32{Int32: adminID, Valid: true},
+	}
+	if got := q.GetCommentByIdForUserCalls[0]; got != want {
+		t.Fatalf("unexpected comment lookup params: %#v", got)
+	}
+	if len(q.SystemCheckGrantCalls) != 0 {
+		t.Fatalf("unexpected grant checks: %v", q.SystemCheckGrantCalls)
+	}
 }

@@ -24,7 +24,7 @@ type CategoryFAQs struct {
 // AllAnsweredFAQ returns answered FAQ entries grouped by category for the
 // current user. Results are cached for the lifetime of the CoreData instance.
 func (cd *CoreData) AllAnsweredFAQ() ([]*CategoryFAQs, error) {
-	return cd.cache.allAnsweredFAQ.Load(func() ([]*CategoryFAQs, error) {
+	return cd.allAnsweredFAQ.Load(func() ([]*CategoryFAQs, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}

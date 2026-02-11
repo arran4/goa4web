@@ -51,15 +51,7 @@ func TestValidID(t *testing.T) {
 	}
 }
 
-func TestImageRoutes(t *testing.T) {
-	t.Run("Image Route Invalid ID", imageRouteInvalidID)
-	t.Run("Cache Route Invalid ID", cacheRouteInvalidID)
-	t.Run("Verify Middleware Unauthorized", verifyMiddlewareUnauthorized)
-	t.Run("Verify Middleware Allows Query Signed Image", verifyMiddlewareAllowsQuerySignedImage)
-	t.Run("Sign Image URL End To End", signImageURLEndToEnd)
-}
-
-func imageRouteInvalidID(t *testing.T) {
+func TestImageRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
 	navReg := navigation.NewRegistry()
@@ -76,7 +68,7 @@ func imageRouteInvalidID(t *testing.T) {
 	}
 }
 
-func cacheRouteInvalidID(t *testing.T) {
+func TestCacheRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
 	navReg := navigation.NewRegistry()
@@ -93,7 +85,7 @@ func cacheRouteInvalidID(t *testing.T) {
 	}
 }
 
-func verifyMiddlewareUnauthorized(t *testing.T) {
+func TestVerifyMiddlewareUnauthorized(t *testing.T) {
 	called := false
 	h := verifyMiddleware("image:")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
@@ -113,7 +105,7 @@ func verifyMiddlewareUnauthorized(t *testing.T) {
 	}
 }
 
-func verifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
+func TestVerifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
 	called := false
 	cfg := config.NewRuntimeConfig()
 	cfg.BaseURL = "http://localhost"
@@ -141,7 +133,7 @@ func verifyMiddlewareAllowsQuerySignedImage(t *testing.T) {
 	}
 }
 
-func signImageURLEndToEnd(t *testing.T) {
+func TestSignImageURL_EndToEnd(t *testing.T) {
 	// Setup Router
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
@@ -184,7 +176,7 @@ func signImageURLEndToEnd(t *testing.T) {
 	}
 }
 
-func TestHappyPathThumbnailRegeneration(t *testing.T) {
+func TestThumbnailRegeneration(t *testing.T) {
 	// 1. Setup
 	local.Register()
 

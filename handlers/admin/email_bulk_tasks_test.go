@@ -74,7 +74,7 @@ func setupBulkEmailTaskRequest(t *testing.T, target string, form url.Values, que
 	return req.WithContext(ctx)
 }
 
-func TestHappyPathResendSentEmailTaskFilteredSelection(t *testing.T) {
+func TestResendSentEmailTaskFilteredSelection(t *testing.T) {
 	queries := &bulkEmailQueries{
 		pendingEmails: map[int32]*db.AdminGetPendingEmailByIDRow{
 			11: {
@@ -109,7 +109,7 @@ func TestHappyPathResendSentEmailTaskFilteredSelection(t *testing.T) {
 	}
 }
 
-func TestHappyPathResendQueueTaskFilteredFailedSelection(t *testing.T) {
+func TestResendQueueTaskFilteredFailedSelection(t *testing.T) {
 	queries := &bulkEmailQueries{
 		pendingEmails: map[int32]*db.AdminGetPendingEmailByIDRow{
 			31: {

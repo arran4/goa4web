@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-
-	"github.com/arran4/goa4web/a4code/ast"
 )
 
 // QuoteOption configures behaviour of Quote.
@@ -181,7 +179,7 @@ func processQuoteBlock(s string, opts quoteOptions) (string, bool) {
 	if err != nil || len(root.Children) != 1 {
 		return s, true
 	}
-	q, ok := root.Children[0].(*ast.QuoteOf)
+	q, ok := root.Children[0].(*QuoteOf)
 	if !ok {
 		return s, true
 	}
@@ -210,7 +208,7 @@ func processQuoteBlock(s string, opts quoteOptions) (string, bool) {
 	return s, true
 }
 
-func isPureQuote(node ast.Node) bool {
+func isPureQuote(node Node) bool {
 	children := nodeChildren(node)
 	if len(children) == 0 {
 		return false
@@ -219,11 +217,11 @@ func isPureQuote(node ast.Node) bool {
 	hasQuote := false
 	for _, child := range children {
 		switch child.(type) {
-		case *ast.QuoteOf:
+		case *QuoteOf:
 			hasQuote = true
-		case *ast.Text:
+		case *Text:
 			// Check for non-empty text
-			if t, ok := child.(*ast.Text); ok && strings.TrimSpace(t.Value) != "" {
+			if t, ok := child.(*Text); ok && strings.TrimSpace(t.Value) != "" {
 				return false
 			}
 		default:
@@ -233,10 +231,10 @@ func isPureQuote(node ast.Node) bool {
 	return hasQuote
 }
 
-func getPureQuoteDepth(node ast.Node) int {
+func getPureQuoteDepth(node Node) int {
 	max := 0
 	for _, child := range nodeChildren(node) {
-		if q, ok := child.(*ast.QuoteOf); ok {
+		if q, ok := child.(*QuoteOf); ok {
 			d := 1
 			if isPureQuote(q) {
 				d += getPureQuoteDepth(q)
@@ -249,21 +247,21 @@ func getPureQuoteDepth(node ast.Node) int {
 	return max
 }
 
-func nodeChildren(n ast.Node) []ast.Node {
+func nodeChildren(n Node) []Node {
 	switch v := n.(type) {
-	case *ast.Root:
+	case *Root:
 		return v.Children
-	case *ast.QuoteOf:
+	case *QuoteOf:
 		return v.Children
 	default:
 		return nil
 	}
 }
 
-func truncateQuotes(node ast.Node, currentDepth int, limit int) {
+func truncateQuotes(node Node, currentDepth int, limit int) {
 	children := nodeChildren(node)
 	for _, child := range children {
-		if q, ok := child.(*ast.QuoteOf); ok {
+		if q, ok := child.(*QuoteOf); ok {
 			childDepth := currentDepth + 1
 			if childDepth > limit {
 				q.Children = nil
@@ -275,8 +273,10 @@ func truncateQuotes(node ast.Node, currentDepth int, limit int) {
 }
 
 // Need a helper to write AST back to string.
-func nodeToString(n ast.Node) string {
-	return ToCode(n)
+func nodeToString(n Node) string {
+	var b bytes.Buffer
+	n.a4code(&b)
+	return b.String()
 }
 
 func isQuoteBlock(s string) bool {

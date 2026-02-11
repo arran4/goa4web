@@ -2,7 +2,7 @@ package images
 
 import (
 	"bytes"
-	"crypto/sha256"
+	"crypto/sha1"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -57,8 +57,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	hash := sha256.Sum256(data)
-	id := fmt.Sprintf("%x", hash[:20])
+	id := fmt.Sprintf("%x", sha1.Sum(data))
 	ext, err := intimages.CleanExtension(header.Filename)
 	if err != nil {
 		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))

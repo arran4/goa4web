@@ -394,62 +394,6 @@ func (q *Queries) SystemGetUserByUsername(ctx context.Context, username sql.Null
 	return &i, err
 }
 
-const systemGetUsersByIDs = `-- name: SystemGetUsersByIDs :many
-SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
-FROM users u
-LEFT JOIN user_emails ue ON ue.id = (
-        SELECT id FROM user_emails ue2
-        WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL
-        ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
-)
-WHERE u.idusers IN (/*SLICE:ids*/?)
-`
-
-type SystemGetUsersByIDsRow struct {
-	Idusers                int32
-	Email                  sql.NullString
-	Username               sql.NullString
-	PublicProfileEnabledAt sql.NullTime
-}
-
-func (q *Queries) SystemGetUsersByIDs(ctx context.Context, ids []int32) ([]*SystemGetUsersByIDsRow, error) {
-	query := systemGetUsersByIDs
-	var queryParams []interface{}
-	if len(ids) > 0 {
-		for _, v := range ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*SystemGetUsersByIDsRow
-	for rows.Next() {
-		var i SystemGetUsersByIDsRow
-		if err := rows.Scan(
-			&i.Idusers,
-			&i.Email,
-			&i.Username,
-			&i.PublicProfileEnabledAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const systemInsertUser = `-- name: SystemInsertUser :execlastid
 INSERT INTO users (username)
 VALUES (?)

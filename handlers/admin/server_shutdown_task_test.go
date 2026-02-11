@@ -13,16 +13,14 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestHappyPathServerShutdownTask_EventPublished(t *testing.T) {
+func TestServerShutdownTask_EventPublished(t *testing.T) {
 	bus := eventbus.NewBus()
 	h := New(WithServer(&server.Server{Bus: bus}))
 	ch := bus.Subscribe(eventbus.TaskMessageType)
-	q := testhelpers.NewQuerierStub()
 
-	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(),
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(),
 		common.WithUserRoles([]string{"administrator"}),
 		common.WithPermissions([]*db.GetPermissionsByUserIDRow{
 			{Name: "administrator", IsAdmin: true},
@@ -37,11 +35,10 @@ func TestHappyPathServerShutdownTask_EventPublished(t *testing.T) {
 	h.NewServerShutdownTask().Action(rr, req)
 
 	select {
-	case env := <-ch:
-		env.Ack()
-		evt, ok := env.Msg.(eventbus.TaskEvent)
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
 		if !ok {
-			t.Fatalf("wrong message type %T", env.Msg)
+			t.Fatalf("wrong message type %T", msg)
 		}
 		name, ok := evt.Task.(tasks.Name)
 		if !ok {

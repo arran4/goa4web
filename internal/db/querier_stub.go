@@ -58,10 +58,10 @@ type QuerierStub struct {
 	AdminListAllImagePostsErr     error
 	AdminListAllImagePostsFn      func(context.Context, AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error)
 
-	GetImagePostInfoByPathCalls []GetImagePostInfoByPathParams
-	GetImagePostInfoByPathRow   *GetImagePostInfoByPathRow
-	GetImagePostInfoByPathErr   error
-	GetImagePostInfoByPathFn    func(context.Context, GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
+	GetImagePostInfoByPathCalls   []GetImagePostInfoByPathParams
+	GetImagePostInfoByPathRow     *GetImagePostInfoByPathRow
+	GetImagePostInfoByPathErr     error
+	GetImagePostInfoByPathFn      func(context.Context, GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
 
 	AdminScrubCommentCalls []AdminScrubCommentParams
 	AdminScrubCommentErr   error
@@ -109,52 +109,6 @@ type QuerierStub struct {
 	AdminListFailedEmailIDsErr     error
 	AdminListFailedEmailIDsFn      func(context.Context, AdminListFailedEmailIDsParams) ([]int32, error)
 
-	AdminListAllCommentsWithThreadInfoCalls   []AdminListAllCommentsWithThreadInfoParams
-	AdminListAllCommentsWithThreadInfoReturns []*AdminListAllCommentsWithThreadInfoRow
-	AdminListAllCommentsWithThreadInfoErr     error
-	AdminListAllCommentsWithThreadInfoFn      func(context.Context, AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
-
-	AdminGetAllWritingsByAuthorCalls   []int32
-	AdminGetAllWritingsByAuthorReturns []*AdminGetAllWritingsByAuthorRow
-	AdminGetAllWritingsByAuthorErr     error
-	AdminGetAllWritingsByAuthorFn      func(context.Context, int32) ([]*AdminGetAllWritingsByAuthorRow, error)
-
-	AdminGetUserEmailByIDCalls   []int32
-	AdminGetUserEmailByIDReturns *UserEmail
-	AdminGetUserEmailByIDErr     error
-	AdminGetUserEmailByIDFn      func(context.Context, int32) (*UserEmail, error)
-
-	InsertUserEmailCalls []InsertUserEmailParams
-	InsertUserEmailErr   error
-	InsertUserEmailFn    func(context.Context, InsertUserEmailParams) error
-
-	AdminDeleteUserEmailCalls []int32
-	AdminDeleteUserEmailErr   error
-	AdminDeleteUserEmailFn    func(context.Context, int32) error
-
-	AdminUpdateUserEmailDetailsCalls []AdminUpdateUserEmailDetailsParams
-	AdminUpdateUserEmailDetailsErr   error
-	AdminUpdateUserEmailDetailsFn    func(context.Context, AdminUpdateUserEmailDetailsParams) error
-
-	SystemUpdateVerificationCodeCalls []SystemUpdateVerificationCodeParams
-	SystemUpdateVerificationCodeErr   error
-	SystemUpdateVerificationCodeFn    func(context.Context, SystemUpdateVerificationCodeParams) error
-
-	AdminListRecentNotificationsCalls   []int32
-	AdminListRecentNotificationsReturns []*Notification
-	AdminListRecentNotificationsErr     error
-	AdminListRecentNotificationsFn      func(context.Context, int32) ([]*Notification, error)
-
-	AdminListAnnouncementsWithNewsCalls   int
-	AdminListAnnouncementsWithNewsReturns []*AdminListAnnouncementsWithNewsRow
-	AdminListAnnouncementsWithNewsErr     error
-	AdminListAnnouncementsWithNewsFn      func(context.Context) ([]*AdminListAnnouncementsWithNewsRow, error)
-
-	ListBannedIpsCalls   int
-	ListBannedIpsReturns []*BannedIp
-	ListBannedIpsErr     error
-	ListBannedIpsFn      func(context.Context) ([]*BannedIp, error)
-
 	GetAllAnsweredFAQWithFAQCategoriesForUserCalls   []GetAllAnsweredFAQWithFAQCategoriesForUserParams
 	GetAllAnsweredFAQWithFAQCategoriesForUserReturns []*GetAllAnsweredFAQWithFAQCategoriesForUserRow
 	GetAllAnsweredFAQWithFAQCategoriesForUserErr     error
@@ -197,11 +151,6 @@ type QuerierStub struct {
 	SystemGetUserByIDRow   *SystemGetUserByIDRow
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
-
-	SystemGetUsersByIDsCalls   [][]int32
-	SystemGetUsersByIDsReturns []*SystemGetUsersByIDsRow
-	SystemGetUsersByIDsErr     error
-	SystemGetUsersByIDsFn      func(context.Context, []int32) ([]*SystemGetUsersByIDsRow, error)
 
 	SystemGetUserByEmailRow   *SystemGetUserByEmailRow
 	SystemGetUserByEmailErr   error
@@ -401,30 +350,6 @@ type QuerierStub struct {
 
 	UpdateExternalLinkMetadataCalls []UpdateExternalLinkMetadataParams
 	UpdateExternalLinkMetadataErr   error
-	UpdateExternalLinkMetadataFn    func(context.Context, UpdateExternalLinkMetadataParams) error
-
-	CreateExternalLinkCalls   []string
-	CreateExternalLinkReturns sql.Result
-	CreateExternalLinkErr     error
-	CreateExternalLinkFn      func(context.Context, string) (sql.Result, error)
-
-	GetExternalLinkCalls   []string
-	GetExternalLinkReturns *ExternalLink
-	GetExternalLinkErr     error
-	GetExternalLinkFn      func(context.Context, string) (*ExternalLink, error)
-
-	GetExternalLinkByIDCalls   []int32
-	GetExternalLinkByIDReturns *ExternalLink
-	GetExternalLinkByIDErr     error
-	GetExternalLinkByIDFn      func(context.Context, int32) (*ExternalLink, error)
-
-	SystemRegisterExternalLinkClickCalls []string
-	SystemRegisterExternalLinkClickErr   error
-	SystemRegisterExternalLinkClickFn    func(context.Context, string) error
-
-	UpdateExternalLinkImageCacheCalls []UpdateExternalLinkImageCacheParams
-	UpdateExternalLinkImageCacheErr   error
-	UpdateExternalLinkImageCacheFn    func(context.Context, UpdateExternalLinkImageCacheParams) error
 
 	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
 	AdminInsertRequestCommentErr   error
@@ -510,114 +435,13 @@ type QuerierStub struct {
 
 	ListSubscribersForPatternsParams []ListSubscribersForPatternsParams
 	ListSubscribersForPatternsReturn map[string][]int32
-	ListSubscribersForPatternsFn     func(context.Context, ListSubscribersForPatternsParams) ([]int32, error)
 
 	GetPreferenceForListerParams []int32
 	GetPreferenceForListerReturn map[int32]*Preference
-	GetPreferenceForListerFn     func(context.Context, int32) (*Preference, error)
 
-	InsertSubscriptionParams []InsertSubscriptionParams
-	DeleteSubscriptionParams []DeleteSubscriptionForSubscriberParams
-	DeleteSubscriptionErr    error
-
-	SystemInsertLoginAttemptCalls []SystemInsertLoginAttemptParams
-	SystemInsertLoginAttemptErr   error
-	SystemInsertLoginAttemptFn    func(context.Context, SystemInsertLoginAttemptParams) error
-
-	SystemCountRecentLoginAttemptsCalls   []SystemCountRecentLoginAttemptsParams
-	SystemCountRecentLoginAttemptsReturns int64
-	SystemCountRecentLoginAttemptsErr     error
-	SystemCountRecentLoginAttemptsFn      func(context.Context, SystemCountRecentLoginAttemptsParams) (int64, error)
-
-	SystemInsertUserCalls   []sql.NullString
-	SystemInsertUserReturns int64
-	SystemInsertUserErr     error
-	SystemInsertUserFn      func(context.Context, sql.NullString) (int64, error)
-
-	SystemCreateUserRoleCalls []SystemCreateUserRoleParams
-	SystemCreateUserRoleErr   error
-	SystemCreateUserRoleFn    func(context.Context, SystemCreateUserRoleParams) error
-
-	GetNotificationForListerCalls   []GetNotificationForListerParams
-	GetNotificationForListerReturns *Notification
-	GetNotificationForListerErr     error
-	GetNotificationForListerFn      func(context.Context, GetNotificationForListerParams) (*Notification, error)
-
-	ListUnreadNotificationsForListerCalls   []ListUnreadNotificationsForListerParams
-	ListUnreadNotificationsForListerReturns []*Notification
-	ListUnreadNotificationsForListerErr     error
-	ListUnreadNotificationsForListerFn      func(context.Context, ListUnreadNotificationsForListerParams) ([]*Notification, error)
-
-	SetNotificationReadForListerCalls []SetNotificationReadForListerParams
-	SetNotificationReadForListerErr   error
-	SetNotificationReadForListerFn    func(context.Context, SetNotificationReadForListerParams) error
-
-	SetNotificationPriorityForListerCalls []SetNotificationPriorityForListerParams
-	SetNotificationPriorityForListerErr   error
-	SetNotificationPriorityForListerFn    func(context.Context, SetNotificationPriorityForListerParams) error
-
-	GetMaxNotificationPriorityCalls   []int32
-	GetMaxNotificationPriorityReturns interface{}
-	GetMaxNotificationPriorityErr     error
-	GetMaxNotificationPriorityFn      func(context.Context, int32) (interface{}, error)
-
-	InsertPreferenceForListerCalls []InsertPreferenceForListerParams
-	InsertPreferenceForListerErr   error
-	InsertPreferenceForListerFn    func(context.Context, InsertPreferenceForListerParams) error
-
-	UpdateCustomCssForListerCalls []UpdateCustomCssForListerParams
-	UpdateCustomCssForListerErr   error
-	UpdateCustomCssForListerFn    func(context.Context, UpdateCustomCssForListerParams) error
-
-	GetUserEmailByIDCalls   []int32
-	GetUserEmailByIDReturns *UserEmail
-	GetUserEmailByIDErr     error
-	GetUserEmailByIDFn      func(context.Context, int32) (*UserEmail, error)
-
-	GetUserEmailByCodeCalls []sql.NullString
-	GetUserEmailByCodeRow   *UserEmail
-	GetUserEmailByCodeErr   error
-	GetUserEmailByCodeFn    func(context.Context, sql.NullString) (*UserEmail, error)
-
-	GetPublicProfileRoleForUserCalls   []int32
-	GetPublicProfileRoleForUserReturns int32
-	GetPublicProfileRoleForUserErr     error
-	GetPublicProfileRoleForUserFn      func(context.Context, int32) (int32, error)
-
-	GetUserLanguagesCalls   []int32
-	GetUserLanguagesReturns []*UserLanguage
-	GetUserLanguagesErr     error
-	GetUserLanguagesFn      func(context.Context, int32) ([]*UserLanguage, error)
-
-	DeleteUserLanguagesForUserCalls []int32
-	DeleteUserLanguagesForUserErr   error
-	DeleteUserLanguagesForUserFn    func(context.Context, int32) error
-
-	InsertUserLangCalls []InsertUserLangParams
-	InsertUserLangErr   error
-	InsertUserLangFn    func(context.Context, InsertUserLangParams) error
-
-	UpdatePreferenceForListerCalls []UpdatePreferenceForListerParams
-	UpdatePreferenceForListerErr   error
-	UpdatePreferenceForListerFn    func(context.Context, UpdatePreferenceForListerParams) error
-
-	ListUserEmailsForListerCalls   []ListUserEmailsForListerParams
-	ListUserEmailsForListerReturns []*UserEmail
-	ListUserEmailsForListerErr     error
-	ListUserEmailsForListerFn      func(context.Context, ListUserEmailsForListerParams) ([]*UserEmail, error)
-
-	SetVerificationCodeForListerCalls []SetVerificationCodeForListerParams
-	SetVerificationCodeForListerErr   error
-	SetVerificationCodeForListerFn    func(context.Context, SetVerificationCodeForListerParams) error
-
-	SystemMarkUserEmailVerifiedCalls []SystemMarkUserEmailVerifiedParams
-	SystemMarkUserEmailVerifiedErr   error
-	SystemMarkUserEmailVerifiedFn    func(context.Context, SystemMarkUserEmailVerifiedParams) error
-
-	SystemDeleteUserEmailsByEmailExceptIDCalls []SystemDeleteUserEmailsByEmailExceptIDParams
-	SystemDeleteUserEmailsByEmailExceptIDErr   error
-	SystemDeleteUserEmailsByEmailExceptIDFn    func(context.Context, SystemDeleteUserEmailsByEmailExceptIDParams) error
-
+	InsertSubscriptionParams         []InsertSubscriptionParams
+	DeleteSubscriptionParams         []DeleteSubscriptionForSubscriberParams
+	DeleteSubscriptionErr            error
 	CreateFAQQuestionForWriterCalls  []CreateFAQQuestionForWriterParams
 	CreateFAQQuestionForWriterErr    error
 	CreateFAQQuestionForWriterFn     func(context.Context, CreateFAQQuestionForWriterParams) error
@@ -815,10 +639,6 @@ type QuerierStub struct {
 	AdminUpdateForumCategoryErr   error
 	AdminUpdateForumCategoryFn    func(context.Context, AdminUpdateForumCategoryParams) error
 
-	AdminUpdateWritingCategoryCalls []AdminUpdateWritingCategoryParams
-	AdminUpdateWritingCategoryErr   error
-	AdminUpdateWritingCategoryFn    func(context.Context, AdminUpdateWritingCategoryParams) error
-
 	AdminUpdateFAQCalls []AdminUpdateFAQParams
 	AdminUpdateFAQErr   error
 	AdminUpdateFAQFn    func(context.Context, AdminUpdateFAQParams) error
@@ -852,11 +672,6 @@ type QuerierStub struct {
 	ListBloggersForListerReturns []*ListBloggersForListerRow
 	ListBloggersForListerErr     error
 	ListBloggersForListerFn      func(ListBloggersForListerParams) ([]*ListBloggersForListerRow, error)
-
-	ListBloggersSearchForListerCalls   []ListBloggersSearchForListerParams
-	ListBloggersSearchForListerReturns []*ListBloggersSearchForListerRow
-	ListBloggersSearchForListerErr     error
-	ListBloggersSearchForListerFn      func(ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error)
 
 	ListWritersForListerCalls   []ListWritersForListerParams
 	ListWritersForListerReturns []*ListWritersForListerRow
@@ -941,29 +756,6 @@ type QuerierStub struct {
 	AdminGetFAQDismissedQuestionsReturns []*AdminGetFAQDismissedQuestionsRow
 	AdminGetFAQDismissedQuestionsErr     error
 	AdminGetFAQDismissedQuestionsFn      func(context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
-
-	AdminListTopicsWithUserGrantsNoRolesCalls   []interface{}
-	AdminListTopicsWithUserGrantsNoRolesReturns []*AdminListTopicsWithUserGrantsNoRolesRow
-	AdminListTopicsWithUserGrantsNoRolesErr     error
-	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
-
-	AdminCreateGrantCalls   []AdminCreateGrantParams
-	AdminCreateGrantReturns int64
-	AdminCreateGrantErr     error
-	AdminCreateGrantFn      func(context.Context, AdminCreateGrantParams) (int64, error)
-
-	UpdateSubscriptionByIDForSubscriberCalls []UpdateSubscriptionByIDForSubscriberParams
-	UpdateSubscriptionByIDForSubscriberErr   error
-	UpdateSubscriptionByIDForSubscriberFn    func(context.Context, UpdateSubscriptionByIDForSubscriberParams) error
-
-	DeleteSubscriptionByIDForSubscriberCalls []DeleteSubscriptionByIDForSubscriberParams
-	DeleteSubscriptionByIDForSubscriberErr   error
-	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
-
-	GetUserRoleByIDCalls []int32
-	GetUserRoleByIDRow   *GetUserRoleByIDRow
-	GetUserRoleByIDErr   error
-	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -1390,312 +1182,6 @@ func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCre
 	return ret, err
 }
 
-func (s *QuerierStub) SystemCreateUserRole(ctx context.Context, arg SystemCreateUserRoleParams) error {
-	s.mu.Lock()
-	s.SystemCreateUserRoleCalls = append(s.SystemCreateUserRoleCalls, arg)
-	fn := s.SystemCreateUserRoleFn
-	err := s.SystemCreateUserRoleErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) GetUserRoleByID(ctx context.Context, id int32) (*GetUserRoleByIDRow, error) {
-	s.mu.Lock()
-	s.GetUserRoleByIDCalls = append(s.GetUserRoleByIDCalls, id)
-	fn := s.GetUserRoleByIDFn
-	row := s.GetUserRoleByIDRow
-	err := s.GetUserRoleByIDErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, id)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return row, nil
-}
-
-func (s *QuerierStub) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
-	s.mu.Lock()
-	s.SystemMarkUserEmailVerifiedCalls = append(s.SystemMarkUserEmailVerifiedCalls, arg)
-	fn := s.SystemMarkUserEmailVerifiedFn
-	err := s.SystemMarkUserEmailVerifiedErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error {
-	s.mu.Lock()
-	s.SystemDeleteUserEmailsByEmailExceptIDCalls = append(s.SystemDeleteUserEmailsByEmailExceptIDCalls, arg)
-	fn := s.SystemDeleteUserEmailsByEmailExceptIDFn
-	err := s.SystemDeleteUserEmailsByEmailExceptIDErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) GetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error) {
-	s.mu.Lock()
-	s.GetUserEmailByIDCalls = append(s.GetUserEmailByIDCalls, id)
-	fn := s.GetUserEmailByIDFn
-	ret := s.GetUserEmailByIDReturns
-	err := s.GetUserEmailByIDErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, id)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) GetUserEmailByCode(ctx context.Context, code sql.NullString) (*UserEmail, error) {
-	s.mu.Lock()
-	s.GetUserEmailByCodeCalls = append(s.GetUserEmailByCodeCalls, code)
-	fn := s.GetUserEmailByCodeFn
-	row := s.GetUserEmailByCodeRow
-	err := s.GetUserEmailByCodeErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, code)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if row == nil {
-		return nil, errors.New("GetUserEmailByCode not stubbed")
-	}
-	return row, nil
-}
-
-func (s *QuerierStub) GetPublicProfileRoleForUser(ctx context.Context, id int32) (int32, error) {
-	s.mu.Lock()
-	s.GetPublicProfileRoleForUserCalls = append(s.GetPublicProfileRoleForUserCalls, id)
-	fn := s.GetPublicProfileRoleForUserFn
-	ret := s.GetPublicProfileRoleForUserReturns
-	err := s.GetPublicProfileRoleForUserErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, id)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) GetUserLanguages(ctx context.Context, id int32) ([]*UserLanguage, error) {
-	s.mu.Lock()
-	s.GetUserLanguagesCalls = append(s.GetUserLanguagesCalls, id)
-	fn := s.GetUserLanguagesFn
-	ret := s.GetUserLanguagesReturns
-	err := s.GetUserLanguagesErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, id)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) DeleteUserLanguagesForUser(ctx context.Context, id int32) error {
-	s.mu.Lock()
-	s.DeleteUserLanguagesForUserCalls = append(s.DeleteUserLanguagesForUserCalls, id)
-	fn := s.DeleteUserLanguagesForUserFn
-	err := s.DeleteUserLanguagesForUserErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, id)
-	}
-	return err
-}
-
-func (s *QuerierStub) InsertUserLang(ctx context.Context, arg InsertUserLangParams) error {
-	s.mu.Lock()
-	s.InsertUserLangCalls = append(s.InsertUserLangCalls, arg)
-	fn := s.InsertUserLangFn
-	err := s.InsertUserLangErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error {
-	s.mu.Lock()
-	s.UpdatePreferenceForListerCalls = append(s.UpdatePreferenceForListerCalls, arg)
-	fn := s.UpdatePreferenceForListerFn
-	err := s.UpdatePreferenceForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) ListUserEmailsForLister(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error) {
-	s.mu.Lock()
-	s.ListUserEmailsForListerCalls = append(s.ListUserEmailsForListerCalls, arg)
-	fn := s.ListUserEmailsForListerFn
-	ret := s.ListUserEmailsForListerReturns
-	err := s.ListUserEmailsForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error {
-	s.mu.Lock()
-	s.SetVerificationCodeForListerCalls = append(s.SetVerificationCodeForListerCalls, arg)
-	fn := s.SetVerificationCodeForListerFn
-	err := s.SetVerificationCodeForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error) {
-	s.mu.Lock()
-	s.GetNotificationForListerCalls = append(s.GetNotificationForListerCalls, arg)
-	fn := s.GetNotificationForListerFn
-	ret := s.GetNotificationForListerReturns
-	err := s.GetNotificationForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error) {
-	s.mu.Lock()
-	s.ListUnreadNotificationsForListerCalls = append(s.ListUnreadNotificationsForListerCalls, arg)
-	fn := s.ListUnreadNotificationsForListerFn
-	ret := s.ListUnreadNotificationsForListerReturns
-	err := s.ListUnreadNotificationsForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error {
-	s.mu.Lock()
-	s.SetNotificationReadForListerCalls = append(s.SetNotificationReadForListerCalls, arg)
-	fn := s.SetNotificationReadForListerFn
-	err := s.SetNotificationReadForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error {
-	s.mu.Lock()
-	s.SetNotificationPriorityForListerCalls = append(s.SetNotificationPriorityForListerCalls, arg)
-	fn := s.SetNotificationPriorityForListerFn
-	err := s.SetNotificationPriorityForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) GetMaxNotificationPriority(ctx context.Context, listerID int32) (interface{}, error) {
-	s.mu.Lock()
-	s.GetMaxNotificationPriorityCalls = append(s.GetMaxNotificationPriorityCalls, listerID)
-	fn := s.GetMaxNotificationPriorityFn
-	ret := s.GetMaxNotificationPriorityReturns
-	err := s.GetMaxNotificationPriorityErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, listerID)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error {
-	s.mu.Lock()
-	s.InsertPreferenceForListerCalls = append(s.InsertPreferenceForListerCalls, arg)
-	fn := s.InsertPreferenceForListerFn
-	err := s.InsertPreferenceForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error {
-	s.mu.Lock()
-	s.UpdateCustomCssForListerCalls = append(s.UpdateCustomCssForListerCalls, arg)
-	fn := s.UpdateCustomCssForListerFn
-	err := s.UpdateCustomCssForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error {
-	s.mu.Lock()
-	s.SystemInsertLoginAttemptCalls = append(s.SystemInsertLoginAttemptCalls, arg)
-	fn := s.SystemInsertLoginAttemptFn
-	err := s.SystemInsertLoginAttemptErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error) {
-	s.mu.Lock()
-	s.SystemCountRecentLoginAttemptsCalls = append(s.SystemCountRecentLoginAttemptsCalls, arg)
-	fn := s.SystemCountRecentLoginAttemptsFn
-	ret := s.SystemCountRecentLoginAttemptsReturns
-	err := s.SystemCountRecentLoginAttemptsErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error) {
-	s.mu.Lock()
-	s.SystemInsertUserCalls = append(s.SystemInsertUserCalls, username)
-	fn := s.SystemInsertUserFn
-	ret := s.SystemInsertUserReturns
-	err := s.SystemInsertUserErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, username)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.AdminListTopicsWithUserGrantsNoRolesCalls = append(s.AdminListTopicsWithUserGrantsNoRolesCalls, includeAdmin)
-	if s.AdminListTopicsWithUserGrantsNoRolesFn != nil {
-		return s.AdminListTopicsWithUserGrantsNoRolesFn(ctx, includeAdmin)
-	}
-	return s.AdminListTopicsWithUserGrantsNoRolesReturns, s.AdminListTopicsWithUserGrantsNoRolesErr
-}
-
 func (s *QuerierStub) ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1749,18 +1235,6 @@ func (s *QuerierStub) AdminUpdateForumCategory(ctx context.Context, arg AdminUpd
 	s.AdminUpdateForumCategoryCalls = append(s.AdminUpdateForumCategoryCalls, arg)
 	fn := s.AdminUpdateForumCategoryFn
 	err := s.AdminUpdateForumCategoryErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
-}
-
-func (s *QuerierStub) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdateWritingCategoryParams) error {
-	s.mu.Lock()
-	s.AdminUpdateWritingCategoryCalls = append(s.AdminUpdateWritingCategoryCalls, arg)
-	fn := s.AdminUpdateWritingCategoryFn
-	err := s.AdminUpdateWritingCategoryErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
@@ -1865,19 +1339,6 @@ func (s *QuerierStub) ListBloggersForLister(ctx context.Context, arg ListBlogger
 	fn := s.ListBloggersForListerFn
 	ret := s.ListBloggersForListerReturns
 	err := s.ListBloggersForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) ListBloggersSearchForLister(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error) {
-	s.mu.Lock()
-	s.ListBloggersSearchForListerCalls = append(s.ListBloggersSearchForListerCalls, arg)
-	fn := s.ListBloggersSearchForListerFn
-	ret := s.ListBloggersSearchForListerReturns
-	err := s.ListBloggersSearchForListerErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(arg)
@@ -2343,20 +1804,6 @@ func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*Sy
 	return s.SystemGetUserByIDRow, nil
 }
 
-// SystemGetUsersByIDs records the call and returns the configured response.
-func (s *QuerierStub) SystemGetUsersByIDs(ctx context.Context, ids []int32) ([]*SystemGetUsersByIDsRow, error) {
-	s.mu.Lock()
-	s.SystemGetUsersByIDsCalls = append(s.SystemGetUsersByIDsCalls, ids)
-	fn := s.SystemGetUsersByIDsFn
-	ret := s.SystemGetUsersByIDsReturns
-	err := s.SystemGetUsersByIDsErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, ids)
-	}
-	return ret, err
-}
-
 // SystemGetUserByEmail records the call and returns the configured response.
 func (s *QuerierStub) SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error) {
 	s.mu.Lock()
@@ -2599,9 +2046,6 @@ func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSu
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ListSubscribersForPatternsParams = append(s.ListSubscribersForPatternsParams, arg)
-	if s.ListSubscribersForPatternsFn != nil {
-		return s.ListSubscribersForPatternsFn(ctx, arg)
-	}
 	// Flatten returns for all patterns or just return a default set
 	var ret []int32
 	if s.ListSubscribersForPatternsReturn != nil {
@@ -2635,9 +2079,6 @@ func (s *QuerierStub) GetPreferenceForLister(ctx context.Context, listerID int32
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.GetPreferenceForListerParams = append(s.GetPreferenceForListerParams, listerID)
-	if s.GetPreferenceForListerFn != nil {
-		return s.GetPreferenceForListerFn(ctx, listerID)
-	}
 	if s.GetPreferenceForListerReturn != nil {
 		if v, ok := s.GetPreferenceForListerReturn[listerID]; ok {
 			return v, nil
@@ -2791,28 +2232,15 @@ func (s *QuerierStub) AdminInsertRequestQueue(ctx context.Context, arg AdminInse
 	}
 	return ret, nil
 }
-func (s *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.UpdateExternalLinkImageCacheCalls = append(s.UpdateExternalLinkImageCacheCalls, arg)
-	fn := s.UpdateExternalLinkImageCacheFn
-	err := s.UpdateExternalLinkImageCacheErr
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
+func (q *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error {
+	return nil
 }
 
 func (s *QuerierStub) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.UpdateExternalLinkMetadataCalls = append(s.UpdateExternalLinkMetadataCalls, arg)
-	fn := s.UpdateExternalLinkMetadataFn
-	err := s.UpdateExternalLinkMetadataErr
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
+	return s.UpdateExternalLinkMetadataErr
 }
 
 func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
@@ -2826,77 +2254,6 @@ func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg G
 		return fn(ctx, arg)
 	}
 	return ret, err
-}
-
-func (s *QuerierStub) CreateExternalLink(ctx context.Context, url string) (sql.Result, error) {
-	s.mu.Lock()
-	s.CreateExternalLinkCalls = append(s.CreateExternalLinkCalls, url)
-	fn := s.CreateExternalLinkFn
-	ret := s.CreateExternalLinkReturns
-	err := s.CreateExternalLinkErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, url)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if ret == nil {
-		return FakeSQLResult{}, nil
-	}
-	return ret, nil
-}
-
-func (s *QuerierStub) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
-	s.mu.Lock()
-	s.GetExternalLinkCalls = append(s.GetExternalLinkCalls, url)
-	fn := s.GetExternalLinkFn
-	ret := s.GetExternalLinkReturns
-	err := s.GetExternalLinkErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, url)
-	}
-	if err != nil {
-		return nil, err
-	}
-	if ret == nil {
-		// Simulate not found if not configured?
-		// For consistency with other methods, we might return nil, nil if nothing configured?
-		// Or errors.New("GetExternalLink not stubbed")?
-		// Many stubs return (nil, nil) or whatever is in Returns (which is nil).
-		// But in tests we usually check for sql.ErrNoRows if we want to simulate missing.
-		return nil, nil // Or sql.ErrNoRows?
-	}
-	return ret, nil
-}
-
-func (s *QuerierStub) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
-	s.mu.Lock()
-	s.GetExternalLinkByIDCalls = append(s.GetExternalLinkByIDCalls, id)
-	fn := s.GetExternalLinkByIDFn
-	ret := s.GetExternalLinkByIDReturns
-	err := s.GetExternalLinkByIDErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, id)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-func (s *QuerierStub) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
-	s.mu.Lock()
-	s.SystemRegisterExternalLinkClickCalls = append(s.SystemRegisterExternalLinkClickCalls, url)
-	fn := s.SystemRegisterExternalLinkClickFn
-	err := s.SystemRegisterExternalLinkClickErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, url)
-	}
-	return err
 }
 
 func (s *QuerierStub) AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error) {

@@ -9,31 +9,29 @@ import (
 )
 
 func TestPagesExist(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		pages := []tasks.Template{
-			LinkerShowPageTmpl,
-			LinkerCommentsPageTmpl,
-			LinkerAdminDashboardPageTmpl,
-			LinkerSuggestPageTmpl,
-			LinkerAdminAddPageTmpl,
-			LinkerUserPageTmpl,
-			LinkerPageTmpl,
-			LinkerCategoriesPageTmpl,
-			LinkerAdminQueuePageTmpl,
-			LinkerAdminCategoriesPageTmpl,
-			LinkerAdminCategoryGrantsPageTmpl,
-			LinkerAdminLinkPageTmpl,
-			LinkerAdminLinkGrantsPageTmpl,
-			LinkerAdminCategoryEditPageTmpl,
-			LinkerAdminLinkViewPageTmpl,
-			LinkerAdminLinksPageTmpl,
-			LinkerAdminCategoryPageTmpl,
-		}
+	pages := []tasks.Template{
+		LinkerShowPageTmpl,
+		LinkerCommentsPageTmpl,
+		LinkerAdminDashboardPageTmpl,
+		LinkerSuggestPageTmpl,
+		LinkerAdminAddPageTmpl,
+		LinkerUserPageTmpl,
+		LinkerPageTmpl,
+		LinkerCategoriesPageTmpl,
+		LinkerAdminQueuePageTmpl,
+		LinkerAdminCategoriesPageTmpl,
+		LinkerAdminCategoryGrantsPageTmpl,
+		LinkerAdminLinkPageTmpl,
+		LinkerAdminLinkGrantsPageTmpl,
+		LinkerAdminCategoryEditPageTmpl,
+		LinkerAdminLinkViewPageTmpl,
+		LinkerAdminLinksPageTmpl,
+		LinkerAdminCategoryPageTmpl,
+	}
 
-		for _, page := range pages {
-			t.Run(string(page), func(t *testing.T) {
-				assert.True(t, page.Exists(templates.WithSilence(true)), "Page %s should exist", page)
-			})
-		}
-	})
+	for _, page := range pages {
+		t.Run(string(page), func(t *testing.T) {
+			assert.True(t, page.Exists(templates.WithSilence(true)), "Page %s should exist", page)
+		})
+	}
 }

@@ -38,11 +38,9 @@ var allPages = []tasks.Template{
 }
 
 func TestAllRegisteredPagesExist(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		for _, p := range allPages {
-			if !p.Exists(templates.WithSilence(true)) {
-				t.Errorf("Page template missing: %s", p)
-			}
+	for _, p := range allPages {
+		if !p.Exists(templates.WithSilence(true)) {
+			t.Errorf("Page template missing: %s", p)
 		}
-	})
+	}
 }

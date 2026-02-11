@@ -53,25 +53,3 @@ func TestWouldCreateLoopNone(t *testing.T) {
 		t.Fatalf("unexpected loop %v", path)
 	}
 }
-
-func TestWouldCreateLoopRoot(t *testing.T) {
-	parents := map[int32]int32{1: 0}
-	path, loop := WouldCreateLoop(parents, 2, 0)
-	if loop {
-		t.Fatalf("unexpected loop")
-	}
-	if path != nil {
-		t.Fatalf("expected nil path, got %v", path)
-	}
-}
-
-func TestWouldCreateLoopDangling(t *testing.T) {
-	parents := map[int32]int32{1: 2}
-	path, loop := WouldCreateLoop(parents, 3, 1)
-	if loop {
-		t.Fatalf("unexpected loop")
-	}
-	if path != nil {
-		t.Fatalf("expected nil path, got %v", path)
-	}
-}

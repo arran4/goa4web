@@ -41,36 +41,34 @@ func (q *renameLanguageQueries) GetPermissionsByUserID(ctx context.Context, idus
 	return []*db.GetPermissionsByUserIDRow{{Name: "administrator", IsAdmin: true}}, nil
 }
 
-func TestRenameLanguageTask(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		queries := &renameLanguageQueries{
-			languages: []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
-		}
+func TestRenameLanguageTask_Action(t *testing.T) {
+	queries := &renameLanguageQueries{
+		languages: []*db.Language{{ID: 1, Nameof: sql.NullString{String: "en", Valid: true}}},
+	}
 
-		form := url.Values{}
-		form.Set("cid", "1")
-		form.Set("cname", "fr")
+	form := url.Values{}
+	form.Set("cid", "1")
+	form.Set("cname", "fr")
 
-		req := httptest.NewRequest("POST", "/admin/languages/language/1/edit", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req := httptest.NewRequest("POST", "/admin/languages/language/1/edit", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		cfg := config.NewRuntimeConfig()
-		cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
-		cd.UserID = 1
-		cd.AdminMode = true
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
+	cfg := config.NewRuntimeConfig()
+	cd := common.NewCoreData(context.Background(), queries, cfg, common.WithUserRoles([]string{"administrator"}))
+	cd.UserID = 1
+	cd.AdminMode = true
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
 
-		result := renameLanguageTask.Action(rr, req)
-		if result != nil {
-			t.Fatalf("expected nil, got %v", result)
-		}
-		if len(queries.renameArgs) != 1 {
-			t.Fatalf("expected rename call, got %d", len(queries.renameArgs))
-		}
-		if arg := queries.renameArgs[0]; arg.ID != 1 || arg.Nameof.String != "fr" {
-			t.Fatalf("unexpected rename args: %#v", arg)
-		}
-	})
+	result := renameLanguageTask.Action(rr, req)
+	if result != nil {
+		t.Fatalf("expected nil, got %v", result)
+	}
+	if len(queries.renameArgs) != 1 {
+		t.Fatalf("expected rename call, got %d", len(queries.renameArgs))
+	}
+	if arg := queries.renameArgs[0]; arg.ID != 1 || arg.Nameof.String != "fr" {
+		t.Fatalf("unexpected rename args: %#v", arg)
+	}
 }

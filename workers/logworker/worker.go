@@ -16,17 +16,12 @@ func Worker(ctx context.Context, bus *eventbus.Bus) {
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case env, ok := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
 			if !ok {
-				return
-			}
-			evt, ok := env.Msg.(eventbus.TaskEvent)
-			if !ok {
-				env.Ack()
 				continue
 			}
 			log.Printf("event path=%s task=%s uid=%d data=%v", evt.Path, evt.Task, evt.UserID, cleanData(evt.Data))
-			env.Ack()
 		case <-ctx.Done():
 			return
 		}

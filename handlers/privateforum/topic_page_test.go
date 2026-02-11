@@ -20,7 +20,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestHappyPathTopicPage_Prefix(t *testing.T) {
+func TestTopicPage_Prefix(t *testing.T) {
 	core.Store = sessions.NewCookieStore([]byte("test"))
 	core.SessionName = "test-session"
 	queries := testhelpers.NewQuerierStub()

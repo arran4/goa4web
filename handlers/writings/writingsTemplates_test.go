@@ -36,17 +36,15 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestWritingsTemplatesExist(t *testing.T) {
-	t.Run("Happy Path - All Templates", func(t *testing.T) {
-		providers := []notif.SubscribersNotificationTemplateProvider{
-			submitWritingTask,
-			updateWritingTask,
-			replyTask,
+	providers := []notif.SubscribersNotificationTemplateProvider{
+		submitWritingTask,
+		updateWritingTask,
+		replyTask,
+	}
+	for _, p := range providers {
+		if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			checkEmailTemplates(t, et)
 		}
-		for _, p := range providers {
-			if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
-				checkEmailTemplates(t, et)
-			}
-			checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
-		}
-	})
+		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	}
 }

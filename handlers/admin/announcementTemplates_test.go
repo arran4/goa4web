@@ -40,7 +40,7 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 	}
 }
 
-func TestHappyPathAnnouncementTemplatesExist(t *testing.T) {
+func TestAnnouncementTemplatesExist(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
 		addAnnouncementTask,
 		deleteAnnouncementTask,

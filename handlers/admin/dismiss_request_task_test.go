@@ -69,7 +69,7 @@ func (q *dismissRequestQueries) GetPermissionsByUserID(ctx context.Context, id i
 	}, nil
 }
 
-func TestHappyPathDismissRequestTask_Action(t *testing.T) {
+func TestDismissRequestTask_Action(t *testing.T) {
 	requestID := 10
 	queries := &dismissRequestQueries{
 		requestID: int32(requestID),

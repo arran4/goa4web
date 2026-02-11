@@ -9,13 +9,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestUserCanCreateLink(t *testing.T) {
-	t.Run("Allowed", userCanCreateLinkAllowed)
-	t.Run("Denied", userCanCreateLinkDenied)
-	t.Run("Error", userCanCreateLinkError)
-}
-
-func userCanCreateLinkAllowed(t *testing.T) {
+func TestUserCanCreateLink_Allowed(t *testing.T) {
 	q := testhelpers.NewQuerierStub(
 		testhelpers.WithGrantResult(true),
 	)
@@ -32,7 +26,7 @@ func userCanCreateLinkAllowed(t *testing.T) {
 	}
 }
 
-func userCanCreateLinkDenied(t *testing.T) {
+func TestUserCanCreateLink_Denied(t *testing.T) {
 	q := testhelpers.NewQuerierStub(
 		testhelpers.WithGrantError(sql.ErrNoRows),
 	)
@@ -49,7 +43,7 @@ func userCanCreateLinkDenied(t *testing.T) {
 	}
 }
 
-func userCanCreateLinkError(t *testing.T) {
+func TestUserCanCreateLink_Error(t *testing.T) {
 	q := testhelpers.NewQuerierStub(
 		testhelpers.WithGrantError(errors.New("db offline")),
 	)

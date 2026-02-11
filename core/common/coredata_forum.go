@@ -12,7 +12,7 @@ import (
 
 // ForumCategories loads all forum categories once.
 func (cd *CoreData) ForumCategories() ([]*db.Forumcategory, error) {
-	return cd.cache.forumCategories.Load(func() ([]*db.Forumcategory, error) {
+	return cd.forumCategories.Load(func() ([]*db.Forumcategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -40,7 +40,7 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazy.Map(&cd.cache.forumThreadRows, &cd.cache.mapMu, id, fetch, ops...)
+	return lazy.Map(&cd.forumThreadRows, &cd.mapMu, id, fetch, ops...)
 }
 
 // ForumThread is a convenience wrapper around ForumThreadByID.
@@ -50,13 +50,13 @@ func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[*db.GetThreadLastPo
 
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
-	if cd.cache.forumThreads == nil {
-		cd.cache.forumThreads = make(map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow])
+	if cd.forumThreads == nil {
+		cd.forumThreads = make(map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow])
 	}
-	lv, ok := cd.cache.forumThreads[topicID]
+	lv, ok := cd.forumThreads[topicID]
 	if !ok {
 		lv = &lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]{}
-		cd.cache.forumThreads[topicID] = lv
+		cd.forumThreads[topicID] = lv
 	}
 	return lv.Load(func() ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 		if cd.queries == nil {
@@ -82,18 +82,18 @@ func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[*db.GetForumTopi
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 		})
 	}
-	return lazy.Map(&cd.cache.forumTopics, &cd.cache.mapMu, id, fetch, ops...)
+	return lazy.Map(&cd.forumTopics, &cd.mapMu, id, fetch, ops...)
 }
 
 // ForumTopics loads forum topics for a given category once per category.
 func (cd *CoreData) ForumTopics(categoryID int32) ([]*db.GetForumTopicsForUserRow, error) {
-	if cd.cache.forumTopicLists == nil {
-		cd.cache.forumTopicLists = make(map[int32]*lazy.Value[[]*db.GetForumTopicsForUserRow])
+	if cd.forumTopicLists == nil {
+		cd.forumTopicLists = make(map[int32]*lazy.Value[[]*db.GetForumTopicsForUserRow])
 	}
-	lv, ok := cd.cache.forumTopicLists[categoryID]
+	lv, ok := cd.forumTopicLists[categoryID]
 	if !ok {
 		lv = &lazy.Value[[]*db.GetForumTopicsForUserRow]{}
-		cd.cache.forumTopicLists[categoryID] = lv
+		cd.forumTopicLists[categoryID] = lv
 	}
 	return lv.Load(func() ([]*db.GetForumTopicsForUserRow, error) {
 		if cd.queries == nil {

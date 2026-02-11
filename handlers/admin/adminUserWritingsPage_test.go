@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,22 +14,41 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
+type userWritingsQueries struct {
+	db.Querier
+	userID   int32
+	user     *db.SystemGetUserByIDRow
+	writings []*db.AdminGetAllWritingsByAuthorRow
+}
+
+func (q *userWritingsQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
+	}
+	return q.user, nil
+}
+
+func (q *userWritingsQueries) AdminGetAllWritingsByAuthor(_ context.Context, id int32) ([]*db.AdminGetAllWritingsByAuthorRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected author id: %d", id)
+	}
+	return q.writings, nil
+}
+
 func TestAdminUserWritingsPage(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		userID := int32(1)
-		qs := testhelpers.NewQuerierStub()
-		qs.SystemGetUserByIDRow = &db.SystemGetUserByIDRow{
-			Idusers:                userID,
+	queries := &userWritingsQueries{
+		userID: 1,
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                1,
 			Email:                  sql.NullString{String: "u@test", Valid: true},
 			Username:               sql.NullString{String: "user", Valid: true},
 			PublicProfileEnabledAt: sql.NullTime{},
-		}
-		qs.AdminGetAllWritingsByAuthorReturns = []*db.AdminGetAllWritingsByAuthorRow{{
+		},
+		writings: []*db.AdminGetAllWritingsByAuthorRow{{
 			Idwriting:         1,
-			UsersIdusers:      userID,
+			UsersIdusers:      1,
 			ForumthreadID:     0,
 			LanguageID:        sql.NullInt32{},
 			WritingCategoryID: 2,
@@ -42,27 +62,27 @@ func TestAdminUserWritingsPage(t *testing.T) {
 			LastIndex:         sql.NullTime{},
 			Username:          sql.NullString{String: "user", Valid: true},
 			Comments:          0,
-		}}
+		}},
+	}
 
-		req := httptest.NewRequest("GET", "/admin/user/1/writings", nil)
-		ctx := req.Context()
-		cd := common.NewCoreData(ctx, qs, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
-		cd.SetCurrentProfileUserID(userID)
-		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/admin/user/1/writings", nil)
+	ctx := req.Context()
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.SetCurrentProfileUserID(1)
+	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
 
-		adminUserWritingsPage(rr, req)
+	(&AdminUserWritingsPage{}).ServeHTTP(rr, req)
 
-		if rr.Result().StatusCode != http.StatusOK {
-			t.Fatalf("status=%d", rr.Result().StatusCode)
-		}
-		body := rr.Body.String()
-		if !strings.Contains(body, `<td>1</td>`) {
-			t.Fatalf("missing id: %s", body)
-		}
-		if !strings.Contains(body, "Title") {
-			t.Fatalf("missing title: %s", body)
-		}
-	})
+	if rr.Result().StatusCode != http.StatusOK {
+		t.Fatalf("status=%d", rr.Result().StatusCode)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, `<td>1</td>`) {
+		t.Fatalf("missing id: %s", body)
+	}
+	if !strings.Contains(body, "Title") {
+		t.Fatalf("missing title: %s", body)
+	}
 }

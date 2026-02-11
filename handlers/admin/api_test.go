@@ -11,18 +11,16 @@ import (
 )
 
 func TestAdminAPIServerShutdown_Unauthorized(t *testing.T) {
-	t.Run("Unhappy Path", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
-		rr := httptest.NewRecorder()
-		h := New()
-		h.AdminAPIServerShutdown(rr, req)
-		if rr.Code != http.StatusUnauthorized {
-			t.Fatalf("want %d got %d", http.StatusUnauthorized, rr.Code)
-		}
-	})
+	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
+	rr := httptest.NewRecorder()
+	h := New()
+	h.AdminAPIServerShutdown(rr, req)
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("want %d got %d", http.StatusUnauthorized, rr.Code)
+	}
 }
 
-func TestHappyPathAdminAPIServerShutdown_Authorized(t *testing.T) {
+func TestAdminAPIServerShutdown_Authorized(t *testing.T) {
 	AdminAPISecret = "k"
 	signer := adminapi.NewSigner("k")
 	h := New(WithServer(&server.Server{}))

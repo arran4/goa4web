@@ -83,7 +83,9 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 func PageHandler(p common.Page) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if v := r.Context().Value(consts.KeyCoreData).(*common.CoreData); v != nil {
-			v.PageTitle = p.PageTitle()
+			if pt, ok := p.(common.HasPageTitle); ok {
+				v.PageTitle = pt.PageTitle()
+			}
 			v.SetCurrentPage(p)
 		}
 		p.ServeHTTP(w, r)

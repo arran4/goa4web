@@ -69,11 +69,7 @@ func TestUserExistsAPI(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		runName := "Happy Path"
-		if tt.expectedStatus != http.StatusOK {
-			runName = "Unhappy Path"
-		}
-		t.Run(runName+" - "+tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			mockQuerier := &QuerierProxier{}
 			if tt.mockFunc != nil {
 				mockQuerier.SystemGetUserByUsernameFunc = func(ctx context.Context, username sql.NullString) (*db.SystemGetUserByUsernameRow, error) {

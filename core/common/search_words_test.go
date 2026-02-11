@@ -24,7 +24,7 @@ func TestSearchWordsFromRequestCachesAndReturnsCopy(t *testing.T) {
 	}
 
 	copied[0] = "changed"
-	if cd.cache.searchWords[0] != "Hello" {
-		t.Fatalf("SearchWords should return a copy, state was mutated: %v", cd.cache.searchWords)
+	if cd.searchWords[0] != "Hello" {
+		t.Fatalf("SearchWords should return a copy, state was mutated: %v", cd.searchWords)
 	}
 }

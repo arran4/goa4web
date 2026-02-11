@@ -54,7 +54,6 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	nr.HandleFunc("/news/{news}/announcement", handlers.TaskHandler(announcementDeleteTask)).Methods("POST").MatcherFunc(demoteAnnouncementGrant).MatcherFunc(announcementDeleteTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST").MatcherFunc(cancelTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskDoneAutoRefreshPage).Methods("POST")
-	nr.HandleFunc("/{news}/labels", handlers.TaskHandler(markReadTask)).Methods("GET").MatcherFunc(markReadTask.Matcher())
 
 	api := r.PathPrefix("/api/news").Subrouter()
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")

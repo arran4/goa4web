@@ -15,8 +15,29 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/testhelpers"
 )
+
+type subscriptionQueries struct {
+	db.Querier
+	inserted []db.InsertSubscriptionParams
+	updated  []db.UpdateSubscriptionByIDForSubscriberParams
+	deleted  []db.DeleteSubscriptionByIDForSubscriberParams
+}
+
+func (q *subscriptionQueries) InsertSubscription(_ context.Context, arg db.InsertSubscriptionParams) error {
+	q.inserted = append(q.inserted, arg)
+	return nil
+}
+
+func (q *subscriptionQueries) UpdateSubscriptionByIDForSubscriber(_ context.Context, arg db.UpdateSubscriptionByIDForSubscriberParams) error {
+	q.updated = append(q.updated, arg)
+	return nil
+}
+
+func (q *subscriptionQueries) DeleteSubscriptionByIDForSubscriber(_ context.Context, arg db.DeleteSubscriptionByIDForSubscriberParams) error {
+	q.deleted = append(q.deleted, arg)
+	return nil
+}
 
 func setupSubscriptionTaskTest(t *testing.T, userID int, body url.Values, queries db.Querier) (*httptest.ResponseRecorder, *http.Request) {
 	t.Helper()
@@ -38,49 +59,47 @@ func setupSubscriptionTaskTest(t *testing.T, userID int, body url.Values, querie
 	return httptest.NewRecorder(), req
 }
 
-func TestHappyPathUserSubscriptionTasks(t *testing.T) {
-	t.Run("Add Uses URL Param", func(t *testing.T) {
-		body := url.Values{"pattern": {"/foo"}, "method": {"internal"}}
-		q := testhelpers.NewQuerierStub()
-		rr, req := setupSubscriptionTaskTest(t, 9, body, q)
-		if err, ok := addUserSubscriptionTask.Action(rr, req).(error); ok && err != nil {
-			t.Fatalf("Action: %v", err)
-		}
-		if len(q.InsertSubscriptionParams) != 1 {
-			t.Fatalf("expected insert, got %d", len(q.InsertSubscriptionParams))
-		}
-		if arg := q.InsertSubscriptionParams[0]; arg.UsersIdusers != 9 || arg.Pattern != "/foo" || arg.Method != "internal" {
-			t.Fatalf("unexpected insert args: %#v", arg)
-		}
-	})
+func TestAddUserSubscriptionTask_UsesURLParam(t *testing.T) {
+	body := url.Values{"pattern": {"/foo"}, "method": {"internal"}}
+	queries := &subscriptionQueries{}
+	rr, req := setupSubscriptionTaskTest(t, 9, body, queries)
+	if err, ok := addUserSubscriptionTask.Action(rr, req).(error); ok && err != nil {
+		t.Fatalf("Action: %v", err)
+	}
+	if len(queries.inserted) != 1 {
+		t.Fatalf("expected insert, got %d", len(queries.inserted))
+	}
+	if arg := queries.inserted[0]; arg.UsersIdusers != 9 || arg.Pattern != "/foo" || arg.Method != "internal" {
+		t.Fatalf("unexpected insert args: %#v", arg)
+	}
+}
 
-	t.Run("Update Uses URL Param", func(t *testing.T) {
-		body := url.Values{"id": {"3"}, "pattern": {"/bar"}, "method": {"email"}}
-		q := testhelpers.NewQuerierStub()
-		rr, req := setupSubscriptionTaskTest(t, 4, body, q)
-		if err, ok := updateUserSubscriptionTask.Action(rr, req).(error); ok && err != nil {
-			t.Fatalf("Action: %v", err)
-		}
-		if len(q.UpdateSubscriptionByIDForSubscriberCalls) != 1 {
-			t.Fatalf("expected update, got %d", len(q.UpdateSubscriptionByIDForSubscriberCalls))
-		}
-		if arg := q.UpdateSubscriptionByIDForSubscriberCalls[0]; arg.Pattern != "/bar" || arg.Method != "email" || arg.SubscriberID != 4 || arg.ID != 3 {
-			t.Fatalf("unexpected update args: %#v", arg)
-		}
-	})
+func TestUpdateUserSubscriptionTask_UsesURLParam(t *testing.T) {
+	body := url.Values{"id": {"3"}, "pattern": {"/bar"}, "method": {"email"}}
+	queries := &subscriptionQueries{}
+	rr, req := setupSubscriptionTaskTest(t, 4, body, queries)
+	if err, ok := updateUserSubscriptionTask.Action(rr, req).(error); ok && err != nil {
+		t.Fatalf("Action: %v", err)
+	}
+	if len(queries.updated) != 1 {
+		t.Fatalf("expected update, got %d", len(queries.updated))
+	}
+	if arg := queries.updated[0]; arg.Pattern != "/bar" || arg.Method != "email" || arg.SubscriberID != 4 || arg.ID != 3 {
+		t.Fatalf("unexpected update args: %#v", arg)
+	}
+}
 
-	t.Run("Delete Uses URL Param", func(t *testing.T) {
-		body := url.Values{"id": {"5"}}
-		q := testhelpers.NewQuerierStub()
-		rr, req := setupSubscriptionTaskTest(t, 11, body, q)
-		if err, ok := deleteUserSubscriptionTask.Action(rr, req).(error); ok && err != nil {
-			t.Fatalf("Action: %v", err)
-		}
-		if len(q.DeleteSubscriptionByIDForSubscriberCalls) != 1 {
-			t.Fatalf("expected delete, got %d", len(q.DeleteSubscriptionByIDForSubscriberCalls))
-		}
-		if arg := q.DeleteSubscriptionByIDForSubscriberCalls[0]; arg.SubscriberID != 11 || arg.ID != 5 {
-			t.Fatalf("unexpected delete args: %#v", arg)
-		}
-	})
+func TestDeleteUserSubscriptionTask_UsesURLParam(t *testing.T) {
+	body := url.Values{"id": {"5"}}
+	queries := &subscriptionQueries{}
+	rr, req := setupSubscriptionTaskTest(t, 11, body, queries)
+	if err, ok := deleteUserSubscriptionTask.Action(rr, req).(error); ok && err != nil {
+		t.Fatalf("Action: %v", err)
+	}
+	if len(queries.deleted) != 1 {
+		t.Fatalf("expected delete, got %d", len(queries.deleted))
+	}
+	if arg := queries.deleted[0]; arg.SubscriberID != 11 || arg.ID != 5 {
+		t.Fatalf("unexpected delete args: %#v", arg)
+	}
 }

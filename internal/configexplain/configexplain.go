@@ -92,7 +92,7 @@ func Explain(inputs Inputs) []OptionInfo {
 		currentVal := valueOrDefault(inputs.Values, o.Env)
 		defaultVal := o.Default
 		flagSet := setFlags[o.Name]
-		if !flagSet && inputs.FlagSet == nil && shouldInferFlagSource(normalizeBool(defaultVal), normalizeBool(currentVal), normalizeBool(fileVal), normalizeBool(envVal)) {
+		if !flagSet && inputs.FlagSet == nil && shouldInferFlagSource(defaultVal, currentVal, fileVal, envVal) {
 			flagSet = true
 			flagVal = currentVal
 		}
@@ -179,16 +179,10 @@ func shouldInferFlagSource(defaultVal, currentVal, fileVal, envVal string) bool 
 	if currentVal == "" {
 		return false
 	}
-	if currentVal == defaultVal {
+	if fileVal != "" || envVal != "" {
 		return false
 	}
-	if fileVal != "" && currentVal == fileVal {
-		return false
-	}
-	if envVal != "" && currentVal == envVal {
-		return false
-	}
-	return true
+	return currentVal != defaultVal
 }
 
 func resolveString(defaultVal, flagVal, fileVal, envVal string, flagSet bool, name, envKey, cfgFile string) (string, SourceKind, string, string) {

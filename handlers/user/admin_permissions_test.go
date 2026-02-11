@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -18,9 +19,36 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 )
+
+type permissionQueries struct {
+	db.Querier
+	userID     int32
+	user       *db.SystemGetUserByIDRow
+	username   string
+	userByName *db.SystemGetUserByUsernameRow
+	created    []db.SystemCreateUserRoleParams
+}
+
+func (q *permissionQueries) SystemGetUserByID(_ context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
+	if id != q.userID {
+		return nil, fmt.Errorf("unexpected user id: %d", id)
+	}
+	return q.user, nil
+}
+
+func (q *permissionQueries) SystemGetUserByUsername(_ context.Context, username sql.NullString) (*db.SystemGetUserByUsernameRow, error) {
+	if username.String != q.username {
+		return nil, fmt.Errorf("unexpected username: %s", username.String)
+	}
+	return q.userByName, nil
+}
+
+func (q *permissionQueries) SystemCreateUserRole(_ context.Context, arg db.SystemCreateUserRoleParams) error {
+	q.created = append(q.created, arg)
+	return nil
+}
 
 func TestPermissionUserTasksTemplates(t *testing.T) {
 	admins := []notifications.AdminEmailTemplateProvider{
@@ -39,67 +67,57 @@ func TestPermissionUserTasksTemplates(t *testing.T) {
 	}
 }
 
-func TestPermissionUserAllowTask(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		bus := eventbus.NewBus()
+func TestPermissionUserAllowEventData(t *testing.T) {
+	bus := eventbus.NewBus()
 
-		queries := testhelpers.NewQuerierStub()
-		queries.SystemGetUserByIDFn = func(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
-			if id != 2 {
-				return nil, sql.ErrNoRows
-			}
-			return &db.SystemGetUserByIDRow{
-				Idusers:                2,
-				Email:                  sql.NullString{String: "bob@test", Valid: true},
-				Username:               sql.NullString{String: "bob", Valid: true},
-				PublicProfileEnabledAt: sql.NullTime{},
-			}, nil
-		}
-		queries.SystemGetUserByUsernameFn = func(ctx context.Context, username sql.NullString) (*db.SystemGetUserByUsernameRow, error) {
-			if username.String != "bob" {
-				return nil, sql.ErrNoRows
-			}
-			return &db.SystemGetUserByUsernameRow{Idusers: 2, Username: sql.NullString{String: "bob", Valid: true}}, nil
-		}
+	queries := &permissionQueries{
+		userID:   2,
+		username: "bob",
+		user: &db.SystemGetUserByIDRow{
+			Idusers:                2,
+			Email:                  sql.NullString{String: "bob@test", Valid: true},
+			Username:               sql.NullString{String: "bob", Valid: true},
+			PublicProfileEnabledAt: sql.NullTime{},
+		},
+		userByName: &db.SystemGetUserByUsernameRow{Idusers: 2, Username: sql.NullString{String: "bob", Valid: true}},
+	}
 
-		ch := bus.Subscribe(eventbus.TaskMessageType)
+	ch := bus.Subscribe(eventbus.TaskMessageType)
 
-		form := url.Values{}
-		form.Set("username", "bob")
-		form.Set("role", "moderator")
-		form.Set("task", string(TaskUserAllow))
-		req := httptest.NewRequest("POST", "/admin/user/2/permissions", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		req = mux.SetURLVars(req, map[string]string{"user": "2"})
-		cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
-		cd.LoadSelectionsFromRequest(req)
-		evt := &eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
-		cd.SetEvent(evt)
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-		mw := middleware.NewTaskEventMiddleware(bus)
-		handler := mw.Middleware(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
-		handler.ServeHTTP(rr, req)
+	form := url.Values{}
+	form.Set("username", "bob")
+	form.Set("role", "moderator")
+	form.Set("task", string(TaskUserAllow))
+	req := httptest.NewRequest("POST", "/admin/user/2/permissions", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = mux.SetURLVars(req, map[string]string{"user": "2"})
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
+	cd.LoadSelectionsFromRequest(req)
+	evt := &eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
+	cd.SetEvent(evt)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	mw := middleware.NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(handlers.TaskHandler(permissionUserAllowTask)))
+	handler.ServeHTTP(rr, req)
 
-		select {
-		case env := <-ch:
-			env.Ack()
-			e, ok := env.Msg.(eventbus.TaskEvent)
-			if !ok {
-				t.Fatalf("wrong message type %T", env.Msg)
-			}
-			if e.Data["Username"] != "bob" || e.Data["Permission"] != "moderator" {
-				t.Fatalf("unexpected event data: %+v", e.Data)
-			}
-		case <-time.After(time.Second):
-			t.Fatal("no event")
+	select {
+	case msg := <-ch:
+		e, ok := msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong message type %T", msg)
 		}
-		if len(queries.SystemCreateUserRoleCalls) != 1 {
-			t.Fatalf("expected create user role, got %d", len(queries.SystemCreateUserRoleCalls))
+		if e.Data["Username"] != "bob" || e.Data["Permission"] != "moderator" {
+			t.Fatalf("unexpected event data: %+v", e.Data)
 		}
-		if arg := queries.SystemCreateUserRoleCalls[0]; arg.UsersIdusers != 2 || arg.Name != "moderator" {
-			t.Fatalf("unexpected user role: %#v", arg)
-		}
-	})
+	case <-time.After(time.Second):
+		t.Fatal("no event")
+	}
+	if len(queries.created) != 1 {
+		t.Fatalf("expected create user role, got %d", len(queries.created))
+	}
+	if arg := queries.created[0]; arg.UsersIdusers != 2 || arg.Name != "moderator" {
+		t.Fatalf("unexpected user role: %#v", arg)
+	}
 }

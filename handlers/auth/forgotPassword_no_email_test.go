@@ -18,64 +18,60 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestForgotPasswordNoEmail_Action(t *testing.T) {
-	t.Run("Happy Path - No Email", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.SystemGetLoginRow = &db.SystemGetLoginRow{
-			Idusers:         1,
-			Passwd:          sql.NullString{String: "", Valid: true},
-			PasswdAlgorithm: sql.NullString{String: "", Valid: true},
-			Username:        sql.NullString{String: "u", Valid: true},
-		}
-		q.SystemListVerifiedEmailsByUserIDReturn = []*db.UserEmail{}
-		q.SystemGetUserByEmailRow = &db.SystemGetUserByEmailRow{
-			Idusers:  1,
-			Email:    "u@test.com",
-			Username: sql.NullString{String: "u", Valid: true},
-		}
-		q.GetLoginRoleForUserReturns = 1
-		q.GetPasswordResetByUserErr = sql.ErrNoRows
+func TestForgotPasswordNoEmail(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	q.SystemGetLoginRow = &db.SystemGetLoginRow{
+		Idusers:         1,
+		Passwd:          sql.NullString{String: "", Valid: true},
+		PasswdAlgorithm: sql.NullString{String: "", Valid: true},
+		Username:        sql.NullString{String: "u", Valid: true},
+	}
+	q.SystemListVerifiedEmailsByUserIDReturn = []*db.UserEmail{}
+	q.SystemGetUserByEmailRow = &db.SystemGetUserByEmailRow{
+		Idusers:  1,
+		Email:    "u@test.com",
+		Username: sql.NullString{String: "u", Valid: true},
+	}
+	q.GetLoginRoleForUserReturns = 1
+	q.GetPasswordResetByUserErr = sql.ErrNoRows
 
-		evt := &eventbus.TaskEvent{}
-		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithEvent(evt))
-		ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
+	evt := &eventbus.TaskEvent{}
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithEvent(evt))
+	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
-		form := url.Values{"username": {"u"}, "password": {"pw"}}
-		req := httptest.NewRequest("POST", "/forgot", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-		handlers.TaskHandler(forgotPasswordTask)(rr, req)
+	form := url.Values{"username": {"u"}, "password": {"pw"}}
+	req := httptest.NewRequest("POST", "/forgot", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(forgotPasswordTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-	})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
 }
 
-func TestEmailAssociationRequestTask_Action(t *testing.T) {
-	t.Run("Happy Path", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.SystemGetUserByUsernameRow = &db.SystemGetUserByUsernameRow{
-			Idusers:                1,
-			Username:               sql.NullString{String: "u", Valid: true},
-			PublicProfileEnabledAt: sql.NullTime{},
-		}
-		q.SystemListVerifiedEmailsByUserIDReturn = []*db.UserEmail{}
-		q.AdminInsertRequestQueueReturns = db.FakeSQLResult{LastInsertIDValue: 1, RowsAffectedValue: 1}
+func TestEmailAssociationRequestTask(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	q.SystemGetUserByUsernameRow = &db.SystemGetUserByUsernameRow{
+		Idusers:                1,
+		Username:               sql.NullString{String: "u", Valid: true},
+		PublicProfileEnabledAt: sql.NullTime{},
+	}
+	q.SystemListVerifiedEmailsByUserIDReturn = []*db.UserEmail{}
+	q.AdminInsertRequestQueueReturns = db.FakeSQLResult{LastInsertIDValue: 1, RowsAffectedValue: 1}
 
-		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
-		ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	ctx := context.WithValue(context.Background(), consts.KeyCoreData, cd)
 
-		form := url.Values{"username": {"u"}, "email": {"a@test.com"}, "reason": {"help"}}
-		req := httptest.NewRequest("POST", "/forgot", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-		handlers.TaskHandler(emailAssociationRequestTask)(rr, req)
+	form := url.Values{"username": {"u"}, "email": {"a@test.com"}, "reason": {"help"}}
+	req := httptest.NewRequest("POST", "/forgot", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(emailAssociationRequestTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-	})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
 }

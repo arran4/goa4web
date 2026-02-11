@@ -8,7 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
-func TestHappyPathCustomFAQIndexRoles(t *testing.T) {
+func TestCustomFAQIndexRoles(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"administrator"}))
 	cd.AdminMode = true
 	CustomFAQIndex(cd, nil)

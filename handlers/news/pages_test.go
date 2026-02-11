@@ -21,7 +21,7 @@ var allPages = []tasks.Template{
 	news.SearchResultNewsActionPageTmpl,
 }
 
-func TestHappyPathAllRegisteredPagesExist(t *testing.T) {
+func TestAllRegisteredPagesExist(t *testing.T) {
 	for _, p := range allPages {
 		if !p.Exists(templates.WithSilence(true)) {
 			t.Errorf("Page template missing: %s", p)

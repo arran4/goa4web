@@ -68,11 +68,7 @@ func TestPrivateRoute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		runName := "Happy Path"
-		if tt.expectedCode != http.StatusOK {
-			runName = "Unhappy Path"
-		}
-		t.Run(runName+" - "+tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			req := testhelpers.Must(http.NewRequest("GET", tt.path, nil))
 			rr := httptest.NewRecorder()
 

@@ -20,8 +20,10 @@ func (cd *CoreData) Breadcrumbs() []Breadcrumb {
 		return nil
 	}
 
-	if hb := cd.currentPage; hb != nil {
-		return buildBreadcrumbs(hb)
+	if cd.currentPage != nil {
+		if hb, ok := cd.currentPage.(HasBreadcrumb); ok {
+			return buildBreadcrumbs(hb)
+		}
 	}
 	if cd.event != nil && cd.event.Task != nil {
 		if hb, ok := cd.event.Task.(HasBreadcrumb); ok {

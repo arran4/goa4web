@@ -18,109 +18,103 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestRequireWritingAuthor(t *testing.T) {
-	t.Run("Happy Path - Writing Var", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
+func TestRequireWritingAuthorWritingVar(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
 
-		req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
-		req = mux.SetURLVars(req, map[string]string{"writing": "2"})
+	req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
+	req = mux.SetURLVars(req, map[string]string{"writing": "2"})
 
-		sess := testhelpers.Must(store.Get(req, core.SessionName))
-		sess.Values["UID"] = int32(1)
+	sess := testhelpers.Must(store.Get(req, core.SessionName))
+	sess.Values["UID"] = int32(1)
 
-		cd := common.NewCoreData(
-			req.Context(),
-			q,
-			config.NewRuntimeConfig(),
-			common.WithSession(sess),
-			common.WithUserRoles([]string{"content writer"}),
-		)
-		cd.LoadSelectionsFromRequest(req)
-		cd.UserID = 1
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	cd := common.NewCoreData(
+		req.Context(),
+		q,
+		config.NewRuntimeConfig(),
+		common.WithSession(sess),
+		common.WithUserRoles([]string{"content writer"}),
+	)
+	cd.LoadSelectionsFromRequest(req)
+	cd.UserID = 1
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		q.GetWritingForListerByIDRow = &db.GetWritingForListerByIDRow{
-			Idwriting:         2,
-			UsersIdusers:      1,
-			ForumthreadID:     0,
-			LanguageID:        sql.NullInt32{Int32: 1, Valid: true},
-			WritingCategoryID: 1,
-			Title:             sql.NullString{},
-			Published:         sql.NullTime{},
-			Timezone:          sql.NullString{},
-			Writing:           sql.NullString{},
-			Abstract:          sql.NullString{},
-			Private:           sql.NullBool{},
-			DeletedAt:         sql.NullTime{},
-			LastIndex:         sql.NullTime{},
-			Writerid:          1,
-			Writerusername:    sql.NullString{},
+	q.GetWritingForListerByIDRow = &db.GetWritingForListerByIDRow{
+		Idwriting:         2,
+		UsersIdusers:      1,
+		ForumthreadID:     0,
+		LanguageID:        sql.NullInt32{Int32: 1, Valid: true},
+		WritingCategoryID: 1,
+		Title:             sql.NullString{},
+		Published:         sql.NullTime{},
+		Timezone:          sql.NullString{},
+		Writing:           sql.NullString{},
+		Abstract:          sql.NullString{},
+		Private:           sql.NullBool{},
+		DeletedAt:         sql.NullTime{},
+		LastIndex:         sql.NullTime{},
+		Writerid:          1,
+		Writerusername:    sql.NullString{},
+	}
+	q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		return 1, nil
+	}
+
+	called := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		if cd.CurrentWritingLoaded() == nil {
+			t.Errorf("writing not cached")
 		}
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 1, nil
-		}
-
-		called := false
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			called = true
-			if cd.CurrentWritingLoaded() == nil {
-				t.Errorf("writing not cached")
-			}
-			w.WriteHeader(http.StatusOK)
-		})
-
-		rr := httptest.NewRecorder()
-		RequireWritingAuthor(handler).ServeHTTP(rr, req)
-
-		if !called {
-			t.Errorf("expected handler call")
-		}
-		if rr.Code != http.StatusOK {
-			t.Errorf("status=%d", rr.Code)
-		}
+		w.WriteHeader(http.StatusOK)
 	})
+
+	rr := httptest.NewRecorder()
+	RequireWritingAuthor(handler).ServeHTTP(rr, req)
+
+	if !called {
+		t.Errorf("expected handler call")
+	}
+	if rr.Code != http.StatusOK {
+		t.Errorf("status=%d", rr.Code)
+	}
 }
 
-func TestMatchCanEditWritingArticle(t *testing.T) {
-	t.Run("Happy Path - Uses Grant", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
-		req = mux.SetURLVars(req, map[string]string{"writing": "2"})
+func TestMatchCanEditWritingArticleUsesGrant(t *testing.T) {
+	req := httptest.NewRequest("GET", "/writings/article/2/edit", nil)
+	req = mux.SetURLVars(req, map[string]string{"writing": "2"})
 
-		q := testhelpers.NewQuerierStub()
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 1, nil
-		}
-		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
-		cd.UserID = 7
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		return 1, nil
+	}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd.UserID = 7
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		if !MatchCanEditWritingArticle(req, &mux.RouteMatch{}) {
-			t.Fatalf("expected match to allow edit")
-		}
-	})
+	if !MatchCanEditWritingArticle(req, &mux.RouteMatch{}) {
+		t.Fatalf("expected match to allow edit")
+	}
 }
 
-func TestMatchCanPostWriting(t *testing.T) {
-	t.Run("Unhappy Path - Denies Without Grant", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/writings/category/3/add", nil)
-		req = mux.SetURLVars(req, map[string]string{"category": "3"})
+func TestMatchCanPostWritingDeniesWithoutGrant(t *testing.T) {
+	req := httptest.NewRequest("GET", "/writings/category/3/add", nil)
+	req = mux.SetURLVars(req, map[string]string{"category": "3"})
 
-		q := testhelpers.NewQuerierStub()
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 0, sql.ErrNoRows
-		}
-		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
-		cd.UserID = 4
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		return 0, sql.ErrNoRows
+	}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+	cd.UserID = 4
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		if MatchCanPostWriting(req, &mux.RouteMatch{}) {
-			t.Fatalf("expected match to deny posting")
-		}
-	})
+	if MatchCanPostWriting(req, &mux.RouteMatch{}) {
+		t.Fatalf("expected match to deny posting")
+	}
 }

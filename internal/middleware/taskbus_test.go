@@ -28,16 +28,15 @@ func TestTaskEventMiddleware(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case env := <-ch:
-		evt, ok := env.Msg.(eventbus.TaskEvent)
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
 		if !ok {
-			t.Fatalf("wrong type %T", env.Msg)
+			t.Fatalf("wrong type %T", msg)
 		}
 		named, ok := evt.Task.(tasks.Name)
 		if !ok || named.Name() != "MISSING" || evt.Path != "/admin/p" {
 			t.Fatalf("unexpected event %+v", evt)
 		}
-		env.Ack()
 	default:
 		t.Fatalf("expected event on success")
 	}
@@ -50,15 +49,14 @@ func TestTaskEventMiddleware(t *testing.T) {
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	successHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case env := <-ch:
-		evt, ok := env.Msg.(eventbus.TaskEvent)
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
 		if !ok {
-			t.Fatalf("wrong type %T", env.Msg)
+			t.Fatalf("wrong type %T", msg)
 		}
 		if strings.Contains(evt.Path, "/admin") {
 			t.Fatalf("unexpected admin path for %#v", evt)
 		}
-		env.Ack()
 	default:
 		t.Fatalf("expected event for non-admin path")
 	}
@@ -99,16 +97,15 @@ func TestTaskEventMiddleware(t *testing.T) {
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
 	itemHandler.ServeHTTP(rec, req.WithContext(ctx))
 	select {
-	case env := <-ch:
-		evt, ok := env.Msg.(eventbus.TaskEvent)
+	case msg := <-ch:
+		evt, ok := msg.(eventbus.TaskEvent)
 		if !ok {
-			t.Fatalf("wrong type %T", env.Msg)
+			t.Fatalf("wrong type %T", msg)
 		}
 		val, ok := evt.Data["info"].(bool)
 		if evt.Data == nil || !ok || !val {
 			t.Fatalf("missing data: %+v", evt)
 		}
-		env.Ack()
 	default:
 		t.Fatalf("expected event with data")
 	}
@@ -165,8 +162,7 @@ func TestTaskEventQueue(t *testing.T) {
 	mw.Flush(context.Background())
 
 	select {
-	case env := <-ch:
-		env.Ack()
+	case <-ch:
 	default:
 		t.Fatalf("expected flushed event")
 	}

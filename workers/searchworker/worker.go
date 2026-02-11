@@ -35,13 +35,9 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case env, ok := <-ch:
+		case msg := <-ch:
+			evt, ok := msg.(eventbus.TaskEvent)
 			if !ok {
-				return
-			}
-			evt, ok := env.Msg.(eventbus.TaskEvent)
-			if !ok {
-				env.Ack()
 				continue
 			}
 			// Use a context that isn't canceled while processing
@@ -56,7 +52,6 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 			} else {
 				processEvent(evtCtx, evt, q)
 			}
-			env.Ack()
 		case <-ctx.Done():
 			return
 		}

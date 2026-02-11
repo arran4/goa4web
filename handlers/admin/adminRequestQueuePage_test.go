@@ -55,7 +55,7 @@ func TestHappyPathAdminRequestPage_RequestFound(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminRequestPage(rr, req)
+	(&AdminRequestPage{}).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
@@ -102,7 +102,7 @@ func TestHappyPathAdminRequestPage_UserEmailsRequest(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	adminRequestPage(rr, req)
+	(&AdminRequestPage{}).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)

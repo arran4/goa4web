@@ -6,120 +6,152 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestRegisterTask_Action(t *testing.T) {
-	t.Run("Unhappy Path - Validation Errors", func(t *testing.T) {
-		cases := []struct {
-			name string
-			form url.Values
-		}{
-			{"no username", url.Values{"password": {"p"}, "email": {"e@example.com"}}},
-			{"no password", url.Values{"username": {"u"}, "email": {"e@example.com"}}},
-			{"no email", url.Values{"username": {"u"}, "password": {"p"}}},
-			{"invalid email", url.Values{"username": {"u"}, "password": {"p"}, "email": {"foo@bar..com"}}},
-		}
-		for _, c := range cases {
-			t.Run(c.name, func(t *testing.T) {
-				req := httptest.NewRequest("POST", "/register", strings.NewReader(c.form.Encode()))
-				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-				cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
-				ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-				req = req.WithContext(ctx)
-				rr := httptest.NewRecorder()
-				handlers.TaskHandler(registerTask)(rr, req)
-				want := http.StatusOK
-				if c.name == "invalid email" {
-					want = http.StatusSeeOther
-				}
-				if rr.Result().StatusCode != want {
-					t.Errorf("%s: status=%d", c.name, rr.Result().StatusCode)
-				}
-			})
-		}
-	})
-
-	t.Run("Happy Path - Redirects To Login", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.SystemGetUserByUsernameErr = sql.ErrNoRows
-		q.SystemGetUserByEmailErr = sql.ErrNoRows
-		q.SystemInsertUserReturns = 1
-
-		form := url.Values{"username": {"alice"}, "password": {"pw"}, "email": {"alice@example.com"}}
-		req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
+func TestRegisterActionPageValidation(t *testing.T) {
+	cases := []struct {
+		name string
+		form url.Values
+	}{
+		{"no username", url.Values{"password": {"p"}, "email": {"e@example.com"}}},
+		{"no password", url.Values{"username": {"u"}, "email": {"e@example.com"}}},
+		{"no email", url.Values{"username": {"u"}, "password": {"p"}}},
+		{"invalid email", url.Values{"username": {"u"}, "password": {"p"}, "email": {"foo@bar..com"}}},
+	}
+	for _, c := range cases {
+		req := httptest.NewRequest("POST", "/register", strings.NewReader(c.form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig())
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
-
 		rr := httptest.NewRecorder()
 		handlers.TaskHandler(registerTask)(rr, req)
+		want := http.StatusOK
+		if c.name == "invalid email" {
+			want = http.StatusSeeOther
+		}
+		if rr.Result().StatusCode != want {
+			t.Errorf("%s: status=%d", c.name, rr.Result().StatusCode)
+		}
+	}
+}
 
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-		body := rr.Body.String()
-		if !strings.Contains(body, "/login?notice=") {
-			t.Fatalf("expected body to reference login notice got %q", body)
-		}
-		if len(q.SystemInsertUserCalls) != 1 {
-			t.Errorf("expected user insert")
-		}
-		if len(q.InsertUserEmailCalls) != 1 {
-			t.Errorf("expected email insert")
-		}
-		if len(q.InsertPasswordCalls) != 1 {
-			t.Errorf("expected password insert")
-		}
-	})
+func TestRegisterActionRedirectsToLogin(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
 
-	t.Run("Happy Path - Preserves Back Params", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.SystemGetUserByUsernameErr = sql.ErrNoRows
-		q.SystemGetUserByEmailErr = sql.ErrNoRows
-		q.SystemInsertUserReturns = 2
+	queries := db.New(conn)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers,\n       username,\n       public_profile_enabled_at\nFROM users\nWHERE username = ?\n")).
+		WithArgs(sql.NullString{String: "alice", Valid: true}).
+		WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username\nFROM users u JOIN user_emails ue ON ue.user_id = u.idusers\nWHERE ue.email = ?\nLIMIT 1\n")).
+		WithArgs("alice@example.com").
+		WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO users (username)\nVALUES (?)\n")).
+		WithArgs(sql.NullString{String: "alice", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority)\nVALUES (?, ?, ?, ?, ?, ?)\n")).
+		WithArgs(int32(1), "alice@example.com", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), int32(0)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)\nVALUES (?, ?, ?)\n")).
+		WithArgs(int32(1), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
-		form := url.Values{
-			"username": {"bob"},
-			"password": {"pw"},
-			"email":    {"bob@example.com"},
-			"back":     {"/protected"},
-			"method":   {"POST"},
-			"data":     {"foo=bar"},
-		}
-		req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
+	form := url.Values{"username": {"alice"}, "password": {"pw"}, "email": {"alice@example.com"}}
+	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
 
-		rr := httptest.NewRecorder()
-		handlers.TaskHandler(registerTask)(rr, req)
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(registerTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
-		}
-		body := rr.Body.String()
-		// Verify parameters are in the redirect URL
-		expected := "back=%2Fprotected"
-		if !strings.Contains(body, expected) {
-			t.Errorf("expected body to contain %q, got %q", expected, body)
-		}
-		expected = "method=POST"
-		if !strings.Contains(body, expected) {
-			t.Errorf("expected body to contain %q, got %q", expected, body)
-		}
-		expected = "data=foo%3Dbar"
-		if !strings.Contains(body, expected) {
-			t.Errorf("expected body to contain %q, got %q", expected, body)
-		}
-	})
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "/login?notice=") {
+		t.Fatalf("expected body to reference login notice got %q", body)
+	}
+}
+
+func TestRegisterActionPreservesBackParams(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer conn.Close()
+
+	queries := db.New(conn)
+	// Expect strict order of queries
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT idusers,\n       username,\n       public_profile_enabled_at\nFROM users\nWHERE username = ?\n")).
+		WithArgs(sql.NullString{String: "bob", Valid: true}).
+		WillReturnError(sql.ErrNoRows)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT u.idusers, ue.email, u.username\nFROM users u JOIN user_emails ue ON ue.user_id = u.idusers\nWHERE ue.email = ?\nLIMIT 1\n")).
+		WithArgs("bob@example.com").
+		WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO users (username)\nVALUES (?)\n")).
+		WithArgs(sql.NullString{String: "bob", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(2, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO user_emails (user_id, email, verified_at, last_verification_code, verification_expires_at, notification_priority)\nVALUES (?, ?, ?, ?, ?, ?)\n")).
+		WithArgs(int32(2), "bob@example.com", sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), int32(0)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO passwords (users_idusers, passwd, passwd_algorithm)\nVALUES (?, ?, ?)\n")).
+		WithArgs(int32(2), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	form := url.Values{
+		"username": {"bob"},
+		"password": {"pw"},
+		"email":    {"bob@example.com"},
+		"back":     {"/protected"},
+		"method":   {"POST"},
+		"data":     {"foo=bar"},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	cd := common.NewCoreData(req.Context(), queries, config.NewRuntimeConfig())
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	handlers.TaskHandler(registerTask)(rr, req)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Logf("expectations: %v", err)
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	body := rr.Body.String()
+	// Verify parameters are in the redirect URL
+	expected := "back=%2Fprotected"
+	if !strings.Contains(body, expected) {
+		t.Errorf("expected body to contain %q, got %q", expected, body)
+	}
+	expected = "method=POST"
+	if !strings.Contains(body, expected) {
+		t.Errorf("expected body to contain %q, got %q", expected, body)
+	}
+	expected = "data=foo%3Dbar"
+	if !strings.Contains(body, expected) {
+		t.Errorf("expected body to contain %q, got %q", expected, body)
+	}
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func TestHappyPathAdminAPISigned(t *testing.T) {
+func TestAdminAPISigned(t *testing.T) {
 	AdminAPISecret = "k"
 	signer := adminapi.NewSigner("k")
 	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
@@ -21,15 +21,13 @@ func TestHappyPathAdminAPISigned(t *testing.T) {
 }
 
 func TestAdminAPISignedFail(t *testing.T) {
-	t.Run("Unhappy Path", func(t *testing.T) {
-		AdminAPISecret = "k"
-		signer := adminapi.NewSigner("k")
-		ts, sig := signer.Sign("POST", "/admin/api/shutdown")
-		req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
-		req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))
-		req.Method = "GET"
-		if AdminAPISigned()(req, &mux.RouteMatch{}) {
-			t.Fatal("expected matcher failure")
-		}
-	})
+	AdminAPISecret = "k"
+	signer := adminapi.NewSigner("k")
+	ts, sig := signer.Sign("POST", "/admin/api/shutdown")
+	req := httptest.NewRequest("POST", "/admin/api/shutdown", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Goa4web %d:%s", ts, sig))
+	req.Method = "GET"
+	if AdminAPISigned()(req, &mux.RouteMatch{}) {
+		t.Fatal("expected matcher failure")
+	}
 }

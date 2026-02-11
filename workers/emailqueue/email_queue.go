@@ -28,12 +28,8 @@ func StartEventListener(ctx context.Context, q db.Querier, provider email.Provid
 	ch := bus.Subscribe(eventbus.EmailQueueMessageType)
 	for {
 		select {
-		case env, ok := <-ch:
-			if !ok {
-				return
-			}
+		case <-ch:
 			ProcessPendingEmail(ctx, q, provider, dlqProvider, cfg)
-			env.Ack()
 		case <-ctx.Done():
 			return
 		}

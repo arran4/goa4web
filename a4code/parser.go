@@ -71,6 +71,14 @@ func isBlockContext(n ast.Node) bool {
 	return false
 }
 
+func isBlockTag(tag string) bool {
+	switch strings.ToLower(tag) {
+	case "quote", "quoteof", "spoiler", "indent":
+		return true
+	}
+	return false
+}
+
 func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bool) {
 	if len(children) > 0 {
 		prev := children[len(children)-1]
@@ -83,6 +91,14 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			} else if txt, ok := newChild.(*ast.Text); ok {
 				if strings.HasPrefix(txt.Value, "\n") {
 					startsNewline = true
+				}
+			} else if c, ok := newChild.(*ast.Custom); ok {
+				// Check if it's a closing tag of a block element
+				if strings.HasPrefix(c.Tag, "/") {
+					tag := strings.TrimPrefix(c.Tag, "/")
+					if isBlockTag(tag) {
+						startsNewline = true
+					}
 				}
 			}
 
@@ -105,6 +121,17 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 				} else if txt, ok := lastChild.(*ast.Text); ok {
 					if strings.HasSuffix(txt.Value, "\n") {
 						prevIsNewline = true
+					}
+				} else if c, ok := lastChild.(*ast.Custom); ok {
+					// Check if it's a closing tag of a block element (acting as newline/break)
+					// OR if it's a Custom block element (if we had any, but we rely on isBlockContext for known ones)
+					// But closing tag of PREVIOUS block implies we are on a new line effectively?
+					// e.g. [/quote][link]
+					if strings.HasPrefix(c.Tag, "/") {
+						tag := strings.TrimPrefix(c.Tag, "/")
+						if isBlockTag(tag) {
+							prevIsNewline = true
+						}
 					}
 				}
 			}

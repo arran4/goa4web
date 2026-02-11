@@ -195,7 +195,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 						if srcC.Idforumtopic.Valid {
 							srcTopicId := srcC.Idforumtopic.Int32
 							srcThreadId := srcC.Idforumthread.Int32
-							link := fmt.Sprintf("\n\n[url=%s/topic/%d/thread/%d#c%d]View original[/url]", base, srcTopicId, srcThreadId, cId)
+							link := fmt.Sprintf("\n\n[url %s/topic/%d/thread/%d#c%d View original]", base, srcTopicId, srcThreadId, cId)
 							text += link
 						}
 					}

@@ -201,24 +201,24 @@ func TestSubstring(t *testing.T) {
 		},
 		{
 			name:  "With Bold",
-			s:     "hello [b]world[/b]",
+			s:     "hello [b world]",
 			start: 2,
 			end:   8,
-			want:  "llo [b]wo[/b]",
+			want:  "llo [b wo]",
 		},
 		{
 			name:  "Partial Bold",
-			s:     "hello [b]world[/b]",
+			s:     "hello [b world]",
 			start: 7,
 			end:   10,
-			want:  "[b]orl[/b]",
+			want:  "[b orl]",
 		},
 		{
 			name:  "Across Bold",
-			s:     "he[b]llo[/b] world",
+			s:     "he[b llo] world",
 			start: 1,
 			end:   10,
-			want:  "e[b]llo[/b] wor",
+			want:  "e[b llo] wor",
 		},
 		{
 			name:  "Code block",
@@ -356,8 +356,8 @@ func TestQuoteRepro(t *testing.T) {
 		},
 		{
 			name:  "ParagraphStartingWithBracket",
-			input: "Para 1\n\n[b]bold[/b]",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
+			input: "Para 1\n\n[b bold]",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b bold]]\n",
 		},
 		{
 			name:  "NotFilterMixedQuotes",

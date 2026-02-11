@@ -3,6 +3,7 @@ package a4code
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"iter"
 	"strings"
@@ -92,14 +93,6 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 				if strings.HasPrefix(txt.Value, "\n") {
 					startsNewline = true
 				}
-			} else if c, ok := newChild.(*ast.Custom); ok {
-				// Check if it's a closing tag of a block element
-				if strings.HasPrefix(c.Tag, "/") {
-					tag := strings.TrimPrefix(c.Tag, "/")
-					if isBlockTag(tag) {
-						startsNewline = true
-					}
-				}
 			}
 
 			if !startsNewline {
@@ -110,27 +103,39 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 
 	if isContextBlock {
 		if l, ok := newChild.(*ast.Link); ok {
-			// Check previous sibling
+			// Check previous sibling, skipping whitespace
 			prevIsNewline := false
-			if len(children) == 0 {
-				prevIsNewline = true
-			} else {
-				lastChild := children[len(children)-1]
+
+			// Start checking from the last child
+			idx := len(children) - 1
+			for idx >= 0 {
+				lastChild := children[idx]
+
 				if isBlockContext(lastChild) {
 					prevIsNewline = true
+					break
 				} else if txt, ok := lastChild.(*ast.Text); ok {
 					if strings.HasSuffix(txt.Value, "\n") {
 						prevIsNewline = true
+						break
 					}
-				} else if c, ok := lastChild.(*ast.Custom); ok {
-					// Check if it's a closing tag of a block element (acting as newline/break)
-					if strings.HasPrefix(c.Tag, "/") {
-						tag := strings.TrimPrefix(c.Tag, "/")
-						if isBlockTag(tag) {
-							prevIsNewline = true
-						}
+					if strings.TrimSpace(txt.Value) != "" {
+						// Found non-whitespace text that doesn't end in newline
+						prevIsNewline = false
+						break
 					}
+					// If strictly whitespace, continue looking back
+				} else {
+					// Other inline element (e.g. bold, italic, image)
+					prevIsNewline = false
+					break
 				}
+				idx--
+			}
+
+			// If we exhausted children without finding content (or children was empty), it's start of block
+			if idx < 0 {
+				prevIsNewline = true
 			}
 
 			if prevIsNewline {
@@ -140,14 +145,6 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			}
 		}
 	}
-}
-
-func matchesClosingTag(n ast.Node, closingTag string) bool {
-	switch n.(type) {
-	case *ast.Link:
-		return strings.EqualFold(closingTag, "/link") || strings.EqualFold(closingTag, "/url") || strings.EqualFold(closingTag, "/a")
-	}
-	return false
 }
 
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
@@ -241,8 +238,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				}
 
 				if l, ok := n.(*ast.Link); ok {
-					// IsImmediateClose is true if no children were added (meaning it was [link url] style)
-					// If it was [link=url]..[/link], children would be present.
+					// IsImmediateClose is true if no children were added (meaning it was [link url] style with no content)
 					if len(l.Children) == 0 {
 						l.IsImmediateClose = true
 					} else {
@@ -250,51 +246,11 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					}
 				}
 
-				// Check if the popped node is a closing tag that closes the NEW top of stack
-				parentPopped := false
-				if custom, ok := n.(*ast.Custom); ok && len(stack) > 0 {
-					parent := stack[len(stack)-1]
-					if matchesClosingTag(parent.(ast.Node), custom.Tag) {
-						// Pop the parent as well!
-						// But first, we need to add the closing tag (n) to the parent?
-						// Usually [/tag] is consumed or added to parent.
-						// Current logic adds n to parent.
-						// So [link] content [/link] -> Link contains content, Custom(/link).
-						// Then we close Link.
-
-						p := stack[len(stack)-1]
-						children := p.GetChildren()
-						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
-						p.AddChild(n)
-
-						// Now pop parent
-						n = stack[len(stack)-1]
-						stack = stack[:len(stack)-1]
-						parentPopped = true
-
-						if nNode, ok := n.(ast.Node); ok {
-							start, _ := nNode.GetPos()
-							nNode.SetPos(start, visiblePos)
-						}
-
-						// Re-evaluate IsImmediateClose for the parent (Link)
-						if l, ok := n.(*ast.Link); ok {
-							if len(l.Children) == 0 {
-								l.IsImmediateClose = true
-							} else {
-								l.IsImmediateClose = false
-							}
-						}
-					}
-				}
-
-				if !parentPopped {
-					if len(stack) > 0 {
-						p := stack[len(stack)-1]
-						children := p.GetChildren()
-						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
-						p.AddChild(n)
-					}
+				if len(stack) > 0 {
+					p := stack[len(stack)-1]
+					children := p.GetChildren()
+					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+					p.AddChild(n)
 				}
 
 				if !yield(n, len(stack)+1) {
@@ -351,7 +307,6 @@ func Parse(r io.Reader) (*ast.Root, error) {
 	} else {
 		root.SetPos(0, 0)
 	}
-	// No need to call DetermineLinkProperties anymore
 	return root, nil
 }
 
@@ -362,12 +317,6 @@ func ParseString(s string) (*ast.Root, error) {
 
 // ParseNodesReader parses r and returns only the top-level nodes.
 func ParseNodesReader(r io.Reader) ([]ast.Node, error) {
-	// ParseNodesReader usually returns independent nodes.
-	// But Parse uses this logic too via Stream.
-	// We should duplicate the manual collection if we want block logic here too?
-	// ParseNodesReader is used by ParseNodes, which is used in tests.
-	// If we want consistent behavior, we should use similar logic.
-
 	var nodes []ast.Node
 	for n := range Stream(r, WithDepth(1)) {
 		updateBlockStatus(nodes, n, true) // Treat as root context for block logic
@@ -385,6 +334,11 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	cmd, err := getNext(s, true)
 	if err != nil && err != io.EOF {
 		return stack, visiblePos, err
+	}
+
+	// Error on closing tags
+	if strings.HasPrefix(cmd, "/") {
+		return stack, visiblePos, fmt.Errorf("closing tags like [%s] are not supported in a4code; use lisp-style nesting [tag content]", cmd)
 	}
 
 	createNode := func(n ast.Container) {
@@ -424,28 +378,11 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		yield(n, depth)
 	case "a", "link", "url":
-		// Distinguish [link url] vs [link=url]
-		isContainer := false
-		if ch, err := s.ReadByte(); err == nil {
-			if ch == '=' {
-				isContainer = true
-			} else if ch != ' ' {
-				s.UnreadByte()
-			}
-		}
+		skipArgPrefix(s)
 
 		raw, err := getNext(s, false)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
-		}
-
-		// If container, consume ']' to prevent immediate pop
-		if isContainer {
-			if ch, err := s.ReadByte(); err == nil {
-				if ch != ']' {
-					s.UnreadByte()
-				}
-			}
 		}
 
 		n := &ast.Link{Href: raw}
@@ -457,7 +394,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 				s.UnreadByte()
 			}
 		}
-		// directOutput consumes content bytes
+		// directOutput consumes content bytes until terminator
 		raw, _, _, err := directOutput(s, "[/code]", "code]")
 		if err != nil {
 			return stack, visiblePos, err

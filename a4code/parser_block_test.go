@@ -15,7 +15,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 	}{
 		{
 			name:  "Root: Standalone link",
-			input: "[link=url][/link]",
+			input: "[link url]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -25,7 +25,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Root: Link surrounded by newlines",
-			input: "\n[link=url][/link]\n",
+			input: "\n[link url]\n",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -35,7 +35,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Root: Link after text no newline",
-			input: "foo[link=url][/link]",
+			input: "foo[link url]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if l.IsBlock {
@@ -45,7 +45,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Root: Link before text no newline",
-			input: "[link=url][/link]foo",
+			input: "[link url]foo",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if l.IsBlock {
@@ -55,7 +55,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Quote: Standalone link",
-			input: "[quote][link=url][/link][/quote]",
+			input: "[quote [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -65,7 +65,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Quote: Link with newlines",
-			input: "[quote]\n[link=url][/link]\n[/quote]",
+			input: "[quote \n[link url]\n]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -75,7 +75,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Bold: Standalone link (Inline context)",
-			input: "[b][link=url][/link][/b]",
+			input: "[b [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if l.IsBlock {
@@ -85,7 +85,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "QuoteOf: Standalone link",
-			input: "[quoteof user][link=url][/link][/quoteof]",
+			input: "[quoteof user [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -95,7 +95,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Spoiler: Standalone link",
-			input: "[spoiler][link=url][/link][/spoiler]",
+			input: "[spoiler [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -105,7 +105,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Indent: Standalone link",
-			input: "[indent][link=url][/link][/indent]",
+			input: "[indent [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -115,7 +115,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Multiple Block Links",
-			input: "[quote][link=1][/link]\n[link=2][/link][/quote]",
+			input: "[quote [link 1]\n[link 2]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
 				ast.Walk(root, func(n ast.Node) error {
@@ -137,7 +137,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Mixed Inline/Block Links",
-			input: "[quote]foo [link=1][/link]\n[link=2][/link][/quote]",
+			input: "[quote foo [link 1]\n[link 2]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
 				ast.Walk(root, func(n ast.Node) error {
@@ -157,15 +157,43 @@ func TestUpdateBlockStatus(t *testing.T) {
 				}
 			},
 		},
+		// New tests for parsing lisp style arguments
+		{
+			name: "Lisp Style: Link with Title",
+			input: "[link url Title]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if l.Href != "url" {
+					t.Errorf("Expected Href='url', got %q", l.Href)
+				}
+				// Title should be a child text node
+				if len(l.Children) != 1 {
+					t.Errorf("Expected 1 child, got %d", len(l.Children))
+					return
+				}
+				if txt, ok := l.Children[0].(*ast.Text); ok {
+					// Note: Parser currently captures leading space?
+					// [link url Title] -> cmd=link, raw=url. Remaining " Title".
+					// " Title" might be parsed as " " and "Title" or " Title".
+					// Scanner is character based.
+					// Let's check trimmed value
+					if strings.TrimSpace(txt.Value) != "Title" {
+						t.Errorf("Expected child text 'Title', got %q", txt.Value)
+					}
+				} else {
+					t.Errorf("Expected child to be Text, got %T", l.Children[0])
+				}
+			},
+		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			root, err := Parse(strings.NewReader(tc.input))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := ParseString(tt.input)
 			if err != nil {
-				t.Fatalf("Parse error: %v", err)
+				t.Fatalf("ParseString() error = %v", err)
 			}
-			tc.checkLink(t, root)
+			tt.checkLink(t, root)
 		})
 	}
 }

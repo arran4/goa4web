@@ -198,6 +198,11 @@ type QuerierStub struct {
 	SystemGetUserByIDErr   error
 	SystemGetUserByIDCalls []int32
 
+	SystemGetUsersByIDsCalls   [][]int32
+	SystemGetUsersByIDsReturns []*SystemGetUsersByIDsRow
+	SystemGetUsersByIDsErr     error
+	SystemGetUsersByIDsFn      func(context.Context, []int32) ([]*SystemGetUsersByIDsRow, error)
+
 	SystemGetUserByEmailRow   *SystemGetUserByEmailRow
 	SystemGetUserByEmailErr   error
 	SystemGetUserByEmailCalls []string
@@ -569,10 +574,10 @@ type QuerierStub struct {
 	GetUserEmailByIDErr     error
 	GetUserEmailByIDFn      func(context.Context, int32) (*UserEmail, error)
 
-	GetUserEmailByCodeCalls   []sql.NullString
-	GetUserEmailByCodeRow     *UserEmail
-	GetUserEmailByCodeErr     error
-	GetUserEmailByCodeFn      func(context.Context, sql.NullString) (*UserEmail, error)
+	GetUserEmailByCodeCalls []sql.NullString
+	GetUserEmailByCodeRow   *UserEmail
+	GetUserEmailByCodeErr   error
+	GetUserEmailByCodeFn    func(context.Context, sql.NullString) (*UserEmail, error)
 
 	GetPublicProfileRoleForUserCalls   []int32
 	GetPublicProfileRoleForUserReturns int32
@@ -954,6 +959,11 @@ type QuerierStub struct {
 	DeleteSubscriptionByIDForSubscriberCalls []DeleteSubscriptionByIDForSubscriberParams
 	DeleteSubscriptionByIDForSubscriberErr   error
 	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
+
+	GetUserRoleByIDCalls []int32
+	GetUserRoleByIDRow   *GetUserRoleByIDRow
+	GetUserRoleByIDErr   error
+	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -1390,6 +1400,22 @@ func (s *QuerierStub) SystemCreateUserRole(ctx context.Context, arg SystemCreate
 		return fn(ctx, arg)
 	}
 	return err
+}
+
+func (s *QuerierStub) GetUserRoleByID(ctx context.Context, id int32) (*GetUserRoleByIDRow, error) {
+	s.mu.Lock()
+	s.GetUserRoleByIDCalls = append(s.GetUserRoleByIDCalls, id)
+	fn := s.GetUserRoleByIDFn
+	row := s.GetUserRoleByIDRow
+	err := s.GetUserRoleByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return row, nil
 }
 
 func (s *QuerierStub) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
@@ -2315,6 +2341,20 @@ func (s *QuerierStub) SystemGetUserByID(ctx context.Context, idusers int32) (*Sy
 		return nil, errors.New("SystemGetUserByID not stubbed")
 	}
 	return s.SystemGetUserByIDRow, nil
+}
+
+// SystemGetUsersByIDs records the call and returns the configured response.
+func (s *QuerierStub) SystemGetUsersByIDs(ctx context.Context, ids []int32) ([]*SystemGetUsersByIDsRow, error) {
+	s.mu.Lock()
+	s.SystemGetUsersByIDsCalls = append(s.SystemGetUsersByIDsCalls, ids)
+	fn := s.SystemGetUsersByIDsFn
+	ret := s.SystemGetUsersByIDsReturns
+	err := s.SystemGetUsersByIDsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, ids)
+	}
+	return ret, err
 }
 
 // SystemGetUserByEmail records the call and returns the configured response.

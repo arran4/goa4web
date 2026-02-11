@@ -128,3 +128,13 @@ SELECT EXISTS(
     AND g.action = ?
     AND g.active = 1
 );
+
+-- name: SystemGetUsersByIDs :many
+SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at
+FROM users u
+LEFT JOIN user_emails ue ON ue.id = (
+        SELECT id FROM user_emails ue2
+        WHERE ue2.user_id = u.idusers AND ue2.verified_at IS NOT NULL
+        ORDER BY ue2.notification_priority DESC, ue2.id LIMIT 1
+)
+WHERE u.idusers IN (sqlc.slice('ids'));

@@ -159,44 +159,54 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ch := h.Bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg := <-ch:
-			evt, ok := msg.(eventbus.TaskEvent)
+		case env, ok := <-ch:
 			if !ok {
-				continue
+				return
 			}
-			if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") {
-				if n, ok := evt.Task.(tasks.Name); ok {
-					if name := n.Name(); name == "Update" || name == "Delete" {
-						var err error
-						subsRows, patterns, err = loadSubs()
-						if err != nil {
-							log.Printf("refresh subscriptions: %v", err)
-						} else if h.Config.LogFlags&config.LogFlagDebug != 0 {
-							log.Printf("subscriptions updated: %d entries", len(subsRows))
+			shouldReturn := func() bool {
+				defer env.Ack()
+				evt, ok := env.Msg.(eventbus.TaskEvent)
+				if !ok {
+					return false
+				}
+				if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") {
+					if n, ok := evt.Task.(tasks.Name); ok {
+						if name := n.Name(); name == "Update" || name == "Delete" {
+							var err error
+							subsRows, patterns, err = loadSubs()
+							if err != nil {
+								log.Printf("refresh subscriptions: %v", err)
+							} else if h.Config.LogFlags&config.LogFlagDebug != 0 {
+								log.Printf("subscriptions updated: %d entries", len(subsRows))
+							}
+							return false
 						}
-						continue
 					}
 				}
-			}
-			if evt.UserID == uid {
-				continue
-			}
-			allowed := false
-			name := ""
-			if n, ok := evt.Task.(tasks.Name); ok {
-				name = n.Name()
-			}
-			for _, p := range buildPatterns(name, evt.Path) {
-				if patterns[p] {
-					allowed = true
-					break
+				if evt.UserID == uid {
+					return false
 				}
-			}
-			if !allowed {
-				continue
-			}
-			data, _ := json.Marshal(evt)
-			if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+				allowed := false
+				name := ""
+				if n, ok := evt.Task.(tasks.Name); ok {
+					name = n.Name()
+				}
+				for _, p := range buildPatterns(name, evt.Path) {
+					if patterns[p] {
+						allowed = true
+						break
+					}
+				}
+				if !allowed {
+					return false
+				}
+				data, _ := json.Marshal(evt)
+				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+					return true
+				}
+				return false
+			}()
+			if shouldReturn {
 				return
 			}
 		case <-ctx.Done():

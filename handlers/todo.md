@@ -10,182 +10,199 @@ The following files define tasks that implement `Action` but are missing the com
 ## Test Structure Compliance
 The following test files do not appear to follow the required `t.Run("Happy Path", ...)` structure or are missing standard setup conventions.
 
-- [ ] handlers/user/appearancePage_test.go
-- [ ] handlers/user/timezone_utils_test.go
-- [ ] handlers/user/user_paging_test.go
-- [ ] handlers/user/userEmailPage_test.go
-- [ ] handlers/user/user_lang_page_test.go
-- [ ] handlers/user/user_tasks_test.go
-- [ ] handlers/user/notifications_feed_test.go
-- [ ] handlers/user/subscriptions_logic_test.go
-- [ ] handlers/user/addEmailTask_invalid_test.go
-- [ ] handlers/user/pages_test.go
-- [ ] handlers/user/userEmailPage_event_test.go
-- [ ] handlers/user/userEmailVerify_test.go
-- [ ] handlers/user/userPublicSettingPage_test.go
-- [ ] handlers/user/user_test.go
-- [ ] handlers/user/subscriptions_template_test.go
-- [ ] handlers/user/addEmailTask_expiry_test.go
-- [ ] handlers/user/admin_permissions_test.go
-- [ ] handlers/user/admin_user_routes_test.go
-- [ ] handlers/redirect_test.go
-- [ ] handlers/logutils_test.go
-- [ ] handlers/auth/forgotPassword_test.go
-- [ ] handlers/auth/task_template_test.go
-- [ ] handlers/auth/forgotPassword_limit_test.go
-- [ ] handlers/auth/redirectBackPageHandler_test.go
-- [ ] handlers/auth/login_task_test.go
-- [ ] handlers/auth/loginPage_test.go
-- [ ] handlers/auth/forgotPassword_event_test.go
-- [ ] handlers/auth/password_reset_flow_test.go
-- [ ] handlers/auth/pages_test.go
-- [ ] handlers/auth/registerPage_test.go
-- [ ] handlers/auth/forgotPassword_no_email_test.go
-- [ ] handlers/auth/verify_password_task_test.go
-- [ ] handlers/bookmarks/mine_test.go
-- [ ] handlers/imagebbs/imagebbsAdminPermissions_test.go
-- [ ] handlers/imagebbs/imagebbs_reply_notifications_test.go
-- [ ] handlers/imagebbs/imagebbsBoardPage_test.go
-- [ ] handlers/imagebbs/imagebbs_tasks_test.go
-- [ ] handlers/imagebbs/auto_subscribe_test.go
-- [ ] handlers/imagebbs/pages_test.go
-- [ ] handlers/imagebbs/imagebbsFeed_test.go
-- [ ] handlers/imagebbs/imagebbsTemplates_test.go
-- [ ] handlers/errorpage_test.go
-- [ ] handlers/forum/comments/matchers_test.go
-- [ ] handlers/forum/topic_thread_reply_cancel_task_test.go
-- [ ] handlers/forum/permissions_test.go
-- [ ] handlers/forum/forum_create_thread_labels_test.go
-- [ ] handlers/forum/subscription_tasks_test.go
-- [ ] handlers/forum/routes_test.go
+- [x] handlers/access_cache_test.go
+- [x] handlers/access_test.go
+- [x] handlers/admin/adminAnyoneGrantsPage_test.go
+- [x] handlers/admin/adminCommentPage_test.go
+- [x] handlers/admin/adminCommentTasks_test.go
+- [x] handlers/admin/adminFilesPage_test.go
+- [x] handlers/admin/adminGrantsAvailablePage_test.go
+- [x] handlers/admin/adminGrantsPage_test.go
+- [x] handlers/admin/adminIPBanTemplates_test.go
+- [x] handlers/admin/adminLinksToolsPage_test.go
+- [x] handlers/admin/adminRequestQueuePage_test.go
+- [x] handlers/admin/adminUserGrantsPage_test.go
+- [x] handlers/admin/adminUserProfilePage_test.go
+- [x] handlers/admin/adminUserWritingsPage_test.go
+- [x] handlers/admin/admin_breadcrumbs_test.go
+- [x] handlers/admin/admin_email_tasks_test.go
+- [x] handlers/admin/admin_email_template_test.go
+- [x] handlers/admin/admin_password_reset_cleanup_tasks_test.go
+- [x] handlers/admin/admin_tasks_event_test.go
+- [x] handlers/admin/admin_tasks_test.go
+- [x] handlers/admin/admin_user_generate_link_test.go
+- [x] handlers/admin/admin_user_password_reset_display_test.go
+- [x] handlers/admin/admin_user_password_reset_test.go
+- [x] handlers/admin/announcementTemplates_test.go
+- [x] handlers/admin/api_matcher_test.go
+- [x] handlers/admin/api_test.go
+- [x] handlers/admin/dismiss_request_task_test.go
+- [x] handlers/admin/email_bulk_tasks_test.go
+- [x] handlers/admin/global_grant_create_task_test.go
+- [x] handlers/admin/grants_routes_test.go
+- [x] handlers/admin/maintenancePage_test.go
+- [x] handlers/admin/netutil_test.go
+- [x] handlers/admin/pages_test.go
+- [x] handlers/admin/reload_shutdown_test.go
+- [x] handlers/admin/role_grant_create_task_test.go
+- [x] handlers/admin/role_grants_build_test.go
+- [x] handlers/admin/role_grants_editor_test.go
+- [x] handlers/admin/save_template_task_test.go
+- [x] handlers/admin/server_shutdown_task_test.go
+- [x] handlers/admin/user_grants_build_test.go
+- [x] handlers/admin/user_subscription_tasks_test.go
+- [x] handlers/auth/cache_test.go
+- [x] handlers/auth/forgotPassword_event_test.go
+- [x] handlers/auth/forgotPassword_limit_test.go
+- [x] handlers/auth/forgotPassword_no_email_test.go
+- [x] handlers/auth/forgotPassword_test.go
+- [x] handlers/auth/loginPage_test.go
+- [x] handlers/auth/login_task_test.go
+- [x] handlers/auth/pages_test.go
+- [x] handlers/auth/password_reset_flow_test.go
+- [x] handlers/auth/redirectBackPageHandler_test.go
+- [x] handlers/auth/registerPage_test.go
+- [x] handlers/auth/task_template_test.go
+- [x] handlers/auth/verify_password_task_test.go
+- [x] handlers/blogs/auto_subscribe_test.go
+- [x] handlers/blogs/bloggerListPage_search_test.go
+- [x] handlers/blogs/blogsAdminBlogCommentsPage_test.go
+- [x] handlers/blogs/blogsAdminBlogPage_test.go
+- [x] handlers/blogs/blogsAutoSubscribe_test.go
+- [x] handlers/blogs/blogsBlogAddPage_test.go
+- [x] handlers/blogs/blogsBloggersBloggerPage_test.go
+- [x] handlers/blogs/blogsIndexPermissions_test.go
+- [x] handlers/blogs/blogsPage_test.go
+- [x] handlers/blogs/blogs_reply_notifications_test.go
+- [x] handlers/blogs/blogs_tasks_test.go
+- [x] handlers/blogs/pages_test.go
+- [x] handlers/blogs/routes_test.go
+- [x] handlers/bookmarks/mine_test.go
+- [x] handlers/errorpage_test.go
+- [x] handlers/externallink/redirect_test.go
+- [x] handlers/externallink/tasks_test.go
+- [x] handlers/faq/admin_questions_test.go
+- [x] handlers/faq/admin_templates_page_test.go
+- [x] handlers/faq/ask_test.go
+- [x] handlers/faq/empty_faq_test.go
+- [x] handlers/faq/faqIndexPermissions_test.go
+- [x] handlers/faq/faqTemplates_test.go
+- [x] handlers/faq/page_test.go
+- [x] handlers/faq/pages_test.go
+- [x] handlers/forum/admin_topic_edit_template_test.go
+- [x] handlers/forum/api_test.go
+- [x] handlers/forum/auto_subscribe_grants_test.go
+- [x] handlers/forum/category_prune_test.go
+- [x] handlers/forum/comments/matchers_test.go
 - [ ] handlers/forum/forumAdminCategoryCreatePage_test.go
-- [ ] handlers/forum/admin_topic_edit_template_test.go
-- [ ] handlers/forum/category_prune_test.go
-- [ ] handlers/forum/thread_label_tasks_test.go
-- [ ] handlers/forum/forumFeed_test.go
-- [ ] handlers/forum/topic_grants_build_test.go
-- [ ] handlers/forum/thread_delete_test.go
-- [ ] handlers/forum/pages_test.go
-- [ ] handlers/forum/forum_create_thread_notification_test.go
 - [ ] handlers/forum/forumAdminCategoryEditPage_submit_test.go
-- [ ] handlers/forum/forum_reply_notifications_test.go
-- [ ] handlers/forum/forum_reply_redirect_test.go
-- [ ] handlers/forum/forumTemplates_test.go
-- [ ] handlers/forum/api_test.go
 - [ ] handlers/forum/forumAdminTemplates_test.go
+- [ ] handlers/forum/forumFeed_test.go
 - [ ] handlers/forum/forumIndexPermissions_test.go
-- [ ] handlers/forum/shared_preview_test.go
+- [ ] handlers/forum/forumTemplates_test.go
+- [ ] handlers/forum/forum_create_thread_labels_test.go
+- [ ] handlers/forum/forum_create_thread_notification_test.go
+- [x] handlers/forum/forum_reply_notifications_test.go
+- [ ] handlers/forum/forum_reply_redirect_test.go
+- [ ] handlers/forum/manage_topic_labels_page_test.go
 - [ ] handlers/forum/matchers_test.go
-- [ ] handlers/template_render_test.go
-- [ ] handlers/news/newsPreview_test.go
-- [ ] handlers/news/newsIndexPermissions_test.go
-- [ ] handlers/news/news_tasks_test.go
-- [ ] handlers/news/routes_test.go
-- [ ] handlers/news/newsTemplates_test.go
-- [ ] handlers/news/newsPostPage_test.go
+- [ ] handlers/forum/pages_test.go
+- [ ] handlers/forum/permissions_test.go
+- [ ] handlers/forum/routes_test.go
+- [ ] handlers/forum/shared_preview_test.go
+- [ ] handlers/forum/subscription_tasks_test.go
+- [ ] handlers/forum/thread_delete_test.go
+- [ ] handlers/forum/thread_label_tasks_test.go
+- [ ] handlers/forum/topic_grants_build_test.go
+- [ ] handlers/forum/topic_thread_reply_cancel_task_test.go
+- [x] handlers/imagebbs/auto_subscribe_test.go
+- [x] handlers/imagebbs/imagebbsAdminPermissions_test.go
+- [x] handlers/imagebbs/imagebbsBoardPage_test.go
+- [x] handlers/imagebbs/imagebbsFeed_test.go
+- [x] handlers/imagebbs/imagebbsTemplates_test.go
+- [x] handlers/imagebbs/imagebbs_reply_notifications_test.go
+- [x] handlers/imagebbs/imagebbs_tasks_test.go
+- [x] handlers/imagebbs/pages_test.go
+- [x] handlers/images/routes_test.go
+- [x] handlers/languages/delete_language_task_test.go
+- [x] handlers/languages/languagesTemplates_test.go
+- [x] handlers/languages/rename_language_task_test.go
+- [x] handlers/linker/linkerAdminLinkViewPage_test.go
+- [x] handlers/linker/linkerCommentsPage_test.go
+- [x] handlers/linker/linkerPage_test.go
+- [x] handlers/linker/linkerQueueTemplates_test.go
+- [x] handlers/linker/linkerTemplates_test.go
+- [x] handlers/linker/linker_approve_notifications_test.go
+- [x] handlers/linker/linker_tasks_test.go
+- [x] handlers/linker/pages_test.go
+- [x] handlers/linker/permissions_test.go
+- [x] handlers/logutils_test.go
+- [x] handlers/matchers_test.go
 - [ ] handlers/news/auto_subscribe_test.go
-- [ ] handlers/news/search_test.go
-- [ ] handlers/news/newsPostPage_labels_test.go
-- [ ] handlers/news/pages_test.go
-- [ ] handlers/news/news_reply_notifications_test.go
-- [ ] handlers/news/newsEditPostTask_test.go
-- [ ] handlers/news/newsRssPage_test.go
+- [ ] handlers/news/label_tasks_ajax_test.go
+- [ ] handlers/news/label_tasks_redirect_test.go
 - [ ] handlers/news/newsAutoSubscribe_test.go
-- [ ] handlers/access_test.go
-- [ ] handlers/admin/user_grants_build_test.go
-- [ ] handlers/admin/server_shutdown_task_test.go
-- [ ] handlers/admin/role_grants_build_test.go
-- [ ] handlers/admin/adminRequestQueuePage_test.go
-- [ ] handlers/admin/adminIPBanTemplates_test.go
-- [ ] handlers/admin/admin_user_password_reset_test.go
-- [ ] handlers/admin/api_matcher_test.go
-- [ ] handlers/admin/admin_tasks_test.go
-- [ ] handlers/admin/announcementTemplates_test.go
-- [ ] handlers/admin/role_grant_create_task_test.go
-- [ ] handlers/admin/adminGrantsPage_test.go
-- [ ] handlers/admin/admin_tasks_event_test.go
-- [ ] handlers/admin/admin_password_reset_cleanup_tasks_test.go
-- [ ] handlers/admin/reload_shutdown_test.go
-- [ ] handlers/admin/grants_routes_test.go
-- [ ] handlers/admin/admin_email_template_test.go
-- [ ] handlers/admin/admin_user_password_reset_display_test.go
-- [ ] handlers/admin/adminUserProfilePage_test.go
-- [ ] handlers/admin/netutil_test.go
-- [ ] handlers/admin/adminUserWritingsPage_test.go
-- [ ] handlers/admin/adminUserGrantsPage_test.go
-- [ ] handlers/admin/pages_test.go
-- [ ] handlers/admin/admin_email_tasks_test.go
-- [ ] handlers/admin/save_template_task_test.go
-- [ ] handlers/admin/role_grants_editor_test.go
-- [ ] handlers/admin/adminLinksToolsPage_test.go
-- [ ] handlers/admin/adminCommentPage_test.go
-- [ ] handlers/admin/api_test.go
-- [ ] handlers/admin/global_grant_create_task_test.go
-- [ ] handlers/admin/adminAnyoneGrantsPage_test.go
-- [ ] handlers/admin/email_bulk_tasks_test.go
-- [ ] handlers/admin/user_subscription_tasks_test.go
-- [ ] handlers/admin/admin_user_generate_link_test.go
-- [ ] handlers/admin/adminCommentTasks_test.go
-- [ ] handlers/admin/maintenancePage_test.go
-- [ ] handlers/externallink/redirect_test.go
-- [ ] handlers/externallink/tasks_test.go
-- [ ] handlers/blogs/blogs_tasks_test.go
-- [ ] handlers/blogs/blogsBloggersBloggerPage_test.go
-- [ ] handlers/blogs/routes_test.go
-- [ ] handlers/blogs/blogsIndexPermissions_test.go
-- [ ] handlers/blogs/bloggerListPage_search_test.go
-- [ ] handlers/blogs/blogsPage_test.go
-- [ ] handlers/blogs/auto_subscribe_test.go
-- [ ] handlers/blogs/pages_test.go
-- [ ] handlers/blogs/blogsAdminBlogPage_test.go
-- [ ] handlers/blogs/blogsAdminBlogCommentsPage_test.go
-- [ ] handlers/blogs/blogsBlogAddPage_test.go
-- [ ] handlers/blogs/blogsAutoSubscribe_test.go
-- [ ] handlers/blogs/blogs_reply_notifications_test.go
-- [ ] handlers/writings/writingsAdminCategoriesPage_test.go
-- [ ] handlers/writings/reply_task_test.go
-- [ ] handlers/writings/permissions_test.go
-- [ ] handlers/writings/writing_category_change_task_test.go
-- [ ] handlers/writings/templates_test.go
-- [ ] handlers/writings/writingsFeed_test.go
-- [ ] handlers/writings/writingsAdminCategoryEditPage_test.go
-- [ ] handlers/writings/writingsTemplates_test.go
-- [ ] handlers/writings/writings_tasks_test.go
-- [ ] handlers/writings/writings_reply_notifications_test.go
-- [ ] handlers/writings/writingsWriterListPage_test.go
-- [ ] handlers/writings/pages_test.go
-- [ ] handlers/writings/writingsArticlePage_test.go
-- [ ] handlers/writings/writingsAdminCategoryGrantsPage_test.go
-- [ ] handlers/writings/matchers_test.go
+- [ ] handlers/news/newsEditPostTask_test.go
+- [ ] handlers/news/newsIndexPermissions_test.go
+- [ ] handlers/news/newsListing_unread_test.go
+- [ ] handlers/news/newsPostPage_labels_test.go
+- [ ] handlers/news/newsPostPage_test.go
+- [ ] handlers/news/newsPreview_test.go
+- [ ] handlers/news/newsRssPage_test.go
+- [ ] handlers/news/newsTemplates_test.go
+- [ ] handlers/news/news_reply_notifications_test.go
+- [ ] handlers/news/news_tasks_test.go
+- [ ] handlers/news/pages_test.go
+- [ ] handlers/news/routes_test.go
+- [ ] handlers/news/search_test.go
 - [ ] handlers/pages_test.go
-- [ ] handlers/privateforum/privateforum_tasks_test.go
-- [ ] handlers/privateforum/page_test.go
-- [ ] handlers/privateforum/repro_test.go
-- [ ] handlers/privateforum/auto_subscribe_test.go
-- [ ] handlers/privateforum/labels_test.go
-- [ ] handlers/privateforum/pages_test.go
-- [ ] handlers/privateforum/topic_page_test.go
-- [ ] handlers/privateforum/api_test.go
-- [ ] handlers/linker/linkerCommentsPage_test.go
-- [ ] handlers/linker/linkerQueueTemplates_test.go
-- [ ] handlers/linker/permissions_test.go
-- [ ] handlers/linker/pages_test.go
-- [ ] handlers/linker/linkerTemplates_test.go
-- [ ] handlers/linker/linkerPage_test.go
-- [ ] handlers/linker/linker_approve_notifications_test.go
-- [ ] handlers/linker/linker_tasks_test.go
-- [ ] handlers/linker/linkerAdminLinkViewPage_test.go
-- [ ] handlers/images/routes_test.go
-- [ ] handlers/share/opengraph_test.go
-- [ ] handlers/faq/faqIndexPermissions_test.go
-- [ ] handlers/faq/faqTemplates_test.go
-- [ ] handlers/faq/page_test.go
-- [ ] handlers/faq/ask_test.go
-- [ ] handlers/faq/pages_test.go
-- [ ] handlers/search/permissions_test.go
-- [ ] handlers/search/search_tasks_test.go
-- [ ] handlers/search/pages_test.go
-- [ ] handlers/languages/languagesTemplates_test.go
-- [ ] handlers/languages/delete_language_task_test.go
-- [ ] handlers/languages/rename_language_task_test.go
-- [ ] handlers/matchers_test.go
+- [x] handlers/privateforum/api_test.go
+- [x] handlers/privateforum/auto_subscribe_test.go
+- [x] handlers/privateforum/labels_test.go
+- [x] handlers/privateforum/page_test.go
+- [x] handlers/privateforum/pages_test.go
+- [x] handlers/privateforum/privateforum_tasks_test.go
+- [x] handlers/privateforum/repro_test.go
+- [x] handlers/privateforum/topic_page_test.go
+- [x] handlers/redirect_test.go
+- [x] handlers/search/pages_test.go
+- [x] handlers/search/permissions_test.go
+- [x] handlers/search/search_tasks_test.go
+- [x] handlers/share/opengraph_test.go
+- [x] handlers/template_render_test.go
+- [x] handlers/user/addEmailTask_expiry_test.go
+- [x] handlers/user/addEmailTask_invalid_test.go
+- [x] handlers/user/admin_permissions_test.go
+- [x] handlers/user/admin_user_routes_test.go
+- [x] handlers/user/appearancePage_test.go
+- [x] handlers/user/notification_fix_test.go
+- [x] handlers/user/notification_open_test.go
+- [x] handlers/user/notifications_feed_test.go
+- [x] handlers/user/pages_test.go
+- [x] handlers/user/subscriptions_logic_test.go
+- [x] handlers/user/subscriptions_template_test.go
+- [x] handlers/user/subscriptions_update_test.go
+- [x] handlers/user/timezone_utils_test.go
+- [x] handlers/user/userEmailPage_event_test.go
+- [x] handlers/user/userEmailPage_test.go
+- [x] handlers/user/userEmailVerify_test.go
+- [x] handlers/user/userPublicSettingPage_test.go
+- [x] handlers/user/user_lang_page_test.go
+- [x] handlers/user/user_paging_test.go
+- [x] handlers/user/user_tasks_test.go
+- [x] handlers/user/user_test.go
+- [x] handlers/writings/matchers_test.go
+- [x] handlers/writings/pages_test.go
+- [x] handlers/writings/permissions_test.go
+- [x] handlers/writings/reply_task_test.go
+- [x] handlers/writings/templates_test.go
+- [x] handlers/writings/writing_category_change_task_test.go
+- [x] handlers/writings/writingsAdminCategoriesPage_test.go
+- [x] handlers/writings/writingsAdminCategoryEditPage_test.go
+- [x] handlers/writings/writingsAdminCategoryGrantsPage_test.go
+- [x] handlers/writings/writingsArticlePage_test.go
+- [x] handlers/writings/writingsFeed_test.go
+- [x] handlers/writings/writingsTemplates_test.go
+- [x] handlers/writings/writingsWriterListPage_test.go
+- [x] handlers/writings/writings_reply_notifications_test.go
+- [x] handlers/writings/writings_tasks_test.go

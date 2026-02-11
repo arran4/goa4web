@@ -18,7 +18,7 @@ func stubFuncs() template.FuncMap {
 	return cd.Funcs(req)
 }
 
-func TestEmptyFAQMessage(t *testing.T) {
+func TestHappyPathEmptyFAQMessage(t *testing.T) {
 	// Load templates from disk so we can modify them and verify the fix
 	tmpl := templates.GetCompiledSiteTemplates(stubFuncs(), templates.WithDir("../../core/templates"))
 

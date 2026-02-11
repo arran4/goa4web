@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPagesExist(t *testing.T) {
+func TestHappyPathPagesExist(t *testing.T) {
 	pages := []tasks.Template{
 		CreateTopicTmpl,
 		TopicsOnlyTmpl,

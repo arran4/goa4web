@@ -61,7 +61,7 @@ func (m *mockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 
 func (m *mockEmailProvider) TestConfig(ctx context.Context) error { return nil }
 
-func TestBlogReply(t *testing.T) {
+func TestHappyPathBlogReply(t *testing.T) {
 	replierUID := int32(1)
 	subscriberUID := int32(2)
 	blogID := int32(5)

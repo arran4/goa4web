@@ -25,7 +25,7 @@ func checkIPBanEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	}
 }
 
-func TestAdminIPBanTemplatesExist(t *testing.T) {
+func TestHappyPathAdminIPBanTemplatesExist(t *testing.T) {
 	admins := []notif.AdminEmailTemplateProvider{
 		&AddIPBanTask{TaskString: TaskAdd},
 		&DeleteIPBanTask{TaskString: TaskDelete},

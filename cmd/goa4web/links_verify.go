@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
@@ -41,7 +42,15 @@ func (c *linksVerifyCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
 	}
-	if err := sign.Verify(c.url, c.sig, key, sign.WithExpiryTimestamp(c.ts)); err == nil {
+	var opts []sign.SignOption
+	if c.ts != "" {
+		if tsInt, err := strconv.ParseInt(c.ts, 10, 64); err == nil {
+			opts = append(opts, sign.WithExpiryTimeUnix(tsInt))
+		} else {
+			return fmt.Errorf("invalid timestamp: %w", err)
+		}
+	}
+	if err := sign.Verify(c.url, c.sig, key, opts...); err == nil {
 		fmt.Println("valid")
 	} else {
 		fmt.Println("invalid")

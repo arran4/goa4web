@@ -36,7 +36,7 @@ func (cd *CoreData) ArticleComments() ([]*db.GetCommentsByThreadIdForUserRow, er
 
 // WritingCategories returns all writing categories cached once.
 func (cd *CoreData) WritingCategories() ([]*db.WritingCategory, error) {
-	return cd.writingCategories.Load(func() ([]*db.WritingCategory, error) {
+	return cd.cache.writingCategories.Load(func() ([]*db.WritingCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -100,13 +100,13 @@ func (cd *CoreData) WriterByUsername(username string) (*db.SystemGetUserByUserna
 
 // WriterWritings returns public writings for the specified author respecting cd's permissions.
 func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.ListPublicWritingsByUserForListerRow, error) {
-	if cd.writerWritings == nil {
-		cd.writerWritings = map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
+	if cd.cache.writerWritings == nil {
+		cd.cache.writerWritings = map[int32]*lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
 	}
-	lv, ok := cd.writerWritings[userID]
+	lv, ok := cd.cache.writerWritings[userID]
 	if !ok {
 		lv = &lazy.Value[[]*db.ListPublicWritingsByUserForListerRow]{}
-		cd.writerWritings[userID] = lv
+		cd.cache.writerWritings[userID] = lv
 	}
 	return lv.Load(func() ([]*db.ListPublicWritingsByUserForListerRow, error) {
 		if cd.queries == nil {

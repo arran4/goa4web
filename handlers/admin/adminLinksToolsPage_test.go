@@ -14,15 +14,17 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestAdminLinksToolsPage(t *testing.T) {
+func TestHappyPathAdminLinksToolsPage(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LinkSignSecret = "test-key"
 	cfg.HTTPHostname = "http://example.com"
+	queries := testhelpers.NewQuerierStub()
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/links/tools", nil)
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"})))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, common.NewCoreData(req.Context(), queries, cfg, common.WithUserRoles([]string{"administrator"})))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -36,10 +38,11 @@ func TestAdminLinksToolsPage(t *testing.T) {
 	}
 }
 
-func TestAdminLinksToolsPageSign(t *testing.T) {
+func TestHappyPathAdminLinksToolsPageSign(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LinkSignSecret = "test-key"
 	cfg.HTTPHostname = "http://example.com"
+	queries := testhelpers.NewQuerierStub()
 
 	form := url.Values{}
 	form.Set("action", "sign")
@@ -48,7 +51,7 @@ func TestAdminLinksToolsPageSign(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/admin/links/tools", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"})))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, common.NewCoreData(req.Context(), queries, cfg, common.WithUserRoles([]string{"administrator"})))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 
@@ -66,14 +69,15 @@ func TestAdminLinksToolsPageSign(t *testing.T) {
 	}
 }
 
-func TestAdminLinksToolsPageVerify(t *testing.T) {
+func TestHappyPathAdminLinksToolsPageVerify(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LinkSignSecret = "test-key"
+	queries := testhelpers.NewQuerierStub()
 
 	ts := time.Now().Add(1 * time.Hour).Unix()
 	tsStr := strconv.FormatInt(ts, 10)
 	urlToVerify := "https://example.com/resource"
-	sig := sign.Sign(urlToVerify, cfg.LinkSignSecret, sign.WithExpiryTimestamp(tsStr))
+	sig := sign.Sign(urlToVerify, cfg.LinkSignSecret, sign.WithExpiryTimeUnix(ts))
 
 	form := url.Values{}
 	form.Set("action", "verify")
@@ -83,7 +87,7 @@ func TestAdminLinksToolsPageVerify(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/admin/links/tools", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, common.NewCoreData(req.Context(), nil, cfg, common.WithUserRoles([]string{"administrator"})))
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, common.NewCoreData(req.Context(), queries, cfg, common.WithUserRoles([]string{"administrator"})))
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 

@@ -12,8 +12,8 @@ import (
 	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
-// TestRoleGrantsEditorJSRoute ensures the role grants editor script is served.
-func TestRoleGrantsEditorJSRoute(t *testing.T) {
+// TestHappyPathRoleGrantsEditorJSRoute ensures the role grants editor script is served.
+func TestHappyPathRoleGrantsEditorJSRoute(t *testing.T) {
 	h := admin.New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()

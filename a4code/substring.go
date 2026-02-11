@@ -2,7 +2,10 @@ package a4code
 
 import (
 	"bytes"
+	"io"
 	"strings"
+
+	"github.com/arran4/goa4web/a4code/ast"
 )
 
 func substring(s string, start, end int) string {
@@ -188,42 +191,39 @@ func normaliseSimpleBB(in string) string {
 	return out.String()
 }
 
-// openTag returns the opening tag for a node in bracket syntax, e.g. [b], [i], [a=...]
-func openTag(n Node) string {
+// openTag returns the opening tag for a node in bracket syntax, e.g. [b, [i, [a=...
+func openTag(n ast.Node) string {
 	switch t := n.(type) {
-	case *Bold:
-		return "[b]"
-	case *Italic:
-		return "[i]"
-	case *Underline:
-		return "[u]"
-	case *Sup:
-		return "[sup]"
-	case *Sub:
-		return "[sub]"
-	case *Link:
+	case *ast.Bold:
+		return "[b"
+	case *ast.Italic:
+		return "[i"
+	case *ast.Underline:
+		return "[u"
+	case *ast.Sup:
+		return "[sup"
+	case *ast.Sub:
+		return "[sub"
+	case *ast.Link:
 		var b bytes.Buffer
 		b.WriteString("[a=")
 		escapeArg(&b, t.Href)
-		b.WriteString("]")
 		return b.String()
-	case *Quote:
-		return "[quote]"
-	case *QuoteOf:
+	case *ast.Quote:
+		return "[quote"
+	case *ast.QuoteOf:
 		var b bytes.Buffer
 		b.WriteString("[quoteof ")
 		escapeArg(&b, t.Name)
-		b.WriteString("]")
 		return b.String()
-	case *Spoiler:
-		return "[spoiler]"
-	case *Indent:
-		return "[indent]"
-	case *Custom:
+	case *ast.Spoiler:
+		return "[spoiler"
+	case *ast.Indent:
+		return "[indent"
+	case *ast.Custom:
 		var b bytes.Buffer
 		b.WriteByte('[')
 		b.WriteString(t.Tag)
-		b.WriteByte(']')
 		return b.String()
 	default:
 		return ""
@@ -232,60 +232,41 @@ func openTag(n Node) string {
 
 // closeTag returns the closing tag for a node in bracket syntax, e.g. [/b], [/a]
 // For nodes that are not containers or do not require explicit closing, returns an empty string.
-func closeTag(n Node) string {
+func closeTag(n ast.Node) string {
 	switch n.(type) {
-	case *Bold:
-		return "[/b]"
-	case *Italic:
-		return "[/i]"
-	case *Underline:
-		return "[/u]"
-	case *Sup:
-		return "[/sup]"
-	case *Sub:
-		return "[/sub]"
-	case *Link:
-		return "[/a]"
-	case *Quote:
-		return "[/quote]"
-	case *QuoteOf:
-		return "[/quoteof]"
-	case *Spoiler:
-		return "[/spoiler]"
-	case *Indent:
-		return "[/indent]"
-	case *Custom:
-		// do our best and assume symmetrical closing
-		return "[/" + strings.TrimPrefix(strings.TrimSpace(nTag(n)), "/") + "]"
+	case *ast.Bold, *ast.Italic, *ast.Underline, *ast.Sup, *ast.Sub, *ast.Link, *ast.Quote, *ast.QuoteOf, *ast.Spoiler, *ast.Indent:
+		return "]"
+	case *ast.Custom:
+		return "]"
 	default:
 		return ""
 	}
 }
 
 // nTag returns the raw tag name for supported nodes, or empty.
-func nTag(n Node) string {
+func nTag(n ast.Node) string {
 	switch t := n.(type) {
-	case *Bold:
+	case *ast.Bold:
 		return "b"
-	case *Italic:
+	case *ast.Italic:
 		return "i"
-	case *Underline:
+	case *ast.Underline:
 		return "u"
-	case *Sup:
+	case *ast.Sup:
 		return "sup"
-	case *Sub:
+	case *ast.Sub:
 		return "sub"
-	case *Link:
+	case *ast.Link:
 		return "a"
-	case *Quote:
+	case *ast.Quote:
 		return "quote"
-	case *QuoteOf:
+	case *ast.QuoteOf:
 		return "quoteof"
-	case *Spoiler:
+	case *ast.Spoiler:
 		return "spoiler"
-	case *Indent:
+	case *ast.Indent:
 		return "indent"
-	case *Custom:
+	case *ast.Custom:
 		return t.Tag
 	default:
 		return ""
@@ -304,4 +285,26 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// escapeArg escapes characters in a tag argument.
+func escapeArg(w io.Writer, s string) {
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '[', ']', '=', '\\':
+			writeByte(w, '\\')
+			writeByte(w, s[i])
+		default:
+			writeByte(w, s[i])
+		}
+	}
+}
+
+// writeByte writes a byte to the writer.
+func writeByte(w io.Writer, b byte) {
+	if bw, ok := w.(io.ByteWriter); ok {
+		_ = bw.WriteByte(b)
+		return
+	}
+	_, _ = w.Write([]byte{b})
 }

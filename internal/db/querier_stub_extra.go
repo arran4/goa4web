@@ -6,6 +6,146 @@ import (
 	"time"
 )
 
+func (s *QuerierStub) AdminGetRequestByID(ctx context.Context, id int32) (*AdminRequestQueue, error) {
+	s.mu.Lock()
+	s.AdminGetRequestByIDCalls = append(s.AdminGetRequestByIDCalls, id)
+	fn := s.AdminGetRequestByIDFn
+	ret := s.AdminGetRequestByIDReturns
+	err := s.AdminGetRequestByIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListRequestCommentsCalls = append(s.AdminListRequestCommentsCalls, requestID)
+	if s.AdminListRequestCommentsFn != nil {
+		return s.AdminListRequestCommentsFn(ctx, requestID)
+	}
+	return s.AdminListRequestCommentsReturns, s.AdminListRequestCommentsErr
+}
+
+func (s *QuerierStub) AdminScrubComment(ctx context.Context, arg AdminScrubCommentParams) error {
+	s.mu.Lock()
+	s.AdminScrubCommentCalls = append(s.AdminScrubCommentCalls, arg)
+	fn := s.AdminScrubCommentFn
+	err := s.AdminScrubCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error {
+	s.mu.Lock()
+	s.AdminArchiveCommentCalls = append(s.AdminArchiveCommentCalls, arg)
+	fn := s.AdminArchiveCommentFn
+	err := s.AdminArchiveCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminIsCommentDeactivated(ctx context.Context, id int32) (bool, error) {
+	s.mu.Lock()
+	s.AdminIsCommentDeactivatedCalls = append(s.AdminIsCommentDeactivatedCalls, id)
+	fn := s.AdminIsCommentDeactivatedFn
+	ret := s.AdminIsCommentDeactivatedReturns
+	err := s.AdminIsCommentDeactivatedErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminRestoreComment(ctx context.Context, arg AdminRestoreCommentParams) error {
+	s.mu.Lock()
+	s.AdminRestoreCommentCalls = append(s.AdminRestoreCommentCalls, arg)
+	fn := s.AdminRestoreCommentFn
+	err := s.AdminRestoreCommentErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminListDeactivatedComments(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListDeactivatedCommentsCalls = append(s.AdminListDeactivatedCommentsCalls, arg)
+	if s.AdminListDeactivatedCommentsFn != nil {
+		return s.AdminListDeactivatedCommentsFn(ctx, arg)
+	}
+	return s.AdminListDeactivatedCommentsReturns, s.AdminListDeactivatedCommentsErr
+}
+
+func (s *QuerierStub) AdminMarkCommentRestored(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.AdminMarkCommentRestoredCalls = append(s.AdminMarkCommentRestoredCalls, id)
+	fn := s.AdminMarkCommentRestoredFn
+	err := s.AdminMarkCommentRestoredErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) AdminCountAllImagePosts(ctx context.Context) (int64, error) {
+	s.mu.Lock()
+	s.AdminCountAllImagePostsCalls++
+	fn := s.AdminCountAllImagePostsFn
+	ret := s.AdminCountAllImagePostsReturns
+	err := s.AdminCountAllImagePostsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListAllImagePosts(ctx context.Context, arg AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListAllImagePostsCalls = append(s.AdminListAllImagePostsCalls, arg)
+	if s.AdminListAllImagePostsFn != nil {
+		return s.AdminListAllImagePostsFn(ctx, arg)
+	}
+	return s.AdminListAllImagePostsReturns, s.AdminListAllImagePostsErr
+}
+
+func (s *QuerierStub) GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error) {
+	s.mu.Lock()
+	s.GetImagePostInfoByPathCalls = append(s.GetImagePostInfoByPathCalls, arg)
+	fn := s.GetImagePostInfoByPathFn
+	row := s.GetImagePostInfoByPathRow
+	err := s.GetImagePostInfoByPathErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return row, err
+}
+
+func (s *QuerierStub) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg GetCommentsByIdsForUserWithThreadInfoParams) ([]*GetCommentsByIdsForUserWithThreadInfoRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.GetCommentsByIdsForUserWithThreadInfoCalls = append(s.GetCommentsByIdsForUserWithThreadInfoCalls, arg)
+	if s.GetCommentsByIdsForUserWithThreadInfoFn != nil {
+		return s.GetCommentsByIdsForUserWithThreadInfoFn(ctx, arg)
+	}
+	return s.GetCommentsByIdsForUserWithThreadInfoReturns, s.GetCommentsByIdsForUserWithThreadInfoErr
+}
+
 func (s *QuerierStub) AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error {
 	s.mu.Lock()
 	s.AdminInsertBannedIpCalls = append(s.AdminInsertBannedIpCalls, arg)
@@ -507,4 +647,144 @@ func (s *QuerierStub) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*Adm
 		return fn(ctx)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) AdminGetAllWritingsByAuthor(ctx context.Context, authorID int32) ([]*AdminGetAllWritingsByAuthorRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminGetAllWritingsByAuthorCalls = append(s.AdminGetAllWritingsByAuthorCalls, authorID)
+	if s.AdminGetAllWritingsByAuthorFn != nil {
+		return s.AdminGetAllWritingsByAuthorFn(ctx, authorID)
+	}
+	return s.AdminGetAllWritingsByAuthorReturns, s.AdminGetAllWritingsByAuthorErr
+}
+
+func (s *QuerierStub) AdminGetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminGetUserEmailByIDCalls = append(s.AdminGetUserEmailByIDCalls, id)
+	if s.AdminGetUserEmailByIDFn != nil {
+		return s.AdminGetUserEmailByIDFn(ctx, id)
+	}
+	return s.AdminGetUserEmailByIDReturns, s.AdminGetUserEmailByIDErr
+}
+
+func (s *QuerierStub) InsertUserEmail(ctx context.Context, arg InsertUserEmailParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.InsertUserEmailCalls = append(s.InsertUserEmailCalls, arg)
+	if s.InsertUserEmailFn != nil {
+		return s.InsertUserEmailFn(ctx, arg)
+	}
+	return s.InsertUserEmailErr
+}
+
+func (s *QuerierStub) AdminDeleteUserEmail(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminDeleteUserEmailCalls = append(s.AdminDeleteUserEmailCalls, id)
+	if s.AdminDeleteUserEmailFn != nil {
+		return s.AdminDeleteUserEmailFn(ctx, id)
+	}
+	return s.AdminDeleteUserEmailErr
+}
+
+func (s *QuerierStub) AdminUpdateUserEmailDetails(ctx context.Context, arg AdminUpdateUserEmailDetailsParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminUpdateUserEmailDetailsCalls = append(s.AdminUpdateUserEmailDetailsCalls, arg)
+	if s.AdminUpdateUserEmailDetailsFn != nil {
+		return s.AdminUpdateUserEmailDetailsFn(ctx, arg)
+	}
+	return s.AdminUpdateUserEmailDetailsErr
+}
+
+func (s *QuerierStub) SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemUpdateVerificationCodeCalls = append(s.SystemUpdateVerificationCodeCalls, arg)
+	if s.SystemUpdateVerificationCodeFn != nil {
+		return s.SystemUpdateVerificationCodeFn(ctx, arg)
+	}
+	return s.SystemUpdateVerificationCodeErr
+}
+
+func (s *QuerierStub) AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListRecentNotificationsCalls = append(s.AdminListRecentNotificationsCalls, limit)
+	if s.AdminListRecentNotificationsFn != nil {
+		return s.AdminListRecentNotificationsFn(ctx, limit)
+	}
+	return s.AdminListRecentNotificationsReturns, s.AdminListRecentNotificationsErr
+}
+
+func (s *QuerierStub) AdminListAnnouncementsWithNews(ctx context.Context) ([]*AdminListAnnouncementsWithNewsRow, error) {
+	s.mu.Lock()
+	s.AdminListAnnouncementsWithNewsCalls++
+	fn := s.AdminListAnnouncementsWithNewsFn
+	ret := s.AdminListAnnouncementsWithNewsReturns
+	err := s.AdminListAnnouncementsWithNewsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListBannedIps(ctx context.Context) ([]*BannedIp, error) {
+	s.mu.Lock()
+	s.ListBannedIpsCalls++
+	fn := s.ListBannedIpsFn
+	ret := s.ListBannedIpsReturns
+	err := s.ListBannedIpsErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminListAllCommentsWithThreadInfoCalls = append(s.AdminListAllCommentsWithThreadInfoCalls, arg)
+	return s.AdminListAllCommentsWithThreadInfoReturns, s.AdminListAllCommentsWithThreadInfoErr
+}
+
+func (s *QuerierStub) AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error) {
+	s.mu.Lock()
+	s.AdminCreateGrantCalls = append(s.AdminCreateGrantCalls, arg)
+	fn := s.AdminCreateGrantFn
+	ret := s.AdminCreateGrantReturns
+	err := s.AdminCreateGrantErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error {
+	s.mu.Lock()
+	s.UpdateSubscriptionByIDForSubscriberCalls = append(s.UpdateSubscriptionByIDForSubscriberCalls, arg)
+	fn := s.UpdateSubscriptionByIDForSubscriberFn
+	err := s.UpdateSubscriptionByIDForSubscriberErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error {
+	s.mu.Lock()
+	s.DeleteSubscriptionByIDForSubscriberCalls = append(s.DeleteSubscriptionByIDForSubscriberCalls, arg)
+	fn := s.DeleteSubscriptionByIDForSubscriberFn
+	err := s.DeleteSubscriptionByIDForSubscriberErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }

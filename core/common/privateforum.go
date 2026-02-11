@@ -87,7 +87,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
 		return nil, nil
 	}
-	return cd.privateForumTopics.Load(func() ([]*PrivateTopic, error) {
+	return cd.cache.privateForumTopics.Load(func() ([]*PrivateTopic, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -219,4 +219,11 @@ func (cd *CoreData) GrantPrivateForumTopic(topicID int32, uid, rid sql.NullInt32
 		Action:   action,
 		Extra:    sql.NullString{},
 	})
+}
+
+// WithPrivateForumTopics preloads private forum topics for testing.
+func WithPrivateForumTopics(topics []*PrivateTopic) CoreOption {
+	return func(cd *CoreData) {
+		cd.cache.privateForumTopics.Set(topics)
+	}
 }

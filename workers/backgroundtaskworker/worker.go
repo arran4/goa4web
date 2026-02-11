@@ -20,32 +20,38 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
 		select {
-		case msg := <-ch:
-			evt, ok := msg.(eventbus.TaskEvent)
+		case env, ok := <-ch:
 			if !ok {
-				continue
+				return
 			}
-			if p, ok := evt.Task.(tasks.BackgroundTasker); ok {
-				evtCtx := context.WithoutCancel(ctx)
-				t, err := p.BackgroundTask(evtCtx, q)
-				if err != nil {
-					log.Printf("background task: %v", err)
-					continue
+			func() {
+				defer env.Ack()
+				evt, ok := env.Msg.(eventbus.TaskEvent)
+				if !ok {
+					return
 				}
-				if t != nil {
-					nEvt := eventbus.TaskEvent{
-						Path:    evt.Path,
-						Task:    t,
-						UserID:  evt.UserID,
-						Time:    time.Now(),
-						Data:    evt.Data,
-						Outcome: eventbus.TaskOutcomeSuccess,
+				if p, ok := evt.Task.(tasks.BackgroundTasker); ok {
+					evtCtx := context.WithoutCancel(ctx)
+					t, err := p.BackgroundTask(evtCtx, q)
+					if err != nil {
+						log.Printf("background task: %v", err)
+						return
 					}
-					if err := bus.Publish(nEvt); err != nil && err != eventbus.ErrBusClosed {
-						log.Printf("background publish: %v", err)
+					if t != nil {
+						nEvt := eventbus.TaskEvent{
+							Path:    evt.Path,
+							Task:    t,
+							UserID:  evt.UserID,
+							Time:    time.Now(),
+							Data:    evt.Data,
+							Outcome: eventbus.TaskOutcomeSuccess,
+						}
+						if err := bus.Publish(nEvt); err != nil && err != eventbus.ErrBusClosed {
+							log.Printf("background publish: %v", err)
+						}
 					}
 				}
-			}
+			}()
 		case <-ctx.Done():
 			return
 		}

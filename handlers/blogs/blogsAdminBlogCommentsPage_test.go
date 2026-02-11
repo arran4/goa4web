@@ -18,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
+func TestHappyPathAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	blogID := 9
 	q := testhelpers.NewQuerierStub()
 	q.GetBlogEntryForListerByIDRow = &db.GetBlogEntryForListerByIDRow{

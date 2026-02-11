@@ -6,7 +6,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestCategoryTreePruneEmpty(t *testing.T) {
+func TestHappyPathCategoryTreePruneEmpty(t *testing.T) {
 	cats := []*db.Forumcategory{
 		{Idforumcategory: 1, ForumcategoryIdforumcategory: 0},
 		{Idforumcategory: 2, ForumcategoryIdforumcategory: 1},

@@ -13,7 +13,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestSaveTemplateTaskRecordsOverride(t *testing.T) {
+func TestHappyPathSaveTemplateTaskRecordsOverride(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), q, cfg)

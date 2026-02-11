@@ -24,10 +24,14 @@ func (c *DigestConsumer) Run(ctx context.Context) {
 	ch := c.notifier.Bus.Subscribe(eventbus.DigestRunMessageType)
 	for {
 		select {
-		case msg := <-ch:
-			if evt, ok := msg.(eventbus.DigestRunEvent); ok {
+		case env, ok := <-ch:
+			if !ok {
+				return
+			}
+			if evt, ok := env.Msg.(eventbus.DigestRunEvent); ok {
 				c.notifier.ProcessDigestForTime(ctx, evt.Time)
 			}
+			env.Ack()
 		case <-ctx.Done():
 			return
 		}

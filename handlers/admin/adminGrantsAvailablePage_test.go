@@ -10,16 +10,17 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestAdminGrantsAvailablePage(t *testing.T) {
+func TestHappyPathAdminGrantsAvailablePage(t *testing.T) {
 	req := httptest.NewRequest("GET", "/admin/grants/available", nil)
 	ctx := req.Context()
 	cfg := config.NewRuntimeConfig()
 	// Templates are in ../../core/templates relative to handlers/admin
 	cfg.TemplatesDir = "../../core/templates"
 
-	queries := &grantsPageQueries{}
+	queries := testhelpers.NewQuerierStub()
 
 	cd := common.NewCoreData(ctx, queries, cfg, common.WithUserRoles([]string{"administrator"}))
 	ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

@@ -11,10 +11,11 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestAdminTopicEditTemplateDeleteTaskValue(t *testing.T) {
-	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+func TestHappyPathAdminTopicEditTemplateDeleteTaskValue(t *testing.T) {
+	cd := common.NewCoreData(context.Background(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig())
 	req := httptest.NewRequest("GET", "/admin/forum/topics/topic/12/edit", nil)
 
 	data := struct {

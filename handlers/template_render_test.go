@@ -23,7 +23,7 @@ func stubFuncs() template.FuncMap {
 	return cd.Funcs(req)
 }
 
-func TestPageTemplatesRender(t *testing.T) {
+func TestHappyPathPageTemplatesRender(t *testing.T) {
 	tmpl := templates.GetCompiledSiteTemplates(stubFuncs(), templates.WithSilence(true))
 	req := httptest.NewRequest("GET", "/", nil)
 

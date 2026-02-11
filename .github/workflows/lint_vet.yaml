@@ -2,9 +2,7 @@ name: Lint & Vet
 
 on:
   push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   lint:
@@ -20,14 +18,16 @@ jobs:
           - 'nosqlite,s3,sendgrid,ses'
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v9.2.0
-      with:
-        version: v1.64
-        args: --build-tags '${{ matrix.tags }}'
-    - name: Vet
-      run: go vet -tags '${{ matrix.tags }}' ./...
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Go Vet
+        run: go vet -tags '${{ matrix.tags }}' ./...
+      - name: Golangci Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.8.0
+          args: --build-tags '${{ matrix.tags }}'

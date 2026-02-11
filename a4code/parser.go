@@ -3,7 +3,6 @@ package a4code
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"iter"
 	"strings"
@@ -76,13 +75,17 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 	if len(children) > 0 {
 		prev := children[len(children)-1]
 		if l, ok := prev.(*ast.Link); ok && l.IsBlock {
-			// Check if newChild starts with newline
+			// Check if newChild starts with newline or is a block element
 			startsNewline := false
-			if txt, ok := newChild.(*ast.Text); ok {
+
+			if isBlockContext(newChild) {
+				startsNewline = true
+			} else if txt, ok := newChild.(*ast.Text); ok {
 				if strings.HasPrefix(txt.Value, "\n") {
 					startsNewline = true
 				}
 			}
+
 			if !startsNewline {
 				l.IsBlock = false
 			}
@@ -96,15 +99,15 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			if len(children) == 0 {
 				prevIsNewline = true
 			} else {
-				if txt, ok := children[len(children)-1].(*ast.Text); ok {
+				lastChild := children[len(children)-1]
+				if isBlockContext(lastChild) {
+					prevIsNewline = true
+				} else if txt, ok := lastChild.(*ast.Text); ok {
 					if strings.HasSuffix(txt.Value, "\n") {
 						prevIsNewline = true
 					}
 				}
 			}
-
-            // Debug logging
-            // fmt.Printf("UpdateBlockStatus: Link %p, children=%d, prevIsNewline=%v, isContextBlock=%v\n", l, len(children), prevIsNewline, isContextBlock)
 
 			if prevIsNewline {
 				l.IsBlock = true
@@ -214,9 +217,6 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				if len(stack) > 0 {
 					p := stack[len(stack)-1]
 					children := p.GetChildren()
-
-                    // Debug
-                    // fmt.Printf("Popping %T into %T. isBlockContext: %v\n", n, p, isBlockContext(p.(ast.Node)))
 
 					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 					p.AddChild(n)

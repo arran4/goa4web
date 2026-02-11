@@ -36,7 +36,7 @@ func (cd *CoreData) GetPrivateTopicDisplayTitle(topicID int32, originalTitle str
 	for _, p := range parts {
 		if p.Username.Valid {
 			allNames = append(allNames, p.Username.String)
-			if cd.UserID == 0 || p.Idusers != cd.UserID {
+			if !cd.IsUserLoggedIn() || p.Idusers != cd.UserID {
 				names = append(names, p.Username.String)
 			}
 		}

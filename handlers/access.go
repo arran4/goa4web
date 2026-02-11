@@ -59,7 +59,7 @@ func RequireRole(h http.HandlerFunc, err error, roles ...string) http.HandlerFun
 func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 	DisableCaching(w)
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd != nil && cd.UserID != 0 {
+	if cd.IsUserLoggedIn() {
 		RenderErrorPage(w, r, ErrNotFound)
 	} else {
 		RenderPermissionDenied(w, r)

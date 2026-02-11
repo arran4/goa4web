@@ -5,7 +5,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/go-consume"
+	"github.com/arran4/go-consume/strconsume"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/router"
 
@@ -16,6 +20,7 @@ import (
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
 	br := r.PathPrefix("/bookmarks").Subrouter()
+	r.PathPrefix("/bookmarks").Handler(NewRouter())
 	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
 	br.HandleFunc("", BookmarksPage).Methods("GET")
@@ -26,7 +31,67 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 }
 
+func NewRouter() *Router {
+	return &Router{
+		consumeUntilSlash: strconsume.NewUntilConsumer("/"),
+	}
+}
+
 // Register registers the bookmarks router module.
 func Register(reg *router.Registry) {
 	reg.RegisterModule("bookmarks", nil, RegisterRoutes)
+}
+
+type Router struct {
+	consumeUntilSlash strconsume.UntilConsumer
+}
+
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	p := req.URL.Path
+	var ok bool
+	_, _, p, ok = r.consumeUntilSlash.Consume(p, consume.Inclusive(true), consume.ConsumeRemainingIfNotFound(true))
+	if !ok {
+		handlers.RenderNotFoundOrLogin(w, req)
+		return
+	}
+	cd, ok := req.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !ok {
+		handlers.RenderNotFoundOrLogin(w, req)
+		return
+	}
+	switch p {
+	case "", "/":
+		BookmarksPage(w, req)
+	case "/mine":
+		if !cd.IsUserLoggedIn() {
+			break
+		}
+		switch req.Method {
+		case "GET":
+			MinePage(w, req)
+			return
+		}
+	case "/edit":
+		if !cd.IsUserLoggedIn() {
+			break
+		}
+		switch req.Method {
+		case "GET":
+			EditPage(w, req)
+			return
+		case "POST":
+			task := req.PostFormValue("task")
+			switch task {
+			case string(TaskSave):
+				handlers.TaskHandler(saveTask)(w, req)
+				return
+			case string(TaskCreate):
+				handlers.TaskHandler(createTask)(w, req)
+				return
+			}
+		default:
+
+		}
+	}
+	handlers.RenderNotFoundOrLogin(w, req)
 }

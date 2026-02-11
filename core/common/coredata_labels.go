@@ -160,7 +160,7 @@ func (cd *CoreData) PrivateLabels(item string, itemID int32, authorID int32) ([]
 	labels := make([]string, 0, len(userLabels)+2)
 	// Only threads, news articles, links, image board posts, blog entries,
 	// and writing articles receive default status labels.
-	if cd.UserID != 0 {
+	if cd.IsUserLoggedIn() {
 		switch item {
 		case "thread", "news", "link", "imagebbs", "blog", "writing":
 			if !inverted["new"] && authorID != cd.UserID {

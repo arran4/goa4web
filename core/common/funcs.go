@@ -148,6 +148,18 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 				if v.Valid {
 					return v.Int64
 				}
+			case sql.NullTime:
+				if v.Valid {
+					return v.Time
+				}
+			case sql.NullBool:
+				if v.Valid {
+					return v.Bool
+				}
+			case sql.NullFloat64:
+				if v.Valid {
+					return v.Float64
+				}
 			case nil:
 				// returns default
 			default:

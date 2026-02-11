@@ -1,45 +1,44 @@
 -- simple.txt --
 [b Bold]
 -- simple.expect.txt --
- Bold
+Bold
 -- simple_nested.txt --
 [b Bold [i Italic]]
 -- simple_nested.expect.txt --
- Bold  Italic
+Bold Italic
 -- link.txt --
 [a=http://example.com Link]
 -- link.expect.txt --
- Link
+Link
 -- image.txt --
-[img=http://example.com/image.jpg]
+[img=image.jpg]
 -- image.expect.txt --
 -- code.txt --
-[code]func[/code]
+[code]Code[/code]
 -- code.expect.txt --
 -- quote.txt --
 [quote Q]
 -- quote.expect.txt --
- Q
+Q
 -- quoteof.txt --
 [quoteof "User" Q]
 -- quoteof.expect.txt --
- Q
+Q
 -- spoiler.txt --
 [spoiler S]
 -- spoiler.expect.txt --
- S
+S
 -- indent.txt --
 [indent I]
 -- indent.expect.txt --
- I
+I
 -- hr.txt --
 [hr]
 -- hr.expect.txt --
 ---
 
 -- hr_inline.txt --
-Text[hr]
+[hr]
 -- hr_inline.expect.txt --
-Text
 ---
 

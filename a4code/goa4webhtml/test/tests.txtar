@@ -1,11 +1,11 @@
 -- simple.txt --
 [b Bold]
 -- simple.expect.txt --
-<strong data-start-pos="0" data-end-pos="5"><span data-start-pos="0" data-end-pos="5"> Bold</span></strong>
+<strong data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4">Bold</span></strong>
 -- provider_link.txt --
 [a=http://example.com Link]
 -- provider_link.expect.txt --
-<custom-link href="http://example.com"><span data-start-pos="0" data-end-pos="5"> Link</span></custom-link>
+<custom-link href="http://example.com"><span data-start-pos="0" data-end-pos="4">Link</span></custom-link>
 -- provider_image.txt --
 [img=image.jpg]
 -- provider_image.expect.txt --
@@ -13,8 +13,8 @@
 -- provider_quoteof.txt --
 [quoteof "User" Text]
 -- provider_quoteof.expect.txt --
-<blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-start-pos="0" data-end-pos="5"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="5"> Text</span></div></blockquote>
+<blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-start-pos="0" data-end-pos="4"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="4">Text</span></div></blockquote>
 -- provider_quoteof_multi.txt --
 [quoteof "User1" Text1 [quoteof "User2" Text2]]
 -- provider_quoteof_multi.expect.txt --
-<blockquote class="a4code-block a4code-quoteof user-color-User1 quote-color-0" data-start-pos="0" data-end-pos="13"><div class="quote-header">Quote of User1:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Text1 </span><blockquote class="a4code-block a4code-quoteof user-color-User2 quote-color-1" data-start-pos="7" data-end-pos="13"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="7" data-end-pos="13"> Text2</span></div></blockquote></div></blockquote>
+<blockquote class="a4code-block a4code-quoteof user-color-User1 quote-color-0" data-start-pos="0" data-end-pos="11"><div class="quote-header">Quote of User1:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="6">Text1 </span><blockquote class="a4code-block a4code-quoteof user-color-User2 quote-color-1" data-start-pos="6" data-end-pos="11"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="6" data-end-pos="11">Text2</span></div></blockquote></div></blockquote>

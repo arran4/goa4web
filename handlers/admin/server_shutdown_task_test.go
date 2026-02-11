@@ -37,10 +37,11 @@ func TestHappyPathServerShutdownTask_EventPublished(t *testing.T) {
 	h.NewServerShutdownTask().Action(rr, req)
 
 	select {
-	case msg := <-ch:
-		evt, ok := msg.(eventbus.TaskEvent)
+	case env := <-ch:
+		env.Ack()
+		evt, ok := env.Msg.(eventbus.TaskEvent)
 		if !ok {
-			t.Fatalf("wrong message type %T", msg)
+			t.Fatalf("wrong message type %T", env.Msg)
 		}
 		name, ok := evt.Task.(tasks.Name)
 		if !ok {

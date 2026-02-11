@@ -14,8 +14,10 @@ func TestNormalizeIPNet(t *testing.T) {
 		{"invalid", "invalid"},
 	}
 	for _, tt := range tests {
-		if got := NormalizeIPNet(tt.in); got != tt.out {
-			t.Errorf("NormalizeIPNet(%q)=%q want %q", tt.in, got, tt.out)
-		}
+		t.Run(tt.in, func(t *testing.T) {
+			if got := NormalizeIPNet(tt.in); got != tt.out {
+				t.Errorf("NormalizeIPNet(%q)=%q want %q", tt.in, got, tt.out)
+			}
+		})
 	}
 }

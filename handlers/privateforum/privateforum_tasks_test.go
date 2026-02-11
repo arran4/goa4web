@@ -7,7 +7,7 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func TestPrivateForumTasksTemplatesRequiredExist(t *testing.T) {
+func TestHappyPathPrivateForumTasksTemplatesRequiredExist(t *testing.T) {
 	tasks := []struct {
 		name string
 		task tasks.TemplatesRequired

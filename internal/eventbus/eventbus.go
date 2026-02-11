@@ -29,6 +29,20 @@ type Message interface {
 	Type() MessageType
 }
 
+// Envelope wraps a Message with an acknowledgement function.
+type Envelope struct {
+	Msg Message
+	ack func()
+}
+
+// Ack signals that the message has been processed.
+// It is safe to call multiple times; subsequent calls are no-ops.
+func (e *Envelope) Ack() {
+	if e.ack != nil {
+		e.ack()
+	}
+}
+
 // TaskEvent represents a task or notification that occurred in the application.
 type TaskEvent struct {
 	Path    string         // Path or URI describing the event source
@@ -65,7 +79,7 @@ func (DigestRunEvent) Type() MessageType { return DigestRunMessageType }
 
 // Bus provides a simple publish/subscribe mechanism for events.
 type subscriber struct {
-	ch    chan Message
+	ch    chan Envelope
 	types map[MessageType]struct{}
 }
 
@@ -74,6 +88,7 @@ type Bus struct {
 	mu          sync.RWMutex
 	subscribers []subscriber
 	closed      bool
+	wg          sync.WaitGroup
 	SyncPublish func(Message) // Optional hook for synchronous delivery (mostly for tests)
 }
 
@@ -87,8 +102,9 @@ func NewBus() *Bus {
 
 // Subscribe registers a new subscriber for the provided message types.
 // If no types are supplied the subscriber receives all messages.
-func (b *Bus) Subscribe(types ...MessageType) <-chan Message {
-	ch := make(chan Message, 1)
+// It returns a read-only channel of Envelopes. Consumers must call Ack() on each envelope.
+func (b *Bus) Subscribe(types ...MessageType) <-chan Envelope {
+	ch := make(chan Envelope, 1)
 	set := make(map[MessageType]struct{}, len(types))
 	for _, t := range types {
 		set[t] = struct{}{}
@@ -115,48 +131,64 @@ func (b *Bus) Publish(msg Message) error {
 		}
 	}
 	b.mu.RLock()
+	defer b.mu.RUnlock()
 	if b.closed {
-		b.mu.RUnlock()
 		return ErrBusClosed
 	}
-	subs := append([]subscriber(nil), b.subscribers...)
-	b.mu.RUnlock()
-	for _, s := range subs {
+	for _, s := range b.subscribers {
 		if len(s.types) > 0 {
 			if _, ok := s.types[msg.Type()]; !ok {
 				continue
 			}
 		}
+
+		b.wg.Add(1)
+
+		// Create a separate once per subscriber/message to properly handle drop/send
+		var once sync.Once
+		ack := func() {
+			once.Do(func() {
+				b.wg.Done()
+			})
+		}
+
+		env := Envelope{
+			Msg: msg,
+			ack: ack,
+		}
+
 		select {
-		case s.ch <- msg:
+		case s.ch <- env:
 		default:
+			// If channel is full, we drop but must decrease WG immediately
+			// effectively auto-acking the dropped message.
+			ack()
 		}
 	}
 	return nil
 }
-
-const drainInterval = 10 * time.Millisecond // wait time between draining checks
 
 // Shutdown waits for all queued events to be processed and
 // prevents any new events from being published.
 func (b *Bus) Shutdown(ctx context.Context) error {
 	b.mu.Lock()
 	b.closed = true
-	subs := append([]subscriber(nil), b.subscribers...)
-	b.mu.Unlock()
-	for _, s := range subs {
-		ch := s.ch
-		for {
-			if len(ch) == 0 {
-				break
-			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(drainInterval)
-			}
-		}
+	// Close all subscriber channels to signal consumers to stop.
+	for _, s := range b.subscribers {
+		close(s.ch)
 	}
-	return nil
+	b.mu.Unlock()
+
+	done := make(chan struct{})
+	go func() {
+		b.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

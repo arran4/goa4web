@@ -17,7 +17,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func TestBoardPageRendersSubBoards(t *testing.T) {
+func TestHappyPathBoardPage(t *testing.T) {
 	qs := testhelpers.NewQuerierStub(testhelpers.WithGrantResult(true))
 
 	req := httptest.NewRequest("GET", "/imagebbs/board/3", nil)

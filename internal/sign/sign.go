@@ -65,11 +65,6 @@ func Sign(data string, key string, opts ...SignOption) string {
 			hostname = string(v)
 		case WithIssuedAt:
 			issuedAt = time.Time(v)
-		case *legacyExpiryTimestamp:
-			// Legacy: parse timestamp string
-			if ts, err := strconv.ParseInt(v.ts, 10, 64); err == nil {
-				expiry = time.Unix(ts, 0)
-			}
 		case *noNonce:
 			// Legacy: explicitly no nonce/expiry
 		}
@@ -119,13 +114,6 @@ func Verify(data string, sig string, key string, opts ...SignOption) error {
 		case WithAbsoluteExpiry:
 			if time.Now().After(time.Time(v)) {
 				return fmt.Errorf("signature expired at %v (absolute)", time.Time(v))
-			}
-		case *legacyExpiryTimestamp:
-			if ts, err := strconv.ParseInt(v.ts, 10, 64); err == nil {
-				expiry := time.Unix(ts, 0)
-				if time.Now().After(expiry) {
-					return fmt.Errorf("signature expired at %v", expiry)
-				}
 			}
 		}
 	}

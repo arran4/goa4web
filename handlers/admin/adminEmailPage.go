@@ -163,10 +163,12 @@ func (p *AdminEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ids = append(ids, e.ToUserID.Int32)
 		}
 	}
-	users := make(map[int32]*db.SystemGetUserByIDRow)
-	for _, id := range ids {
-		if u, err := queries.SystemGetUserByID(r.Context(), id); err == nil {
-			users[id] = u
+	users := make(map[int32]*db.SystemGetUsersByIDsRow)
+	if len(ids) > 0 {
+		if us, err := queries.SystemGetUsersByIDs(r.Context(), ids); err == nil {
+			for _, u := range us {
+				users[u.Idusers] = u
+			}
 		}
 	}
 

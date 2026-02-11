@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -90,10 +91,25 @@ func (p *AdminLinksToolsPage) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 				data.VerifyError = fmt.Sprintf("link sign secret: %v", err)
 			} else if data.VerifyURL == "" || data.VerifySig == "" {
 				data.VerifyError = "URL and signature are required."
-			} else if err := sign.Verify(data.VerifyURL, data.VerifySig, key, sign.WithExpiryTimestamp(data.VerifyTS)); err == nil {
-				data.VerifyResult = "valid"
 			} else {
-				data.VerifyResult = "invalid"
+				var opts []sign.SignOption
+				validTS := true
+				if data.VerifyTS != "" {
+					if tsInt, err := strconv.ParseInt(data.VerifyTS, 10, 64); err == nil {
+						opts = append(opts, sign.WithExpiryTimeUnix(tsInt))
+					} else {
+						data.VerifyError = "Invalid timestamp format"
+						validTS = false
+					}
+				}
+
+				if validTS {
+					if err := sign.Verify(data.VerifyURL, data.VerifySig, key, opts...); err == nil {
+						data.VerifyResult = "valid"
+					} else {
+						data.VerifyResult = "invalid"
+					}
+				}
 			}
 		}
 	}

@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -73,16 +72,11 @@ func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func roleInfoByPermID(ctx context.Context, q db.Querier, id int32) (int32, string, string, error) {
-	rows, err := q.GetPermissionsWithUsers(ctx, db.GetPermissionsWithUsersParams{Username: sql.NullString{}})
+	row, err := q.GetUserRoleByID(ctx, id)
 	if err != nil {
 		return 0, "", "", err
 	}
-	for _, row := range rows {
-		if row.IduserRoles == id {
-			return row.UsersIdusers, row.Username.String, row.Name, nil
-		}
-	}
-	return 0, "", "", sql.ErrNoRows
+	return row.UsersIdusers, row.Username.String, row.Name, nil
 }
 
 func (PermissionUpdateTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {

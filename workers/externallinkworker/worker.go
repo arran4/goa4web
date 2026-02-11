@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -24,102 +25,108 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 
 	for {
 		select {
-		case msg := <-ch:
-			evt, ok := msg.(eventbus.TaskEvent)
+		case env, ok := <-ch:
 			if !ok {
-				continue
+				return
 			}
-			if evt.Outcome != eventbus.TaskOutcomeSuccess {
-				continue
-			}
-			body, ok := evt.Data["Body"].(string)
-			if !ok || body == "" {
-				continue
-			}
-
-			root, err := a4code.ParseString(body)
-			if err != nil {
-				continue
-			}
-
-			_ = a4code.Walk(root, func(n a4code.Node) error {
-				link, ok := n.(*a4code.Link)
+			func() {
+				defer env.Ack()
+				evt, ok := env.Msg.(eventbus.TaskEvent)
 				if !ok {
-					return nil
+					return
 				}
-				url := link.Href
-				if url == "" {
-					return nil
+				if evt.Outcome != eventbus.TaskOutcomeSuccess {
+					return
+				}
+				body, ok := evt.Data["Body"].(string)
+				if !ok || body == "" {
+					return
 				}
 
-				res, err := q.EnsureExternalLink(ctx, url)
+				root, err := a4code.ParseString(body)
 				if err != nil {
-					log.Printf("EnsureExternalLink %s: %v", url, err)
-					return nil
-				}
-				id, err := res.LastInsertId()
-				if err != nil {
-					log.Printf("LastInsertId for %s: %v", url, err)
-					return nil
+					return
 				}
 
-				// Check if we need to fetch metadata
-				existing, err := q.GetExternalLinkByID(ctx, int32(id))
-				if err != nil && !errors.Is(err, sql.ErrNoRows) {
-					log.Printf("GetExternalLinkByID %d: %v", id, err)
-					return nil
-				}
-				if existing != nil && existing.CardTitle.Valid && existing.CardTitle.String != "" {
-					return nil // Already has title
-				}
-
-				var info *opengraph.Info
-				for i := 0; i < 3; i++ {
-					info, err = opengraph.Fetch(url, nil)
-					if err == nil {
-						break
+				_ = ast.Walk(root, func(n ast.Node) error {
+					link, ok := n.(*ast.Link)
+					if !ok {
+						return nil
 					}
-					time.Sleep(time.Duration(i+1) * 2 * time.Second)
-				}
-				if err != nil {
-					log.Printf("opengraph.Fetch %s: %v", url, err)
-					return nil
-				}
+					url := link.Href
+					if url == "" {
+						return nil
+					}
 
-				var cachedImage string
-				if info.Image != "" {
-					cd := common.NewCoreData(ctx, q, cfg)
-					cached, err := cd.DownloadAndCacheImage(info.Image)
+					res, err := q.EnsureExternalLink(ctx, url)
 					if err != nil {
-						log.Printf("DownloadAndCacheImage %s: %v", info.Image, err)
-					} else {
-						cachedImage = cached
+						log.Printf("EnsureExternalLink %s: %v", url, err)
+						return nil
 					}
-				}
+					id, err := res.LastInsertId()
+					if err != nil {
+						log.Printf("LastInsertId for %s: %v", url, err)
+						return nil
+					}
 
-				if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-					CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-					CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-					CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-					CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-					CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-					CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-					ID:              int32(id),
-				}); err != nil {
-					log.Printf("UpdateExternalLinkMetadata %d: %v", id, err)
-				}
+					// Check if we need to fetch metadata
+					existing, err := q.GetExternalLinkByID(ctx, int32(id))
+					if err != nil && !errors.Is(err, sql.ErrNoRows) {
+						log.Printf("GetExternalLinkByID %d: %v", id, err)
+						return nil
+					}
+					if existing != nil && existing.CardTitle.Valid && existing.CardTitle.String != "" {
+						return nil // Already has title
+					}
 
-				if cachedImage != "" {
-					if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-						CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-						ID:             int32(id),
+					var info *opengraph.Info
+					for i := 0; i < 3; i++ {
+						info, err = opengraph.Fetch(url, nil)
+						if err == nil {
+							break
+						}
+						time.Sleep(time.Duration(i+1) * 2 * time.Second)
+					}
+					if err != nil {
+						log.Printf("opengraph.Fetch %s: %v", url, err)
+						return nil
+					}
+
+					var cachedImage string
+					if info.Image != "" {
+						cd := common.NewCoreData(ctx, q, cfg)
+						cached, err := cd.DownloadAndCacheImage(info.Image)
+						if err != nil {
+							log.Printf("DownloadAndCacheImage %s: %v", info.Image, err)
+						} else {
+							cachedImage = cached
+						}
+					}
+
+					if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
+						CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
+						CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
+						CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
+						CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
+						CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
+						CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
+						ID:              int32(id),
 					}); err != nil {
-						log.Printf("UpdateExternalLinkImageCache %d: %v", id, err)
+						log.Printf("UpdateExternalLinkMetadata %d: %v", id, err)
 					}
-				}
 
-				return nil
-			})
+					if cachedImage != "" {
+						if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
+							CardImageCache: sql.NullString{String: cachedImage, Valid: true},
+							ID:             int32(id),
+						}); err != nil {
+							log.Printf("UpdateExternalLinkImageCache %d: %v", id, err)
+						}
+					}
+
+					return nil
+				})
+			}()
 
 		case <-ctx.Done():
 			return

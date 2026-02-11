@@ -36,8 +36,10 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestLinkerTemplatesExist(t *testing.T) {
-	requireEmailTemplates(t, "linkerAddEmail")
-	requireNotificationTemplate(t, AdminAddTask.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
-	requireEmailTemplates(t, "adminNotificationLinkerAddEmail")
-	requireNotificationTemplate(t, AdminAddTask.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	t.Run("Happy Path", func(t *testing.T) {
+		requireEmailTemplates(t, "linkerAddEmail")
+		requireNotificationTemplate(t, AdminAddTask.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireEmailTemplates(t, "adminNotificationLinkerAddEmail")
+		requireNotificationTemplate(t, AdminAddTask.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+	})
 }

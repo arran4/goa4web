@@ -15,35 +15,37 @@ import (
 )
 
 func TestWritingsFeed(t *testing.T) {
-	q := testhelpers.NewQuerierStub()
-	q.SystemCheckGrantFn = func(db.SystemCheckGrantParams) (int32, error) {
-		return 1, nil
-	}
-	now := time.Now()
-	q.GetPublicWritingsReturns = []*db.Writing{
-		{
-			Idwriting: 1,
-			Title:     sql.NullString{String: "Title", Valid: true},
-			Published: sql.NullTime{Time: now, Valid: true},
-			Writing:   sql.NullString{String: "Content", Valid: true},
-			Abstract:  sql.NullString{String: "Abstract", Valid: true},
-		},
-	}
+	t.Run("Happy Path - Success", func(t *testing.T) {
+		q := testhelpers.NewQuerierStub()
+		q.SystemCheckGrantFn = func(db.SystemCheckGrantParams) (int32, error) {
+			return 1, nil
+		}
+		now := time.Now()
+		q.GetPublicWritingsReturns = []*db.Writing{
+			{
+				Idwriting: 1,
+				Title:     sql.NullString{String: "Title", Valid: true},
+				Published: sql.NullTime{Time: now, Valid: true},
+				Writing:   sql.NullString{String: "Content", Valid: true},
+				Abstract:  sql.NullString{String: "Abstract", Valid: true},
+			},
+		}
 
-	req := httptest.NewRequest("GET", "http://example.com/writings/rss", nil)
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSiteTitle("Site"))
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+		req := httptest.NewRequest("GET", "http://example.com/writings/rss", nil)
+		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSiteTitle("Site"))
+		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+		req = req.WithContext(ctx)
 
-	feed, err := feedGen(req, cd)
-	if err != nil {
-		t.Fatalf("feedGen: %v", err)
-	}
+		feed, err := feedGen(req, cd)
+		if err != nil {
+			t.Fatalf("feedGen: %v", err)
+		}
 
-	if feed.Title != "Site - Latest writings" {
-		t.Errorf("feed title incorrect: %s", feed.Title)
-	}
-	if len(feed.Items) != 1 {
-		t.Errorf("expected 1 item, got %d", len(feed.Items))
-	}
+		if feed.Title != "Site - Latest writings" {
+			t.Errorf("feed title incorrect: %s", feed.Title)
+		}
+		if len(feed.Items) != 1 {
+			t.Errorf("expected 1 item, got %d", len(feed.Items))
+		}
+	})
 }

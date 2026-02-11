@@ -14,14 +14,10 @@ func TestParseToHTML(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(tree)
-	// [b (vis 0)
-	//  Bold (space + Bold + space = 6). vis 0-6.
-	// [i (vis 6)
-	//  Italic (space + Italic = 7). vis 6-13.
-	// ] (vis 13)
-	// ] (vis 13)
-	//  plain (space + plain = 6). vis 13-19.
-	want := `<strong data-start-pos="0" data-end-pos="13"><span data-start-pos="0" data-end-pos="6"> Bold </span><i data-start-pos="6" data-end-pos="13"><span data-start-pos="6" data-end-pos="13"> Italic</span></i></strong><span data-start-pos="13" data-end-pos="19"> plain</span>`
+	// New behavior: consume space after tag.
+	// [b Bold [i Italic]] -> Bold node ("Bold "), Italic node ("Italic").
+	// plain -> " plain".
+	want := `<strong data-start-pos="0" data-end-pos="11"><span data-start-pos="0" data-end-pos="5">Bold </span><i data-start-pos="5" data-end-pos="11"><span data-start-pos="5" data-end-pos="11">Italic</span></i></strong><span data-start-pos="11" data-end-pos="17"> plain</span>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -67,9 +63,9 @@ func TestParseNodes(t *testing.T) {
 	}
 	root := &ast.Root{Children: nodes}
 	got := ToHTML(root)
-	// [b foo] -> " foo" (4)
-	// [i bar] -> " bar" (4)
-	want := `<strong data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4"> foo</span></strong><i data-start-pos="4" data-end-pos="8"><span data-start-pos="4" data-end-pos="8"> bar</span></i>`
+	// [b foo] -> "foo"
+	// [i bar] -> "bar"
+	want := `<strong data-start-pos="0" data-end-pos="3"><span data-start-pos="0" data-end-pos="3">foo</span></strong><i data-start-pos="3" data-end-pos="6"><span data-start-pos="3" data-end-pos="6">bar</span></i>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -98,7 +94,7 @@ func TestQuoteHTML(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(tree)
-	want := `<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><blockquote class="a4code-block a4code-quote quote-color-1" data-start-pos="7" data-end-pos="14"><div class="quote-body"><span data-start-pos="7" data-end-pos="14"> Nested</span></div></blockquote></div></blockquote>`
+	want := `<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="12"><div class="quote-body"><span data-start-pos="0" data-end-pos="6">Outer </span><blockquote class="a4code-block a4code-quote quote-color-1" data-start-pos="6" data-end-pos="12"><div class="quote-body"><span data-start-pos="6" data-end-pos="12">Nested</span></div></blockquote></div></blockquote>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -111,7 +107,7 @@ func TestQuoteOfHTML(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(tree)
-	want := `<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><blockquote class="a4code-block a4code-quoteof quote-color-1" data-start-pos="7" data-end-pos="14"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="7" data-end-pos="14"> Nested</span></div></blockquote></div></blockquote>`
+	want := `<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="12"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="6">Outer </span><blockquote class="a4code-block a4code-quoteof quote-color-1" data-start-pos="6" data-end-pos="12"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="6" data-end-pos="12">Nested</span></div></blockquote></div></blockquote>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}

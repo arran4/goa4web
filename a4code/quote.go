@@ -305,7 +305,3 @@ func isQuoteBlock(s string) bool {
 func isQuoteOf(s string) bool {
 	return isQuoteBlock(s)
 }
-
-func Substring(s string, start, end int) string {
-	return substring(s, start, end)
-}

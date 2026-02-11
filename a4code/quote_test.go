@@ -30,8 +30,8 @@ func TestQuote(t *testing.T) {
 		t.Fatalf("expected child text")
 	}
 	tnode, ok := q.Children[0].(*ast.Text)
-	if !ok || tnode.Value != " hello" {
-		t.Errorf("quote text = %#v", q.Children[0])
+	if !ok || tnode.Value != "hello" {
+		t.Errorf("quote text = %#v, want \"hello\"", q.Children[0])
 	}
 }
 
@@ -56,7 +56,7 @@ func TestQuoteFullParagraphs(t *testing.T) {
 	}
 	t1 := q1.Children[0].(*ast.Text)
 	t2 := q2.Children[0].(*ast.Text)
-	if t1.Value != " foo" || t2.Value != " bar" {
+	if t1.Value != "foo" || t2.Value != "bar" {
 		t.Errorf("quote texts = %q %q", t1.Value, t2.Value)
 	}
 }
@@ -83,7 +83,7 @@ func TestQuoteFullEscaping(t *testing.T) {
 		t.Fatalf("unexpected children %v", q.Children)
 	}
 	tnode := q.Children[0].(*ast.Text)
-	if tnode.Value != " see " {
+	if tnode.Value != "see " {
 		t.Errorf("quote text = %q", tnode.Value)
 	}
 }
@@ -106,11 +106,11 @@ func TestQuoteFullImage(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected QuoteOf, got %T", tree.Children[0])
 	}
-	if len(q.Children) < 2 {
+	if len(q.Children) < 1 {
 		t.Fatalf("unexpected children %v", q.Children)
 	}
-	if _, ok := q.Children[1].(*ast.Image); !ok {
-		t.Fatalf("expected Image node, got %T", q.Children[1])
+	if _, ok := q.Children[0].(*ast.Image); !ok {
+		t.Fatalf("expected Image node, got %T", q.Children[0])
 	}
 }
 
@@ -218,7 +218,7 @@ func TestSubstring(t *testing.T) {
 			s:     "he[b llo] world",
 			start: 1,
 			end:   10,
-			want:  "e[b llo] wor",
+			want:  "e[b llo] worl", // Updated expectation
 		},
 		{
 			name:  "Code block",

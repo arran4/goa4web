@@ -342,6 +342,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	}
 
 	createNode := func(n ast.Container) {
+		skipArgPrefix(s) // Consume any whitespace separator between tag and content
 		n.SetPos(startPos, 0) // End will be set when popped
 		stack = append(stack, n)
 	}
@@ -378,6 +379,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		yield(n, depth)
 	case "a", "link", "url":
+		// Link logic is slightly different due to args
 		skipArgPrefix(s)
 
 		raw, err := getNext(s, false)
@@ -552,7 +554,9 @@ func skipArgPrefix(s *scanner) {
 	if ch, err := s.ReadByte(); err == nil {
 		if ch != '=' && ch != ' ' {
 			s.UnreadByte()
-		}
+		} else {
+            // fmt.Printf("Consumed separator: %q\n", ch)
+        }
 	}
 }
 

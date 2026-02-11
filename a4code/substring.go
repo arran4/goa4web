@@ -1,174 +1,172 @@
 package a4code
 
 import (
-	"bytes"
-	"io"
+	"fmt"
 	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
 )
 
-func substring(s string, start, end int) string {
-	if start < 0 || end < start {
-		return ""
+// Substring extracts a substring based on visible text length, preserving markup.
+// start and end are indices into the *visible text*.
+func Substring(s string, start, end int) string {
+	root, err := ParseString(s)
+	if err != nil {
+		fmt.Printf("Substring Parse Error: %v\n", err)
+		// Fallback to simple string slicing if parsing fails, though imperfect.
+		if start >= len(s) {
+			return ""
+		}
+		if end > len(s) {
+			end = len(s)
+		}
+		return s[start:end]
 	}
 
-	type tag struct {
-		name  string
-		open  string
-		close string
-	}
+	newRoot := &ast.Root{}
+	pos := 0
+	// filterNodes expects a slice of nodes and returns a slice of nodes.
+	// It updates pos as it traverses text.
+	newRoot.Children = filterNodes(root.Children, start, end, &pos)
 
-	// helper: write closers in reverse order
-	writeClosers := func(b *bytes.Buffer, stack []tag) {
-		for i := len(stack) - 1; i >= 0; i-- {
-			if stack[i].close != "" {
-				b.WriteString(stack[i].close)
-			}
-		}
-	}
-
-	// find the next ']' accounting for escapes
-	findClose := func(str string, idx int) int {
-		for j := idx; j < len(str); j++ {
-			if str[j] == '\\' {
-				j++
-				continue
-			}
-			if str[j] == ']' {
-				return j
-			}
-		}
-		return -1
-	}
-
-	// parse tag content into a tag struct and whether it’s an opener/closer
-	parseTag := func(full string) (tg tag, isOpen, isClose bool) {
-		content := strings.TrimSpace(full[1 : len(full)-1]) // between [ and ]
-		lower := strings.ToLower(content)
-		// Determine name and args
-		name := lower
-		if sp := strings.IndexAny(lower, " ="); sp != -1 {
-			name = lower[:sp]
-		}
-		if strings.HasPrefix(name, "/") {
-			isClose = true
-			name = strings.TrimPrefix(name, "/")
-			tg = tag{name: name, open: "", close: "[" + "/" + name + "]"}
-			return
-		}
-		// Recognize common container tags; others are treated as non-visible
-		switch name {
-		case "b", "i", "u", "sup", "sub", "quote", "quoteof", "spoiler", "indent", "a", "code":
-			tg = tag{name: name, open: full, close: "[" + "/" + name + "]"}
-			isOpen = true
-			return
-		default:
-			// Non-container or unknown tag; treat as non-visible (no stack effect)
-			return
-		}
-	}
-
-	var (
-		out       bytes.Buffer
-		stack     []tag
-		visible   int
-		inSegment bool
-	)
-
-	for i := 0; i < len(s) && visible < end; {
-		// handle escapes for visible text
-		if s[i] == '\\' && i+1 < len(s) {
-			ch := s[i+1]
-			if visible >= start && visible < end {
-				if !inSegment {
-					for _, t := range stack {
-						out.WriteString(t.open)
-					}
-					inSegment = true
-				}
-				out.WriteByte(ch)
-			}
-			visible++
-			i += 2
-			continue
-		}
-
-		if s[i] == '[' {
-			j := findClose(s, i+1)
-			if j == -1 { // no closing, treat as literal
-				if visible >= start && visible < end {
-					if !inSegment {
-						for _, t := range stack {
-							out.WriteString(t.open)
-						}
-						inSegment = true
-					}
-					out.WriteByte(s[i])
-				}
-				visible++
-				i++
-				continue
-			}
-
-			// close current visible run before changing tag state
-			if inSegment {
-				writeClosers(&out, stack)
-				inSegment = false
-			}
-
-			full := s[i : j+1]
-			tg, isOpen, isClose := parseTag(full)
-			if isOpen {
-				stack = append(stack, tg)
-			} else if isClose {
-				// count closing tag as consuming one visible unit if inside window
-				if visible >= start && visible < end {
-					visible++
-				}
-				// pop until matching name (if any)
-				for k := len(stack) - 1; k >= 0; k-- {
-					if stack[k].name == tg.name {
-						stack = stack[:k]
-						break
-					}
-				}
-			}
-			i = j + 1
-			continue
-		}
-
-		// visible character
-		if visible >= start && visible < end {
-			if !inSegment {
-				for _, t := range stack {
-					out.WriteString(t.open)
-				}
-				inSegment = true
-			}
-			out.WriteByte(s[i])
-		}
-		visible++
-		i++
-	}
-
-	if inSegment {
-		writeClosers(&out, stack)
-	}
-
-	return strings.TrimSpace(out.String())
+	return ToCode(newRoot)
 }
 
-// normaliseSimpleBB converts very simple paired BBCode tags used in tests
-// into the internal single-bracket form that the parser understands.
-// Currently handles only bold: [b]...[/b] -> [b...]
+func filterNodes(nodes []ast.Node, start, end int, pos *int) []ast.Node {
+	var kept []ast.Node
+
+	for _, n := range nodes {
+		if *pos >= end {
+			break
+		}
+
+		switch t := n.(type) {
+		case *ast.Text:
+			l := len(t.Value)
+			// Range of this node is [*pos, *pos+l)
+			// Intersect with [start, end)
+			s := max(*pos, start)
+			e := min(*pos+l, end)
+
+			if s < e {
+				// Visible part
+				relS := s - *pos
+				relE := e - *pos
+				// Clone node to avoid mutating original AST if reused (though here it's fresh)
+				newText := &ast.Text{}
+				newText.Value = t.Value[relS:relE]
+				kept = append(kept, newText)
+			}
+			*pos += l
+
+		case ast.Container:
+			// Recurse into children
+			children := t.GetChildren()
+			newChildren := filterNodes(children, start, end, pos)
+
+			if len(newChildren) > 0 {
+				// We need to create a new container of the same type or mutate the existing one.
+				// Since ParseString returns a fresh tree, we can mutate 't' directly,
+				// but we must be careful if we are sharing nodes (we aren't).
+				// However, 't' in the loop is a pointer to the node in the original tree.
+				// If we modify it, we modify the original tree. That's fine here.
+				// But simpler is to reuse 't' and set its children.
+				setChildren(t, newChildren)
+				kept = append(kept, t)
+			} else {
+				// Debug why empty?
+				// fmt.Printf("Container %T empty after filter\n", t)
+			}
+
+		case *ast.Image:
+			// Images are 0-width text-wise usually, or treated as such.
+			// If we are strictly within the range (start <= pos < end), we keep it.
+			// Or should we keep it if we just passed start?
+			if *pos >= start && *pos < end {
+				kept = append(kept, t)
+			}
+
+		case *ast.Code:
+			// Code block treated as text for length purposes?
+			// Usually code blocks have visible content.
+			l := len(t.Value)
+			s := max(*pos, start)
+			e := min(*pos+l, end)
+
+			if s < e {
+				relS := s - *pos
+				relE := e - *pos
+				t.Value = t.Value[relS:relE]
+				kept = append(kept, t)
+			}
+			*pos += l
+
+		case *ast.HR:
+			if *pos >= start && *pos < end {
+				kept = append(kept, t)
+			}
+
+		default:
+			// For other nodes, if they are not containers and not text,
+			// we assume they are 0-width visible items?
+			// If we don't know them, safe to skip or keep?
+			// Best effort: skip unknown.
+		}
+	}
+	return kept
+}
+
+func setChildren(c ast.Container, children []ast.Node) {
+	switch t := c.(type) {
+	case *ast.Root:
+		t.Children = children
+	case *ast.Bold:
+		t.Children = children
+	case *ast.Italic:
+		t.Children = children
+	case *ast.Underline:
+		t.Children = children
+	case *ast.Sup:
+		t.Children = children
+	case *ast.Sub:
+		t.Children = children
+	case *ast.Link:
+		t.Children = children
+	case *ast.Quote:
+		t.Children = children
+	case *ast.QuoteOf:
+		t.Children = children
+	case *ast.Spoiler:
+		t.Children = children
+	case *ast.Indent:
+		t.Children = children
+	case *ast.Custom:
+		t.Children = children
+	}
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// normaliseSimpleBB is kept for backward compatibility if used elsewhere,
+// though it looks like it was helper for the old substring.
 func normaliseSimpleBB(in string) string {
 	if len(in) == 0 {
 		return in
 	}
-	var out bytes.Buffer
+	var out strings.Builder
 	for i := 0; i < len(in); {
-		// preserve escapes
 		if in[i] == '\\' && i+1 < len(in) {
 			out.WriteByte(in[i])
 			out.WriteByte(in[i+1])
@@ -189,122 +187,4 @@ func normaliseSimpleBB(in string) string {
 		i++
 	}
 	return out.String()
-}
-
-// openTag returns the opening tag for a node in bracket syntax, e.g. [b, [i, [a=...
-func openTag(n ast.Node) string {
-	switch t := n.(type) {
-	case *ast.Bold:
-		return "[b"
-	case *ast.Italic:
-		return "[i"
-	case *ast.Underline:
-		return "[u"
-	case *ast.Sup:
-		return "[sup"
-	case *ast.Sub:
-		return "[sub"
-	case *ast.Link:
-		var b bytes.Buffer
-		b.WriteString("[a=")
-		escapeArg(&b, t.Href)
-		return b.String()
-	case *ast.Quote:
-		return "[quote"
-	case *ast.QuoteOf:
-		var b bytes.Buffer
-		b.WriteString("[quoteof ")
-		escapeArg(&b, t.Name)
-		return b.String()
-	case *ast.Spoiler:
-		return "[spoiler"
-	case *ast.Indent:
-		return "[indent"
-	case *ast.Custom:
-		var b bytes.Buffer
-		b.WriteByte('[')
-		b.WriteString(t.Tag)
-		return b.String()
-	default:
-		return ""
-	}
-}
-
-// closeTag returns the closing tag for a node in bracket syntax, e.g. [/b], [/a]
-// For nodes that are not containers or do not require explicit closing, returns an empty string.
-func closeTag(n ast.Node) string {
-	switch n.(type) {
-	case *ast.Bold, *ast.Italic, *ast.Underline, *ast.Sup, *ast.Sub, *ast.Link, *ast.Quote, *ast.QuoteOf, *ast.Spoiler, *ast.Indent:
-		return "]"
-	case *ast.Custom:
-		return "]"
-	default:
-		return ""
-	}
-}
-
-// nTag returns the raw tag name for supported nodes, or empty.
-func nTag(n ast.Node) string {
-	switch t := n.(type) {
-	case *ast.Bold:
-		return "b"
-	case *ast.Italic:
-		return "i"
-	case *ast.Underline:
-		return "u"
-	case *ast.Sup:
-		return "sup"
-	case *ast.Sub:
-		return "sub"
-	case *ast.Link:
-		return "a"
-	case *ast.Quote:
-		return "quote"
-	case *ast.QuoteOf:
-		return "quoteof"
-	case *ast.Spoiler:
-		return "spoiler"
-	case *ast.Indent:
-		return "indent"
-	case *ast.Custom:
-		return t.Tag
-	default:
-		return ""
-	}
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// escapeArg escapes characters in a tag argument.
-func escapeArg(w io.Writer, s string) {
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '[', ']', '=', '\\':
-			writeByte(w, '\\')
-			writeByte(w, s[i])
-		default:
-			writeByte(w, s[i])
-		}
-	}
-}
-
-// writeByte writes a byte to the writer.
-func writeByte(w io.Writer, b byte) {
-	if bw, ok := w.(io.ByteWriter); ok {
-		_ = bw.WriteByte(b)
-		return
-	}
-	_, _ = w.Write([]byte{b})
 }

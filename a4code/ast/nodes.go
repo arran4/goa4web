@@ -117,9 +117,7 @@ func (b *Bold) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (b *Bold) String() string {
-	return "[b" + joinChildren(b.Children) + "]" // Assuming implicit close or handled by parser for roundtrip, but String() is often debug or raw content representation.
-	// Actually, based on previous feedback "children?", the user implies recursively printing children.
-	// Simple concatenation for now.
+	return "[b" + joinChildren(b.Children) + "]"
 }
 
 // Italic text.
@@ -217,7 +215,7 @@ func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (l *Link) String() string {
-	return "[a=" + l.Href + joinChildren(l.Children) + "]"
+	return "[link " + l.Href + joinChildren(l.Children) + "]"
 }
 
 // Image embeds an image.

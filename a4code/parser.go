@@ -3,6 +3,7 @@ package a4code
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"iter"
 	"strings"
@@ -101,6 +102,10 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 					}
 				}
 			}
+
+            // Debug logging
+            fmt.Printf("UpdateBlockStatus: Link %p, children=%d, prevIsNewline=%v, isContextBlock=%v\n", l, len(children), prevIsNewline, isContextBlock)
+
 			if prevIsNewline {
 				l.IsBlock = true
 			} else {
@@ -209,6 +214,10 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				if len(stack) > 0 {
 					p := stack[len(stack)-1]
 					children := p.GetChildren()
+
+                    // Debug
+                    fmt.Printf("Popping %T into %T. isBlockContext: %v\n", n, p, isBlockContext(p.(ast.Node)))
+
 					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 					p.AddChild(n)
 				}

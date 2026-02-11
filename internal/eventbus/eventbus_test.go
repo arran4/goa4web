@@ -1,7 +1,5 @@
 package eventbus
 
-// fix duplicate imports
-
 import (
 	"context"
 	"net/http"

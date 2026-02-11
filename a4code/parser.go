@@ -104,7 +104,7 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			}
 
             // Debug logging
-            fmt.Printf("UpdateBlockStatus: Link %p, children=%d, prevIsNewline=%v, isContextBlock=%v\n", l, len(children), prevIsNewline, isContextBlock)
+            // fmt.Printf("UpdateBlockStatus: Link %p, children=%d, prevIsNewline=%v, isContextBlock=%v\n", l, len(children), prevIsNewline, isContextBlock)
 
 			if prevIsNewline {
 				l.IsBlock = true
@@ -216,7 +216,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					children := p.GetChildren()
 
                     // Debug
-                    fmt.Printf("Popping %T into %T. isBlockContext: %v\n", n, p, isBlockContext(p.(ast.Node)))
+                    // fmt.Printf("Popping %T into %T. isBlockContext: %v\n", n, p, isBlockContext(p.(ast.Node)))
 
 					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 					p.AddChild(n)

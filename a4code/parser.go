@@ -124,9 +124,6 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 					}
 				} else if c, ok := lastChild.(*ast.Custom); ok {
 					// Check if it's a closing tag of a block element (acting as newline/break)
-					// OR if it's a Custom block element (if we had any, but we rely on isBlockContext for known ones)
-					// But closing tag of PREVIOUS block implies we are on a new line effectively?
-					// e.g. [/quote][link]
 					if strings.HasPrefix(c.Tag, "/") {
 						tag := strings.TrimPrefix(c.Tag, "/")
 						if isBlockTag(tag) {
@@ -143,6 +140,14 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			}
 		}
 	}
+}
+
+func matchesClosingTag(n ast.Node, closingTag string) bool {
+	switch n.(type) {
+	case *ast.Link:
+		return strings.EqualFold(closingTag, "/link") || strings.EqualFold(closingTag, "/url") || strings.EqualFold(closingTag, "/a")
+	}
+	return false
 }
 
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
@@ -236,18 +241,62 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				}
 
 				if l, ok := n.(*ast.Link); ok {
+					// IsImmediateClose is true if no children were added (meaning it was [link url] style)
+					// If it was [link=url]..[/link], children would be present.
 					if len(l.Children) == 0 {
 						l.IsImmediateClose = true
+					} else {
+						l.IsImmediateClose = false
 					}
 				}
 
-				if len(stack) > 0 {
-					p := stack[len(stack)-1]
-					children := p.GetChildren()
+				// Check if the popped node is a closing tag that closes the NEW top of stack
+				parentPopped := false
+				if custom, ok := n.(*ast.Custom); ok && len(stack) > 0 {
+					parent := stack[len(stack)-1]
+					if matchesClosingTag(parent.(ast.Node), custom.Tag) {
+						// Pop the parent as well!
+						// But first, we need to add the closing tag (n) to the parent?
+						// Usually [/tag] is consumed or added to parent.
+						// Current logic adds n to parent.
+						// So [link] content [/link] -> Link contains content, Custom(/link).
+						// Then we close Link.
 
-					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
-					p.AddChild(n)
+						p := stack[len(stack)-1]
+						children := p.GetChildren()
+						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+						p.AddChild(n)
+
+						// Now pop parent
+						n = stack[len(stack)-1]
+						stack = stack[:len(stack)-1]
+						parentPopped = true
+
+						if nNode, ok := n.(ast.Node); ok {
+							start, _ := nNode.GetPos()
+							nNode.SetPos(start, visiblePos)
+						}
+
+						// Re-evaluate IsImmediateClose for the parent (Link)
+						if l, ok := n.(*ast.Link); ok {
+							if len(l.Children) == 0 {
+								l.IsImmediateClose = true
+							} else {
+								l.IsImmediateClose = false
+							}
+						}
+					}
 				}
+
+				if !parentPopped {
+					if len(stack) > 0 {
+						p := stack[len(stack)-1]
+						children := p.GetChildren()
+						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+						p.AddChild(n)
+					}
+				}
+
 				if !yield(n, len(stack)+1) {
 					return
 				}
@@ -375,11 +424,30 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		yield(n, depth)
 	case "a", "link", "url":
-		skipArgPrefix(s)
+		// Distinguish [link url] vs [link=url]
+		isContainer := false
+		if ch, err := s.ReadByte(); err == nil {
+			if ch == '=' {
+				isContainer = true
+			} else if ch != ' ' {
+				s.UnreadByte()
+			}
+		}
+
 		raw, err := getNext(s, false)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
+
+		// If container, consume ']' to prevent immediate pop
+		if isContainer {
+			if ch, err := s.ReadByte(); err == nil {
+				if ch != ']' {
+					s.UnreadByte()
+				}
+			}
+		}
+
 		n := &ast.Link{Href: raw}
 		createNode(n)
 	case "code":

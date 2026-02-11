@@ -15,7 +15,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 	}{
 		{
 			name:  "Root: Standalone link",
-			input: "[link=url]",
+			input: "[link=url][/link]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -25,7 +25,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Root: Link surrounded by newlines",
-			input: "\n[link=url]\n",
+			input: "\n[link=url][/link]\n",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -35,7 +35,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Root: Link after text no newline",
-			input: "foo[link=url]",
+			input: "foo[link=url][/link]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if l.IsBlock {
@@ -45,7 +45,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Root: Link before text no newline",
-			input: "[link=url]foo",
+			input: "[link=url][/link]foo",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if l.IsBlock {
@@ -55,7 +55,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Quote: Standalone link",
-			input: "[quote][link=url][/quote]",
+			input: "[quote][link=url][/link][/quote]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -65,7 +65,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Quote: Link with newlines",
-			input: "[quote]\n[link=url]\n[/quote]",
+			input: "[quote]\n[link=url][/link]\n[/quote]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -75,7 +75,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Bold: Standalone link (Inline context)",
-			input: "[b][link=url][/b]",
+			input: "[b][link=url][/link][/b]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if l.IsBlock {
@@ -85,7 +85,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "QuoteOf: Standalone link",
-			input: "[quoteof user][link=url][/quoteof]",
+			input: "[quoteof user][link=url][/link][/quoteof]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -95,7 +95,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Spoiler: Standalone link",
-			input: "[spoiler][link=url][/spoiler]",
+			input: "[spoiler][link=url][/link][/spoiler]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -105,7 +105,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Indent: Standalone link",
-			input: "[indent][link=url][/indent]",
+			input: "[indent][link=url][/link][/indent]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
 				if !l.IsBlock {
@@ -115,7 +115,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Multiple Block Links",
-			input: "[quote][link=1]\n[link=2][/quote]",
+			input: "[quote][link=1][/link]\n[link=2][/link][/quote]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
 				ast.Walk(root, func(n ast.Node) error {
@@ -137,7 +137,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 		},
 		{
 			name:  "Mixed Inline/Block Links",
-			input: "[quote]foo [link=1]\n[link=2][/quote]",
+			input: "[quote]foo [link=1][/link]\n[link=2][/link][/quote]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
 				ast.Walk(root, func(n ast.Node) error {

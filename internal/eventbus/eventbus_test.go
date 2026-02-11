@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// CI Fix: Force file update to resolve redeclaration issues in CI
 // mockTask implements tasks.Task and tasks.Name
 type mockTask string
 

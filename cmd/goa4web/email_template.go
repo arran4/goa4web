@@ -109,7 +109,7 @@ func (c *emailTemplateGetCmd) Run() error {
 	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 	rec := httptest.NewRecorder()
-	adminhandlers.AdminEmailTemplatePage(rec, req)
+	(&adminhandlers.AdminEmailTemplatePage{}).ServeHTTP(rec, req)
 	writer, closeFn, err := outputWriter(c.output)
 	if err != nil {
 		return err

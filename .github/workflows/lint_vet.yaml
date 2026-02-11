@@ -1,20 +1,22 @@
-name: lint-vet
+name: Lint & Vet
 
 on:
   push:
   pull_request:
 
 jobs:
-  lint-vet:
-    runs-on: ubuntu-latest
+  lint:
     strategy:
       matrix:
+        go-version: [1.25.x]
+        os: [ubuntu-latest]
         tags:
           - 'nosqlite'
           - 'nosqlite,s3'
           - 'nosqlite,sendgrid'
           - 'nosqlite,ses'
           - 'nosqlite,s3,sendgrid,ses'
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

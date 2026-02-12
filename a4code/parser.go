@@ -480,8 +480,6 @@ func directOutput(s *scanner) (string, int, int, error) {
 	var buf bytes.Buffer
 	startPos := s.pos
 	depth := 0
-	terminator := "]"
-	termLen := len(terminator)
 
 	for {
 		ch, err := s.ReadByte()
@@ -506,23 +504,14 @@ func directOutput(s *scanner) (string, int, int, error) {
 			buf.WriteByte(ch)
 			depth++
 		case ']':
-			buf.WriteByte(ch)
 			if depth > 0 {
+				buf.WriteByte(ch)
 				depth--
-			} else if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
-				// Accepted
-				out := buf.Bytes()[:buf.Len()-termLen]
-				endPos := s.pos - termLen
-				return string(out), startPos, endPos, nil
+			} else {
+				return buf.String(), startPos, s.pos - 1, nil
 			}
 		default:
 			buf.WriteByte(ch)
-			if depth == 0 && buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
-				// Accepted
-				out := buf.Bytes()[:buf.Len()-termLen]
-				endPos := s.pos - termLen
-				return string(out), startPos, endPos, nil
-			}
 		}
 	}
 }

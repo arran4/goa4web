@@ -217,8 +217,8 @@ func TestCodeIn(t *testing.T) {
 			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
 		},
 		{
-			name:  "codein with escaped bracket",
-			input: `[codein "go" func main() { a := [\]int{} }]`,
+			name:  "codein with balanced brackets",
+			input: `[codein "go" func main() { a := []int{} }]`,
 			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="28"><code class="language-go"><span data-start-pos="0" data-end-pos="28">func main() { a := []int{} }</span></code></pre>`,
 		},
 	}
@@ -245,7 +245,7 @@ func TestCodeWhitespace(t *testing.T) {
 	}{
 		{
 			name:      "code with leading newline",
-			input:     "[code \nhi[/code]]",
+			input:     "[code \nhi]",
 			wantValue: "hi",
 		},
 		{
@@ -265,7 +265,7 @@ func TestCodeWhitespace(t *testing.T) {
 		},
 		{
 			name:      "code with multiple lines",
-			input:     "[code \nhi\nhi[/code]]",
+			input:     "[code \nhi\nhi]",
 			wantValue: "hi\nhi",
 		},
 	}

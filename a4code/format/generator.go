@@ -85,7 +85,9 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	io.WriteString(w, "[code")
-	if len(n.Value) > 0 {
+	if strings.Contains(n.Value, "\n") {
+		writeByte(w, '\n')
+	} else if len(n.Value) > 0 {
 		first := n.Value[0]
 		if first != ' ' && first != '\n' && first != '\r' {
 			io.WriteString(w, " ")

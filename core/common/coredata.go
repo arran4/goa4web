@@ -128,7 +128,7 @@ type CoreData struct {
 	NextLink          string
 	NotFoundLink      *NotFoundLink
 	NotificationCount int32
-	pagination        Pagination
+	Pagination        Pagination
 	PageTitle         string
 	OpenGraph         *OpenGraph
 	PrevLink          string
@@ -2252,7 +2252,7 @@ func (cd *CoreData) Offset() int { return cd.currentOffset }
 
 // SetPagination sets the pagination strategy for the current page.
 func (cd *CoreData) SetPagination(p Pagination) {
-	cd.pagination = p
+	cd.Pagination = p
 	cd.StartLink = p.StartLink()
 	cd.PrevLink = p.PrevLink()
 	cd.NextLink = p.NextLink()
@@ -2260,10 +2260,10 @@ func (cd *CoreData) SetPagination(p Pagination) {
 
 // PageLinks returns the pagination links for the current page.
 func (cd *CoreData) PageLinks() []PageLink {
-	if cd.pagination == nil {
+	if cd.Pagination == nil {
 		return nil
 	}
-	return cd.pagination.GetLinks()
+	return cd.Pagination.GetLinks()
 }
 
 // SetCurrentRoleID stores the role ID for subsequent lookups.

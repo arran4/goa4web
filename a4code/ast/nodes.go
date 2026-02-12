@@ -37,6 +37,7 @@ type parent interface {
 type Container interface {
 	Node
 	AddChild(Node)
+	GetChildren() []Node
 }
 
 func transformChildren(n Node, op func(Node) (Node, error)) (Node, error) {
@@ -79,6 +80,7 @@ func (r *Root) Transform(op func(Node) (Node, error)) (Node, error) {
 
 func (r *Root) childrenPtr() *[]Node { return &r.Children }
 func (r *Root) AddChild(n Node)      { r.Children = append(r.Children, n) }
+func (r *Root) GetChildren() []Node  { return r.Children }
 
 func (r *Root) String() string {
 	return joinChildren(r.Children)
@@ -109,6 +111,7 @@ type Bold struct {
 func (*Bold) isNode()                {}
 func (b *Bold) childrenPtr() *[]Node { return &b.Children }
 func (b *Bold) AddChild(n Node)      { b.Children = append(b.Children, n) }
+func (b *Bold) GetChildren() []Node  { return b.Children }
 
 func (b *Bold) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(b, op)
@@ -129,6 +132,7 @@ type Italic struct {
 func (*Italic) isNode()                {}
 func (i *Italic) childrenPtr() *[]Node { return &i.Children }
 func (i *Italic) AddChild(n Node)      { i.Children = append(i.Children, n) }
+func (i *Italic) GetChildren() []Node  { return i.Children }
 
 func (i *Italic) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(i, op)
@@ -147,6 +151,7 @@ type Underline struct {
 func (*Underline) isNode()                {}
 func (u *Underline) childrenPtr() *[]Node { return &u.Children }
 func (u *Underline) AddChild(n Node)      { u.Children = append(u.Children, n) }
+func (u *Underline) GetChildren() []Node  { return u.Children }
 
 func (u *Underline) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(u, op)
@@ -165,6 +170,7 @@ type Sup struct {
 func (*Sup) isNode()                {}
 func (s *Sup) childrenPtr() *[]Node { return &s.Children }
 func (s *Sup) AddChild(n Node)      { s.Children = append(s.Children, n) }
+func (s *Sup) GetChildren() []Node  { return s.Children }
 
 func (s *Sup) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(s, op)
@@ -183,6 +189,7 @@ type Sub struct {
 func (*Sub) isNode()                {}
 func (s *Sub) childrenPtr() *[]Node { return &s.Children }
 func (s *Sub) AddChild(n Node)      { s.Children = append(s.Children, n) }
+func (s *Sub) GetChildren() []Node  { return s.Children }
 
 func (s *Sub) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(s, op)
@@ -197,18 +204,24 @@ type Link struct {
 	BaseNode
 	Href     string
 	Children []Node
+	IsBlock  bool
 }
 
 func (*Link) isNode()                {}
 func (l *Link) childrenPtr() *[]Node { return &l.Children }
 func (l *Link) AddChild(n Node)      { l.Children = append(l.Children, n) }
+func (l *Link) GetChildren() []Node  { return l.Children }
+
+func (l *Link) IsImmediateClose() bool {
+	return len(l.Children) == 0
+}
 
 func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(l, op)
 }
 
 func (l *Link) String() string {
-	return "[a=" + l.Href + joinChildren(l.Children) + "]"
+	return "[link " + l.Href + joinChildren(l.Children) + "]"
 }
 
 // Image embeds an image.
@@ -273,6 +286,7 @@ type Quote struct {
 func (*Quote) isNode()                {}
 func (q *Quote) childrenPtr() *[]Node { return &q.Children }
 func (q *Quote) AddChild(n Node)      { q.Children = append(q.Children, n) }
+func (q *Quote) GetChildren() []Node  { return q.Children }
 
 func (q *Quote) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(q, op)
@@ -292,6 +306,7 @@ type QuoteOf struct {
 func (*QuoteOf) isNode()                {}
 func (q *QuoteOf) childrenPtr() *[]Node { return &q.Children }
 func (q *QuoteOf) AddChild(n Node)      { q.Children = append(q.Children, n) }
+func (q *QuoteOf) GetChildren() []Node  { return q.Children }
 
 func (q *QuoteOf) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(q, op)
@@ -310,6 +325,7 @@ type Spoiler struct {
 func (*Spoiler) isNode()                {}
 func (s *Spoiler) childrenPtr() *[]Node { return &s.Children }
 func (s *Spoiler) AddChild(n Node)      { s.Children = append(s.Children, n) }
+func (s *Spoiler) GetChildren() []Node  { return s.Children }
 
 func (s *Spoiler) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(s, op)
@@ -328,6 +344,7 @@ type Indent struct {
 func (*Indent) isNode()                {}
 func (i *Indent) childrenPtr() *[]Node { return &i.Children }
 func (i *Indent) AddChild(n Node)      { i.Children = append(i.Children, n) }
+func (i *Indent) GetChildren() []Node  { return i.Children }
 
 func (i *Indent) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(i, op)
@@ -362,6 +379,7 @@ type Custom struct {
 func (*Custom) isNode()                {}
 func (c *Custom) childrenPtr() *[]Node { return &c.Children }
 func (c *Custom) AddChild(n Node)      { c.Children = append(c.Children, n) }
+func (c *Custom) GetChildren() []Node  { return c.Children }
 
 func (c *Custom) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(c, op)

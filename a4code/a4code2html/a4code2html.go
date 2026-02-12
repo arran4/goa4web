@@ -202,11 +202,8 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminators ...string) error {
-	lens := make([]int, len(terminators))
-	for i, t := range terminators {
-		lens[i] = len(t)
-	}
+func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminator string) error {
+	termLen := len(terminator)
 	var buf bytes.Buffer
 	depth := 0
 
@@ -236,22 +233,10 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 		default:
 			buf.WriteByte(ch)
 
-			matchedTerminator := false
-			termIdx := -1
-			for idx, term := range terminators {
-				if buf.Len() >= lens[idx] && strings.EqualFold(term, buf.String()[buf.Len()-lens[idx]:]) {
-					matchedTerminator = true
-					termIdx = idx
-					break
-				}
-			}
-
-			if matchedTerminator {
-				term := terminators[termIdx]
-				// We assume checking against "]" is sufficient for balanced logic
-				if term == "]" {
+			if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+				if terminator == "]" {
 					if depth == 0 {
-						out := buf.Bytes()[:buf.Len()-lens[termIdx]]
+						out := buf.Bytes()[:buf.Len()-termLen]
 						if _, err := w.Write(out); err != nil {
 							return err
 						}
@@ -259,7 +244,7 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 					}
 					// Ignore terminator, treat as content
 				} else {
-					out := buf.Bytes()[:buf.Len()-lens[termIdx]]
+					out := buf.Bytes()[:buf.Len()-termLen]
 					if _, err := w.Write(out); err != nil {
 						return err
 					}

@@ -73,9 +73,26 @@ func (s *scanner) Peek() (byte, error) {
 }
 
 func isBlockContext(n ast.Node) bool {
-	switch n.(type) {
-	case *ast.Root, *ast.Quote, *ast.QuoteOf, *ast.Spoiler, *ast.Indent:
+	if _, ok := n.(*ast.Root); ok {
 		return true
+	}
+	// Check specific types that have IsBlock field
+	// Actually, the AST nodes embed BaseNode, but the interface ast.Node doesn't expose it directly except via getter?
+	// But we are casting to specific types usually.
+	// Let's use type switch and access the field.
+	switch t := n.(type) {
+	case *ast.Quote:
+		return t.IsBlock
+	case *ast.QuoteOf:
+		return t.IsBlock // Always true
+	case *ast.Spoiler:
+		return t.IsBlock
+	case *ast.Indent:
+		return t.IsBlock // Always true
+	case *ast.Link:
+		return t.IsBlock
+	case *ast.Code:
+		return t.IsBlock
 	}
 	return false
 }
@@ -206,15 +223,6 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 						nNode.SetPos(start, visiblePos)
 					}
 
-					if l, ok := n.(*ast.Link); ok {
-						// IsImmediateClose is true if no children were added (meaning it was [link url] style with no content)
-						if len(l.Children) == 0 {
-							l.IsImmediateClose = true
-						} else {
-							l.IsImmediateClose = false
-						}
-					}
-
 					if len(stack) > 0 {
 						p := stack[len(stack)-1]
 						children := p.GetChildren()
@@ -269,15 +277,6 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 						t.IsBlock = true
 					case *ast.Indent:
 						t.IsBlock = true
-					}
-				}
-
-				if l, ok := n.(*ast.Link); ok {
-					// IsImmediateClose is true if no children were added (meaning it was [link url] style with no content)
-					if len(l.Children) == 0 {
-						l.IsImmediateClose = true
-					} else {
-						l.IsImmediateClose = false
 					}
 				}
 
@@ -449,15 +448,13 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	case "code":
 		skipArgPrefix(s)
 
-		terminators := []string{"[/code]", "]"}
 		if ch, err := s.Peek(); err == nil && ch == ']' {
 			s.ReadByte() // Consume ']' which starts the block in legacy syntax
-			terminators = []string{"[/code]"}
 		}
 
 		// directOutput consumes content bytes until terminator
 		// Support [code ... [/code] and [code ... ]
-		raw, _, _, err := directOutput(s, terminators...)
+		raw, _, _, err := directOutput(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -496,7 +493,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		skipArgPrefix(s)
 		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s, "]")
+		raw, _, _, err := directOutput(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -528,7 +525,9 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	case "quote", "q":
 		createNode(&ast.Quote{})
 	case "spoiler", "sp":
-		createNode(&ast.Spoiler{})
+		n := &ast.Spoiler{}
+		createNode(n)
+		n.IsBlock = lastChar == '\n' || lastChar == '\r' || startPos == 0
 	case "indent":
 		createNode(&ast.Indent{})
 	case "hr":
@@ -687,14 +686,10 @@ func skipArgPrefix(s *scanner) {
 	s.UnreadByte()
 }
 
-func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
+func directOutput(s *scanner) (string, int, int, error) {
 	var buf bytes.Buffer
 	startPos := s.pos
 	depth := 0
-
-    if len(terminators) == 0 {
-        terminators = []string{"]"}
-    }
 
 	for {
 		ch, err := s.ReadByte()
@@ -714,46 +709,25 @@ func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
 				}
 				return "", 0, 0, err
 			}
-            // Unescape: consume backslash, write next char
+			// Unescape: consume backslash, write next char
 			buf.WriteByte(next)
 			continue
 		}
 
 		buf.WriteByte(ch)
 
-        // Check multi-char terminators
-        for _, t := range terminators {
-            if len(t) > 1 && strings.HasSuffix(buf.String(), t) {
-                // Found terminator
-                res := buf.String()
-                res = res[:len(res)-len(t)]
-                return res, startPos, s.pos - len(t), nil
-            }
-        }
-
 		switch ch {
 		case '[':
 			depth++
 		case ']':
-             // Check if "]" is a terminator
-             isTerm := false
-             for _, t := range terminators {
-                 if t == "]" {
-                     isTerm = true
-                     break
-                 }
-             }
-
-             if isTerm && depth == 0 {
-                 // Found terminator "]" at top level
-                 res := buf.String()
-                 res = res[:len(res)-1]
-                 return res, startPos, s.pos - 1, nil
-             }
-
-             if depth > 0 {
-                 depth--
-             }
+			if depth > 0 {
+				depth--
+			} else {
+				// Found terminator "]" at top level
+				res := buf.String()
+				res = res[:len(res)-1]
+				return res, startPos, s.pos - 1, nil
+			}
 		}
 	}
 }

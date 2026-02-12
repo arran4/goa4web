@@ -202,16 +202,19 @@ func (s *Sub) String() string {
 // Link to a URL.
 type Link struct {
 	BaseNode
-	Href             string
-	Children         []Node
-	IsBlock          bool
-	IsImmediateClose bool
+	Href     string
+	Children []Node
+	IsBlock  bool
 }
 
 func (*Link) isNode()                {}
 func (l *Link) childrenPtr() *[]Node { return &l.Children }
 func (l *Link) AddChild(n Node)      { l.Children = append(l.Children, n) }
 func (l *Link) GetChildren() []Node  { return l.Children }
+
+func (l *Link) IsImmediateClose() bool {
+	return len(l.Children) == 0
+}
 
 func (l *Link) Transform(op func(Node) (Node, error)) (Node, error) {
 	return transformChildren(l, op)

@@ -68,7 +68,7 @@ func NewGenerator(opts ...interface{}) *Generator {
 func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 	if g.LinkProvider != nil {
 		// Use AST properties
-		htmlOpen, htmlClose, _ := g.LinkProvider.RenderLink(n.Href, n.IsBlock, n.IsImmediateClose)
+		htmlOpen, htmlClose, _ := g.LinkProvider.RenderLink(n.Href, n.IsBlock, n.IsImmediateClose())
 		if _, err := io.WriteString(w, htmlOpen); err != nil {
 			return err
 		}

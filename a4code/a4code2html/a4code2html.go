@@ -202,10 +202,9 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminators ...string) error {
-	if len(terminators) == 0 {
-		terminators = []string{"]"}
-	}
+func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
+	const terminator = "]"
+	const termLen = len(terminator)
 	var buf bytes.Buffer
 	depth := 0
 
@@ -218,8 +217,8 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 			}
 			return err
 		}
-
-		if ch == '\\' {
+		switch ch {
+		case '\\':
 			next, err := r.ReadByte()
 			if err != nil {
 				if err == io.EOF {
@@ -230,51 +229,24 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 				return err
 			}
 			buf.WriteByte(next)
-			continue
-		} else if ch == '<' || ch == '>' || ch == '&' {
+		case '<', '>', '&':
 			buf.WriteString(c.Escape(ch))
-			continue
-		}
-
-		buf.WriteByte(ch)
-
-		// Check multi-char terminators
-        for _, t := range terminators {
-            if len(t) > 1 && strings.HasSuffix(buf.String(), t) {
-                // Found terminator
-                out := buf.Bytes()[:buf.Len()-len(t)]
-                if _, err := w.Write(out); err != nil {
-                    return err
-                }
-                return nil
-            }
-        }
-
-		switch ch {
 		case '[':
+			buf.WriteByte(ch)
 			depth++
 		case ']':
-             // Check if "]" is a terminator
-             isTerm := false
-             for _, t := range terminators {
-                 if t == "]" {
-                     isTerm = true
-                     break
-                 }
-             }
-
-             if isTerm && depth == 0 {
-                 // Found terminator "]" at top level
-                 out := buf.Bytes()[:buf.Len()-1]
-                 if _, err := w.Write(out); err != nil {
-                     return err
-                 }
-                 return nil
-             }
-
-             if depth > 0 {
-                 depth--
-             }
+			buf.WriteByte(ch)
+			if depth > 0 {
+				depth--
+			} else {
+				out := buf.Bytes()[:buf.Len()-termLen]
+				if _, err := w.Write(out); err != nil {
+					return err
+				}
+				return nil
+			}
+		default:
+			buf.WriteByte(ch)
 		}
 	}
 }
@@ -529,7 +501,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
 				return err
 			}
-			if err := a.directOutputReader(r, w, "]"); err != nil {
+			if err := a.directOutputReader(r, w); err != nil {
 				return err
 			}
 			if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {

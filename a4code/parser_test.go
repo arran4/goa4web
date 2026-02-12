@@ -245,7 +245,7 @@ func TestCodeWhitespace(t *testing.T) {
 	}{
 		{
 			name:      "code with leading newline",
-			input:     "[code \nhi[/code]]",
+			input:     "[code \nhi]",
 			wantValue: "hi",
 		},
 		{
@@ -265,7 +265,7 @@ func TestCodeWhitespace(t *testing.T) {
 		},
 		{
 			name:      "code with multiple lines",
-			input:     "[code \nhi\nhi[/code]]",
+			input:     "[code \nhi\nhi]",
 			wantValue: "hi\nhi",
 		},
 	}

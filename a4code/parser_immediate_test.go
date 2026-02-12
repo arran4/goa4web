@@ -16,7 +16,7 @@ func TestLinkIsImmediateClose(t *testing.T) {
 		link := findFirstLink(root)
 		assert.NotNil(t, link)
 		assert.Equal(t, "http://example.com", link.Href)
-		assert.True(t, link.IsImmediateClose, "Expected IsImmediateClose to be true for [link url]")
+		assert.True(t, link.IsImmediateClose(), "Expected IsImmediateClose() to be true for [link url]")
 		assert.Empty(t, link.Children)
 	})
 
@@ -29,7 +29,7 @@ func TestLinkIsImmediateClose(t *testing.T) {
 		link := findFirstLink(root)
 		assert.NotNil(t, link)
 		assert.Equal(t, "http://example.com", link.Href)
-		assert.False(t, link.IsImmediateClose, "Expected IsImmediateClose to be false for [link url Content]")
+		assert.False(t, link.IsImmediateClose(), "Expected IsImmediateClose() to be false for [link url Content]")
 		assert.NotEmpty(t, link.Children)
 	})
 
@@ -42,7 +42,7 @@ func TestLinkIsImmediateClose(t *testing.T) {
 		link := findFirstLink(root)
 		assert.NotNil(t, link)
 		assert.Equal(t, "http://example.com", link.Href)
-		assert.False(t, link.IsImmediateClose, "Expected IsImmediateClose to be false for [link url [b Bold]]")
+		assert.False(t, link.IsImmediateClose(), "Expected IsImmediateClose() to be false for [link url [b Bold]]")
 		assert.NotEmpty(t, link.Children)
 	})
 }

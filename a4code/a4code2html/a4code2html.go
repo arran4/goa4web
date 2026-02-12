@@ -202,8 +202,9 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminator string) error {
-	termLen := len(terminator)
+func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
+	const terminator = "]"
+	const termLen = len(terminator)
 	var buf bytes.Buffer
 	depth := 0
 
@@ -234,22 +235,14 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 			buf.WriteByte(ch)
 
 			if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
-				if terminator == "]" {
-					if depth == 0 {
-						out := buf.Bytes()[:buf.Len()-termLen]
-						if _, err := w.Write(out); err != nil {
-							return err
-						}
-						return nil
-					}
-					// Ignore terminator, treat as content
-				} else {
+				if depth == 0 {
 					out := buf.Bytes()[:buf.Len()-termLen]
 					if _, err := w.Write(out); err != nil {
 						return err
 					}
 					return nil
 				}
+				// Ignore terminator, treat as content
 			}
 
 			if ch == '[' {
@@ -460,7 +453,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
 				r.ReadByte() // consume ]
 			} else {
-				if err := a.directOutputReader(r, &buf, "]"); err != nil {
+				if err := a.directOutputReader(r, &buf); err != nil {
 					return err
 				}
 			}

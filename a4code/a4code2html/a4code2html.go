@@ -245,9 +245,10 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 				// Ignore terminator, treat as content
 			}
 
-			if ch == '[' {
+			switch ch {
+			case '[':
 				depth++
-			} else if ch == ']' {
+			case ']':
 				if depth > 0 {
 					depth--
 				}

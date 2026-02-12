@@ -92,7 +92,11 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 	io.WriteString(w, "[codein ")
 	escapeQuotedArg(w, n.Language)
-	writeByte(w, ' ')
+	if len(n.Value) > 0 && (n.Value[0] == '\n' || n.Value[0] == '\r') {
+		// No separator needed if content starts with newline
+	} else {
+		writeByte(w, ' ')
+	}
 	io.WriteString(w, n.Value)
 	writeByte(w, ']')
 	return nil

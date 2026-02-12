@@ -115,25 +115,23 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	numPages := int((totalCount + int64(pageSize-1)) / int64(pageSize))
-
 	base := "/admin/search/list"
 	vals := url.Values{}
 	if letter != "" {
 		vals.Set("letter", letter)
 	}
 
-	for i := 1; i <= numPages; i++ {
-		vals.Set("page", strconv.Itoa(i))
-		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: base + "?" + vals.Encode(), Active: i == page})
+	pagBase := base
+	if len(vals) > 0 {
+		pagBase += "?" + vals.Encode()
 	}
-	if page < numPages {
-		vals.Set("page", strconv.Itoa(page+1))
-		cd.NextLink = base + "?" + vals.Encode()
-	}
-	if page > 1 {
-		vals.Set("page", strconv.Itoa(page-1))
-		cd.PrevLink = base + "?" + vals.Encode()
+
+	cd.Pagination = &common.PageNumberPagination{
+		TotalItems:  int(totalCount),
+		PageSize:    pageSize,
+		CurrentPage: page,
+		BaseURL:     pagBase,
+		ParamName:   "page",
 	}
 
 	AdminSearchWordListPageTmpl.Handle(w, r, data)

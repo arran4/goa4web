@@ -65,20 +65,19 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	numPages := int((count + int64(ps) - 1) / int64(ps))
-	currentPage := offset/ps + 1
 	base := "/usr/notifications"
 	allParam := ""
+	pagBase := base
 	if showAll {
 		allParam = "&all=1"
+		pagBase += "?all=1"
 	}
-	for i := 1; i <= numPages; i++ {
-		cd.PageLinks = append(cd.PageLinks, common.PageLink{
-			Num:    i,
-			Link:   fmt.Sprintf("%s?offset=%d%s", base, (i-1)*ps, allParam),
-			Active: i == currentPage,
-		})
-	}
+	cd.SetPagination(&common.OffsetPagination{
+		TotalItems: int(count),
+		PageSize:   ps,
+		Offset:     offset,
+		BaseURL:    pagBase,
+	})
 	if offset+ps < int(count) {
 		cd.NextLink = fmt.Sprintf("%s?offset=%d%s", base, offset+ps, allParam)
 	}

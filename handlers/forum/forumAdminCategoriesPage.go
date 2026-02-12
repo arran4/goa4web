@@ -46,12 +46,13 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	numPages := int((total + int64(ps) - 1) / int64(ps))
-	currentPage := offset/ps + 1
 	base := "/admin/forum/categories"
-	for i := 1; i <= numPages; i++ {
-		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: fmt.Sprintf("%s?offset=%d", base, (i-1)*ps), Active: i == currentPage})
-	}
+	cd.SetPagination(&common.OffsetPagination{
+		TotalItems: int(total),
+		PageSize:   ps,
+		Offset:     offset,
+		BaseURL:    base,
+	})
 	if offset+ps < int(total) {
 		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
 	}

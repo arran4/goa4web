@@ -123,10 +123,18 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		vals.Set("letter", letter)
 	}
 
-	for i := 1; i <= numPages; i++ {
-		vals.Set("page", strconv.Itoa(i))
-		cd.PageLinks = append(cd.PageLinks, common.PageLink{Num: i, Link: base + "?" + vals.Encode(), Active: i == page})
+	pagBase := base
+	if len(vals) > 0 {
+		pagBase += "?" + vals.Encode()
 	}
+
+	cd.SetPagination(&common.PageNumberPagination{
+		TotalItems:  int(totalCount),
+		PageSize:    pageSize,
+		CurrentPage: page,
+		BaseURL:     pagBase,
+		ParamName:   "page",
+	})
 	if page < numPages {
 		vals.Set("page", strconv.Itoa(page+1))
 		cd.NextLink = base + "?" + vals.Encode()

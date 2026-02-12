@@ -57,13 +57,6 @@ type AdminSection struct {
 	SubSections []AdminSection
 }
 
-// PageLink represents a numbered pagination link.
-type PageLink struct {
-	Num    int
-	Link   string
-	Active bool
-}
-
 // OpenGraph represents the Open Graph data for a page.
 type OpenGraph struct {
 	Title       string
@@ -135,7 +128,7 @@ type CoreData struct {
 	NextLink          string
 	NotFoundLink      *NotFoundLink
 	NotificationCount int32
-	PageLinks         []PageLink
+	pagination        Pagination
 	PageTitle         string
 	OpenGraph         *OpenGraph
 	PrevLink          string
@@ -2256,6 +2249,19 @@ func (cd *CoreData) CurrentRequestID() int32 { return cd.currentRequestID }
 
 // Offset returns the current pagination offset.
 func (cd *CoreData) Offset() int { return cd.currentOffset }
+
+// SetPagination sets the pagination strategy for the current page.
+func (cd *CoreData) SetPagination(p Pagination) {
+	cd.pagination = p
+}
+
+// PageLinks returns the pagination links for the current page.
+func (cd *CoreData) PageLinks() []PageLink {
+	if cd.pagination == nil {
+		return nil
+	}
+	return cd.pagination.GetLinks()
+}
 
 // SetCurrentRoleID stores the role ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }

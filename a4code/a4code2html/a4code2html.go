@@ -202,12 +202,12 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminators ...string) error {
-	lens := make([]int, len(terminators))
-	for i, t := range terminators {
-		lens[i] = len(t)
-	}
+func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
+	const terminator = "]"
+	const termLen = len(terminator)
 	var buf bytes.Buffer
+	depth := 0
+
 	for {
 		ch, err := r.ReadByte()
 		if err != nil {
@@ -231,17 +231,22 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminato
 			buf.WriteByte(next)
 		case '<', '>', '&':
 			buf.WriteString(c.Escape(ch))
+		case '[':
+			buf.WriteByte(ch)
+			depth++
+		case ']':
+			buf.WriteByte(ch)
+			if depth > 0 {
+				depth--
+			} else {
+				out := buf.Bytes()[:buf.Len()-termLen]
+				if _, err := w.Write(out); err != nil {
+					return err
+				}
+				return nil
+			}
 		default:
 			buf.WriteByte(ch)
-			for idx, term := range terminators {
-				if buf.Len() >= lens[idx] && strings.EqualFold(term, buf.String()[buf.Len()-lens[idx]:]) {
-					out := buf.Bytes()[:buf.Len()-lens[idx]]
-					if _, err := w.Write(out); err != nil {
-						return err
-					}
-					return nil
-				}
-			}
 		}
 	}
 }
@@ -439,14 +444,44 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">"); err != nil {
-				return err
+			var buf bytes.Buffer
+			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
+				r.ReadByte() // consume ]
+			} else {
+				if err := a.directOutputReader(r, &buf); err != nil {
+					return err
+				}
 			}
-			if err := a.directOutputReader(r, w, "[/code]", "code]"); err != nil {
-				return err
+
+			isBlock := false
+			if wasAtLineStart {
+				// Check if followed by newline
+				p, err := r.Peek(1)
+				if err == io.EOF || (err == nil && len(p) > 0 && (p[0] == '\n' || p[0] == '\r')) {
+					isBlock = true
+				}
 			}
-			if _, err := io.WriteString(w, "</pre></div>"); err != nil {
-				return err
+
+			if isBlock {
+				if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">"); err != nil {
+					return err
+				}
+				if _, err := w.Write(buf.Bytes()); err != nil {
+					return err
+				}
+				if _, err := io.WriteString(w, "</pre></div>"); err != nil {
+					return err
+				}
+			} else {
+				if _, err := io.WriteString(w, "<code class=\"a4code-inline a4code-code\">"); err != nil {
+					return err
+				}
+				if _, err := w.Write(buf.Bytes()); err != nil {
+					return err
+				}
+				if _, err := io.WriteString(w, "</code>"); err != nil {
+					return err
+				}
 			}
 		}
 	case "codein":
@@ -496,12 +531,21 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			colorClass := fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
-			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote"+colorClass+"\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
-				return err
+			if wasAtLineStart {
+				// Block quote
+				colorClass := fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
+				if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote"+colorClass+"\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
+					return err
+				}
+				a.quoteDepth++
+				a.stack = append(a.stack, "</div></blockquote>")
+			} else {
+				// Inline quote
+				if _, err := io.WriteString(w, "<q class=\"a4code-inline a4code-quote\">"); err != nil {
+					return err
+				}
+				a.stack = append(a.stack, "</q>")
 			}
-			a.quoteDepth++
-			a.stack = append(a.stack, "</div></blockquote>")
 		}
 	case "spoiler", "sp":
 		switch a.CodeType {

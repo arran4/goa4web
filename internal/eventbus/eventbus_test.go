@@ -326,6 +326,8 @@ func TestShutdown(t *testing.T) {
 	go func() {
 		// Wait a bit to simulate processing time, but less than context timeout
 		time.Sleep(50 * time.Millisecond)
+		env := <-ch
+		env.Ack()
 		for env := range ch {
 			env.Ack()
 		}

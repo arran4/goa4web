@@ -15,7 +15,7 @@
 -- image.expect.txt --
 ![](http://example.com/image.jpg)
 -- code.txt --
-[code]func[/code]
+[code func]
 -- code.expect.txt --
 
 ```

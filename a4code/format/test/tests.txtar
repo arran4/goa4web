@@ -15,17 +15,17 @@
 -- image.expect.txt --
 [img=http://example.com/image.jpg]
 -- code.txt --
-[code]
+[code
 func main() {
     fmt.Println("Hello")
 }
-[/code]
+]
 -- code.expect.txt --
-[code]
+[code
 func main() {
     fmt.Println("Hello")
 }
-[/code]
+]
 -- quote.txt --
 [quote Quoted text]
 -- quote.expect.txt --

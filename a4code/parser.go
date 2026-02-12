@@ -64,6 +64,14 @@ func (s *scanner) UnreadByte() error {
 	return err
 }
 
+func (s *scanner) Peek() (byte, error) {
+	b, err := s.r.Peek(1)
+	if err != nil {
+		return 0, err
+	}
+	return b[0], nil
+}
+
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	br := bufio.NewReader(r)
 	s := &scanner{r: br, pos: 0}
@@ -75,6 +83,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	visiblePos := 0
 
 	textStart := -1
+	lastChar := byte('\n')
 
 	flush := func(offset int) bool {
 		if buf.Len() == 0 {
@@ -128,7 +137,8 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			var e error
 			// startPos for tag is current visiblePos
 			startPos := visiblePos
-			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos)
+			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos, lastChar)
+			lastChar = ']' // Assume command ended with ]
 			if e != nil {
 				return
 			}
@@ -142,6 +152,23 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				if nNode, ok := n.(ast.Node); ok {
 					start, _ := nNode.GetPos()
 					nNode.SetPos(start, visiblePos)
+
+					// Determine IsBlock for closed node (Quote, etc)
+					switch t := nNode.(type) {
+					case *ast.Quote:
+						if t.IsBlock {
+							next, err := s.Peek()
+							if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
+								// Kept as block
+							} else {
+								t.IsBlock = false
+							}
+						}
+					case *ast.QuoteOf:
+						t.IsBlock = true
+					case *ast.Indent:
+						t.IsBlock = true
+					}
 				}
 				if len(stack) > 0 {
 					stack[len(stack)-1].AddChild(n)
@@ -150,6 +177,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					return
 				}
 			}
+			lastChar = ']'
 		case '\\':
 			if textStart == -1 {
 				textStart = s.pos - 1
@@ -169,11 +197,13 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				buf.WriteByte('\\')
 				buf.WriteByte(next)
 			}
+			lastChar = next
 		default:
 			if textStart == -1 {
 				textStart = s.pos - 1
 			}
 			buf.WriteByte(ch)
+			lastChar = ch
 		}
 	}
 }
@@ -211,7 +241,7 @@ func ParseNodes(s string) ([]ast.Node, error) {
 	return ParseNodesReader(strings.NewReader(s))
 }
 
-func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int) ([]ast.Container, int, error) {
+func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int, lastChar byte) ([]ast.Container, int, error) {
 	cmd, err := getNext(s, true)
 	if err != nil && err != io.EOF {
 		return stack, visiblePos, err
@@ -219,6 +249,24 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 	createNode := func(n ast.Container) {
 		n.SetPos(startPos, 0) // End will be set when popped
+		// Determine initial IsBlock status
+		isBlockStart := lastChar == '\n' || lastChar == '\r' || startPos == 0
+
+		// Set IsBlock on the node if possible
+		switch t := n.(type) {
+		case *ast.Quote:
+			t.IsBlock = isBlockStart
+		case *ast.QuoteOf:
+			t.IsBlock = true // QuoteOf is always block
+		case *ast.Link:
+			t.IsBlock = isBlockStart
+		case *ast.Indent:
+			t.IsBlock = true
+		case *ast.Spoiler:
+			// Spoiler usually inline?
+			t.IsBlock = false
+		}
+
 		stack = append(stack, n)
 	}
 
@@ -260,13 +308,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(n)
 	case "code":
 		skipArgPrefix(s)
-		if ch, err := s.ReadByte(); err == nil {
-			if ch != ']' {
-				s.UnreadByte()
-			}
-		}
+
 		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s, "[/code]", "code]")
+		// Enable balanced brackets support for Code
+		raw, _, _, err := directOutput(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -277,6 +322,16 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 		n := &ast.Code{Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
 		n.SetPos(startPos, innerEnd) // Code node includes content
+
+		// Determine IsBlock for Code
+		isBlockStart := lastChar == '\n' || lastChar == '\r' || startPos == 0
+		isBlockEnd := false
+		next, err := s.Peek()
+		if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
+			isBlockEnd = true
+		}
+
+		n.IsBlock = isBlockStart && isBlockEnd
 
 		visiblePos += contentLen
 
@@ -477,13 +532,10 @@ func skipArgPrefix(s *scanner) {
 	s.UnreadByte()
 }
 
-func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
-	lens := make([]int, len(terminators))
-	for i, t := range terminators {
-		lens[i] = len(t)
-	}
+func directOutput(s *scanner) (string, int, int, error) {
 	var buf bytes.Buffer
 	startPos := s.pos
+	depth := 0
 
 	for {
 		ch, err := s.ReadByte()
@@ -504,16 +556,18 @@ func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
 				return "", 0, 0, err
 			}
 			buf.WriteByte(next)
+		case '[':
+			buf.WriteByte(ch)
+			depth++
+		case ']':
+			if depth > 0 {
+				buf.WriteByte(ch)
+				depth--
+			} else {
+				return buf.String(), startPos, s.pos - 1, nil
+			}
 		default:
 			buf.WriteByte(ch)
-			for idx, term := range terminators {
-				if buf.Len() >= lens[idx] && strings.EqualFold(term, buf.String()[buf.Len()-lens[idx]:]) {
-					out := buf.Bytes()[:buf.Len()-lens[idx]]
-					// End position of content is current pos - length of terminator
-					endPos := s.pos - lens[idx]
-					return string(out), startPos, endPos, nil
-				}
-			}
 		}
 	}
 }

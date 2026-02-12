@@ -15,7 +15,7 @@
 -- image.expect.txt --
 <img src="http://example.com/image.jpg" data-start-pos="0" data-end-pos="0" />
 -- code.txt --
-[code]func[/code]
+[code func]
 -- code.expect.txt --
 <pre class="a4code-block a4code-code" data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4">func</span></pre>
 -- quote.txt --

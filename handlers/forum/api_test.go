@@ -53,10 +53,10 @@ func TestQuoteApi(t *testing.T) {
 			commentID: "1",
 			replyType: "selected&start=2&end=8",
 			mockComment: &db.GetCommentByIdForUserRow{
-				Text: sql.NullString{String: "hello [b]world[/b]", Valid: true},
+				Text: sql.NullString{String: "hello [b world]", Valid: true},
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"text":"[quoteof \"\" llo [b]wo[/b]]\n"}`,
+			expectedBody:   `{"text":"[quoteof \"\" llo [b wo]]\n"}`,
 		},
 		{
 			name:           "Comment Not Found", // Treated as happy path (200 OK)

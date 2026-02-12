@@ -29,12 +29,12 @@ func TestSnipText(t *testing.T) {
 		length int
 		want   string
 	}{
-		{"This is a [b]long[/b] string", 10, "This is a..."},
-		{"[b]Bold[/b] text", 4, "Bold..."},
-		{"[b]Bold[/b] text", 3, "Bol..."},
+		{"This is a [b long] string", 10, "This is a..."},
+		{"[b Bold] text", 4, "Bold..."},
+		{"[b Bold] text", 3, "Bol..."},
 		{"Short", 10, "Short"},
-		{"[i]Italic[/i] and [b]Bold[/b]", 6, "Italic..."},
-		{"[quote]Ignored[/quote] content", 10, "Ignored co..."},
+		{"[i Italic] and [b Bold]", 6, "Italic..."},
+		{"[quote Ignored] content", 10, "Ignored co..."},
 	}
 	for _, tt := range tests {
 		if got := SnipText(tt.input, tt.length); got != tt.want {

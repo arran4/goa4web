@@ -202,9 +202,10 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
-	const terminator = "]"
-	const termLen = len(terminator)
+func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminators ...string) error {
+	if len(terminators) == 0 {
+		terminators = []string{"]"}
+	}
 	var buf bytes.Buffer
 	depth := 0
 
@@ -217,8 +218,8 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 			}
 			return err
 		}
-		switch ch {
-		case '\\':
+
+		if ch == '\\' {
 			next, err := r.ReadByte()
 			if err != nil {
 				if err == io.EOF {
@@ -229,24 +230,51 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 				return err
 			}
 			buf.WriteByte(next)
-		case '<', '>', '&':
+			continue
+		} else if ch == '<' || ch == '>' || ch == '&' {
 			buf.WriteString(c.Escape(ch))
+			continue
+		}
+
+		buf.WriteByte(ch)
+
+		// Check multi-char terminators
+        for _, t := range terminators {
+            if len(t) > 1 && strings.HasSuffix(buf.String(), t) {
+                // Found terminator
+                out := buf.Bytes()[:buf.Len()-len(t)]
+                if _, err := w.Write(out); err != nil {
+                    return err
+                }
+                return nil
+            }
+        }
+
+		switch ch {
 		case '[':
-			buf.WriteByte(ch)
 			depth++
 		case ']':
-			buf.WriteByte(ch)
-			if depth > 0 {
-				depth--
-			} else {
-				out := buf.Bytes()[:buf.Len()-termLen]
-				if _, err := w.Write(out); err != nil {
-					return err
-				}
-				return nil
-			}
-		default:
-			buf.WriteByte(ch)
+             // Check if "]" is a terminator
+             isTerm := false
+             for _, t := range terminators {
+                 if t == "]" {
+                     isTerm = true
+                     break
+                 }
+             }
+
+             if isTerm && depth == 0 {
+                 // Found terminator "]" at top level
+                 out := buf.Bytes()[:buf.Len()-1]
+                 if _, err := w.Write(out); err != nil {
+                     return err
+                 }
+                 return nil
+             }
+
+             if depth > 0 {
+                 depth--
+             }
 		}
 	}
 }

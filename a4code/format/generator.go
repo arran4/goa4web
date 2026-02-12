@@ -47,32 +47,50 @@ func (g *Generator) generateChildren(w io.Writer, children []ast.Node) error {
 
 func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
 	io.WriteString(w, "[b")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
 	io.WriteString(w, "[i")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
 	io.WriteString(w, "[u")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
 	io.WriteString(w, "[sup")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
 	io.WriteString(w, "[sub")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 	io.WriteString(w, "[a=")
 	escapeArg(w, n.Href)
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
@@ -85,7 +103,9 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	io.WriteString(w, "[code")
-	if len(n.Value) > 0 {
+	if n.IsBlock {
+		io.WriteString(w, "\n")
+	} else if len(n.Value) > 0 {
 		first := n.Value[0]
 		if first != ' ' && first != '\n' && first != '\r' {
 			io.WriteString(w, " ")
@@ -111,22 +131,34 @@ func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	io.WriteString(w, "[quote")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	io.WriteString(w, "[quoteof ")
 	escapeQuotedArg(w, n.Name)
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
 	io.WriteString(w, "[spoiler")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
 func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 	io.WriteString(w, "[indent")
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
@@ -138,6 +170,9 @@ func (g *Generator) HR(w io.Writer, n *ast.HR) error {
 func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
 	writeByte(w, '[')
 	io.WriteString(w, n.Tag)
+	if len(n.Children) > 0 {
+		writeByte(w, ' ')
+	}
 	return g.generateChildren(w, n.Children)
 }
 
@@ -152,7 +187,7 @@ func writeByte(w io.Writer, b byte) {
 func escapeArg(w io.Writer, s string) {
 	for i := 0; i < len(s); i++ {
 		switch s[i] {
-		case '[', ']', '=', '\\':
+		case '[', ']', '=', '\\', ' ': // Escape space too now!
 			writeByte(w, '\\')
 			writeByte(w, s[i])
 		default:

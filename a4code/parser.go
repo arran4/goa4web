@@ -440,11 +440,41 @@ func getNext(s *scanner, endAtEqual bool) (string, error) {
 }
 
 func skipArgPrefix(s *scanner) {
-	if ch, err := s.ReadByte(); err == nil {
-		if ch != '=' && ch != ' ' {
+	ch, err := s.ReadByte()
+	if err != nil {
+		return
+	}
+
+	if ch == ' ' || ch == '=' {
+		// Optional newline after space/eq
+		next, err := s.ReadByte()
+		if err != nil {
+			return
+		}
+		if next == '\n' {
+			return
+		}
+		if next == '\r' {
+			if next2, err := s.ReadByte(); err == nil && next2 != '\n' {
+				s.UnreadByte()
+			}
+			return
+		}
+		s.UnreadByte()
+		return
+	}
+
+	if ch == '\n' {
+		return
+	}
+	if ch == '\r' {
+		if next, err := s.ReadByte(); err == nil && next != '\n' {
 			s.UnreadByte()
 		}
+		return
 	}
+
+	s.UnreadByte()
 }
 
 func directOutput(s *scanner, terminators ...string) (string, int, int, error) {

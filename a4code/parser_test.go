@@ -153,3 +153,93 @@ func TestCodeIn(t *testing.T) {
 		})
 	}
 }
+
+func TestCodeWhitespace(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantValue string
+	}{
+		{
+			name:      "code with leading newline",
+			input:     "[code \nhi[/code]]",
+			wantValue: "hi",
+		},
+		{
+			name:      "codein with leading newline",
+			input:     "[codein \"go\" \nhi]",
+			wantValue: "hi",
+		},
+		{
+			name:      "codein with inline newline",
+			input:     "[codein \"go\"\nhi]",
+			wantValue: "hi",
+		},
+		{
+			name:      "codein with multiple lines",
+			input:     "[codein \"go\" \nhi\nhi]",
+			wantValue: "hi\nhi",
+		},
+		{
+			name:      "code with multiple lines",
+			input:     "[code \nhi\nhi[/code]]",
+			wantValue: "hi\nhi",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := Parse(strings.NewReader(tt.input))
+			if err != nil {
+				t.Fatalf("parse error: %v", err)
+			}
+            if len(root.Children) != 1 {
+                t.Fatalf("expected 1 child, got %d", len(root.Children))
+            }
+            node := root.Children[0]
+            var got string
+            switch n := node.(type) {
+            case *ast.Code:
+                got = n.Value
+            case *ast.CodeIn:
+                got = n.Value
+            default:
+                t.Fatalf("expected Code or CodeIn, got %T", node)
+            }
+
+			if got != tt.wantValue {
+				t.Errorf("got %q want %q", got, tt.wantValue)
+			}
+		})
+	}
+}
+
+func TestCodeInGenerator(t *testing.T) {
+    // Need to verify generator output. ToA4Code uses generator.
+	tests := []struct {
+		name  string
+		input *ast.CodeIn
+		want  string
+	}{
+		{
+			name:  "inline codein",
+			input: &ast.CodeIn{Language: "go", Value: "hi"},
+			want:  "[codein \"go\" hi]",
+		},
+		{
+			name:  "multiline codein",
+			input: &ast.CodeIn{Language: "go", Value: "hi\nbye"},
+			want:  "[codein \"go\"\nhi\nbye]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+            root := &ast.Root{Children: []ast.Node{tt.input}}
+			got := ToA4Code(root)
+			if got != tt.want {
+				t.Errorf("got %q want %q", got, tt.want)
+			}
+		})
+	}
+}

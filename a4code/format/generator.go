@@ -2,6 +2,7 @@ package format
 
 import (
 	"io"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
 )
@@ -92,8 +93,8 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 	io.WriteString(w, "[codein ")
 	escapeQuotedArg(w, n.Language)
-	if len(n.Value) > 0 && (n.Value[0] == '\n' || n.Value[0] == '\r') {
-		// No separator needed if content starts with newline
+	if strings.Contains(n.Value, "\n") {
+		writeByte(w, '\n')
 	} else {
 		writeByte(w, ' ')
 	}

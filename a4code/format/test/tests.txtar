@@ -35,13 +35,13 @@ func main() {
 -- quoteof.expect.txt --
 [quoteof "User" Quoted text]
 -- spoiler.txt --
-[spoiler Spoiler text]
+[spoiler Secret]
 -- spoiler.expect.txt --
-[spoiler Spoiler text]
+[spoiler Secret]
 -- indent.txt --
-[indent Indented text]
+[indent Indented]
 -- indent.expect.txt --
-[indent Indented text]
+[indent Indented]
 -- hr.txt --
 [hr]
 -- hr.expect.txt --

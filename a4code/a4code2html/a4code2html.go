@@ -231,27 +231,28 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 			buf.WriteByte(next)
 		case '<', '>', '&':
 			buf.WriteString(c.Escape(ch))
+		case '[':
+			buf.WriteByte(ch)
+			depth++
+		case ']':
+			buf.WriteByte(ch)
+			if depth > 0 {
+				depth--
+			} else if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+				out := buf.Bytes()[:buf.Len()-termLen]
+				if _, err := w.Write(out); err != nil {
+					return err
+				}
+				return nil
+			}
 		default:
 			buf.WriteByte(ch)
-
-			if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
-				if depth == 0 {
-					out := buf.Bytes()[:buf.Len()-termLen]
-					if _, err := w.Write(out); err != nil {
-						return err
-					}
-					return nil
+			if depth == 0 && buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+				out := buf.Bytes()[:buf.Len()-termLen]
+				if _, err := w.Write(out); err != nil {
+					return err
 				}
-				// Ignore terminator, treat as content
-			}
-
-			switch ch {
-			case '[':
-				depth++
-			case ']':
-				if depth > 0 {
-					depth--
-				}
+				return nil
 			}
 		}
 	}

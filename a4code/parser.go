@@ -502,25 +502,26 @@ func directOutput(s *scanner) (string, int, int, error) {
 				return "", 0, 0, err
 			}
 			buf.WriteByte(next)
+		case '[':
+			buf.WriteByte(ch)
+			depth++
+		case ']':
+			buf.WriteByte(ch)
+			if depth > 0 {
+				depth--
+			} else if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+				// Accepted
+				out := buf.Bytes()[:buf.Len()-termLen]
+				endPos := s.pos - termLen
+				return string(out), startPos, endPos, nil
+			}
 		default:
 			buf.WriteByte(ch)
-
-			if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
-				if depth == 0 {
-					// Accepted
-					out := buf.Bytes()[:buf.Len()-termLen]
-					endPos := s.pos - termLen
-					return string(out), startPos, endPos, nil
-				}
-			}
-
-			switch ch {
-			case '[':
-				depth++
-			case ']':
-				if depth > 0 {
-					depth--
-				}
+			if depth == 0 && buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+				// Accepted
+				out := buf.Bytes()[:buf.Len()-termLen]
+				endPos := s.pos - termLen
+				return string(out), startPos, endPos, nil
 			}
 		}
 	}

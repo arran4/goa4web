@@ -1,15 +1,15 @@
 -- simple.txt --
 [b Bold]
 -- simple.expect.txt --
- Bold
+Bold
 -- simple_nested.txt --
 [b Bold [i Italic]]
 -- simple_nested.expect.txt --
- Bold  Italic
+Bold Italic
 -- link.txt --
 [a=http://example.com Link]
 -- link.expect.txt --
- Link
+Link
 -- image.txt --
 [img=http://example.com/image.jpg]
 -- image.expect.txt --
@@ -28,11 +28,11 @@
 -- spoiler.txt --
 [spoiler S]
 -- spoiler.expect.txt --
- S
+S
 -- indent.txt --
 [indent I]
 -- indent.expect.txt --
- I
+I
 -- hr.txt --
 [hr]
 -- hr.expect.txt --

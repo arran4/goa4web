@@ -30,7 +30,7 @@ func TestQuote(t *testing.T) {
 		t.Fatalf("expected child text")
 	}
 	tnode, ok := q.Children[0].(*ast.Text)
-	if !ok || tnode.Value != " hello" {
+	if !ok || tnode.Value != "hello" {
 		t.Errorf("quote text = %#v", q.Children[0])
 	}
 }
@@ -56,7 +56,7 @@ func TestQuoteFullParagraphs(t *testing.T) {
 	}
 	t1 := q1.Children[0].(*ast.Text)
 	t2 := q2.Children[0].(*ast.Text)
-	if t1.Value != " foo" || t2.Value != " bar" {
+	if t1.Value != "foo" || t2.Value != "bar" {
 		t.Errorf("quote texts = %q %q", t1.Value, t2.Value)
 	}
 }
@@ -79,11 +79,11 @@ func TestQuoteFullEscaping(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected QuoteOf, got %T", tree.Children[0])
 	}
-	if len(q.Children) < 2 {
+	if len(q.Children) < 1 {
 		t.Fatalf("unexpected children %v", q.Children)
 	}
 	tnode := q.Children[0].(*ast.Text)
-	if tnode.Value != " see " {
+	if tnode.Value != "see " {
 		t.Errorf("quote text = %q", tnode.Value)
 	}
 }
@@ -106,11 +106,11 @@ func TestQuoteFullImage(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected QuoteOf, got %T", tree.Children[0])
 	}
-	if len(q.Children) < 2 {
+	if len(q.Children) < 1 {
 		t.Fatalf("unexpected children %v", q.Children)
 	}
-	if _, ok := q.Children[1].(*ast.Image); !ok {
-		t.Fatalf("expected Image node, got %T", q.Children[1])
+	if _, ok := q.Children[0].(*ast.Image); !ok {
+		t.Fatalf("expected Image node, got %T", q.Children[0])
 	}
 }
 
@@ -201,38 +201,38 @@ func TestSubstring(t *testing.T) {
 		},
 		{
 			name:  "With Bold",
-			s:     "hello [b]world[/b]",
+			s:     "hello [b world]",
 			start: 2,
 			end:   8,
-			want:  "llo [b]wo[/b]",
+			want:  "llo [b wo]",
 		},
 		{
 			name:  "Partial Bold",
-			s:     "hello [b]world[/b]",
+			s:     "hello [b world]",
 			start: 7,
 			end:   10,
-			want:  "[b]orl[/b]",
+			want:  "[b orl]",
 		},
 		{
 			name:  "Across Bold",
-			s:     "he[b]llo[/b] world",
+			s:     "he[b llo] world",
 			start: 1,
 			end:   10,
-			want:  "e[b]llo[/b] wor",
+			want:  "e[b llo] worl",
 		},
 		{
 			name:  "Code block",
 			s:     "[code]hello[/code]",
 			start: 0,
 			end:   5,
-			want:  "[code]hello[/code]",
+			want:  "[code\nhello]",
 		},
 		{
 			name:  "Partial code block",
 			s:     "[code]hello[/code]",
 			start: 1,
 			end:   3,
-			want:  "[code]el[/code]",
+			want:  "[code\nel]",
 		},
 	}
 	for _, tt := range tests {
@@ -356,8 +356,8 @@ func TestQuoteRepro(t *testing.T) {
 		},
 		{
 			name:  "ParagraphStartingWithBracket",
-			input: "Para 1\n\n[b]bold[/b]",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b]bold[/b]]\n",
+			input: "Para 1\n\n[b bold]",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b bold]]\n",
 		},
 		{
 			name:  "NotFilterMixedQuotes",

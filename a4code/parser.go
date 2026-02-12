@@ -3,9 +3,9 @@ package a4code
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"iter"
-	"slices"
 	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -72,6 +72,106 @@ func (s *scanner) Peek() (byte, error) {
 	return b[0], nil
 }
 
+func isBlockContext(n ast.Node) bool {
+	if _, ok := n.(*ast.Root); ok {
+		return true
+	}
+	// Check specific types that have IsBlock field
+	// Actually, the AST nodes embed BaseNode, but the interface ast.Node doesn't expose it directly except via getter?
+	// But we are casting to specific types usually.
+	// Let's use type switch and access the field.
+	switch t := n.(type) {
+	case *ast.Quote:
+		return t.IsBlock
+	case *ast.QuoteOf:
+		return t.IsBlock // Always true
+	case *ast.Spoiler:
+		return t.IsBlock
+	case *ast.Indent:
+		return t.IsBlock // Always true
+	case *ast.Link:
+		return t.IsBlock
+	case *ast.Code:
+		return t.IsBlock
+	}
+	return false
+}
+
+func isBlockTag(tag string) bool {
+	switch strings.ToLower(tag) {
+	case "quote", "quoteof", "spoiler", "indent":
+		return true
+	}
+	return false
+}
+
+func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bool) {
+	if len(children) > 0 {
+		prev := children[len(children)-1]
+		if l, ok := prev.(*ast.Link); ok && l.IsBlock {
+			// Check if newChild starts with newline or is a block element
+			startsNewline := false
+
+			if isBlockContext(newChild) {
+				startsNewline = true
+			} else if txt, ok := newChild.(*ast.Text); ok {
+				if strings.HasPrefix(txt.Value, "\n") {
+					startsNewline = true
+				}
+			}
+
+			if !startsNewline {
+				l.IsBlock = false
+			}
+		}
+	}
+
+	if isContextBlock {
+		if l, ok := newChild.(*ast.Link); ok {
+			// Check previous sibling, skipping whitespace
+			prevIsNewline := false
+
+			// Start checking from the last child
+			idx := len(children) - 1
+			for idx >= 0 {
+				lastChild := children[idx]
+
+				if isBlockContext(lastChild) {
+					prevIsNewline = true
+					break
+				} else if txt, ok := lastChild.(*ast.Text); ok {
+					if strings.HasSuffix(txt.Value, "\n") {
+						prevIsNewline = true
+						break
+					}
+					if strings.TrimSpace(txt.Value) != "" {
+						// Found non-whitespace text that doesn't end in newline
+						prevIsNewline = false
+						break
+					}
+					// If strictly whitespace, continue looking back
+				} else {
+					// Other inline element (e.g. bold, italic, image)
+					prevIsNewline = false
+					break
+				}
+				idx--
+			}
+
+			// If we exhausted children without finding content (or children was empty), it's start of block
+			if idx < 0 {
+				prevIsNewline = true
+			}
+
+			if prevIsNewline {
+				l.IsBlock = true
+			} else {
+				l.IsBlock = false
+			}
+		}
+	}
+}
+
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	br := bufio.NewReader(r)
 	s := &scanner{r: br, pos: 0}
@@ -100,7 +200,10 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 		textStart = -1
 		buf.Reset()
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(t)
+			p := stack[len(stack)-1]
+			children := p.GetChildren()
+			updateBlockStatus(children, t, isBlockContext(p.(ast.Node)))
+			p.AddChild(t)
 		}
 		return yield(t, len(stack)+1)
 	}
@@ -119,8 +222,12 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 						start, _ := nNode.GetPos()
 						nNode.SetPos(start, visiblePos)
 					}
+
 					if len(stack) > 0 {
-						stack[len(stack)-1].AddChild(n)
+						p := stack[len(stack)-1]
+						children := p.GetChildren()
+						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+						p.AddChild(n)
 					}
 					if !yield(n, len(stack)+1) {
 					}
@@ -140,6 +247,8 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos, lastChar)
 			lastChar = ']' // Assume command ended with ]
 			if e != nil {
+				// We should probably return the error or handle it, but streamImpl signature doesn't return error.
+				// For now, we return (stop parsing).
 				return
 			}
 		case ']':
@@ -170,8 +279,12 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 						t.IsBlock = true
 					}
 				}
+
 				if len(stack) > 0 {
-					stack[len(stack)-1].AddChild(n)
+					p := stack[len(stack)-1]
+					children := p.GetChildren()
+					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+					p.AddChild(n)
 				}
 				if !yield(n, len(stack)+1) {
 					return
@@ -210,15 +323,21 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 
 // Parse reads markup from r and returns the root node.
 func Parse(r io.Reader) (*ast.Root, error) {
-	nodes := slices.Collect(Stream(r, WithDepth(1)))
-	root := &ast.Root{Children: nodes}
+	var nodes []ast.Node
+	root := &ast.Root{} // Temporary root to check context logic
+
+	for n := range Stream(r, WithDepth(1)) {
+		// Update block status for Root children
+		updateBlockStatus(nodes, n, true) // Root is always block context
+		nodes = append(nodes, n)
+	}
+
+	root.Children = nodes
 	// Calculate root range based on children
 	if len(nodes) > 0 {
 		start, _ := nodes[0].GetPos()
 		_, end := nodes[len(nodes)-1].GetPos()
 		// Since we track visiblePos now, start/end are consistent.
-		// If there are gaps (not possible if stream is continuous), this might be weird,
-		// but visiblePos is continuous.
 		root.SetPos(start, end)
 	} else {
 		root.SetPos(0, 0)
@@ -233,7 +352,12 @@ func ParseString(s string) (*ast.Root, error) {
 
 // ParseNodesReader parses r and returns only the top-level nodes.
 func ParseNodesReader(r io.Reader) ([]ast.Node, error) {
-	return slices.Collect(Stream(r, WithDepth(1))), nil
+	var nodes []ast.Node
+	for n := range Stream(r, WithDepth(1)) {
+		updateBlockStatus(nodes, n, true) // Treat as root context for block logic
+		nodes = append(nodes, n)
+	}
+	return nodes, nil
 }
 
 // ParseNodes parses s and returns only the top-level nodes.
@@ -247,10 +371,22 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		return stack, visiblePos, err
 	}
 
+	// Error on closing tags
+	if strings.HasPrefix(cmd, "/") {
+		return stack, visiblePos, fmt.Errorf("closing tags like [%s] are not supported in a4code; use lisp-style nesting [tag content]", cmd)
+	}
+
 	createNode := func(n ast.Container) {
+		skipArgPrefix(s) // Consume any whitespace separator between tag and content
 		n.SetPos(startPos, 0) // End will be set when popped
+
+		parentIsBlock := true
+		if len(stack) > 0 {
+			parentIsBlock = isBlockContext(stack[len(stack)-1].(ast.Node))
+		}
+
 		// Determine initial IsBlock status
-		isBlockStart := lastChar == '\n' || lastChar == '\r' || startPos == 0
+		isBlockStart := (lastChar == '\n' || lastChar == '\r' || startPos == 0) && parentIsBlock
 
 		// Set IsBlock on the node if possible
 		switch t := n.(type) {
@@ -295,7 +431,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n := &ast.Image{Src: raw}
 		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := p.GetChildren()
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	case "a", "link", "url":
@@ -309,8 +448,12 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	case "code":
 		skipArgPrefix(s)
 
-		// directOutput consumes content bytes
-		// Enable balanced brackets support for Code
+		if ch, err := s.Peek(); err == nil && ch == ']' {
+			s.ReadByte() // Consume ']' which starts the block in legacy syntax
+		}
+
+		// directOutput consumes content bytes until terminator
+		// Support [code ... [/code] and [code ... ]
 		raw, _, _, err := directOutput(s)
 		if err != nil {
 			return stack, visiblePos, err
@@ -336,7 +479,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		visiblePos += contentLen
 
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := p.GetChildren()
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	case "codein":
@@ -362,7 +508,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		visiblePos += contentLen
 
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := p.GetChildren()
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	case "quoteof":
@@ -376,7 +525,9 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	case "quote", "q":
 		createNode(&ast.Quote{})
 	case "spoiler", "sp":
-		createNode(&ast.Spoiler{})
+		n := &ast.Spoiler{}
+		createNode(n)
+		n.IsBlock = lastChar == '\n' || lastChar == '\r' || startPos == 0
 	case "indent":
 		createNode(&ast.Indent{})
 	case "hr":
@@ -388,7 +539,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
-			stack[len(stack)-1].AddChild(n)
+			p := stack[len(stack)-1]
+			children := p.GetChildren()
+			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
+			p.AddChild(n)
 		}
 		yield(n, depth)
 	default:
@@ -545,8 +699,8 @@ func directOutput(s *scanner) (string, int, int, error) {
 			}
 			return "", 0, 0, err
 		}
-		switch ch {
-		case '\\':
+
+		if ch == '\\' {
 			next, err := s.ReadByte()
 			if err != nil {
 				if err == io.EOF {
@@ -555,19 +709,25 @@ func directOutput(s *scanner) (string, int, int, error) {
 				}
 				return "", 0, 0, err
 			}
+			// Unescape: consume backslash, write next char
 			buf.WriteByte(next)
+			continue
+		}
+
+		buf.WriteByte(ch)
+
+		switch ch {
 		case '[':
-			buf.WriteByte(ch)
 			depth++
 		case ']':
 			if depth > 0 {
-				buf.WriteByte(ch)
 				depth--
 			} else {
-				return buf.String(), startPos, s.pos - 1, nil
+				// Found terminator "]" at top level
+				res := buf.String()
+				res = res[:len(res)-1]
+				return res, startPos, s.pos - 1, nil
 			}
-		default:
-			buf.WriteByte(ch)
 		}
 	}
 }

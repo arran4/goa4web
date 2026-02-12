@@ -86,6 +86,40 @@ func TestOffsetPagination_GetLinks(t *testing.T) {
 	}
 }
 
+func TestOffsetPagination_NavLinks(t *testing.T) {
+	p := &common.OffsetPagination{
+		TotalItems: 30,
+		PageSize:   10,
+		Offset:     10,
+		BaseURL:    "/test",
+	}
+
+	if link := p.StartLink(); link != "/test?offset=0" {
+		t.Errorf("StartLink: got %s, want /test?offset=0", link)
+	}
+	if link := p.PrevLink(); link != "/test?offset=0" {
+		t.Errorf("PrevLink: got %s, want /test?offset=0", link)
+	}
+	if link := p.NextLink(); link != "/test?offset=20" {
+		t.Errorf("NextLink: got %s, want /test?offset=20", link)
+	}
+
+	// First page
+	p.Offset = 0
+	if link := p.StartLink(); link != "" {
+		t.Errorf("StartLink (first page): got %s, want empty", link)
+	}
+	if link := p.PrevLink(); link != "" {
+		t.Errorf("PrevLink (first page): got %s, want empty", link)
+	}
+
+	// Last page
+	p.Offset = 20
+	if link := p.NextLink(); link != "" {
+		t.Errorf("NextLink (last page): got %s, want empty", link)
+	}
+}
+
 func TestPageNumberPagination_GetLinks(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -152,5 +186,39 @@ func TestPageNumberPagination_GetLinks(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestPageNumberPagination_NavLinks(t *testing.T) {
+	p := &common.PageNumberPagination{
+		TotalItems:  30,
+		PageSize:    10,
+		CurrentPage: 2,
+		BaseURL:     "/test",
+	}
+
+	if link := p.StartLink(); link != "/test?page=1" {
+		t.Errorf("StartLink: got %s, want /test?page=1", link)
+	}
+	if link := p.PrevLink(); link != "/test?page=1" {
+		t.Errorf("PrevLink: got %s, want /test?page=1", link)
+	}
+	if link := p.NextLink(); link != "/test?page=3" {
+		t.Errorf("NextLink: got %s, want /test?page=3", link)
+	}
+
+	// First page
+	p.CurrentPage = 1
+	if link := p.StartLink(); link != "" {
+		t.Errorf("StartLink (first page): got %s, want empty", link)
+	}
+	if link := p.PrevLink(); link != "" {
+		t.Errorf("PrevLink (first page): got %s, want empty", link)
+	}
+
+	// Last page
+	p.CurrentPage = 3
+	if link := p.NextLink(); link != "" {
+		t.Errorf("NextLink (last page): got %s, want empty", link)
 	}
 }

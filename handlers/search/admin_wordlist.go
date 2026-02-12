@@ -115,8 +115,6 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	numPages := int((totalCount + int64(pageSize-1)) / int64(pageSize))
-
 	base := "/admin/search/list"
 	vals := url.Values{}
 	if letter != "" {
@@ -135,14 +133,6 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		BaseURL:     pagBase,
 		ParamName:   "page",
 	})
-	if page < numPages {
-		vals.Set("page", strconv.Itoa(page+1))
-		cd.NextLink = base + "?" + vals.Encode()
-	}
-	if page > 1 {
-		vals.Set("page", strconv.Itoa(page-1))
-		cd.PrevLink = base + "?" + vals.Encode()
-	}
 
 	AdminSearchWordListPageTmpl.Handle(w, r, data)
 }

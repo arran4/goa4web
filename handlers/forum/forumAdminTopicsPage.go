@@ -73,13 +73,6 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 		Offset:     offset,
 		BaseURL:    base,
 	})
-	if offset+ps < int(total) {
-		cd.NextLink = fmt.Sprintf("%s?offset=%d", base, offset+ps)
-	}
-	if offset > 0 {
-		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
-		cd.StartLink = base + "?offset=0"
-	}
 
 	topics := make([]*AdminTopicDisplay, 0, len(rows))
 	for _, row := range rows {

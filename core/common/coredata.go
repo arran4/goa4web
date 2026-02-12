@@ -2253,6 +2253,9 @@ func (cd *CoreData) Offset() int { return cd.currentOffset }
 // SetPagination sets the pagination strategy for the current page.
 func (cd *CoreData) SetPagination(p Pagination) {
 	cd.pagination = p
+	cd.StartLink = p.StartLink()
+	cd.PrevLink = p.PrevLink()
+	cd.NextLink = p.NextLink()
 }
 
 // PageLinks returns the pagination links for the current page.

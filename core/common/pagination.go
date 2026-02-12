@@ -15,6 +15,9 @@ type PageLink struct {
 // Pagination defines an interface for generating pagination links.
 type Pagination interface {
 	GetLinks() []PageLink
+	StartLink() string
+	PrevLink() string
+	NextLink() string
 }
 
 // OffsetPagination implements Pagination for offset-based paging.
@@ -26,6 +29,43 @@ type OffsetPagination struct {
 	ParamName  string // Defaults to "offset"
 }
 
+func (op *OffsetPagination) fmtLink(offset int) string {
+	sep := "?"
+	if strings.Contains(op.BaseURL, "?") {
+		sep = "&"
+	}
+	param := op.ParamName
+	if param == "" {
+		param = "offset"
+	}
+	return fmt.Sprintf("%s%s%s=%d", op.BaseURL, sep, param, offset)
+}
+
+func (op *OffsetPagination) StartLink() string {
+	if op.Offset <= 0 {
+		return ""
+	}
+	return op.fmtLink(0)
+}
+
+func (op *OffsetPagination) PrevLink() string {
+	if op.Offset <= 0 {
+		return ""
+	}
+	prev := op.Offset - op.PageSize
+	if prev < 0 {
+		prev = 0
+	}
+	return op.fmtLink(prev)
+}
+
+func (op *OffsetPagination) NextLink() string {
+	if op.Offset+op.PageSize >= op.TotalItems {
+		return ""
+	}
+	return op.fmtLink(op.Offset + op.PageSize)
+}
+
 func (op *OffsetPagination) GetLinks() []PageLink {
 	if op.PageSize <= 0 {
 		return nil
@@ -35,22 +75,12 @@ func (op *OffsetPagination) GetLinks() []PageLink {
 		return nil
 	}
 	currentPage := op.Offset/op.PageSize + 1
-	param := op.ParamName
-	if param == "" {
-		param = "offset"
-	}
 
 	var links []PageLink
-	sep := "?"
-	if strings.Contains(op.BaseURL, "?") {
-		sep = "&"
-	}
-
 	for i := 1; i <= pages; i++ {
-		link := fmt.Sprintf("%s%s%s=%d", op.BaseURL, sep, param, (i-1)*op.PageSize)
 		links = append(links, PageLink{
 			Num:    i,
-			Link:   link,
+			Link:   op.fmtLink((i - 1) * op.PageSize),
 			Active: i == currentPage,
 		})
 	}
@@ -66,6 +96,43 @@ type PageNumberPagination struct {
 	ParamName   string // Defaults to "page"
 }
 
+func (pp *PageNumberPagination) fmtLink(page int) string {
+	sep := "?"
+	if strings.Contains(pp.BaseURL, "?") {
+		sep = "&"
+	}
+	param := pp.ParamName
+	if param == "" {
+		param = "page"
+	}
+	return fmt.Sprintf("%s%s%s=%d", pp.BaseURL, sep, param, page)
+}
+
+func (pp *PageNumberPagination) StartLink() string {
+	if pp.CurrentPage <= 1 {
+		return ""
+	}
+	return pp.fmtLink(1)
+}
+
+func (pp *PageNumberPagination) PrevLink() string {
+	if pp.CurrentPage <= 1 {
+		return ""
+	}
+	return pp.fmtLink(pp.CurrentPage - 1)
+}
+
+func (pp *PageNumberPagination) NextLink() string {
+	if pp.PageSize <= 0 {
+		return ""
+	}
+	pages := (pp.TotalItems + pp.PageSize - 1) / pp.PageSize
+	if pp.CurrentPage >= pages {
+		return ""
+	}
+	return pp.fmtLink(pp.CurrentPage + 1)
+}
+
 func (pp *PageNumberPagination) GetLinks() []PageLink {
 	if pp.PageSize <= 0 {
 		return nil
@@ -75,22 +142,11 @@ func (pp *PageNumberPagination) GetLinks() []PageLink {
 		return nil
 	}
 
-	param := pp.ParamName
-	if param == "" {
-		param = "page"
-	}
-
 	var links []PageLink
-	sep := "?"
-	if strings.Contains(pp.BaseURL, "?") {
-		sep = "&"
-	}
-
 	for i := 1; i <= pages; i++ {
-		link := fmt.Sprintf("%s%s%s=%d", pp.BaseURL, sep, param, i)
 		links = append(links, PageLink{
 			Num:    i,
-			Link:   link,
+			Link:   pp.fmtLink(i),
 			Active: i == pp.CurrentPage,
 		})
 	}

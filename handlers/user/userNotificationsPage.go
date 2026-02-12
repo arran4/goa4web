@@ -66,10 +66,8 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := "/usr/notifications"
-	allParam := ""
 	pagBase := base
 	if showAll {
-		allParam = "&all=1"
 		pagBase += "?all=1"
 	}
 	cd.SetPagination(&common.OffsetPagination{
@@ -78,13 +76,6 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Offset:     offset,
 		BaseURL:    pagBase,
 	})
-	if offset+ps < int(count) {
-		cd.NextLink = fmt.Sprintf("%s?offset=%d%s", base, offset+ps, allParam)
-	}
-	if offset > 0 {
-		cd.PrevLink = fmt.Sprintf("%s?offset=%d%s", base, offset-ps, allParam)
-		cd.StartLink = fmt.Sprintf("%s?offset=0%s", base, allParam)
-	}
 
 	pref, _ := cd.UserSettings(cd.UserID)
 	var digestHour *int32

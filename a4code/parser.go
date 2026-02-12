@@ -311,7 +311,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 		// directOutput consumes content bytes
 		// Enable balanced brackets support for Code
-		raw, _, _, err := directOutput(s, true, "]")
+		raw, _, _, err := directOutput(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -476,14 +476,12 @@ func skipArgPrefix(s *scanner) {
 	}
 }
 
-func directOutput(s *scanner, balanced bool, terminators ...string) (string, int, int, error) {
-	lens := make([]int, len(terminators))
-	for i, t := range terminators {
-		lens[i] = len(t)
-	}
+func directOutput(s *scanner) (string, int, int, error) {
 	var buf bytes.Buffer
 	startPos := s.pos
 	depth := 0
+	terminator := "]"
+	termLen := len(terminator)
 
 	for {
 		ch, err := s.ReadByte()
@@ -507,51 +505,21 @@ func directOutput(s *scanner, balanced bool, terminators ...string) (string, int
 		default:
 			buf.WriteByte(ch)
 
-			matchedTerminator := false
-			termIdx := -1
-			for idx, term := range terminators {
-				if buf.Len() >= lens[idx] && strings.EqualFold(term, buf.String()[buf.Len()-lens[idx]:]) {
-					matchedTerminator = true
-					termIdx = idx
-					break
-				}
-			}
-
-			if matchedTerminator {
-				// If balanced check is enabled
-				if balanced {
-					term := terminators[termIdx]
-					// Check if this terminator is a weak terminator (just "]")
-					if term == "]" {
-						if depth > 0 {
-							// Ignored, treat as content
-							// depth decrement happens below
-						} else {
-							// Accepted
-							out := buf.Bytes()[:buf.Len()-lens[termIdx]]
-							endPos := s.pos - lens[termIdx]
-							return string(out), startPos, endPos, nil
-						}
-					} else {
-						// Strong terminator (e.g. [/code]), accept regardless of depth
-						out := buf.Bytes()[:buf.Len()-lens[termIdx]]
-						endPos := s.pos - lens[termIdx]
-						return string(out), startPos, endPos, nil
-					}
-				} else {
-					out := buf.Bytes()[:buf.Len()-lens[termIdx]]
-					endPos := s.pos - lens[termIdx]
+			if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+				if depth == 0 {
+					// Accepted
+					out := buf.Bytes()[:buf.Len()-termLen]
+					endPos := s.pos - termLen
 					return string(out), startPos, endPos, nil
 				}
 			}
 
-			if balanced {
-				if ch == '[' {
-					depth++
-				} else if ch == ']' {
-					if depth > 0 {
-						depth--
-					}
+			switch ch {
+			case '[':
+				depth++
+			case ']':
+				if depth > 0 {
+					depth--
 				}
 			}
 		}

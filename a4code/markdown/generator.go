@@ -127,7 +127,7 @@ func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 	io.WriteString(w, n.Language)
 	io.WriteString(w, "\n")
 	io.WriteString(w, n.Value)
-	io.WriteString(w, "\n```\n")
+	io.WriteString(w, "\n```")
 	return nil
 }
 

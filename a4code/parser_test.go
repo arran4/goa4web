@@ -133,6 +133,11 @@ func TestCodeIn(t *testing.T) {
 			input: `[codein go func main() {}]`,
 			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
 		},
+		{
+			name:  "codein with escaped bracket",
+			input: `[codein "go" func main() { a := [\]int{} }]`,
+			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="28"><code class="language-go"><span data-start-pos="0" data-end-pos="28">func main() { a := []int{} }</span></code></pre>`,
+		},
 	}
 
 	for _, tt := range tests {

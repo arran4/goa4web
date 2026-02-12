@@ -15,30 +15,46 @@
 -- image.expect.txt --
 [img=http://example.com/image.jpg]
 -- code.txt --
-[code]func[/code]
+[code]
+func main() {
+    fmt.Println("Hello")
+}
+[/code]
 -- code.expect.txt --
-[code]func[/code]
+[code]
+func main() {
+    fmt.Println("Hello")
+}
+[/code]
 -- quote.txt --
-[quote Q]
+[quote Quoted text]
 -- quote.expect.txt --
-[quote Q]
+[quote Quoted text]
 -- quoteof.txt --
-[quoteof "User" Q]
+[quoteof "User" Quoted text]
 -- quoteof.expect.txt --
-[quoteof "User" Q]
+[quoteof "User" Quoted text]
 -- spoiler.txt --
-[spoiler S]
+[spoiler Spoiler text]
 -- spoiler.expect.txt --
-[spoiler S]
+[spoiler Spoiler text]
 -- indent.txt --
-[indent I]
+[indent Indented text]
 -- indent.expect.txt --
-[indent I]
+[indent Indented text]
 -- hr.txt --
 [hr]
 -- hr.expect.txt --
 [hr]
 -- codein.txt --
-[codein "go" func]
+[codein "go"
+func main() {
+    fmt.Println("Hello")
+}
+]
 -- codein.expect.txt --
-[codein "go" func]
+[codein "go"
+func main() {
+    fmt.Println("Hello")
+}
+]

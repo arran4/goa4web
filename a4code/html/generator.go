@@ -155,6 +155,15 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	return nil
 }
 
+func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
+	fmt.Fprintf(w, `<pre class="a4code-block a4code-code a4code-language-%s" data-start-pos="%d" data-end-pos="%d">`, htmlEscape(n.Language), n.Start, n.End)
+	fmt.Fprintf(w, `<code class="language-%s">`, htmlEscape(n.Language))
+	fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, n.InnerStart, n.InnerEnd)
+	io.WriteString(w, htmlEscape(n.Value))
+	io.WriteString(w, "</span></code></pre>")
+	return nil
+}
+
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
 	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, n.Start, n.End)

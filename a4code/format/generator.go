@@ -89,6 +89,15 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	return nil
 }
 
+func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
+	io.WriteString(w, "[codein ")
+	escapeQuotedArg(w, n.Language)
+	io.WriteString(w, "]")
+	io.WriteString(w, n.Value)
+	io.WriteString(w, "[/codein]")
+	return nil
+}
+
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	io.WriteString(w, "[quote")
 	return g.generateChildren(w, n.Children)

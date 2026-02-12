@@ -449,6 +449,33 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 				return err
 			}
 		}
+	case "codein":
+		switch a.CodeType {
+		case CTTableOfContents, CTTagStrip, CTWordsOnly:
+		default:
+			language, err := a.getNextReader(r, false)
+			if err != nil && err != io.EOF {
+				return err
+			}
+			if len(language) >= 2 && language[0] == '"' && language[len(language)-1] == '"' {
+				language = language[1 : len(language)-1]
+			}
+			if _, err := a.readWhiteSpace(r); err != nil && err != io.EOF {
+				return err
+			}
+			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
+				r.ReadByte()
+			}
+			if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
+				return err
+			}
+			if err := a.directOutputReader(r, w, "[/codein]", "codein]"); err != nil {
+				return err
+			}
+			if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {
+				return err
+			}
+		}
 	case "quoteof":
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:

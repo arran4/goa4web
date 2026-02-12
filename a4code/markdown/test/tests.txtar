@@ -49,3 +49,10 @@ Text[hr]
 Text
 ---
 
+-- codein.txt --
+[codein "go"]func[/codein]
+-- codein.expect.txt --
+
+```go
+func
+```

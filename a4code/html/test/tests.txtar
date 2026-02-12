@@ -38,3 +38,7 @@
 [hr]
 -- hr.expect.txt --
 <hr data-start-pos="0" data-end-pos="0" />
+-- codein.txt --
+[codein "go"]func[/codein]
+-- codein.expect.txt --
+<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="4"><code class="language-go"><span data-start-pos="0" data-end-pos="4">func</span></code></pre>

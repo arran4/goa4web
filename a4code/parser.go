@@ -284,6 +284,37 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			stack[len(stack)-1].AddChild(n)
 		}
 		yield(n, depth)
+	case "codein":
+		skipArgPrefix(s)
+		language, err := getNextArg(s)
+		if err != nil && err != io.EOF {
+			return stack, visiblePos, err
+		}
+		skipArgPrefix(s)
+		if ch, err := s.ReadByte(); err == nil {
+			if ch != ']' {
+				s.UnreadByte()
+			}
+		}
+		// directOutput consumes content bytes
+		raw, _, _, err := directOutput(s, "[/codein]", "codein]")
+		if err != nil {
+			return stack, visiblePos, err
+		}
+		// raw is the content.
+		contentLen := len(raw)
+		innerStart := visiblePos
+		innerEnd := visiblePos + contentLen
+
+		n := &ast.CodeIn{Language: language, Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
+		n.SetPos(startPos, innerEnd) // Code node includes content
+
+		visiblePos += contentLen
+
+		if len(stack) > 0 {
+			stack[len(stack)-1].AddChild(n)
+		}
+		yield(n, depth)
 	case "quoteof":
 		skipArgPrefix(s)
 		name, err := getNextArg(s)

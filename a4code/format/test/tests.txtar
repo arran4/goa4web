@@ -46,3 +46,7 @@ func main() {
 [hr]
 -- hr.expect.txt --
 [hr]
+-- codein.txt --
+[codein "go"]func[/codein]
+-- codein.expect.txt --
+[codein "go"]func[/codein]

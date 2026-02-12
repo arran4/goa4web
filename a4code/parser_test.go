@@ -116,3 +116,40 @@ func TestQuoteOfHTML(t *testing.T) {
 		t.Errorf("got %q want %q", got, want)
 	}
 }
+
+func TestCodeIn(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "simple codein",
+			input: `[codein "go"]func main() {}[/codein]`,
+			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
+		},
+		{
+			name:  "codein unquoted language",
+			input: `[codein go]func main() {}[/codein]`,
+			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
+		},
+		{
+			name:  "codein with closing tag",
+			input: `[codein "go"]func main() {}[/codein]`,
+			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree, err := Parse(strings.NewReader(tt.input))
+			if err != nil {
+				t.Fatalf("parse error: %v", err)
+			}
+			got := ToHTML(tree)
+			if got != tt.want {
+				t.Errorf("got %q want %q", got, tt.want)
+			}
+		})
+	}
+}

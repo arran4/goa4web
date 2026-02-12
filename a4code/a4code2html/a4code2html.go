@@ -501,7 +501,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
 				return err
 			}
-			if err := a.directOutputReader(r, w, "]"); err != nil {
+			if err := a.directOutputReader(r, w); err != nil {
 				return err
 			}
 			if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {

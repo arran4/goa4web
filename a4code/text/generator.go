@@ -1,10 +1,15 @@
 package text
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/arran4/goa4web/a4code/ast"
 )
+
+type lineTracker interface {
+	isStartOfLine() bool
+}
 
 type SmartWriter struct {
 	w        io.Writer
@@ -20,6 +25,54 @@ func (sw *SmartWriter) Write(p []byte) (n int, err error) {
 		sw.lastByte = p[n-1]
 	}
 	return
+}
+
+func (sw *SmartWriter) isStartOfLine() bool {
+	return sw.lastByte == '\n'
+}
+
+type PrefixWriter struct {
+	w         io.Writer
+	prefix    []byte
+	startLine bool
+}
+
+func (pw *PrefixWriter) isStartOfLine() bool {
+	return pw.startLine
+}
+
+func (pw *PrefixWriter) Write(p []byte) (int, error) {
+	written := 0
+	for len(p) > 0 {
+		if pw.startLine {
+			if _, err := pw.w.Write(pw.prefix); err != nil {
+				return written, err
+			}
+			pw.startLine = false
+		}
+
+		idx := bytes.IndexByte(p, '\n')
+		var toWrite []byte
+		if idx == -1 {
+			toWrite = p
+		} else {
+			toWrite = p[:idx+1]
+		}
+
+		n, err := pw.w.Write(toWrite)
+		written += n
+		if err != nil {
+			return written, err
+		}
+
+		if idx != -1 {
+			pw.startLine = true
+			p = p[idx+1:]
+		} else {
+			p = nil
+		}
+	}
+	return written, nil
 }
 
 type Generator struct{}
@@ -89,11 +142,24 @@ func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
-	return g.visitChildren(w, n.Children)
+	if lt, ok := w.(lineTracker); ok {
+		if !lt.isStartOfLine() {
+			io.WriteString(w, "\n")
+		}
+	}
+	pw := &PrefixWriter{w: w, prefix: []byte("> "), startLine: true}
+	return g.visitChildren(pw, n.Children)
 }
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
-	return g.visitChildren(w, n.Children)
+	if lt, ok := w.(lineTracker); ok {
+		if !lt.isStartOfLine() {
+			io.WriteString(w, "\n")
+		}
+	}
+	io.WriteString(w, "> "+n.Name+" wrote:\n")
+	pw := &PrefixWriter{w: w, prefix: []byte("> "), startLine: true}
+	return g.visitChildren(pw, n.Children)
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
@@ -105,8 +171,8 @@ func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
-	if sw, ok := w.(*SmartWriter); ok {
-		if sw.lastByte != '\n' {
+	if lt, ok := w.(lineTracker); ok {
+		if !lt.isStartOfLine() {
 			io.WriteString(w, "\n")
 		}
 	}

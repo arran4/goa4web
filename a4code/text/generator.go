@@ -84,6 +84,10 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	return nil
 }
 
+func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
+	return nil
+}
+
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	return g.visitChildren(w, n.Children)
 }

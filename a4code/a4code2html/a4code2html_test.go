@@ -492,5 +492,15 @@ func TestA4code2htmlBlockQuote(t *testing.T) {
 	got := string(gotBytes)
 	if !strings.Contains(got, "<blockquote class=\"a4code-block a4code-quote") {
 		t.Errorf("expected block quote <blockquote>, got %q", got)
+  }
+}
+
+func TestCodeIn(t *testing.T) {
+	c := New()
+	c.SetInput("[codein \"go\" func main() {}]")
+	got := testhelpers.Must(io.ReadAll(c.Process()))
+	want := "<div class=\"a4code-block a4code-code-wrapper a4code-language-go\"><div class=\"code-header\">Code (go)</div><pre class=\"a4code-code-body\"><code class=\"language-go\">func main() {}</code></pre></div>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
 	}
 }

@@ -225,6 +225,7 @@ func TestPublish(t *testing.T) {
 		select {
 		case env := <-chEmail:
 			t.Fatalf("chEmail received unexpected message: %v", env.Msg)
+			env.Ack()
 		default:
 			// OK
 		}
@@ -256,6 +257,7 @@ func TestPublish(t *testing.T) {
 		select {
 		case env := <-chTask:
 			t.Fatalf("chTask received unexpected message: %v", env.Msg)
+			env.Ack()
 		default:
 			// OK
 		}
@@ -302,6 +304,7 @@ func TestPublish_NonBlocking(t *testing.T) {
 	select {
 	case env := <-ch:
 		t.Fatalf("Received unexpected message (should have been dropped): %v", env.Msg)
+		env.Ack()
 	default:
 		// OK
 	}
@@ -325,6 +328,9 @@ func TestShutdown(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		env := <-ch
 		env.Ack()
+		for env := range ch {
+			env.Ack()
+		}
 	}()
 
 	err = bus.Shutdown(ctx)
@@ -386,7 +392,10 @@ func TestConcurrentAccess(t *testing.T) {
 			ch := bus.Subscribe()
 			for {
 				select {
-				case <-ch:
+				case env, ok := <-ch:
+					if ok {
+						env.Ack()
+					}
 				case <-stop:
 					return
 				}

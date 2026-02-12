@@ -43,3 +43,6 @@ Text[hr]
 Text
 ---
 
+-- codein.txt --
+[codein "go" func]
+-- codein.expect.txt --

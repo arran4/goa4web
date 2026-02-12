@@ -46,3 +46,15 @@ func main() {
 [hr]
 -- hr.expect.txt --
 [hr]
+-- codein.txt --
+[codein "go"
+func main() {
+    fmt.Println("Hello")
+}
+]
+-- codein.expect.txt --
+[codein "go"
+func main() {
+    fmt.Println("Hello")
+}
+]

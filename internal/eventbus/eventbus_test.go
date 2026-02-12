@@ -2,9 +2,6 @@ package eventbus
 
 import (
 	"context"
-	"sync"
-	"testing"
-	"time"
 	"net/http"
 	"sync"
 	"testing"

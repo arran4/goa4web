@@ -6,6 +6,7 @@ import (
 	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/google/go-cmp/cmp"
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -126,16 +127,6 @@ func TestSpoiler(t *testing.T) {
 	}
 }
 
-func TestCodeSlashClose(t *testing.T) {
-	c := New()
-	c.SetInput("[code]foo[/code]")
-	got := testhelpers.Must(io.ReadAll(c.Process()))
-	want := "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">]foo</pre></div>"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
-	}
-}
-
 func TestQuoteMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quote hi]")
@@ -173,7 +164,9 @@ func TestNestedQuotes(t *testing.T) {
 	c := New()
 	c.SetInput("[quote 0 [quote 1 [quote 2]]]")
 	got := testhelpers.Must(io.ReadAll(c.Process()))
-	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">0 <blockquote class=\"a4code-block a4code-quote quote-color-1\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">1 <blockquote class=\"a4code-block a4code-quote quote-color-2\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">2</div></blockquote></div></blockquote></div></blockquote>"
+	// [quote 0] is at line start -> Block.
+	// [quote 1] and [quote 2] are not at line start -> Inline <q>.
+	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">0 <q class=\"a4code-inline a4code-quote\">1 <q class=\"a4code-inline a4code-quote\">2</q></q></div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
 	}
@@ -446,5 +439,58 @@ func TestLinkProvider(t *testing.T) {
 	want = "<img class=\"a4code-image\" src=\"mapped:foo.jpg\" />"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestA4code2htmlInlineCode(t *testing.T) {
+	c := New()
+	c.SetInput("text [code inline] text")
+	gotBytes, _ := io.ReadAll(c.Process())
+	got := string(gotBytes)
+	want := "text <code class=\"a4code-inline a4code-code\">inline</code> text"
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestA4code2htmlBlockCode(t *testing.T) {
+	c := New()
+	c.SetInput("[code \nblock\n]")
+	gotBytes, _ := io.ReadAll(c.Process())
+	got := string(gotBytes)
+	// Check for block wrapper
+	if !strings.Contains(got, "a4code-block a4code-code-wrapper") {
+		t.Errorf("expected block wrapper, got %q", got)
+	}
+}
+
+func TestA4code2htmlInlineCodeWithBrackets(t *testing.T) {
+	c := New()
+	c.SetInput("please use [code [quote]] so I know.")
+	gotBytes, _ := io.ReadAll(c.Process())
+	got := string(gotBytes)
+	want := "please use <code class=\"a4code-inline a4code-code\">[quote]</code> so I know."
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestA4code2htmlInlineQuote(t *testing.T) {
+	c := New()
+	c.SetInput("text [quote inline] text")
+	gotBytes, _ := io.ReadAll(c.Process())
+	got := string(gotBytes)
+	if !strings.Contains(got, "<q class=\"a4code-inline a4code-quote\">") {
+		t.Errorf("expected inline quote <q>, got %q", got)
+	}
+}
+
+func TestA4code2htmlBlockQuote(t *testing.T) {
+	c := New()
+	c.SetInput("[quote \nblock\n]")
+	gotBytes, _ := io.ReadAll(c.Process())
+	got := string(gotBytes)
+	if !strings.Contains(got, "<blockquote class=\"a4code-block a4code-quote") {
+		t.Errorf("expected block quote <blockquote>, got %q", got)
 	}
 }

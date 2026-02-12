@@ -14,7 +14,7 @@
 [img=http://example.com/image.jpg]
 -- image.expect.txt --
 -- code.txt --
-[code]func[/code]
+[code func]
 -- code.expect.txt --
 -- quote.txt --
 [quote Q]

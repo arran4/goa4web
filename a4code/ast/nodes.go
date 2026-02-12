@@ -244,6 +244,25 @@ func (c *Code) String() string {
 	return "[code]" + c.Value + "[/code]"
 }
 
+// CodeIn block with language specification.
+type CodeIn struct {
+	BaseNode
+	Language   string
+	InnerStart int
+	InnerEnd   int
+	Value      string
+}
+
+func (*CodeIn) isNode() {}
+
+func (c *CodeIn) Transform(op func(Node) (Node, error)) (Node, error) {
+	return transformChildren(c, op)
+}
+
+func (c *CodeIn) String() string {
+	return "[codein \"" + c.Language + "\" " + c.Value + "]"
+}
+
 // Quote node.
 type Quote struct {
 	BaseNode

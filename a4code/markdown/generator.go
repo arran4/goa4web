@@ -122,6 +122,15 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	return nil
 }
 
+func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
+	io.WriteString(w, "\n```")
+	io.WriteString(w, n.Language)
+	io.WriteString(w, "\n")
+	io.WriteString(w, n.Value)
+	io.WriteString(w, "\n```")
+	return nil
+}
+
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	// Fallback to HTML for complex blocks
 	io.WriteString(w, "<blockquote>")

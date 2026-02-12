@@ -284,6 +284,32 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			stack[len(stack)-1].AddChild(n)
 		}
 		yield(n, depth)
+	case "codein":
+		skipArgPrefix(s)
+		language, err := getNextArg(s)
+		if err != nil && err != io.EOF {
+			return stack, visiblePos, err
+		}
+		skipArgPrefix(s)
+		// directOutput consumes content bytes
+		raw, _, _, err := directOutput(s, "]")
+		if err != nil {
+			return stack, visiblePos, err
+		}
+		// raw is the content.
+		contentLen := len(raw)
+		innerStart := visiblePos
+		innerEnd := visiblePos + contentLen
+
+		n := &ast.CodeIn{Language: language, Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
+		n.SetPos(startPos, innerEnd) // Code node includes content
+
+		visiblePos += contentLen
+
+		if len(stack) > 0 {
+			stack[len(stack)-1].AddChild(n)
+		}
+		yield(n, depth)
 	case "quoteof":
 		skipArgPrefix(s)
 		name, err := getNextArg(s)
@@ -414,11 +440,41 @@ func getNext(s *scanner, endAtEqual bool) (string, error) {
 }
 
 func skipArgPrefix(s *scanner) {
-	if ch, err := s.ReadByte(); err == nil {
-		if ch != '=' && ch != ' ' {
+	ch, err := s.ReadByte()
+	if err != nil {
+		return
+	}
+
+	if ch == ' ' || ch == '=' {
+		// Optional newline after space/eq
+		next, err := s.ReadByte()
+		if err != nil {
+			return
+		}
+		if next == '\n' {
+			return
+		}
+		if next == '\r' {
+			if next2, err := s.ReadByte(); err == nil && next2 != '\n' {
+				s.UnreadByte()
+			}
+			return
+		}
+		s.UnreadByte()
+		return
+	}
+
+	if ch == '\n' {
+		return
+	}
+	if ch == '\r' {
+		if next, err := s.ReadByte(); err == nil && next != '\n' {
 			s.UnreadByte()
 		}
+		return
 	}
+
+	s.UnreadByte()
 }
 
 func directOutput(s *scanner, terminators ...string) (string, int, int, error) {

@@ -15,6 +15,7 @@ type Generator interface {
 	Link(w io.Writer, n *Link) error
 	Image(w io.Writer, n *Image) error
 	Code(w io.Writer, n *Code) error
+	CodeIn(w io.Writer, n *CodeIn) error
 	Quote(w io.Writer, n *Quote) error
 	QuoteOf(w io.Writer, n *QuoteOf) error
 	Spoiler(w io.Writer, n *Spoiler) error
@@ -49,6 +50,8 @@ func Generate(w io.Writer, n Node, g Generator) error {
 		return g.Image(w, t)
 	case *Code:
 		return g.Code(w, t)
+	case *CodeIn:
+		return g.CodeIn(w, t)
 	case *Quote:
 		return g.Quote(w, t)
 	case *QuoteOf:

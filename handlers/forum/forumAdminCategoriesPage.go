@@ -46,12 +46,12 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	base := "/admin/forum/categories"
-	cd.SetPagination(&common.OffsetPagination{
+	cd.Pagination = &common.OffsetPagination{
 		TotalItems: int(total),
 		PageSize:   ps,
 		Offset:     offset,
 		BaseURL:    base,
-	})
+	}
 
 	data := Data{Categories: rows}
 

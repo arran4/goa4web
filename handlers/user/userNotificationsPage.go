@@ -70,12 +70,12 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	if showAll {
 		pagBase += "?all=1"
 	}
-	cd.SetPagination(&common.OffsetPagination{
+	cd.Pagination = &common.OffsetPagination{
 		TotalItems: int(count),
 		PageSize:   ps,
 		Offset:     offset,
 		BaseURL:    pagBase,
-	})
+	}
 
 	pref, _ := cd.UserSettings(cd.UserID)
 	var digestHour *int32

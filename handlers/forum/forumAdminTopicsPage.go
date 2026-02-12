@@ -67,12 +67,12 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 
 	// pagination links
 	base := "/admin/forum/topics"
-	cd.SetPagination(&common.OffsetPagination{
+	cd.Pagination = &common.OffsetPagination{
 		TotalItems: int(total),
 		PageSize:   ps,
 		Offset:     offset,
 		BaseURL:    base,
-	})
+	}
 
 	topics := make([]*AdminTopicDisplay, 0, len(rows))
 	for _, row := range rows {

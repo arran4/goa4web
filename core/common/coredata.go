@@ -2250,11 +2250,6 @@ func (cd *CoreData) CurrentRequestID() int32 { return cd.currentRequestID }
 // Offset returns the current pagination offset.
 func (cd *CoreData) Offset() int { return cd.currentOffset }
 
-// SetPagination sets the pagination strategy for the current page.
-func (cd *CoreData) SetPagination(p Pagination) {
-	cd.Pagination = p
-}
-
 // SetCurrentRoleID stores the role ID for subsequent lookups.
 func (cd *CoreData) SetCurrentRoleID(id int32) { cd.currentRoleID = id }
 

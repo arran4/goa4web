@@ -126,13 +126,13 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		pagBase += "?" + vals.Encode()
 	}
 
-	cd.SetPagination(&common.PageNumberPagination{
+	cd.Pagination = &common.PageNumberPagination{
 		TotalItems:  int(totalCount),
 		PageSize:    pageSize,
 		CurrentPage: page,
 		BaseURL:     pagBase,
 		ParamName:   "page",
-	})
+	}
 
 	AdminSearchWordListPageTmpl.Handle(w, r, data)
 }

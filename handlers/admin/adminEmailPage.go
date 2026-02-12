@@ -34,6 +34,10 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.PageTitle = fmt.Sprintf("Email %s", strings.Title(mode))
+	cd.SetBreadcrumbs(
+		common.Breadcrumb{Title: "Admin", Link: "/admin"},
+		common.Breadcrumb{Title: "Email", Link: "/admin/email/queue"},
+	)
 
 	pageSize := cd.PageSize()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

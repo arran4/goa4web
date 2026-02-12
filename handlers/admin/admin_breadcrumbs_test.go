@@ -159,3 +159,35 @@ func TestAdminPages_HaveTitlesAndBreadcrumbs(t *testing.T) {
 		}
 	})
 }
+
+func TestAdminBreadcrumbsOverride(t *testing.T) {
+	t.Run("Custom Breadcrumbs", func(t *testing.T) {
+		cd, _ := setupCoreData(t, "/admin")
+		cd.SetCurrentSection("admin")
+		cd.PageTitle = "Custom Page"
+
+		// Default behavior check (assuming "Custom Page" falls into default case)
+		// default: crumbs = append(crumbs, Breadcrumb{Title: cd.PageTitle})
+		// Breadcrumbs() strips the last one, so we get ["Admin"]
+		defaultCrumbs := cd.Breadcrumbs()
+		if len(defaultCrumbs) != 1 || defaultCrumbs[0].Title != "Admin" {
+			t.Errorf("Expected default crumbs [Admin], got %v", defaultCrumbs)
+		}
+
+		// Set custom breadcrumbs
+		custom := []common.Breadcrumb{
+			{Title: "Home", Link: "/"},
+			{Title: "Custom", Link: "/custom"},
+		}
+		cd.SetBreadcrumbs(custom...)
+
+		// Verify override
+		crumbs := cd.Breadcrumbs()
+		if len(crumbs) != 2 {
+			t.Errorf("Expected 2 crumbs, got %d", len(crumbs))
+		}
+		if crumbs[0].Title != "Home" || crumbs[1].Title != "Custom" {
+			t.Errorf("Crumbs mismatch: %v", crumbs)
+		}
+	})
+}

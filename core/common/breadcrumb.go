@@ -12,10 +12,19 @@ type Breadcrumb struct {
 	Link  string
 }
 
+// SetBreadcrumbs allows manually setting the breadcrumbs for the current page,
+// overriding the default generation logic.
+func (cd *CoreData) SetBreadcrumbs(crumbs ...Breadcrumb) {
+	cd.customBreadcrumbs = crumbs
+}
+
 // Breadcrumbs builds the breadcrumb trail for the current section based on
 // selection information stored on CoreData. It returns nil if no breadcrumbs
 // are applicable.
 func (cd *CoreData) Breadcrumbs() []Breadcrumb {
+	if len(cd.customBreadcrumbs) > 0 {
+		return cd.customBreadcrumbs
+	}
 	if cd == nil || cd.queries == nil {
 		return nil
 	}

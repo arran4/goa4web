@@ -184,6 +184,7 @@ type CoreData struct {
 	currentCategoryID                int32
 	currentWritingID                 int32
 	event                            *eventbus.TaskEvent
+	customBreadcrumbs                []Breadcrumb
 	cache                            DataCache
 }
 

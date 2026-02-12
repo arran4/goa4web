@@ -2,6 +2,9 @@ package eventbus
 
 import (
 	"context"
+	"sync"
+	"testing"
+	"time"
 	"net/http"
 	"sync"
 	"testing"
@@ -205,16 +208,16 @@ func TestPublish(t *testing.T) {
 
 		// Verify chAll received taskMsg
 		select {
-		case env := <-chAll:
-			assert.Equal(t, taskMsg, env.Msg)
+		case msg := <-chAll:
+			assert.Equal(t, taskMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chAll did not receive taskMsg")
 		}
 
 		// Verify chTask received taskMsg
 		select {
-		case env := <-chTask:
-			assert.Equal(t, taskMsg, env.Msg)
+		case msg := <-chTask:
+			assert.Equal(t, taskMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chTask did not receive taskMsg")
 		}
@@ -234,16 +237,16 @@ func TestPublish(t *testing.T) {
 
 		// Verify chAll received emailMsg
 		select {
-		case env := <-chAll:
-			assert.Equal(t, emailMsg, env.Msg)
+		case msg := <-chAll:
+			assert.Equal(t, emailMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chAll did not receive emailMsg")
 		}
 
 		// Verify chEmail received emailMsg
 		select {
-		case env := <-chEmail:
-			assert.Equal(t, emailMsg, env.Msg)
+		case msg := <-chEmail:
+			assert.Equal(t, emailMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chEmail did not receive emailMsg")
 		}
@@ -287,8 +290,8 @@ func TestPublish_NonBlocking(t *testing.T) {
 
 	// Verify we received the first message
 	select {
-	case env := <-ch:
-		assert.Equal(t, msg1, env.Msg)
+	case msg := <-ch:
+		assert.Equal(t, msg1, msg)
 	default:
 		t.Fatal("Expected msg1 in channel")
 	}
@@ -311,16 +314,14 @@ func TestShutdown(t *testing.T) {
 	require.NoError(t, err)
 
 	// Shutdown with context
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	// Drain the channel in background so Shutdown can complete
 	go func() {
 		// Wait a bit to simulate processing time, but less than context timeout
-		time.Sleep(10 * time.Millisecond)
-		for env := range ch {
-			env.Ack()
-		}
+		time.Sleep(50 * time.Millisecond)
+		<-ch
 	}()
 
 	err = bus.Shutdown(ctx)

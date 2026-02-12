@@ -202,7 +202,7 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, balanced bool, terminators ...string) error {
+func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, terminators ...string) error {
 	lens := make([]int, len(terminators))
 	for i, t := range terminators {
 		lens[i] = len(t)
@@ -247,25 +247,17 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, balanced 
 			}
 
 			if matchedTerminator {
-				if balanced {
-					term := terminators[termIdx]
-					if term == "]" {
-						if depth > 0 {
-							// Ignore terminator, treat as content
-						} else {
-							out := buf.Bytes()[:buf.Len()-lens[termIdx]]
-							if _, err := w.Write(out); err != nil {
-								return err
-							}
-							return nil
-						}
-					} else {
+				term := terminators[termIdx]
+				// We assume checking against "]" is sufficient for balanced logic
+				if term == "]" {
+					if depth == 0 {
 						out := buf.Bytes()[:buf.Len()-lens[termIdx]]
 						if _, err := w.Write(out); err != nil {
 							return err
 						}
 						return nil
 					}
+					// Ignore terminator, treat as content
 				} else {
 					out := buf.Bytes()[:buf.Len()-lens[termIdx]]
 					if _, err := w.Write(out); err != nil {
@@ -275,13 +267,11 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer, balanced 
 				}
 			}
 
-			if balanced {
-				if ch == '[' {
-					depth++
-				} else if ch == ']' {
-					if depth > 0 {
-						depth--
-					}
+			if ch == '[' {
+				depth++
+			} else if ch == ']' {
+				if depth > 0 {
+					depth--
 				}
 			}
 		}
@@ -482,19 +472,12 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
 			var buf bytes.Buffer
-			explicitClose := false
 			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
-				explicitClose = true
 				r.ReadByte() // consume ]
-			}
-
-			terminators := []string{"[/code]", "code]"}
-			if !explicitClose {
-				terminators = append(terminators, "]")
-			}
-
-			if err := a.directOutputReader(r, &buf, true, terminators...); err != nil {
-				return err
+			} else {
+				if err := a.directOutputReader(r, &buf, "]"); err != nil {
+					return err
+				}
 			}
 
 			isBlock := false

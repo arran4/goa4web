@@ -308,25 +308,10 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(n)
 	case "code":
 		skipArgPrefix(s)
-		explicitClose := false
-		if ch, err := s.ReadByte(); err == nil {
-			if ch == ']' {
-				explicitClose = true
-			} else {
-				s.UnreadByte()
-			}
-		}
-
-		var terminators []string
-		if explicitClose {
-			terminators = []string{"[/code]", "code]"}
-		} else {
-			terminators = []string{"[/code]", "code]", "]"}
-		}
 
 		// directOutput consumes content bytes
 		// Enable balanced brackets support for Code
-		raw, _, _, err := directOutput(s, true, terminators...)
+		raw, _, _, err := directOutput(s, true, "]")
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -345,16 +330,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
 			isBlockEnd = true
 		}
-		// Code is block if:
-		// 1. It is explicitly closed [code]...[/code] AND it is on its own line (start/end match).
-		// 2. Or if content contains newlines? (Existing behavior: <pre>).
-		// Let's stick to surroundings.
-		// If explicitClose ([code]), we lean towards block?
-		// But [code]inline[/code] should be inline if surrounded by text?
-		// User example: please use [code [quote]] so I know.
-		// If user types [code]...[/code] inside text, they expect inline?
-		// Standard markdown: `code` is inline.
-		// So checking surroundings is correct.
 
 		n.IsBlock = isBlockStart && isBlockEnd
 

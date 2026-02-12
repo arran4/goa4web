@@ -127,16 +127,6 @@ func TestSpoiler(t *testing.T) {
 	}
 }
 
-func TestCodeSlashClose(t *testing.T) {
-	c := New()
-	c.SetInput("[code]foo[/code]")
-	got := testhelpers.Must(io.ReadAll(c.Process()))
-	want := "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">foo</pre></div>"
-	if string(got) != want {
-		t.Errorf("got %q want %q", string(got), want)
-	}
-}
-
 func TestQuoteMarkup(t *testing.T) {
 	c := New()
 	c.SetInput("[quote hi]")
@@ -487,7 +477,7 @@ func TestA4code2htmlInlineCodeWithBrackets(t *testing.T) {
 
 func TestA4code2htmlInlineQuote(t *testing.T) {
 	c := New()
-	c.SetInput("text [quote]inline[/quote] text")
+	c.SetInput("text [quote inline] text")
 	gotBytes, _ := io.ReadAll(c.Process())
 	got := string(gotBytes)
 	if !strings.Contains(got, "<q class=\"a4code-inline a4code-quote\">") {
@@ -497,7 +487,7 @@ func TestA4code2htmlInlineQuote(t *testing.T) {
 
 func TestA4code2htmlBlockQuote(t *testing.T) {
 	c := New()
-	c.SetInput("[quote]\nblock\n[/quote]")
+	c.SetInput("[quote \nblock\n]")
 	gotBytes, _ := io.ReadAll(c.Process())
 	got := string(gotBytes)
 	if !strings.Contains(got, "<blockquote class=\"a4code-block a4code-quote") {

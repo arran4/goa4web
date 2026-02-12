@@ -76,10 +76,10 @@ func TestParseNodes(t *testing.T) {
 }
 
 func TestOffsets(t *testing.T) {
-	// [code]foo[/code]
+	// [code foo]
 	// vis 0-3.
 	// Inner content: foo.
-	input := "[code]foo[/code]"
+	input := "[code foo]"
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
@@ -162,7 +162,7 @@ func TestInlineCodeWithBrackets(t *testing.T) {
 }
 
 func TestInlineQuote(t *testing.T) {
-	input := "text [quote]inline[/quote] text"
+	input := "text [quote inline] text"
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
@@ -175,7 +175,7 @@ func TestInlineQuote(t *testing.T) {
 }
 
 func TestBlockQuote(t *testing.T) {
-	input := "[quote]\nblock\n[/quote]"
+	input := "[quote \nblock\n]"
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)

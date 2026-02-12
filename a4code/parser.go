@@ -250,7 +250,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	createNode := func(n ast.Container) {
 		n.SetPos(startPos, 0) // End will be set when popped
 		// Determine initial IsBlock status
-		isBlockStart := lastChar == '\n' || lastChar == '\r'
+		isBlockStart := lastChar == '\n' || lastChar == '\r' || startPos == 0
 
 		// Set IsBlock on the node if possible
 		switch t := n.(type) {
@@ -339,7 +339,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n.SetPos(startPos, innerEnd) // Code node includes content
 
 		// Determine IsBlock for Code
-		isBlockStart := lastChar == '\n' || lastChar == '\r'
+		isBlockStart := lastChar == '\n' || lastChar == '\r' || startPos == 0
 		isBlockEnd := false
 		next, err := s.Peek()
 		if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {

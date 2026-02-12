@@ -174,22 +174,8 @@ func TestNestedQuotes(t *testing.T) {
 	c := New()
 	c.SetInput("[quote 0 [quote 1 [quote 2]]]")
 	got := testhelpers.Must(io.ReadAll(c.Process()))
-	// Previous behavior was nested blocks because it didn't distinguish inline.
-	// Now with new logic, if it's not at line start, it's inline <q>.
-	// "[quote 0 [quote 1 [quote 2]]]"
-	// [quote 0] starts at char 0. atLineStart = true. -> Block.
-	// 0 ... [quote 1]. atLineStart = false. -> Inline.
-	// 1 ... [quote 2]. atLineStart = false. -> Inline.
-
-	// Expectation:
-	// <blockquote ...>...
-	// 0 <q ...>
-	// 1 <q ...>
-	// 2</q></q>...</blockquote>
-	// We need to verify if this passes with updated code, or if I need to update this test too.
-	// The original test expected nested blockquotes.
-	// I will comment out this test expectation and let it fail/I fix it, OR update it now.
-	// Updating it now seems safer.
+	// [quote 0] is at line start -> Block.
+	// [quote 1] and [quote 2] are not at line start -> Inline <q>.
 	want := "<blockquote class=\"a4code-block a4code-quote quote-color-0\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">0 <q class=\"a4code-inline a4code-quote\">1 <q class=\"a4code-inline a4code-quote\">2</q></q></div></blockquote>"
 	if string(got) != want {
 		t.Errorf("got %q want %q", string(got), want)

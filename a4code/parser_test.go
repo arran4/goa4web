@@ -98,7 +98,9 @@ func TestQuoteHTML(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(tree)
-	want := `<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><blockquote class="a4code-block a4code-quote quote-color-1" data-start-pos="7" data-end-pos="14"><div class="quote-body"><span data-start-pos="7" data-end-pos="14"> Nested</span></div></blockquote></div></blockquote>`
+	// Outer quote starts at 0 (newline/start) and ends at EOF -> Block
+	// Inner quote starts after space -> Inline
+	want := `<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><q class="a4code-inline a4code-quote" data-start-pos="7" data-end-pos="14"><span data-start-pos="7" data-end-pos="14"> Nested</span></q></div></blockquote>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}
@@ -114,5 +116,86 @@ func TestQuoteOfHTML(t *testing.T) {
 	want := `<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="14"><div class="quote-header">Quote of User:</div><div class="quote-body"><span data-start-pos="0" data-end-pos="7"> Outer </span><blockquote class="a4code-block a4code-quoteof quote-color-1" data-start-pos="7" data-end-pos="14"><div class="quote-header">Quote of User2:</div><div class="quote-body"><span data-start-pos="7" data-end-pos="14"> Nested</span></div></blockquote></div></blockquote>`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func TestInlineCode(t *testing.T) {
+	input := "text [code]inline[/code] text"
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	// Expect <code>
+	if !strings.Contains(got, "<code class=\"a4code-inline a4code-code\"") {
+		t.Errorf("expected inline code, got %q", got)
+	}
+}
+
+func TestBlockCode(t *testing.T) {
+	input := "[code]\nblock\n[/code]"
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	// Expect <pre>
+	if !strings.Contains(got, "<pre class=\"a4code-block a4code-code\"") {
+		t.Errorf("expected block code, got %q", got)
+	}
+}
+
+func TestInlineCodeWithBrackets(t *testing.T) {
+	input := "please use [code [quote]] so I know."
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	// Expect <code> and content "[quote]"
+	if !strings.Contains(got, "<code class=\"a4code-inline a4code-code\"") {
+		t.Errorf("expected inline code, got %q", got)
+	}
+	if !strings.Contains(got, "[quote]") {
+		t.Errorf("expected content [quote], got %q", got)
+	}
+}
+
+func TestInlineQuote(t *testing.T) {
+	input := "text [quote]inline[/quote] text"
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	// Expect <q>
+	if !strings.Contains(got, "<q class=\"a4code-inline a4code-quote\"") {
+		t.Errorf("expected inline quote, got %q", got)
+	}
+}
+
+func TestBlockQuote(t *testing.T) {
+	input := "[quote]\nblock\n[/quote]"
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	// Expect <blockquote>
+	if !strings.Contains(got, "<blockquote class=\"a4code-block a4code-quote") {
+		t.Errorf("expected block quote, got %q", got)
+	}
+}
+
+func TestQuoteOfAlwaysBlock(t *testing.T) {
+	input := "text [quoteof user text]"
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	// Expect <blockquote>
+	if !strings.Contains(got, "<blockquote class=\"a4code-block a4code-quoteof") {
+		t.Errorf("expected block quoteof, got %q", got)
 	}
 }

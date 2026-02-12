@@ -148,26 +148,43 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	fmt.Fprintf(w, `<pre class="a4code-block a4code-code" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
-	fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, n.InnerStart, n.InnerEnd)
-	io.WriteString(w, htmlEscape(n.Value))
-	io.WriteString(w, "</span></pre>")
+	if n.IsBlock {
+		fmt.Fprintf(w, `<pre class="a4code-block a4code-code" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
+		fmt.Fprintf(w, `<span data-start-pos="%d" data-end-pos="%d">`, n.InnerStart, n.InnerEnd)
+		io.WriteString(w, htmlEscape(n.Value))
+		io.WriteString(w, "</span></pre>")
+	} else {
+		fmt.Fprintf(w, `<code class="a4code-inline a4code-code" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
+		io.WriteString(w, htmlEscape(n.Value))
+		io.WriteString(w, "</code>")
+	}
 	return nil
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
-	colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, n.Start, n.End)
-	io.WriteString(w, "<div class=\"quote-body\">")
+	if n.IsBlock {
+		colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
+		fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, n.Start, n.End)
+		io.WriteString(w, "<div class=\"quote-body\">")
 
-	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self}
-	for _, c := range n.Children {
-		if err := ast.Generate(w, c, childGen); err != nil {
-			return err
+		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self}
+		for _, c := range n.Children {
+			if err := ast.Generate(w, c, childGen); err != nil {
+				return err
+			}
 		}
+		io.WriteString(w, "</div>")
+		io.WriteString(w, "</blockquote>")
+	} else {
+		fmt.Fprintf(w, `<q class="a4code-inline a4code-quote" data-start-pos="%d" data-end-pos="%d">`, n.Start, n.End)
+		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self}
+		for _, c := range n.Children {
+			if err := ast.Generate(w, c, childGen); err != nil {
+				return err
+			}
+		}
+		io.WriteString(w, "</q>")
 	}
-	io.WriteString(w, "</div>")
-	io.WriteString(w, "</blockquote>")
 	return nil
 }
 

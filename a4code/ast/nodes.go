@@ -15,8 +15,9 @@ type Node interface {
 }
 
 type BaseNode struct {
-	Start int
-	End   int
+	Start   int
+	End     int
+	IsBlock bool
 }
 
 func (n *BaseNode) SetPos(start, end int) {

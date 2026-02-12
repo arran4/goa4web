@@ -64,6 +64,14 @@ func (s *scanner) UnreadByte() error {
 	return err
 }
 
+func (s *scanner) Peek() (byte, error) {
+	b, err := s.r.Peek(1)
+	if err != nil {
+		return 0, err
+	}
+	return b[0], nil
+}
+
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	br := bufio.NewReader(r)
 	s := &scanner{r: br, pos: 0}
@@ -75,6 +83,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	visiblePos := 0
 
 	textStart := -1
+	lastChar := byte('\n')
 
 	flush := func(offset int) bool {
 		if buf.Len() == 0 {
@@ -128,7 +137,8 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 			var e error
 			// startPos for tag is current visiblePos
 			startPos := visiblePos
-			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos)
+			stack, visiblePos, e = parseCommand(s, stack, len(stack)+1, yield, startPos, visiblePos, lastChar)
+			lastChar = ']' // Assume command ended with ]
 			if e != nil {
 				return
 			}
@@ -142,6 +152,23 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				if nNode, ok := n.(ast.Node); ok {
 					start, _ := nNode.GetPos()
 					nNode.SetPos(start, visiblePos)
+
+					// Determine IsBlock for closed node (Quote, etc)
+					switch t := nNode.(type) {
+					case *ast.Quote:
+						if t.IsBlock {
+							next, err := s.Peek()
+							if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
+								// Kept as block
+							} else {
+								t.IsBlock = false
+							}
+						}
+					case *ast.QuoteOf:
+						t.IsBlock = true
+					case *ast.Indent:
+						t.IsBlock = true
+					}
 				}
 				if len(stack) > 0 {
 					stack[len(stack)-1].AddChild(n)
@@ -150,6 +177,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					return
 				}
 			}
+			lastChar = ']'
 		case '\\':
 			if textStart == -1 {
 				textStart = s.pos - 1
@@ -169,11 +197,13 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 				buf.WriteByte('\\')
 				buf.WriteByte(next)
 			}
+			lastChar = next
 		default:
 			if textStart == -1 {
 				textStart = s.pos - 1
 			}
 			buf.WriteByte(ch)
+			lastChar = ch
 		}
 	}
 }
@@ -211,7 +241,7 @@ func ParseNodes(s string) ([]ast.Node, error) {
 	return ParseNodesReader(strings.NewReader(s))
 }
 
-func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int) ([]ast.Container, int, error) {
+func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int, lastChar byte) ([]ast.Container, int, error) {
 	cmd, err := getNext(s, true)
 	if err != nil && err != io.EOF {
 		return stack, visiblePos, err
@@ -219,6 +249,24 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 	createNode := func(n ast.Container) {
 		n.SetPos(startPos, 0) // End will be set when popped
+		// Determine initial IsBlock status
+		isBlockStart := lastChar == '\n' || lastChar == '\r'
+
+		// Set IsBlock on the node if possible
+		switch t := n.(type) {
+		case *ast.Quote:
+			t.IsBlock = isBlockStart
+		case *ast.QuoteOf:
+			t.IsBlock = true // QuoteOf is always block
+		case *ast.Link:
+			t.IsBlock = isBlockStart
+		case *ast.Indent:
+			t.IsBlock = true
+		case *ast.Spoiler:
+			// Spoiler usually inline?
+			t.IsBlock = false
+		}
+
 		stack = append(stack, n)
 	}
 
@@ -260,13 +308,25 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(n)
 	case "code":
 		skipArgPrefix(s)
+		explicitClose := false
 		if ch, err := s.ReadByte(); err == nil {
-			if ch != ']' {
+			if ch == ']' {
+				explicitClose = true
+			} else {
 				s.UnreadByte()
 			}
 		}
+
+		var terminators []string
+		if explicitClose {
+			terminators = []string{"[/code]", "code]"}
+		} else {
+			terminators = []string{"[/code]", "code]", "]"}
+		}
+
 		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s, "[/code]", "code]")
+		// Enable balanced brackets support for Code
+		raw, _, _, err := directOutput(s, true, terminators...)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -277,6 +337,26 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 		n := &ast.Code{Value: raw, InnerStart: innerStart, InnerEnd: innerEnd}
 		n.SetPos(startPos, innerEnd) // Code node includes content
+
+		// Determine IsBlock for Code
+		isBlockStart := lastChar == '\n' || lastChar == '\r'
+		isBlockEnd := false
+		next, err := s.Peek()
+		if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
+			isBlockEnd = true
+		}
+		// Code is block if:
+		// 1. It is explicitly closed [code]...[/code] AND it is on its own line (start/end match).
+		// 2. Or if content contains newlines? (Existing behavior: <pre>).
+		// Let's stick to surroundings.
+		// If explicitClose ([code]), we lean towards block?
+		// But [code]inline[/code] should be inline if surrounded by text?
+		// User example: please use [code [quote]] so I know.
+		// If user types [code]...[/code] inside text, they expect inline?
+		// Standard markdown: `code` is inline.
+		// So checking surroundings is correct.
+
+		n.IsBlock = isBlockStart && isBlockEnd
 
 		visiblePos += contentLen
 
@@ -421,13 +501,14 @@ func skipArgPrefix(s *scanner) {
 	}
 }
 
-func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
+func directOutput(s *scanner, balanced bool, terminators ...string) (string, int, int, error) {
 	lens := make([]int, len(terminators))
 	for i, t := range terminators {
 		lens[i] = len(t)
 	}
 	var buf bytes.Buffer
 	startPos := s.pos
+	depth := 0
 
 	for {
 		ch, err := s.ReadByte()
@@ -450,12 +531,52 @@ func directOutput(s *scanner, terminators ...string) (string, int, int, error) {
 			buf.WriteByte(next)
 		default:
 			buf.WriteByte(ch)
+
+			matchedTerminator := false
+			termIdx := -1
 			for idx, term := range terminators {
 				if buf.Len() >= lens[idx] && strings.EqualFold(term, buf.String()[buf.Len()-lens[idx]:]) {
-					out := buf.Bytes()[:buf.Len()-lens[idx]]
-					// End position of content is current pos - length of terminator
-					endPos := s.pos - lens[idx]
+					matchedTerminator = true
+					termIdx = idx
+					break
+				}
+			}
+
+			if matchedTerminator {
+				// If balanced check is enabled
+				if balanced {
+					term := terminators[termIdx]
+					// Check if this terminator is a weak terminator (just "]")
+					if term == "]" {
+						if depth > 0 {
+							// Ignored, treat as content
+							// depth decrement happens below
+						} else {
+							// Accepted
+							out := buf.Bytes()[:buf.Len()-lens[termIdx]]
+							endPos := s.pos - lens[termIdx]
+							return string(out), startPos, endPos, nil
+						}
+					} else {
+						// Strong terminator (e.g. [/code]), accept regardless of depth
+						out := buf.Bytes()[:buf.Len()-lens[termIdx]]
+						endPos := s.pos - lens[termIdx]
+						return string(out), startPos, endPos, nil
+					}
+				} else {
+					out := buf.Bytes()[:buf.Len()-lens[termIdx]]
+					endPos := s.pos - lens[termIdx]
 					return string(out), startPos, endPos, nil
+				}
+			}
+
+			if balanced {
+				if ch == '[' {
+					depth++
+				} else if ch == ']' {
+					if depth > 0 {
+						depth--
+					}
 				}
 			}
 		}

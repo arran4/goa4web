@@ -2,6 +2,9 @@ package eventbus
 
 import (
 	"context"
+	"sync"
+	"testing"
+	"time"
 	"net/http"
 	"sync"
 	"testing"
@@ -205,26 +208,24 @@ func TestPublish(t *testing.T) {
 
 		// Verify chAll received taskMsg
 		select {
-		case env := <-chAll:
-			assert.Equal(t, taskMsg, env.Msg)
-			env.Ack()
+		case msg := <-chAll:
+			assert.Equal(t, taskMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chAll did not receive taskMsg")
 		}
 
 		// Verify chTask received taskMsg
 		select {
-		case env := <-chTask:
-			assert.Equal(t, taskMsg, env.Msg)
-			env.Ack()
+		case msg := <-chTask:
+			assert.Equal(t, taskMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chTask did not receive taskMsg")
 		}
 
 		// Verify chEmail did NOT receive taskMsg
 		select {
-		case env := <-chEmail:
-			t.Fatalf("chEmail received unexpected message: %v", env)
+		case msg := <-chEmail:
+			t.Fatalf("chEmail received unexpected message: %v", msg)
 		default:
 			// OK
 		}
@@ -236,26 +237,24 @@ func TestPublish(t *testing.T) {
 
 		// Verify chAll received emailMsg
 		select {
-		case env := <-chAll:
-			assert.Equal(t, emailMsg, env.Msg)
-			env.Ack()
+		case msg := <-chAll:
+			assert.Equal(t, emailMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chAll did not receive emailMsg")
 		}
 
 		// Verify chEmail received emailMsg
 		select {
-		case env := <-chEmail:
-			assert.Equal(t, emailMsg, env.Msg)
-			env.Ack()
+		case msg := <-chEmail:
+			assert.Equal(t, emailMsg, msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chEmail did not receive emailMsg")
 		}
 
 		// Verify chTask did NOT receive emailMsg
 		select {
-		case env := <-chTask:
-			t.Fatalf("chTask received unexpected message: %v", env)
+		case msg := <-chTask:
+			t.Fatalf("chTask received unexpected message: %v", msg)
 		default:
 			// OK
 		}
@@ -291,17 +290,16 @@ func TestPublish_NonBlocking(t *testing.T) {
 
 	// Verify we received the first message
 	select {
-	case env := <-ch:
-		assert.Equal(t, msg1, env.Msg)
-		env.Ack()
+	case msg := <-ch:
+		assert.Equal(t, msg1, msg)
 	default:
 		t.Fatal("Expected msg1 in channel")
 	}
 
 	// Verify we DO NOT receive the second message (it was dropped)
 	select {
-	case env := <-ch:
-		t.Fatalf("Received unexpected message (should have been dropped): %v", env)
+	case msg := <-ch:
+		t.Fatalf("Received unexpected message (should have been dropped): %v", msg)
 	default:
 		// OK
 	}
@@ -323,9 +321,7 @@ func TestShutdown(t *testing.T) {
 	go func() {
 		// Wait a bit to simulate processing time, but less than context timeout
 		time.Sleep(50 * time.Millisecond)
-		if env, ok := <-ch; ok {
-			env.Ack()
-		}
+		<-ch
 	}()
 
 	err = bus.Shutdown(ctx)
@@ -387,8 +383,7 @@ func TestConcurrentAccess(t *testing.T) {
 			ch := bus.Subscribe()
 			for {
 				select {
-				case env := <-ch:
-					env.Ack()
+				case <-ch:
 				case <-stop:
 					return
 				}

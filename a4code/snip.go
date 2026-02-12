@@ -13,7 +13,7 @@ func Snip(s string, l int) string {
 
 func SnipText(s string, l int) string {
 	if root, err := ParseString(s); err == nil {
-		s = ToText(root)
+		s = ToCleanText(root)
 	}
 	return Snip(s, l)
 }
@@ -28,7 +28,7 @@ func SnipWords(s string, count int) string {
 
 func SnipTextWords(s string, count int) string {
 	if root, err := ParseString(s); err == nil {
-		s = ToText(root)
+		s = ToCleanText(root)
 	}
 	return SnipWords(s, count)
 }

@@ -19,6 +19,15 @@ func ToCode(n ast.Node) string {
 	return buf.String()
 }
 
+// ToCleanText converts the AST to plain text, stripping all markup and prefixes.
+func ToCleanText(n ast.Node) string {
+	var buf bytes.Buffer
+	if err := ast.Generate(&buf, n, text.NewCleanGenerator()); err != nil {
+		return ""
+	}
+	return buf.String()
+}
+
 // ToText converts the AST to plain text, stripping all markup.
 func ToText(n ast.Node) string {
 	var buf bytes.Buffer

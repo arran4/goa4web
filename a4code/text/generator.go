@@ -75,9 +75,23 @@ func (pw *PrefixWriter) Write(p []byte) (int, error) {
 	return written, nil
 }
 
-type Generator struct{}
+type Generator struct {
+	QuotePrefix     string
+	QuoteHeaderFunc func(name string) string
+	HRString        string
+}
 
 func NewGenerator() *Generator {
+	return &Generator{
+		QuotePrefix: "> ",
+		QuoteHeaderFunc: func(name string) string {
+			return "> " + name + " wrote:\n"
+		},
+		HRString: "---\n",
+	}
+}
+
+func NewCleanGenerator() *Generator {
 	return &Generator{}
 }
 
@@ -147,8 +161,11 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 			io.WriteString(w, "\n")
 		}
 	}
-	pw := &PrefixWriter{w: w, prefix: []byte("> "), startLine: true}
-	return g.visitChildren(pw, n.Children)
+	if len(g.QuotePrefix) > 0 {
+		pw := &PrefixWriter{w: w, prefix: []byte(g.QuotePrefix), startLine: true}
+		return g.visitChildren(pw, n.Children)
+	}
+	return g.visitChildren(w, n.Children)
 }
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
@@ -157,9 +174,14 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 			io.WriteString(w, "\n")
 		}
 	}
-	io.WriteString(w, "> "+n.Name+" wrote:\n")
-	pw := &PrefixWriter{w: w, prefix: []byte("> "), startLine: true}
-	return g.visitChildren(pw, n.Children)
+	if g.QuoteHeaderFunc != nil {
+		io.WriteString(w, g.QuoteHeaderFunc(n.Name))
+	}
+	if len(g.QuotePrefix) > 0 {
+		pw := &PrefixWriter{w: w, prefix: []byte(g.QuotePrefix), startLine: true}
+		return g.visitChildren(pw, n.Children)
+	}
+	return g.visitChildren(w, n.Children)
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
@@ -176,7 +198,9 @@ func (g *Generator) HR(w io.Writer, n *ast.HR) error {
 			io.WriteString(w, "\n")
 		}
 	}
-	io.WriteString(w, "---\n")
+	if len(g.HRString) > 0 {
+		io.WriteString(w, g.HRString)
+	}
 	return nil
 }
 

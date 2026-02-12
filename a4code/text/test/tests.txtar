@@ -19,12 +19,12 @@ Link
 -- quote.txt --
 [quote Q]
 -- quote.expect.txt --
->  Q
+> Q
 -- quoteof.txt --
 [quoteof "User" Q]
 -- quoteof.expect.txt --
 > User wrote:
->  Q
+> Q
 -- spoiler.txt --
 [spoiler S]
 -- spoiler.expect.txt --

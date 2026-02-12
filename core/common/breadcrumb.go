@@ -22,10 +22,13 @@ func (cd *CoreData) SetBreadcrumbs(crumbs ...Breadcrumb) {
 // selection information stored on CoreData. It returns nil if no breadcrumbs
 // are applicable.
 func (cd *CoreData) Breadcrumbs() []Breadcrumb {
+	if cd == nil {
+		return nil
+	}
 	if len(cd.customBreadcrumbs) > 0 {
 		return cd.customBreadcrumbs
 	}
-	if cd == nil || cd.queries == nil {
+	if cd.queries == nil {
 		return nil
 	}
 	var (

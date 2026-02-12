@@ -238,7 +238,7 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 			buf.WriteByte(ch)
 			if depth > 0 {
 				depth--
-			} else if buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
+			} else {
 				out := buf.Bytes()[:buf.Len()-termLen]
 				if _, err := w.Write(out); err != nil {
 					return err
@@ -247,13 +247,6 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 			}
 		default:
 			buf.WriteByte(ch)
-			if depth == 0 && buf.Len() >= termLen && strings.EqualFold(terminator, buf.String()[buf.Len()-termLen:]) {
-				out := buf.Bytes()[:buf.Len()-termLen]
-				if _, err := w.Write(out); err != nil {
-					return err
-				}
-				return nil
-			}
 		}
 	}
 }

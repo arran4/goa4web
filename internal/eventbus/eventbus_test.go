@@ -2,9 +2,6 @@ package eventbus
 
 import (
 	"context"
-	"sync"
-	"testing"
-	"time"
 	"net/http"
 	"sync"
 	"testing"
@@ -209,7 +206,7 @@ func TestPublish(t *testing.T) {
 		// Verify chAll received taskMsg
 		select {
 		case msg := <-chAll:
-			assert.Equal(t, taskMsg, msg)
+			assert.Equal(t, taskMsg, msg.Msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chAll did not receive taskMsg")
 		}
@@ -217,7 +214,7 @@ func TestPublish(t *testing.T) {
 		// Verify chTask received taskMsg
 		select {
 		case msg := <-chTask:
-			assert.Equal(t, taskMsg, msg)
+			assert.Equal(t, taskMsg, msg.Msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chTask did not receive taskMsg")
 		}
@@ -238,7 +235,7 @@ func TestPublish(t *testing.T) {
 		// Verify chAll received emailMsg
 		select {
 		case msg := <-chAll:
-			assert.Equal(t, emailMsg, msg)
+			assert.Equal(t, emailMsg, msg.Msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chAll did not receive emailMsg")
 		}
@@ -246,7 +243,7 @@ func TestPublish(t *testing.T) {
 		// Verify chEmail received emailMsg
 		select {
 		case msg := <-chEmail:
-			assert.Equal(t, emailMsg, msg)
+			assert.Equal(t, emailMsg, msg.Msg)
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("chEmail did not receive emailMsg")
 		}
@@ -291,7 +288,7 @@ func TestPublish_NonBlocking(t *testing.T) {
 	// Verify we received the first message
 	select {
 	case msg := <-ch:
-		assert.Equal(t, msg1, msg)
+		assert.Equal(t, msg1, msg.Msg)
 	default:
 		t.Fatal("Expected msg1 in channel")
 	}
@@ -321,7 +318,8 @@ func TestShutdown(t *testing.T) {
 	go func() {
 		// Wait a bit to simulate processing time, but less than context timeout
 		time.Sleep(50 * time.Millisecond)
-		<-ch
+		msg := <-ch
+		msg.Ack()
 	}()
 
 	err = bus.Shutdown(ctx)

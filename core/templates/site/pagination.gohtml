@@ -1,14 +1,26 @@
 {{define "pagination"}}
-    {{ if or cd.StartLink cd.PrevLink cd.NextLink cd.PageLinks }}
+    {{ if cd.Pagination }}
+        <div class="pagination-bar">
+            <div class="pagination-left">
+                {{ if cd.Pagination.StartLink }}<a href="{{ cd.Pagination.StartLink }}">The start</a>{{ end }}
+                {{ if cd.Pagination.PrevLink }}<a href="{{ cd.Pagination.PrevLink }}">Previous{{ if cd.PageSize }} {{ cd.PageSize }}{{ end }}</a>{{ end }}
+            </div>
+            <div class="pagination-center">
+                {{ range cd.Pagination.GetLinks }}
+                    {{ if .Active }}<strong>{{ .Num }}</strong>{{ else }}<a href="{{ .Link }}">{{ .Num }}</a>{{ end }}
+                {{ end }}
+            </div>
+            <div class="pagination-right">
+                {{ if cd.Pagination.NextLink }}<a href="{{ cd.Pagination.NextLink }}">Next{{ if cd.PageSize }} {{ cd.PageSize }}{{ end }}</a>{{ end }}
+            </div>
+        </div>
+    {{ else if or cd.StartLink cd.PrevLink cd.NextLink }}
         <div class="pagination-bar">
             <div class="pagination-left">
                 {{ if cd.StartLink }}<a href="{{ cd.StartLink }}">The start</a>{{ end }}
                 {{ if cd.PrevLink }}<a href="{{ cd.PrevLink }}">Previous{{ if cd.PageSize }} {{ cd.PageSize }}{{ end }}</a>{{ end }}
             </div>
             <div class="pagination-center">
-                {{ range cd.PageLinks }}
-                    {{ if .Active }}<strong>{{ .Num }}</strong>{{ else }}<a href="{{ .Link }}">{{ .Num }}</a>{{ end }}
-                {{ end }}
             </div>
             <div class="pagination-right">
                 {{ if cd.NextLink }}<a href="{{ cd.NextLink }}">Next{{ if cd.PageSize }} {{ cd.PageSize }}{{ end }}</a>{{ end }}

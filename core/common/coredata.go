@@ -57,13 +57,6 @@ type AdminSection struct {
 	SubSections []AdminSection
 }
 
-// PageLink represents a numbered pagination link.
-type PageLink struct {
-	Num    int
-	Link   string
-	Active bool
-}
-
 // OpenGraph represents the Open Graph data for a page.
 type OpenGraph struct {
 	Title       string
@@ -135,7 +128,7 @@ type CoreData struct {
 	NextLink          string
 	NotFoundLink      *NotFoundLink
 	NotificationCount int32
-	PageLinks         []PageLink
+	Pagination        Pagination
 	PageTitle         string
 	OpenGraph         *OpenGraph
 	PrevLink          string

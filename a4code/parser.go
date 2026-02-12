@@ -291,13 +291,8 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			return stack, visiblePos, err
 		}
 		skipArgPrefix(s)
-		if ch, err := s.ReadByte(); err == nil {
-			if ch != ']' {
-				s.UnreadByte()
-			}
-		}
 		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s, "[/codein]", "codein]")
+		raw, _, _, err := directOutput(s, "]")
 		if err != nil {
 			return stack, visiblePos, err
 		}

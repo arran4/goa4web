@@ -451,7 +451,7 @@ func TestLinkProvider(t *testing.T) {
 
 func TestCodeIn(t *testing.T) {
 	c := New()
-	c.SetInput("[codein \"go\"]func main() {}[/codein]")
+	c.SetInput("[codein \"go\" func main() {}]")
 	got := testhelpers.Must(io.ReadAll(c.Process()))
 	want := "<div class=\"a4code-block a4code-code-wrapper a4code-language-go\"><div class=\"code-header\">Code (go)</div><pre class=\"a4code-code-body\"><code class=\"language-go\">func main() {}</code></pre></div>"
 	if string(got) != want {

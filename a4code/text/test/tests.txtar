@@ -44,5 +44,5 @@ Text
 ---
 
 -- codein.txt --
-[codein "go"]func[/codein]
+[codein "go" func]
 -- codein.expect.txt --

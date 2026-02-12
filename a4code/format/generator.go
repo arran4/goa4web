@@ -92,9 +92,9 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 	io.WriteString(w, "[codein ")
 	escapeQuotedArg(w, n.Language)
-	io.WriteString(w, "]")
+	writeByte(w, ' ')
 	io.WriteString(w, n.Value)
-	io.WriteString(w, "[/codein]")
+	writeByte(w, ']')
 	return nil
 }
 

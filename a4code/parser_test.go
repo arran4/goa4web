@@ -125,18 +125,13 @@ func TestCodeIn(t *testing.T) {
 	}{
 		{
 			name:  "simple codein",
-			input: `[codein "go"]func main() {}[/codein]`,
-			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
+			input: `[codein "go" func main() {}]`,
+			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="28"><code class="language-go"><span data-start-pos="0" data-end-pos="28">func main() {}</span></code></pre>`,
 		},
 		{
 			name:  "codein unquoted language",
-			input: `[codein go]func main() {}[/codein]`,
-			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
-		},
-		{
-			name:  "codein with closing tag",
-			input: `[codein "go"]func main() {}[/codein]`,
-			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="14"><code class="language-go"><span data-start-pos="0" data-end-pos="14">func main() {}</span></code></pre>`,
+			input: `[codein go func main() {}]`,
+			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="26"><code class="language-go"><span data-start-pos="0" data-end-pos="26">func main() {}</span></code></pre>`,
 		},
 	}
 

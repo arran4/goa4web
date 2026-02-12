@@ -260,7 +260,7 @@ func (c *CodeIn) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (c *CodeIn) String() string {
-	return "[codein \"" + c.Language + "\"]" + c.Value + "[/codein]"
+	return "[codein \"" + c.Language + "\" " + c.Value + "]"
 }
 
 // Quote node.

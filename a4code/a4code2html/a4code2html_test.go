@@ -454,7 +454,7 @@ func TestLinkProvider(t *testing.T) {
 
 func TestA4code2htmlInlineCode(t *testing.T) {
 	c := New()
-	c.SetInput("text [code]inline[/code] text")
+	c.SetInput("text [code inline] text")
 	gotBytes, _ := io.ReadAll(c.Process())
 	got := string(gotBytes)
 	want := "text <code class=\"a4code-inline a4code-code\">inline</code> text"
@@ -465,7 +465,7 @@ func TestA4code2htmlInlineCode(t *testing.T) {
 
 func TestA4code2htmlBlockCode(t *testing.T) {
 	c := New()
-	c.SetInput("[code]\nblock\n[/code]")
+	c.SetInput("[code \nblock\n]")
 	gotBytes, _ := io.ReadAll(c.Process())
 	got := string(gotBytes)
 	// Check for block wrapper

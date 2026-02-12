@@ -120,7 +120,7 @@ func TestQuoteOfHTML(t *testing.T) {
 }
 
 func TestInlineCode(t *testing.T) {
-	input := "text [code]inline[/code] text"
+	input := "text [code inline] text"
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
@@ -133,7 +133,7 @@ func TestInlineCode(t *testing.T) {
 }
 
 func TestBlockCode(t *testing.T) {
-	input := "[code]\nblock\n[/code]"
+	input := "[code\nblock\n]"
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)

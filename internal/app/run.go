@@ -61,6 +61,7 @@ type serverOptions struct {
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
 	DB              *sql.DB
+	Querier         db.Querier
 	RouterReg       *routerpkg.Registry
 }
 
@@ -118,6 +119,9 @@ func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOpti
 // WithDB uses the supplied database pool instead of performing startup checks.
 func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
 
+// WithQuerier sets the querier implementation.
+func WithQuerier(q db.Querier) ServerOption { return func(o *serverOptions) { o.Querier = q } }
+
 // WithRouterRegistry sets the router module registry.
 func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
 	return func(o *serverOptions) { o.RouterReg = r }
@@ -153,14 +157,23 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: sameSite}
 
-	if o.DB == nil {
+	if o.DB == nil && o.Querier == nil {
 		var err error
 		o.DB, err = PerformChecks(cfg, o.DBReg)
 		if err != nil {
 			return nil, fmt.Errorf("startup checks: %w", err)
 		}
 	}
-	queries := db.New(o.DB)
+
+	var queries db.Querier
+	if o.Querier != nil {
+		queries = o.Querier
+	} else if o.DB != nil {
+		queries = db.New(o.DB)
+	} else {
+		return nil, fmt.Errorf("NewServer: no db or querier provided")
+	}
+
 	sm := db.NewSessionProxy(queries)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return nil, fmt.Errorf("ensure default language: %w", err)
@@ -195,6 +208,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	srv := server.New(
 		server.WithStore(store),
 		server.WithDB(o.DB),
+		server.WithQuerier(queries),
 		server.WithConfig(cfg),
 		server.WithRouterRegistry(o.RouterReg),
 		server.WithNavRegistry(navReg),

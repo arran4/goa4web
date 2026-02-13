@@ -257,9 +257,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 
 	sm := s.SessionManager
 	if sm == nil {
-		if q, ok := queries.(*db.Queries); ok {
-			sm = db.NewSessionProxy(q)
-		}
+		sm = db.NewSessionProxy(queries)
 	}
 	if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())
@@ -346,7 +344,6 @@ func (s *Server) startWorkers(ctx context.Context) {
 	if s.WorkerCancel != nil {
 		return
 	}
-	workerCtx, cancel := context.WithCancel(ctx)
 	emailProvider, err := s.EmailReg.ProviderFromConfig(s.Config)
 	if err != nil {
 		log.Printf("Email provider init failed: %v", err)
@@ -354,8 +351,18 @@ func (s *Server) startWorkers(ctx context.Context) {
 	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
 	}
-	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, db.New(s.DB))
-	workers.Start(workerCtx, s.DB, emailProvider, dlqProvider, s.Config, s.Bus)
+	var q db.Querier
+	if s.Queries != nil {
+		q = s.Queries
+	} else if s.DB != nil {
+		q = db.New(s.DB)
+	} else {
+		log.Printf("startWorkers: no db or querier available")
+		return
+	}
+	workerCtx, cancel := context.WithCancel(ctx)
+	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
+	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus)
 	s.WorkerCancel = cancel
 }
 

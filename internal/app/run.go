@@ -60,7 +60,7 @@ type serverOptions struct {
 	TasksReg        *tasks.Registry
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
-	DB              *sql.DB
+	DB              any
 	RouterReg       *routerpkg.Registry
 }
 
@@ -116,7 +116,7 @@ func WithBus(b *eventbus.Bus) ServerOption { return func(o *serverOptions) { o.B
 func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOptions) { o.Store = s } }
 
 // WithDB uses the supplied database pool instead of performing startup checks.
-func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
+func WithDB(db any) ServerOption { return func(o *serverOptions) { o.DB = db } }
 
 // WithRouterRegistry sets the router module registry.
 func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
@@ -160,7 +160,18 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 			return nil, fmt.Errorf("startup checks: %w", err)
 		}
 	}
-	queries := db.New(o.DB)
+
+	var queries db.Querier
+
+	switch v := o.DB.(type) {
+	case *sql.DB:
+		queries = db.New(v)
+	case db.Querier:
+		queries = v
+	default:
+		panic(fmt.Sprintf("unknown object: %T", o.DB))
+	}
+
 	sm := db.NewSessionProxy(queries)
 	if err := corelanguage.EnsureDefaultLanguage(context.Background(), queries, cfg.DefaultLanguage); err != nil {
 		return nil, fmt.Errorf("ensure default language: %w", err)
@@ -249,7 +260,9 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	if ah != nil {
 		ah.ConfigFile = ConfigFile
 		ah.Srv = srv
-		ah.DBPool = o.DB
+		if db, ok := o.DB.(*sql.DB); ok {
+			ah.DBPool = db
+		}
 		ah.UpdateConfigKeyFunc = config.UpdateConfigKey
 	}
 	srv.TasksReg = o.TasksReg

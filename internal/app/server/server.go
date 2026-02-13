@@ -132,7 +132,18 @@ func WithHandler(h http.Handler) Option { return func(s *Server) { s.Router = h 
 func WithStore(store *sessions.CookieStore) Option { return func(s *Server) { s.Store = store } }
 
 // WithDB sets the database pool.
-func WithDB(db *sql.DB) Option { return func(s *Server) { s.DB = db } }
+func WithDB(d any) Option {
+	return func(s *Server) {
+		switch v := d.(type) {
+		case *sql.DB:
+			s.DB = v
+		case db.Querier:
+			s.Queries = v
+		default:
+			panic(fmt.Sprintf("unknown object: %T", d))
+		}
+	}
+}
 
 // WithQuerier sets a custom query implementation for the server.
 func WithQuerier(q db.Querier) Option { return func(s *Server) { s.Queries = q } }
@@ -257,9 +268,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 
 	sm := s.SessionManager
 	if sm == nil {
-		if q, ok := queries.(*db.Queries); ok {
-			sm = db.NewSessionProxy(q)
-		}
+		sm = db.NewSessionProxy(queries)
 	}
 	if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())

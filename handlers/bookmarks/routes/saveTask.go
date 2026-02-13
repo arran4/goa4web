@@ -1,4 +1,4 @@
-package bookmarks
+package routes
 
 import (
 	"database/sql"
@@ -15,12 +15,12 @@ import (
 )
 
 // SaveTask persists changes for a bookmark list.
-type SaveTask struct{ tasks.TaskString }
+type saveTask struct{ tasks.TaskString }
 
-var saveTask = &SaveTask{TaskString: TaskSave}
+var SaveTask = &saveTask{TaskString: TaskSave}
 
 // ensure SaveTask implements tasks.Task for routing
-var _ tasks.Task = (*SaveTask)(nil)
+var _ tasks.Task = (*saveTask)(nil)
 
 func EditPage(w http.ResponseWriter, r *http.Request) {
 	session, ok := core.GetSessionOrFail(w, r)
@@ -35,7 +35,7 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 
 const BookmarkEditPageTmpl tasks.Template = "bookmarks/editPage.gohtml"
 
-func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (saveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, ok := core.GetSessionOrFail(w, r)

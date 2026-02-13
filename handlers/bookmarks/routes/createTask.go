@@ -1,4 +1,4 @@
-package bookmarks
+package routes
 
 import (
 	"database/sql"
@@ -14,14 +14,14 @@ import (
 )
 
 // CreateTask creates a new bookmark list.
-type CreateTask struct{ tasks.TaskString }
+type createTask struct{ tasks.TaskString }
 
-var createTask = &CreateTask{TaskString: TaskCreate}
+var CreateTask = &createTask{TaskString: TaskCreate}
 
 // ensure CreateTask implements tasks.Task for routing
-var _ tasks.Task = (*CreateTask)(nil)
+var _ tasks.Task = (*createTask)(nil)
 
-func (CreateTask) Action(w http.ResponseWriter, r *http.Request) any {
+func (createTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, ok := core.GetSessionOrFail(w, r)

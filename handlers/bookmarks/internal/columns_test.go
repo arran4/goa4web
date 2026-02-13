@@ -1,0 +1,57 @@
+package internal
+
+import (
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+func TestParseColumns(t *testing.T) {
+	tests := []struct {
+		name      string
+		bookmarks string
+		want      []*Column
+	}{
+		{
+			name:      "Test",
+			bookmarks: "Category: Search\nhttp://www.google.com.au Google\nCategory: Wikies\nhttp://en.wikipedia.org/wiki/Main_Page Wikipedia\nhttp://mathworld.wolfram.com/ Math World\nhttp://gentoo-wiki.com/Main_Page Gentoo-wiki\n",
+			want: []*Column{{
+				Categories: []*Category{
+					{
+						Name: "Search",
+						Entries: []*Entry{
+							{
+								Url:  "http://www.google.com.au",
+								Name: "Google",
+							},
+						},
+					},
+					{
+						Name: "Wikies",
+						Entries: []*Entry{
+							{
+								Url:  "http://en.wikipedia.org/wiki/Main_Page",
+								Name: "Wikipedia",
+							},
+							{
+								Url:  "http://mathworld.wolfram.com/",
+								Name: "Math World",
+							},
+							{
+								Url:  "http://gentoo-wiki.com/Main_Page",
+								Name: "Gentoo-wiki",
+							},
+						},
+					},
+				}}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ParseColumns(tt.bookmarks)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("ParseColumns() = diff\n%s", diff)
+			}
+		})
+	}
+}

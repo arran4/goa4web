@@ -3,6 +3,7 @@ package bookmarks
 import (
 	"net/http"
 
+	"github.com/arran4/goa4web/handlers/bookmarks/routes"
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/go-consume"
@@ -16,19 +17,15 @@ import (
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 )
 
+const (
+	// SectionWeight controls the order of the Bookmarks section in navigation.
+	SectionWeight = 70
+)
+
 // RegisterRoutes attaches the bookmarks endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
 	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
-	br := r.PathPrefix("/bookmarks").Subrouter()
 	r.PathPrefix("/bookmarks").Handler(NewRouter())
-	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
-	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
-	br.HandleFunc("", BookmarksPage).Methods("GET")
-	br.HandleFunc("/mine", MinePage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
-	br.HandleFunc("/edit", EditPage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
-	br.HandleFunc("/edit", handlers.TaskHandler(saveTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Matcher())
-	br.HandleFunc("/edit", handlers.TaskHandler(createTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Matcher())
-
 }
 
 func NewRouter() *Router {
@@ -59,38 +56,63 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		handlers.RenderNotFoundOrLogin(w, req)
 		return
 	}
+	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
+		Name: "Show",
+		Link: "/bookmarks/mine",
+	})
+	cd.CustomIndexItems = append(cd.CustomIndexItems, common.IndexItem{
+		Name: "Edit",
+		Link: "/bookmarks/edit",
+	})
 	switch p {
 	case "", "/":
-		BookmarksPage(w, req)
+		r.Serve(w, req, cd)
+		return
 	case "/mine":
-		if !cd.IsUserLoggedIn() {
-			break
-		}
-		switch req.Method {
-		case "GET":
-			MinePage(w, req)
-			return
-		}
+		r.ServeMine(w, req, cd)
+		return
 	case "/edit":
-		if !cd.IsUserLoggedIn() {
-			break
-		}
-		switch req.Method {
-		case "GET":
-			EditPage(w, req)
-			return
-		case "POST":
-			task := req.PostFormValue("task")
-			switch task {
-			case string(TaskSave):
-				handlers.TaskHandler(saveTask)(w, req)
-				return
-			case string(TaskCreate):
-				handlers.TaskHandler(createTask)(w, req)
-				return
-			}
-		default:
+		r.ServeEdit(w, req, cd)
+		return
+	}
+	handlers.RenderNotFoundOrLogin(w, req)
+}
 
+func (r *Router) Serve(w http.ResponseWriter, req *http.Request, cd *common.CoreData) {
+	routes.BookmarksPage(w, req)
+}
+
+func (r *Router) ServeMine(w http.ResponseWriter, req *http.Request, cd *common.CoreData) {
+	if !cd.IsUserLoggedIn() {
+		handlers.RenderNotFoundOrLogin(w, req)
+		return
+	}
+	switch req.Method {
+	case "GET":
+		routes.MinePage(w, req)
+		return
+	}
+	handlers.RenderNotFoundOrLogin(w, req)
+}
+
+func (r *Router) ServeEdit(w http.ResponseWriter, req *http.Request, cd *common.CoreData) {
+	if !cd.IsUserLoggedIn() {
+		handlers.RenderNotFoundOrLogin(w, req)
+		return
+	}
+	switch req.Method {
+	case "GET":
+		routes.EditPage(w, req)
+		return
+	case "POST":
+		task := req.PostFormValue("task")
+		switch task {
+		case string(routes.TaskSave):
+			handlers.TaskHandler(routes.SaveTask)(w, req)
+			return
+		case string(routes.TaskCreate):
+			handlers.TaskHandler(routes.CreateTask)(w, req)
+			return
 		}
 	}
 	handlers.RenderNotFoundOrLogin(w, req)

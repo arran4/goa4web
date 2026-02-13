@@ -1,4 +1,4 @@
-package bookmarks
+package routes
 
 import (
 	"net/http"

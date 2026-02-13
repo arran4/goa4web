@@ -48,7 +48,12 @@ func TestLoginTask_Action(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.RemoteAddr = "1.2.3.4:1111"
 
-		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+
+		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
@@ -97,7 +102,8 @@ func TestLoginTask_Action(t *testing.T) {
 		req.RemoteAddr = "1.2.3.4:1111"
 		req.Host = "example.com"
 
-		cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSignKey(key))
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), q, cfg, common.WithImageSignKey(key), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
@@ -121,7 +127,11 @@ func TestLoginTask_Action(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.RemoteAddr = "1.2.3.4:1111"
 		ctx := req.Context()
-		cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(session))
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
@@ -157,7 +167,11 @@ func TestLoginTask_Action(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.RemoteAddr = "1.2.3.4:1111"
 		ctx := req.Context()
-		cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(session))
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
@@ -199,7 +213,11 @@ func TestLoginTask_Action(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.RemoteAddr = "1.2.3.4:1111"
 		ctx := req.Context()
-		cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig())
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithSession(session))
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
@@ -249,7 +267,8 @@ func TestLoginTask_Action(t *testing.T) {
 		req.RemoteAddr = "1.2.3.4:1111"
 		req.Host = "example.com"
 
-		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 
@@ -278,7 +297,11 @@ func TestLoginTask_Action(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.RemoteAddr = "1.2.3.4:1111"
-		cd := common.NewCoreData(req.Context(), q, cfg)
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), q, cfg, common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -297,7 +320,11 @@ func TestLoginTask_Action(t *testing.T) {
 func TestLoginTask_Page(t *testing.T) {
 	t.Run("Happy Path - Hidden Fields", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -331,7 +358,11 @@ func TestLoginTask_Page(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw)+"&back_ts="+fmt.Sprint(ts)+"&back_sig="+sig, nil)
 		req.Host = "example.com"
 		key := "k"
-		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), cfg, common.WithImageSignKey(key))
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), cfg, common.WithImageSignKey(key), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -353,7 +384,11 @@ func TestLoginTask_Page(t *testing.T) {
 	t.Run("Unhappy Path - Invalid Back URL", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
 		req.Host = "example.com"
-		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig())
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig(), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -369,7 +404,11 @@ func TestLoginTask_Page(t *testing.T) {
 
 func TestHappyPathLoginFormHandler_ActionTarget(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/register", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
+	session, _ := store.New(req, core.SessionName)
+	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -388,7 +427,11 @@ func TestHappyPathSanitizeBackURL(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	cfg.BaseURL = ""
-	cd := common.NewCoreData(req.Context(), db.New(nil), cfg)
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
+	session, _ := store.New(req, core.SessionName)
+	cd := common.NewCoreData(req.Context(), db.New(nil), cfg, common.WithSession(session))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
@@ -403,7 +446,7 @@ func TestHappyPathSanitizeBackURL(t *testing.T) {
 	}
 
 	cfg.BaseURL = "https://example.com"
-	cd = common.NewCoreData(req.Context(), db.New(nil), cfg)
+	cd = common.NewCoreData(req.Context(), db.New(nil), cfg, common.WithSession(session))
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
@@ -418,7 +461,11 @@ func TestHappyPathSanitizeBackURLSigned(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.LoginAttemptThreshold = 10
 	key := "k"
-	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSignKey(key))
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
+	session, _ := store.New(req, core.SessionName)
+	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSignKey(key), common.WithSession(session))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	ts := time.Now().Add(time.Hour).Unix()
@@ -435,7 +482,11 @@ func TestHappyPathSanitizeBackURLSigned(t *testing.T) {
 func TestRedirectBackPageHandler(t *testing.T) {
 	t.Run("Happy Path - GET", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -453,7 +504,11 @@ func TestRedirectBackPageHandler(t *testing.T) {
 
 	t.Run("Happy Path - Empty Method", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -470,8 +525,12 @@ func TestRedirectBackPageHandler(t *testing.T) {
 	})
 
 	t.Run("Happy Path - Back URL", func(t *testing.T) {
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -491,8 +550,12 @@ func TestRedirectBackPageHandler(t *testing.T) {
 	})
 
 	t.Run("Happy Path - Post", func(t *testing.T) {
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		store := sessions.NewCookieStore([]byte("test"))
+		core.Store = store
+		core.SessionName = "test-session"
+		session, _ := store.New(req, core.SessionName)
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()

@@ -132,18 +132,7 @@ func WithHandler(h http.Handler) Option { return func(s *Server) { s.Router = h 
 func WithStore(store *sessions.CookieStore) Option { return func(s *Server) { s.Store = store } }
 
 // WithDB sets the database pool.
-func WithDB(d any) Option {
-	return func(s *Server) {
-		switch v := d.(type) {
-		case *sql.DB:
-			s.DB = v
-		case db.Querier:
-			s.Queries = v
-		default:
-			panic(fmt.Sprintf("unknown object: %T", d))
-		}
-	}
-}
+func WithDB(db *sql.DB) Option { return func(s *Server) { s.DB = db } }
 
 // WithQuerier sets a custom query implementation for the server.
 func WithQuerier(q db.Querier) Option { return func(s *Server) { s.Queries = q } }

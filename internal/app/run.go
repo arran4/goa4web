@@ -60,7 +60,8 @@ type serverOptions struct {
 	TasksReg        *tasks.Registry
 	Bus             *eventbus.Bus
 	Store           *sessions.CookieStore
-	DB              any
+	DB              *sql.DB
+	Querier         db.Querier
 	RouterReg       *routerpkg.Registry
 }
 
@@ -116,18 +117,10 @@ func WithBus(b *eventbus.Bus) ServerOption { return func(o *serverOptions) { o.B
 func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOptions) { o.Store = s } }
 
 // WithDB uses the supplied database pool instead of performing startup checks.
-func WithDB(d any) ServerOption {
-	return func(o *serverOptions) {
-		switch v := d.(type) {
-		case *sql.DB:
-			o.DB = v
-		case db.Querier:
-			o.DB = v
-		default:
-			panic(fmt.Sprintf("unknown object: %T", d))
-		}
-	}
-}
+func WithDB(db *sql.DB) ServerOption { return func(o *serverOptions) { o.DB = db } }
+
+// WithQuerier sets the querier implementation.
+func WithQuerier(q db.Querier) ServerOption { return func(o *serverOptions) { o.Querier = q } }
 
 // WithRouterRegistry sets the router module registry.
 func WithRouterRegistry(r *routerpkg.Registry) ServerOption {
@@ -164,7 +157,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: sameSite}
 
-	if o.DB == nil {
+	if o.DB == nil && o.Querier == nil {
 		var err error
 		o.DB, err = PerformChecks(cfg, o.DBReg)
 		if err != nil {
@@ -173,14 +166,10 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	}
 
 	var queries db.Querier
-
-	switch v := o.DB.(type) {
-	case *sql.DB:
-		queries = db.New(v)
-	case db.Querier:
-		queries = v
-	default:
-		panic(fmt.Sprintf("unknown object: %T", o.DB))
+	if o.Querier != nil {
+		queries = o.Querier
+	} else {
+		queries = db.New(o.DB)
 	}
 
 	sm := db.NewSessionProxy(queries)
@@ -217,6 +206,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	srv := server.New(
 		server.WithStore(store),
 		server.WithDB(o.DB),
+		server.WithQuerier(queries),
 		server.WithConfig(cfg),
 		server.WithRouterRegistry(o.RouterReg),
 		server.WithNavRegistry(navReg),
@@ -271,9 +261,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	if ah != nil {
 		ah.ConfigFile = ConfigFile
 		ah.Srv = srv
-		if db, ok := o.DB.(*sql.DB); ok {
-			ah.DBPool = db
-		}
+		ah.DBPool = o.DB
 		ah.UpdateConfigKeyFunc = config.UpdateConfigKey
 	}
 	srv.TasksReg = o.TasksReg

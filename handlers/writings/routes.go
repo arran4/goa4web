@@ -17,10 +17,12 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public writings endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Writings", "/writings", SectionWeight, "writing", "category")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Writings"), "Writings", "/admin/writings", SectionWeight)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Writings"), "Categories", "/admin/writings/categories", SectionWeight+1)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("Writings", "/writings", SectionWeight, "writing", "category"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Writings"), "Writings", "/admin/writings", SectionWeight),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Writings"), "Categories", "/admin/writings/categories", SectionWeight+1),
+	}
 	wr := r.PathPrefix("/writings").Subrouter()
 	wr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	wr.Use(handlers.IndexMiddleware(CustomWritingsIndex), handlers.SectionMiddleware("writing"))
@@ -63,9 +65,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 	api := r.PathPrefix("/api/writings").Subrouter()
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
+	return opts
 }
 
 // Register registers the writings router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("writings", nil, RegisterRoutes)
+	reg.RegisterModule("writings", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

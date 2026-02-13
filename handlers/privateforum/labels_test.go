@@ -12,14 +12,12 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
-	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/gorilla/mux"
 )
 
 func TestPrivateLabelRoutes(t *testing.T) {
 	r := mux.NewRouter()
-	nav := navpkg.NewRegistry()
-	RegisterRoutes(r, config.NewRuntimeConfig(), nav)
+	RegisterRoutes(r, config.NewRuntimeConfig())
 
 	t.Run("Happy Path", func(t *testing.T) {
 		t.Run("uses redirect parameter", func(t *testing.T) {

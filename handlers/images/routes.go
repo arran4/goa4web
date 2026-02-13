@@ -82,7 +82,7 @@ func verifyMiddleware(prefix string) mux.MiddlewareFunc {
 }
 
 // RegisterRoutes attaches the image endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *nav.Registry) {
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOptions {
 	ir := r.PathPrefix("/images").Subrouter()
 	ir.Use(handlers.IndexMiddleware(CustomIndex))
 	ir.HandleFunc("/upload/image", handlers.TaskHandler(uploadImageTask)).
@@ -94,6 +94,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *nav.Registry) {
 		Methods(http.MethodGet)
 	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).
 		Methods(http.MethodGet)
+	return nil
 }
 
 func serveImage(w http.ResponseWriter, r *http.Request) {
@@ -167,5 +168,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 
 // Register registers the images router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("images", nil, RegisterRoutes)
+	reg.RegisterModule("images", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

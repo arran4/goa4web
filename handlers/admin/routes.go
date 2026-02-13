@@ -26,44 +26,46 @@ import (
 
 // RegisterRoutes attaches the admin endpoints to ar. The router is expected to
 // already have any required authentication middleware applied.
-func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
+func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
 	ar.Use(handlers.SectionMiddleware("admin"))
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Roles"), "Roles", "/admin/roles", 25)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Roles"), "Role SQL Loader", "/admin/roles/load", 26)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Roles"), "Role Templates", "/admin/roles/templates", 26)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Grants"), "Grants", "/admin/grants", 27)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Grants"), "Available Grants", "/admin/grants/available", 28)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "Once Off & Maintenance", "/admin/maintenance", 29)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "External Links", "/admin/external-links", 30)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Status", "/admin/db/status", 31)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Schema", "/admin/db/schema", 156)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Migrations", "/admin/db/migrations", 157)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Tools", "/admin/links/tools", 31)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Remap", "/admin/link-remap", 32)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Notifications"), "Notifications", "/admin/notifications", 90)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Notifications"), "Subscription Templates", "/admin/subscriptions/templates", 95)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Queued Emails", "/admin/email/queue", 110)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Failed Emails", "/admin/email/failed", 112)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Sent Emails", "/admin/email/sent", 115)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Email Tester", "/admin/email/test", 118)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Email Template", "/admin/email/template", 120)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Template Export", "/admin/templates/export", 121)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Email"), "Dead Letter Queue", "/admin/dlq", 130)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Stats"), "Server Stats", "/admin/stats", 140)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Users"), "Requests", "/admin/requests", 145)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Users"), "Password Resets", "/admin/password_resets", 146)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Users"), "Comments", "/admin/comments", 147)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Users"), "Deactivated Comments", "/admin/comments/deactivated", 148)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Settings"), "Site Settings", "/admin/settings", 150)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Settings"), "Config Export", "/admin/config/as-cli", 151)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Settings"), "Config Explain", "/admin/config/explain", 151)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Settings"), "Pagination", "/admin/page-size", 152)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Files"), "Files", "/admin/files", 153)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Files"), "Image Cache", "/admin/images/cache", 154)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Backup", "/admin/db/backup", 154)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "DB"), "DB Restore", "/admin/db/restore", 155)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Settings"), "Share Tools", "/admin/share/tools", 155)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Core", "Stats"), "Usage Stats", "/admin/usage", 160)
+	opts := []navpkg.RouterOptions{
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Roles"), "Roles", "/admin/roles", 25),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Roles"), "Role SQL Loader", "/admin/roles/load", 26),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Roles"), "Role Templates", "/admin/roles/templates", 26),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Grants"), "Grants", "/admin/grants", 27),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Grants"), "Available Grants", "/admin/grants/available", 28),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Once Off & Maintenance", "/admin/maintenance", 29),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "External Links", "/admin/external-links", 30),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Status", "/admin/db/status", 31),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Schema", "/admin/db/schema", 156),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Migrations", "/admin/db/migrations", 157),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Tools", "/admin/links/tools", 31),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Remap", "/admin/link-remap", 32),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Notifications"), "Notifications", "/admin/notifications", 90),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Notifications"), "Subscription Templates", "/admin/subscriptions/templates", 95),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Queued Emails", "/admin/email/queue", 110),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Failed Emails", "/admin/email/failed", 112),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Sent Emails", "/admin/email/sent", 115),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Email Tester", "/admin/email/test", 118),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Email Template", "/admin/email/template", 120),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Template Export", "/admin/templates/export", 121),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Dead Letter Queue", "/admin/dlq", 130),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Stats"), "Server Stats", "/admin/stats", 140),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Users"), "Requests", "/admin/requests", 145),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Users"), "Password Resets", "/admin/password_resets", 146),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Users"), "Comments", "/admin/comments", 147),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Users"), "Deactivated Comments", "/admin/comments/deactivated", 148),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Settings"), "Site Settings", "/admin/settings", 150),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Settings"), "Config Export", "/admin/config/as-cli", 151),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Settings"), "Config Explain", "/admin/config/explain", 151),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Settings"), "Pagination", "/admin/page-size", 152),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Files"), "Files", "/admin/files", 153),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Files"), "Image Cache", "/admin/images/cache", 154),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Backup", "/admin/db/backup", 154),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Restore", "/admin/db/restore", 155),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Settings"), "Share Tools", "/admin/share/tools", 155),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Stats"), "Usage Stats", "/admin/usage", 160),
+	}
 
 	ar.HandleFunc("", AdminPage).Methods("GET")
 	ar.HandleFunc("/", AdminPage).Methods("GET")
@@ -225,8 +227,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	// faq admin
 	faq.RegisterAdminRoutes(ar)
 	search.RegisterAdminRoutes(ar)
-	userhandlers.RegisterAdminRoutes(ar, navReg)
-	languages.RegisterAdminRoutes(ar, navReg)
+	opts = append(opts, userhandlers.RegisterAdminRoutes(ar)...)
+	opts = append(opts, languages.RegisterAdminRoutes(ar)...)
 	blogs.RegisterAdminRoutes(ar)
 
 	// news admin
@@ -251,6 +253,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig, nav
 	api := ar.PathPrefix("/api").Subrouter()
 	api.Use(router.AdminCheckerMiddleware)
 	api.HandleFunc("/shutdown", h.AdminAPIServerShutdown).MatcherFunc(AdminAPISigned()).Methods("POST")
+
+	return opts
 }
 
 // Register registers the admin router module.

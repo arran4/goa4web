@@ -48,10 +48,10 @@ func WithUpdateConfigKeyFunc(fn func(fs core.FileSystem, path, key, value string
 
 // Register registers the admin router module using h's dependencies.
 func (h *Handlers) Register(reg *router.Registry) {
-	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig, navReg *navigation.Registry) {
+	reg.RegisterModule("admin", []string{"faq", "forum", "imagebbs", "languages", "linker", "news", "search", "user", "writings", "blogs"}, func(r *mux.Router, cfg *config.RuntimeConfig) []navigation.RouterOptions {
 		ar := r.PathPrefix("/admin").Subrouter()
 		ar.Use(router.AdminCheckerMiddleware)
 		ar.Use(handlers.IndexMiddleware(CustomIndex))
-		h.RegisterRoutes(ar, cfg, navReg)
+		return h.RegisterRoutes(ar, cfg)
 	})
 }

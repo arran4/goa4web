@@ -15,7 +15,10 @@ func TestHappyPathRegisterRoutesRegistersGrantsLink(t *testing.T) {
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
 	navReg := navpkg.NewRegistry()
-	h.RegisterRoutes(ar, &config.RuntimeConfig{}, navReg)
+	opts := h.RegisterRoutes(ar, &config.RuntimeConfig{})
+	for _, opt := range opts {
+		opt.Apply(navReg)
+	}
 	links := navReg.AdminLinks()
 	for _, l := range links {
 		if l.Name == "Grants" {
@@ -32,8 +35,7 @@ func TestHappyPathRegisterRoutesRegistersGrantAdd(t *testing.T) {
 	h := New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	navReg := navpkg.NewRegistry()
-	h.RegisterRoutes(ar, &config.RuntimeConfig{}, navReg)
+	h.RegisterRoutes(ar, &config.RuntimeConfig{})
 	var found bool
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		path, err := route.GetPathTemplate()
@@ -59,8 +61,7 @@ func TestHappyPathRegisterRoutesRegistersGrantCreate(t *testing.T) {
 	h := New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	navReg := navpkg.NewRegistry()
-	h.RegisterRoutes(ar, &config.RuntimeConfig{}, navReg)
+	h.RegisterRoutes(ar, &config.RuntimeConfig{})
 	var found bool
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		path, err := route.GetPathTemplate()

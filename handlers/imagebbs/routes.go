@@ -13,9 +13,11 @@ import (
 )
 
 // RegisterRoutes attaches the public image board endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("ImageBBS", "/imagebbs", SectionWeight, "imagebbs", "board")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("ImageBBS"), "ImageBBS", "/admin/imagebbs", SectionWeight)
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("ImageBBS", "/imagebbs", SectionWeight, "imagebbs", "board"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("ImageBBS"), "ImageBBS", "/admin/imagebbs", SectionWeight),
+	}
 	ibr := r.PathPrefix("/imagebbs").Subrouter()
 	ibr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	ibr.Use(handlers.IndexMiddleware(CustomImageBBSIndex), handlers.SectionMiddleware("imagebbs"))
@@ -35,10 +37,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	ibr.HandleFunc("/", ImagebbsPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}", PosterPage).Methods("GET")
 	ibr.HandleFunc("/poster/{username}/", PosterPage).Methods("GET")
-
+	return opts
 }
 
 // Register registers the imagebbs router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("imagebbs", nil, RegisterRoutes)
+	reg.RegisterModule("imagebbs", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

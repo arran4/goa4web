@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
@@ -20,10 +19,9 @@ import (
 func TestPrivateRoute(t *testing.T) {
 	r := mux.NewRouter()
 	reg := router.NewRegistry()
-	navReg := navpkg.NewRegistry()
 	cfg := &config.RuntimeConfig{}
 
-	RegisterRoutes(r, cfg, navReg)
+	RegisterRoutes(r, cfg)
 	_ = reg
 
 	tests := []struct {

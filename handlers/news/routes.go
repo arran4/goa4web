@@ -16,9 +16,11 @@ import (
 )
 
 // RegisterRoutes attaches the public news endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("News", "/", SectionWeight, "news", "post")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("News"), "News", "/admin/news", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("News", "/", SectionWeight, "news", "post"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("News"), "News", "/admin/news", SectionWeight),
+	}
 	r.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
 	r.HandleFunc("/", NewsPageHandler).Methods("GET")
 	r.HandleFunc("/", handlers.TaskDoneAutoRefreshPage).Methods("POST")
@@ -58,9 +60,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 	api := r.PathPrefix("/api/news").Subrouter()
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
+	return opts
 }
 
 // Register registers the news router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("news", nil, RegisterRoutes)
+	reg.RegisterModule("news", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

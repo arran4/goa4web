@@ -11,7 +11,7 @@ import (
 )
 
 // RegisterRoutes attaches the login and registration endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions {
 	rr := r.PathPrefix("/register").Subrouter()
 	rr.Use(handlers.IndexMiddleware(CustomIndex))
 	rr.HandleFunc("", handlers.WithNoCache(registerTask.Page)).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
@@ -26,9 +26,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 	fr.HandleFunc("", handlers.WithNoCache(forgotPasswordTask.Page)).Methods("GET").MatcherFunc(Not(handlers.RequiresAnAccount()))
 	fr.HandleFunc("", handlers.TaskHandler(emailAssociationRequestTask)).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(emailAssociationRequestTask.Matcher())
 	fr.HandleFunc("", handlers.TaskHandler(forgotPasswordTask)).Methods("POST").MatcherFunc(Not(handlers.RequiresAnAccount())).MatcherFunc(forgotPasswordTask.Matcher())
+	return nil
 }
 
 // Register registers the auth router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("auth", nil, RegisterRoutes)
+	reg.RegisterModule("auth", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

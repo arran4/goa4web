@@ -12,7 +12,10 @@ import (
 func TestHappyPathRegisterRoutesRegistersAdminLink(t *testing.T) {
 	r := mux.NewRouter()
 	navReg := navpkg.NewRegistry()
-	RegisterRoutes(r, config.NewRuntimeConfig(), navReg)
+	opts := RegisterRoutes(r, config.NewRuntimeConfig())
+	for _, opt := range opts {
+		opt.Apply(navReg)
+	}
 	links := navReg.AdminLinks()
 	for _, l := range links {
 		if l.Name == "Blogs" {

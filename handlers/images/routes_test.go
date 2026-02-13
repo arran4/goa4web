@@ -21,7 +21,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	intimages "github.com/arran4/goa4web/internal/images"
-	"github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/internal/upload/local"
@@ -62,8 +61,7 @@ func TestImageRoutes(t *testing.T) {
 func imageRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
-	navReg := navigation.NewRegistry()
-	RegisterRoutes(r, cfg, navReg)
+	RegisterRoutes(r, cfg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/image/abc!", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -79,8 +77,7 @@ func imageRouteInvalidID(t *testing.T) {
 func cacheRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
-	navReg := navigation.NewRegistry()
-	RegisterRoutes(r, cfg, navReg)
+	RegisterRoutes(r, cfg)
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/images/cache/abc!", nil)
 	cd := common.NewCoreData(req.Context(), nil, cfg)
@@ -146,8 +143,7 @@ func signImageURLEndToEnd(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
 	cfg.BaseURL = "http://localhost"
-	navReg := navigation.NewRegistry()
-	RegisterRoutes(r, cfg, navReg)
+	RegisterRoutes(r, cfg)
 
 	// Setup CoreData with key
 	req := httptest.NewRequest("GET", "/", nil)
@@ -254,8 +250,7 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 
 	// 2. Setup Router
 	r := mux.NewRouter()
-	navReg := navigation.NewRegistry()
-	RegisterRoutes(r, cfg, navReg)
+	RegisterRoutes(r, cfg)
 
 	// 3. Request Thumbnail
 	// Construct signed URL

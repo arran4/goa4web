@@ -18,7 +18,6 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -45,9 +44,6 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		cd.RSSFeedTitle = "Notifications RSS Feed"
 		cd.AtomFeedURL = cd.GenerateFeedURL("/usr/notifications/atom")
 		cd.AtomFeedTitle = "Notifications Atom Feed"
-	}
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
 	}
 	ps := cd.PageSize()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -186,10 +182,7 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 		http.NotFound(w, r)
 		return nil
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -227,10 +220,7 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		}
 		uid = user.Idusers
 	} else {
-		session, ok := core.GetSessionOrFail(w, r)
-		if !ok {
-			return
-		}
+		session := cd.GetSession()
 		uid, _ = session.Values["UID"].(int32)
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -265,10 +255,7 @@ func notificationsAtomPage(w http.ResponseWriter, r *http.Request) {
 		}
 		uid = user.Idusers
 	} else {
-		session, ok := core.GetSessionOrFail(w, r)
-		if !ok {
-			return
-		}
+		session := cd.GetSession()
 		uid, _ = session.Values["UID"].(int32)
 	}
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
@@ -336,10 +323,7 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -409,10 +393,8 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 const UserNotificationOpenPage tasks.Template = "user/notificationOpen.gohtml"
 
 func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
@@ -438,10 +420,8 @@ func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])

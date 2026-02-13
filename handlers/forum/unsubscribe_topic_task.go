@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -26,13 +25,9 @@ var UnsubscribeTopicTaskHandler = unsubscribeTopicTaskAction
 var _ tasks.Task = (*unsubscribeTopicTask)(nil)
 
 func (unsubscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
-	_, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := cd.UnsubscribeTopic(cd.UserID, int32(topicID)); err != nil {
 		log.Printf("delete subscription: %v", err)
 		return fmt.Errorf("delete subscription %w", handlers.ErrRedirectOnSamePageHandler(err))

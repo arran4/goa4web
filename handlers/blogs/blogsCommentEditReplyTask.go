@@ -10,7 +10,6 @@ import (
 
 	"github.com/arran4/goa4web/internal/eventbus"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -55,10 +54,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	blogId, _ := strconv.Atoi(vars["blog"])
 	commentId, _ := strconv.Atoi(vars["comment"])
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
 	comment := cd.CurrentCommentLoaded()

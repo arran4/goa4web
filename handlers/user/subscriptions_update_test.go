@@ -79,15 +79,15 @@ func TestUpdateSubscriptionsTask_MandatoryProtection(t *testing.T) {
 					return []*db.GetPermissionsByUserIDRow{}, nil
 				}
 
-				cd := common.NewCoreData(context.Background(), q, nil)
-				cd.UserID = uid
-				if tt.isAdmin {
-					cd.AdminMode = true
-				}
-
 				// Mock Session
 				mockSession := &sessions.Session{
 					Values: map[interface{}]interface{}{"UID": uid},
+				}
+
+				cd := common.NewCoreData(context.Background(), q, nil, common.WithSession(mockSession))
+				cd.UserID = uid
+				if tt.isAdmin {
+					cd.AdminMode = true
 				}
 
 				// Build request

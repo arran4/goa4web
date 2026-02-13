@@ -19,7 +19,6 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/core"
 )
 
 func AdminAddPage(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +77,7 @@ func (addTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return nil
-	}
+	session := cd.GetSession()
 
 	uid, _ := session.Values["UID"].(int32)
 

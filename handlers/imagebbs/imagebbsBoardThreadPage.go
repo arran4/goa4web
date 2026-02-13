@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 
@@ -123,10 +122,7 @@ const ImageBBSBoardThreadPageTmpl tasks.Template = "imagebbs/boardThreadPage.goh
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 
 	var uid int32
 

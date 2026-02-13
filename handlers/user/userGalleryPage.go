@@ -15,7 +15,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -27,10 +26,8 @@ type galleryImage struct {
 }
 
 func userGalleryPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
@@ -40,7 +37,6 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Gallery"
 	size := cd.Config.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {

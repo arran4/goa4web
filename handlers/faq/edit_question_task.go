@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -37,10 +36,7 @@ func (EditQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("faq id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := cd.UpdateFAQQuestion(question, answer, int32(category), int32(faq), uid, int32(priority)); err != nil {

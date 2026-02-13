@@ -14,7 +14,6 @@ import (
 
 	"github.com/arran4/goa4web/handlers"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/internal/db"
 
 	"github.com/arran4/goa4web/internal/tasks"
@@ -37,12 +36,9 @@ func (PagingSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
-	uid, _ := session.Values["UID"].(int32)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
+	uid, _ := session.Values["UID"].(int32)
 	size, _ := strconv.Atoi(r.FormValue("size"))
 	if size < cd.Config.PageSizeMin {
 		size = cd.Config.PageSizeMin

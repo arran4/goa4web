@@ -17,7 +17,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 
@@ -66,10 +65,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	bid, _ := strconv.Atoi(bidStr)
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
 	queries := cd.Queries()

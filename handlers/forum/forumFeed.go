@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -84,9 +83,6 @@ func handleTopicFeed(w http.ResponseWriter, r *http.Request, feedType string) {
 		if err == nil && user != nil {
 			cd.UserID = user.Idusers
 		}
-	} else if _, ok := core.GetSessionOrFail(w, r); ok {
-		// Session loaded in CoreData (via IndexMiddleware / WithSession)
-		// No op, cd.UserID already set
 	}
 
 	topic, err := cd.ForumTopicByID(int32(topicID))

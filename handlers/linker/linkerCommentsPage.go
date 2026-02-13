@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/a4code"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -53,10 +52,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if lid, err := strconv.Atoi(vars["link"]); err == nil {
 		linkId = lid
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
@@ -191,10 +187,8 @@ func (replyTask) IndexData(data map[string]any) []searchworker.IndexEventData {
 var _ searchworker.IndexedTask = replyTask{}
 
 func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 
 	vars := mux.Vars(r)
 	linkId, err := strconv.Atoi(vars["link"])
@@ -207,7 +201,6 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,

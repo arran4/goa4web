@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
@@ -70,10 +69,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
 	posts, err := cd.LatestNewsList(0, 50)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 )
@@ -34,9 +33,6 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
 
 	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageId), text)
 	if err != nil {

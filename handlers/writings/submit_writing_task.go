@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -36,10 +35,8 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("category id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 
 	languageID, err := strconv.Atoi(r.PostFormValue("language"))
 	if err != nil {
@@ -54,7 +51,6 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	articleID, err := cd.CreateWriting(int32(categoryID), int32(languageID), title, abstract, body, private)
 	if err != nil {

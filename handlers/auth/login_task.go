@@ -124,10 +124,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	session.Values["UID"] = int32(row.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()

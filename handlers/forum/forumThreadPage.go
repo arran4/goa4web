@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
@@ -65,9 +64,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		return
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
 	commentRows, err := cd.SelectedThreadComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)

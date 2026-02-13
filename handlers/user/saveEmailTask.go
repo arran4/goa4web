@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -20,10 +19,8 @@ var saveEmailTask = &SaveEmailTask{TaskString: tasks.TaskString(TaskSaveAll)}
 var _ tasks.Task = (*SaveEmailTask)(nil)
 
 func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		return common.UserError{ErrorMessage: "forbidden"}
@@ -33,7 +30,6 @@ func (SaveEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	updates := r.PostFormValue("emailupdates") != ""
 	auto := r.PostFormValue("autosubscribe") != ""

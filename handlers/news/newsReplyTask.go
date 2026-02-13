@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -91,10 +90,8 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 
 	vars := mux.Vars(r)
 	pid, err := strconv.Atoi(vars["news"])
@@ -106,7 +103,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	uid, _ := session.Values["UID"].(int32)
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.HasGrant("news", "post", "reply", int32(pid)) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil

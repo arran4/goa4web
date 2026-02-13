@@ -53,7 +53,7 @@ func RequiredGrantFromPath(section, item, action, param string) mux.MatcherFunc 
 func RequiresAnAccount() mux.MatcherFunc {
 	return func(request *http.Request, match *mux.RouteMatch) bool {
 		if cd, ok := request.Context().Value(consts.KeyCoreData).(*common.CoreData); ok && cd != nil {
-			if cd.UserID != 0 {
+			if cd.IsUserLoggedIn() {
 				return true
 			}
 		}

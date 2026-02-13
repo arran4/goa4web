@@ -15,6 +15,11 @@ func (cd *CoreData) UserSettings(userID int32) (*db.Preference, error) {
 	return cd.queries.GetPreferenceForLister(cd.ctx, userID)
 }
 
+// IsUserLoggedIn reports whether a user is currently logged in.
+func (cd *CoreData) IsUserLoggedIn() bool {
+	return cd != nil && cd.UserID != 0
+}
+
 // UserLanguages fetches languages selected by the user.
 func (cd *CoreData) UserLanguages(userID int32) ([]*db.UserLanguage, error) {
 	if cd == nil || cd.queries == nil {
@@ -113,7 +118,7 @@ func (cd *CoreData) UserGallery(userID int32, limit, offset int32) ([]*db.Upload
 	return cd.queries.ListUploadedImagesByUserForLister(cd.ctx, db.ListUploadedImagesByUserForListerParams{
 		ListerID:      cd.UserID,
 		UserID:        userID,
-		ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.IsUserLoggedIn()},
 		Limit:         limit,
 		Offset:        offset,
 	})

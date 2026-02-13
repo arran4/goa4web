@@ -22,13 +22,14 @@ require (
 
 require (
 	github.com/arran4/go-be-lazy v0.1.0
+	github.com/arran4/go-consume v0.0.4
 	github.com/arran4/go-pattern v0.0.6
 	github.com/arran4/golang-wordwrap v0.0.4
 	github.com/chzyer/readline v1.5.1
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/jedib0t/go-pretty/v6 v6.7.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/image v0.35.0
 	golang.org/x/sys v0.40.0
 	golang.org/x/tools v0.41.0

@@ -22,7 +22,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/arran4/go-be-lazy"
+	lazy "github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/config"
@@ -2886,7 +2886,7 @@ func (cd *CoreData) HasModule(name string) bool {
 
 // GenerateFeedURL returns a signed feed URL if the user is logged in, otherwise the raw path.
 func (cd *CoreData) GenerateFeedURL(path string) string {
-	if cd.UserID != 0 && cd.FeedSignKey != "" {
+	if cd.IsUserLoggedIn() && cd.FeedSignKey != "" {
 		u := cd.CurrentUserLoaded()
 		if u == nil {
 			// Try to load it if not loaded

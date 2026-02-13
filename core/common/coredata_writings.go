@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/arran4/go-be-lazy"
+	lazy "github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
 )

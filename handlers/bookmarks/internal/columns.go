@@ -1,6 +1,8 @@
-package bookmarks
+package internal
 
 import "strings"
+
+// TODO move to internal or somewhere more appropriate
 
 // Entry represents a single bookmark.
 type Entry struct {

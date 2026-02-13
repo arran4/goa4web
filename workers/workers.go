@@ -38,21 +38,20 @@ func safeGo(fn func()) {
 }
 
 // Start launches all background workers using the given configuration.
-func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus) {
+func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus) {
 	log.Printf("Starting email worker")
 	safeGo(func() {
-		emailqueue.StartEventListener(ctx, db.New(sdb), provider, dlqProvider, bus, cfg)
+		emailqueue.StartEventListener(ctx, q, provider, dlqProvider, bus, cfg)
 	})
 	log.Printf("Starting generic scheduler and digest consumer")
 	safeGo(func() {
-		q := db.New(sdb)
-		n := notifications.New(
-			notifications.WithQueries(q),
-			notifications.WithCustomQueries(q),
-			notifications.WithEmailProvider(provider),
-			notifications.WithBus(bus),
-			notifications.WithConfig(cfg),
-		)
+		var nOpts []notifications.Option
+		nOpts = append(nOpts, notifications.WithQueries(q))
+		if cq, ok := q.(db.CustomQueries); ok {
+			nOpts = append(nOpts, notifications.WithCustomQueries(cq))
+		}
+		nOpts = append(nOpts, notifications.WithEmailProvider(provider), notifications.WithBus(bus), notifications.WithConfig(cfg))
+		n := notifications.New(nOpts...)
 		// Start consumer
 		consumer := notifications.NewDigestConsumer(n)
 		go consumer.Run(ctx)
@@ -85,24 +84,24 @@ func Start(ctx context.Context, sdb *sql.DB, provider email.Provider, dlqProvide
 	log.Printf("Starting event bus logger worker")
 	safeGo(func() { logworker.Worker(ctx, bus) })
 	log.Printf("Starting audit worker")
-	safeGo(func() { auditworker.Worker(ctx, bus, db.New(sdb)) })
+	safeGo(func() { auditworker.Worker(ctx, bus, q) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
-		n := notifications.New(
-			notifications.WithQueries(db.New(sdb)),
-			notifications.WithEmailProvider(provider),
-			notifications.WithCustomQueries(db.New(sdb)),
-			notifications.WithBus(bus),
-			notifications.WithConfig(cfg),
-		)
+		var nOpts []notifications.Option
+		nOpts = append(nOpts, notifications.WithQueries(q))
+		if cq, ok := q.(db.CustomQueries); ok {
+			nOpts = append(nOpts, notifications.WithCustomQueries(cq))
+		}
+		nOpts = append(nOpts, notifications.WithEmailProvider(provider), notifications.WithBus(bus), notifications.WithConfig(cfg))
+		n := notifications.New(nOpts...)
 		n.BusWorker(ctx, bus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
-	safeGo(func() { searchworker.Worker(ctx, bus, db.New(sdb)) })
+	safeGo(func() { searchworker.Worker(ctx, bus, q) })
 	log.Printf("Starting background task worker")
-	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, db.New(sdb)) })
+	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, q) })
 	log.Printf("Starting post count worker")
-	safeGo(func() { postcountworker.Worker(ctx, bus, db.New(sdb)) })
+	safeGo(func() { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")
-	safeGo(func() { externallinkworker.Worker(ctx, bus, db.New(sdb), cfg) })
+	safeGo(func() { externallinkworker.Worker(ctx, bus, q, cfg) })
 }

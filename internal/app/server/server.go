@@ -352,8 +352,16 @@ func (s *Server) startWorkers(ctx context.Context) {
 	if s.Config.EmailEnabled && s.Config.EmailProvider != "" && s.Config.EmailFrom == "" {
 		log.Printf("%s not set while EMAIL_PROVIDER=%s", config.EnvEmailFrom, s.Config.EmailProvider)
 	}
-	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, db.New(s.DB))
-	workers.Start(workerCtx, s.DB, emailProvider, dlqProvider, s.Config, s.Bus)
+	var q db.Querier
+	if s.Queries != nil {
+		q = s.Queries
+	} else {
+		if s.DB != nil {
+			q = db.New(s.DB)
+		}
+	}
+	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
+	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus)
 	s.WorkerCancel = cancel
 }
 

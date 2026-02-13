@@ -116,7 +116,18 @@ func WithBus(b *eventbus.Bus) ServerOption { return func(o *serverOptions) { o.B
 func WithStore(s *sessions.CookieStore) ServerOption { return func(o *serverOptions) { o.Store = s } }
 
 // WithDB uses the supplied database pool instead of performing startup checks.
-func WithDB(db any) ServerOption { return func(o *serverOptions) { o.DB = db } }
+func WithDB(d any) ServerOption {
+	return func(o *serverOptions) {
+		switch v := d.(type) {
+		case *sql.DB:
+			o.DB = v
+		case db.Querier:
+			o.DB = v
+		default:
+			panic(fmt.Sprintf("unknown object: %T", d))
+		}
+	}
+}
 
 // WithRouterRegistry sets the router module registry.
 func WithRouterRegistry(r *routerpkg.Registry) ServerOption {

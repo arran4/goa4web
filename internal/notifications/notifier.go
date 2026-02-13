@@ -47,7 +47,14 @@ func WithSilence(silent bool) Option {
 }
 
 // WithQueries sets the db.Queries dependency.
-func WithQueries(q db.Querier) Option { return func(n *Notifier) { n.Queries = q } }
+func WithQueries(q db.Querier) Option {
+	return func(n *Notifier) {
+		n.Queries = q
+		if cq, ok := q.(db.CustomQueries); ok {
+			n.CustomQueries = cq
+		}
+	}
+}
 
 // WithCustomQueries sets the db.CustomQueries dependency.
 func WithCustomQueries(cq db.CustomQueries) Option {

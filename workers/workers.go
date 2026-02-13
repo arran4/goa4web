@@ -44,13 +44,12 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	})
 	log.Printf("Starting generic scheduler and digest consumer")
 	safeGo(func() {
-		var nOpts []notifications.Option
-		nOpts = append(nOpts, notifications.WithQueries(q))
-		if cq, ok := q.(db.CustomQueries); ok {
-			nOpts = append(nOpts, notifications.WithCustomQueries(cq))
-		}
-		nOpts = append(nOpts, notifications.WithEmailProvider(provider), notifications.WithBus(bus), notifications.WithConfig(cfg))
-		n := notifications.New(nOpts...)
+		n := notifications.New(
+			notifications.WithQueries(q),
+			notifications.WithEmailProvider(provider),
+			notifications.WithBus(bus),
+			notifications.WithConfig(cfg),
+		)
 		// Start consumer
 		consumer := notifications.NewDigestConsumer(n)
 		go consumer.Run(ctx)
@@ -86,13 +85,12 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	safeGo(func() { auditworker.Worker(ctx, bus, q) })
 	log.Printf("Starting notification bus worker")
 	safeGo(func() {
-		var nOpts []notifications.Option
-		nOpts = append(nOpts, notifications.WithQueries(q))
-		if cq, ok := q.(db.CustomQueries); ok {
-			nOpts = append(nOpts, notifications.WithCustomQueries(cq))
-		}
-		nOpts = append(nOpts, notifications.WithEmailProvider(provider), notifications.WithBus(bus), notifications.WithConfig(cfg))
-		n := notifications.New(nOpts...)
+		n := notifications.New(
+			notifications.WithQueries(q),
+			notifications.WithEmailProvider(provider),
+			notifications.WithBus(bus),
+			notifications.WithConfig(cfg),
+		)
 		n.BusWorker(ctx, bus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")

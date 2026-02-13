@@ -168,8 +168,10 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	var queries db.Querier
 	if o.Querier != nil {
 		queries = o.Querier
-	} else {
+	} else if o.DB != nil {
 		queries = db.New(o.DB)
+	} else {
+		return nil, fmt.Errorf("NewServer: no db or querier provided")
 	}
 
 	sm := db.NewSessionProxy(queries)

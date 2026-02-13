@@ -355,10 +355,11 @@ func (s *Server) startWorkers(ctx context.Context) {
 	var q db.Querier
 	if s.Queries != nil {
 		q = s.Queries
+	} else if s.DB != nil {
+		q = db.New(s.DB)
 	} else {
-		if s.DB != nil {
-			q = db.New(s.DB)
-		}
+		log.Printf("startWorkers: no db or querier available")
+		return
 	}
 	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
 	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus)

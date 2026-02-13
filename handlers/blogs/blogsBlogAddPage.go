@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/core"
 	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
@@ -75,10 +74,7 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if err := cd.ValidateCodeImagesForUser(uid, text); err != nil {
 		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -43,10 +42,8 @@ const WritingsArticleAddPageTmpl tasks.Template = "writings/articleAddPage.gohtm
 func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	categoryId, _ := strconv.Atoi(vars["category"])
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 	private, _ := strconv.ParseBool(r.PostFormValue("isitprivate"))
@@ -55,7 +52,6 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	articleId, err := cd.CreateWriting(int32(categoryId), int32(languageId), title, abstract, body, private)
 	if err != nil {
 		log.Printf("insertWriting Error: %s", err)

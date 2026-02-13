@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -32,12 +31,9 @@ func (SaveTimezoneTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return common.UserError{ErrorMessage: "invalid timezone"}
 		}
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
-	uid, _ := session.Values["UID"].(int32)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
+	uid, _ := session.Values["UID"].(int32)
 	if err := cd.SetTimezone(uid, tz); err != nil {
 		log.Printf("Save timezone Error: %v", err)
 		return fmt.Errorf("save timezone fail %w", handlers.ErrRedirectOnSamePageHandler(err))

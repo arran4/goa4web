@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -50,10 +49,8 @@ func (t AddEmailTask) generateVerificationCode() string {
 }
 
 func (t AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -65,7 +62,6 @@ func (t AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, err := mail.ParseAddress(emailAddr); err != nil {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=invalid+email"}
 	}
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	if ue, err := queries.GetUserEmailByEmail(r.Context(), emailAddr); err == nil && ue.VerifiedAt.Valid {
 		return handlers.RefreshDirectHandler{TargetURL: "/usr/email?error=email+exists"}
@@ -105,16 +101,13 @@ func (t AddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (t AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 	ue, err := queries.GetUserEmailByID(r.Context(), int32(id))
 	if err != nil || ue.UserID != uid {
@@ -154,17 +147,14 @@ func (t AddEmailTask) Resend(w http.ResponseWriter, r *http.Request) any {
 }
 
 func (AddEmailTask) Notify(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/usr/email", http.StatusSeeOther)
 		return
 	}
 	id, _ := strconv.Atoi(r.FormValue("id"))
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if err := cd.AddEmail(uid, int32(id)); err != nil {
 		log.Printf("set notification priority: %v", err)
 	}

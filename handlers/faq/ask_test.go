@@ -45,7 +45,8 @@ func TestAskActionPage(t *testing.T) {
 				req.AddCookie(c)
 			}
 			ctx := req.Context()
-			ctx = context.WithValue(ctx, consts.KeyCoreData, &common.CoreData{})
+			cd := common.NewCoreData(ctx, nil, config.NewRuntimeConfig(), common.WithSession(sess))
+			ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
 			req = req.WithContext(ctx)
 
 			rr := httptest.NewRecorder()
@@ -91,7 +92,7 @@ func TestAskActionPage(t *testing.T) {
 			return nil
 		}
 		evt := &eventbus.TaskEvent{Path: "/faq/ask", Task: tasks.TaskString(TaskAsk), UserID: 1}
-		cd := common.NewCoreData(req.Context(), q, cfg)
+		cd := common.NewCoreData(req.Context(), q, cfg, common.WithSession(sess))
 		cd.UserID = 1
 		cd.SetEvent(evt)
 

@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -38,10 +37,7 @@ func (CreateQuestionTask) Action(w http.ResponseWriter, r *http.Request) any {
 		handlers.TaskErrorAcknowledgementPage(w, r)
 		return nil
 	}
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if _, err := cd.CreateFAQQuestion(common.CreateFAQQuestionParams{
 		Question:   question,

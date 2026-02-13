@@ -105,7 +105,7 @@ func TestUserNotificationOpenPage_SetsTitle(t *testing.T) {
 				ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 
 				// Setup CoreData
-				cd := common.NewCoreData(ctx, qs, config.NewRuntimeConfig())
+				cd := common.NewCoreData(ctx, qs, config.NewRuntimeConfig(), common.WithSession(session))
 				cd.Config.NotificationsEnabled = true
 				cd.UserID = 1
 				ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

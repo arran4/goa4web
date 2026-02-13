@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/handlers/share"
 
 	"github.com/arran4/goa4web/a4code"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
@@ -159,9 +158,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 const ArticlePageTmpl tasks.Template = "writings/articlePage.gohtml"
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return
-	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	writing, err := cd.Article()

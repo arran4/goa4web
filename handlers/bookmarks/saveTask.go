@@ -7,7 +7,6 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
@@ -23,12 +22,9 @@ var saveTask = &SaveTask{TaskString: TaskSave}
 var _ tasks.Task = (*SaveTask)(nil)
 
 func EditPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
-	_ = session
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
+	_ = session
 	cd.PageTitle = "Edit Bookmarks"
 	BookmarkEditPageTmpl.Handle(w, r, struct{}{})
 }
@@ -38,10 +34,7 @@ const BookmarkEditPageTmpl tasks.Template = "bookmarks/editPage.gohtml"
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
 	if err := cd.SaveBookmark(db.UpdateBookmarksForListerParams{

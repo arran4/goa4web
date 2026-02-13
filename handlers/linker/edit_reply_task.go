@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -35,13 +34,10 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	linkId, _ := strconv.Atoi(vars["link"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	comment := cd.CurrentCommentLoaded()
 	if comment == nil {
 		var err error

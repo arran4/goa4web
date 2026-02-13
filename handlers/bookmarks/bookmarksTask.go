@@ -3,7 +3,6 @@ package bookmarks
 import (
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -34,10 +33,7 @@ func (t *bookmarksTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 func (t *bookmarksTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
 	cd.PageTitle = "Bookmarks"

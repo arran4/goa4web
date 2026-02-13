@@ -17,7 +17,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/searchworker"
 
-	"github.com/arran4/goa4web/core"
 )
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
@@ -34,10 +33,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Edit Article"
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 

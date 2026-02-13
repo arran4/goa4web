@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/gorilla/mux"
 )
 
@@ -73,10 +72,8 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 const LinkerShowPageTmpl tasks.Template = "linker/showPage.gohtml"
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 
 	text := r.PostFormValue("replytext")
 	languageValue := r.PostFormValue("language")
@@ -101,7 +98,6 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
 		ViewerID:     cd.UserID,

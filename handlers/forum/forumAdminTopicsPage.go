@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -217,10 +216,7 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	// derive section from base path, handling private forum mapping
 	base := cd.ForumBasePath

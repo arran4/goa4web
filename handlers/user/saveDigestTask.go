@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -21,10 +20,8 @@ var saveDigestTask = &SaveDigestTask{TaskString: TaskSaveDigest}
 var _ tasks.Task = (*SaveDigestTask)(nil)
 
 func (SaveDigestTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	if uid == 0 {
 		return common.UserError{ErrorMessage: "forbidden"}
@@ -34,7 +31,6 @@ func (SaveDigestTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	hourStr := r.PostFormValue("daily_digest_hour")
 	var hour *int

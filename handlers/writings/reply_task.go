@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -78,11 +77,8 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return handlers.SessionFetchFail{}
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
 	cd.LoadSelectionsFromRequest(r)
 
 	writing, err := cd.Article()

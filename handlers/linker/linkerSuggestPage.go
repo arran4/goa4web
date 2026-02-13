@@ -16,7 +16,6 @@ import (
 
 	"github.com/arran4/goa4web/internal/tasks"
 
-	"github.com/arran4/goa4web/core"
 )
 
 func SuggestPage(w http.ResponseWriter, r *http.Request) {
@@ -72,10 +71,7 @@ func (SuggestTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	queries := cd.Queries()
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return nil
-	}
+	session := cd.GetSession()
 
 	uid, _ := session.Values["UID"].(int32)
 

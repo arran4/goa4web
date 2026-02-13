@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -51,12 +50,9 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	postId, _ := strconv.Atoi(vars["news"])
 	commentId, _ := strconv.Atoi(vars["comment"])
 
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
-	uid, _ := session.Values["UID"].(int32)
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
+	uid, _ := session.Values["UID"].(int32)
 	ti, err := cd.UpdateNewsReply(int32(commentId), uid, int32(languageId), text)
 	if err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))

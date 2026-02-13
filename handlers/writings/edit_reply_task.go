@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/internal/eventbus"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -46,9 +45,6 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if _, ok := core.GetSessionOrFail(w, r); !ok {
-		return handlers.SessionFetchFail{}
-	}
 
 	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageID), text)
 	if err != nil {

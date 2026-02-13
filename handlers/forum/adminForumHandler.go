@@ -15,7 +15,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 
-	"github.com/arran4/goa4web/core"
 )
 
 func AdminForumPage(w http.ResponseWriter, r *http.Request) {
@@ -57,10 +56,6 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return
-	}
 
 	queries := cd.Queries()
 

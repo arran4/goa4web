@@ -10,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 
 	"github.com/arran4/goa4web/a4code"
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -117,12 +116,9 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	session, ok := core.GetSessionOrFail(w, r)
-	if !ok {
-		return handlers.SessionFetchFail{}
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	session := cd.GetSession()
+
 	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Reply"
 	threadRow, err := cd.SelectedThread()

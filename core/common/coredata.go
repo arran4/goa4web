@@ -2226,6 +2226,11 @@ func (cd *CoreData) SelectedCommentID() int32 { return cd.currentCommentID }
 // Session returns the request session if available.
 func (cd *CoreData) Session() *sessions.Session { return cd.session }
 
+// This satisfies the gobookmarks.Core interface.
+func (cd *CoreData) GetSession() *sessions.Session {
+	return cd.session
+}
+
 // SessionManager returns the configured session manager, if any.
 func (cd *CoreData) SessionManager() SessionManager { return cd.sessionProxy }
 

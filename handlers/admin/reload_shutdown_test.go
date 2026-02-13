@@ -16,7 +16,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
@@ -26,8 +25,7 @@ func TestAdminReload(t *testing.T) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		cfg := config.NewRuntimeConfig()
 		h := New(WithServer(&server.Server{Config: &config.RuntimeConfig{}}))
-		navReg := navigation.NewRegistry()
-		h.RegisterRoutes(ar, cfg, navReg)
+		h.RegisterRoutes(ar, cfg)
 		q := testhelpers.NewQuerierStub()
 
 		req := httptest.NewRequest("POST", "/admin/reload", nil)
@@ -69,8 +67,7 @@ func TestAdminReload(t *testing.T) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		cfg := config.NewRuntimeConfig()
 		h := New(WithServer(&server.Server{Config: &config.RuntimeConfig{}}))
-		navReg := navigation.NewRegistry()
-		h.RegisterRoutes(ar, cfg, navReg)
+		h.RegisterRoutes(ar, cfg)
 		q := testhelpers.NewQuerierStub()
 
 		req := httptest.NewRequest("POST", "/admin/reload", nil)
@@ -93,8 +90,7 @@ func TestAdminShutdown(t *testing.T) {
 		r := mux.NewRouter()
 		ar := r.PathPrefix("/admin").Subrouter()
 		cfg := config.NewRuntimeConfig()
-		navReg := navigation.NewRegistry()
-		h.RegisterRoutes(ar, cfg, navReg)
+		h.RegisterRoutes(ar, cfg)
 		q := testhelpers.NewQuerierStub()
 
 		form := url.Values{}
@@ -123,8 +119,7 @@ func TestAdminShutdown(t *testing.T) {
 		ar := r.PathPrefix("/admin").Subrouter()
 		cfg := config.NewRuntimeConfig()
 		h := New(WithServer(&server.Server{}))
-		navReg := navigation.NewRegistry()
-		h.RegisterRoutes(ar, cfg, navReg)
+		h.RegisterRoutes(ar, cfg)
 		q := testhelpers.NewQuerierStub()
 
 		req := httptest.NewRequest("POST", "/admin/shutdown", nil)

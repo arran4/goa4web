@@ -9,7 +9,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers/admin"
-	nav "github.com/arran4/goa4web/internal/navigation"
 )
 
 // TestHappyPathRoleGrantsEditorJSRoute ensures the role grants editor script is served.
@@ -17,8 +16,7 @@ func TestHappyPathRoleGrantsEditorJSRoute(t *testing.T) {
 	h := admin.New()
 	r := mux.NewRouter()
 	ar := r.PathPrefix("/admin").Subrouter()
-	navReg := nav.NewRegistry()
-	h.RegisterRoutes(ar, &config.RuntimeConfig{}, navReg)
+	h.RegisterRoutes(ar, &config.RuntimeConfig{})
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/admin/role-grants-editor.js", nil)
 	rec := httptest.NewRecorder()

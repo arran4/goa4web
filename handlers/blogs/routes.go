@@ -15,9 +15,11 @@ import (
 )
 
 // RegisterRoutes attaches the public blog endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Blogs", "/blogs", SectionWeight, "blogs", "entry")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Blogs"), "Blogs", "/admin/blogs", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("Blogs", "/blogs", SectionWeight, "blogs", "entry"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Blogs"), "Blogs", "/admin/blogs", SectionWeight),
+	}
 	br := r.PathPrefix("/blogs").Subrouter()
 	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	br.Use(handlers.IndexMiddleware(BlogsMiddlewareIndex), handlers.SectionMiddleware("blogs"))
@@ -51,9 +53,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 
 	api := r.PathPrefix("/api/blogs").Subrouter()
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
+	return opts
 }
 
 // Register registers the blogs router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("blogs", nil, RegisterRoutes)
+	reg.RegisterModule("blogs", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

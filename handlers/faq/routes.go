@@ -17,17 +17,20 @@ func noTask() mux.MatcherFunc {
 }
 
 // RegisterRoutes attaches the public FAQ endpoints to the router.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Help", "/faq", SectionWeight, "faq", "question/answer")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Help"), "Help Questions", "/admin/faq/questions", SectionWeight)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Help"), "FAQ Templates", "/admin/faq/templates", SectionWeight+1)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Help"), "Help Categories", "/admin/faq/categories", SectionWeight+2)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("Help", "/faq", SectionWeight, "faq", "question/answer"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Help"), "Help Questions", "/admin/faq/questions", SectionWeight),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Help"), "FAQ Templates", "/admin/faq/templates", SectionWeight+1),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Help"), "Help Categories", "/admin/faq/categories", SectionWeight+2),
+	}
 	faqr := r.PathPrefix("/faq").Subrouter()
 	faqr.Use(handlers.IndexMiddleware(CustomFAQIndex))
 	faqr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	faqr.HandleFunc("", Page).Methods("GET", "POST")
 	faqr.HandleFunc("/ask", askTask.Page).Methods("GET")
 	faqr.HandleFunc("/ask", handlers.TaskHandler(askTask)).Methods("POST").MatcherFunc(askTask.Matcher())
+	return opts
 }
 
 // RegisterAdminRoutes attaches the admin FAQ endpoints to the router.
@@ -58,5 +61,7 @@ func RegisterAdminRoutes(ar *mux.Router) {
 
 // Register registers the faq router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("faq", nil, RegisterRoutes)
+	reg.RegisterModule("faq", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

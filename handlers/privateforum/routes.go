@@ -14,8 +14,10 @@ import (
 )
 
 // RegisterRoutes attaches the private forum endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Private", "/private", SectionWeight, "privateforum", "topic")
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("Private", "/private", SectionWeight, "privateforum", "topic"),
+	}
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	pr.Use(handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
@@ -76,10 +78,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	pr.Handle("/topic/{topic}/thread/{thread}/reply", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ReplyTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ReplyTaskHandler.Matcher())
 	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumhandlers.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionHandler))))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.TopicThreadCommentEditActionHandler.Matcher())
 	pr.Handle("/topic/{topic}/thread/{thread}/comment/{comment}", forumhandlers.RequireThreadAndTopic(forumcomments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(forumhandlers.TopicThreadCommentEditActionCancelHandler))))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.TopicThreadCommentEditActionCancelHandler.Matcher())
-
+	return opts
 }
 
 // Register registers the private forum router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("privateforum", nil, RegisterRoutes)
+	reg.RegisterModule("privateforum", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

@@ -14,7 +14,10 @@ func TestInitModulesOnce(t *testing.T) {
 	reg := NewRegistry()
 	r := mux.NewRouter()
 	count := 0
-	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { count++ })
+	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig) []navigation.RouterOptions {
+		count++
+		return nil
+	})
 
 	cfg := &config.RuntimeConfig{}
 	navReg := navigation.NewRegistry()
@@ -33,9 +36,18 @@ func TestInitModulesDependencyOrder(t *testing.T) {
 
 	navReg := navigation.NewRegistry()
 
-	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { order = append(order, "a") })
-	reg.RegisterModule("b", []string{"a"}, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { order = append(order, "b") })
-	reg.RegisterModule("c", []string{"b"}, func(*mux.Router, *config.RuntimeConfig, *navigation.Registry) { order = append(order, "c") })
+	reg.RegisterModule("a", nil, func(*mux.Router, *config.RuntimeConfig) []navigation.RouterOptions {
+		order = append(order, "a")
+		return nil
+	})
+	reg.RegisterModule("b", []string{"a"}, func(*mux.Router, *config.RuntimeConfig) []navigation.RouterOptions {
+		order = append(order, "b")
+		return nil
+	})
+	reg.RegisterModule("c", []string{"b"}, func(*mux.Router, *config.RuntimeConfig) []navigation.RouterOptions {
+		order = append(order, "c")
+		return nil
+	})
 
 	reg.InitModules(r, &config.RuntimeConfig{}, navReg)
 

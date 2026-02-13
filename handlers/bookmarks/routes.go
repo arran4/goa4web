@@ -13,8 +13,10 @@ import (
 )
 
 // RegisterRoutes attaches the bookmarks endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLink("Bookmarks", "/bookmarks", SectionWeight)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLink("Bookmarks", "/bookmarks", SectionWeight),
+	}
 	br := r.PathPrefix("/bookmarks").Subrouter()
 	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	br.Use(handlers.IndexMiddleware(bookmarksCustomIndex))
@@ -23,10 +25,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 	br.HandleFunc("/edit", EditPage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
 	br.HandleFunc("/edit", handlers.TaskHandler(saveTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveTask.Matcher())
 	br.HandleFunc("/edit", handlers.TaskHandler(createTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createTask.Matcher())
-
+	return opts
 }
 
 // Register registers the bookmarks router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("bookmarks", nil, RegisterRoutes)
+	reg.RegisterModule("bookmarks", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

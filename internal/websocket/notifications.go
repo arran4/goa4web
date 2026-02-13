@@ -216,10 +216,11 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 // registerRoutes attaches the websocket handler to r.
-func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig, _ *navigation.Registry) {
+func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navigation.RouterOptions {
 	h := NewNotificationsHandler(m.Bus, cfg)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
 	r.HandleFunc("/websocket/notifications.js", NotificationsJS(cfg)).Methods(http.MethodGet)
+	return nil
 }
 
 // Register registers the websocket router module.

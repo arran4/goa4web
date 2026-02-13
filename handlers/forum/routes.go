@@ -15,15 +15,17 @@ import (
 )
 
 // RegisterRoutes attaches the public forum endpoints to r.
-func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Forum", "/admin/forum", SectionWeight)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Flagged Posts", "/admin/forum/flagged", SectionWeight+1)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Moderator Logs", "/admin/forum/logs", SectionWeight+2)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Word List", "/admin/forum/list", SectionWeight+3)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Categories", "/admin/forum/categories", SectionWeight+4)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Topics", "/admin/forum/topics", SectionWeight+5)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Forum"), "Threads", "/admin/forum/threads", SectionWeight+6)
+func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Forum", "/admin/forum", SectionWeight),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Flagged Posts", "/admin/forum/flagged", SectionWeight+1),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Moderator Logs", "/admin/forum/logs", SectionWeight+2),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Word List", "/admin/forum/list", SectionWeight+3),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Categories", "/admin/forum/categories", SectionWeight+4),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Topics", "/admin/forum/topics", SectionWeight+5),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Threads", "/admin/forum/threads", SectionWeight+6),
+	}
 	fr := r.PathPrefix("/forum").Subrouter()
 	fr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	h := New()
@@ -82,9 +84,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig, navReg *navpkg.Reg
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
+	return opts
 }
 
 // Register registers the forum router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("forum", nil, RegisterRoutes)
+	reg.RegisterModule("forum", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

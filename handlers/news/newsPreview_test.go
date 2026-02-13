@@ -13,17 +13,15 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestPreviewRoute(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		r := mux.NewRouter()
-		navReg := navpkg.NewRegistry()
 		cfg := &config.RuntimeConfig{}
 
-		RegisterRoutes(r, cfg, navReg)
+		RegisterRoutes(r, cfg)
 
 		// Middleware to inject CoreData
 		mw := func(next http.Handler) http.Handler {

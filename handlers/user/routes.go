@@ -12,7 +12,7 @@ import (
 )
 
 // RegisterRoutes attaches user account endpoints to the router.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions {
 	ur := r.PathPrefix("/usr").Subrouter()
 	ur.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
@@ -66,9 +66,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, _ *nav.Registry) {
 
 	r.HandleFunc("/user/{user:[0-9]+}/reset", UserResetPasswordPage).Methods("GET")
 	r.HandleFunc("/user/{user:[0-9]+}/reset", handlers.TaskHandler(userResetPasswordTask)).Methods("POST").MatcherFunc(userResetPasswordTask.Matcher())
+	return nil
 }
 
 // Register registers the user router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("user", nil, RegisterRoutes)
+	reg.RegisterModule("user", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

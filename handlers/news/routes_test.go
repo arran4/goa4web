@@ -7,14 +7,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/config"
-	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestHappyPathEditRouteRegistered(t *testing.T) {
 	r := mux.NewRouter()
-	navReg := navpkg.NewRegistry()
-	RegisterRoutes(r, config.NewRuntimeConfig(), navReg)
+	RegisterRoutes(r, config.NewRuntimeConfig())
 
 	found := false
 	_ = r.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {

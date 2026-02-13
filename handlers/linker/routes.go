@@ -15,13 +15,15 @@ import (
 var legacyRedirectsEnabled = true
 
 // RegisterRoutes attaches the public linker endpoints to r.
-func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Registry) {
-	navReg.RegisterIndexLinkWithViewPermission("Linker", "/linker", SectionWeight, "linker", "category")
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Linker", "/admin/linker", SectionWeight)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Categories", "/admin/linker/categories", SectionWeight+1)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Links", "/admin/linker/links", SectionWeight+2)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Queue", "/admin/linker/queue", SectionWeight+3)
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Linker"), "Add Link", "/admin/linker/add", SectionWeight+4)
+func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewIndexLinkWithViewPermission("Linker", "/linker", SectionWeight, "linker", "category"),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Linker"), "Linker", "/admin/linker", SectionWeight),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Linker"), "Categories", "/admin/linker/categories", SectionWeight+1),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Linker"), "Links", "/admin/linker/links", SectionWeight+2),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Linker"), "Queue", "/admin/linker/queue", SectionWeight+3),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Linker"), "Add Link", "/admin/linker/add", SectionWeight+4),
+	}
 	lr := r.PathPrefix("/linker").Subrouter()
 	lr.Use(handlers.IndexMiddleware(CustomLinkerIndex), handlers.SectionMiddleware("linker"))
 	lr.HandleFunc("/rss", RssPage).Methods("GET")
@@ -47,9 +49,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig, navReg *navpkg.Regis
 		r.Path("/links").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
 		r.PathPrefix("/links/").HandlerFunc(handlers.RedirectPermanentPrefix("/links", "/linker"))
 	}
+	return opts
 }
 
 // Register registers the linker router module.
 func Register(reg *router.Registry) {
-	reg.RegisterModule("linker", nil, RegisterRoutes)
+	reg.RegisterModule("linker", nil, func(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
+		return RegisterRoutes(r, cfg)
+	})
 }

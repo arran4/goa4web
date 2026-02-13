@@ -9,8 +9,10 @@ import (
 )
 
 // RegisterAdminRoutes attaches the admin language endpoints to the router.
-func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
-	navReg.RegisterAdminControlCenter(navpkg.AdminCCCategory("Languages"), "Languages", "/admin/languages", SectionWeight)
+func RegisterAdminRoutes(ar *mux.Router) []navpkg.RouterOptions {
+	opts := []navpkg.RouterOptions{
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Languages"), "Languages", "/admin/languages", SectionWeight),
+	}
 	ar.HandleFunc("/languages", adminLanguagesPage).Methods("GET")
 	ar.HandleFunc("/language", adminLanguageRedirect).Methods("GET")
 	ar.HandleFunc("/languages/new", adminLanguageNewPage).Methods("GET")
@@ -19,6 +21,7 @@ func RegisterAdminRoutes(ar *mux.Router, navReg *navpkg.Registry) {
 	ar.HandleFunc("/languages/language/{language}/edit", adminLanguageEditPage).Methods("GET")
 	ar.HandleFunc("/languages/language/{language}/edit", handlers.TaskHandler(renameLanguageTask)).Methods("POST").MatcherFunc(renameLanguageTask.Matcher())
 	ar.HandleFunc("/languages/language/{language}/edit", handlers.TaskHandler(deleteLanguageTask)).Methods("POST").MatcherFunc(deleteLanguageTask.Matcher())
+	return opts
 }
 
 // Register registers the languages router module.

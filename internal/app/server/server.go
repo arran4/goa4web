@@ -344,7 +344,6 @@ func (s *Server) startWorkers(ctx context.Context) {
 	if s.WorkerCancel != nil {
 		return
 	}
-	workerCtx, cancel := context.WithCancel(ctx)
 	emailProvider, err := s.EmailReg.ProviderFromConfig(s.Config)
 	if err != nil {
 		log.Printf("Email provider init failed: %v", err)
@@ -361,6 +360,7 @@ func (s *Server) startWorkers(ctx context.Context) {
 		log.Printf("startWorkers: no db or querier available")
 		return
 	}
+	workerCtx, cancel := context.WithCancel(ctx)
 	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
 	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus)
 	s.WorkerCancel = cancel

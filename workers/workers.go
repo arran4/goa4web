@@ -2,7 +2,6 @@ package workers
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"os"
 	"time"

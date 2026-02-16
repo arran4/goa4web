@@ -31,7 +31,6 @@ func (SaveDigestTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-
 	hourStr := r.PostFormValue("daily_digest_hour")
 	var hour *int
 	if hourStr != "" && hourStr != "-1" {

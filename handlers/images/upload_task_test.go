@@ -3,13 +3,13 @@ package images
 import (
 	"bytes"
 	"context"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"mime/multipart"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
@@ -28,15 +28,15 @@ var minimalGIF = []byte{
 }
 
 type mockQuerier struct {
-    *db.QuerierStub
-    createFn func(context.Context, db.CreateUploadedImageForUploaderParams) (int64, error)
+	*db.QuerierStub
+	createFn func(context.Context, db.CreateUploadedImageForUploaderParams) (int64, error)
 }
 
 func (m *mockQuerier) CreateUploadedImageForUploader(ctx context.Context, arg db.CreateUploadedImageForUploaderParams) (int64, error) {
-    if m.createFn != nil {
-        return m.createFn(ctx, arg)
-    }
-    return 0, nil
+	if m.createFn != nil {
+		return m.createFn(ctx, arg)
+	}
+	return 0, nil
 }
 
 func TestUploadImageTask_Action_SecurityFix(t *testing.T) {
@@ -54,16 +54,16 @@ func TestUploadImageTask_Action_SecurityFix(t *testing.T) {
 		testhelpers.WithGrant("images", "upload", "post"),
 	)
 
-    mock := &mockQuerier{
-        QuerierStub: stub,
-        createFn: func(ctx context.Context, arg db.CreateUploadedImageForUploaderParams) (int64, error) {
-            if arg.Path.Valid {
-                capturedPath = arg.Path.String
-            }
-            capturedUploaderID = arg.UploaderID
-            return 1, nil
-        },
-    }
+	mock := &mockQuerier{
+		QuerierStub: stub,
+		createFn: func(ctx context.Context, arg db.CreateUploadedImageForUploaderParams) (int64, error) {
+			if arg.Path.Valid {
+				capturedPath = arg.Path.String
+			}
+			capturedUploaderID = arg.UploaderID
+			return 1, nil
+		},
+	}
 
 	ctx := context.Background()
 	cd := common.NewCoreData(ctx, mock, cfg)
@@ -100,7 +100,7 @@ func TestUploadImageTask_Action_SecurityFix(t *testing.T) {
 
 	txt, ok := res.(handlers.TextByteWriter)
 	if !ok {
-		 t.Fatalf("Expected TextByteWriter, got %T", res)
+		t.Fatalf("Expected TextByteWriter, got %T", res)
 	}
 
 	respStr := string(txt)

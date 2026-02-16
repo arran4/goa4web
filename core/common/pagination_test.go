@@ -8,14 +8,14 @@ import (
 
 func TestOffsetPagination_GetLinks(t *testing.T) {
 	tests := []struct {
-		name          string
-		total         int
-		pageSize      int
-		offset        int
-		baseURL       string
-		paramName     string
-		expectedLinks int
-		expectedURLs  []string
+		name           string
+		total          int
+		pageSize       int
+		offset         int
+		baseURL        string
+		paramName      string
+		expectedLinks  int
+		expectedURLs   []string
 		expectedActive int
 	}{
 		{
@@ -27,34 +27,34 @@ func TestOffsetPagination_GetLinks(t *testing.T) {
 			expectedLinks: 0,
 		},
 		{
-			name:          "Two pages, first active",
-			total:         15,
-			pageSize:      10,
-			offset:        0,
-			baseURL:       "/test",
-			expectedLinks: 2,
-			expectedURLs:  []string{"/test?offset=0", "/test?offset=10"},
+			name:           "Two pages, first active",
+			total:          15,
+			pageSize:       10,
+			offset:         0,
+			baseURL:        "/test",
+			expectedLinks:  2,
+			expectedURLs:   []string{"/test?offset=0", "/test?offset=10"},
 			expectedActive: 1,
 		},
 		{
-			name:          "Two pages, second active",
-			total:         15,
-			pageSize:      10,
-			offset:        10,
-			baseURL:       "/test",
-			expectedLinks: 2,
-			expectedURLs:  []string{"/test?offset=0", "/test?offset=10"},
+			name:           "Two pages, second active",
+			total:          15,
+			pageSize:       10,
+			offset:         10,
+			baseURL:        "/test",
+			expectedLinks:  2,
+			expectedURLs:   []string{"/test?offset=0", "/test?offset=10"},
 			expectedActive: 2,
 		},
 		{
-			name:          "Custom param, existing query",
-			total:         25,
-			pageSize:      10,
-			offset:        20,
-			baseURL:       "/test?foo=bar",
-			paramName:     "off",
-			expectedLinks: 3,
-			expectedURLs:  []string{"/test?foo=bar&off=0", "/test?foo=bar&off=10", "/test?foo=bar&off=20"},
+			name:           "Custom param, existing query",
+			total:          25,
+			pageSize:       10,
+			offset:         20,
+			baseURL:        "/test?foo=bar",
+			paramName:      "off",
+			expectedLinks:  3,
+			expectedURLs:   []string{"/test?foo=bar&off=0", "/test?foo=bar&off=10", "/test?foo=bar&off=20"},
 			expectedActive: 3,
 		},
 	}
@@ -122,14 +122,14 @@ func TestOffsetPagination_NavLinks(t *testing.T) {
 
 func TestPageNumberPagination_GetLinks(t *testing.T) {
 	tests := []struct {
-		name          string
-		total         int
-		pageSize      int
-		currentPage   int
-		baseURL       string
-		paramName     string
-		expectedLinks int
-		expectedURLs  []string
+		name           string
+		total          int
+		pageSize       int
+		currentPage    int
+		baseURL        string
+		paramName      string
+		expectedLinks  int
+		expectedURLs   []string
 		expectedActive int
 	}{
 		{
@@ -141,23 +141,23 @@ func TestPageNumberPagination_GetLinks(t *testing.T) {
 			expectedLinks: 0,
 		},
 		{
-			name:          "Two pages",
-			total:         15,
-			pageSize:      10,
-			currentPage:   1,
-			baseURL:       "/test",
-			expectedLinks: 2,
-			expectedURLs:  []string{"/test?page=1", "/test?page=2"},
+			name:           "Two pages",
+			total:          15,
+			pageSize:       10,
+			currentPage:    1,
+			baseURL:        "/test",
+			expectedLinks:  2,
+			expectedURLs:   []string{"/test?page=1", "/test?page=2"},
 			expectedActive: 1,
 		},
 		{
-			name:          "Existing query",
-			total:         15,
-			pageSize:      10,
-			currentPage:   2,
-			baseURL:       "/test?q=a",
-			expectedLinks: 2,
-			expectedURLs:  []string{"/test?q=a&page=1", "/test?q=a&page=2"},
+			name:           "Existing query",
+			total:          15,
+			pageSize:       10,
+			currentPage:    2,
+			baseURL:        "/test?q=a",
+			expectedLinks:  2,
+			expectedURLs:   []string{"/test?q=a&page=1", "/test?q=a&page=2"},
 			expectedActive: 2,
 		},
 	}

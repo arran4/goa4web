@@ -492,7 +492,7 @@ func TestA4code2htmlBlockQuote(t *testing.T) {
 	got := string(gotBytes)
 	if !strings.Contains(got, "<blockquote class=\"a4code-block a4code-quote") {
 		t.Errorf("expected block quote <blockquote>, got %q", got)
-  }
+	}
 }
 
 func TestCodeIn(t *testing.T) {

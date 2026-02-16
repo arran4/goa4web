@@ -281,19 +281,19 @@ func TestCodeWhitespace(t *testing.T) {
 			if err != nil {
 				t.Fatalf("parse error: %v", err)
 			}
-            if len(root.Children) != 1 {
-                t.Fatalf("expected 1 child, got %d", len(root.Children))
-            }
-            node := root.Children[0]
-            var got string
-            switch n := node.(type) {
-            case *ast.Code:
-                got = n.Value
-            case *ast.CodeIn:
-                got = n.Value
-            default:
-                t.Fatalf("expected Code or CodeIn, got %T", node)
-            }
+			if len(root.Children) != 1 {
+				t.Fatalf("expected 1 child, got %d", len(root.Children))
+			}
+			node := root.Children[0]
+			var got string
+			switch n := node.(type) {
+			case *ast.Code:
+				got = n.Value
+			case *ast.CodeIn:
+				got = n.Value
+			default:
+				t.Fatalf("expected Code or CodeIn, got %T", node)
+			}
 
 			if got != tt.wantValue {
 				t.Errorf("got %q want %q", got, tt.wantValue)
@@ -303,7 +303,7 @@ func TestCodeWhitespace(t *testing.T) {
 }
 
 func TestCodeInGenerator(t *testing.T) {
-    // Need to verify generator output. ToA4Code uses generator.
+	// Need to verify generator output. ToA4Code uses generator.
 	tests := []struct {
 		name  string
 		input *ast.CodeIn
@@ -323,7 +323,7 @@ func TestCodeInGenerator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-            root := &ast.Root{Children: []ast.Node{tt.input}}
+			root := &ast.Root{Children: []ast.Node{tt.input}}
 			got := ToA4Code(root)
 			if got != tt.want {
 				t.Errorf("got %q want %q", got, tt.want)

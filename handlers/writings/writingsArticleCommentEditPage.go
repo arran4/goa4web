@@ -33,7 +33,6 @@ func ArticleCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageId), text)
 	if err != nil {
 		handlers.RedirectSeeOtherWithMessage(w, r, "", err.Error())

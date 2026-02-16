@@ -120,5 +120,6 @@ a4code2html
 .share_sign_secret
 jmap.env
 *.txt
+!internal/faq_templates/*.txt
 cmd/goa4web/cert.pem
 cmd/goa4web/key.pem

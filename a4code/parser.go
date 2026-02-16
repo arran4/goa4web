@@ -453,7 +453,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 
 		// directOutput consumes content bytes until terminator
-		// Support [code ... [/code] and [code ... ]
+		// Support [code ... ]
 		raw, _, _, err := directOutput(s)
 		if err != nil {
 			return stack, visiblePos, err

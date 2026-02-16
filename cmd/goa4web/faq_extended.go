@@ -43,7 +43,7 @@ func (c *faqAddFromTemplateCmd) Run() error {
 		return fmt.Errorf("template %q not found: %w", templateName, err)
 	}
 
-	question, answer, err := faq_templates.ParseTemplateContent(content)
+	description, question, answer, err := faq_templates.ParseTemplateContent(content)
 	if err != nil {
 		return err
 	}
@@ -65,12 +65,13 @@ func (c *faqAddFromTemplateCmd) Run() error {
 	}
 
 	params := db.AdminCreateFAQParams{
-		Question:   sql.NullString{String: question, Valid: true},
-		Answer:     sql.NullString{String: answer, Valid: true},
-		CategoryID: cid,
-		AuthorID:   int32(c.authorID),
-		LanguageID: lid,
-		Priority:   0,
+		Question:    sql.NullString{String: question, Valid: true},
+		Answer:      sql.NullString{String: answer, Valid: true},
+		Description: sql.NullString{String: description, Valid: true},
+		CategoryID:  cid,
+		AuthorID:    int32(c.authorID),
+		LanguageID:  lid,
+		Priority:    0,
 	}
 
 	res, err := d.AdminCreateFAQ(context.Background(), params)
@@ -183,7 +184,7 @@ func (c *faqUpdateCmd) Run() error {
 		}
 	}
 
-	question, answer, err := faq_templates.ParseTemplateContent(string(content))
+	description, question, answer, err := faq_templates.ParseTemplateContent(string(content))
 	if err != nil {
 		return err
 	}
@@ -201,10 +202,11 @@ func (c *faqUpdateCmd) Run() error {
 	}
 
 	params := db.AdminUpdateFAQQuestionAnswerParams{
-		Question:   sql.NullString{String: question, Valid: true},
-		Answer:     sql.NullString{String: answer, Valid: true},
-		CategoryID: existing.CategoryID,
-		ID:         int32(id),
+		Question:    sql.NullString{String: question, Valid: true},
+		Answer:      sql.NullString{String: answer, Valid: true},
+		Description: sql.NullString{String: description, Valid: true},
+		CategoryID:  existing.CategoryID,
+		ID:          int32(id),
 	}
 
 	err = d.AdminUpdateFAQQuestionAnswer(context.Background(), params)
@@ -372,7 +374,7 @@ func (c *faqCreateCmd) Run() error {
 		}
 	}
 
-	question, answer, err := faq_templates.ParseTemplateContent(string(content))
+	description, question, answer, err := faq_templates.ParseTemplateContent(string(content))
 	if err != nil {
 		return err
 	}
@@ -394,12 +396,13 @@ func (c *faqCreateCmd) Run() error {
 	}
 
 	params := db.AdminCreateFAQParams{
-		Question:   sql.NullString{String: question, Valid: true},
-		Answer:     sql.NullString{String: answer, Valid: true},
-		CategoryID: cid,
-		AuthorID:   int32(c.authorID),
-		LanguageID: lid,
-		Priority:   0,
+		Question:    sql.NullString{String: question, Valid: true},
+		Answer:      sql.NullString{String: answer, Valid: true},
+		Description: sql.NullString{String: description, Valid: true},
+		CategoryID:  cid,
+		AuthorID:    int32(c.authorID),
+		LanguageID:  lid,
+		Priority:    0,
 	}
 
 	res, err := d.AdminCreateFAQ(context.Background(), params)

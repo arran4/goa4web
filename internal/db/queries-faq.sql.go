@@ -555,15 +555,16 @@ func (q *Queries) AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQ
 
 const adminUpdateFAQQuestionAnswer = `-- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = NOW()
 WHERE id = ?
 `
 
 type AdminUpdateFAQQuestionAnswerParams struct {
-	Answer     sql.NullString
-	Question   sql.NullString
-	CategoryID sql.NullInt32
-	ID         int32
+	Answer      sql.NullString
+	Question    sql.NullString
+	CategoryID  sql.NullInt32
+	Description sql.NullString
+	ID          int32
 }
 
 func (q *Queries) AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpdateFAQQuestionAnswerParams) error {
@@ -571,6 +572,7 @@ func (q *Queries) AdminUpdateFAQQuestionAnswer(ctx context.Context, arg AdminUpd
 		arg.Answer,
 		arg.Question,
 		arg.CategoryID,
+		arg.Description,
 		arg.ID,
 	)
 	return err

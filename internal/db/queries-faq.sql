@@ -94,7 +94,7 @@ WHERE EXISTS (
 
 -- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminDeleteFAQ :exec

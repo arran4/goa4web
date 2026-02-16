@@ -43,6 +43,8 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(addTopicPublicLabelTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addTopicPublicLabelTask.Matcher())
 	removeTopicPublicLabelTask := &forumhandlers.RemoveTopicPublicLabelTask{TaskString: forumhandlers.TaskRemoveTopicPublicLabel}
 	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(removeTopicPublicLabelTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(removeTopicPublicLabelTask.Matcher())
+	setTopicLabelsTask := &forumhandlers.SetTopicLabelsTask{TaskString: forumhandlers.TaskSetTopicLabels}
+	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(setTopicLabelsTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(setTopicLabelsTask.Matcher())
 
 	pr.HandleFunc("/topic/{topic}/edit", TopicEditPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/topic/{topic}/edit", TopicEditSubmit).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())

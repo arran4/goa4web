@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -31,17 +32,10 @@ func TestTemplateLinks(t *testing.T) {
 	reg.InitModules(r, cfg, navReg)
 	router.RegisterRoutes(r, reg, cfg, navReg)
 
-	// Collect route regexps
-	var routeRegexps []*regexp.Regexp
+	// Collect routes
+	var routes []*mux.Route
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		str, err := route.GetPathRegexp()
-		if err != nil {
-			return nil
-		}
-		re, err := regexp.Compile("^" + str + "$")
-		if err == nil {
-			routeRegexps = append(routeRegexps, re)
-		}
+		routes = append(routes, route)
 		return nil
 	})
 
@@ -132,7 +126,7 @@ func TestTemplateLinks(t *testing.T) {
 				matched := false
 				for _, v := range variants {
 					normalized := tmplRegex.ReplaceAllString(urlPath, v)
-					if matchAny(routeRegexps, normalized) {
+					if matchAny(routes, normalized) {
 						matched = true
 						break
 					}
@@ -167,10 +161,24 @@ func TestTemplateLinks(t *testing.T) {
 	}
 }
 
-func matchAny(regexps []*regexp.Regexp, urlStr string) bool {
-	for _, re := range regexps {
-		if re.MatchString(urlStr) {
+func matchAny(routes []*mux.Route, urlStr string) bool {
+	req, _ := http.NewRequest("GET", urlStr, nil)
+	for _, route := range routes {
+		// 1. Try strict Mux matching (handles PathPrefix correctly)
+		var match mux.RouteMatch
+		if route.Match(req, &match) {
 			return true
+		}
+		if match.MatchErr == mux.ErrMethodMismatch {
+			return true
+		}
+
+		// 2. Fallback to Regex matching (handles Auth failures where route.Match returns false)
+		str, err := route.GetPathRegexp()
+		if err == nil {
+			if matched, _ := regexp.MatchString("^"+str+"$", urlStr); matched {
+				return true
+			}
 		}
 	}
 	return false

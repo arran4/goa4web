@@ -33,6 +33,28 @@ func TestFirstLine(t *testing.T) {
 	}
 }
 
+func TestAdd(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b int
+		want int
+	}{
+		{"Positive numbers", 1, 2, 3},
+		{"Negative numbers", -1, -2, -3},
+		{"Mixed numbers", -1, 2, 1},
+		{"Zero", 0, 0, 0},
+		{"Zero and positive", 0, 5, 5},
+		{"Zero and negative", 0, -5, -5},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.Add(tt.a, tt.b); got != tt.want {
+				t.Errorf("Add(%d, %d) = %d, want %d", tt.a, tt.b, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLeft(t *testing.T) {
 	tests := []struct {
 		name string

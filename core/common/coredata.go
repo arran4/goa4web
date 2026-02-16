@@ -1803,7 +1803,7 @@ func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) e
 
 // UpdateFAQQuestion updates a FAQ question, changing its text, answer and
 // category while recording a revision for the user.
-func (cd *CoreData) UpdateFAQQuestion(question, answer, description, version string, categoryID, faqID, userID int32, priority int32) error {
+func (cd *CoreData) UpdateFAQQuestion(question, answer, description string, categoryID, faqID, userID int32, priority int32) error {
 	if cd.queries == nil {
 		return nil
 	}
@@ -1814,7 +1814,6 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer, description, version str
 		Priority:    priority,
 		ID:          faqID,
 		Description: sql.NullString{String: description, Valid: description != ""},
-		Version:     sql.NullString{String: version, Valid: version != ""},
 	}); err != nil {
 		return err
 	}

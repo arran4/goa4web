@@ -11,8 +11,8 @@ import (
 )
 
 const adminCreateFAQ = `-- name: AdminCreateFAQ :execresult
-INSERT INTO faq (question, answer, category_id, author_id, language_id, priority, description, version)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO faq (question, answer, category_id, author_id, language_id, priority, description)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type AdminCreateFAQParams struct {
@@ -23,7 +23,6 @@ type AdminCreateFAQParams struct {
 	LanguageID  sql.NullInt32
 	Priority    int32
 	Description sql.NullString
-	Version     sql.NullString
 }
 
 func (q *Queries) AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error) {
@@ -35,7 +34,6 @@ func (q *Queries) AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) 
 		arg.LanguageID,
 		arg.Priority,
 		arg.Description,
-		arg.Version,
 	)
 }
 
@@ -493,7 +491,7 @@ func (q *Queries) AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQ
 
 const adminUpdateFAQ = `-- name: AdminUpdateFAQ :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, version = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, updated_at = NOW()
 WHERE id = ?
 `
 
@@ -503,7 +501,6 @@ type AdminUpdateFAQParams struct {
 	CategoryID  sql.NullInt32
 	Priority    int32
 	Description sql.NullString
-	Version     sql.NullString
 	ID          int32
 }
 
@@ -514,7 +511,6 @@ func (q *Queries) AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) 
 		arg.CategoryID,
 		arg.Priority,
 		arg.Description,
-		arg.Version,
 		arg.ID,
 	)
 	return err

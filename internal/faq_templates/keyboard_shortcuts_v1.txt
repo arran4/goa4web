@@ -1,5 +1,3 @@
-1
-===
 Common keyboard shortcuts for navigation and editing.
 ===
 What are the keyboard shortcuts?

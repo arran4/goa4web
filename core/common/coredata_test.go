@@ -63,7 +63,7 @@ func TestUpdateFAQQuestion(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	queries := db.New(conn)
 	mock.ExpectExec("UPDATE faq").
-		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}, int32(3), sql.NullString{Valid: false}, sql.NullString{Valid: false}, int32(1)).
+		WithArgs(sql.NullString{String: "a", Valid: true}, sql.NullString{String: "q", Valid: true}, sql.NullInt32{Int32: 2, Valid: true}, int32(3), sql.NullString{Valid: false}, int32(1)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("INSERT INTO faq_revisions").
 		WithArgs(int32(1), int32(3), sql.NullString{String: "q", Valid: true}, sql.NullString{String: "a", Valid: true}, sql.NullString{String: cfg.Timezone, Valid: true}, sql.NullInt32{Int32: 3, Valid: true}, int32(3)).
@@ -71,7 +71,7 @@ func TestUpdateFAQQuestion(t *testing.T) {
 
 	cd := common.NewTestCoreData(t, queries)
 	common.WithConfig(cfg)(cd)
-	if err := cd.UpdateFAQQuestion("q", "a", "", "", 2, 1, 3, 3); err != nil {
+	if err := cd.UpdateFAQQuestion("q", "a", "", 2, 1, 3, 3); err != nil {
 		t.Fatalf("UpdateFAQQuestion: %v", err)
 	}
 

@@ -65,7 +65,7 @@ func (CreateTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("template load fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	version, description, question, answer, err := faq_templates.ParseTemplateContent(content)
+	description, question, answer, err := faq_templates.ParseTemplateContent(content)
 	if err != nil {
 		return fmt.Errorf("template parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -78,7 +78,6 @@ func (CreateTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		LanguageID:  sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
 		Priority:    0,
 		Description: sql.NullString{String: description, Valid: description != ""},
-		Version:     sql.NullString{String: version, Valid: version != ""},
 	}
 
 	res, err := cd.Queries().AdminCreateFAQ(r.Context(), params)

@@ -5,7 +5,7 @@
 <tr>
     <td>{{ .ID }}</td>
     <td>
-        <a href="/admin/faq/question/{{ .ID }}">{{ if .Description.String }}{{ .Description.String }} ({{ .Version.String }}){{ else }}{{ .Question.String | truncateWords 20 }}{{ end }}</a>
+        <a href="/admin/faq/question/{{ .ID }}">{{ if .Description.String }}{{ .Description.String }}{{ else }}{{ .Question.String | truncateWords 20 }}{{ end }}</a>
         <details>
             <summary>Preview</summary>
             <div>
@@ -14,7 +14,7 @@
                 <strong>A:</strong> {{ .Answer.String | a4code2html }}
                 {{ if .Description.String }}
                 <hr>
-                <strong>Desc:</strong> {{ .Description.String }} (v{{ .Version.String }})
+                <strong>Desc:</strong> {{ .Description.String }}
                 {{ end }}
             </div>
         </details>

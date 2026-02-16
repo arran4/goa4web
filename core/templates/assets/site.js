@@ -111,7 +111,7 @@ function insertA4CodeTag(targetId, tag) {
     } else if (tag === 'quote') {
         replacement = `[quote ${selectedText}]`;
     } else if (tag === 'code') {
-        replacement = `[code]${selectedText}[/code]`;
+        replacement = `[code ${selectedText}]`;
     }
 
     textarea.setRangeText(replacement, start, end, 'select');

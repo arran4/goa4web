@@ -16,6 +16,7 @@ Link
 -- code.txt --
 [code func]
 -- code.expect.txt --
+func
 -- quote.txt --
 [quote Q]
 -- quote.expect.txt --
@@ -47,3 +48,4 @@ Text
 -- codein.txt --
 [codein "go" func]
 -- codein.expect.txt --
+func

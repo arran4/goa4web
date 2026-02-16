@@ -331,3 +331,26 @@ func TestCodeInGenerator(t *testing.T) {
 		})
 	}
 }
+
+func TestCodeWithNestedQuote(t *testing.T) {
+	input := "[code[quote]]"
+	tree, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	got := ToHTML(tree)
+	if !strings.Contains(got, "[quote]") {
+		t.Errorf("expected content [quote], got %q", got)
+	}
+
+	if len(tree.Children) != 1 {
+		t.Fatalf("expected 1 child, got %d", len(tree.Children))
+	}
+	codeNode, ok := tree.Children[0].(*ast.Code)
+	if !ok {
+		t.Fatalf("expected Code node, got %T", tree.Children[0])
+	}
+	if codeNode.Value != "[quote]" {
+		t.Errorf("expected value [quote], got %q", codeNode.Value)
+	}
+}

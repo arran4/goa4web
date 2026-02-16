@@ -255,7 +255,7 @@ func (c *Code) Transform(op func(Node) (Node, error)) (Node, error) {
 }
 
 func (c *Code) String() string {
-	return "[code]" + c.Value + "[/code]"
+	return "[code " + c.Value + "]"
 }
 
 // CodeIn block with language specification.

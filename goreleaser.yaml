@@ -41,11 +41,17 @@ nfpms:
 dockers:
   - image_templates:
       - "ghcr.io/arran4/goa4web:{{ .Version }}-amd64"
+    use: buildx
+    build_flag_templates:
+      - "--provenance=false"
     dockerfile: Dockerfile.goreleaser
     goos: linux
     goarch: amd64
   - image_templates:
       - "ghcr.io/arran4/goa4web:{{ .Version }}-arm64"
+    use: buildx
+    build_flag_templates:
+      - "--provenance=false"
     dockerfile: Dockerfile.goreleaser
     goos: linux
     goarch: arm64

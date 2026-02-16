@@ -1,17 +1,21 @@
 {{ define "adminQuestionTable" }}
 <table>
-<tr><th>ID</th><th>Question</th><th>Category</th><th><a href="/admin/faq/categories/category/0/questions">Priority</a></th><th>Actions</th></tr>
+<tr><th>ID</th><th>Question / Description</th><th>Category</th><th><a href="/admin/faq/categories/category/0/questions">Priority</a></th><th>Actions</th></tr>
 {{- range .Rows }}
 <tr>
     <td>{{ .ID }}</td>
     <td>
-        <a href="/admin/faq/question/{{ .ID }}">{{ .Question.String | truncateWords 20 }}</a>
+        <a href="/admin/faq/question/{{ .ID }}">{{ if .Description.String }}{{ .Description.String }} ({{ .Version.String }}){{ else }}{{ .Question.String | truncateWords 20 }}{{ end }}</a>
         <details>
             <summary>Preview</summary>
             <div>
                 <strong>Q:</strong> {{ .Question.String | a4code2html }}
                 <hr>
                 <strong>A:</strong> {{ .Answer.String | a4code2html }}
+                {{ if .Description.String }}
+                <hr>
+                <strong>Desc:</strong> {{ .Description.String }} (v{{ .Version.String }})
+                {{ end }}
             </div>
         </details>
     </td>

@@ -261,12 +261,12 @@ UPDATE faq SET priority = ?, updated_at = NOW() WHERE id = ?;
 
 -- name: AdminUpdateFAQ :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, priority = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, version = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminCreateFAQ :execresult
-INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO faq (question, answer, category_id, author_id, language_id, priority, description, version)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: AdminMoveFAQContent :exec
 UPDATE faq SET category_id = sqlc.arg(new_category_id), updated_at = NOW() WHERE category_id = sqlc.arg(old_category_id);

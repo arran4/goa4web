@@ -66,6 +66,8 @@ CREATE TABLE `faq` (
   `priority` INT NOT NULL DEFAULT 0,
   `deleted_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
+  `description` VARCHAR(255) DEFAULT '',
+  `version` VARCHAR(50) DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `Table_21_FKIndex1` (`author_id`),
   KEY `Table_21_FKIndex2` (`language_id`),
@@ -766,5 +768,5 @@ CREATE TABLE scheduler_state (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (83)
+INSERT INTO `schema_version` (`version`) VALUES (84)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

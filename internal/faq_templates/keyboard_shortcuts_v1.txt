@@ -1,0 +1,16 @@
+Common keyboard shortcuts for navigation and editing.
+===
+What are the keyboard shortcuts?
+===
+Here are the available keyboard shortcuts:
+
+[b Global]
+* [b Ctrl] + [b ?] : Show this help
+* [b Alt] + [b Home] : Go to Home
+
+[b Forum]
+* [b j] / [b k] : Next/Prev Comment
+* [b q] : Quote Selected Text
+
+[b Editor]
+* [b Ctrl] + [b Enter] : Submit Post

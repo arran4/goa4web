@@ -32,6 +32,9 @@
 {{ if .SelectedTemplate }}
 <div>
     <h5>Template Source</h5>
+    {{ if .Description }}
+    <p><strong>Description:</strong> {{ .Description }}</p>
+    {{ end }}
     <p><strong>Question</strong></p>
     <div class="preview-box"><div class="a4code-code-body">{{ .Question }}</div></div>
     <p><strong>Answer</strong></p>

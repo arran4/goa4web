@@ -48,8 +48,9 @@ func (t *AdminQuestionEditPageTask) Page(w http.ResponseWriter, r *http.Request)
 	}
 	cats, _ := queries.AdminGetFAQCategories(r.Context())
 	type TemplateContent struct {
-		Question string
-		Answer   string
+		Question    string
+		Answer      string
+		Description string
 	}
 	type Data struct {
 		Faq          *db.Faq
@@ -62,11 +63,12 @@ func (t *AdminQuestionEditPageTask) Page(w http.ResponseWriter, r *http.Request)
 	for _, t := range templates {
 		content, err := faq_templates.Get(t)
 		if err == nil {
-			q, a, err := faq_templates.ParseTemplateContent(content)
+			d, q, a, err := faq_templates.ParseTemplateContent(content)
 			if err == nil {
 				templateData[t] = TemplateContent{
-					Question: q,
-					Answer:   a,
+					Question:    q,
+					Answer:      a,
+					Description: d,
 				}
 			}
 		}

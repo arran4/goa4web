@@ -33,7 +33,8 @@
 <div>
     <h5>Template Source</h5>
     {{ if .Description }}
-    <p><strong>Description:</strong> {{ .Description }}</p>
+    <p><strong>Description</strong></p>
+    <div class="preview-box">{{ .Description }}</div>
     {{ end }}
     <p><strong>Question</strong></p>
     <div class="preview-box"><div class="a4code-code-body">{{ .Question }}</div></div>

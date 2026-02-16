@@ -45,7 +45,6 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("load comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-
 	thread, err := cd.UpdateWritingReply(comment.Idcomments, int32(languageID), text)
 	if err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))

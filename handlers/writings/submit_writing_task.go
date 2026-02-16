@@ -51,7 +51,6 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 	body := r.PostFormValue("body")
 	uid, _ := session.Values["UID"].(int32)
 
-
 	articleID, err := cd.CreateWriting(int32(categoryID), int32(languageID), title, abstract, body, private)
 	if err != nil {
 		return fmt.Errorf("create writing fail %w", handlers.ErrRedirectOnSamePageHandler(err))

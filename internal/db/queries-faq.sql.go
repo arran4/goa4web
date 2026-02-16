@@ -78,7 +78,7 @@ func (q *Queries) AdminDeleteFAQCategory(ctx context.Context, id int32) error {
 }
 
 const adminGetFAQActiveQuestions = `-- name: AdminGetFAQActiveQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at, updated_at, description, version
+SELECT id, category_id, language_id, author_id, answer, question, description, priority, deleted_at, updated_at
 FROM faq
 WHERE answer IS NOT NULL
   AND category_id IS NOT NULL
@@ -101,11 +101,10 @@ func (q *Queries) AdminGetFAQActiveQuestions(ctx context.Context) ([]*Faq, error
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Description,
 			&i.Priority,
 			&i.DeletedAt,
 			&i.UpdatedAt,
-			&i.Description,
-			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -121,7 +120,7 @@ func (q *Queries) AdminGetFAQActiveQuestions(ctx context.Context) ([]*Faq, error
 }
 
 const adminGetFAQByID = `-- name: AdminGetFAQByID :one
-SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at, updated_at, description, version FROM faq WHERE id = ?
+SELECT id, category_id, language_id, author_id, answer, question, description, priority, deleted_at, updated_at FROM faq WHERE id = ?
 `
 
 func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
@@ -134,11 +133,10 @@ func (q *Queries) AdminGetFAQByID(ctx context.Context, id int32) (*Faq, error) {
 		&i.AuthorID,
 		&i.Answer,
 		&i.Question,
+		&i.Description,
 		&i.Priority,
 		&i.DeletedAt,
 		&i.UpdatedAt,
-		&i.Description,
-		&i.Version,
 	)
 	return &i, err
 }
@@ -283,18 +281,19 @@ func (q *Queries) AdminGetFAQCategoryWithQuestionCountByID(ctx context.Context, 
 }
 
 const adminGetFAQDismissedQuestions = `-- name: AdminGetFAQDismissedQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question
+SELECT id, category_id, language_id, author_id, answer, question, description
 FROM faq
 WHERE deleted_at IS NOT NULL
 `
 
 type AdminGetFAQDismissedQuestionsRow struct {
-	ID         int32
-	CategoryID sql.NullInt32
-	LanguageID sql.NullInt32
-	AuthorID   int32
-	Answer     sql.NullString
-	Question   sql.NullString
+	ID          int32
+	CategoryID  sql.NullInt32
+	LanguageID  sql.NullInt32
+	AuthorID    int32
+	Answer      sql.NullString
+	Question    sql.NullString
+	Description sql.NullString
 }
 
 func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error) {
@@ -313,6 +312,7 @@ func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGe
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}
@@ -328,7 +328,7 @@ func (q *Queries) AdminGetFAQDismissedQuestions(ctx context.Context) ([]*AdminGe
 }
 
 const adminGetFAQQuestionsByCategory = `-- name: AdminGetFAQQuestionsByCategory :many
-SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at, updated_at, description, version FROM faq WHERE category_id = ? ORDER BY priority DESC, id DESC
+SELECT id, category_id, language_id, author_id, answer, question, description, priority, deleted_at, updated_at FROM faq WHERE category_id = ? ORDER BY priority DESC, id DESC
 `
 
 func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID sql.NullInt32) ([]*Faq, error) {
@@ -347,11 +347,10 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Description,
 			&i.Priority,
 			&i.DeletedAt,
 			&i.UpdatedAt,
-			&i.Description,
-			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -367,7 +366,7 @@ func (q *Queries) AdminGetFAQQuestionsByCategory(ctx context.Context, categoryID
 }
 
 const adminGetFAQUnansweredQuestions = `-- name: AdminGetFAQUnansweredQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at, updated_at, description, version
+SELECT id, category_id, language_id, author_id, answer, question, description, priority, deleted_at, updated_at
 FROM faq
 WHERE category_id IS NULL OR answer IS NULL
 `
@@ -388,11 +387,10 @@ func (q *Queries) AdminGetFAQUnansweredQuestions(ctx context.Context) ([]*Faq, e
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Description,
 			&i.Priority,
 			&i.DeletedAt,
 			&i.UpdatedAt,
-			&i.Description,
-			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -1047,7 +1045,7 @@ func (q *Queries) InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRev
 }
 
 const systemGetFAQQuestions = `-- name: SystemGetFAQQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question, priority, deleted_at, updated_at, description, version
+SELECT id, category_id, language_id, author_id, answer, question, description, priority, deleted_at, updated_at
 FROM faq
 `
 
@@ -1067,11 +1065,10 @@ func (q *Queries) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error) {
 			&i.AuthorID,
 			&i.Answer,
 			&i.Question,
+			&i.Description,
 			&i.Priority,
 			&i.DeletedAt,
 			&i.UpdatedAt,
-			&i.Description,
-			&i.Version,
 		); err != nil {
 			return nil, err
 		}

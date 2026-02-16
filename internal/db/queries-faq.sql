@@ -37,7 +37,7 @@ WHERE answer IS NOT NULL
   );
 
 -- name: AdminGetFAQDismissedQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question
+SELECT id, category_id, language_id, author_id, answer, question, description
 FROM faq
 WHERE deleted_at IS NOT NULL;
 

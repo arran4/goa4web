@@ -1812,8 +1812,8 @@ func (cd *CoreData) UpdateFAQQuestion(question, answer, description string, cate
 		Question:    sql.NullString{String: question, Valid: true},
 		CategoryID:  sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
 		Priority:    priority,
+		Description: sql.NullString{String: description, Valid: true},
 		ID:          faqID,
-		Description: sql.NullString{String: description, Valid: description != ""},
 	}); err != nil {
 		return err
 	}

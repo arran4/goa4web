@@ -43,7 +43,7 @@ func (c *faqAddFromTemplateCmd) Run() error {
 		return fmt.Errorf("template %q not found: %w", templateName, err)
 	}
 
-	_, _, question, answer, err := faq_templates.ParseTemplateContent(content)
+	question, answer, err := faq_templates.ParseTemplateContent(content)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (c *faqUpdateCmd) Run() error {
 		}
 	}
 
-	_, _, question, answer, err := faq_templates.ParseTemplateContent(string(content))
+	question, answer, err := faq_templates.ParseTemplateContent(string(content))
 	if err != nil {
 		return err
 	}
@@ -372,7 +372,7 @@ func (c *faqCreateCmd) Run() error {
 		}
 	}
 
-	_, _, question, answer, err := faq_templates.ParseTemplateContent(string(content))
+	question, answer, err := faq_templates.ParseTemplateContent(string(content))
 	if err != nil {
 		return err
 	}

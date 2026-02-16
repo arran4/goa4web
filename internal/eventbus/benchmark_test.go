@@ -23,16 +23,18 @@ func BenchmarkShutdown(b *testing.B) {
 		// Consumer that delays reading
 		go func() {
 			defer wg.Done()
-            // Wait 5ms before starting to consume
-            time.Sleep(5 * time.Millisecond)
+			// Wait 5ms before starting to consume
+			time.Sleep(5 * time.Millisecond)
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case env, ok := <-ch:
-                    if !ok { return }
-                    // Consumed immediately
-                    env.Ack()
+					if !ok {
+						return
+					}
+					// Consumed immediately
+					env.Ack()
 				}
 			}
 		}()
@@ -41,8 +43,8 @@ func BenchmarkShutdown(b *testing.B) {
 		bus.Publish(TaskEvent{Task: nil})
 
 		// Shutdown
-        // Current: checks len=1. Sleeps 10ms. Checks len=0. Returns. Time ~10ms.
-        // Optimized: Waits for signal. Consumer reads at 5ms. Signal at 5ms. Returns. Time ~5ms.
+		// Current: checks len=1. Sleeps 10ms. Checks len=0. Returns. Time ~10ms.
+		// Optimized: Waits for signal. Consumer reads at 5ms. Signal at 5ms. Returns. Time ~5ms.
 		if err := bus.Shutdown(context.Background()); err != nil {
 			b.Fatalf("shutdown failed: %v", err)
 		}

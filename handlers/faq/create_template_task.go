@@ -73,11 +73,11 @@ func (CreateTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	params := db.AdminCreateFAQParams{
 		Question:    sql.NullString{String: question, Valid: question != ""},
 		Answer:      sql.NullString{String: answer, Valid: answer != ""},
+		Description: sql.NullString{String: description, Valid: description != ""},
 		CategoryID:  sql.NullInt32{Int32: int32(categoryID), Valid: categoryID != 0},
 		AuthorID:    int32(authorID),
 		LanguageID:  sql.NullInt32{Int32: int32(languageID), Valid: languageID != 0},
 		Priority:    0,
-		Description: sql.NullString{String: description, Valid: description != ""},
 	}
 
 	res, err := cd.Queries().AdminCreateFAQ(r.Context(), params)

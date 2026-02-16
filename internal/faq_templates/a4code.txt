@@ -1,7 +1,3 @@
-1
-===
-Explanation of a4code formatting tags.
-===
 What is a4code?
 ===
 [b a4code] is a lightweight markup language used on this site for formatting text. It uses square brackets to denote formatting tags.

@@ -9,9 +9,9 @@ import (
 
 func TestUpdateBlockStatus(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       string
-		checkLink   func(*testing.T, *ast.Root)
+		name      string
+		input     string
+		checkLink func(*testing.T, *ast.Root)
 	}{
 		{
 			name:  "Root: Standalone link",
@@ -158,7 +158,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "Lisp Style: Link with Title",
+			name:  "Lisp Style: Link with Title",
 			input: "[link url Title]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)

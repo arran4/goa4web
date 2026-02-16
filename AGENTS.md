@@ -102,4 +102,3 @@ The JSON data file should contain the data structure expected by the template (t
 Field types in `Dot` are automatically fixed:
 - Strings in RFC3339 format are converted to `time.Time`.
 - Whole number `float64` values are converted to `int32` to match typical DB IDs.
-For code generation, use `sqlc` version v1.30.0 or greater, based on what is in the comments of some of the generated files.

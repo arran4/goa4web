@@ -239,11 +239,10 @@ type Faq struct {
 	AuthorID    int32
 	Answer      sql.NullString
 	Question    sql.NullString
+	Description sql.NullString
 	Priority    int32
 	DeletedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
-	Description sql.NullString
-	Version     sql.NullString
 }
 
 type FaqCategory struct {

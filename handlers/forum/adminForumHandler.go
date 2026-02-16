@@ -14,7 +14,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
-
 )
 
 func AdminForumPage(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +54,6 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
-
 
 	queries := cd.Queries()
 

@@ -29,8 +29,8 @@ func Substring(s string, start, end int) string {
 	// It updates pos as it traverses text.
 	newRoot.Children = filterNodes(root.Children, start, end, &pos)
 
-    res := ToCode(newRoot)
-    return res
+	res := ToCode(newRoot)
+	return res
 }
 
 func filterNodes(nodes []ast.Node, start, end int, pos *int) []ast.Node {

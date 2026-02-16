@@ -16,7 +16,6 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/searchworker"
-
 )
 
 func ArticleEditPage(w http.ResponseWriter, r *http.Request) {

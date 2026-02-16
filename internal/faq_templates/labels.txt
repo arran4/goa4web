@@ -1,3 +1,7 @@
+1
+===
+Explanation of content labels and their types.
+===
 How do labels work?
 ===
 Labels are tags that can be attached to content (like forum threads, blog posts, etc.) to help organize and filter them. There are three types of labels:

@@ -20,6 +20,7 @@ type AdminTemplatesPageData struct {
 	Question           string
 	Answer             string
 	Description        string
+	Version            string
 	Categories         []*db.FaqCategory
 	Languages          []*db.Language
 	Authors            []*db.AdminListAllUsersRow
@@ -50,13 +51,14 @@ func AdminTemplatesPage(w http.ResponseWriter, r *http.Request) {
 	var question string
 	var answer string
 	var description string
+	var version string
 	if selected != "" {
 		content, err := faq_templates.Get(selected)
 		if err != nil {
 			handlers.RenderErrorPage(w, r, err)
 			return
 		}
-		description, question, answer, err = faq_templates.ParseTemplateContent(content)
+		version, description, question, answer, err = faq_templates.ParseTemplateContent(content)
 		if err != nil {
 			handlers.RenderErrorPage(w, r, err)
 			return
@@ -116,6 +118,7 @@ func AdminTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		Question:           question,
 		Answer:             answer,
 		Description:        description,
+		Version:            version,
 		Categories:         categories,
 		Languages:          languages,
 		Authors:            authors,

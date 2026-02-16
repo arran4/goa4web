@@ -65,7 +65,7 @@ func (CreateTemplateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("template load fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	_, question, answer, err := faq_templates.ParseTemplateContent(content)
+	_, _, question, answer, err := faq_templates.ParseTemplateContent(content)
 	if err != nil {
 		return fmt.Errorf("template parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

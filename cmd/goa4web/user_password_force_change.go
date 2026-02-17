@@ -89,9 +89,7 @@ func forceChangePassword(ctx context.Context, queries *db.Queries, userID int, u
 
 // Usage prints command usage information with examples.
 func (c *userPasswordForceChangeCmd) Usage() {
-	// TODO: Create usage file or inline
-	fmt.Fprintf(c.fs.Output(), "Usage of %s:\n", c.fs.Name())
-	c.fs.PrintDefaults()
+	executeUsage(c.fs.Output(), "user_password_force_change_usage.txt", c)
 }
 
 func (c *userPasswordForceChangeCmd) FlagGroups() []flagGroup {

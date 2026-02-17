@@ -113,7 +113,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Blog"
 	if !(cd.IsAdmin() || cd.HasGrant("blogs", "entry", "post", 0)) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
+		// TODO: Fix: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

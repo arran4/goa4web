@@ -31,6 +31,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptio
 	nr.Use(handlers.IndexMiddleware(CustomNewsIndex), handlers.SectionMiddleware("news"))
 	nr.HandleFunc("", NewsPageHandler).Methods("GET")
 	nr.HandleFunc("", handlers.TaskDoneAutoRefreshPage).Methods("POST")
+	viewGrant := handlers.RequireGrantForPathInt("news", "post", "view", "news")
 	editGrant := handlers.RequireGrantForPathInt("news", "post", "edit", "news")
 	promoteAnnouncementGrant := handlers.RequireGrantForPathInt("news", "post", "promote", "news")
 	demoteAnnouncementGrant := handlers.RequireGrantForPathInt("news", "post", "demote", "news")
@@ -43,7 +44,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptio
 	nr.HandleFunc("/shared/news/{news}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 	nr.HandleFunc("/shared/news/{news}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
-	nr.HandleFunc("/news/{news}", NewsPostPageHandler).Methods("GET")
+	nr.HandleFunc("/news/{news}", NewsPostPageHandler).Methods("GET").MatcherFunc(viewGrant)
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(editTask.Page))).Methods("GET").MatcherFunc(editGrant)
 	nr.Handle("/news/{news}/edit", RequireNewsPostAuthor(http.HandlerFunc(handlers.TaskHandler(editTask)))).Methods("POST").MatcherFunc(editGrant).MatcherFunc(editTask.Matcher())
 	nr.HandleFunc("/news/{news}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())

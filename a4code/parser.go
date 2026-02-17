@@ -366,7 +366,7 @@ func ParseNodes(s string) ([]ast.Node, error) {
 }
 
 func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int, lastChar byte) ([]ast.Container, int, error) {
-	cmd, err := getNext(s, true)
+	cmd, err := GetNext(s, true)
 	if err != nil && err != io.EOF {
 		return stack, visiblePos, err
 	}
@@ -419,7 +419,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(&ast.Sub{})
 	case "img", "image":
 		skipArgPrefix(s)
-		raw, err := getNext(s, false)
+		raw, err := GetNext(s, false)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -439,7 +439,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		yield(n, depth)
 	case "a", "link", "url":
 		skipArgPrefix(s)
-		raw, err := getNext(s, false)
+		raw, err := GetNext(s, false)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -491,7 +491,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		yield(n, depth)
 	case "codein":
 		skipArgPrefix(s)
-		language, err := getNextArg(s)
+		language, err := GetNextArg(s)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -524,7 +524,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		yield(n, depth)
 	case "quoteof":
 		skipArgPrefix(s)
-		name, err := getNextArg(s)
+		name, err := GetNextArg(s)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -559,101 +559,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(n)
 	}
 	return stack, visiblePos, nil
-}
-
-func getNextArg(s *scanner) (string, error) {
-	ch, err := s.ReadByte()
-	if err != nil {
-		if err == io.EOF {
-			return "", io.EOF
-		}
-		return "", err
-	}
-	if ch == '"' {
-		var result bytes.Buffer
-		for {
-			ch, err = s.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					return result.String(), io.EOF
-				}
-				return "", err
-			}
-			switch ch {
-			case '"':
-				return result.String(), nil
-			case '\\':
-				next, err := s.ReadByte()
-				if err != nil {
-					if err == io.EOF {
-						result.WriteByte('\\')
-						return result.String(), io.EOF
-					}
-					return "", err
-				}
-				switch next {
-				case '"', ' ', '[', ']', '=', '\\', '*', '/', '_':
-					result.WriteByte(next)
-				default:
-					result.WriteByte('\\')
-					result.WriteByte(next)
-				}
-			default:
-				result.WriteByte(ch)
-			}
-		}
-	} else {
-		if err := s.UnreadByte(); err != nil {
-			return "", err
-		}
-		return getNext(s, false)
-	}
-}
-
-func getNext(s *scanner, endAtEqual bool) (string, error) {
-	var result bytes.Buffer
-	for {
-		ch, err := s.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				return result.String(), io.EOF
-			}
-			return "", err
-		}
-		switch ch {
-		case '\n', ']', '[', ' ', '\r':
-			if err := s.UnreadByte(); err != nil {
-				return "", err
-			}
-			return result.String(), nil
-		case '=':
-			if endAtEqual {
-				if err := s.UnreadByte(); err != nil {
-					return "", err
-				}
-				return result.String(), nil
-			}
-			result.WriteByte(ch)
-		case '\\':
-			next, err := s.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					result.WriteByte('\\')
-					return result.String(), io.EOF
-				}
-				return "", err
-			}
-			switch next {
-			case ' ', '[', ']', '=', '\\', '*', '/', '_':
-				result.WriteByte(next)
-			default:
-				result.WriteByte('\\')
-				result.WriteByte(next)
-			}
-		default:
-			result.WriteByte(ch)
-		}
-	}
 }
 
 func skipArgPrefix(s *scanner) {

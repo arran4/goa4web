@@ -504,3 +504,24 @@ func TestCodeIn(t *testing.T) {
 		t.Errorf("got %q want %q", string(got), want)
 	}
 }
+
+func TestQuoteOfWithQuotes(t *testing.T) {
+	c := New()
+	c.SetInput("[quoteof \"bob jones\" hi]")
+	got := testhelpers.Must(io.ReadAll(c.Process()))
+	// Should strip quotes from name
+	want := "<blockquote class=\"a4code-block a4code-quoteof quote-color-0\"><div class=\"quote-header\">Quote of bob jones:</div><div class=\"quote-body\"> hi</div></blockquote>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}
+
+func TestCodeInWithQuotesAndSpaces(t *testing.T) {
+	c := New()
+	c.SetInput("[codein \"c++\" int main() {}]")
+	got := testhelpers.Must(io.ReadAll(c.Process()))
+	want := "<div class=\"a4code-block a4code-code-wrapper a4code-language-c++\"><div class=\"code-header\">Code (c++)</div><pre class=\"a4code-code-body\"><code class=\"language-c++\">int main() {}</code></pre></div>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}

@@ -74,6 +74,35 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 	})
 }
 
+// RequireBlogCommentsGrant checks whether the requester can view or reply to blog comments.
+func RequireBlogCommentsGrant(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd == nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+
+		cd.LoadSelectionsFromRequest(r)
+
+		vars := mux.Vars(r)
+		blogIDStr := vars["blog"]
+		blogID, err := strconv.Atoi(blogIDStr)
+		if err != nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			return
+		}
+
+		if !(cd.HasGrant("blogs", "entry", "view", int32(blogID)) ||
+			cd.HasGrant("blogs", "entry", "reply", int32(blogID)) ||
+			cd.SelectedThreadCanReply()) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // RequireBlogEditGrant checks whether the requester can edit the blog referenced in the URL path.
 func RequireBlogEditGrant() mux.MatcherFunc {
 	return func(r *http.Request, match *mux.RouteMatch) bool {

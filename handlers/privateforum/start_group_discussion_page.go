@@ -15,7 +15,6 @@ func StartGroupDiscussionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	// TODO: Fix: Add enforced Access in router rather than task
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		// TODO: Fix: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

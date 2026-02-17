@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -80,26 +81,54 @@ func listImageCacheEntries(dir string) ([]ImageCacheEntry, int64, error) {
 	if !info.IsDir() {
 		return nil, 0, fmt.Errorf("cache dir is not a directory")
 	}
+
+	entriesChan := make(chan ImageCacheEntry, 64)
+	errChan := make(chan error, 1)
+	sem := make(chan struct{}, 64)
+	var wg sync.WaitGroup
+
+	go func() {
+		defer close(entriesChan)
+		defer close(errChan)
+		if err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+
+			wg.Add(1)
+			sem <- struct{}{}
+			go func(path string, d os.DirEntry) {
+				defer wg.Done()
+				defer func() { <-sem }()
+
+				info, err := d.Info()
+				if err != nil {
+					return
+				}
+				id := filepath.Base(path)
+				if !intimages.ValidID(id) {
+					return
+				}
+				entriesChan <- ImageCacheEntry{ID: id, Size: info.Size()}
+			}(path, d)
+			return nil
+		}); err != nil {
+			errChan <- err
+		}
+		wg.Wait()
+	}()
+
 	var entries []ImageCacheEntry
 	var total int64
-	if err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		info, err := d.Info()
-		if err != nil {
-			return nil
-		}
-		id := filepath.Base(path)
-		if !intimages.ValidID(id) {
-			return nil
-		}
-		entries = append(entries, ImageCacheEntry{ID: id, Size: info.Size()})
-		total += info.Size()
-		return nil
-	}); err != nil {
+	for entry := range entriesChan {
+		entries = append(entries, entry)
+		total += entry.Size
+	}
+
+	if err := <-errChan; err != nil {
 		return nil, total, err
 	}
+
 	sort.Slice(entries, func(i, j int) bool { return entries[i].ID < entries[j].ID })
 	return entries, total, nil
 }

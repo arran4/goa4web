@@ -2,7 +2,7 @@ Usage:
   {{.Prog}} links remap <command> [<args>]
 
 Commands:
-  extract    export link references to CSV
+  extract    scan content to discover external links and export to CSV
   apply      apply URL remappings from CSV
 
 Examples:

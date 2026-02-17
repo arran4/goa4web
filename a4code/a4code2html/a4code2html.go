@@ -202,11 +202,10 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
+func (c *A4code2html) consumeCodeBlock(r *bufio.Reader, w io.Writer) error {
 	const terminator = "]"
 	const termLen = len(terminator)
 	var buf bytes.Buffer
-	depth := 0
 
 	for {
 		ch, err := r.ReadByte()
@@ -231,20 +230,13 @@ func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
 			buf.WriteByte(next)
 		case '<', '>', '&':
 			buf.WriteString(c.Escape(ch))
-		case '[':
-			buf.WriteByte(ch)
-			depth++
 		case ']':
 			buf.WriteByte(ch)
-			if depth > 0 {
-				depth--
-			} else {
-				out := buf.Bytes()[:buf.Len()-termLen]
-				if _, err := w.Write(out); err != nil {
-					return err
-				}
-				return nil
+			out := buf.Bytes()[:buf.Len()-termLen]
+			if _, err := w.Write(out); err != nil {
+				return err
 			}
+			return nil
 		default:
 			buf.WriteByte(ch)
 		}
@@ -448,7 +440,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
 				r.ReadByte() // consume ]
 			} else {
-				if err := a.directOutputReader(r, &buf); err != nil {
+				if err := a.consumeCodeBlock(r, &buf); err != nil {
 					return err
 				}
 			}
@@ -501,7 +493,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
 				return err
 			}
-			if err := a.directOutputReader(r, w); err != nil {
+			if err := a.consumeCodeBlock(r, w); err != nil {
 				return err
 			}
 			if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {

@@ -466,7 +466,7 @@ func TestA4code2htmlBlockCode(t *testing.T) {
 
 func TestA4code2htmlInlineCodeWithBrackets(t *testing.T) {
 	c := New()
-	c.SetInput("please use [code [quote]] so I know.")
+	c.SetInput("please use [code [quote\\]] so I know.")
 	gotBytes, _ := io.ReadAll(c.Process())
 	got := string(gotBytes)
 	want := "please use <code class=\"a4code-inline a4code-code\">[quote]</code> so I know."

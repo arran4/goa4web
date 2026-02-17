@@ -11,6 +11,8 @@ import (
 	"log"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/a4code"
 )
 
 // CodeType defines the output mode for A4code2html.
@@ -203,44 +205,23 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 }
 
 func (c *A4code2html) consumeCodeBlock(r *bufio.Reader, w io.Writer) error {
-	const terminator = "]"
-	const termLen = len(terminator)
-	var buf bytes.Buffer
-
-	for {
-		ch, err := r.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				_, werr := w.Write(buf.Bytes())
-				return werr
-			}
-			return err
-		}
+	content, err := a4code.ConsumeCodeBlock(r)
+	if err != nil {
+		return err
+	}
+	for _, ch := range content {
 		switch ch {
-		case '\\':
-			next, err := r.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					buf.WriteByte('\\')
-					_, werr := w.Write(buf.Bytes())
-					return werr
-				}
-				return err
-			}
-			buf.WriteByte(next)
 		case '<', '>', '&':
-			buf.WriteString(c.Escape(ch))
-		case ']':
-			buf.WriteByte(ch)
-			out := buf.Bytes()[:buf.Len()-termLen]
-			if _, err := w.Write(out); err != nil {
+			if _, err := w.Write([]byte(c.Escape(byte(ch)))); err != nil {
 				return err
 			}
-			return nil
 		default:
-			buf.WriteByte(ch)
+			if _, err := w.Write([]byte{byte(ch)}); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (a *A4code2html) peekBlockLink(r *bufio.Reader) (bool, bool) {

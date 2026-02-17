@@ -157,53 +157,6 @@ func (c *A4code2html) Escape(ch byte) string {
 	}
 }
 
-// getNextReader reads characters from r until it reaches a control character.
-func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, error) {
-	result := new(bytes.Buffer)
-	for {
-		ch, err := r.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				return result.String(), io.EOF
-			}
-			return "", err
-		}
-		switch ch {
-		case '\n', ']', '[', ' ', '\r':
-			if err := r.UnreadByte(); err != nil {
-				return "", err
-			}
-			return result.String(), nil
-		case '=':
-			if endAtEqual {
-				if err := r.UnreadByte(); err != nil {
-					return "", err
-				}
-				return result.String(), nil
-			}
-			result.WriteByte(ch)
-		case '\\':
-			next, err := r.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					result.WriteByte('\\')
-					return result.String(), io.EOF
-				}
-				return "", err
-			}
-			switch next {
-			case ' ', '[', ']', '=', '\\', '*', '/', '_':
-				result.WriteByte(next)
-			default:
-				result.WriteByte('\\')
-				result.WriteByte(next)
-			}
-		default:
-			result.WriteByte(ch)
-		}
-	}
-}
-
 func (c *A4code2html) consumeCodeBlock(r *bufio.Reader, w io.Writer) error {
 	content, err := a4code.ConsumeCodeBlock(r)
 	if err != nil {
@@ -255,7 +208,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 	wasAtLineStart := a.atLineStart
 	a.atLineStart = false
 
-	cmd, err := a.getNextReader(r, true)
+	cmd, err := a4code.GetNext(r, true)
 	if err != nil && err != io.EOF {
 		return err
 	}
@@ -310,7 +263,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			a.stack = append(a.stack, "</sub>")
 		}
 	case "img", "image":
-		raw, err := a.getNextReader(r, false)
+		raw, err := a4code.GetNext(r, false)
 		if err != nil && err != io.EOF {
 			return err
 		}
@@ -330,7 +283,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents:
 		case CTTagStrip, CTWordsOnly:
-			raw, err := a.getNextReader(r, false)
+			raw, err := a4code.GetNext(r, false)
 			if err != nil && err != io.EOF {
 				return err
 			}
@@ -340,7 +293,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 				}
 			}
 		default:
-			raw, err := a.getNextReader(r, false)
+			raw, err := a4code.GetNext(r, false)
 			if err != nil && err != io.EOF {
 				return err
 			}
@@ -461,12 +414,9 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			language, err := a.getNextReader(r, false)
+			language, err := a4code.GetNextArg(r)
 			if err != nil && err != io.EOF {
 				return err
-			}
-			if len(language) >= 2 && language[0] == '"' && language[len(language)-1] == '"' {
-				language = language[1 : len(language)-1]
 			}
 			if _, err := a.readWhiteSpace(r); err != nil && err != io.EOF {
 				return err
@@ -485,7 +435,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			name, err := a.getNextReader(r, false)
+			name, err := a4code.GetNextArg(r)
 			if err != nil && err != io.EOF {
 				return err
 			}

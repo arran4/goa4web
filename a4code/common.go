@@ -9,6 +9,7 @@ import (
 // This allows both bufio.Reader (in a4code2html) and the custom scanner (in parser.go) to be used.
 type ScannerInterface interface {
 	ReadByte() (byte, error)
+	UnreadByte() error
 }
 
 // ConsumeCodeBlock consumes content bytes until the terminator ']' is found at the top level.
@@ -50,6 +51,103 @@ func ConsumeCodeBlock(s ScannerInterface) (string, error) {
 			res := buf.String()
 			res = res[:len(res)-termLen]
 			return res, nil
+		}
+	}
+}
+
+// GetNextArg reads the next argument from the scanner, handling optional quotes.
+func GetNextArg(s ScannerInterface) (string, error) {
+	ch, err := s.ReadByte()
+	if err != nil {
+		if err == io.EOF {
+			return "", io.EOF
+		}
+		return "", err
+	}
+	if ch == '"' {
+		var result bytes.Buffer
+		for {
+			ch, err = s.ReadByte()
+			if err != nil {
+				if err == io.EOF {
+					return result.String(), io.EOF
+				}
+				return "", err
+			}
+			switch ch {
+			case '"':
+				return result.String(), nil
+			case '\\':
+				next, err := s.ReadByte()
+				if err != nil {
+					if err == io.EOF {
+						result.WriteByte('\\')
+						return result.String(), io.EOF
+					}
+					return "", err
+				}
+				switch next {
+				case '"', ' ', '[', ']', '=', '\\', '*', '/', '_':
+					result.WriteByte(next)
+				default:
+					result.WriteByte('\\')
+					result.WriteByte(next)
+				}
+			default:
+				result.WriteByte(ch)
+			}
+		}
+	} else {
+		if err := s.UnreadByte(); err != nil {
+			return "", err
+		}
+		return GetNext(s, false)
+	}
+}
+
+// GetNext reads the next token from the scanner.
+func GetNext(s ScannerInterface, endAtEqual bool) (string, error) {
+	var result bytes.Buffer
+	for {
+		ch, err := s.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				return result.String(), io.EOF
+			}
+			return "", err
+		}
+		switch ch {
+		case '\n', ']', '[', ' ', '\r':
+			if err := s.UnreadByte(); err != nil {
+				return "", err
+			}
+			return result.String(), nil
+		case '=':
+			if endAtEqual {
+				if err := s.UnreadByte(); err != nil {
+					return "", err
+				}
+				return result.String(), nil
+			}
+			result.WriteByte(ch)
+		case '\\':
+			next, err := s.ReadByte()
+			if err != nil {
+				if err == io.EOF {
+					result.WriteByte('\\')
+					return result.String(), io.EOF
+				}
+				return "", err
+			}
+			switch next {
+			case ' ', '[', ']', '=', '\\', '*', '/', '_':
+				result.WriteByte(next)
+			default:
+				result.WriteByte('\\')
+				result.WriteByte(next)
+			}
+		default:
+			result.WriteByte(ch)
 		}
 	}
 }

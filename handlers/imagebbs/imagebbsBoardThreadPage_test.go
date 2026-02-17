@@ -30,7 +30,7 @@ func TestBoardThreadPage_Forbidden(t *testing.T) {
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	BoardThreadPage(rr, req)
+	CheckBoardViewGrant(BoardThreadPage).ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusForbidden {
 		t.Errorf("handler returned wrong status code: got %v want %v", rr.Code, http.StatusForbidden)

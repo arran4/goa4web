@@ -13,19 +13,6 @@ import (
 
 	"github.com/arran4/goa4web"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
-	authhandlers "github.com/arran4/goa4web/handlers/auth"
-	bloghandlers "github.com/arran4/goa4web/handlers/blogs"
-	bookmarkhandlers "github.com/arran4/goa4web/handlers/bookmarks"
-	faqhandlers "github.com/arran4/goa4web/handlers/faq"
-	forumhandlers "github.com/arran4/goa4web/handlers/forum"
-	imagebbshandlers "github.com/arran4/goa4web/handlers/imagebbs"
-	imagehandlers "github.com/arran4/goa4web/handlers/images"
-	linkerhandlers "github.com/arran4/goa4web/handlers/linker"
-	newshandlers "github.com/arran4/goa4web/handlers/news"
-	privateforumhandlers "github.com/arran4/goa4web/handlers/privateforum"
-	searchhandlers "github.com/arran4/goa4web/handlers/search"
-	userhandlers "github.com/arran4/goa4web/handlers/user"
-	writinghandlers "github.com/arran4/goa4web/handlers/writings"
 	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -50,25 +37,12 @@ var (
 )
 
 func registerTasks(reg *tasks.Registry, ah *adminhandlers.Handlers) {
-	register := func(section string, ts []tasks.NamedTask) {
-		for _, t := range ts {
-			reg.Register(section, t)
+	for _, manifest := range compiledModuleManifests(ah) {
+		if manifest.RegisterTasks == nil {
+			continue
 		}
+		manifest.RegisterTasks(reg)
 	}
-	register("admin", ah.RegisterTasks())
-	register("auth", authhandlers.RegisterTasks())
-	register("blogs", bloghandlers.RegisterTasks())
-	register("bookmarks", bookmarkhandlers.RegisterTasks())
-	register("faq", faqhandlers.RegisterTasks())
-	register("forum", forumhandlers.RegisterTasks())
-	register("privateforum", privateforumhandlers.RegisterTasks())
-	register("images", imagehandlers.RegisterTasks())
-	register("imagebbs", imagebbshandlers.RegisterTasks())
-	register("linker", linkerhandlers.RegisterTasks())
-	register("news", newshandlers.RegisterTasks())
-	register("search", searchhandlers.RegisterTasks())
-	register("user", userhandlers.RegisterTasks())
-	register("writing", writinghandlers.RegisterTasks())
 }
 
 func main() {

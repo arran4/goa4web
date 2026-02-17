@@ -79,7 +79,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
 		canReply ||
 		cd.SelectedThreadCanReply()) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
+		// TODO: FIx: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

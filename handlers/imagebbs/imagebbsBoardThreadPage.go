@@ -94,7 +94,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
 	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		fmt.Println("TODO: FIx: Add enforced Access in router rather than task")
+		// TODO: FIx: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

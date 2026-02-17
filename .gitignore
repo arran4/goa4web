@@ -122,3 +122,4 @@ jmap.env
 *.txt
 cmd/goa4web/cert.pem
 cmd/goa4web/key.pem
+!cmd/goa4web/templates/*.txt

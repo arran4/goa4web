@@ -8,13 +8,17 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sync"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 )
 
-var linkRemapRegex = regexp.MustCompile(`https?://[^\s"']+`)
+var (
+	linkRemapRegex *regexp.Regexp
+	linkRemapOnce  sync.Once
+)
 
 // AdminLinkRemapPage displays site news URLs for remapping.
 func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +40,11 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 		var buf bytes.Buffer
 		wcsv := csv.NewWriter(&buf)
 		_ = wcsv.Write([]string{"internal reference", "original url", "to url"})
+
+		linkRemapOnce.Do(func() {
+			linkRemapRegex = regexp.MustCompile(`https?://[^\s"']+`)
+		})
+
 		for _, row := range rows {
 			if row.News.Valid {
 				matches := linkRemapRegex.FindAllString(row.News.String, -1)

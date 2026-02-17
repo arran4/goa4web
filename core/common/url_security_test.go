@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -20,34 +21,34 @@ func TestSanitizeBackURL_Vulnerability(t *testing.T) {
 	// The function signature is (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) (string, error)
 
 	tests := []struct {
-		name     string
-		raw      string
-		expected string // We expect empty string for invalid/unsafe URLs
-		wantErr  bool
+		name      string
+		raw       string
+		expected  string // We expect empty string for invalid/unsafe URLs
+		targetErr error
 	}{
 		{
-			name:     "Protocol-relative URL (Open Redirect)",
-			raw:      "//malicious.com",
-			expected: "",
-			wantErr:  true,
+			name:      "Protocol-relative URL (Open Redirect)",
+			raw:       "//malicious.com",
+			expected:  "",
+			targetErr: common.ErrProtocolRelativeBackURL,
 		},
 		{
-			name:     "Absolute URL malicious",
-			raw:      "http://malicious.com",
-			expected: "",
-			wantErr:  true,
+			name:      "Absolute URL malicious",
+			raw:       "http://malicious.com",
+			expected:  "",
+			targetErr: common.ErrDisallowedBackHost,
 		},
 		{
-			name:     "Relative URL valid",
-			raw:      "/home",
-			expected: "/home",
-			wantErr:  false,
+			name:      "Relative URL valid",
+			raw:       "/home",
+			expected:  "/home",
+			targetErr: nil,
 		},
 		{
-			name:     "Allowed host",
-			raw:      "http://example.com/home",
-			expected: "/home",
-			wantErr:  false,
+			name:      "Allowed host",
+			raw:       "http://example.com/home",
+			expected:  "/home",
+			targetErr: nil,
 		},
 	}
 
@@ -58,8 +59,12 @@ func TestSanitizeBackURL_Vulnerability(t *testing.T) {
 			if got != tt.expected {
 				t.Errorf("SanitizeBackURL(%q) = %q; want %q", tt.raw, got, tt.expected)
 			}
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SanitizeBackURL(%q) error = %v, wantErr %v", tt.raw, err, tt.wantErr)
+			if tt.targetErr != nil {
+				if !errors.Is(err, tt.targetErr) {
+					t.Errorf("SanitizeBackURL(%q) error = %v, want targetErr %v", tt.raw, err, tt.targetErr)
+				}
+			} else if err != nil {
+				t.Errorf("SanitizeBackURL(%q) unexpected error = %v", tt.raw, err)
 			}
 		})
 	}

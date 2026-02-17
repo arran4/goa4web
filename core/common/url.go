@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,6 +9,14 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/internal/sign"
+)
+
+var (
+	ErrInvalidBackURL          = errors.New("invalid back url")
+	ErrProtocolRelativeBackURL = errors.New("protocol relative back url")
+	ErrInvalidBackScheme       = errors.New("invalid back scheme")
+	ErrInvalidBackSignature    = errors.New("invalid back signature")
+	ErrDisallowedBackHost      = errors.New("disallowed back host")
 )
 
 // SanitizeBackURL validates raw and returns a safe back URL.
@@ -22,18 +31,18 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) (string, error)
 	u, err := url.Parse(raw)
 	if err != nil {
 		log.Printf("invalid back url %q: %v", raw, err)
-		return "", fmt.Errorf("invalid back url: %w", err)
+		return "", fmt.Errorf("%w: %v", ErrInvalidBackURL, err)
 	}
 	if !u.IsAbs() {
 		if u.Host != "" {
 			log.Printf("invalid back host (protocol relative) %q", raw)
-			return "", fmt.Errorf("invalid back host (protocol relative)")
+			return "", ErrProtocolRelativeBackURL
 		}
 		return raw, nil
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {
 		log.Printf("invalid back scheme %q", raw)
-		return "", fmt.Errorf("invalid back scheme: %s", u.Scheme)
+		return "", fmt.Errorf("%w: %s", ErrInvalidBackScheme, u.Scheme)
 	}
 
 	allowed := map[string]struct{}{}
@@ -76,9 +85,9 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) (string, error)
 	}
 	if sig != "" {
 		log.Printf("invalid back signature url=%q sig=%s", raw, sig)
-		return "", fmt.Errorf("invalid back signature")
+		return "", ErrInvalidBackSignature
 	} else {
 		log.Printf("disallowed back host url=%q", raw)
-		return "", fmt.Errorf("disallowed back host: %s", u.Host)
+		return "", fmt.Errorf("%w: %s", ErrDisallowedBackHost, u.Host)
 	}
 }

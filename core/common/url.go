@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,25 +13,27 @@ import (
 // SanitizeBackURL validates raw and returns a safe back URL.
 // Absolute URLs are allowed only when the host matches an allowed hostname
 // or when accompanied by a valid signature via back_ts and back_sig.
-func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) string {
+// Returns the sanitized URL string and nil on success.
+// Returns an empty string and an error explaining why the URL was rejected on failure.
+func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) (string, error) {
 	if raw == "" {
-		return ""
+		return "", nil
 	}
 	u, err := url.Parse(raw)
 	if err != nil {
 		log.Printf("invalid back url %q: %v", raw, err)
-		return ""
+		return "", fmt.Errorf("invalid back url: %w", err)
 	}
 	if !u.IsAbs() {
 		if u.Host != "" {
 			log.Printf("invalid back host (protocol relative) %q", raw)
-			return ""
+			return "", fmt.Errorf("invalid back host (protocol relative)")
 		}
-		return raw
+		return raw, nil
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {
 		log.Printf("invalid back scheme %q", raw)
-		return ""
+		return "", fmt.Errorf("invalid back scheme: %s", u.Scheme)
 	}
 
 	allowed := map[string]struct{}{}
@@ -61,20 +64,21 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) string {
 		if u.Fragment != "" {
 			result += "#" + u.Fragment
 		}
-		return result
+		return result, nil
 	}
 
 	sig := r.FormValue("back_sig")
 	if cd.ImageSignKey != "" && sig != "" {
 		data := "back:" + raw
 		if err := sign.Verify(data, sig, cd.ImageSignKey, sign.WithOutNonce()); err == nil {
-			return raw
+			return raw, nil
 		}
 	}
 	if sig != "" {
 		log.Printf("invalid back signature url=%q sig=%s", raw, sig)
+		return "", fmt.Errorf("invalid back signature")
 	} else {
 		log.Printf("disallowed back host url=%q", raw)
+		return "", fmt.Errorf("disallowed back host: %s", u.Host)
 	}
-	return ""
 }

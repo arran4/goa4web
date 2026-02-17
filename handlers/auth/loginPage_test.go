@@ -435,13 +435,13 @@ func TestHappyPathSanitizeBackURL(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	if got := cd.SanitizeBackURL(req, "/foo"); got != "/foo" {
+	if got, _ := cd.SanitizeBackURL(req, "/foo"); got != "/foo" {
 		t.Fatalf("relative got %q", got)
 	}
-	if got := cd.SanitizeBackURL(req, "https://example.com/bar?x=1"); got != "/bar?x=1" {
+	if got, _ := cd.SanitizeBackURL(req, "https://example.com/bar?x=1"); got != "/bar?x=1" {
 		t.Fatalf("host match got %q", got)
 	}
-	if got := cd.SanitizeBackURL(req, "https://evil.com/"); got != "" {
+	if got, _ := cd.SanitizeBackURL(req, "https://evil.com/"); got != "" {
 		t.Fatalf("evil got %q", got)
 	}
 
@@ -449,7 +449,7 @@ func TestHappyPathSanitizeBackURL(t *testing.T) {
 	cd = common.NewCoreData(req.Context(), db.New(nil), cfg, common.WithSession(session))
 	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
-	if got := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
+	if got, _ := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
 		t.Fatalf("cfg host got %q", got)
 	}
 }
@@ -474,7 +474,7 @@ func TestHappyPathSanitizeBackURLSigned(t *testing.T) {
 	q.Set("back_ts", fmt.Sprint(ts))
 	q.Set("back_sig", sig)
 	req.URL.RawQuery = q.Encode()
-	if got := cd.SanitizeBackURL(req, raw); got != raw {
+	if got, _ := cd.SanitizeBackURL(req, raw); got != raw {
 		t.Fatalf("signed got %q", got)
 	}
 }

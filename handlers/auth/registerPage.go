@@ -37,8 +37,9 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 		Method string
 		Data   string
 	}
+	back, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 	data := Data{
-		Back:   cd.SanitizeBackURL(r, r.FormValue("back")),
+		Back:   back,
 		Method: r.FormValue("method"),
 		Data:   r.FormValue("data"),
 	}

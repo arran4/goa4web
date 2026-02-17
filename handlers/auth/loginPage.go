@@ -79,9 +79,10 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 		Data    string
 	}
 	handlers.SetPageTitle(r, "Login")
+	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 	data := Data{
 		Code:    r.FormValue("code"),
-		Back:    cd.SanitizeBackURL(r, r.FormValue("back")),
+		Back:    backURL,
 		BackSig: r.FormValue("back_sig"),
 		BackTS:  r.FormValue("back_ts"),
 		Method:  r.FormValue("method"),

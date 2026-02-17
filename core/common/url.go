@@ -22,6 +22,10 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) string {
 		return ""
 	}
 	if !u.IsAbs() {
+		if u.Host != "" {
+			log.Printf("invalid back host (protocol relative) %q", raw)
+			return ""
+		}
 		return raw
 	}
 	if u.Scheme != "http" && u.Scheme != "https" {

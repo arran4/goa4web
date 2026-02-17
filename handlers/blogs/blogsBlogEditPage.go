@@ -103,7 +103,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "Edit Blog"
 	blog := cd.CurrentBlogLoaded()
 	if blog == nil || !(cd.HasGrant("blogs", "entry", "edit-any", 0) || cd.HasGrant("blogs", "entry", "edit", blog.Idblogs)) {
-		// TODO: FIx: Add enforced Access in router rather than task
+		// TODO: Fix: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

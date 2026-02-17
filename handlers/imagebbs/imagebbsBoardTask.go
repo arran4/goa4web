@@ -37,7 +37,7 @@ func (t *imagebbsBoardTask) Get(w http.ResponseWriter, r *http.Request) {
 	bid := cd.SelectedBoardID()
 
 	if !cd.HasGrant("imagebbs", "board", "view", bid) {
-		// TODO: FIx: Add enforced Access in router rather than task
+		// TODO: Fix: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

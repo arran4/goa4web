@@ -31,7 +31,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	ibr.HandleFunc("/board/{boardno:[0-9]+}.atom", BoardAtomPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", ImagebbsBoardPage).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}", handlers.TaskHandler(uploadImageTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(uploadImageTask.Matcher())
-	ibr.HandleFunc("/board/{boardno}/thread/{thread}", BoardThreadPage).Methods("GET")
+	ibr.HandleFunc("/board/{boardno}/thread/{thread}", CheckBoardViewGrant(BoardThreadPage)).Methods("GET")
 	ibr.HandleFunc("/board/{boardno}/thread/{thread}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(replyTask.Matcher())
 	ibr.HandleFunc("", ImagebbsPage).Methods("GET")
 	ibr.HandleFunc("/", ImagebbsPage).Methods("GET")

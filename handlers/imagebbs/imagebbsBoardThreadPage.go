@@ -93,12 +93,6 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 	thid, _ := strconv.Atoi(thidStr)
 	cd.PageTitle = fmt.Sprintf("Thread %d/%d", bid, thid)
 
-	if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	common.WithOffset(offset)(cd)
 

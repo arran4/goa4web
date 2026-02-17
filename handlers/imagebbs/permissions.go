@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 )
 
 // imagebbsApproveAction is the grant action needed for image board approvals and administration.
@@ -56,4 +57,21 @@ func imageBoardIDFromRequest(r *http.Request, cd *common.CoreData) (int32, error
 		return post.ImageboardIdimageboard.Int32, nil
 	}
 	return 0, nil
+}
+
+func CheckBoardViewGrant(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		vars := mux.Vars(r)
+		bidStr := vars["board"]
+		if bidStr == "" {
+			bidStr = vars["boardno"]
+		}
+		bid, _ := strconv.Atoi(bidStr)
+		if !cd.HasGrant("imagebbs", "board", "view", int32(bid)) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+		h(w, r)
+	}
 }

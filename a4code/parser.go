@@ -711,6 +711,13 @@ func directOutput(s *scanner) (string, int, int, error) {
 			}
 			// Unescape: consume backslash, write next char
 			buf.WriteByte(next)
+
+			if next == ']' {
+				if depth > 0 {
+					depth--
+				}
+			}
+
 			continue
 		}
 

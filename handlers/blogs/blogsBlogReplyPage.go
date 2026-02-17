@@ -73,7 +73,6 @@ func (ReplyBlogTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, 
 		return string(TaskReply), fmt.Sprintf("/forum/topic/%d/thread/%d", data.TopicID, data.ThreadID), nil
 	}
 	return string(TaskReply), evt.Path, nil
-	//return TaskReply, evt.Path
 }
 
 func (ReplyBlogTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {

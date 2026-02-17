@@ -452,9 +452,9 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			s.ReadByte() // Consume ']' which starts the block in legacy syntax
 		}
 
-		// directOutput consumes content bytes until terminator
+		// consumeCodeBlock consumes content bytes until terminator
 		// Support [code ... ]
-		raw, _, _, err := directOutput(s)
+		raw, _, _, err := consumeCodeBlock(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -492,8 +492,8 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			return stack, visiblePos, err
 		}
 		skipArgPrefix(s)
-		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s)
+		// consumeCodeBlock consumes content bytes
+		raw, _, _, err := consumeCodeBlock(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
@@ -686,10 +686,9 @@ func skipArgPrefix(s *scanner) {
 	s.UnreadByte()
 }
 
-func directOutput(s *scanner) (string, int, int, error) {
+func consumeCodeBlock(s *scanner) (string, int, int, error) {
 	var buf bytes.Buffer
 	startPos := s.pos
-	depth := 0
 
 	for {
 		ch, err := s.ReadByte()
@@ -716,18 +715,11 @@ func directOutput(s *scanner) (string, int, int, error) {
 
 		buf.WriteByte(ch)
 
-		switch ch {
-		case '[':
-			// depth++
-		case ']':
-			if depth > 0 {
-				depth--
-			} else {
-				// Found terminator "]" at top level
-				res := buf.String()
-				res = res[:len(res)-1]
-				return res, startPos, s.pos - 1, nil
-			}
+		if ch == ']' {
+			// Found terminator "]" at top level
+			res := buf.String()
+			res = res[:len(res)-1]
+			return res, startPos, s.pos - 1, nil
 		}
 	}
 }

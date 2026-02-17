@@ -30,9 +30,14 @@ func TestCodeBlockEscaping(t *testing.T) {
             expected: `C:]path`, // Captures C:]path, last bracket terminates block
         },
 		{
-			name:     "Standard block content",
+			name:     "Standard block content (not balanced anymore)",
 			input:    `[code [b]bold[/b]]`,
-			expected: `[b]bold[/b]`,
+			expected: `[b`, // Balancing is disabled, stops at first ]
+		},
+		{
+			name:     "Standard block content (fully escaped)",
+			input:    `[code [b\]bold[/b\]]`,
+			expected: `[b]bold[/b]`, // Now requires escaping all closing brackets
 		},
 		{
 			name:     "Literal bracket at end",
@@ -41,7 +46,7 @@ func TestCodeBlockEscaping(t *testing.T) {
 		},
 		{
 			name:     "Multiple nested escaped brackets",
-			input:    `[code [ [ ] \] ]`,
+			input:    `[code [ [ \] \] ]`,
 			expected: `[ [ ] ] `,
 		},
 		{
@@ -59,6 +64,16 @@ func TestCodeBlockEscaping(t *testing.T) {
             input: "[code \nline1\nline2\n]",
             expected: "line1\nline2\n", // Leading newline consumed by parser
         },
+		{
+			name: "Comment case 1",
+			input: "[code [b]",
+			expected: `[b`,
+		},
+		{
+			name: "Comment case 2",
+			input: "[code [ [ ] ]",
+			expected: `[ [ `, // Stops at first ]
+		},
 	}
 
 	for _, tc := range tests {

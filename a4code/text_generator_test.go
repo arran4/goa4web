@@ -27,7 +27,7 @@ func TestToText_Code(t *testing.T) {
 		},
         {
             name: "Code with brackets",
-            input: "[code [b]bold[/b]]",
+            input: "[code [b\\]bold[/b\\]]",
             want: "[b]bold[/b]",
         },
 	}

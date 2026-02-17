@@ -146,7 +146,7 @@ func TestBlockCode(t *testing.T) {
 }
 
 func TestInlineCodeWithBrackets(t *testing.T) {
-	input := "please use [code [quote]] so I know."
+	input := "please use [code [quote\\]] so I know."
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
@@ -223,7 +223,7 @@ func TestCodeIn(t *testing.T) {
 		},
 		{
 			name:  "codein with balanced brackets",
-			input: `[codein "go" func main() { a := []int{} }]`,
+			input: `[codein "go" func main() { a := [\]int{} }]`,
 			want:  `<pre class="a4code-block a4code-code a4code-language-go" data-start-pos="0" data-end-pos="28"><code class="language-go"><span data-start-pos="0" data-end-pos="28">func main() { a := []int{} }</span></code></pre>`,
 		},
 	}
@@ -333,7 +333,7 @@ func TestCodeInGenerator(t *testing.T) {
 }
 
 func TestCodeWithNestedQuote(t *testing.T) {
-	input := "[code[quote]]"
+	input := "[code[quote\\]]"
 	tree, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("parse error: %v", err)

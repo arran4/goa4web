@@ -11,6 +11,8 @@ import (
 	"log"
 	"net/url"
 	"strings"
+
+	"github.com/arran4/goa4web/a4code"
 )
 
 // CodeType defines the output mode for A4code2html.
@@ -202,53 +204,24 @@ func (c *A4code2html) getNextReader(r *bufio.Reader, endAtEqual bool) (string, e
 	}
 }
 
-func (c *A4code2html) directOutputReader(r *bufio.Reader, w io.Writer) error {
-	const terminator = "]"
-	const termLen = len(terminator)
-	var buf bytes.Buffer
-	depth := 0
-
-	for {
-		ch, err := r.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				_, werr := w.Write(buf.Bytes())
-				return werr
-			}
-			return err
-		}
+func (c *A4code2html) consumeCodeBlock(r *bufio.Reader, w io.Writer) error {
+	content, err := a4code.ConsumeCodeBlock(r)
+	if err != nil {
+		return err
+	}
+	for _, ch := range content {
 		switch ch {
-		case '\\':
-			next, err := r.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					buf.WriteByte('\\')
-					_, werr := w.Write(buf.Bytes())
-					return werr
-				}
+		case '<', '>', '&':
+			if _, err := w.Write([]byte(c.Escape(byte(ch)))); err != nil {
 				return err
 			}
-			buf.WriteByte(next)
-		case '<', '>', '&':
-			buf.WriteString(c.Escape(ch))
-		case '[':
-			buf.WriteByte(ch)
-			depth++
-		case ']':
-			buf.WriteByte(ch)
-			if depth > 0 {
-				depth--
-			} else {
-				out := buf.Bytes()[:buf.Len()-termLen]
-				if _, err := w.Write(out); err != nil {
-					return err
-				}
-				return nil
-			}
 		default:
-			buf.WriteByte(ch)
+			if _, err := w.Write([]byte{byte(ch)}); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (a *A4code2html) peekBlockLink(r *bufio.Reader) (bool, bool) {
@@ -448,7 +421,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
 				r.ReadByte() // consume ]
 			} else {
-				if err := a.directOutputReader(r, &buf); err != nil {
+				if err := a.consumeCodeBlock(r, &buf); err != nil {
 					return err
 				}
 			}
@@ -501,7 +474,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 			if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
 				return err
 			}
-			if err := a.directOutputReader(r, w); err != nil {
+			if err := a.consumeCodeBlock(r, w); err != nil {
 				return err
 			}
 			if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {

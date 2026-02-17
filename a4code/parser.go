@@ -452,12 +452,16 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			s.ReadByte() // Consume ']' which starts the block in legacy syntax
 		}
 
-		// directOutput consumes content bytes until terminator
+		// ConsumeCodeBlock consumes content bytes until terminator
 		// Support [code ... ]
-		raw, _, _, err := directOutput(s)
+		startContentPos := s.pos
+		raw, err := ConsumeCodeBlock(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
+		// endContentPos := s.pos - 1 // -1 for the closing bracket
+		_ = startContentPos
+
 		// raw is the content.
 		contentLen := len(raw)
 		innerStart := visiblePos
@@ -492,11 +496,15 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			return stack, visiblePos, err
 		}
 		skipArgPrefix(s)
-		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s)
+		// ConsumeCodeBlock consumes content bytes
+		startContentPos := s.pos
+		raw, err := ConsumeCodeBlock(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
+		// endContentPos := s.pos - 1
+		_ = startContentPos
+
 		// raw is the content.
 		contentLen := len(raw)
 		innerStart := visiblePos
@@ -686,48 +694,3 @@ func skipArgPrefix(s *scanner) {
 	s.UnreadByte()
 }
 
-func directOutput(s *scanner) (string, int, int, error) {
-	var buf bytes.Buffer
-	startPos := s.pos
-	depth := 0
-
-	for {
-		ch, err := s.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				return buf.String(), startPos, s.pos, nil
-			}
-			return "", 0, 0, err
-		}
-
-		if ch == '\\' {
-			next, err := s.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					buf.WriteByte('\\')
-					return buf.String(), startPos, s.pos, nil
-				}
-				return "", 0, 0, err
-			}
-			// Unescape: consume backslash, write next char
-			buf.WriteByte(next)
-			continue
-		}
-
-		buf.WriteByte(ch)
-
-		switch ch {
-		case '[':
-			depth++
-		case ']':
-			if depth > 0 {
-				depth--
-			} else {
-				// Found terminator "]" at top level
-				res := buf.String()
-				res = res[:len(res)-1]
-				return res, startPos, s.pos - 1, nil
-			}
-		}
-	}
-}

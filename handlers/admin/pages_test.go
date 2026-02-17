@@ -12,7 +12,7 @@ func TestHappyPathAdminTemplatesExist(t *testing.T) {
 	pages := []tasks.Template{
 		AdminAuditLogPageTmpl,
 		AdminCommentPageTmpl,
-		AdminLinkRemapPageTmpl,
+		AdminLinkDiscoveryPageTmpl,
 		AdminGrantAddPageTmpl,
 		AdminRoleGrantAddPageTmpl,
 		AdminPageTmpl,

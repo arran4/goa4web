@@ -91,8 +91,27 @@ func TestBaseURLPrecedence(t *testing.T) {
 		config.WithFileValues(map[string]string{
 			config.EnvHost: "host",
 		}),
+		config.WithGetenv(func(string) string { return "" }),
 	)
 	if cfg.BaseURL != "http://host" {
 		t.Errorf("expected Host usage, got %q", cfg.BaseURL)
+	}
+}
+
+func TestHostPreferredWhenHostnameLacksScheme(t *testing.T) {
+	cfg := config.NewRuntimeConfig(
+		config.WithFileValues(map[string]string{
+			config.EnvHost: "configured-host",
+		}),
+		config.WithGetenv(func(key string) string {
+			if key == config.EnvHostname {
+				return "container-hostname"
+			}
+			return ""
+		}),
+	)
+
+	if cfg.BaseURL != "http://configured-host" {
+		t.Fatalf("expected host to win over non-URL hostname, got %q", cfg.BaseURL)
 	}
 }

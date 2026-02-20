@@ -397,7 +397,7 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 
 	if cfg.ExternalURL != "" {
 		cfg.BaseURL = cfg.ExternalURL
-	} else if cfg.HTTPHostname != "" {
+	} else if cfg.HTTPHostname != "" && (strings.Contains(cfg.HTTPHostname, "://") || cfg.Host == "") {
 		cfg.BaseURL = cfg.HTTPHostname
 	} else if cfg.Host != "" {
 		cfg.BaseURL = "http://" + cfg.Host

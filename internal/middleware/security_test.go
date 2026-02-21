@@ -106,4 +106,8 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 	if got := rr.Header().Get("Referrer-Policy"); got != "no-referrer" {
 		t.Fatalf("Referrer-Policy=%q want no-referrer", got)
 	}
+	expectedCSP := "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+	if got := rr.Header().Get("Content-Security-Policy"); got != expectedCSP {
+		t.Errorf("Content-Security-Policy=\n%q\nwant\n%q", got, expectedCSP)
+	}
 }

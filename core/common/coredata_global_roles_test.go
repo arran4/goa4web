@@ -9,7 +9,7 @@ import (
 
 func TestAllRolesGlobalCaching(t *testing.T) {
 	// Reset global cache
-	resetGlobalRolesCache()
+	ResetGlobalRolesCache()
 
 	conn, mock, err := sqlmock.New()
 	if err != nil {

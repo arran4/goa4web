@@ -356,7 +356,7 @@ func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, erro
 
 var globalRolesCache lazy.Value[[]*db.Role]
 
-func resetGlobalRolesCache() {
+func ResetGlobalRolesCache() {
 	globalRolesCache = lazy.Value[[]*db.Role]{}
 }
 

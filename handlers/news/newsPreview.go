@@ -3,7 +3,6 @@ package news
 import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/arran4/goa4web/core/common"
@@ -47,9 +46,7 @@ func PreviewPage(w http.ResponseWriter, r *http.Request) {
 	// Set headers for partial HTML content
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if err := NewsPreviewPageTmpl.Handle(w, r, data); err != nil {
-		log.Printf("Error processing preview: %v", err)
-	}
+	NewsPreviewPageTmpl.Handle(w, r, data)
 }
 
 const NewsPreviewPageTmpl tasks.Template = "news/preview.gohtml"

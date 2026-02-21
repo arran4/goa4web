@@ -15,6 +15,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	ttemplate "text/template"
 	"time"
 
@@ -39,6 +40,11 @@ import (
 
 // Ensure SessionProxy implements SessionManager.
 var _ SessionManager = (*db.SessionProxy)(nil)
+
+var (
+	globalLanguagesCache   = &lazy.Value[[]*db.Language]{}
+	globalLanguagesCacheMu sync.RWMutex
+)
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
@@ -1299,7 +1305,10 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 
 // Languages returns the list of available languages loaded on demand.
 func (cd *CoreData) Languages() ([]*db.Language, error) {
-	return cd.cache.langs.Load(func() ([]*db.Language, error) {
+	globalLanguagesCacheMu.RLock()
+	cache := globalLanguagesCache
+	globalLanguagesCacheMu.RUnlock()
+	return cache.Load(func() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
@@ -1324,6 +1333,9 @@ func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
 		return fmt.Errorf("update language: %w", err)
 	}
 	cd.cache.langs = lazy.Value[[]*db.Language]{}
+	globalLanguagesCacheMu.Lock()
+	globalLanguagesCache = &lazy.Value[[]*db.Language]{}
+	globalLanguagesCacheMu.Unlock()
 	return nil
 }
 
@@ -1358,6 +1370,9 @@ func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
 		return int32(id), name, err
 	}
 	cd.cache.langs = lazy.Value[[]*db.Language]{}
+	globalLanguagesCacheMu.Lock()
+	globalLanguagesCache = &lazy.Value[[]*db.Language]{}
+	globalLanguagesCacheMu.Unlock()
 	return int32(id), name, nil
 }
 
@@ -1376,6 +1391,9 @@ func (cd *CoreData) CreateLanguage(code, name string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	globalLanguagesCacheMu.Lock()
+	globalLanguagesCache = &lazy.Value[[]*db.Language]{}
+	globalLanguagesCacheMu.Unlock()
 	return res.LastInsertId()
 }
 

@@ -1,7 +1,6 @@
 package a4code
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -12,7 +11,6 @@ import (
 func Substring(s string, start, end int) string {
 	root, err := ParseString(s)
 	if err != nil {
-		fmt.Printf("Substring Parse Error: %v\n", err)
 		// Fallback to simple string slicing if parsing fails, though imperfect.
 		if start >= len(s) {
 			return ""

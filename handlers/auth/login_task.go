@@ -74,7 +74,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			return loginFormHandler{msg: "No such user"}
+			return loginFormHandler{msg: "Invalid username or password"}
 		}
 		return fmt.Errorf("LoginTask.Action: user credentials query: %w", err)
 	}
@@ -89,7 +89,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 					if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 						log.Printf("insert login attempt: %v", err)
 					}
-					return loginFormHandler{msg: "Invalid password"}
+					return loginFormHandler{msg: "Invalid username or password"}
 				}
 			} else {
 				type Data struct {
@@ -104,7 +104,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			return loginFormHandler{msg: "Invalid password"}
+			return loginFormHandler{msg: "Invalid username or password"}
 		}
 	}
 

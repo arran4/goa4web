@@ -145,7 +145,7 @@ func TestLoginTask_Action(t *testing.T) {
 			t.Fatalf("expected login attempt recorded, got %d", len(q.SystemInsertLoginAttemptCalls))
 		}
 		body := rr.Body.String()
-		if !strings.Contains(body, "No such user") {
+		if !strings.Contains(body, "Invalid username or password") {
 			t.Fatalf("body=%q", body)
 		}
 	})
@@ -185,7 +185,7 @@ func TestLoginTask_Action(t *testing.T) {
 			t.Fatalf("expected login attempt recorded, got %d", len(q.SystemInsertLoginAttemptCalls))
 		}
 		body := rr.Body.String()
-		if !strings.Contains(body, "Invalid password") {
+		if !strings.Contains(body, "Invalid username or password") {
 			t.Fatalf("body=%q", body)
 		}
 	})
@@ -231,7 +231,7 @@ func TestLoginTask_Action(t *testing.T) {
 			t.Fatalf("expected login attempt recorded, got %d", len(q.SystemInsertLoginAttemptCalls))
 		}
 		body := rr.Body.String()
-		if !strings.Contains(body, "Invalid password") {
+		if !strings.Contains(body, "Invalid username or password") {
 			t.Fatalf("body=%q", body)
 		}
 		if !strings.Contains(body, "name=\"back\" value=\"/target\"") {

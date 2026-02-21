@@ -58,32 +58,30 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
-		ViewerID:     cd.UserID,
-		ID:           int32(linkId),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-			return
-		default:
-			log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
-			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
-			return
+	var link *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow
+	if v := r.Context().Value(keyLink); v != nil {
+		link = v.(*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow)
+	} else {
+		var err error
+		link, err = queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+			ViewerID:     cd.UserID,
+			ID:           int32(linkId),
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+		if err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+				return
+			default:
+				log.Printf("getLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending Error: %s", err)
+				handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+				return
+			}
 		}
 	}
 
 	canReply := cd.HasGrant("linker", "link", "reply", link.ID)
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		canReply ||
-		cd.SelectedThreadCanReply()) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
 	data.IsReplyable = canReply
 
 	data.Link = link

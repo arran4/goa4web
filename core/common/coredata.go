@@ -354,9 +354,15 @@ func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, erro
 	})
 }
 
+var globalRolesCache lazy.Value[[]*db.Role]
+
+func resetGlobalRolesCache() {
+	globalRolesCache = lazy.Value[[]*db.Role]{}
+}
+
 // AllRoles returns every defined role loaded once from the database.
 func (cd *CoreData) AllRoles() ([]*db.Role, error) {
-	return cd.cache.allRoles.Load(func() ([]*db.Role, error) {
+	return globalRolesCache.Load(func() ([]*db.Role, error) {
 		var roles []*db.Role
 		if cd.queries != nil {
 			var err error

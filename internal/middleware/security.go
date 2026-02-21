@@ -3,15 +3,23 @@ package middleware
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"net"
 	"net/http"
 	"net/netip"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+)
+
+var (
+	lastUntrustedProxyLogTime time.Time
+	untrustedProxyLogMu       sync.Mutex
 )
 
 func normalizeIP(ip string) string {
@@ -33,6 +41,14 @@ func requestIP(r *http.Request, cfg *config.RuntimeConfig) string {
 	remoteIP = normalizeIP(remoteIP)
 
 	if cfg == nil || len(cfg.TrustedProxiesParsed) == 0 {
+		if r.Header.Get("X-Forwarded-For") != "" {
+			untrustedProxyLogMu.Lock()
+			if time.Since(lastUntrustedProxyLogTime) > 24*time.Hour {
+				log.Printf("Security Warning: X-Forwarded-For header detected but no trusted proxies configured. Ignoring header. Configure TRUSTED_PROXIES to trust specific proxies.")
+				lastUntrustedProxyLogTime = time.Now()
+			}
+			untrustedProxyLogMu.Unlock()
+		}
 		return remoteIP
 	}
 

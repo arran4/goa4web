@@ -1,7 +1,6 @@
 package a4code
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -9,18 +8,17 @@ import (
 
 // Substring extracts a substring based on visible text length, preserving markup.
 // start and end are indices into the *visible text*.
-func Substring(s string, start, end int) string {
+func Substring(s string, start, end int) (string, error) {
 	root, err := ParseString(s)
 	if err != nil {
-		fmt.Printf("Substring Parse Error: %v\n", err)
 		// Fallback to simple string slicing if parsing fails, though imperfect.
 		if start >= len(s) {
-			return ""
+			return "", err
 		}
 		if end > len(s) {
 			end = len(s)
 		}
-		return s[start:end]
+		return s[start:end], err
 	}
 
 	newRoot := &ast.Root{}
@@ -30,7 +28,7 @@ func Substring(s string, start, end int) string {
 	newRoot.Children = filterNodes(root.Children, start, end, &pos)
 
 	res := ToCode(newRoot)
-	return res
+	return res, nil
 }
 
 func filterNodes(nodes []ast.Node, start, end int, pos *int) []ast.Node {

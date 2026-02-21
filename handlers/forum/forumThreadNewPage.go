@@ -175,7 +175,11 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 				case "selected":
 					start, _ := strconv.Atoi(r.URL.Query().Get("quote_start"))
 					end, _ := strconv.Atoi(r.URL.Query().Get("quote_end"))
-					text = a4code.QuoteText(c.Username.String, a4code.Substring(c.Text.String, start, end))
+					sub, err := a4code.Substring(c.Text.String, start, end)
+					if err != nil {
+						log.Printf("Substring error: %v", err)
+					}
+					text = a4code.QuoteText(c.Username.String, sub)
 				default:
 					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
 				}

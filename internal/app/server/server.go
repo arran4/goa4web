@@ -16,6 +16,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
@@ -70,6 +71,8 @@ type Server struct {
 	cachedEmailError    error
 	lastEmailConfig     *config.RuntimeConfig
 	emailMu             sync.Mutex
+
+	rolesCache *lazy.Value[[]*db.Role]
 }
 
 // Addr returns the address the server is listening on after Start is called.
@@ -194,7 +197,9 @@ func WithTasksRegistry(r *tasks.Registry) Option { return func(s *Server) { s.Ta
 
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
-	s := &Server{}
+	s := &Server{
+		rolesCache: &lazy.Value[[]*db.Role]{},
+	}
 	for _, o := range opts {
 		o(s)
 	}
@@ -305,6 +310,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithRouterModules(modules),
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
+		common.WithRolesCache(s.rolesCache),
 	)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()

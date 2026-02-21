@@ -14,7 +14,6 @@ import (
 
 // TestBuildTopicGrantGroupsIncludesAllRoles ensures groups are returned for each action when no grants exist.
 func TestBuildTopicGrantGroupsIncludesAllRoles(t *testing.T) {
-	common.ResetGlobalRolesCache()
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

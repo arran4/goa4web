@@ -1,16 +1,16 @@
 package common
 
 import (
+	"context"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/go-be-lazy"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestAllRolesGlobalCaching(t *testing.T) {
-	// Reset global cache
-	ResetGlobalRolesCache()
-
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -24,8 +24,11 @@ func TestAllRolesGlobalCaching(t *testing.T) {
 	// Expect query ONLY ONCE
 	mock.ExpectQuery("SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at FROM roles ORDER BY id").WillReturnRows(rows)
 
+	// Create a shared cache
+	cache := &lazy.Value[[]*db.Role]{}
+
 	// Instance 1
-	cd1 := NewTestCoreData(t, db.New(conn))
+	cd1 := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig(), WithRolesCache(cache))
 	roles1, err := cd1.AllRoles()
 	if err != nil {
 		t.Fatalf("AllRoles 1: %v", err)
@@ -35,7 +38,7 @@ func TestAllRolesGlobalCaching(t *testing.T) {
 	}
 
 	// Instance 2
-	cd2 := NewTestCoreData(t, db.New(conn))
+	cd2 := NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig(), WithRolesCache(cache))
 	roles2, err := cd2.AllRoles()
 	if err != nil {
 		t.Fatalf("AllRoles 2: %v", err)

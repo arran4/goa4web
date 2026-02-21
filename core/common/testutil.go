@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -61,5 +62,6 @@ func NewTestCoreData(t *testing.T, q db.Querier) *CoreData {
 	if q == nil {
 		q = &QuerierFake{}
 	}
-	return NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cache := &lazy.Value[[]*db.Role]{}
+	return NewCoreData(context.Background(), q, config.NewRuntimeConfig(), WithRolesCache(cache))
 }

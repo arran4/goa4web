@@ -8,7 +8,6 @@ import (
 )
 
 func TestAllRolesLazy(t *testing.T) {
-	ResetGlobalRolesCache()
 	conn, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)

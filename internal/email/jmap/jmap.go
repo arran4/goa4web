@@ -162,23 +162,24 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 	return nil
 }
 
-func (j *Provider) TestConfig(ctx context.Context) error {
-	fmt.Printf("Performing JMAP discovery for endpoint: %s\n", j.Endpoint)
+func (j *Provider) TestConfig(ctx context.Context) (string, error) {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Performing JMAP discovery for endpoint: %s\n", j.Endpoint)
 	session, err := DiscoverSession(ctx, j.Client, j.Endpoint, j.Username, j.Password)
 	if err != nil {
-		return fmt.Errorf("failed to discover JMAP session: %w", err)
+		return b.String(), fmt.Errorf("failed to discover JMAP session: %w", err)
 	}
 	acc := SelectAccountID(session)
 	id := SelectIdentityID(session)
 	if id == "" {
 		id, err = DiscoverIdentityID(ctx, j.Client, session.APIURL, j.Username, j.Password, acc)
 		if err != nil {
-			fmt.Printf("failed to discover Identity ID via API: %v\n", err)
+			fmt.Fprintf(&b, "failed to discover Identity ID via API: %v\n", err)
 		}
 	}
-	fmt.Printf("Discovered Account ID: %s\n", acc)
-	fmt.Printf("Discovered Identity ID: %s\n", id)
-	return nil
+	fmt.Fprintf(&b, "Discovered Account ID: %s\n", acc)
+	fmt.Fprintf(&b, "Discovered Identity ID: %s\n", id)
+	return b.String(), nil
 }
 
 func getJMAPDiscoveryEndpoint(cfg *config.RuntimeConfig) (string, error) {
@@ -212,7 +213,6 @@ func discoverSessionWithRetries(ctx context.Context, client *http.Client, endpoi
 		if err == nil {
 			return session, nil
 		}
-		fmt.Printf("JMAP discovery attempt %d failed: %v\n", i+1, err)
 		if i < retries-1 {
 			time.Sleep(2 * time.Second)
 		}
@@ -601,16 +601,11 @@ func (j *Provider) getBestMailboxID(ctx context.Context) (string, error) {
 	for _, role := range []string{"outbox", "sent", "drafts", "inbox"} {
 		id, err := j.getMailboxIDByRole(ctx, role)
 		if err == nil && id != "" {
-			fmt.Printf("JMAP: Found mailbox '%s' with ID: %s for email import\n", role, id)
 			return id, nil
 		}
 	}
 	// Fallback: Get ANY mailbox
-	fmt.Println("JMAP: No standard mailbox found, checking for any available mailbox.")
 	id, err := j.getAnyMailboxID(ctx)
-	if err == nil && id != "" {
-		fmt.Printf("JMAP: Found fallback mailbox with ID: %s\n", id)
-	}
 	return id, err
 }
 

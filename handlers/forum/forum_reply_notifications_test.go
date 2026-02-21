@@ -51,7 +51,7 @@ func (m *MockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 	return nil
 }
 
-func (m *MockEmailProvider) TestConfig(ctx context.Context) error { return nil }
+func (m *MockEmailProvider) TestConfig(ctx context.Context) (string, error) { return "", nil }
 
 // TestHappyPathForumReply verifies that forum reply use correct templates with real event data and exact string matching.
 func TestHappyPathForumReply(t *testing.T) {

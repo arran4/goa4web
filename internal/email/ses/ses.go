@@ -35,13 +35,12 @@ func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []b
 	return err
 }
 
-func (s Provider) TestConfig(ctx context.Context) error {
+func (s Provider) TestConfig(ctx context.Context) (string, error) {
 	_, err := s.Client.GetSendQuotaWithContext(ctx, &ses.GetSendQuotaInput{})
 	if err != nil {
-		return fmt.Errorf("failed to get send quota: %w", err)
+		return "", fmt.Errorf("failed to get send quota: %w", err)
 	}
-	fmt.Println("SES provider is configured correctly")
-	return nil
+	return "SES provider is configured correctly", nil
 }
 
 func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {

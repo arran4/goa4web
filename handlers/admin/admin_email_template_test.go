@@ -137,7 +137,7 @@ func (r *recordAdminMail) Send(ctx context.Context, to mail.Address, rawEmailMes
 	return nil
 }
 
-func (r *recordAdminMail) TestConfig(ctx context.Context) error { return nil }
+func (r *recordAdminMail) TestConfig(ctx context.Context) (string, error) { return "", nil }
 
 func TestNotifyAdminsEnv(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {

@@ -64,7 +64,7 @@ func (m *mockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 	return nil
 }
 
-func (m *mockEmailProvider) TestConfig(ctx context.Context) error { return nil }
+func (m *mockEmailProvider) TestConfig(ctx context.Context) (string, error) { return "", nil }
 
 func TestHappyPathImageBbsReply(t *testing.T) {
 	replierUID := int32(1)

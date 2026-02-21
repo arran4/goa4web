@@ -59,7 +59,7 @@ func (m *mockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 	return nil
 }
 
-func (m *mockEmailProvider) TestConfig(ctx context.Context) error { return nil }
+func (m *mockEmailProvider) TestConfig(ctx context.Context) (string, error) { return "", nil }
 
 func TestWritingReply_Notifications(t *testing.T) {
 	t.Run("Happy Path - Reply and Notify", func(t *testing.T) {

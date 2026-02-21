@@ -38,13 +38,33 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// Ensure SessionProxy implements SessionManager.
-var _ SessionManager = (*db.SessionProxy)(nil)
+// LanguageCache manages the thread-safe caching of languages.
+type LanguageCache struct {
+	mu  sync.RWMutex
+	val *lazy.Value[[]*db.Language]
+}
 
-var (
-	globalLanguagesCache   = &lazy.Value[[]*db.Language]{}
-	globalLanguagesCacheMu sync.RWMutex
-)
+// NewLanguageCache creates a new language cache instance.
+func NewLanguageCache() *LanguageCache {
+	return &LanguageCache{
+		val: &lazy.Value[[]*db.Language]{},
+	}
+}
+
+// Load retrieves languages from the cache or loads them using the generator.
+func (lc *LanguageCache) Load(generator func() ([]*db.Language, error)) ([]*db.Language, error) {
+	lc.mu.RLock()
+	val := lc.val
+	lc.mu.RUnlock()
+	return val.Load(generator)
+}
+
+// Invalidate clears the cache, forcing a reload on the next access.
+func (lc *LanguageCache) Invalidate() {
+	lc.mu.Lock()
+	lc.val = &lazy.Value[[]*db.Language]{}
+	lc.mu.Unlock()
+}
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
@@ -149,6 +169,8 @@ type CoreData struct {
 	UserID            int32
 	// routerModules tracks enabled router modules.
 	routerModules map[string]struct{}
+
+	languageCache *LanguageCache
 
 	httpClient *http.Client
 
@@ -1305,15 +1327,16 @@ func (cd *CoreData) ImageURLMapper(tag, val string) string {
 
 // Languages returns the list of available languages loaded on demand.
 func (cd *CoreData) Languages() ([]*db.Language, error) {
-	globalLanguagesCacheMu.RLock()
-	cache := globalLanguagesCache
-	globalLanguagesCacheMu.RUnlock()
-	return cache.Load(func() ([]*db.Language, error) {
+	gen := func() ([]*db.Language, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
 		return cd.queries.SystemListLanguages(cd.ctx)
-	})
+	}
+	if cd.languageCache != nil {
+		return cd.languageCache.Load(gen)
+	}
+	return cd.cache.langs.Load(gen)
 }
 
 // RenameLanguage updates the language code from oldCode to newCode and clears
@@ -1333,9 +1356,9 @@ func (cd *CoreData) RenameLanguage(oldCode, newCode string) error {
 		return fmt.Errorf("update language: %w", err)
 	}
 	cd.cache.langs = lazy.Value[[]*db.Language]{}
-	globalLanguagesCacheMu.Lock()
-	globalLanguagesCache = &lazy.Value[[]*db.Language]{}
-	globalLanguagesCacheMu.Unlock()
+	if cd.languageCache != nil {
+		cd.languageCache.Invalidate()
+	}
 	return nil
 }
 
@@ -1370,9 +1393,9 @@ func (cd *CoreData) DeleteLanguage(code string) (int32, string, error) {
 		return int32(id), name, err
 	}
 	cd.cache.langs = lazy.Value[[]*db.Language]{}
-	globalLanguagesCacheMu.Lock()
-	globalLanguagesCache = &lazy.Value[[]*db.Language]{}
-	globalLanguagesCacheMu.Unlock()
+	if cd.languageCache != nil {
+		cd.languageCache.Invalidate()
+	}
 	return int32(id), name, nil
 }
 
@@ -1391,9 +1414,9 @@ func (cd *CoreData) CreateLanguage(code, name string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	globalLanguagesCacheMu.Lock()
-	globalLanguagesCache = &lazy.Value[[]*db.Language]{}
-	globalLanguagesCacheMu.Unlock()
+	if cd.languageCache != nil {
+		cd.languageCache.Invalidate()
+	}
 	return res.LastInsertId()
 }
 
@@ -2667,6 +2690,11 @@ type CoreOption func(*CoreData)
 // WithImageURLMapper sets the a4code image mapper option.
 func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
+}
+
+// WithLanguageCache sets the shared language cache.
+func WithLanguageCache(lc *LanguageCache) CoreOption {
+	return func(cd *CoreData) { cd.languageCache = lc }
 }
 
 // WithHTTPClient sets the HTTP client used for external requests.

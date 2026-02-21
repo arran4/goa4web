@@ -46,7 +46,7 @@ func PreviewPage(w http.ResponseWriter, r *http.Request) {
 	// Set headers for partial HTML content
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	NewsPreviewPageTmpl.Handle(w, r, data)
+	_ = NewsPreviewPageTmpl.Handle(w, r, data)
 }
 
 const NewsPreviewPageTmpl tasks.Template = "news/preview.gohtml"

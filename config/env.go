@@ -212,4 +212,7 @@ const (
 	EnvStartupMediaCheckThresholdPercent = "STARTUP_MEDIA_CHECK_THRESHOLD_PERCENT"
 	// EnvSkipStartupMediaCheck skips the startup media check entirely.
 	EnvSkipStartupMediaCheck = "SKIP_STARTUP_MEDIA_CHECK"
+
+	// EnvTrustedProxies is a comma-separated list of trusted proxy CIDRs.
+	EnvTrustedProxies = "TRUSTED_PROXIES"
 )

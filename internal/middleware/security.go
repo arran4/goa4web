@@ -25,28 +25,79 @@ func normalizeIP(ip string) string {
 	return parsed.String()
 }
 
-func requestIP(r *http.Request) string {
-	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
-		if comma := strings.IndexByte(ip, ','); comma >= 0 {
-			ip = ip[:comma]
-		}
-		ip = strings.TrimSpace(ip)
-		if host, _, err := net.SplitHostPort(ip); err == nil {
-			ip = host
-		}
-		return normalizeIP(ip)
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
+func requestIP(r *http.Request, cfg *config.RuntimeConfig) string {
+	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return normalizeIP(r.RemoteAddr)
+		remoteIP = r.RemoteAddr
 	}
-	return normalizeIP(host)
+	remoteIP = normalizeIP(remoteIP)
+
+	if cfg == nil || len(cfg.TrustedProxiesParsed) == 0 {
+		return remoteIP
+	}
+
+	addr, err := netip.ParseAddr(remoteIP)
+	if err != nil {
+		return remoteIP
+	}
+
+	isTrusted := false
+	for _, cidr := range cfg.TrustedProxiesParsed {
+		if cidr.Contains(addr) {
+			isTrusted = true
+			break
+		}
+	}
+
+	if !isTrusted {
+		return remoteIP
+	}
+
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff == "" {
+		return remoteIP
+	}
+
+	ips := strings.Split(xff, ",")
+	currentIP := addr
+
+	for i := len(ips) - 1; i >= 0; i-- {
+		ipStr := strings.TrimSpace(ips[i])
+		if host, _, err := net.SplitHostPort(ipStr); err == nil {
+			ipStr = host
+		}
+		parsedIP, err := netip.ParseAddr(ipStr)
+		if err != nil {
+			return normalizeIP(currentIP.String())
+		}
+
+		isIpTrusted := false
+		for _, cidr := range cfg.TrustedProxiesParsed {
+			if cidr.Contains(parsedIP) {
+				isIpTrusted = true
+				break
+			}
+		}
+
+		if isIpTrusted {
+			currentIP = parsedIP
+			continue
+		} else {
+			return normalizeIP(ipStr)
+		}
+	}
+
+	return normalizeIP(currentIP.String())
 }
 
 // SecurityHeadersMiddleware enforces IP bans and sets common security headers.
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := requestIP(r)
+		var cfg *config.RuntimeConfig
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			cfg = cd.Config
+		}
+		ip := requestIP(r, cfg)
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -73,10 +124,6 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		var cfg *config.RuntimeConfig
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			cfg = cd.Config
-		}
 		var hsts string
 		if cfg != nil {
 			hsts = cfg.HSTSHeaderValue

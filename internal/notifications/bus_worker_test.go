@@ -27,7 +27,7 @@ func (d *busDummyProvider) Send(_ context.Context, to mail.Address, _ []byte) er
 	return nil
 }
 
-func (d *busDummyProvider) TestConfig(ctx context.Context) error { return nil }
+func (d *busDummyProvider) TestConfig(ctx context.Context) (string, error) { return "", nil }
 
 type recordDLQ struct{ msg string }
 
@@ -200,8 +200,8 @@ func (errProvider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 	return fmt.Errorf("send error")
 }
 
-func (errProvider) TestConfig(ctx context.Context) error {
-	return fmt.Errorf("test config error")
+func (errProvider) TestConfig(ctx context.Context) (string, error) {
+	return "", fmt.Errorf("test config error")
 }
 
 func TestProcessEventDLQ(t *testing.T) {

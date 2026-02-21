@@ -55,7 +55,7 @@ func (m *mockEmailProvider) Send(ctx context.Context, to mail.Address, rawEmailM
 	return nil
 }
 
-func (m *mockEmailProvider) TestConfig(ctx context.Context) error { return nil }
+func (m *mockEmailProvider) TestConfig(ctx context.Context) (string, error) { return "", nil }
 
 func TestLinkerApprove(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {

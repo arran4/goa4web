@@ -143,15 +143,18 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				data.Error = fmt.Sprintf("Error creating provider: %v", err)
 			} else {
-				err = p.TestConfig(r.Context())
+				msg, err := p.TestConfig(r.Context())
 				if err != nil {
-					data.Error = fmt.Sprintf("Config Test Failed: %v", err)
+					data.Error = fmt.Sprintf("Config Test Failed: %v\nOutput: %s", err, msg)
 				} else {
+					if msg != "" {
+						data.Result = fmt.Sprintf("Config Test Passed:\n%s\n", msg)
+					}
 					err = p.Send(r.Context(), mail.Address{Address: data.ToAddress}, []byte("Subject: Test Email\r\n\r\nThis is a test email from Goa4Web admin dashboard."))
 					if err != nil {
 						data.Error = fmt.Sprintf("Send Failed: %v", err)
 					} else {
-						data.Result = "Email sent successfully!"
+						data.Result += "Email sent successfully!"
 					}
 				}
 			}

@@ -27,6 +27,6 @@ func (s *stub) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte
 	return errors.New("ses provider not compiled")
 }
 
-func (s *stub) TestConfig(ctx context.Context) error {
-	return errors.New("ses provider not compiled")
+func (s *stub) TestConfig(ctx context.Context) (string, error) {
+	return "", errors.New("ses provider not compiled")
 }

@@ -52,10 +52,17 @@ func (c *emailTestCmd) Run() error {
 
 	c.Infof("Testing email provider %q", cfg.EmailProvider)
 
-	if err := provider.TestConfig(context.Background()); err != nil {
+	msg, err := provider.TestConfig(context.Background())
+	if err != nil {
+		if msg != "" {
+			c.Infof("Test Output:\n%s", msg)
+		}
 		return fmt.Errorf("email provider test failed: %w", err)
 	}
 
+	if msg != "" {
+		c.Infof("Test Output:\n%s", msg)
+	}
 	c.Infof("Email provider test successful")
 
 	return nil

@@ -35,13 +35,12 @@ func (Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byt
 }
 
 // TestConfig checks if the sendmail binary is available.
-func (Provider) TestConfig(ctx context.Context) error {
+func (Provider) TestConfig(ctx context.Context) (string, error) {
 	_, err := exec.LookPath("sendmail")
 	if err != nil {
-		return fmt.Errorf("sendmail binary not found: %w", err)
+		return "", fmt.Errorf("sendmail binary not found: %w", err)
 	}
-	fmt.Println("sendmail binary found")
-	return nil
+	return "sendmail binary found", nil
 }
 
 func providerFromConfig(*config.RuntimeConfig) (email.Provider, error) { return Provider{}, nil }

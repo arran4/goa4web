@@ -5,7 +5,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/arran4/goa4web/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,8 +16,8 @@ func TestRequestIPSpoofing_Untrusted(t *testing.T) {
 	req.RemoteAddr = "1.2.3.4:1234" // Real IP
 	req.Header.Set("X-Forwarded-For", "6.6.6.6") // Spoofed IP
 
-	cfg := &config.RuntimeConfig{} // Empty config
-	ip := requestIP(req, cfg)
+	var trusted []netip.Prefix
+	ip := requestIP(req, trusted)
 
 	assert.Equal(t, "1.2.3.4", ip, "Expected Real IP (ignoring spoofed header)")
 }
@@ -31,13 +30,10 @@ func TestRequestIPSpoofing_Trusted(t *testing.T) {
 	req.RemoteAddr = "10.0.0.1:1234" // Trusted Proxy IP
 	req.Header.Set("X-Forwarded-For", "6.6.6.6") // Client IP
 
-	cfg := &config.RuntimeConfig{
-		TrustedProxies: "10.0.0.1/32",
-		TrustedProxiesParsed: []netip.Prefix{
-			netip.MustParsePrefix("10.0.0.1/32"),
-		},
+	trusted := []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.1/32"),
 	}
-	ip := requestIP(req, cfg)
+	ip := requestIP(req, trusted)
 
 	assert.Equal(t, "6.6.6.6", ip, "Expected Client IP (via trusted proxy)")
 }
@@ -52,13 +48,11 @@ func TestRequestIPSpoofing_TrustedChain(t *testing.T) {
 	req.RemoteAddr = "10.0.0.1:5678"
 	req.Header.Set("X-Forwarded-For", "1.2.3.4, 10.0.0.2")
 
-	cfg := &config.RuntimeConfig{
-		TrustedProxiesParsed: []netip.Prefix{
-			netip.MustParsePrefix("10.0.0.1/32"),
-			netip.MustParsePrefix("10.0.0.2/32"),
-		},
+	trusted := []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.1/32"),
+		netip.MustParsePrefix("10.0.0.2/32"),
 	}
-	ip := requestIP(req, cfg)
+	ip := requestIP(req, trusted)
 
 	assert.Equal(t, "1.2.3.4", ip, "Expected Client IP (traversing trusted chain)")
 }
@@ -72,12 +66,10 @@ func TestRequestIPSpoofing_UntrustedInChain(t *testing.T) {
 	req.RemoteAddr = "10.0.0.1:5678"
 	req.Header.Set("X-Forwarded-For", "1.2.3.4, 6.6.6.6")
 
-	cfg := &config.RuntimeConfig{
-		TrustedProxiesParsed: []netip.Prefix{
-			netip.MustParsePrefix("10.0.0.1/32"),
-		},
+	trusted := []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.1/32"),
 	}
-	ip := requestIP(req, cfg)
+	ip := requestIP(req, trusted)
 
 	assert.Equal(t, "6.6.6.6", ip, "Expected Untrusted Proxy IP (client)")
 }
@@ -88,12 +80,10 @@ func TestRequestIPSpoofing_GarbageHeader(t *testing.T) {
     req.RemoteAddr = "10.0.0.1:1234"
     req.Header.Set("X-Forwarded-For", "garbage")
 
-    cfg := &config.RuntimeConfig{
-        TrustedProxiesParsed: []netip.Prefix{
-            netip.MustParsePrefix("10.0.0.1/32"),
-        },
-    }
-    ip := requestIP(req, cfg)
+	trusted := []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.1/32"),
+	}
+    ip := requestIP(req, trusted)
     // Should fallback to RemoteAddr because parsing failed?
     // Wait, my logic: netip.ParseAddr("garbage") fails. Returns normalizeIP(currentIP.String()).
     // currentIP is RemoteAddr.

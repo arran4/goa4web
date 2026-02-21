@@ -33,14 +33,14 @@ func normalizeIP(ip string) string {
 	return parsed.String()
 }
 
-func requestIP(r *http.Request, cfg *config.RuntimeConfig) string {
+func requestIP(r *http.Request, trusted []netip.Prefix) string {
 	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		remoteIP = r.RemoteAddr
 	}
 	remoteIP = normalizeIP(remoteIP)
 
-	if cfg == nil || len(cfg.TrustedProxiesParsed) == 0 {
+	if len(trusted) == 0 {
 		if r.Header.Get("X-Forwarded-For") != "" {
 			untrustedProxyLogMu.Lock()
 			if time.Since(lastUntrustedProxyLogTime) > 24*time.Hour {
@@ -58,7 +58,7 @@ func requestIP(r *http.Request, cfg *config.RuntimeConfig) string {
 	}
 
 	isTrusted := false
-	for _, cidr := range cfg.TrustedProxiesParsed {
+	for _, cidr := range trusted {
 		if cidr.Contains(addr) {
 			isTrusted = true
 			break
@@ -88,7 +88,7 @@ func requestIP(r *http.Request, cfg *config.RuntimeConfig) string {
 		}
 
 		isIpTrusted := false
-		for _, cidr := range cfg.TrustedProxiesParsed {
+		for _, cidr := range trusted {
 			if cidr.Contains(parsedIP) {
 				isIpTrusted = true
 				break
@@ -109,11 +109,11 @@ func requestIP(r *http.Request, cfg *config.RuntimeConfig) string {
 // SecurityHeadersMiddleware enforces IP bans and sets common security headers.
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var cfg *config.RuntimeConfig
+		var trusted []netip.Prefix
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			cfg = cd.Config
+			trusted = cd.TrustedProxies
 		}
-		ip := requestIP(r, cfg)
+		ip := requestIP(r, trusted)
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -140,6 +140,10 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
+		var cfg *config.RuntimeConfig
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			cfg = cd.Config
+		}
 		var hsts string
 		if cfg != nil {
 			hsts = cfg.HSTSHeaderValue

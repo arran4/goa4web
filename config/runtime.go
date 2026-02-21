@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"net"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -181,8 +180,6 @@ type RuntimeConfig struct {
 
 	// TrustedProxies is a comma-separated list of trusted proxy CIDRs.
 	TrustedProxies string
-	// TrustedProxiesParsed is the parsed list of trusted proxy CIDRs.
-	TrustedProxiesParsed []netip.Prefix
 }
 
 // Option configures RuntimeConfig values.
@@ -447,22 +444,6 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.PasswordResetExpiryHours = 24
 	}
 
-	if cfg.TrustedProxies != "" {
-		cfg.TrustedProxiesParsed = nil
-		for _, p := range strings.Split(cfg.TrustedProxies, ",") {
-			p = strings.TrimSpace(p)
-			if p == "" {
-				continue
-			}
-			if prefix, err := netip.ParsePrefix(p); err == nil {
-				cfg.TrustedProxiesParsed = append(cfg.TrustedProxiesParsed, prefix)
-			} else if addr, err := netip.ParseAddr(p); err == nil {
-				cfg.TrustedProxiesParsed = append(cfg.TrustedProxiesParsed, netip.PrefixFrom(addr, addr.BitLen()))
-			} else {
-				log.Printf("invalid trusted proxy: %s", p)
-			}
-		}
-	}
 }
 
 // UpdatePaginationConfig adjusts the pagination fields of cfg and enforces

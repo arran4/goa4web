@@ -22,7 +22,6 @@ type DataCache struct {
 	adminUserRoles                map[int32]*lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	adminUserStats                map[int32]*lazy.Value[*db.AdminUserPostCountsByIDRow]
 	allAnsweredFAQ                lazy.Value[[]*CategoryFAQs]
-	allRoles                      lazy.Value[[]*db.Role]
 	annMu                         sync.Mutex
 	announcement                  lazy.Value[*db.GetActiveAnnouncementWithNewsForListerRow]
 	blogEntries                   map[int32]*lazy.Value[*db.GetBlogEntryForListerByIDRow]

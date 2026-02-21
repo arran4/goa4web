@@ -178,6 +178,7 @@ type CoreData struct {
 	currentWritingID                 int32
 	event                            *eventbus.TaskEvent
 	cache                            DataCache
+	rolesCache                       *lazy.Value[[]*db.Role]
 }
 
 // AbsoluteURL returns an absolute URL by combining the configured hostname or
@@ -356,7 +357,11 @@ func (cd *CoreData) adminRequestList(kind string) ([]*db.AdminRequestQueue, erro
 
 // AllRoles returns every defined role loaded once from the database.
 func (cd *CoreData) AllRoles() ([]*db.Role, error) {
-	return cd.cache.allRoles.Load(func() ([]*db.Role, error) {
+	cache := cd.rolesCache
+	if cache == nil {
+		cache = &lazy.Value[[]*db.Role]{}
+	}
+	return cache.Load(func() ([]*db.Role, error) {
 		var roles []*db.Role
 		if cd.queries != nil {
 			var err error
@@ -2789,6 +2794,11 @@ func WithCustomQueries(cq db.CustomQueries) CoreOption {
 // WithOffset records the current pagination offset.
 func WithOffset(o int) CoreOption {
 	return func(cd *CoreData) { cd.currentOffset = o }
+}
+
+// WithRolesCache sets the shared roles cache.
+func WithRolesCache(c *lazy.Value[[]*db.Role]) CoreOption {
+	return func(cd *CoreData) { cd.rolesCache = c }
 }
 
 // assignIDFromString converts v to int32 and stores it in the mapped CoreData

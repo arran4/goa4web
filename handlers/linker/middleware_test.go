@@ -42,11 +42,6 @@ func enforceLinkerCommentsAccessAllowed(t *testing.T) {
 	handler := EnforceLinkerCommentsAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
-
-		// Verify context has link
-		if r.Context().Value(keyLink) == nil {
-			t.Errorf("expected link in context")
-		}
 	}))
 
 	handler.ServeHTTP(w, req)

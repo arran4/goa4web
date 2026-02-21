@@ -36,7 +36,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptio
 	lr.HandleFunc("/linker/{username}/", UserPage).Methods("GET")
 	lr.HandleFunc("/categories", CategoriesPage).Methods("GET")
 	lr.HandleFunc("/category/{category}", LinkerCategoryPage).Methods("GET")
-	lr.HandleFunc("/comments/{link}", CommentsPage).Methods("GET")
+	lr.Handle("/comments/{link}", EnforceLinkerCommentsAccess(http.HandlerFunc(CommentsPage))).Methods("GET")
 	lr.HandleFunc("/comments/{link}", handlers.TaskHandler(replyTaskEvent)).Methods("POST").MatcherFunc(replyTaskEvent.Matcher())
 	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(commentEditAction)))).Methods("POST").MatcherFunc(commentEditAction.Matcher())
 	lr.Handle("/comments/{link}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(CommentEditActionCancelPage))).Methods("POST")

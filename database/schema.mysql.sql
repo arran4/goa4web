@@ -766,5 +766,5 @@ CREATE TABLE scheduler_state (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (84)
+INSERT INTO `schema_version` (`version`) VALUES (83)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

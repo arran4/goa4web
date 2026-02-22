@@ -177,6 +177,9 @@ type RuntimeConfig struct {
 	StartupMediaCheckThresholdPercent int
 	// SkipStartupMediaCheck skips the startup media check entirely.
 	SkipStartupMediaCheck bool
+
+	// TrustedProxies is a comma-separated list of trusted proxy CIDRs.
+	TrustedProxies string
 }
 
 // Option configures RuntimeConfig values.
@@ -397,7 +400,7 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 
 	if cfg.ExternalURL != "" {
 		cfg.BaseURL = cfg.ExternalURL
-	} else if cfg.HTTPHostname != "" {
+	} else if cfg.HTTPHostname != "" && (strings.Contains(cfg.HTTPHostname, "://") || cfg.Host == "") {
 		cfg.BaseURL = cfg.HTTPHostname
 	} else if cfg.Host != "" {
 		cfg.BaseURL = "http://" + cfg.Host
@@ -440,6 +443,7 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	if cfg.PasswordResetExpiryHours == 0 {
 		cfg.PasswordResetExpiryHours = 24
 	}
+
 }
 
 // UpdatePaginationConfig adjusts the pagination fields of cfg and enforces

@@ -6,8 +6,14 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/gorilla/sessions"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestSessionManagerInterface(t *testing.T) {
+	// Ensure SessionProxy implements SessionManager.
+	var _ common.SessionManager = (*db.SessionProxy)(nil)
+}
 
 func TestCoreDataSession(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("secret"))

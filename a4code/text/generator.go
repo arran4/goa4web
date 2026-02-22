@@ -148,11 +148,13 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	return nil
+	_, err := io.WriteString(w, n.Value)
+	return err
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
-	return nil
+	_, err := io.WriteString(w, n.Value)
+	return err
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {

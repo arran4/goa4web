@@ -8,19 +8,25 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sync"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 )
 
-// AdminLinkRemapPage displays site news URLs for remapping.
-func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
+var (
+	linkDiscoveryRegex *regexp.Regexp
+	linkDiscoveryOnce  sync.Once
+)
+
+// AdminLinkDiscoveryPage displays site news URLs for discovery and remapping.
+func AdminLinkDiscoveryPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		CSV string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Link Remap"
+	cd.PageTitle = "Link Discovery & Remap"
 	data := Data{}
 
 	if r.URL.Query().Has("generate") {
@@ -34,10 +40,14 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 		var buf bytes.Buffer
 		wcsv := csv.NewWriter(&buf)
 		_ = wcsv.Write([]string{"internal reference", "original url", "to url"})
-		re := regexp.MustCompile(`https?://[^\s"']+`)
+
+		linkDiscoveryOnce.Do(func() {
+			linkDiscoveryRegex = regexp.MustCompile(`https?://[^\s"']+`)
+		})
+
 		for _, row := range rows {
 			if row.News.Valid {
-				matches := re.FindAllString(row.News.String, -1)
+				matches := linkDiscoveryRegex.FindAllString(row.News.String, -1)
 				for _, m := range matches {
 					_ = wcsv.Write([]string{fmt.Sprintf("site_news:%d", row.Idsitenews), m, ""})
 				}
@@ -46,7 +56,7 @@ func AdminLinkRemapPage(w http.ResponseWriter, r *http.Request) {
 		wcsv.Flush()
 		data.CSV = buf.String()
 	}
-	AdminLinkRemapPageTmpl.Handle(w, r, data)
+	AdminLinkDiscoveryPageTmpl.Handle(w, r, data)
 }
 
-const AdminLinkRemapPageTmpl tasks.Template = "admin/linkRemapPage.gohtml"
+const AdminLinkDiscoveryPageTmpl tasks.Template = "admin/linkDiscoveryPage.gohtml"

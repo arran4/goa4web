@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,6 +61,7 @@ type Server struct {
 	DBReg          *dbdrivers.Registry
 	DLQReg         *dlq.Registry
 	Websocket      *websocket.Module
+	LanguageCache  *common.LanguageCache
 
 	WorkerCancel context.CancelFunc
 
@@ -70,6 +72,10 @@ type Server struct {
 	cachedEmailError    error
 	lastEmailConfig     *config.RuntimeConfig
 	emailMu             sync.Mutex
+
+	trustedProxiesParsed []netip.Prefix
+	lastTrustedProxies   string
+	configMu             sync.Mutex
 }
 
 // Addr returns the address the server is listening on after Start is called.
@@ -194,7 +200,9 @@ func WithTasksRegistry(r *tasks.Registry) Option { return func(s *Server) { s.Ta
 
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
-	s := &Server{}
+	s := &Server{
+		LanguageCache: common.NewLanguageCache(),
+	}
 	for _, o := range opts {
 		o(s)
 	}
@@ -212,6 +220,36 @@ func (s *Server) getEmailProvider() (common.MailProvider, error) {
 	s.cachedEmailError = err
 	s.lastEmailConfig = s.Config
 	return p, err
+}
+
+func (s *Server) getTrustedProxies() []netip.Prefix {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+
+	current := s.Config.TrustedProxies
+	if s.lastTrustedProxies == current && s.trustedProxiesParsed != nil {
+		return s.trustedProxiesParsed
+	}
+
+	var parsed []netip.Prefix
+	if current != "" {
+		for _, p := range strings.Split(current, ",") {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			if prefix, err := netip.ParsePrefix(p); err == nil {
+				parsed = append(parsed, prefix)
+			} else if addr, err := netip.ParseAddr(p); err == nil {
+				parsed = append(parsed, netip.PrefixFrom(addr, addr.BitLen()))
+			} else {
+				log.Printf("invalid trusted proxy: %s", p)
+			}
+		}
+	}
+	s.trustedProxiesParsed = parsed
+	s.lastTrustedProxies = current
+	return parsed
 }
 
 // CoreDataMiddleware constructs the middleware responsible for populating
@@ -280,6 +318,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		base = strings.TrimRight(s.Config.BaseURL, "/")
 	}
 	provider, providerErr := s.getEmailProvider()
+	trustedProxies := s.getTrustedProxies()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	modules := []string{}
 	if s.RouterReg != nil {
@@ -305,6 +344,8 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithRouterModules(modules),
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
+		common.WithTrustedProxies(trustedProxies),
+		common.WithLanguageCache(s.LanguageCache),
 	)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()

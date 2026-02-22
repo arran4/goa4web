@@ -40,7 +40,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig) []n
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Schema", "/admin/db/schema", 156),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "DB"), "DB Migrations", "/admin/db/migrations", 157),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Tools", "/admin/links/tools", 31),
-		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Remap", "/admin/link-remap", 32),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Link Discovery", "/admin/link-discovery", 32),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Notifications"), "Notifications", "/admin/notifications", 90),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Notifications"), "Subscription Templates", "/admin/subscriptions/templates", 95),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Queued Emails", "/admin/email/queue", 110),
@@ -89,8 +89,8 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig) []n
 	dbSeedTask := h.NewDBSeedTask()
 	ar.HandleFunc("/db/status", handlers.TaskHandler(dbSeedTask)).Methods("POST").MatcherFunc(dbSeedTask.Matcher())
 	ar.HandleFunc("/links/tools", AdminLinksToolsPage).Methods("GET", "POST")
-	ar.HandleFunc("/link-remap", AdminLinkRemapPage).Methods("GET")
-	ar.HandleFunc("/link-remap", handlers.TaskHandler(applyLinkRemapTask)).Methods("POST").MatcherFunc(applyLinkRemapTask.Matcher())
+	ar.HandleFunc("/link-discovery", AdminLinkDiscoveryPage).Methods("GET")
+	ar.HandleFunc("/link-discovery", handlers.TaskHandler(applyLinkRemapTask)).Methods("POST").MatcherFunc(applyLinkRemapTask.Matcher())
 	ar.HandleFunc("/db/backup", AdminDBBackupPage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))
 	ar.HandleFunc("/db/backup", handlers.TaskHandler(dbBackupTask)).Methods("POST").MatcherFunc(dbBackupTask.Matcher()).MatcherFunc(handlers.RequiredAccess("administrator"))
 	ar.HandleFunc("/db/restore", AdminDBRestorePage).Methods("GET").MatcherFunc(handlers.RequiredAccess("administrator"))

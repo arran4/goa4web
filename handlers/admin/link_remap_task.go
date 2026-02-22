@@ -67,7 +67,7 @@ func (ApplyLinkRemapTask) Action(w http.ResponseWriter, r *http.Request) any {
 			continue
 		}
 	}
-	return handlers.RefreshDirectHandler{TargetURL: "/admin/link-remap"}
+	return handlers.RefreshDirectHandler{TargetURL: "/admin/link-discovery"}
 }
 
 func (ApplyLinkRemapTask) AuditRecord(data map[string]any) string {

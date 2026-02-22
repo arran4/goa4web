@@ -366,7 +366,7 @@ func ParseNodes(s string) ([]ast.Node, error) {
 }
 
 func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.Node, int) bool, startPos int, visiblePos int, lastChar byte) ([]ast.Container, int, error) {
-	cmd, err := getNext(s, true)
+	cmd, err := GetNext(s, true)
 	if err != nil && err != io.EOF {
 		return stack, visiblePos, err
 	}
@@ -419,7 +419,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(&ast.Sub{})
 	case "img", "image":
 		skipArgPrefix(s)
-		raw, err := getNext(s, false)
+		raw, err := GetNext(s, false)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -439,7 +439,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		yield(n, depth)
 	case "a", "link", "url":
 		skipArgPrefix(s)
-		raw, err := getNext(s, false)
+		raw, err := GetNext(s, false)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -452,12 +452,16 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			s.ReadByte() // Consume ']' which starts the block in legacy syntax
 		}
 
-		// directOutput consumes content bytes until terminator
+		// ConsumeCodeBlock consumes content bytes until terminator
 		// Support [code ... ]
-		raw, _, _, err := directOutput(s)
+		startContentPos := s.pos
+		raw, err := ConsumeCodeBlock(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
+		// endContentPos := s.pos - 1 // -1 for the closing bracket
+		_ = startContentPos
+
 		// raw is the content.
 		contentLen := len(raw)
 		innerStart := visiblePos
@@ -487,16 +491,20 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		yield(n, depth)
 	case "codein":
 		skipArgPrefix(s)
-		language, err := getNextArg(s)
+		language, err := GetNextArg(s)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
 		skipArgPrefix(s)
-		// directOutput consumes content bytes
-		raw, _, _, err := directOutput(s)
+		// ConsumeCodeBlock consumes content bytes
+		startContentPos := s.pos
+		raw, err := ConsumeCodeBlock(s)
 		if err != nil {
 			return stack, visiblePos, err
 		}
+		// endContentPos := s.pos - 1
+		_ = startContentPos
+
 		// raw is the content.
 		contentLen := len(raw)
 		innerStart := visiblePos
@@ -516,7 +524,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		yield(n, depth)
 	case "quoteof":
 		skipArgPrefix(s)
-		name, err := getNextArg(s)
+		name, err := GetNextArg(s)
 		if err != nil && err != io.EOF {
 			return stack, visiblePos, err
 		}
@@ -551,101 +559,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		createNode(n)
 	}
 	return stack, visiblePos, nil
-}
-
-func getNextArg(s *scanner) (string, error) {
-	ch, err := s.ReadByte()
-	if err != nil {
-		if err == io.EOF {
-			return "", io.EOF
-		}
-		return "", err
-	}
-	if ch == '"' {
-		var result bytes.Buffer
-		for {
-			ch, err = s.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					return result.String(), io.EOF
-				}
-				return "", err
-			}
-			switch ch {
-			case '"':
-				return result.String(), nil
-			case '\\':
-				next, err := s.ReadByte()
-				if err != nil {
-					if err == io.EOF {
-						result.WriteByte('\\')
-						return result.String(), io.EOF
-					}
-					return "", err
-				}
-				switch next {
-				case '"', ' ', '[', ']', '=', '\\', '*', '/', '_':
-					result.WriteByte(next)
-				default:
-					result.WriteByte('\\')
-					result.WriteByte(next)
-				}
-			default:
-				result.WriteByte(ch)
-			}
-		}
-	} else {
-		if err := s.UnreadByte(); err != nil {
-			return "", err
-		}
-		return getNext(s, false)
-	}
-}
-
-func getNext(s *scanner, endAtEqual bool) (string, error) {
-	var result bytes.Buffer
-	for {
-		ch, err := s.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				return result.String(), io.EOF
-			}
-			return "", err
-		}
-		switch ch {
-		case '\n', ']', '[', ' ', '\r':
-			if err := s.UnreadByte(); err != nil {
-				return "", err
-			}
-			return result.String(), nil
-		case '=':
-			if endAtEqual {
-				if err := s.UnreadByte(); err != nil {
-					return "", err
-				}
-				return result.String(), nil
-			}
-			result.WriteByte(ch)
-		case '\\':
-			next, err := s.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					result.WriteByte('\\')
-					return result.String(), io.EOF
-				}
-				return "", err
-			}
-			switch next {
-			case ' ', '[', ']', '=', '\\', '*', '/', '_':
-				result.WriteByte(next)
-			default:
-				result.WriteByte('\\')
-				result.WriteByte(next)
-			}
-		default:
-			result.WriteByte(ch)
-		}
-	}
 }
 
 func skipArgPrefix(s *scanner) {
@@ -686,48 +599,3 @@ func skipArgPrefix(s *scanner) {
 	s.UnreadByte()
 }
 
-func directOutput(s *scanner) (string, int, int, error) {
-	var buf bytes.Buffer
-	startPos := s.pos
-	depth := 0
-
-	for {
-		ch, err := s.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				return buf.String(), startPos, s.pos, nil
-			}
-			return "", 0, 0, err
-		}
-
-		if ch == '\\' {
-			next, err := s.ReadByte()
-			if err != nil {
-				if err == io.EOF {
-					buf.WriteByte('\\')
-					return buf.String(), startPos, s.pos, nil
-				}
-				return "", 0, 0, err
-			}
-			// Unescape: consume backslash, write next char
-			buf.WriteByte(next)
-			continue
-		}
-
-		buf.WriteByte(ch)
-
-		switch ch {
-		case '[':
-			depth++
-		case ']':
-			if depth > 0 {
-				depth--
-			} else {
-				// Found terminator "]" at top level
-				res := buf.String()
-				res = res[:len(res)-1]
-				return res, startPos, s.pos - 1, nil
-			}
-		}
-	}
-}

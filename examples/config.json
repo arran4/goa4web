@@ -88,5 +88,6 @@
   "STATS_START_YEAR": "2005",
   "TEMPLATES_DIR": "",
   "TIMEZONE": "Australia/Melbourne",
+  "TRUSTED_PROXIES": "",
   "TWITTER_SITE": ""
 }

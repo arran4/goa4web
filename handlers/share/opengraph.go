@@ -91,7 +91,7 @@ type OpenGraphData struct {
 	ImageWidth  int
 	ImageHeight int
 	TwitterSite string
-	JSONLD      interface{}
+	JSONLD      *common.JSONLD
 }
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.

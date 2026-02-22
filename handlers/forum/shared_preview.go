@@ -87,20 +87,20 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		share.WithBody(ogDescription),
 		share.WithSection("Public Forum Thread"),
 		share.WithGeneratorType("forum"),
-		share.WithJSONLD{Data: map[string]interface{}{
-			"@context":      "https://schema.org",
-			"@type":         "DiscussionForumPosting",
-			"headline":      ogTitle,
-			"description":   ogDescription,
-			"datePublished": thread.CreatedAt.Time.Format(time.RFC3339),
-			"author": map[string]interface{}{
-				"@type": "Person",
-				"name":  authorName,
+		share.WithJSONLD{Data: &common.JSONLD{
+			Context:       "https://schema.org",
+			Type:          "DiscussionForumPosting",
+			Headline:      ogTitle,
+			Description:   ogDescription,
+			DatePublished: thread.CreatedAt.Time.Format(time.RFC3339),
+			Author: &common.JSONLDAuthor{
+				Type: "Person",
+				Name: authorName,
 			},
-			"interactionStatistic": map[string]interface{}{
-				"@type":                "InteractionCounter",
-				"interactionType":      "https://schema.org/CommentAction",
-				"userInteractionCount": thread.PostCount.Int32,
+			InteractionStatistic: &common.JSONLDInteractionStatistic{
+				Type:                 "InteractionCounter",
+				InteractionType:      "https://schema.org/CommentAction",
+				UserInteractionCount: thread.PostCount.Int32,
 			},
 		}},
 	)
@@ -144,14 +144,14 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 		share.WithBody(ogDescription),
 		share.WithSection("Public Forum Topic"),
 		share.WithGeneratorType("forum"),
-		share.WithJSONLD{Data: map[string]interface{}{
-			"@context":    "https://schema.org",
-			"@type":       "DiscussionForumPosting",
-			"headline":    ogTitle,
-			"description": ogDescription,
-			"author": map[string]interface{}{
-				"@type": "Organization",
-				"name":  cd.SiteTitle,
+		share.WithJSONLD{Data: &common.JSONLD{
+			Context:     "https://schema.org",
+			Type:        "DiscussionForumPosting",
+			Headline:    ogTitle,
+			Description: ogDescription,
+			Author: &common.JSONLDAuthor{
+				Type: "Organization",
+				Name: cd.SiteTitle,
 			},
 		}},
 	)
@@ -169,7 +169,7 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	redirectURL := "/login?return_url=" + url.QueryEscape(r.URL.RequestURI())
 
 	var title, desc string
-	var jsonLD interface{}
+	var jsonLD *common.JSONLD
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:

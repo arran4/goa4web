@@ -56,15 +56,15 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
-		JSONLD: map[string]interface{}{
-			"@context":      "https://schema.org",
-			"@type":         "Article",
-			"headline":      ogTitle,
-			"description":   ogDescription,
-			"datePublished": writing.Published.Time.Format(time.RFC3339),
-			"author": map[string]interface{}{
-				"@type": "Person",
-				"name":  writing.Writerusername.String,
+		JSONLD: &common.JSONLD{
+			Context:       "https://schema.org",
+			Type:          "Article",
+			Headline:      ogTitle,
+			Description:   ogDescription,
+			DatePublished: writing.Published.Time.Format(time.RFC3339),
+			Author: &common.JSONLDAuthor{
+				Type: "Person",
+				Name: writing.Writerusername.String,
 			},
 		},
 	}

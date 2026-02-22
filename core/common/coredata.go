@@ -84,6 +84,30 @@ type AdminSection struct {
 	SubSections []AdminSection
 }
 
+// JSONLDAuthor represents the author field in JSON-LD.
+type JSONLDAuthor struct {
+	Type string `json:"@type"`
+	Name string `json:"name"`
+}
+
+// JSONLDInteractionStatistic represents interaction statistics in JSON-LD.
+type JSONLDInteractionStatistic struct {
+	Type                 string `json:"@type"`
+	InteractionType      string `json:"interactionType"`
+	UserInteractionCount int32  `json:"userInteractionCount"`
+}
+
+// JSONLD represents structured data for SEO.
+type JSONLD struct {
+	Context              string                      `json:"@context"`
+	Type                 string                      `json:"@type"`
+	Headline             string                      `json:"headline,omitempty"`
+	Description          string                      `json:"description,omitempty"`
+	DatePublished        string                      `json:"datePublished,omitempty"`
+	Author               *JSONLDAuthor               `json:"author,omitempty"`
+	InteractionStatistic *JSONLDInteractionStatistic `json:"interactionStatistic,omitempty"`
+}
+
 // OpenGraph represents the Open Graph data for a page.
 type OpenGraph struct {
 	Title       string
@@ -94,7 +118,7 @@ type OpenGraph struct {
 	TwitterSite string
 	URL         string
 	Type        string
-	JSONLD      interface{}
+	JSONLD      *JSONLD
 }
 
 // NotFoundLink represents a contextual link on the 404 page.

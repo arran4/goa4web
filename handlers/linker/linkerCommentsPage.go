@@ -82,7 +82,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.ID)
 	data.CanEdit = cd.IsAdmin() || cd.HasGrant("linker", "link", "edit-any", link.ID) || cd.HasGrant("linker", "link", "edit", link.ID)
 
-	cd.SetCurrentThreadAndTopic(link.ThreadID, 0)
 	commentRows, err := cd.SectionThreadComments("linker", "link", link.ThreadID)
 	if err != nil {
 		switch {

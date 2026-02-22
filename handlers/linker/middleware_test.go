@@ -22,6 +22,33 @@ import (
 func TestEnforceLinkerCommentsAccess(t *testing.T) {
 	t.Run("Allowed", enforceLinkerCommentsAccessAllowed)
 	t.Run("Denied_NoLink", enforceLinkerCommentsAccessDeniedNoLink)
+	t.Run("Denied_Access", enforceLinkerCommentsAccessDeniedAccess)
+}
+
+func enforceLinkerCommentsAccessDeniedAccess(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	q.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
+		ID:         1,
+		ThreadID:   1,
+		Title:      sql.NullString{String: "t", Valid: true},
+		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+	}
+	// Deny everything
+	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
+		return 0, sql.ErrNoRows
+	}
+
+	w, req, _ := newCommentsPageRequestWithCoreData(t, q, []string{"user"}, 2)
+
+	handler := EnforceLinkerCommentsAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected forbidden, got %d", w.Code)
+	}
 }
 
 func enforceLinkerCommentsAccessAllowed(t *testing.T) {

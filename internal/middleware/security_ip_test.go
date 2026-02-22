@@ -89,3 +89,28 @@ func TestRequestIPSpoofing_GarbageHeader(t *testing.T) {
     // currentIP is RemoteAddr.
     assert.Equal(t, "10.0.0.1", ip)
 }
+
+func TestRequestIPSpoofing_IPv6_CIDR(t *testing.T) {
+	// Case 6: IPv6 and CIDR ranges.
+	// We trust 2001:db8::/32 and 192.168.0.0/24.
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "[2001:db8:1234::1]:1234" // IP inside 2001:db8::/32
+	req.Header.Set("X-Forwarded-For", "10.0.0.1") // Client IP
+
+	trusted := []netip.Prefix{
+		netip.MustParsePrefix("2001:db8::/32"),
+		netip.MustParsePrefix("192.168.0.0/24"),
+	}
+	ip := requestIP(req, trusted)
+
+	assert.Equal(t, "10.0.0.1", ip, "Expected Client IP via IPv6 trusted proxy")
+
+	// Test IPv4 CIDR
+	req2 := httptest.NewRequest("GET", "/", nil)
+	req2.RemoteAddr = "192.168.0.50:5678" // IP inside 192.168.0.0/24
+	req2.Header.Set("X-Forwarded-For", "10.0.0.2")
+
+	ip2 := requestIP(req2, trusted)
+	assert.Equal(t, "10.0.0.2", ip2, "Expected Client IP via IPv4 CIDR trusted proxy")
+}

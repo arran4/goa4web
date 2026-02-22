@@ -27,10 +27,10 @@ func TestEnforceLinkerCommentsAccess(t *testing.T) {
 func enforceLinkerCommentsAccessAllowed(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	q.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-		ID:         1,
-		ThreadID:   1,
-		Title:      sql.NullString{String: "t", Valid: true},
-		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		ID:       1,
+		ThreadID: 1,
+		Title:    sql.NullString{String: "t", Valid: true},
+		Listed:   sql.NullTime{Time: time.Unix(0, 0), Valid: true},
 	}
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
 		return 1, nil // Grant Allowed
@@ -96,4 +96,52 @@ func newCommentsPageRequestWithCoreData(t *testing.T, queries db.Querier, roles 
 	req = req.WithContext(ctx)
 
 	return w, req, cd
+}
+
+func TestEnforceLinkViewAccess(t *testing.T) {
+	t.Run("Allowed", enforceLinkViewAccessAllowed)
+	t.Run("Denied", enforceLinkViewAccessDenied)
+}
+
+func enforceLinkViewAccessAllowed(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
+		return 1, nil // Grant Allowed
+	}
+
+	w, req, _ := newCommentsPageRequestWithCoreData(t, q, []string{"user"}, 2)
+
+	// Simulate router
+	handler := EnforceLinkViewAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}))
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected access allowed, got %d", w.Code)
+	}
+	if w.Body.String() != "OK" {
+		t.Errorf("expected OK body, got %s", w.Body.String())
+	}
+}
+
+func enforceLinkViewAccessDenied(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
+		return 0, sql.ErrNoRows // Grant Denied
+	}
+
+	w, req, _ := newCommentsPageRequestWithCoreData(t, q, []string{"user"}, 2)
+
+	handler := EnforceLinkViewAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected forbidden, got %d", w.Code)
+	}
 }

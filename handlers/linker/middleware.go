@@ -64,3 +64,29 @@ func EnforceLinkerCommentsAccess(next http.Handler) http.Handler {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 	})
 }
+
+func EnforceLinkViewAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok {
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			return
+		}
+
+		// Ensure selections are loaded (populates currentLinkID from mux vars)
+		cd.LoadSelectionsFromRequest(r)
+
+		id, err := cd.SelectedAdminLinkerItemID(r)
+		if err != nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+
+		if !cd.HasGrant("linker", "link", "view", id) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

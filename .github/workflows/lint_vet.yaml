@@ -29,5 +29,5 @@ jobs:
       - name: Golangci Lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.64.5
+          version: latest
           args: --build-tags '${{ matrix.tags }}'

@@ -91,6 +91,7 @@ type OpenGraphData struct {
 	ImageWidth  int
 	ImageHeight int
 	TwitterSite string
+	JSONLD      interface{}
 }
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
@@ -121,6 +122,18 @@ func (d OpenGraphData) ImageHeightMeta() template.HTML {
 
 func (d OpenGraphData) TwitterImageMeta() template.HTML {
 	return template.HTML(fmt.Sprintf(`<meta name="twitter:image" content="%s" />`, d.ImageURL))
+}
+
+func (d OpenGraphData) JSONLDScript() template.HTML {
+	if d.JSONLD == nil {
+		return ""
+	}
+	b, err := json.Marshal(d.JSONLD)
+	if err != nil {
+		log.Printf("Error marshaling JSONLD: %v", err)
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<script type="application/ld+json">%s</script>`, string(b)))
 }
 
 // VerifyAndGetPath verifies the signature and returns the content path without auth parameters.

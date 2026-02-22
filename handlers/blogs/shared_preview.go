@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -58,6 +59,17 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
+		JSONLD: map[string]interface{}{
+			"@context":      "https://schema.org",
+			"@type":         "BlogPosting",
+			"headline":      ogTitle,
+			"description":   ogDescription,
+			"datePublished": blog.Written.Format(time.RFC3339),
+			"author": map[string]interface{}{
+				"@type": "Person",
+				"name":  blog.Username.String,
+			},
+		},
 	}
 
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {

@@ -94,6 +94,7 @@ type OpenGraph struct {
 	TwitterSite string
 	URL         string
 	Type        string
+	JSONLD      interface{}
 }
 
 // NotFoundLink represents a contextual link on the 404 page.

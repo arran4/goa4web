@@ -41,3 +41,10 @@ type WithAvatar image.Image
 // Example: share.WithGeneratorType("forum")
 // Used by: share.Generate
 type WithGeneratorType string
+
+// WithJSONLD specifies the structured data for the page.
+// Example: share.WithJSONLD(map[string]interface{}{...})
+// Used by: OpenGraphData
+type WithJSONLD struct {
+	Data interface{}
+}

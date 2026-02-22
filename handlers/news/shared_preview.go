@@ -57,6 +57,16 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
+		JSONLD: map[string]interface{}{
+			"@context":    "https://schema.org",
+			"@type":       "NewsArticle",
+			"headline":    ogTitle,
+			"description": ogDescription,
+			"author": map[string]interface{}{
+				"@type": "Organization",
+				"name":  cd.SiteTitle,
+			},
+		},
 	}
 
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {

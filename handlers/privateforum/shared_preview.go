@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -74,11 +75,33 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
+	user := cd.UserByID(thread.CreatedBy)
+	authorName := "Unknown"
+	if user != nil && user.Username.Valid {
+		authorName = user.Username.String
+	}
+
 	renderSharedPreview(w, r, cd, fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID),
 		share.WithTitle(ogTitle),
 		share.WithBody(ogDescription),
 		share.WithSection("Private Forum Thread"),
 		share.WithGeneratorType("forum"),
+		share.WithJSONLD{Data: map[string]interface{}{
+			"@context":      "https://schema.org",
+			"@type":         "DiscussionForumPosting",
+			"headline":      ogTitle,
+			"description":   ogDescription,
+			"datePublished": thread.CreatedAt.Time.Format(time.RFC3339),
+			"author": map[string]interface{}{
+				"@type": "Person",
+				"name":  authorName,
+			},
+			"interactionStatistic": map[string]interface{}{
+				"@type":                "InteractionCounter",
+				"interactionType":      "https://schema.org/CommentAction",
+				"userInteractionCount": thread.PostCount.Int32,
+			},
+		}},
 	)
 }
 
@@ -124,6 +147,16 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 		share.WithBody(ogDescription),
 		share.WithSection("Private Forum Topic"),
 		share.WithGeneratorType("forum"),
+		share.WithJSONLD{Data: map[string]interface{}{
+			"@context":    "https://schema.org",
+			"@type":       "DiscussionForumPosting",
+			"headline":    ogTitle,
+			"description": ogDescription,
+			"author": map[string]interface{}{
+				"@type": "Organization",
+				"name":  cd.SiteTitle,
+			},
+		}},
 	)
 }
 
@@ -143,18 +176,22 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	}
 
 	var title, desc string
+	var jsonLD interface{}
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:
 			title = string(v)
 		case share.WithBody:
 			desc = string(v)
+		case share.WithJSONLD:
+			jsonLD = v.Data
 		}
 	}
 
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
 		Description: desc,
+		JSONLD:      jsonLD,
 		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,

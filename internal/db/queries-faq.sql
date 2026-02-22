@@ -37,7 +37,7 @@ WHERE answer IS NOT NULL
   );
 
 -- name: AdminGetFAQDismissedQuestions :many
-SELECT id, category_id, language_id, author_id, answer, question
+SELECT id, category_id, language_id, author_id, answer, question, description
 FROM faq
 WHERE deleted_at IS NOT NULL;
 
@@ -94,7 +94,7 @@ WHERE EXISTS (
 
 -- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminDeleteFAQ :exec
@@ -261,12 +261,12 @@ UPDATE faq SET priority = ?, updated_at = NOW() WHERE id = ?;
 
 -- name: AdminUpdateFAQ :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, priority = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, updated_at = NOW()
 WHERE id = ?;
 
 -- name: AdminCreateFAQ :execresult
-INSERT INTO faq (question, answer, category_id, author_id, language_id, priority)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO faq (question, answer, category_id, author_id, language_id, priority, description)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: AdminMoveFAQContent :exec
 UPDATE faq SET category_id = sqlc.arg(new_category_id), updated_at = NOW() WHERE category_id = sqlc.arg(old_category_id);

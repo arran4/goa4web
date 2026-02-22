@@ -1846,16 +1846,17 @@ func (cd *CoreData) SelectedQuestionFromCategory(questionID, categoryID int32) e
 
 // UpdateFAQQuestion updates a FAQ question, changing its text, answer and
 // category while recording a revision for the user.
-func (cd *CoreData) UpdateFAQQuestion(question, answer string, categoryID, faqID, userID int32, priority int32) error {
+func (cd *CoreData) UpdateFAQQuestion(question, answer, description string, categoryID, faqID, userID int32, priority int32) error {
 	if cd.queries == nil {
 		return nil
 	}
 	if err := cd.queries.AdminUpdateFAQ(cd.ctx, db.AdminUpdateFAQParams{
-		Answer:     sql.NullString{String: answer, Valid: true},
-		Question:   sql.NullString{String: question, Valid: true},
-		CategoryID: sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
-		Priority:   priority,
-		ID:         faqID,
+		Answer:      sql.NullString{String: answer, Valid: true},
+		Question:    sql.NullString{String: question, Valid: true},
+		CategoryID:  sql.NullInt32{Int32: categoryID, Valid: categoryID != 0},
+		Priority:    priority,
+		Description: sql.NullString{String: description, Valid: true},
+		ID:          faqID,
 	}); err != nil {
 		return err
 	}

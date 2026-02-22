@@ -21,28 +21,7 @@
                     <button class="tab-btn" data-tab="forum">Forum</button>
                     <button class="tab-btn" data-tab="editor">Editor</button>
                 </div>
-                <div class="shortcuts-content">
-                    <div id="section-global" class="shortcut-section">
-                        <h3>Global</h3>
-                        <ul>
-                            <li><kbd>Ctrl</kbd> + <kbd>?</kbd> : Show this help</li>
-                            <li><kbd>Alt</kbd> + <kbd>Home</kbd> : Go to Home</li>
-                        </ul>
-                    </div>
-                    <div id="section-forum" class="shortcut-section hidden">
-                        <h3>Forum</h3>
-                        <ul>
-                             <li><kbd>j</kbd> / <kbd>k</kbd> : Next/Prev Comment</li>
-                             <li><kbd>q</kbd> : Quote Selected Text</li>
-                        </ul>
-                    </div>
-                    <div id="section-editor" class="shortcut-section hidden">
-                        <h3>Editor</h3>
-                        <ul>
-                            <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> : Submit Post</li>
-                        </ul>
-                    </div>
-                </div>
+                {{template "keyboard_shortcuts"}}
             </div>
         </div>
         </body>

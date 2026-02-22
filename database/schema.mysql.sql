@@ -63,6 +63,7 @@ CREATE TABLE `faq` (
   `author_id` int(10) NOT NULL DEFAULT 0,
   `answer` mediumtext DEFAULT NULL,
   `question` mediumtext DEFAULT NULL,
+  `description` VARCHAR(255) DEFAULT '',
   `priority` INT NOT NULL DEFAULT 0,
   `deleted_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
@@ -766,5 +767,5 @@ CREATE TABLE scheduler_state (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (83)
+INSERT INTO `schema_version` (`version`) VALUES (84)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

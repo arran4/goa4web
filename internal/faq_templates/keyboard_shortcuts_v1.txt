@@ -1,0 +1,16 @@
+Keyboard Shortcuts v1
+===
+What are the keyboard shortcuts?
+===
+# NOTE: When updating this file, please also update core/templates/site/keyboard_shortcuts.gohtml
+
+[b]Global[/b]
+* [b]Ctrl[/b] + [b]?[/b] : Show this help
+* [b]Alt[/b] + [b]Home[/b] : Go to Home
+
+[b]Forum[/b]
+* [b]j[/b] / [b]k[/b] : Next/Prev Comment
+* [b]q[/b] : Quote Selected Text
+
+[b]Editor[/b]
+* [b]Ctrl[/b] + [b]Enter[/b] : Submit Post

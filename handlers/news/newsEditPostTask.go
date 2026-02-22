@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -71,11 +70,6 @@ func (EditTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	postId, _ := strconv.Atoi(vars["news"])
-	if !cd.HasGrant("news", "post", "edit", int32(postId)) {
-		r.URL.RawQuery = "error=" + url.QueryEscape("Forbidden")
-		handlers.TaskErrorAcknowledgementPage(w, r)
-		return nil
-	}
 	if err := cd.UpdateNewsPost(int32(postId), int32(languageId), cd.UserID, text); err != nil {
 		return fmt.Errorf("update news post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -102,11 +96,6 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "/news", err)
-		return
-	}
-	if !cd.HasGrant("news", "post", "edit", post.Idsitenews) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 	langs, err := cd.Languages()

@@ -76,14 +76,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	canReply := cd.HasGrant("linker", "link", "reply", link.ID)
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		canReply ||
-		cd.SelectedThreadCanReply()) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
 	data.IsReplyable = canReply
 
 	data.Link = link

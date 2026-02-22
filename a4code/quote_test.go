@@ -237,7 +237,11 @@ func TestSubstring(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Substring(tt.s, tt.start, tt.end); got != tt.want {
+			got, err := Substring(tt.s, tt.start, tt.end)
+			if err != nil {
+				t.Errorf("Substring() error = %v", err)
+			}
+			if got != tt.want {
 				t.Errorf("Substring() = %v, want %v", got, tt.want)
 			}
 		})

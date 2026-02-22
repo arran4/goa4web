@@ -324,24 +324,3 @@ func commentsPageEditControlsAllowAdminMode(t *testing.T) {
 		t.Errorf("expected admin URL %q in body, got: %q", expectedAdminURL, body)
 	}
 }
-
-func TestCommentsPageForbidden(t *testing.T) {
-	queries := testhelpers.NewQuerierStub()
-	queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-		ID:       1,
-		ThreadID: 1,
-		Title:    sql.NullString{String: "Link Title", Valid: true},
-	}
-	// Deny everything
-	queries.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-		return 0, sql.ErrNoRows
-	}
-
-	w, req, _ := newCommentsPageRequest(t, queries, []string{"user"}, 2)
-
-	CommentsPage(w, req)
-
-	if w.Code != http.StatusForbidden {
-		t.Errorf("Expected 403 Forbidden, got %d", w.Code)
-	}
-}

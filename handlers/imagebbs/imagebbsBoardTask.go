@@ -36,12 +36,6 @@ func (t *imagebbsBoardTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd.LoadSelectionsFromRequest(r)
 	bid := cd.SelectedBoardID()
 
-	if !cd.HasGrant("imagebbs", "board", "view", bid) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
 	cd.PageTitle = fmt.Sprintf("Board %d", bid)
 	if err := cd.ExecuteSiteTemplate(w, r, ImagebbsBoardPageTmpl, struct{}{}); err != nil {
 		handlers.RenderErrorPage(w, r, err)

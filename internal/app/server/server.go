@@ -61,6 +61,7 @@ type Server struct {
 	DBReg          *dbdrivers.Registry
 	DLQReg         *dlq.Registry
 	Websocket      *websocket.Module
+	LanguageCache  *common.LanguageCache
 
 	WorkerCancel context.CancelFunc
 
@@ -199,7 +200,9 @@ func WithTasksRegistry(r *tasks.Registry) Option { return func(s *Server) { s.Ta
 
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
-	s := &Server{}
+	s := &Server{
+		LanguageCache: common.NewLanguageCache(),
+	}
 	for _, o := range opts {
 		o(s)
 	}
@@ -342,6 +345,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithOffset(offset),
 		common.WithSiteTitle("Arran's Site"),
 		common.WithTrustedProxies(trustedProxies),
+		common.WithLanguageCache(s.LanguageCache),
 	)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()

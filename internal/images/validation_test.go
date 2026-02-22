@@ -39,6 +39,8 @@ func TestValidID(t *testing.T) {
 		"a":               false,
 		"ab":              false,
 		"abc":             false,
+		"file.name.jpg":   false,
+		"1.2.3":           false,
 		"valid_thumb.jpg": true,
 	}
 

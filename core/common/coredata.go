@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/netip"
 	"net/url"
 	"path"
 	"strconv"
@@ -132,6 +133,7 @@ type CoreData struct {
 	AdminMode bool
 	// Silent suppresses embedded template mode logging.
 	Silent            bool
+	TrustedProxies    []netip.Prefix
 	AtomFeedURL       string
 	PublicAtomFeedURL string
 	AutoRefresh       string
@@ -2977,6 +2979,11 @@ func WithWritingsLimit(l int32) LatestWritingsOption {
 // WithSilence suppresses embedded template mode logging.
 func WithSilence(silent bool) CoreOption {
 	return func(cd *CoreData) { cd.Silent = silent }
+}
+
+// WithTrustedProxies sets the list of trusted proxies.
+func WithTrustedProxies(proxies []netip.Prefix) CoreOption {
+	return func(cd *CoreData) { cd.TrustedProxies = proxies }
 }
 
 // Admin request helpers

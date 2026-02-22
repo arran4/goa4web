@@ -3,15 +3,23 @@ package middleware
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"net"
 	"net/http"
 	"net/netip"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+)
+
+var (
+	lastUntrustedProxyLogTime time.Time
+	untrustedProxyLogMu       sync.Mutex
 )
 
 func normalizeIP(ip string) string {
@@ -25,28 +33,87 @@ func normalizeIP(ip string) string {
 	return parsed.String()
 }
 
-func requestIP(r *http.Request) string {
-	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
-		if comma := strings.IndexByte(ip, ','); comma >= 0 {
-			ip = ip[:comma]
-		}
-		ip = strings.TrimSpace(ip)
-		if host, _, err := net.SplitHostPort(ip); err == nil {
-			ip = host
-		}
-		return normalizeIP(ip)
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
+func requestIP(r *http.Request, trusted []netip.Prefix) string {
+	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return normalizeIP(r.RemoteAddr)
+		remoteIP = r.RemoteAddr
 	}
-	return normalizeIP(host)
+	remoteIP = normalizeIP(remoteIP)
+
+	if len(trusted) == 0 {
+		if r.Header.Get("X-Forwarded-For") != "" {
+			untrustedProxyLogMu.Lock()
+			if time.Since(lastUntrustedProxyLogTime) > 24*time.Hour {
+				log.Printf("Security Warning: X-Forwarded-For header detected but no trusted proxies configured. Ignoring header. Configure TRUSTED_PROXIES to trust specific proxies.")
+				lastUntrustedProxyLogTime = time.Now()
+			}
+			untrustedProxyLogMu.Unlock()
+		}
+		return remoteIP
+	}
+
+	addr, err := netip.ParseAddr(remoteIP)
+	if err != nil {
+		return remoteIP
+	}
+
+	isTrusted := false
+	for _, cidr := range trusted {
+		if cidr.Contains(addr) {
+			isTrusted = true
+			break
+		}
+	}
+
+	if !isTrusted {
+		return remoteIP
+	}
+
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff == "" {
+		return remoteIP
+	}
+
+	ips := strings.Split(xff, ",")
+	currentIP := addr
+
+	for i := len(ips) - 1; i >= 0; i-- {
+		ipStr := strings.TrimSpace(ips[i])
+		if host, _, err := net.SplitHostPort(ipStr); err == nil {
+			ipStr = host
+		}
+		parsedIP, err := netip.ParseAddr(ipStr)
+		if err != nil {
+			return normalizeIP(currentIP.String())
+		}
+
+		isIpTrusted := false
+		for _, cidr := range trusted {
+			if cidr.Contains(parsedIP) {
+				isIpTrusted = true
+				break
+			}
+		}
+
+		if isIpTrusted {
+			currentIP = parsedIP
+			continue
+		} else {
+			return normalizeIP(ipStr)
+		}
+	}
+
+	return normalizeIP(currentIP.String())
 }
 
 // SecurityHeadersMiddleware enforces IP bans and sets common security headers.
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := requestIP(r)
+		var trusted []netip.Prefix
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			trusted = cd.TrustedProxies
+		}
+		ip := requestIP(r, trusted)
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {

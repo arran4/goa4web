@@ -92,6 +92,7 @@ var StringOptions = []StringOption{
 	{"og-image-fg-color", EnvOGImageFgColor, "The foreground color for the Open Graph image.", "#3C424E", nil, "", func(c *RuntimeConfig) *string { return &c.OGImageFgColor }},
 	{"og-image-bg-color", EnvOGImageBgColor, "The background color for the Open Graph image.", "#282C34", nil, "", func(c *RuntimeConfig) *string { return &c.OGImageBgColor }},
 	{"twitter-site", EnvTwitterSite, "The Twitter handle for the site (e.g. @mysite).", "", nil, "", func(c *RuntimeConfig) *string { return &c.TwitterSite }},
+	{"trusted-proxies", EnvTrustedProxies, "A comma-separated list of trusted proxy CIDRs.", "", nil, "", func(c *RuntimeConfig) *string { return &c.TrustedProxies }},
 }
 
 // IntOptions lists the integer runtime options shared by flag parsing and configuration generation.

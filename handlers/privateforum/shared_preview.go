@@ -92,7 +92,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 			Headline:      ogTitle,
 			Description:   ogDescription,
 			DatePublished: thread.CreatedAt.Time.Format(time.RFC3339),
-			Author: &common.JSONLDAuthor{
+			Author: common.JSONLDPerson{
 				Type: "Person",
 				Name: authorName,
 			},
@@ -152,7 +152,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 			Type:        "DiscussionForumPosting",
 			Headline:    ogTitle,
 			Description: ogDescription,
-			Author: &common.JSONLDAuthor{
+			Author: common.JSONLDOrganization{
 				Type: "Organization",
 				Name: cd.SiteTitle,
 			},

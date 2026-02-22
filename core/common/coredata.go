@@ -84,11 +84,26 @@ type AdminSection struct {
 	SubSections []AdminSection
 }
 
-// JSONLDAuthor represents the author field in JSON-LD.
-type JSONLDAuthor struct {
+// JSONLDAuthor is a marker interface for JSON-LD author types.
+type JSONLDAuthor interface {
+	isJSONLDAuthor()
+}
+
+// JSONLDPerson represents a person in JSON-LD.
+type JSONLDPerson struct {
 	Type string `json:"@type"`
 	Name string `json:"name"`
 }
+
+func (j JSONLDPerson) isJSONLDAuthor() {}
+
+// JSONLDOrganization represents an organization in JSON-LD.
+type JSONLDOrganization struct {
+	Type string `json:"@type"`
+	Name string `json:"name"`
+}
+
+func (j JSONLDOrganization) isJSONLDAuthor() {}
 
 // JSONLDInteractionStatistic represents interaction statistics in JSON-LD.
 type JSONLDInteractionStatistic struct {
@@ -104,7 +119,7 @@ type JSONLD struct {
 	Headline             string                      `json:"headline,omitempty"`
 	Description          string                      `json:"description,omitempty"`
 	DatePublished        string                      `json:"datePublished,omitempty"`
-	Author               *JSONLDAuthor               `json:"author,omitempty"`
+	Author               JSONLDAuthor                `json:"author,omitempty"`
 	InteractionStatistic *JSONLDInteractionStatistic `json:"interactionStatistic,omitempty"`
 }
 

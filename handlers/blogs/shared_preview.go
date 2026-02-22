@@ -65,7 +65,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 			Headline:      ogTitle,
 			Description:   ogDescription,
 			DatePublished: blog.Written.Format(time.RFC3339),
-			Author: &common.JSONLDAuthor{
+			Author: common.JSONLDPerson{
 				Type: "Person",
 				Name: blog.Username.String,
 			},

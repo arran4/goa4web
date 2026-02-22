@@ -62,7 +62,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 			Type:        "NewsArticle",
 			Headline:    ogTitle,
 			Description: ogDescription,
-			Author: &common.JSONLDAuthor{
+			Author: common.JSONLDOrganization{
 				Type: "Organization",
 				Name: cd.SiteTitle,
 			},

@@ -47,11 +47,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		CanEdit:     false,
 		IsReplyable: true,
 	}
-	vars := mux.Vars(r)
-	_ = 0
-	if _, err := strconv.Atoi(vars["link"]); err == nil {
-		// linkId = lid
-	}
 	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
@@ -69,11 +64,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
-	}
-
-	if link == nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
 	}
 
 	canReply := cd.HasGrant("linker", "link", "reply", link.ID)

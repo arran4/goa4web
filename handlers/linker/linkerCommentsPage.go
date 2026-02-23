@@ -41,7 +41,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	common.WithOffset(offset)(cd)
 	data := Data{
 		CanEdit:     false,
@@ -51,7 +50,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
 	link, err := cd.SelectedLinkerItem()
 	if err != nil {

@@ -20,6 +20,9 @@ func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, *db.
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}
+	if cfg.ContentSecurityPolicy == "" {
+		cfg.ContentSecurityPolicy = config.DefaultContentSecurityPolicy
+	}
 	cd := common.NewCoreData(context.Background(), stub, &cfg)
 	return cd, stub
 }

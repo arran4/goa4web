@@ -73,7 +73,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 				}
 			}
 		}
-		csp := "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+		csp := config.DefaultContentSecurityPolicy
 		if cfg != nil && cfg.ContentSecurityPolicy != "" {
 			csp = cfg.ContentSecurityPolicy
 		}

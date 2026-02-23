@@ -104,6 +104,8 @@ const (
 	EnvTemplatesDir = "TEMPLATES_DIR"
 	// EnvHSTSHeader sets the Strict-Transport-Security header value.
 	EnvHSTSHeader = "HSTS_HEADER"
+	// EnvContentSecurityPolicy sets the Content-Security-Policy header value.
+	EnvContentSecurityPolicy = "CONTENT_SECURITY_POLICY"
 	// EnvSessionName sets the cookie name used for session data.
 	EnvSessionName = "SESSION_NAME"
 

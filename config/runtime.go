@@ -46,6 +46,9 @@ type RuntimeConfig struct {
 	// HSTSHeaderValue defines the Strict-Transport-Security header value.
 	HSTSHeaderValue string
 
+	// ContentSecurityPolicy defines the Content-Security-Policy header value.
+	ContentSecurityPolicy string
+
 	EmailProvider             string
 	EmailSMTPHost             string
 	EmailSMTPPort             string

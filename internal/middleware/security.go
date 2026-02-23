@@ -47,7 +47,9 @@ func requestIP(r *http.Request) string {
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := requestIP(r)
+		var cfg *config.RuntimeConfig
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			cfg = cd.Config
 			bans, err := cd.Queries().ListActiveBans(r.Context())
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -71,12 +73,12 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 				}
 			}
 		}
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		var cfg *config.RuntimeConfig
-		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-			cfg = cd.Config
+		csp := "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+		if cfg != nil && cfg.ContentSecurityPolicy != "" {
+			csp = cfg.ContentSecurityPolicy
 		}
+		w.Header().Set("Content-Security-Policy", csp)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		var hsts string
 		if cfg != nil {
 			hsts = cfg.HSTSHeaderValue

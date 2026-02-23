@@ -111,3 +111,25 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 		t.Errorf("Content-Security-Policy=\n%q\nwant\n%q", got, expectedCSP)
 	}
 }
+
+func TestSecurityHeadersMiddlewareCSPOverride(t *testing.T) {
+	cfg := config.RuntimeConfig{HTTPHostname: "http://example.com", ContentSecurityPolicy: "default-src 'self'; script-src 'self';"}
+	cd, stub := newCoreData(t, cfg)
+
+	req := httptest.NewRequest("GET", "http://example.com/", nil)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+	rec := httptest.NewRecorder()
+
+	handler := SecurityHeadersMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	handler.ServeHTTP(rec, req)
+
+	wantCSP := cfg.ContentSecurityPolicy
+	if h := rec.Header().Get("Content-Security-Policy"); h != wantCSP {
+		t.Fatalf("Content-Security-Policy=%q want %q", h, wantCSP)
+	}
+
+	if stub.ListActiveBansCalls != 1 {
+		t.Fatalf("ListActiveBansCalls=%d want 1", stub.ListActiveBansCalls)
+	}
+}

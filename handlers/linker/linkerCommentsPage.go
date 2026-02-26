@@ -41,28 +41,18 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	common.WithOffset(offset)(cd)
 	data := Data{
 		CanEdit:     false,
 		IsReplyable: true,
 	}
-	vars := mux.Vars(r)
-	linkId := 0
-	if lid, err := strconv.Atoi(vars["link"]); err == nil {
-		linkId = lid
-	}
 	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 	data.UserId = uid
 
-	queries = r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	queries := cd.Queries()
 
-	link, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(r.Context(), db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
-		ViewerID:     cd.UserID,
-		ID:           int32(linkId),
-		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	link, err := cd.SelectedLinkerItem()
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -82,7 +72,6 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = fmt.Sprintf("Link %d Comments", link.ID)
 	data.CanEdit = cd.IsAdmin() || cd.HasGrant("linker", "link", "edit-any", link.ID) || cd.HasGrant("linker", "link", "edit", link.ID)
 
-	cd.SetCurrentThreadAndTopic(link.ThreadID, 0)
 	commentRows, err := cd.SectionThreadComments("linker", "link", link.ThreadID)
 	if err != nil {
 		switch {

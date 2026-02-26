@@ -1964,6 +1964,24 @@ func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[*db.Link
 	return cd.LinkerCategoryByID(id, ops...)
 }
 
+// SelectedLinkerItem returns the currently selected linker item.
+func (cd *CoreData) SelectedLinkerItem(ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+	if cd.currentLinkID == 0 {
+		return nil, nil
+	}
+	fetch := func(i int32) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+		if cd.queries == nil {
+			return nil, nil
+		}
+		return cd.queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(cd.ctx, db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams{
+			ViewerID:     cd.UserID,
+			ID:           i,
+			ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		})
+	}
+	return lazy.Map(&cd.cache.linkerItems, &cd.cache.mapMu, cd.currentLinkID, fetch, ops...)
+}
+
 // SelectedLinkerItemsForCurrentUser returns linker items for the given category
 // and offset for the current user and ensures the category is cached.
 func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
@@ -1977,6 +1995,14 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 
 // SelectedThread returns the currently requested thread lazily loaded.
 func (cd *CoreData) SelectedThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+	if cd.currentThreadID == 0 {
+		// Attempt to resolve thread ID from selected linker item
+		if cd.currentLinkID != 0 {
+			if link, _ := cd.SelectedLinkerItem(); link != nil {
+				cd.currentThreadID = link.ThreadID
+			}
+		}
+	}
 	if cd.currentThreadID == 0 {
 		return nil, nil
 	}
@@ -2117,6 +2143,11 @@ func (cd *CoreData) SelectedWritingThreadCanReply() bool {
 }
 
 func (cd *CoreData) SelectedLinkerThreadCanReply() bool {
+	if cd.currentThreadID == 0 {
+		if link, _ := cd.SelectedLinkerItem(); link != nil {
+			cd.currentThreadID = link.ThreadID
+		}
+	}
 	return cd.sectionThreadCanReply("linker", cd.currentLinkID)
 }
 

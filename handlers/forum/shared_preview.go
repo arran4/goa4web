@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -75,11 +76,33 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
+	user := cd.UserByID(thread.CreatedBy)
+	authorName := "Unknown"
+	if user != nil && user.Username.Valid {
+		authorName = user.Username.String
+	}
+
 	renderPublicSharedPreview(w, r, cd,
 		share.WithTitle(ogTitle),
 		share.WithBody(ogDescription),
 		share.WithSection("Public Forum Thread"),
 		share.WithGeneratorType("forum"),
+		share.WithJSONLD{Data: &common.JSONLD{
+			Context:       "https://schema.org",
+			Type:          "DiscussionForumPosting",
+			Headline:      ogTitle,
+			Description:   ogDescription,
+			DatePublished: thread.CreatedAt.Time.Format(time.RFC3339),
+			Author: common.JSONLDPerson{
+				Type: "Person",
+				Name: authorName,
+			},
+			InteractionStatistic: &common.JSONLDInteractionStatistic{
+				Type:                 "InteractionCounter",
+				InteractionType:      "https://schema.org/CommentAction",
+				UserInteractionCount: thread.PostCount.Int32,
+			},
+		}},
 	)
 }
 
@@ -116,7 +139,22 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 	ogDescription := topic.Description.String
 
-	renderPublicSharedPreview(w, r, cd, share.WithTitle(ogTitle), share.WithBody(ogDescription), share.WithSection("Public Forum Topic"), share.WithGeneratorType("forum"))
+	renderPublicSharedPreview(w, r, cd,
+		share.WithTitle(ogTitle),
+		share.WithBody(ogDescription),
+		share.WithSection("Public Forum Topic"),
+		share.WithGeneratorType("forum"),
+		share.WithJSONLD{Data: &common.JSONLD{
+			Context:     "https://schema.org",
+			Type:        "DiscussionForumPosting",
+			Headline:    ogTitle,
+			Description: ogDescription,
+			Author: common.JSONLDOrganization{
+				Type: "Organization",
+				Name: cd.SiteTitle,
+			},
+		}},
+	)
 }
 
 func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, ops ...interface{}) {
@@ -131,18 +169,22 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	redirectURL := "/login?return_url=" + url.QueryEscape(r.URL.RequestURI())
 
 	var title, desc string
+	var jsonLD *common.JSONLD
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:
 			title = string(v)
 		case share.WithBody:
 			desc = string(v)
+		case share.WithJSONLD:
+			jsonLD = v.Data
 		}
 	}
 
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
+		JSONLD:      jsonLD,
 		ImageURL:    template.URL(imageURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		RedirectURL: template.URL(redirectURL),

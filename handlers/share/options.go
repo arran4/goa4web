@@ -1,6 +1,10 @@
 package share
 
-import "image"
+import (
+	"image"
+
+	"github.com/arran4/goa4web/core/common"
+)
 
 // WithTitle specifies the main title of the image.
 // Example: share.WithTitle("Community Guidelines")
@@ -41,3 +45,10 @@ type WithAvatar image.Image
 // Example: share.WithGeneratorType("forum")
 // Used by: share.Generate
 type WithGeneratorType string
+
+// WithJSONLD specifies the structured data for the page.
+// Example: share.WithJSONLD{Data: &common.JSONLD{...}}
+// Used by: OpenGraphData
+type WithJSONLD struct {
+	Data *common.JSONLD
+}

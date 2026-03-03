@@ -86,14 +86,19 @@ type AdminSection struct {
 
 // OpenGraph represents the Open Graph data for a page.
 type OpenGraph struct {
-	Title       string
-	Description string
-	Image       string
-	ImageWidth  int
-	ImageHeight int
-	TwitterSite string
-	URL         string
-	Type        string
+	Title          string
+	Description    string
+	Image          string
+	ImageWidth     int
+	ImageHeight    int
+	TwitterSite    string
+	URL            string
+	Type           string
+	ExpirationTime *time.Time
+	PublishedTime  *time.Time
+	ModifiedTime   *time.Time
+	SiteName       string
+	UpdatedTime    *time.Time
 }
 
 // NotFoundLink represents a contextual link on the 404 page.

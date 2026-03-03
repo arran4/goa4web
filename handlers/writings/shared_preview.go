@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
@@ -47,14 +48,22 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error making image URL: %v", err)
 	}
 
+	var pubTime *time.Time
+	if writing.Published.Valid {
+		t := cd.LocalTime(writing.Published.Time)
+		pubTime = &t
+	}
+
 	ogData := share.OpenGraphData{
-		Title:       ogTitle,
-		Description: ogDescription,
-		ImageURL:    template.URL(imgURL),
-		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
-		ImageWidth:  cd.Config.OGImageWidth,
-		ImageHeight: cd.Config.OGImageHeight,
-		TwitterSite: cd.Config.TwitterSite,
+		Title:         ogTitle,
+		Description:   ogDescription,
+		ImageURL:      template.URL(imgURL),
+		ContentURL:    template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
+		ImageWidth:    cd.Config.OGImageWidth,
+		ImageHeight:   cd.Config.OGImageHeight,
+		TwitterSite:   cd.Config.TwitterSite,
+		SiteName:      cd.SiteTitle,
+		PublishedTime: pubTime,
 	}
 
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {

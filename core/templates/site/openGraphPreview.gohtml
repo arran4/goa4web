@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta name="title" content="{{.Title}}" />
+	<meta name="description" content="{{.Description}}" />
+
+	<link rel="canonical" href="{{.ContentURL}}" />
+
+	<link rel="icon" type="image/png" href="{{ assetHash "/favicon.png" }}" />
+	<link rel="icon" type="image/svg+xml" href="{{ assetHash "/favicon.svg" }}" />
+	<link rel="mask-icon" color="black" href="{{ assetHash "/favicon.svg" }}" />
+	<link rel="apple-touch-icon" href="{{ assetHash "/favicon.png" }}" />
+
 	<meta property="og:title" content="{{.Title}}" />
 	<meta property="og:description" content="{{.Description}}" />
 	{{.ImageMeta}}
@@ -8,6 +18,12 @@
 	{{.ImageWidthMeta}}
 	{{.ImageHeightMeta}}
 	{{.URLMeta}}
+	{{.TypeMeta}}
+	{{.ExpirationTimeMeta}}
+	{{.PublishedTimeMeta}}
+	{{.ModifiedTimeMeta}}
+	{{.SiteNameMeta}}
+	{{.UpdatedTimeMeta}}
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="{{.Title}}" />
 	<meta name="twitter:description" content="{{.Description}}" />

@@ -98,6 +98,7 @@ type OpenGraphData struct {
 	ModifiedTime   *time.Time
 	SiteName       string
 	UpdatedTime    *time.Time
+	JSONLD         interface{}
 }
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.

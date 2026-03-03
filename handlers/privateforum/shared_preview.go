@@ -143,17 +143,21 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	}
 
 	var title, desc string
+	var jsonLdData interface{}
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:
 			title = string(v)
 		case share.WithBody:
 			desc = string(v)
+		case share.WithJSONLD:
+			jsonLdData = v.Data
 		}
 	}
 
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
+		JSONLD:      jsonLdData,
 		Description: desc,
 		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,

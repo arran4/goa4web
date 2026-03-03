@@ -41,3 +41,8 @@ type WithAvatar image.Image
 // Example: share.WithGeneratorType("forum")
 // Used by: share.Generate
 type WithGeneratorType string
+
+// WithJSONLD specifies the JSON-LD struct.
+type WithJSONLD struct {
+	Data interface{}
+}

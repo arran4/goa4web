@@ -131,18 +131,22 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 	redirectURL := "/login?return_url=" + url.QueryEscape(r.URL.RequestURI())
 
 	var title, desc string
+	var jsonLdData interface{}
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:
 			title = string(v)
 		case share.WithBody:
 			desc = string(v)
+		case share.WithJSONLD:
+			jsonLdData = v.Data
 		}
 	}
 
 	ogData := share.OpenGraphData{
 		Title:       title,
 		Description: desc,
+		JSONLD:      jsonLdData,
 		ImageURL:    template.URL(imageURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),
 		RedirectURL: template.URL(redirectURL),

@@ -29,7 +29,7 @@ func (cd *CoreData) ForumCategory(id int32) (*db.Forumcategory, error) {
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -44,7 +44,7 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[*db.GetThreadLa
 }
 
 // ForumThread is a convenience wrapper around ForumThreadByID.
-func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	return cd.ForumThreadByID(id, ops...)
 }
 
@@ -71,7 +71,7 @@ func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTop
 }
 
 // ForumTopicByID loads a forum topic once per ID using caching.
-func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
+func (cd *CoreData) ForumTopicByID(id int32, ops ...lazy.Option[int32, *db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
 	fetch := func(i int32) (*db.GetForumTopicByIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil

@@ -197,8 +197,8 @@ func TestHappyPathForumReply(t *testing.T) {
 		thread := &db.GetThreadLastPosterAndPermsRow{Idforumthread: threadID, ForumtopicIdforumtopic: topicID, Lastposterusername: sql.NullString{String: "replier", Valid: true}, Comments: sql.NullInt32{Int32: 1, Valid: true}}
 		topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: topicID, Title: sql.NullString{String: "Test Topic", Valid: true}}
 		cd.SetCurrentThreadAndTopic(threadID, topicID)
-		_, _ = cd.ForumThreadByID(threadID, lazy.Set(thread))
-		_, _ = cd.ForumTopicByID(topicID, lazy.Set(topic))
+		_, _ = cd.ForumThreadByID(threadID, lazy.Set[int32](thread))
+		_, _ = cd.ForumTopicByID(topicID, lazy.Set[int32](topic))
 
 		ctx = context.WithValue(ctx, core.ContextValues("session"), sess)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)

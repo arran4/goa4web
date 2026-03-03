@@ -53,7 +53,7 @@ func TestReplyTask(t *testing.T) {
 			return nil
 		}
 
-		_, _ = cd.WritingByID(writingID, lazy.Set(q.GetWritingForListerByIDRow))
+		_, _ = cd.WritingByID(writingID, lazy.Set[int32](q.GetWritingForListerByIDRow))
 		cd.SetCurrentWriting(writingID)
 
 		form := url.Values{}

@@ -29,7 +29,7 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
 		return
 	}
-	cd.BlogEntryByID(int32(blogID), lazy.Set(row))
+	cd.BlogEntryByID(int32(blogID), lazy.Set[int32](row))
 	cd.SetCurrentBlog(int32(blogID))
 	cd.PageTitle = "Admin Edit Blog"
 	if _, err := cd.Languages(); err != nil {

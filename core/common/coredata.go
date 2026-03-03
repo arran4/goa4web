@@ -90,20 +90,22 @@ type JSONLDAuthor interface {
 }
 
 // JSONLDPerson represents a person in JSON-LD.
-type JSONLDPerson struct {
-	Type string `json:"@type"`
-	Name string `json:"name"`
-}
+type JSONLDPerson string
 
 func (j JSONLDPerson) isJSONLDAuthor() {}
 
-// JSONLDOrganization represents an organization in JSON-LD.
-type JSONLDOrganization struct {
-	Type string `json:"@type"`
-	Name string `json:"name"`
+func (j JSONLDPerson) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`{"@type":"Person","name":%q}`, string(j))), nil
 }
 
+// JSONLDOrganization represents an organization in JSON-LD.
+type JSONLDOrganization string
+
 func (j JSONLDOrganization) isJSONLDAuthor() {}
+
+func (j JSONLDOrganization) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`{"@type":"Organization","name":%q}`, string(j))), nil
+}
 
 // JSONLDInteractionStatistic represents interaction statistics in JSON-LD.
 type JSONLDInteractionStatistic struct {
@@ -118,6 +120,7 @@ type JSONLD struct {
 	Type                 string                      `json:"@type"`
 	Headline             string                      `json:"headline,omitempty"`
 	Description          string                      `json:"description,omitempty"`
+	ArticleBody          string                      `json:"articleBody,omitempty"`
 	DatePublished        string                      `json:"datePublished,omitempty"`
 	Author               JSONLDAuthor                `json:"author,omitempty"`
 	InteractionStatistic *JSONLDInteractionStatistic `json:"interactionStatistic,omitempty"`

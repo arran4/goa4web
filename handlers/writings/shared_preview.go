@@ -48,6 +48,19 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error making image URL: %v", err)
 	}
 
+	jsonLD := &common.JSONLD{
+		Context:       "https://schema.org",
+		Type:          "Article",
+		Headline:      ogTitle,
+		Description:   ogDescription,
+		ArticleBody:   writing.Writing.String,
+		DatePublished: writing.Published.Time.Format(time.RFC3339),
+	}
+
+	if writing.Writerusername.Valid && writing.Writerusername.String != "" {
+		jsonLD.Author = common.JSONLDPerson(writing.Writerusername.String)
+	}
+
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
 		Description: ogDescription,
@@ -56,17 +69,7 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ImageWidth:  cd.Config.OGImageWidth,
 		ImageHeight: cd.Config.OGImageHeight,
 		TwitterSite: cd.Config.TwitterSite,
-		JSONLD: &common.JSONLD{
-			Context:       "https://schema.org",
-			Type:          "Article",
-			Headline:      ogTitle,
-			Description:   ogDescription,
-			DatePublished: writing.Published.Time.Format(time.RFC3339),
-			Author: common.JSONLDPerson{
-				Type: "Person",
-				Name: writing.Writerusername.String,
-			},
-		},
+		JSONLD:      jsonLD,
 	}
 
 	if err := share.RenderOpenGraph(w, r, ogData); err != nil {

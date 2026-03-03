@@ -46,9 +46,18 @@ type WithAvatar image.Image
 // Used by: share.Generate
 type WithGeneratorType string
 
-// WithJSONLD specifies the structured data for the page.
-// Example: share.WithJSONLD{Data: &common.JSONLD{...}}
-// Used by: OpenGraphData
+// WithDatePublished specifies the publication date for JSON-LD.
+type WithDatePublished string
+
+// WithInteractionStatistic specifies interaction stats for JSON-LD.
+type WithInteractionStatistic struct {
+	Type                 string
+	InteractionType      string
+	UserInteractionCount int32
+}
+
+// WithJSONLD specifies additional JSON-LD data not covered by other options.
+// This is used for construction but NOT encoded into the image URL.
 type WithJSONLD struct {
 	Data *common.JSONLD
 }

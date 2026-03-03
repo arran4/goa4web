@@ -44,7 +44,11 @@ func (rw *RangeResponseWriter) WriteHeader(statusCode int) {
 // Serve flushes the buffered response to the underlying http.ResponseWriter
 // using http.ServeContent, enabling Range request support.
 func (rw *RangeResponseWriter) Serve() {
-	if rw.statusCode != 0 && rw.statusCode != http.StatusOK {
+	if rw.statusCode == 0 {
+		rw.statusCode = http.StatusOK
+	}
+
+	if rw.statusCode != http.StatusOK && rw.statusCode != http.StatusPartialContent {
 		// If it's an error or redirect, don't use ServeContent, just copy headers and body.
 		for k, v := range rw.headers {
 			for _, val := range v {
@@ -56,7 +60,7 @@ func (rw *RangeResponseWriter) Serve() {
 		return
 	}
 
-	// For 200 OK responses, use ServeContent.
+	// For 200/206 responses, use ServeContent.
 	for k, v := range rw.headers {
 		for _, val := range v {
 			rw.w.Header().Add(k, val)

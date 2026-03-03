@@ -19,7 +19,7 @@ func GenerateThumbnail(srcImage image.Image, ext string) ([]byte, error) {
 	} else {
 		side := src.Dx()
 		y0 := src.Min.Y + (src.Dy()-side)/2
-		crop = image.Rect(src.Min.X, y0, src.Min.X+side, src.Min.Y+side)
+		crop = image.Rect(src.Min.X, y0, src.Min.X+side, y0+side)
 	}
 	var tbuf bytes.Buffer
 	thumb := image.NewRGBA(image.Rect(0, 0, 200, 200))

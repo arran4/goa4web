@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	forumcomments "github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/httputil"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 )
@@ -68,12 +69,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
 
 	// OpenGraph preview endpoints (no auth required for social media bots if signed)
-	pr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
-	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}", httputil.WithRangeSupport(SharedTopicPreviewPage)).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", httputil.WithRangeSupport(SharedTopicPreviewPage)).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", httputil.WithRangeSupport(SharedTopicPreviewPage)).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}", httputil.WithRangeSupport(SharedThreadPreviewPage)).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", httputil.WithRangeSupport(SharedThreadPreviewPage)).Methods(http.MethodGet, http.MethodHead)
+	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", httputil.WithRangeSupport(SharedThreadPreviewPage)).Methods(http.MethodGet, http.MethodHead)
 
 	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())

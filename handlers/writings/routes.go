@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/httputil"
 	"github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/handlers/share"
@@ -39,9 +40,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptio
 	// Writing routes use {writing} to identify the requested writing.
 
 	// OpenGraph preview endpoint (no auth required for social media bots)
-	wr.HandleFunc("/shared/article/{writing}", SharedPreviewPage).Methods("GET", "HEAD")
-	wr.HandleFunc("/shared/article/{writing}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
-	wr.HandleFunc("/shared/article/{writing}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
+	wr.HandleFunc("/shared/article/{writing}", httputil.WithRangeSupport(SharedPreviewPage)).Methods("GET", "HEAD")
+	wr.HandleFunc("/shared/article/{writing}/ts/{ts}/sign/{sign}", httputil.WithRangeSupport(SharedPreviewPage)).Methods("GET", "HEAD")
+	wr.HandleFunc("/shared/article/{writing}/nonce/{nonce}/sign/{sign}", httputil.WithRangeSupport(SharedPreviewPage)).Methods("GET", "HEAD")
 
 	wr.HandleFunc("/article/{writing}", ArticlePage).Methods("GET")
 	wr.HandleFunc("/article/{writing}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(replyTask.Matcher())

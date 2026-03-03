@@ -8,6 +8,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/httputil"
 	"github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/handlers/share"
@@ -66,12 +67,12 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	fr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(threadNewCancelAction)).Methods("POST").MatcherFunc(threadNewCancelAction.Matcher())
 
 	// OpenGraph preview endpoint (no auth required for social media bots if signed)
-	fr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", SharedTopicPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", SharedThreadPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
-	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}", httputil.WithRangeSupport(SharedTopicPreviewPage)).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/ts/{ts}/sign/{sign}", httputil.WithRangeSupport(SharedTopicPreviewPage)).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/nonce/{nonce}/sign/{sign}", httputil.WithRangeSupport(SharedTopicPreviewPage)).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}", httputil.WithRangeSupport(SharedThreadPreviewPage)).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", httputil.WithRangeSupport(SharedThreadPreviewPage)).Methods("GET", "HEAD")
+	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", httputil.WithRangeSupport(SharedThreadPreviewPage)).Methods("GET", "HEAD")
 
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("POST")

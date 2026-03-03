@@ -9,6 +9,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/httputil"
 	"github.com/arran4/goa4web/internal/router"
 
 	"github.com/arran4/goa4web/handlers/share"
@@ -39,9 +40,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptio
 	nr.HandleFunc("/preview", PreviewPage).Methods("POST")
 
 	// OpenGraph preview endpoint (no auth required for social media bots)
-	nr.HandleFunc("/shared/news/{news}", SharedPreviewPage).Methods("GET", "HEAD")
-	nr.HandleFunc("/shared/news/{news}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
-	nr.HandleFunc("/shared/news/{news}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
+	nr.HandleFunc("/shared/news/{news}", httputil.WithRangeSupport(SharedPreviewPage)).Methods("GET", "HEAD")
+	nr.HandleFunc("/shared/news/{news}/ts/{ts}/sign/{sign}", httputil.WithRangeSupport(SharedPreviewPage)).Methods("GET", "HEAD")
+	nr.HandleFunc("/shared/news/{news}/nonce/{nonce}/sign/{sign}", httputil.WithRangeSupport(SharedPreviewPage)).Methods("GET", "HEAD")
 
 	nr.HandleFunc("/news/{news}", NewsPostPageHandler).Methods("GET").MatcherFunc(viewGrant)
 	nr.Handle("/news/{news}/edit", EnforceNewsPostAccess(http.HandlerFunc(editTask.Page))).Methods("GET")

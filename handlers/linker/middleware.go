@@ -50,7 +50,6 @@ func EnforceLinkerCommentsAccess(next http.Handler) http.Handler {
 
 		// Setup context for SelectedThreadCanReply
 		cd.SetCurrentSection("linker")
-		cd.SetCurrentThreadAndTopic(link.ThreadID, 0)
 
 		canReply := cd.HasGrant("linker", "link", "reply", link.ID)
 

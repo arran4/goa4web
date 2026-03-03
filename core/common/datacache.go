@@ -52,6 +52,7 @@ type DataCache struct {
 	linkerCategoryRows            map[int32]*lazy.Value[*db.LinkerCategory]
 	linkerCatsAll                 lazy.Value[[]*db.LinkerCategory]
 	linkerCatsForUser             lazy.Value[[]*db.LinkerCategory]
+	linkerItems                   map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]
 	newsAnnouncements             map[int32]*lazy.Value[*db.SiteAnnouncement]
 	newsPosts                     map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
 	notifCount                    lazy.Value[int32]

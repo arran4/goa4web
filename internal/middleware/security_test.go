@@ -20,8 +20,9 @@ func newCoreData(t *testing.T, cfg config.RuntimeConfig) (*common.CoreData, *db.
 	if cfg.HSTSHeaderValue == "" {
 		cfg.HSTSHeaderValue = "max-age=63072000; includeSubDomains"
 	}
+	// Emulate config normalization which generates the default CSP
 	if cfg.ContentSecurityPolicy == "" {
-		cfg.ContentSecurityPolicy = config.DefaultContentSecurityPolicy
+		cfg.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
 	}
 	cd := common.NewCoreData(context.Background(), stub, &cfg)
 	return cd, stub

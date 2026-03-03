@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -48,6 +49,8 @@ type RuntimeConfig struct {
 
 	// ContentSecurityPolicy defines the Content-Security-Policy header value.
 	ContentSecurityPolicy string
+	// ExtraScriptSrc defines additional sources for the script-src CSP directive.
+	ExtraScriptSrc string
 
 	EmailProvider             string
 	EmailSMTPHost             string
@@ -410,6 +413,11 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 		cfg.BaseURL = "http://localhost:8080"
 	} else if u, err := url.Parse(cfg.BaseURL); err == nil && u.Scheme == "" {
 		cfg.BaseURL = "http://" + cfg.BaseURL
+	}
+
+	if cfg.ContentSecurityPolicy == "" {
+		cfg.ContentSecurityPolicy = fmt.Sprintf(DefaultContentSecurityPolicyTemplate, strings.TrimSpace(cfg.ExtraScriptSrc))
+		cfg.ContentSecurityPolicy = strings.ReplaceAll(cfg.ContentSecurityPolicy, "  ", " ")
 	}
 
 	cfg.BaseURL = strings.TrimSuffix(cfg.BaseURL, "/")

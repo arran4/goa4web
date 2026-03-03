@@ -31,8 +31,9 @@ type BoolOption struct {
 	Target        func(*RuntimeConfig) *bool
 }
 
-// DefaultContentSecurityPolicy is the default Content-Security-Policy header value.
-const DefaultContentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+// DefaultContentSecurityPolicyTemplate is the template for the default Content-Security-Policy header.
+// It accepts one string parameter for extra script sources.
+const DefaultContentSecurityPolicyTemplate = "default-src 'self'; script-src 'self' 'unsafe-inline' %s; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
 
 // StringOptions lists the string runtime options shared by flag parsing and configuration generation.
 var StringOptions = []StringOption{
@@ -49,7 +50,8 @@ var StringOptions = []StringOption{
 	{"external-url", EnvExternalURL, "The base URL of the server (URI only).", "", nil, "", func(c *RuntimeConfig) *string { return &c.ExternalURL }},
 	{"host", EnvHost, "The hostname of the server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.Host }},
 	{"hsts-header", EnvHSTSHeader, "The value for the Strict-Transport-Security header.", "max-age=63072000; includeSubDomains", nil, "", func(c *RuntimeConfig) *string { return &c.HSTSHeaderValue }},
-	{"content-security-policy", EnvContentSecurityPolicy, "The value for the Content-Security-Policy header. If empty, a default secure policy is used.", DefaultContentSecurityPolicy, nil, "", func(c *RuntimeConfig) *string { return &c.ContentSecurityPolicy }},
+	{"content-security-policy", EnvContentSecurityPolicy, "The value for the Content-Security-Policy header. If empty, a default secure policy is used.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ContentSecurityPolicy }},
+	{"extra-script-src", EnvExtraScriptSrc, "Additional allowed sources for scripts (e.g. analytics, CDNs).", "https://static.cloudflareinsights.com", nil, "", func(c *RuntimeConfig) *string { return &c.ExtraScriptSrc }},
 	{"email-provider", EnvEmailProvider, "The email provider to use. Supported providers are 'smtp', 'ses', 'jmap', and 'log'.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailProvider }},
 	{"smtp-host", EnvSMTPHost, "The hostname of the SMTP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPHost }},
 	{"smtp-port", EnvSMTPPort, "The port of the SMTP server.", "", nil, "", func(c *RuntimeConfig) *string { return &c.EmailSMTPPort }},

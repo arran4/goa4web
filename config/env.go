@@ -106,6 +106,8 @@ const (
 	EnvHSTSHeader = "HSTS_HEADER"
 	// EnvContentSecurityPolicy sets the Content-Security-Policy header value.
 	EnvContentSecurityPolicy = "CONTENT_SECURITY_POLICY"
+	// EnvExtraScriptSrc defines additional allowed domains for the script-src CSP directive.
+	EnvExtraScriptSrc = "EXTRA_SCRIPT_SRC"
 	// EnvSessionName sets the cookie name used for session data.
 	EnvSessionName = "SESSION_NAME"
 

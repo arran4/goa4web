@@ -1,6 +1,10 @@
 package share
 
-import "image"
+import (
+	"image"
+
+	"github.com/arran4/goa4web/core/common"
+)
 
 // WithTitle specifies the main title of the image.
 // Example: share.WithTitle("Community Guidelines")
@@ -41,3 +45,19 @@ type WithAvatar image.Image
 // Example: share.WithGeneratorType("forum")
 // Used by: share.Generate
 type WithGeneratorType string
+
+// WithDatePublished specifies the publication date for JSON-LD.
+type WithDatePublished string
+
+// WithInteractionStatistic specifies interaction stats for JSON-LD.
+type WithInteractionStatistic struct {
+	Type                 string
+	InteractionType      string
+	UserInteractionCount int32
+}
+
+// WithJSONLD specifies additional JSON-LD data not covered by other options.
+// This is used for construction but NOT encoded into the image URL.
+type WithJSONLD struct {
+	Data *common.JSONLD
+}

@@ -1,8 +1,10 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 )
 
 func (og *OpenGraph) URLMeta() template.HTML {
@@ -41,4 +43,16 @@ func (og *OpenGraph) TypeMeta() template.HTML {
 		ogType = og.Type
 	}
 	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, ogType))
+}
+
+func (og *OpenGraph) JSONLDScript() template.HTML {
+	if og.JSONLD == nil {
+		return ""
+	}
+	b, err := json.Marshal(og.JSONLD)
+	if err != nil {
+		log.Printf("Error marshaling JSONLD: %v", err)
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<script type="application/ld+json">%s</script>`, string(b)))
 }

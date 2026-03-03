@@ -13,6 +13,7 @@
 	<meta name="twitter:description" content="{{.Description}}" />
 	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
 	{{.TwitterImageMeta}}
+	{{.JSONLDScript}}
 	{{if .RedirectURL}}<meta http-equiv="refresh" content="0;url={{.RedirectURL}}" />{{else}}<meta http-equiv="refresh" content="0;url={{.ContentURL}}" />{{end}}
 </head>
 <body>

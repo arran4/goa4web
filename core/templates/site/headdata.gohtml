@@ -21,20 +21,20 @@
         <meta property="og:title" content="{{ .Title }}" />
         <meta property="og:description" content="{{ .Description }}" />
         {{.ImageMeta}}
-	{{.SecureImageMeta}}
-	{{.ImageWidthMeta}}
-	{{.ImageHeightMeta}}
-	{{.URLMeta}}
-	{{.TypeMeta}}
-	{{.ExpirationTimeMeta}}
-	{{.PublishedTimeMeta}}
-	{{.ModifiedTimeMeta}}
-	{{.SiteNameMeta}}
-	{{.UpdatedTimeMeta}}
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="{{.Title}}" />
-	<meta name="twitter:description" content="{{.Description}}" />
-	{{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
-	{{.TwitterImageMeta}}
+        {{.SecureImageMeta}}
+        {{.ImageWidthMeta}}
+        {{.ImageHeightMeta}}
+        {{.URLMeta}}
+        {{.TypeMeta}}
+        {{.ExpirationTimeMeta}}
+        {{.PublishedTimeMeta}}
+        {{.ModifiedTimeMeta}}
+        {{.SiteNameMeta}}
+        {{.UpdatedTimeMeta}}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="{{.Title}}" />
+        <meta name="twitter:description" content="{{.Description}}" />
+        {{if .TwitterSite}}<meta name="twitter:site" content="{{.TwitterSite}}" />{{end}}
+        {{.TwitterImageMeta}}
     {{ end }}
 {{- end}}

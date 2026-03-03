@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"html"
 	"html/template"
 	"image"
 	"image/png"
@@ -106,15 +107,15 @@ func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData)
 }
 
 func (d OpenGraphData) URLMeta() template.HTML {
-	return template.HTML(fmt.Sprintf(`<meta property="og:url" content="%s" />`, d.ContentURL))
+	return template.HTML(fmt.Sprintf(`<meta property="og:url" content="%s" />`, html.EscapeString(string(d.ContentURL))))
 }
 
 func (d OpenGraphData) ImageMeta() template.HTML {
-	return template.HTML(fmt.Sprintf(`<meta property="og:image" content="%s" />`, d.ImageURL))
+	return template.HTML(fmt.Sprintf(`<meta property="og:image" content="%s" />`, html.EscapeString(string(d.ImageURL))))
 }
 
 func (d OpenGraphData) SecureImageMeta() template.HTML {
-	return template.HTML(fmt.Sprintf(`<meta property="og:image:secure_url" content="%s" />`, d.ImageURL))
+	return template.HTML(fmt.Sprintf(`<meta property="og:image:secure_url" content="%s" />`, html.EscapeString(string(d.ImageURL))))
 }
 
 func (d OpenGraphData) ImageWidthMeta() template.HTML {
@@ -126,7 +127,7 @@ func (d OpenGraphData) ImageHeightMeta() template.HTML {
 }
 
 func (d OpenGraphData) TwitterImageMeta() template.HTML {
-	return template.HTML(fmt.Sprintf(`<meta name="twitter:image" content="%s" />`, d.ImageURL))
+	return template.HTML(fmt.Sprintf(`<meta name="twitter:image" content="%s" />`, html.EscapeString(string(d.ImageURL))))
 }
 
 func (d OpenGraphData) TypeMeta() template.HTML {
@@ -134,7 +135,7 @@ func (d OpenGraphData) TypeMeta() template.HTML {
 	if d.Type != "" {
 		ogType = d.Type
 	}
-	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, ogType))
+	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, html.EscapeString(ogType)))
 }
 
 func (d OpenGraphData) ExpirationTimeMeta() template.HTML {
@@ -162,7 +163,7 @@ func (d OpenGraphData) SiteNameMeta() template.HTML {
 	if d.SiteName == "" {
 		return ""
 	}
-	return template.HTML(fmt.Sprintf(`<meta property="og:site_name" content="%s" />`, d.SiteName))
+	return template.HTML(fmt.Sprintf(`<meta property="og:site_name" content="%s" />`, html.EscapeString(d.SiteName)))
 }
 
 func (d OpenGraphData) UpdatedTimeMeta() template.HTML {

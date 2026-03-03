@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/arran4/goa4web/handlers/share"
 
@@ -73,15 +74,23 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error making image URL: %v", err)
 	}
 
+	var pubTime *time.Time
+	if writing.Published.Valid {
+		t := cd.LocalTime(writing.Published.Time)
+		pubTime = &t
+	}
+
 	cd.OpenGraph = &common.OpenGraph{
-		Title:       cd.PageTitle,
-		Description: a4code.SnipText(writing.Abstract.String, 128),
-		Image:       imgURL,
-		ImageWidth:  cd.Config.OGImageWidth,
-		ImageHeight: cd.Config.OGImageHeight,
-		TwitterSite: cd.Config.TwitterSite,
-		URL:         cd.AbsoluteURL(r.URL.String()),
-		Type:        "article",
+		Title:         cd.PageTitle,
+		Description:   a4code.SnipText(writing.Abstract.String, 128),
+		Image:         imgURL,
+		ImageWidth:    cd.Config.OGImageWidth,
+		ImageHeight:   cd.Config.OGImageHeight,
+		TwitterSite:   cd.Config.TwitterSite,
+		URL:           cd.AbsoluteURL(r.URL.String()),
+		Type:          "article",
+		SiteName:      cd.SiteTitle,
+		PublishedTime: pubTime,
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

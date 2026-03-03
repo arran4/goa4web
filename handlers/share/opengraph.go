@@ -83,14 +83,20 @@ func Generate(options ...interface{}) (image.Image, error) {
 
 // OpenGraphData contains the metadata for an OpenGraph preview page.
 type OpenGraphData struct {
-	Title       string
-	Description string
-	ImageURL    template.URL
-	ContentURL  template.URL
-	RedirectURL template.URL
-	ImageWidth  int
-	ImageHeight int
-	TwitterSite string
+	Title          string
+	Description    string
+	ImageURL       template.URL
+	ContentURL     template.URL
+	RedirectURL    template.URL
+	ImageWidth     int
+	ImageHeight    int
+	TwitterSite    string
+	Type           string
+	ExpirationTime *time.Time
+	PublishedTime  *time.Time
+	ModifiedTime   *time.Time
+	SiteName       string
+	UpdatedTime    *time.Time
 }
 
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
@@ -121,6 +127,49 @@ func (d OpenGraphData) ImageHeightMeta() template.HTML {
 
 func (d OpenGraphData) TwitterImageMeta() template.HTML {
 	return template.HTML(fmt.Sprintf(`<meta name="twitter:image" content="%s" />`, d.ImageURL))
+}
+
+func (d OpenGraphData) TypeMeta() template.HTML {
+	ogType := "website"
+	if d.Type != "" {
+		ogType = d.Type
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, ogType))
+}
+
+func (d OpenGraphData) ExpirationTimeMeta() template.HTML {
+	if d.ExpirationTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="article:expiration_time" content="%s" />`, d.ExpirationTime.Format("2006-01-02T15:04:05Z07:00")))
+}
+
+func (d OpenGraphData) PublishedTimeMeta() template.HTML {
+	if d.PublishedTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="article:published_time" content="%s" />`, d.PublishedTime.Format("2006-01-02T15:04:05Z07:00")))
+}
+
+func (d OpenGraphData) ModifiedTimeMeta() template.HTML {
+	if d.ModifiedTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="article:modified_time" content="%s" />`, d.ModifiedTime.Format("2006-01-02T15:04:05Z07:00")))
+}
+
+func (d OpenGraphData) SiteNameMeta() template.HTML {
+	if d.SiteName == "" {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="og:site_name" content="%s" />`, d.SiteName))
+}
+
+func (d OpenGraphData) UpdatedTimeMeta() template.HTML {
+	if d.UpdatedTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="og:updated_time" content="%s" />`, d.UpdatedTime.Format("2006-01-02T15:04:05Z07:00")))
 }
 
 // VerifyAndGetPath verifies the signature and returns the content path without auth parameters.

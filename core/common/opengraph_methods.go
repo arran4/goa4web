@@ -42,3 +42,38 @@ func (og *OpenGraph) TypeMeta() template.HTML {
 	}
 	return template.HTML(fmt.Sprintf(`<meta property="og:type" content="%s" />`, ogType))
 }
+
+func (og *OpenGraph) ExpirationTimeMeta() template.HTML {
+	if og.ExpirationTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="article:expiration_time" content="%s" />`, og.ExpirationTime.Format("2006-01-02T15:04:05Z07:00")))
+}
+
+func (og *OpenGraph) PublishedTimeMeta() template.HTML {
+	if og.PublishedTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="article:published_time" content="%s" />`, og.PublishedTime.Format("2006-01-02T15:04:05Z07:00")))
+}
+
+func (og *OpenGraph) ModifiedTimeMeta() template.HTML {
+	if og.ModifiedTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="article:modified_time" content="%s" />`, og.ModifiedTime.Format("2006-01-02T15:04:05Z07:00")))
+}
+
+func (og *OpenGraph) SiteNameMeta() template.HTML {
+	if og.SiteName == "" {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="og:site_name" content="%s" />`, og.SiteName))
+}
+
+func (og *OpenGraph) UpdatedTimeMeta() template.HTML {
+	if og.UpdatedTime == nil {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<meta property="og:updated_time" content="%s" />`, og.UpdatedTime.Format("2006-01-02T15:04:05Z07:00")))
+}

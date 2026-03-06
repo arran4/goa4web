@@ -47,17 +47,11 @@ type WithGeneratorType string
 // WithJSONLDType specifies the JSON-LD type (e.g., "Article", "BlogPosting").
 type WithJSONLDType string
 
-// WithHeadline specifies the JSON-LD headline.
-type WithHeadline string
-
 // WithDatePublished specifies the JSON-LD publish date.
 type WithDatePublished string
 
 // WithDateModified specifies the JSON-LD modification date.
 type WithDateModified string
-
-// WithAuthorName specifies the JSON-LD author name.
-type WithAuthorName string
 
 // WithAuthorURL specifies the JSON-LD author URL.
 type WithAuthorURL string

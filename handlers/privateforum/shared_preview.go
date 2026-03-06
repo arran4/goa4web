@@ -143,7 +143,7 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	}
 
 	var title, desc string
-	var jsonLdType, headline, datePublished, dateModified, authorName, authorURL string
+	var jsonLdType, datePublished, dateModified, author, authorURL string
 	var images []string
 	for _, op := range ops {
 		switch v := op.(type) {
@@ -153,14 +153,13 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 			desc = string(v)
 		case share.WithJSONLDType:
 			jsonLdType = string(v)
-		case share.WithHeadline:
-			headline = string(v)
+
 		case share.WithDatePublished:
 			datePublished = string(v)
 		case share.WithDateModified:
 			dateModified = string(v)
-		case share.WithAuthorName:
-			authorName = string(v)
+		case share.WithAuthor:
+			author = string(v)
 		case share.WithAuthorURL:
 			authorURL = string(v)
 		case share.WithImages:
@@ -170,20 +169,20 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 
 	var jsonLdData common.JSONLDer
 	if jsonLdType != "" {
-		var author common.JSONLDer
-		if authorName != "" || authorURL != "" {
-			author = common.Person{Name: authorName, URL: authorURL}
+		var authorObj common.JSONLDer
+		if author != "" || authorURL != "" {
+			authorObj = common.Person{Name: author, URL: authorURL}
 		}
 
 		switch jsonLdType {
 		case "Article":
-			jsonLdData = common.Article{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+			jsonLdData = common.Article{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
 		case "NewsArticle":
-			jsonLdData = common.NewsArticle{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+			jsonLdData = common.NewsArticle{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
 		case "BlogPosting":
-			jsonLdData = common.BlogPosting{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+			jsonLdData = common.BlogPosting{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
 		case "DiscussionForumPosting":
-			jsonLdData = common.DiscussionForumPosting{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+			jsonLdData = common.DiscussionForumPosting{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
 		}
 	}
 

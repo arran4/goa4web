@@ -60,6 +60,9 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		DatePublished: writing.Published.Time.Format("2006-01-02T15:04:05Z07:00"),
 		Author:        author,
 	}
+	if writing.LastIndex.Valid {
+		jsonLdData.DateModified = writing.LastIndex.Time.Format("2006-01-02T15:04:05Z07:00")
+	}
 
 
 	ogData := share.OpenGraphData{

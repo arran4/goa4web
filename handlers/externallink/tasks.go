@@ -1,6 +1,7 @@
 package externallink
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -63,66 +64,78 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("no url provided")
 	}
 
-	info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
-	if err != nil {
-		return fmt.Errorf("fetch error: %w", err)
-	}
-
-	var cachedImgName string
-	if info.Image != "" {
-		var err error
-		cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
+	// Spawn a goroutine to fetch OpenGraph data in the background
+	go func() {
+		// create a disconnected context or use background context for DB operations
+		// since the request context will be canceled when this handler returns.
+		bgCtx := context.Background()
+		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
 		if err != nil {
-			log.Printf("failed to cache image: %v", err)
-		}
-	}
-
-	// Update DB
-	res, err := cd.Queries().CreateExternalLink(r.Context(), rawURL)
-	var lid int32
-	if err == nil {
-		id, _ := res.LastInsertId()
-		lid = int32(id)
-	} else {
-		// Try to find existing
-		l, err := cd.Queries().GetExternalLink(r.Context(), rawURL)
-		if err == nil {
-			lid = l.ID
-		}
-	}
-
-	if lid != 0 {
-		err := cd.Queries().UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
-			CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-			CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-			CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-			CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-			CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-			CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-			ID:              lid,
-		})
-		if err != nil {
-			return fmt.Errorf("update error: %w", err)
+			log.Printf("background fetch error for %s: %v", rawURL, err)
+			return
 		}
 
-		if cachedImgName != "" {
-			// Update cache
-			err := cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
-				CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
-				ID:             lid,
-			})
+		var cachedImgName string
+		if info.Image != "" {
+			var err error
+			cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
 			if err != nil {
-				// non-fatal, just log
-				log.Printf("failed to update cache: %v", err)
+				log.Printf("failed to cache image: %v", err)
 			}
 		}
-	}
 
-	// Return redirect to the current URL
+		// Update DB
+		res, err := cd.Queries().CreateExternalLink(bgCtx, rawURL)
+		var lid int32
+		if err == nil {
+			id, _ := res.LastInsertId()
+			lid = int32(id)
+		} else {
+			// Try to find existing
+			l, err := cd.Queries().GetExternalLink(bgCtx, rawURL)
+			if err == nil {
+				lid = l.ID
+			}
+		}
+
+		if lid != 0 {
+			err := cd.Queries().UpdateExternalLinkMetadata(bgCtx, db.UpdateExternalLinkMetadataParams{
+				CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
+				CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
+				CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
+				CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
+				CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
+				CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
+				ID:              lid,
+			})
+			if err != nil {
+				log.Printf("background update error: %v", err)
+				return
+			}
+
+			if cachedImgName != "" {
+				// Update cache
+				err := cd.Queries().UpdateExternalLinkImageCache(bgCtx, db.UpdateExternalLinkImageCacheParams{
+					CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
+					ID:             lid,
+				})
+				if err != nil {
+					// non-fatal, just log
+					log.Printf("failed to update cache: %v", err)
+				}
+			}
+		}
+	}()
+
+	// Return redirect to the current URL with msg parameter
 	// We reconstruct the URL from params to be safe, or just use RequestURI?
 	// RequestURI includes the path and query.
 	// Since we are POSTing to /goto?u=... , RequestURI is exactly what we want to GET.
-	return handlers.RedirectHandler(r.RequestURI)
+	redirectURI := r.RequestURI
+	if r.URL.Query().Get("msg") == "" {
+		redirectURI += "&msg=Reloading+Open+Graph+data+in+the+background..."
+	}
+	return handlers.RedirectHandler(redirectURI)
 }
 
 func (t *ReloadExternalLinkTask) Matcher() func(*http.Request, *mux.RouteMatch) bool {

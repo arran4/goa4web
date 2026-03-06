@@ -161,6 +161,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		URL         string
 		RedirectURL string
 		ReloadURL   string
+		Message     string
 	}
 	cd.PageTitle = "External Link"
 	linkParam := "id"
@@ -173,6 +174,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		URL:         rawURL,
 		RedirectURL: fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, sig),
 		ReloadURL:   fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, sig),
+		Message:     r.URL.Query().Get("msg"),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

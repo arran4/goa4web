@@ -67,8 +67,8 @@ func TestReloadExternalLinkTask(t *testing.T) {
 			}
 
 			val := res.(handlers.RedirectHandler)
-			if string(val) != u {
-				t.Errorf("Expected '%s', got '%s'", u, string(val))
+			if string(val) != u+"&msg=Reloading+Open+Graph+data+in+the+background..." {
+				t.Errorf("Expected '%s', got '%s'", u+"&msg=Reloading+Open+Graph+data+in+the+background...", string(val))
 			}
 		})
 

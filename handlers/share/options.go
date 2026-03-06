@@ -42,7 +42,25 @@ type WithAvatar image.Image
 // Used by: share.Generate
 type WithGeneratorType string
 
-// WithJSONLD specifies the JSON-LD struct.
-type WithJSONLD struct {
-	Data interface{}
-}
+// JSONLD Component options
+
+// WithJSONLDType specifies the JSON-LD type (e.g., "Article", "BlogPosting").
+type WithJSONLDType string
+
+// WithHeadline specifies the JSON-LD headline.
+type WithHeadline string
+
+// WithDatePublished specifies the JSON-LD publish date.
+type WithDatePublished string
+
+// WithDateModified specifies the JSON-LD modification date.
+type WithDateModified string
+
+// WithAuthorName specifies the JSON-LD author name.
+type WithAuthorName string
+
+// WithAuthorURL specifies the JSON-LD author URL.
+type WithAuthorURL string
+
+// WithImages specifies the JSON-LD images.
+type WithImages []string

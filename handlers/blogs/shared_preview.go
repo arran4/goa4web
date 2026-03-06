@@ -50,8 +50,17 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error making image URL: %v", err)
 	}
 
+	author := common.Person{Name: blog.Username.String}
+	jsonLdData := common.BlogPosting{
+		Headline:      ogTitle,
+		DatePublished: blog.Written.Format("2006-01-02T15:04:05Z07:00"),
+		Author:        author,
+	}
+
+
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
+		JSONLD:      jsonLdData,
 		Description: ogDescription,
 		ImageURL:    template.URL(imgURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),

@@ -99,7 +99,7 @@ type OpenGraph struct {
 	ModifiedTime   *time.Time
 	SiteName       string
 	UpdatedTime    *time.Time
-	JSONLD         interface{}
+	JSONLD         JSONLDer
 }
 
 // NotFoundLink represents a contextual link on the 404 page.

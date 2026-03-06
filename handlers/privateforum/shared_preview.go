@@ -143,15 +143,47 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	}
 
 	var title, desc string
-	var jsonLdData interface{}
+	var jsonLdType, headline, datePublished, dateModified, authorName, authorURL string
+	var images []string
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:
 			title = string(v)
 		case share.WithBody:
 			desc = string(v)
-		case share.WithJSONLD:
-			jsonLdData = v.Data
+		case share.WithJSONLDType:
+			jsonLdType = string(v)
+		case share.WithHeadline:
+			headline = string(v)
+		case share.WithDatePublished:
+			datePublished = string(v)
+		case share.WithDateModified:
+			dateModified = string(v)
+		case share.WithAuthorName:
+			authorName = string(v)
+		case share.WithAuthorURL:
+			authorURL = string(v)
+		case share.WithImages:
+			images = v
+		}
+	}
+
+	var jsonLdData common.JSONLDer
+	if jsonLdType != "" {
+		var author common.JSONLDer
+		if authorName != "" || authorURL != "" {
+			author = common.Person{Name: authorName, URL: authorURL}
+		}
+
+		switch jsonLdType {
+		case "Article":
+			jsonLdData = common.Article{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+		case "NewsArticle":
+			jsonLdData = common.NewsArticle{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+		case "BlogPosting":
+			jsonLdData = common.BlogPosting{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
+		case "DiscussionForumPosting":
+			jsonLdData = common.DiscussionForumPosting{Headline: headline, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: author}
 		}
 	}
 

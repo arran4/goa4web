@@ -84,8 +84,8 @@ func (og *OpenGraph) JSONLDScript() template.HTML {
 		return ""
 	}
 	// We marshal the JSONLD via the JSONLD type
-	if l, ok := og.JSONLD.(JSONLD); ok {
-		b, err := l.MarshalJSON()
+	if og.JSONLD != nil {
+		b, err := og.JSONLD.MarshalJSONLD()
 		if err == nil {
 			return template.HTML(fmt.Sprintf(`<script type="application/ld+json">%s</script>`, string(b)))
 		}

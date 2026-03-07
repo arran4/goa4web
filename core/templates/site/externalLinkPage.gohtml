@@ -3,7 +3,7 @@
     <p style="color: green; font-weight: bold;">{{$.Message}}</p>
 {{ end }}
 <h2>Are you sure you want to visit:</h2>
-<p><a href="{{$.URL}}" target="_blank">{{$.URL}}</a></p>
+<p><a href="{{(cd).ExternalLinkTargetURL}}" target="_blank">{{(cd).ExternalLinkTargetURL}}</a></p>
 {{ $link := (cd).SelectedExternalLink }}
 {{ if $link }}
     <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; max-width: 600px;">
@@ -21,13 +21,13 @@
     </div>
 {{ end }}
 <p>
-    <a href="{{$.RedirectURL}}" class="button">Goto Link</a>
+    <a href="{{(cd).ExternalLinkRedirectURL}}" class="button">Goto Link</a>
     {{ if $.BackURL }}
     <a href="{{$.BackURL}}" class="button">Go Back</a>
     {{ end }}
 </p>
 <p>
-    <form action="" method="post">
+    <form action="{{(cd).ExternalLinkReloadURL}}" method="post">
         <button type="submit">Reload Open Graph Data</button>
     </form>
 </p>

@@ -195,6 +195,9 @@ type CoreData struct {
 	currentBlogID                    int32
 	currentBoardID                   int32
 	currentCommentID                 int32
+	currentExternalLinkURL           string
+	currentExternalLinkSig           string
+	currentExternalLinkUsedURL       bool
 	currentImagePostID               int32
 	currentLinkID                    int32
 	currentExternalLinkID            int32
@@ -3369,7 +3372,7 @@ func cleanSignedParam(urlStr string) string {
 }
 
 // ResolveExternalLink extracts 'u' or 'id' and 'sig' from the request, verifies the signature,
-// and returns the target URL, the external link database ID, a boolean indicating if 'u' was used, and any error.
+// updates CoreData state and returns the target URL, the external link database ID, a boolean indicating if 'u' was used, and any error.
 func (cd *CoreData) ResolveExternalLink(r *http.Request) (string, int32, *db.ExternalLink, bool, error) {
 	if cd.LinkSignKey == "" {
 		return "", 0, nil, false, fmt.Errorf("invalid link config")
@@ -3378,6 +3381,8 @@ func (cd *CoreData) ResolveExternalLink(r *http.Request) (string, int32, *db.Ext
 	rawURL := r.FormValue("u")
 	idStr := r.FormValue("id")
 	sig := r.FormValue("sig")
+
+	cd.currentExternalLinkSig = sig
 
 	var linkID int32
 	var existingLink *db.ExternalLink
@@ -3415,5 +3420,35 @@ func (cd *CoreData) ResolveExternalLink(r *http.Request) (string, int32, *db.Ext
 		return "", 0, nil, false, fmt.Errorf("no url provided")
 	}
 
+	cd.currentExternalLinkURL = rawURL
+	cd.currentExternalLinkUsedURL = usedURL
+	if linkID != 0 {
+		cd.SetCurrentExternalLinkID(linkID)
+	}
+
 	return rawURL, linkID, existingLink, usedURL, nil
+}
+
+// ExternalLinkTargetURL returns the target URL extracted from the request.
+func (cd *CoreData) ExternalLinkTargetURL() string {
+	return cd.currentExternalLinkURL
+}
+
+// ExternalLinkRedirectURL computes the URL to perform the actual redirect (go=1).
+func (cd *CoreData) ExternalLinkRedirectURL() string {
+	linkParam, linkValue := cd.externalLinkParams()
+	return fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, cd.currentExternalLinkSig)
+}
+
+// ExternalLinkReloadURL computes the URL to reload the OpenGraph data.
+func (cd *CoreData) ExternalLinkReloadURL() string {
+	linkParam, linkValue := cd.externalLinkParams()
+	return fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, cd.currentExternalLinkSig)
+}
+
+func (cd *CoreData) externalLinkParams() (string, string) {
+	if cd.currentExternalLinkUsedURL {
+		return "u", url.QueryEscape(cd.currentExternalLinkURL)
+	}
+	return "id", fmt.Sprintf("%d", cd.currentExternalLinkID)
 }

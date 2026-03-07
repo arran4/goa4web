@@ -26,9 +26,6 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := r.URL.Query().Get("id")
-	sig := r.URL.Query().Get("sig")
-
 	if r.URL.Query().Get("go") != "" {
 		cd.RegisterExternalLinkClick(rawURL)
 		http.Redirect(w, r, rawURL, http.StatusTemporaryRedirect)
@@ -92,9 +89,6 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		// For now, we just don't fetch metadata
 	}
 
-	if linkID != 0 {
-		cd.SetCurrentExternalLinkID(linkID)
-	}
 	link := cd.SelectedExternalLink()
 	if link != nil && link.CardImage.Valid && !link.CardImageCache.Valid {
 		cached, err := cd.DownloadAndCacheImage(link.CardImage.String)
@@ -106,33 +100,13 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			link.CardImageCache = sql.NullString{String: cached, Valid: true}
 		}
 	}
-	if rawURL == "" {
-		if link == nil {
-			w.WriteHeader(http.StatusBadRequest)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
-			return
-		}
-		rawURL = link.Url
-	}
 
 	type Data struct {
-		URL         string
-		RedirectURL string
-		ReloadURL   string
 		Message     string
 		BackURL     string
 	}
 	cd.PageTitle = "External Link"
-	linkParam := "id"
-	linkValue := idStr
-	if usedURL {
-		linkParam = "u"
-		linkValue = url.QueryEscape(rawURL)
-	}
 	data := Data{
-		URL:         rawURL,
-		RedirectURL: fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, sig),
-		ReloadURL:   fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, sig),
 		Message:     r.URL.Query().Get("msg"),
 		BackURL:     r.Referer(),
 	}

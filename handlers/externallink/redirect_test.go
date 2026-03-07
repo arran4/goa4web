@@ -75,8 +75,8 @@ func TestRedirectHandler(t *testing.T) {
 			qs.GetExternalLinkFn = func(ctx context.Context, url string) (*db.ExternalLink, error) {
 				return nil, sql.ErrNoRows
 			}
-			// Mock CreateExternalLink
-			qs.CreateExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+			// Mock EnsureExternalLink
+			qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
 				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
 			}
 			// Mock UpdateExternalLinkMetadata

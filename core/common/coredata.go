@@ -2376,6 +2376,38 @@ func (cd *CoreData) SelectedExternalLink() *db.ExternalLink {
 	return cd.ExternalLink(cd.currentExternalLinkID)
 }
 
+// EnsureExternalLink safely inserts or retrieves an external link ID.
+func (cd *CoreData) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	return cd.queries.EnsureExternalLink(ctx, url)
+}
+
+// GetExternalLink fetches an external link by URL.
+func (cd *CoreData) GetExternalLink(ctx context.Context, url string) (*db.ExternalLink, error) {
+	return cd.queries.GetExternalLink(ctx, url)
+}
+
+// UpdateExternalLinkMetadata saves fetched open graph metadata to the database and invalidates the cache.
+func (cd *CoreData) UpdateExternalLinkMetadata(ctx context.Context, params db.UpdateExternalLinkMetadataParams) error {
+	err := cd.queries.UpdateExternalLinkMetadata(ctx, params)
+	if err == nil {
+		cd.cache.mapMu.Lock()
+		delete(cd.cache.externalLinks, params.ID)
+		cd.cache.mapMu.Unlock()
+	}
+	return err
+}
+
+// UpdateExternalLinkImageCache saves the cached image path to the database and invalidates the cache.
+func (cd *CoreData) UpdateExternalLinkImageCache(ctx context.Context, params db.UpdateExternalLinkImageCacheParams) error {
+	err := cd.queries.UpdateExternalLinkImageCache(ctx, params)
+	if err == nil {
+		cd.cache.mapMu.Lock()
+		delete(cd.cache.externalLinks, params.ID)
+		cd.cache.mapMu.Unlock()
+	}
+	return err
+}
+
 // SelectedBoardID returns the board ID extracted from the request.
 func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }
 

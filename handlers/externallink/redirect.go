@@ -42,13 +42,11 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		usedURL = true
-		if queries := cd.Queries(); queries != nil {
-			if link, err := queries.GetExternalLink(r.Context(), rawURL); err == nil && link != nil {
-				linkID = link.ID
-				existingLink = link
-			} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				log.Printf("load external link by url: %v", err)
-			}
+		if link, err := cd.GetExternalLink(r.Context(), rawURL); err == nil && link != nil {
+			linkID = link.ID
+			existingLink = link
+		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("load external link by url: %v", err)
 		}
 	case idStr != "":
 		id64, err := strconv.ParseInt(idStr, 10, 32)
@@ -59,11 +57,9 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		linkID = int32(id64)
-		if queries := cd.Queries(); queries != nil {
-			if link, err := queries.GetExternalLinkByID(r.Context(), linkID); err == nil && link != nil {
-				existingLink = link
-				rawURL = link.Url
-			}
+		if link, err := cd.Queries().GetExternalLinkByID(r.Context(), linkID); err == nil && link != nil {
+			existingLink = link
+			rawURL = link.Url
 		}
 	default:
 		w.WriteHeader(http.StatusBadRequest)
@@ -104,16 +100,16 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
 		if err == nil {
 			if linkID == 0 {
-				res, err := cd.Queries().CreateExternalLink(r.Context(), rawURL)
+			res, err := cd.EnsureExternalLink(r.Context(), rawURL)
 				if err == nil {
 					id, _ := res.LastInsertId()
 					linkID = int32(id)
 				} else {
-					log.Printf("CreateExternalLink error: %v", err)
+				log.Printf("EnsureExternalLink error: %v", err)
 				}
 			}
 			if linkID != 0 {
-				err := cd.Queries().UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
+				err := cd.UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
 					CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
 					CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
 					CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
@@ -141,7 +137,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	if link != nil && link.CardImage.Valid && !link.CardImageCache.Valid {
 		cached, err := cd.DownloadAndCacheImage(link.CardImage.String)
 		if err == nil {
-			_ = cd.Queries().UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
+			_ = cd.UpdateExternalLinkImageCache(r.Context(), db.UpdateExternalLinkImageCacheParams{
 				CardImageCache: sql.NullString{String: cached, Valid: true},
 				ID:             link.ID,
 			})

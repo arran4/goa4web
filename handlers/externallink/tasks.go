@@ -85,21 +85,21 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 
 		// Update DB using EnsureExternalLink to handle duplicates properly
-		res, err := cd.Queries().EnsureExternalLink(bgCtx, rawURL)
+		res, err := cd.EnsureExternalLink(bgCtx, rawURL)
 		var lid int32
 		if err == nil {
 			id, _ := res.LastInsertId()
 			lid = int32(id)
 		} else {
 			// Fallback to fetch existing if EnsureExternalLink fails for any reason
-			l, err := cd.Queries().GetExternalLink(bgCtx, rawURL)
+			l, err := cd.GetExternalLink(bgCtx, rawURL)
 			if err == nil {
 				lid = l.ID
 			}
 		}
 
 		if lid != 0 {
-			err := cd.Queries().UpdateExternalLinkMetadata(bgCtx, db.UpdateExternalLinkMetadataParams{
+			err := cd.UpdateExternalLinkMetadata(bgCtx, db.UpdateExternalLinkMetadataParams{
 				CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
 				CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
 				CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
@@ -115,7 +115,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 
 			if cachedImgName != "" {
 				// Update cache
-				err := cd.Queries().UpdateExternalLinkImageCache(bgCtx, db.UpdateExternalLinkImageCacheParams{
+				err := cd.UpdateExternalLinkImageCache(bgCtx, db.UpdateExternalLinkImageCacheParams{
 					CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
 					ID:             lid,
 				})

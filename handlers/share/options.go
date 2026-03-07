@@ -41,3 +41,20 @@ type WithAvatar image.Image
 // Example: share.WithGeneratorType("forum")
 // Used by: share.Generate
 type WithGeneratorType string
+
+// JSONLD Component options
+
+// WithJSONLDType specifies the JSON-LD type (e.g., "Article", "BlogPosting").
+type WithJSONLDType string
+
+// WithDatePublished specifies the JSON-LD publish date.
+type WithDatePublished string
+
+// WithDateModified specifies the JSON-LD modification date.
+type WithDateModified string
+
+// WithAuthorURL specifies the JSON-LD author URL.
+type WithAuthorURL string
+
+// WithImages specifies the JSON-LD images.
+type WithImages []string

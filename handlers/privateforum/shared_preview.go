@@ -143,17 +143,52 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	}
 
 	var title, desc string
+	var jsonLdType, datePublished, dateModified, author, authorURL string
+	var images []string
 	for _, op := range ops {
 		switch v := op.(type) {
 		case share.WithTitle:
 			title = string(v)
 		case share.WithBody:
 			desc = string(v)
+		case share.WithJSONLDType:
+			jsonLdType = string(v)
+
+		case share.WithDatePublished:
+			datePublished = string(v)
+		case share.WithDateModified:
+			dateModified = string(v)
+		case share.WithAuthor:
+			author = string(v)
+		case share.WithAuthorURL:
+			authorURL = string(v)
+		case share.WithImages:
+			images = v
+		}
+	}
+
+	var jsonLdData common.JSONLDer
+	if jsonLdType != "" {
+		var authorObj common.JSONLDer
+		if author != "" || authorURL != "" {
+			authorObj = common.Person{Name: author, URL: authorURL}
+		}
+
+		switch jsonLdType {
+		case "Article":
+			jsonLdData = common.Article{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
+		case "NewsArticle":
+			jsonLdData = common.NewsArticle{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
+		case "BlogPosting":
+			jsonLdData = common.BlogPosting{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
+		case "DiscussionForumPosting":
+			jsonLdData = common.DiscussionForumPosting{Headline: title, Image: images, DatePublished: datePublished, DateModified: dateModified, Author: authorObj}
 		}
 	}
 
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       title,
+		JSONLD:      jsonLdData,
 		Description: desc,
 		Image:       imgURL,
 		ImageWidth:  cd.Config.OGImageWidth,

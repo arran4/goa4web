@@ -54,8 +54,20 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		pubTime = &t
 	}
 
+	author := common.Person{Name: writing.Writerusername.String}
+	jsonLdData := common.Article{
+		Headline:      ogTitle,
+		DatePublished: writing.Published.Time.Format("2006-01-02T15:04:05Z07:00"),
+		Author:        author,
+	}
+	if writing.LastIndex.Valid {
+		jsonLdData.DateModified = writing.LastIndex.Time.Format("2006-01-02T15:04:05Z07:00")
+	}
+
+
 	ogData := share.OpenGraphData{
 		Title:         ogTitle,
+		JSONLD:        jsonLdData,
 		Description:   ogDescription,
 		ImageURL:      template.URL(imgURL),
 		ContentURL:    template.URL(cd.AbsoluteURL(r.URL.RequestURI())),

@@ -78,3 +78,17 @@ func (og *OpenGraph) UpdatedTimeMeta() template.HTML {
 	}
 	return template.HTML(fmt.Sprintf(`<meta property="og:updated_time" content="%s" />`, og.UpdatedTime.Format("2006-01-02T15:04:05Z07:00")))
 }
+
+func (og *OpenGraph) JSONLDScript() template.HTML {
+	if og.JSONLD == nil {
+		return ""
+	}
+	// We marshal the JSONLD via the JSONLD type
+	if og.JSONLD != nil {
+		b, err := og.JSONLD.MarshalJSONLD()
+		if err == nil {
+			return template.HTML(fmt.Sprintf(`<script type="application/ld+json">%s</script>`, string(b)))
+		}
+	}
+	return ""
+}

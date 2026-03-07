@@ -49,8 +49,16 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), ogTitle, ogDescription, cd.ShareSignKey, false)
+	author := common.Person{Name: cd.SiteTitle}
+	jsonLdData := common.NewsArticle{
+		Headline:      ogTitle,
+		Author:        author,
+	}
+
+
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
+		JSONLD:      jsonLdData,
 		Description: ogDescription,
 		ImageURL:    template.URL(imageURL),
 		ContentURL:  template.URL(cd.AbsoluteURL(r.URL.RequestURI())),

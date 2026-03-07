@@ -2,7 +2,8 @@
 {{ if $.Message }}
     <p style="color: green; font-weight: bold;">{{$.Message}}</p>
 {{ end }}
-<h2>Are you sure you want to visit <a href="{{$.URL}}" target="_blank">{{$.URL}}</a>?</h2>
+<h2>Are you sure you want to visit:</h2>
+<p><a href="{{$.URL}}" target="_blank">{{$.URL}}</a></p>
 {{ $link := (cd).SelectedExternalLink }}
 {{ if $link }}
     <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; max-width: 600px;">
@@ -20,7 +21,10 @@
     </div>
 {{ end }}
 <p>
-    <button onclick="window.location.href='{{$.RedirectURL}}'">Goto Link</button>
+    <a href="{{$.RedirectURL}}" class="button">Goto Link</a>
+    {{ if $.BackURL }}
+    <a href="{{$.BackURL}}" class="button">Go Back</a>
+    {{ end }}
 </p>
 <p>
     <form action="" method="post">

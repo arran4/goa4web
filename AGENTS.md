@@ -76,7 +76,7 @@ A CLI tool is available to verify template rendering with mock data. This is use
 
 When working on HTML changes, use this tool with the `-listen` flag to start a local server and verify the visual output. You are encouraged to capture screenshots of the changes and share them in the chat to confirm the results.
 
-**Note:** Do not commit these verification screenshots to the repository unless they are useful for the README or a documentation gallery.
+**Note:** Do not commit these verification screenshots to the repository unless they are useful for the README or a documentation gallery. Please also do not commit generated binary files such as `server_bin`.
 
 Usage:
 ```bash

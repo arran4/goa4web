@@ -32,6 +32,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -195,6 +196,9 @@ type CoreData struct {
 	currentBlogID                    int32
 	currentBoardID                   int32
 	currentCommentID                 int32
+	currentExternalLinkURL           string
+	currentExternalLinkSig           string
+	currentExternalLinkUsedURL       bool
 	currentImagePostID               int32
 	currentLinkID                    int32
 	currentExternalLinkID            int32
@@ -2377,6 +2381,38 @@ func (cd *CoreData) SelectedExternalLink() *db.ExternalLink {
 	return cd.ExternalLink(cd.currentExternalLinkID)
 }
 
+// EnsureExternalLink safely inserts or retrieves an external link ID.
+func (cd *CoreData) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+	return cd.queries.EnsureExternalLink(ctx, url)
+}
+
+// GetExternalLink fetches an external link by URL.
+func (cd *CoreData) GetExternalLink(ctx context.Context, url string) (*db.ExternalLink, error) {
+	return cd.queries.GetExternalLink(ctx, url)
+}
+
+// UpdateExternalLinkMetadata saves fetched open graph metadata to the database and invalidates the cache.
+func (cd *CoreData) UpdateExternalLinkMetadata(ctx context.Context, params db.UpdateExternalLinkMetadataParams) error {
+	err := cd.queries.UpdateExternalLinkMetadata(ctx, params)
+	if err == nil {
+		cd.cache.mapMu.Lock()
+		delete(cd.cache.externalLinks, params.ID)
+		cd.cache.mapMu.Unlock()
+	}
+	return err
+}
+
+// UpdateExternalLinkImageCache saves the cached image path to the database and invalidates the cache.
+func (cd *CoreData) UpdateExternalLinkImageCache(ctx context.Context, params db.UpdateExternalLinkImageCacheParams) error {
+	err := cd.queries.UpdateExternalLinkImageCache(ctx, params)
+	if err == nil {
+		cd.cache.mapMu.Lock()
+		delete(cd.cache.externalLinks, params.ID)
+		cd.cache.mapMu.Unlock()
+	}
+	return err
+}
+
 // SelectedBoardID returns the board ID extracted from the request.
 func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }
 
@@ -3334,4 +3370,86 @@ func cleanSignedParam(urlStr string) string {
 		return u.String()
 	}
 	return urlStr
+}
+
+// ResolveExternalLink extracts 'u' or 'id' and 'sig' from the request, verifies the signature,
+// updates CoreData state and returns the target URL, the external link database ID, a boolean indicating if 'u' was used, and any error.
+func (cd *CoreData) ResolveExternalLink(r *http.Request) (string, int32, *db.ExternalLink, bool, error) {
+	if cd.LinkSignKey == "" {
+		return "", 0, nil, false, fmt.Errorf("invalid link config")
+	}
+
+	rawURL := r.FormValue("u")
+	idStr := r.FormValue("id")
+	sig := r.FormValue("sig")
+
+	cd.currentExternalLinkSig = sig
+
+	var linkID int32
+	var existingLink *db.ExternalLink
+	usedURL := false
+
+	switch {
+	case rawURL != "":
+		data := "link:" + rawURL
+		if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()); err != nil {
+			return "", 0, nil, false, fmt.Errorf("invalid signature: %w", err)
+		}
+		usedURL = true
+		if link, err := cd.GetExternalLink(cd.ctx, rawURL); err == nil && link != nil {
+			linkID = link.ID
+			existingLink = link
+		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("load external link by url: %v", err)
+		}
+	case idStr != "":
+		id64, err := strconv.ParseInt(idStr, 10, 32)
+		data := "link:" + idStr
+		if err != nil || sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()) != nil {
+			return "", 0, nil, false, fmt.Errorf("invalid signature")
+		}
+		linkID = int32(id64)
+		if link, err := cd.queries.GetExternalLinkByID(cd.ctx, linkID); err == nil && link != nil {
+			existingLink = link
+			rawURL = link.Url
+		}
+	default:
+		return "", 0, nil, false, fmt.Errorf("missing u or id")
+	}
+
+	if rawURL == "" {
+		return "", 0, nil, false, fmt.Errorf("no url provided")
+	}
+
+	cd.currentExternalLinkURL = rawURL
+	cd.currentExternalLinkUsedURL = usedURL
+	if linkID != 0 {
+		cd.SetCurrentExternalLinkID(linkID)
+	}
+
+	return rawURL, linkID, existingLink, usedURL, nil
+}
+
+// ExternalLinkTargetURL returns the target URL extracted from the request.
+func (cd *CoreData) ExternalLinkTargetURL() string {
+	return cd.currentExternalLinkURL
+}
+
+// ExternalLinkRedirectURL computes the URL to perform the actual redirect (go=1).
+func (cd *CoreData) ExternalLinkRedirectURL() string {
+	linkParam, linkValue := cd.externalLinkParams()
+	return fmt.Sprintf("/goto?%s=%s&sig=%s&go=1", linkParam, linkValue, cd.currentExternalLinkSig)
+}
+
+// ExternalLinkReloadURL computes the URL to reload the OpenGraph data.
+func (cd *CoreData) ExternalLinkReloadURL() string {
+	linkParam, linkValue := cd.externalLinkParams()
+	return fmt.Sprintf("/goto?%s=%s&sig=%s", linkParam, linkValue, cd.currentExternalLinkSig)
+}
+
+func (cd *CoreData) externalLinkParams() (string, string) {
+	if cd.currentExternalLinkUsedURL {
+		return "u", url.QueryEscape(cd.currentExternalLinkURL)
+	}
+	return "id", fmt.Sprintf("%d", cd.currentExternalLinkID)
 }

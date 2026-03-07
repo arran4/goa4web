@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/opengraph"
-	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -27,41 +26,10 @@ var _ tasks.Task = (*ReloadExternalLinkTask)(nil)
 
 func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd.LinkSignKey == "" {
-		return fmt.Errorf("invalid link config")
-	}
 
-	u := r.FormValue("u")
-	id := r.FormValue("id")
-	sig := r.FormValue("sig")
-
-	data := ""
-	if u != "" {
-		data = "link:" + u
-	} else if id != "" {
-		data = "link:" + id
-	} else {
-		return fmt.Errorf("missing u or id")
-	}
-
-	if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()); err != nil {
-		return fmt.Errorf("invalid signature: %w", handlers.ErrForbidden)
-	}
-
-	rawURL := u
-	if id != "" {
-		// If ID is provided, we should look it up to get the URL
-		lid := int32(0)
-		fmt.Sscan(id, &lid)
-		if lid != 0 {
-			if l, err := cd.Queries().GetExternalLinkByID(r.Context(), lid); err == nil {
-				rawURL = l.Url
-			}
-		}
-	}
-
-	if rawURL == "" {
-		return fmt.Errorf("no url provided")
+	rawURL, _, _, _, err := cd.ResolveExternalLink(r)
+	if err != nil {
+		return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
 	}
 
 	// Spawn a goroutine to fetch OpenGraph data in the background

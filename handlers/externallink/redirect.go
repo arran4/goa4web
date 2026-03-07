@@ -2,70 +2,32 @@ package externallink
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/opengraph"
-	"github.com/arran4/goa4web/internal/sign"
 )
 
 // RedirectHandler shows a confirmation page before leaving the site or
 // performs the redirect when the go parameter is present.
 func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd.LinkSignKey == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
-		return
-	}
-	idStr := r.URL.Query().Get("id")
-	rawURL := r.URL.Query().Get("u")
-	sig := r.URL.Query().Get("sig")
-	var linkID int32
-	usedURL := false
-	var existingLink *db.ExternalLink
 
-	switch {
-	case rawURL != "":
-		data := "link:" + rawURL
-		if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
-			return
-		}
-		usedURL = true
-		if link, err := cd.GetExternalLink(r.Context(), rawURL); err == nil && link != nil {
-			linkID = link.ID
-			existingLink = link
-		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			log.Printf("load external link by url: %v", err)
-		}
-	case idStr != "":
-		id64, err := strconv.ParseInt(idStr, 10, 32)
-		data := "link:" + idStr
-		if err != nil || sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()) != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
-			return
-		}
-		linkID = int32(id64)
-		if link, err := cd.Queries().GetExternalLinkByID(r.Context(), linkID); err == nil && link != nil {
-			existingLink = link
-			rawURL = link.Url
-		}
-	default:
+	rawURL, linkID, existingLink, usedURL, err := cd.ResolveExternalLink(r)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("invalid link"))
 		return
 	}
+
+	idStr := r.URL.Query().Get("id")
+	sig := r.URL.Query().Get("sig")
 
 	if r.URL.Query().Get("go") != "" {
 		cd.RegisterExternalLinkClick(rawURL)

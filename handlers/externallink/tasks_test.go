@@ -144,8 +144,8 @@ func TestReloadExternalLinkTask(t *testing.T) {
 			rec := httptest.NewRecorder()
 
 			res := reloadExternalLinkTask.Action(rec, req)
-			if err, ok := res.(error); !ok || err.Error() != "invalid link config" {
-				t.Errorf("Expected 'invalid link config', got %v", res)
+			if err, ok := res.(error); !ok || err.Error() != "invalid link: Forbidden" {
+				t.Errorf("Expected 'invalid link: Forbidden', got %v", res)
 			}
 		})
 	})

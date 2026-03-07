@@ -32,6 +32,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
+	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -3365,4 +3366,54 @@ func cleanSignedParam(urlStr string) string {
 		return u.String()
 	}
 	return urlStr
+}
+
+// ResolveExternalLink extracts 'u' or 'id' and 'sig' from the request, verifies the signature,
+// and returns the target URL, the external link database ID, a boolean indicating if 'u' was used, and any error.
+func (cd *CoreData) ResolveExternalLink(r *http.Request) (string, int32, *db.ExternalLink, bool, error) {
+	if cd.LinkSignKey == "" {
+		return "", 0, nil, false, fmt.Errorf("invalid link config")
+	}
+
+	rawURL := r.FormValue("u")
+	idStr := r.FormValue("id")
+	sig := r.FormValue("sig")
+
+	var linkID int32
+	var existingLink *db.ExternalLink
+	usedURL := false
+
+	switch {
+	case rawURL != "":
+		data := "link:" + rawURL
+		if err := sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()); err != nil {
+			return "", 0, nil, false, fmt.Errorf("invalid signature: %w", err)
+		}
+		usedURL = true
+		if link, err := cd.GetExternalLink(cd.ctx, rawURL); err == nil && link != nil {
+			linkID = link.ID
+			existingLink = link
+		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("load external link by url: %v", err)
+		}
+	case idStr != "":
+		id64, err := strconv.ParseInt(idStr, 10, 32)
+		data := "link:" + idStr
+		if err != nil || sign.Verify(data, sig, cd.LinkSignKey, sign.WithOutNonce()) != nil {
+			return "", 0, nil, false, fmt.Errorf("invalid signature")
+		}
+		linkID = int32(id64)
+		if link, err := cd.queries.GetExternalLinkByID(cd.ctx, linkID); err == nil && link != nil {
+			existingLink = link
+			rawURL = link.Url
+		}
+	default:
+		return "", 0, nil, false, fmt.Errorf("missing u or id")
+	}
+
+	if rawURL == "" {
+		return "", 0, nil, false, fmt.Errorf("no url provided")
+	}
+
+	return rawURL, linkID, existingLink, usedURL, nil
 }

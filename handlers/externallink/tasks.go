@@ -84,14 +84,14 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 		}
 
-		// Update DB
-		res, err := cd.Queries().CreateExternalLink(bgCtx, rawURL)
+		// Update DB using EnsureExternalLink to handle duplicates properly
+		res, err := cd.Queries().EnsureExternalLink(bgCtx, rawURL)
 		var lid int32
 		if err == nil {
 			id, _ := res.LastInsertId()
 			lid = int32(id)
 		} else {
-			// Try to find existing
+			// Fallback to fetch existing if EnsureExternalLink fails for any reason
 			l, err := cd.Queries().GetExternalLink(bgCtx, rawURL)
 			if err == nil {
 				lid = l.ID

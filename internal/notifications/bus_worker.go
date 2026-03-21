@@ -463,13 +463,16 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			stats.IncrementAutoSubscribePreferenceFailures()
-			return nil
+			// Honor the database default of true for auto_subscribe_replies
+			auto = true
+		} else {
+			return fmt.Errorf("get preference by user_id: %w", err)
 		}
-		return fmt.Errorf("get preference by user_id: %w", err)
-	}
-	auto = pref.AutoSubscribeReplies
-	if pref.Emailforumupdates.Valid {
-		email = pref.Emailforumupdates.Bool
+	} else {
+		auto = pref.AutoSubscribeReplies
+		if pref.Emailforumupdates.Valid {
+			email = pref.Emailforumupdates.Bool
+		}
 	}
 	if auto {
 		task, path, err := tp.AutoSubscribePath(evt)

@@ -1,0 +1,23 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>404 - Page Not Found</h1>
+if $.Error {
+
+<p>{ data.Error }</p>
+}
+
+if $.NotFoundLink {
+
+<p><a href="{ data.NotFoundLink.URL }">{ data.NotFoundLink.Text }</a></p>
+}
+
+if $.BackURL {
+
+<p><a href="{ data.BackURL }">Go Back</a></p>
+}
+
+@Tail(cd, $)

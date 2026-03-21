@@ -1,0 +1,14 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ PostImage(cd *common.CoreData, data any) {
+
+        <span class="section-title">Post image</span>:<br>
+                <form method="post" enctype="multipart/form-data">
+        { csrfField }
+                        Image file: <input type="file" name="image"><br>
+                        About the image: <textarea name="text" cols="40" rows="5"></textarea><br>
+                        <input type="submit" name="task" value="Upload image">
+                </form>
+}

@@ -1,0 +1,30 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<ul>
+    <li><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }">Dashboard</a></li>
+    <li><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }/images">Images</a></li>
+    <li><a href="/imagebbs/board/{ data.Board.Idimageboard }">Public View</a></li>
+</ul>
+<form method="post" action="/admin/imagebbs/board/{ data.Board.Idimageboard }/edit">
+    { csrfField }
+    Name: <input name="name" value="{ data.Board.Title.String }"><br>
+    Description: <textarea name="desc" cols="40" rows="5">{ data.Board.Description.String }</textarea><br>
+    Parent Board: <select name="pbid" value="{ data.Board.ImageboardIdimageboard.Int32 }"><option value="0">None</option>if .Boards {
+for _, item := range .Boards {
+<option value="{ data.Idimageboard }" if eq $.Board.ImageboardIdimageboard.Int32 .Idimageboard {
+selected}
+>{ data.Title.String }</option>}
+}
+</select><br>
+    <input type="submit" name="task" value="Modify board">
+</form>
+
+<form method="post" action="/admin/imagebbs/board/{ data.Board.Idimageboard }/delete" onsubmit="return confirm('Delete board?');">
+    { csrfField }
+    <input type="submit" name="task" value="Delete board">
+</form>
+@Tail(cd, $)

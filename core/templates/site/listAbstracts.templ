@@ -1,0 +1,58 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ ListAbstracts(cd *common.CoreData, data any) {
+
+    if cd.HasContentWriterRole {
+
+        [<a href="/writings/category/{ data.CategoryId }/add">Write writing here.</a>]<br>
+    }
+
+    { abstracts := cd.SelectedCategoryPublicWritings data.CategoryId data.Request }
+
+    if gt (len $abstracts) 0 {
+
+        <span class="section-title">Writing abstracts:</span><br>
+        <section class="link-list">
+        for _, item := range $abstracts {
+
+            { title := data.Title.String | a4code2html }
+
+            { username := data.Username.String }
+
+            { published := cd.LocalTime data.Published.Time }
+
+            { abstract := data.Abstract.String | a4code2html }
+
+            { idwriting := data.Idwriting }
+
+            { private := data.Private.Bool }
+
+            { comments := data.Comments }
+
+            { labels := cd.WritingLabels idwriting data.UsersIdusers }
+
+            <article class="full-width link-item">
+                <header class="bg-muted link-header">{ title } By { username } on { published }
+                    if private {
+ - <i>Warning: Privileged information.</i>}
+
+                </header>
+                <div class="link-body">Abstract:<br>{ abstract }
+                    <br>-<br><a href="/writings/article/{ idwriting }">Read now</a> - { comments } comments exist.
+                    if labels {
+<span class="label-list">@TopicLabels(cd, $labels)
+</span>}
+
+                </div>
+            </article>
+        }
+
+        </section>
+    } else {
+
+        There are no writings.
+    }
+
+}

@@ -1,0 +1,113 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<p><a href="/admin/grant/add">Add grant</a></p>
+
+<form method="GET" action="/admin/grants">
+    <div class="row">
+        <div class="col-md-2">
+            <input type="text" name="user" class="form-control" placeholder="User" value="{ data.Filter.Username }">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="role" class="form-control" placeholder="Role" value="{ data.Filter.RoleName }">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="section" class="form-control" placeholder="Section" value="{ data.Filter.Section }">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="item" class="form-control" placeholder="Item" value="{ data.Filter.Item }">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="item_id" class="form-control" placeholder="Item ID" value="{ data.Filter.ItemID }">
+        </div>
+        <div class="col-md-1">
+            <select name="active" class="form-control">
+                <option value="">Status</option>
+                <option value="true" if eq .Filter.Active "true" {
+selected}
+>Active</option>
+                <option value="false" if eq .Filter.Active "false" {
+selected}
+>Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+    </div>
+</form>
+<br/>
+
+<table class="table table-bordered">
+    <tr>
+        <th><a href="?sort=user&dir=if eq .Filter.Sort "user" {
+if eq .Filter.Dir "asc" {
+desc} else {
+asc}
+} else {
+asc}
+&user={ data.Filter.Username }&role={ data.Filter.RoleName }&section={ data.Filter.Section }&item={ data.Filter.Item }&item_id={ data.Filter.ItemID }&active={ data.Filter.Active }">User</a></th>
+        <th><a href="?sort=role&dir=if eq .Filter.Sort "role" {
+if eq .Filter.Dir "asc" {
+desc} else {
+asc}
+} else {
+asc}
+&user={ data.Filter.Username }&role={ data.Filter.RoleName }&section={ data.Filter.Section }&item={ data.Filter.Item }&item_id={ data.Filter.ItemID }&active={ data.Filter.Active }">Role</a></th>
+        <th><a href="?sort=section&dir=if eq .Filter.Sort "section" {
+if eq .Filter.Dir "asc" {
+desc} else {
+asc}
+} else {
+asc}
+&user={ data.Filter.Username }&role={ data.Filter.RoleName }&section={ data.Filter.Section }&item={ data.Filter.Item }&item_id={ data.Filter.ItemID }&active={ data.Filter.Active }">Section</a></th>
+        <th><a href="?sort=item&dir=if eq .Filter.Sort "item" {
+if eq .Filter.Dir "asc" {
+desc} else {
+asc}
+} else {
+asc}
+&user={ data.Filter.Username }&role={ data.Filter.RoleName }&section={ data.Filter.Section }&item={ data.Filter.Item }&item_id={ data.Filter.ItemID }&active={ data.Filter.Active }">Item</a></th>
+        <th><a href="?sort=item_id&dir=if eq .Filter.Sort "item_id" {
+if eq .Filter.Dir "asc" {
+desc} else {
+asc}
+} else {
+asc}
+&user={ data.Filter.Username }&role={ data.Filter.RoleName }&section={ data.Filter.Section }&item={ data.Filter.Item }&item_id={ data.Filter.ItemID }&active={ data.Filter.Active }">Item ID</a></th>
+        <th>Actions</th>
+    </tr>
+    for _, item := range .Grants {
+
+    <tr>
+        <td>if .Grant.UserID.Valid {
+<a href="/admin/user/{ data.Grant.UserID.Int32 }">{ data.UserName } ({ data.Grant.UserID.Int32 })</a>} else if !.Grant.RoleID.Valid {
+<a href="/admin/grants/anyone">{ data.UserName }</a>}
+</td>
+        <td>if .Grant.RoleID.Valid {
+<a href="/admin/role/{ data.Grant.RoleID.Int32 }">{ data.RoleName } ({ data.Grant.RoleID.Int32 })</a>}
+</td>
+        <td>{ data.Grant.Section }</td>
+        <td>if .ItemLink {
+<a href="{ data.ItemLink }">{ data.Grant.Item.String }</a>} else {
+{ data.Grant.Item.String }}
+</td>
+        <td>if .Grant.ItemID.Valid {
+if .ItemLink {
+<a href="{ data.ItemLink }">{ data.Grant.ItemID.Int32 }</a>} else {
+{ data.Grant.ItemID.Int32 }}
+}
+</td>
+        <td>for _, item := range .Actions {
+<a href="/admin/grant/{ data.ID }" class="pillif !.Active {
+ inactive}
+">{ data.Name }</a>}
+</td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

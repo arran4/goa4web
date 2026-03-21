@@ -1,0 +1,19 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Forum thread { data.Thread.Idforumthread }</h2>
+<table class="table table-bordered">
+    <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
+    <tr>
+        <td>{ data.Thread.Idforumthread }</td>
+        <td>{ data.Thread.Comments.Int32 }</td>
+        <td>{ cd.LocalTime(data.Thread.Lastaddition.Time) }</td>
+        <td><a href="/forum/topic/{ data.Thread.ForumtopicIdforumtopic }/thread/{ data.Thread.Idforumthread }">View</a></td>
+    </tr>
+</table>
+<p><a href="/admin/forum/thread/{ data.Thread.Idforumthread }/delete">Delete thread</a></p>
+<p><a href="/admin/forum/threads">Back</a></p>
+@Tail(cd, $)

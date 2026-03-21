@@ -1,0 +1,50 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ TopicThreads(cd *common.CoreData, data any) {
+
+    { base := "/forum" }
+
+    if item := .BasePath; item != nil {
+{ base = . }
+}
+
+    <h2>Threads</h2>
+    <div class="thread-controls">
+        <input type="text" class="label-filter" placeholder="Filter by label...">
+        <div class="sort-buttons">
+            <span>Sort by:</span>
+            <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
+            <button class="sort-button" data-sort="creation" data-order="desc">Creation</button>
+            <button class="sort-button" data-sort="comments" data-order="desc">Comments</button>
+        </div>
+    </div>
+    <div class="thread-list">
+    for _, item := range .Threads {
+
+        <div class="thread" data-last-reply-time="{ data.Lastaddition.Time.Unix }" data-creation-time="{ data.Firstpostwritten.Time.Unix }" data-comments="{ data.Comments.Int32 }">
+            <div class="thread-meta thread-header">
+                First poster: <span class="poster-name first" if ne .Firstpostuserid.Int32 cd.UserID {
+style="font-weight: bold;"}
+>{ data.Firstpostusername.String }</span>
+                At <span class="post-time first">{ cd.LocalTime(data.Firstpostwritten.Time) }</span>
+            </div>
+            <div class="thread-content foldable">
+                { data.Firstposttext.String(|, a4code2html) }<br>
+            </div>
+            <div class="thread-meta">
+                Lastposter: <span class="poster-name last" if ne .Lastposterid.Int32 cd.UserID {
+style="font-weight: bold;"}
+>{ data.Lastposterusername.String }</span>
+                At <span class="post-time last">{ cd.LocalTime(data.Lastaddition.Time) }</span>
+                [<a href="{ base }/topic/{ data.ForumtopicIdforumtopic }/thread/{ data.Idforumthread }">
+                    { data.Comments.Int32 } comments.</a>]{ "(") }
+                @TopicLabels(cd, .Labels)
+
+            </div>
+        </div>
+    }
+
+    </div>
+}

@@ -1,0 +1,145 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+[<a href="/admin">Admin</a>]<br />
+<h1>Subscription Templates</h1>
+if cd.CurrentError {
+
+<p class="text-error">{ cd.CurrentError }</p>
+}
+
+
+<h2>Upload Template</h2>
+<form method="post" enctype="multipart/form-data">
+    { csrfField }
+    <div>
+        <label>
+            Template file
+            <input type="file" name="template_file">
+        </label>
+        if item := index .Upload.Errors "template_file"; item != nil {
+
+        <div class="text-error">{ data }</div>
+        }
+
+    </div>
+    <div>
+        <label>
+            Template name
+            <input type="text" name="template_name" value="{ data.Upload.TemplateName }">
+        </label>
+        if item := index .Upload.Errors "template_name"; item != nil {
+
+        <div class="text-error">{ data }</div>
+        }
+
+    </div>
+    <div>
+        <label>
+            Apply to role
+            <select name="role">
+                <option value="">Select role</option>
+                for _, item := range .Roles {
+
+                <option value="{ data.Name }">{ data.Name }</option>
+                }
+
+            </select>
+        </label>
+    </div>
+    if .Upload.Content {
+
+    <textarea name="template_content" hidden>{ data.Upload.Content }</textarea>
+    }
+
+    <button type="submit" name="preview" value="1">Preview</button>
+    <button type="submit" name="task" value="Apply Template">Apply Template</button>
+    if item := index .Upload.Errors "template_content"; item != nil {
+
+    <div class="text-error">{ data }</div>
+    }
+
+</form>
+
+if .Upload.Patterns {
+
+<h2>Uploaded Template Preview</h2>
+<p><strong>Template:</strong> { data.Upload.TemplateName }</p>
+<table class="table table-bordered">
+<thead>
+<tr><th>Method</th><th>Pattern</th></tr>
+</thead>
+<tbody>
+for _, item := range .Upload.Patterns {
+
+<tr>
+<td>{ data.Method }</td>
+<td style="word-wrap: break-word; word-break: break-all;">{ data.Pattern }</td>
+</tr>
+}
+
+</tbody>
+</table>
+}
+
+
+if item := .Templates; item != nil {
+
+<table class="table table-bordered">
+<tr><th>Template</th><th>Parsed Patterns (method + pattern)</th><th>Apply Template to Role</th></tr>
+for _, item := range . {
+
+<tr>
+    <td>{ data.Name }</td>
+    <td>
+        if .Patterns {
+
+        <table class="table table-bordered">
+        <thead>
+        <tr><th>Method</th><th>Pattern</th></tr>
+        </thead>
+        <tbody>
+        for _, item := range .Patterns {
+
+        <tr>
+        <td>{ data.Method }</td>
+        <td style="word-wrap: break-word; word-break: break-all;">{ data.Pattern }</td>
+        </tr>
+        }
+
+        </tbody>
+        </table>
+        } else {
+
+        <em>No patterns found.</em>
+        }
+
+    </td>
+    <td>
+        <form method="post">
+            { csrfField }
+            <input type="hidden" name="template" value="{ data.Name }">
+            <select name="role">
+                <option value="">Select role</option>
+                for _, item := range $.Roles {
+
+                <option value="{ data.Name }">{ data.Name }</option>
+                }
+
+            </select>
+            <input type="submit" name="task" value="Apply Template">
+        </form>
+    </td>
+</tr>
+}
+
+</table>
+} else {
+
+<p>No templates found.</p>
+}
+
+@Tail(cd, $)

@@ -1,0 +1,34 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+{ u := cd.CurrentProfileUser }
+
+<h2>Comments by { u.Username.String }</h2>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Date</th><th>Topic</th><th>Thread</th><th>Excerpt</th><th>Link</th></tr>
+    for _, item := range cd.AdminCommentsByUser $u.Idusers {
+
+    <tr>
+        <td><a href="/admin/comment/{ data.Idcomments }">{ data.Idcomments }</a></td>
+        <td>if .Written.Valid {
+{ cd.FormatLocalTimeIn(data.Written.Time, data.Timezone.String) }}
+</td>
+        <td>if .ForumtopicIdforumtopic.Valid {
+<a href="/forum/topic/{ data.ForumtopicIdforumtopic.Int32 }">{ topicTitleOrDefault(data.ForumtopicTitle.String) }</a>}
+</td>
+        <td><a href="/forum/topic/{ data.ForumtopicIdforumtopic.Int32 }/thread/{ data.ForumthreadID }">if .ThreadTitle.Valid {
+{ left(40, data.ThreadTitle.String) }} else {
+{ data.ForumthreadID }}
+</a></td>
+        <td>if .Text.Valid {
+{ left(40, data.Text.String) }}
+</td>
+        <td><a href="/forum/topic/{ data.ForumtopicIdforumtopic.Int32 }/thread/{ data.ForumthreadID }#c{ data.Idcomments }">View</a></td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

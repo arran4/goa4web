@@ -1,0 +1,13 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Mark_as_read_form(cd *common.CoreData, data any) {
+
+<form action="{ data.Action }" method="post" class="inline-form">
+    { csrfField }
+    <input type="hidden" name="task" value="Mark Thread Read"/>
+    <input type="hidden" name="back" value="{ data.Back }"/>
+    <button type="submit" class="link-button">{ data.Label }</button>
+</form><br>
+}

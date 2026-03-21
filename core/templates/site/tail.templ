@@ -1,0 +1,46 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Tail(cd *common.CoreData, data any) {
+
+    if cd.Marked "body-table-end" {
+
+            @Pagination(cd, .)
+
+            </main>
+        </div>
+        <div id="bottom"></div>
+        <hr>
+        <footer class="site-footer">
+            @Footer(cd, )
+
+        </footer>
+    }
+
+    if cd.Marked "bodyEnd" {
+
+        <div id="keyboard-shortcuts-overlay" class="shortcuts-overlay hidden">
+            <div class="shortcuts-modal">
+                <div class="shortcuts-header">
+                    <h2>Keyboard Shortcuts</h2>
+                    <button id="close-shortcuts" class="close-button">&times;</button>
+                </div>
+                <div class="shortcuts-tabs">
+                    <button class="tab-btn active" data-tab="global">Global</button>
+                    <button class="tab-btn" data-tab="forum">Forum</button>
+                    <button class="tab-btn" data-tab="editor">Editor</button>
+                </div>
+                @Keyboard_shortcuts(cd, )
+
+            </div>
+        </div>
+        </body>
+    }
+
+if cd.Marked "html-end" {
+
+</html>
+}
+
+}

@@ -1,0 +1,72 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Header(cd *common.CoreData, data any) {
+
+<header class="navbar">
+    <div class="navbar-left">
+        <label for="nav-toggle" class="hamburger" aria-label="Toggle navigation">
+            <span class="hamburger-icon" aria-hidden="true">&#9776;</span>
+            <span class="hamburger-text">Menu</span>
+        </label>
+        if cd.HasAdminRole {
+
+            if cd.AdminMode {
+
+                <a href="?">Disable admin mode</a>
+            } else {
+
+                <a href="?mode=admin">Enable admin mode</a>
+            }
+
+        }
+
+        { crumbs := cd.Breadcrumbs }
+
+        if crumbs {
+
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <ol>
+                    for _, item := range $crumbs {
+
+                        if .Link {
+
+                            <li><a href="{ data.Link }">{ data.Title }</a></li>
+                        } else {
+
+                            <li>{ data.Title }</li>
+                        }
+
+                    }
+
+                </ol>
+            </nav>
+        }
+
+    </div>
+    <div class="navbar-center">
+        <strong>
+           if cd.PageTitle {
+<a class="page-title-link" href=".">{ cd.PageTitle }</a> - }
+{ cd.SiteTitle }
+        </strong>
+    </div>
+    <div class="navbar-right user-links">
+        if cd.UserID {
+
+        if u := cd.CurrentUserLoaded; u != nil {
+if u {
+<span class="username">{ u.Username.String }</span>}
+}
+
+        <a href="/usr/logout" class="logout-link">Logout</a>
+        } else {
+
+            <a href="{ loginURL }">Login</a>
+            <a href="{ registerURL }">Register</a>
+        }
+
+    </div>
+</header>
+}

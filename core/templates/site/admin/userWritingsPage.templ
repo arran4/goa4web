@@ -1,0 +1,25 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Writings by { data.User.Username.String }</h2>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Title</th><th>Category</th><th>Date</th><th>Comments</th><th>Actions</th></tr>
+    for _, item := range .Writings {
+
+    <tr>
+        <td>{ data.Idwriting }</td>
+        <td>{ data.Title.String }</td>
+        <td><a href="/admin/writings/categories/category/{ data.WritingCategoryID }">{ data.WritingCategoryID }</a></td>
+        <td>if .Published.Valid {
+{ cd.FormatLocalTime(data.Published.Time) }}
+</td>
+        <td>{ data.Comments }</td>
+        <td><a href="/writings/article/{ data.Idwriting }">View</a> | <a href="/writings/article/{ data.Idwriting }/edit">Edit</a></td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

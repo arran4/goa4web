@@ -1,0 +1,31 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+    @Head(cd, $)
+
+    { allFAQs := (cd).AllAnsweredFAQ }
+
+    if allFAQs {
+
+        for index, categoryFAQs := range $allFAQs {
+
+            <section class="faq-section">
+                <h2>Section: { categoryFAQs.Category.Name.String }</h2>
+                for index, faq := range $categoryFAQs.FAQs {
+
+                    <div class="faq-item">
+                        <h3 class="faq-question">Q: { faq.Question(|, a4code2html) }</h3>
+                        <div class="faq-answer">A: { faq.Answer(|, a4code2html) }</div>
+                    </div>
+                }
+
+            </section>
+        }
+
+    } else {
+
+        <p>There are no questions at the moment.</p>
+    }
+
+    @Tail(cd, $)

@@ -1,9 +1,0 @@
-{{ define "userPanel" }}
-    <hr>
-    {{ if cd.UserID }}
-        <a href="/usr">Preferences</a><br>
-        <a href="/usr/notifications" id="notif-index">Notifications{{ if gt cd.NotificationCount 0 }} ({{ cd.NotificationCount }}){{ end }}</a><br>
-        <a href="/usr/logout">Logout</a><br>
-    {{ end }}
-    <hr>
-{{ end }}

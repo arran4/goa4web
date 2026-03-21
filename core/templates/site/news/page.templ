@@ -1,0 +1,16 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    for _, item := range cd.LatestNews {
+
+        @NewsPost(cd, .)
+
+    } else {
+
+        <p>There is no news.</p>
+    }
+
+@Tail(cd, $)

@@ -1,0 +1,32 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/languages">(This page/Refresh)</a>]</div>
+<h2>Languages</h2>
+<div style="margin-bottom: 20px;">
+    <p>Manage supported languages and translations.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Add:</strong> Create a new language entry.</li>
+        <li><strong>Edit:</strong> Update language details and translations.</li>
+    </ul>
+</div>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+    </tr>
+    for _, item := range cd.Languages {
+
+    <tr>
+        <td>{ data.ID }</td>
+        <td><a href="/admin/languages/language/{ data.ID }">{ data.Nameof.String }</a></td>
+    </tr>
+    }
+
+</table>
+<p><a href="/admin/languages/new">Create Language</a></p>
+@Tail(cd, $)

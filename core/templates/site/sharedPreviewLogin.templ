@@ -1,0 +1,12 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <h1>Login Required</h1>
+    <p><strong>{ cd.OpenGraph.Title }</strong></p>
+    <p>{ cd.OpenGraph.Description }</p>
+    <p>Please login to view this content.</p>
+    <a class="button" href="/login?redirect={ data.RedirectURL }">Login</a>
+@Tail(cd, $)

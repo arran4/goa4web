@@ -1,0 +1,25 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Your Uploaded Images</h2>
+if .Images {
+
+<div class="gallery">
+    for _, item := range .Images {
+
+    <div class="notification" class="inline-block-margin">
+        <a href="{ data.Full }" target="_blank"><img src="{ data.Thumb }" alt="image"></a><br>
+        <code>{ data.A4Code }</code>
+    </div>
+    }
+
+    </div>
+} else {
+
+<p>No images uploaded.</p>
+}
+
+@Tail(cd, $)

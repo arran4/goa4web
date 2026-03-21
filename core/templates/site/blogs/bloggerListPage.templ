@@ -1,0 +1,43 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <form method="get">
+        <input name="search" value="{ data.Search }">
+        <input type="submit" name="task" value="Search">
+    </form>
+    if .Search {
+
+        if .Rows {
+
+            <h2 class="blog-title">Search results for "{ data.Search }".</h2>
+            for _, item := range .Rows {
+
+                Blogger: <a href="/blogs/blogger/{ data.Username.String }">{ data.Username.String }</a> has { data.Count } blogs.<br>
+            }
+
+        } else {
+
+            No bloggers found for "{ data.Search }".
+        }
+
+    } else {
+
+        if .Rows {
+
+            <h2 class="blog-title">All bloggers.</h2>
+            for _, item := range .Rows {
+
+                Blogger: <a href="/blogs/blogger/{ data.Username.String }">{ data.Username.String }</a> has { data.Count } blogs.<br>
+            }
+
+        } else {
+
+            No bloggers here.
+        }
+
+    }
+
+@Tail(cd, $)

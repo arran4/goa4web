@@ -21,6 +21,7 @@ require (
 )
 
 require (
+	github.com/a-h/templ v0.3.1001
 	github.com/arran4/go-be-lazy v0.1.0
 	github.com/arran4/go-pattern v0.0.6
 	github.com/arran4/golang-wordwrap v0.0.4

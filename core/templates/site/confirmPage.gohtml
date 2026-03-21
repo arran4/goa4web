@@ -1,8 +1,0 @@
-{{ template "head" $ }}
-<p>{{ .Message }}</p>
-<form method="post">
-    {{ csrfField }}
-    <input type="submit" name="task" value="{{ .ConfirmLabel }}">
-</form>
-<a href="{{ .Back }}">Cancel</a>
-{{ template "tail" $ }}

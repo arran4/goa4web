@@ -1,0 +1,81 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Add Grant to Role { data.Role.Name }</h2>
+if eq .Section "" {
+
+<form method="get">
+    <label>Section:
+        <select name="section">
+            for _, item := range .Sections {
+
+            <option value="{ data }">{ data }</option>
+            }
+
+        </select>
+    </label>
+    <input type="submit" value="Next">
+</form>
+} else {
+
+<form method="get">
+    <input type="hidden" name="section" value="{ data.Section }">
+    <label>Item:
+        <select name="item">
+            for _, item := range .Items {
+
+            <option value="{ data }"if eq $.Item . {
+ selected}
+>{ data }</option>
+            }
+
+        </select>
+    </label>
+    <input type="submit" value="Change">
+</form>
+<form method="post" action="/admin/role/{ data.Role.ID }/grant">
+    { csrfField }
+    <input type="hidden" name="task" value="Create grant">
+    <input type="hidden" name="section" value="{ data.Section }">
+    <input type="hidden" name="item" value="{ data.Item }">
+    <label>Item ({ data.Item }):
+        if .ItemOptions {
+
+        <input list="itemOptions" name="item_id"if .RequireItemID {
+ required}
+>
+        <datalist id="itemOptions">
+            if !.RequireItemID {
+<option value="">All</option>}
+
+            for _, item := range .ItemOptions {
+
+            <option value="{ data.ID }">{ data.Label }</option>
+            }
+
+        </datalist>
+        } else {
+
+        <input type="text" name="item_id"if .RequireItemID {
+ required}
+>
+        }
+
+    </label>
+    <fieldset>
+        <legend>Actions</legend>
+        for _, item := range .Actions {
+
+        <label><input type="checkbox" name="action" value="{ data }"> { data }</label><br>
+        }
+
+    </fieldset>
+    <input type="submit" value="Add">
+</form>
+}
+
+<p><a href="/admin/role/{ data.Role.ID }">Back</a></p>
+@Tail(cd, $)

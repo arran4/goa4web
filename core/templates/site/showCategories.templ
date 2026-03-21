@@ -1,0 +1,18 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ GetAllLinkerCategories(cd *common.CoreData, data any) {
+
+    Please select a category:<br>
+    <a href="/linker">All</a><br>
+    for _, item := range cd.LinkerCategoriesForUser {
+
+        <a href="/linker/category/{ data.ID }">{ data.Title.String }</a><br>
+    } else {
+
+        <em>No categories</em><br>
+    }
+
+    <br>
+}

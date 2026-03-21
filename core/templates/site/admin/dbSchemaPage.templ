@@ -1,0 +1,11 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Database Schema</h1>
+<pre style="background: #f4f4f4; padding: 1em; overflow-x: auto;">
+{ data.Schema }
+</pre>
+@Tail(cd, $)

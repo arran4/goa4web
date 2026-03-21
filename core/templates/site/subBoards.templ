@@ -1,0 +1,30 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ SubBoards(cd *common.CoreData, data any) {
+
+    { cd := cd }
+
+    { boards := cd.SubImageBoards cd.SelectedBoardID }
+
+    if boards {
+
+        <span class="section-title">if gt ($cd.SelectedBoardID) 0 {
+Sub-}
+Boards:</span><br>
+        <table>
+            for _, item := range $boards {
+
+                <tr>
+                    <th><a href="/imagebbs/board/{ data.Idimageboard }">{ data.Title.String }</a>
+                    <td>{ data.Description.String }
+            }
+
+        </table><br>
+    } else {
+
+        There isn't anything to see.
+    }
+
+}

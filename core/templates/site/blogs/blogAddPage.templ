@@ -1,0 +1,20 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <form method="post" action="">
+        { csrfField }
+        <!-- Title <input name="title" value=""><br> -->
+        Blog:<br>
+        <textarea id="text" name="text" cols=40 rows=20></textarea><br>
+        @LanguageCombobox(cd, )
+
+        <input type="submit" name="task" value="{ data.Mode }">
+        <button type="button" class="preview-a4code" data-target="text" data-preview-url="/blogs/preview">Preview</button>
+        <div class="form-group hidden" id="preview-container">
+            <div id="preview-content" class="preview-box"></div>
+        </div>
+    </form>
+@Tail(cd, $)

@@ -1,0 +1,32 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Edit Category <a href="/admin/writings/categories/category/{ data.Category.Idwritingcategory }">{ data.Category.Idwritingcategory }</a></h2>
+<form method="post" action="/admin/writings/categories/category/{ data.Category.Idwritingcategory }/edit">
+{ csrfField }
+    <input type="hidden" name="cid" value="{ data.Category.Idwritingcategory }">
+    <table>
+        <tr>
+            <th>Parent</th>
+            <td><select name="pcid"><option value="0">None</option>for _, item := range .Categories {
+<option value="{ data.Idwritingcategory }" if eq $.Category.WritingCategoryID.Int32 .Idwritingcategory {
+selected}
+>{ data.Title.String }</option>}
+</select></td>
+        </tr>
+        <tr>
+            <th>Title</th>
+            <td><input name="name" value="{ data.Category.Title.String }"></td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td><textarea name="desc">{ data.Category.Description.String }</textarea></td>
+        </tr>
+    </table>
+    <input type="submit" name="task" value="writing category change">
+</form>
+<p><a href="/admin/writings/categories/category/{ data.Category.Idwritingcategory }">Back to category</a></p>
+@Tail(cd, $)

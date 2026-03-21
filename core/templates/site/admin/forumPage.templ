@@ -1,0 +1,25 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/forum">(This page/Refresh)</a>]</div>
+    <h2>Forum Management</h2>
+    <div style="margin-bottom: 20px;">
+        <p>Manage forum categories and structure.</p>
+    </div>
+            <strong>What shall we do?</strong><br>
+                        View something:<br>
+                        <a href="/admin/forum/list">Complete word list</a><br>
+                        <a href="/admin/forum/flagged">Flagged posts</a><br>
+                        <a href="/admin/forum/logs">Moderator logs</a><br>
+            <br>
+                        Perform something:<br>
+            <form method="post">
+        { csrfField }
+                <input type="submit" name="task" value="Remake statistic information on forumthread"><br>
+                <input type="submit" name="task" value="Remake statistic information on forumtopic"><br>
+                <!-- <input type="submit" name="task" value="Remake writing search"> -->
+            </form>
+@Tail(cd, $)

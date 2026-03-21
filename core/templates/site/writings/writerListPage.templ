@@ -1,0 +1,24 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <form method="get">
+        <input name="search" value="{ data.Search }">
+        <input type="submit" name="task" value="Search">
+    </form>
+    if .Rows {
+
+        <span class="text-xlarge">All writers.</span><br>
+        for _, item := range .Rows {
+
+            Writer: <a href="/writings/writer/{ data.Username.String }">{ data.Username.String }</a> has { data.Count } articles.<br>
+        }
+
+    } else {
+
+        No writers here.
+    }
+
+@Tail(cd, $)

@@ -1,0 +1,40 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Writings Admin</h1>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Email</th>
+        <th>Roles</th>
+    </tr>
+    for _, item := range .Users {
+
+    <tr>
+        <td>{ data.ID }</td>
+        <td>{ data.Username.String }</td>
+        <td>if .Email {
+for i, e := range .Email {
+if i {
+, }
+{ e }}
+} else {
+None}
+</td>
+        <td>if .Roles {
+for i, r := range .Roles {
+if i {
+, }
+{ r.Name }}
+} else {
+None}
+</td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

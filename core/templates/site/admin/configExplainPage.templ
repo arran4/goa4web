@@ -1,0 +1,64 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<p>Configuration values resolved at runtime.</p>
+<p>Config file: { data.ConfigFile }</p>
+<label for="config-filter">Filter configuration keys</label>
+<input id="config-filter" type="search" placeholder="Search by env or flag name" aria-label="Filter configuration keys">
+<table class="table table-bordered" id="config-explain-table">
+    <tr>
+        <th>Env</th>
+        <th>Flag</th>
+        <th>Value</th>
+        <th>Source</th>
+        <th>Breakdown</th>
+    </tr>
+    for _, item := range .Options {
+
+        <tr data-search="{ data.Env } { data.Name }">
+            <td>{ data.Env }</td>
+            <td>{ data.Name }</td>
+            <td>{ data.FinalValue }</td>
+            <td>{ data.SourceLabel }</td>
+            <td>
+                for _, item := range .Sources {
+
+                    <span title="{ data.Detail }if .Value {
+ (value: { data.Value })}
+">{ data.Label }if .Active {
+*}
+</span>
+                }
+
+            </td>
+        </tr>
+    }
+
+</table>
+<p><small>* Active source</small></p>
+<script>
+    (function () {
+        var input = document.getElementById('config-filter');
+        var table = document.getElementById('config-explain-table');
+        if (!input || !table) {
+            return;
+        }
+        var rows = Array.prototype.slice.call(table.querySelectorAll('tr[data-search]'));
+        var filterRows = function () {
+            var query = input.value.toLowerCase();
+            rows.forEach(function (row) {
+                var haystack = row.getAttribute('data-search');
+                if (!haystack) {
+                    row.style.display = '';
+                    return;
+                }
+                row.style.display = haystack.toLowerCase().indexOf(query) === -1 ? 'none' : '';
+            });
+        };
+        input.addEventListener('input', filterRows);
+    })();
+</script>
+@Tail(cd, $)

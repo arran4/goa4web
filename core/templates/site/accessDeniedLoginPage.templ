@@ -1,0 +1,31 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <p class="text-error">{ data.Error }</p>
+    Login:<br>
+    <form method="post" action="/login">
+        { csrfField }
+        if .BackURL {
+
+        <input type="hidden" name="back" value="{ data.BackURL }">
+        }
+
+        if .Method {
+
+        <input type="hidden" name="method" value="{ data.Method }">
+        }
+
+        if .Data {
+
+        <input type="hidden" name="data" value="{ data.Data }">
+        }
+
+        Username: <input name="username"><br>
+        Password: <input name="password" type="password"><br>
+        <input type="submit" name="task" value="Login">
+        <br><a href="/forgot">Forgot password?</a>
+    </form>
+@Tail(cd, $)

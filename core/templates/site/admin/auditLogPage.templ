@@ -1,0 +1,86 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/audit">(This page/Refresh)</a>]</div>
+<h2>Audit Log</h2>
+<div style="margin-bottom: 20px;">
+    <p>Review system-wide audit logs for security and tracking.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Filter:</strong> Search logs by user, action, or date range.</li>
+    </ul>
+</div>
+<div class="card mb-3">
+    <div class="card-header">Filters</div>
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label" for="audit-user">User</label>
+                <input class="form-control" id="audit-user" name="user" value="{ data.User }">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="audit-action">Action</label>
+                <input class="form-control" id="audit-action" name="action" value="{ data.Action }">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="audit-section">Section</label>
+                <input class="form-control" id="audit-section" name="section" value="{ data.Section }">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="audit-start">Start</label>
+                <input class="form-control" id="audit-start" name="start" type="datetime-local" value="{ data.StartTime }">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="audit-end">End</label>
+                <input class="form-control" id="audit-end" name="end" type="datetime-local" value="{ data.EndTime }">
+            </div>
+            <div class="col-12 d-flex align-items-end gap-2">
+                <button class="btn btn-primary" type="submit">Apply filters</button>
+                <a class="btn btn-outline-secondary" href="/admin/audit">Reset</a>
+                <a class="btn btn-outline-success" href="{ data.ExportLink }">Export CSV</a>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-header">Action Summary</div>
+    <div class="card-body">
+        if .Summary {
+
+        <div class="row g-2">
+            for _, item := range .Summary {
+
+            <div class="col-md-4 col-lg-3">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold">{ data.Action }</div>
+                    <div class="text-muted">Total: { data.Total }</div>
+                </div>
+            </div>
+            }
+
+        </div>
+        } else {
+
+        <div class="text-muted">No actions match the current filters.</div>
+        }
+
+    </div>
+</div>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>User</th><th>Action</th><th>Path</th><th>Time</th></tr>
+    for _, item := range .Rows {
+
+    <tr>
+        <td>{ data.ID }</td>
+        <td>{ data.Username.String }</td>
+        <td>{ data.Action }</td>
+        <td>{ data.Path }</td>
+        <td>{ cd.FormatLocalTime(data.CreatedAt) }</td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

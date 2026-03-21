@@ -1,0 +1,42 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<table class="table table-bordered">
+    <tr><th>ID<th>Title<th>Threads<th>Dashboard<th>Edit</tr>
+    for _, item := range .Boards {
+
+    <tr>
+        <td>{ data.Idimageboard }</td>
+        <td>{ data.Title.String }</td>
+        <td>{ data.Threads }</td>
+        <td><a href="/admin/imagebbs/board/{ data.Idimageboard }">View</a></td>
+        <td><a href="/admin/imagebbs/board/{ data.Idimageboard }/edit">Edit</a></td>
+    </tr>
+    }
+
+</table>
+<h2>New board:</h2>
+<form method="post" action="/admin/imagebbs/boards/new">
+    { csrfField }
+    Name: <input name="name" value=""><br>
+    Description: <textarea name="desc" cols="40" rows="5"></textarea><br>
+    Parent Board: <select name="pbid"><option value="0">None</option>for _, item := range .AllBoards {
+<option value="{ data.Idimageboard }">{ data.Title.String }</option>}
+</select><br>
+    <input type="submit" name="task" value="New board">
+</form>
+<div>
+    if .PrevPage {
+<a href="?page={ data.PrevPage }">Prev</a>}
+
+    if and .PrevPage .NextPage {
+ | }
+
+    if .NextPage {
+<a href="?page={ data.NextPage }">Next</a>}
+
+</div>
+@Tail(cd, $)

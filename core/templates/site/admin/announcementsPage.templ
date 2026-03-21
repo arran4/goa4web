@@ -1,0 +1,35 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/announcements">(This page/Refresh)</a>]</div>
+<form method="post">
+    { csrfField }
+    News ID: <input type="text" name="news_id" value="{ data.NewsID }">
+    <input type="submit" name="task" value="Add">
+</form>
+<form method="post">
+    { csrfField }
+<table class="table table-bordered">
+    <tr><th>Select</th><th>ID</th><th>News ID</th><th>Created</th><th>Active</th><th>News</th></tr>
+    for _, item := range .Announcements {
+
+    <tr>
+        <td><input type="checkbox" name="id" value="{ data.ID }"></td>
+        <td>{ data.ID }</td>
+        <td>{ data.SiteNewsID }</td>
+        <td>{ cd.FormatLocalTime(data.CreatedAt) }</td>
+        <td>if .Active {
+yes} else {
+no}
+</td>
+        <td>{ data.News.String }</td>
+    </tr>
+    }
+
+</table>
+<input type="submit" name="task" value="Delete">
+</form>
+@Tail(cd, $)

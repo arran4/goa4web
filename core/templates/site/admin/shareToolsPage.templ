@@ -1,0 +1,83 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Share Tools</h2>
+if $.Errors {
+
+    Errors occurred:
+    <ul>
+    for _, item := range $.Errors {
+
+        <li>{ data }</li>
+    }
+
+    </ul>
+}
+
+
+<form method="post">
+    { csrfField }
+    <div style="margin-bottom: 1em;">
+        <label for="resource_type"><strong>Resource type</strong></label><br>
+        <select id="resource_type" name="resource_type">
+            for _, item := range .Resources {
+
+            <option value="{ data.Value }"if eq $.SelectedResource .Value {
+ selected}
+>{ data.Label }</option>
+            }
+
+        </select>
+        <div style="margin-top: 0.5em; color: #555;">
+            Path pattern:
+            if $.SelectedHint {
+
+                <code>{ data.SelectedHint }</code>
+            } else {
+
+                <span>Select a resource type to see the path pattern.</span>
+            }
+
+        </div>
+    </div>
+    <div style="margin-bottom: 1em;">
+        <label for="primary_id"><strong>Primary ID</strong></label><br>
+        <input id="primary_id" type="text" name="primary_id" value="{ data.PrimaryID }" placeholder="e.g., 42">
+    </div>
+    <div style="margin-bottom: 1em;">
+        <label for="thread_id"><strong>Thread ID (if applicable)</strong></label><br>
+        <input id="thread_id" type="text" name="thread_id" value="{ data.ThreadID }" placeholder="e.g., 7">
+    </div>
+    <div style="margin-bottom: 1em;">
+        <label for="duration"><strong>Duration</strong></label><br>
+        <input id="duration" type="text" name="duration" value="{ data.Duration }" placeholder="e.g., 24h">
+        <label style="margin-left: 0.5em;">
+            <input type="checkbox" name="no_expiry" if .NoExpiry {
+checked}
+>
+            No expiry
+        </label>
+    </div>
+    <button type="submit">Generate signed URL</button>
+</form>
+
+if .SignedURL {
+
+    <hr>
+    <h3>Preview</h3>
+    <div style="margin-bottom: 0.5em;">
+        <strong>Shared path:</strong> <code>{ data.SharedPath }</code>
+    </div>
+    <div style="margin-bottom: 0.5em;">
+        <strong>Signed URL:</strong><br>
+        <input type="text" value="{ data.SignedURL }" style="width: 100%; max-width: 720px;" readonly>
+    </div>
+    <div>
+        <a href="{ data.SignedURL }" target="_blank" rel="noopener">Open preview</a>
+    </div>
+}
+
+@Tail(cd, $)

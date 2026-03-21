@@ -1,0 +1,61 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Server Runtime Statistics</h2>
+<table class="table table-bordered">
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Goroutines</td><td>{ data.Stats.Goroutines }</td></tr>
+    <tr><td>Alloc</td><td>{ data.Stats.Alloc }</td></tr>
+    <tr><td>Total Alloc</td><td>{ data.Stats.TotalAlloc }</td></tr>
+    <tr><td>System</td><td>{ data.Stats.Sys }</td></tr>
+    <tr><td>Heap Alloc</td><td>{ data.Stats.HeapAlloc }</td></tr>
+    <tr><td>Heap Sys</td><td>{ data.Stats.HeapSys }</td></tr>
+    <tr><td>GC Count</td><td>{ data.Stats.NumGC }</td></tr>
+    <tr><td>CPU Cores</td><td>{ data.Stats.NumCPU }</td></tr>
+    <tr><td>Architecture</td><td>{ data.Stats.Arch }</td></tr>
+    <tr><td>Disk Free</td><td>{ data.Stats.DiskFree }</td></tr>
+    <tr><td>RAM Free</td><td>{ data.Stats.RAMFree }</td></tr>
+    <tr><td>AutoSubscribe Preference Failures</td><td>{ data.Stats.AutoSubscribePreferenceFailures }</td></tr>
+</table>
+<p>Uptime: { data.Uptime }</p>
+<h3>Registered Components</h3>
+<ul>
+    <li>Tasks: for i, t := range .Registries.Tasks {
+if i {
+, }
+{ t }}
+</li>
+    <li>Database Drivers: for i, d := range .Registries.DBDrivers {
+if i {
+, }
+{ d }}
+</li>
+    <li>DLQ Providers: for i, d := range .Registries.DLQProviders {
+if i {
+, }
+{ d }}
+</li>
+    <li>Email Providers: for i, e := range .Registries.EmailProviders {
+if i {
+, }
+{ e }}
+</li>
+    <li>Upload Providers: for i, u := range .Registries.UploadProviders {
+if i {
+, }
+{ u }}
+</li>
+    <li>Router Modules: for i, m := range .Registries.RouterModules {
+if i {
+, }
+{ m }}
+</li>
+</ul>
+<h3>Current Configuration</h3>
+<pre>{ data.ConfigEnv }</pre>
+<h3>Configuration JSON</h3>
+<pre>{ data.ConfigJSON }</pre>
+@Tail(cd, $)

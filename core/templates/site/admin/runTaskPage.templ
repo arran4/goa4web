@@ -1,0 +1,45 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if $.Messages {
+
+        <ul>
+        for _, item := range $.Messages {
+
+                <li>{ data }</li>
+        }
+
+        </ul>
+}
+
+if $.Errors {
+
+        Errors occurred:
+        <ul>
+        for _, item := range $.Errors {
+
+                <li>{ data }</li>
+        }
+
+        </ul>
+}
+
+if $.Messages {
+
+        for _, item := range $.Messages {
+
+                <p>{ data }</p>
+        }
+
+}
+
+if !$.Errors {
+
+        Task completed successfully.
+}
+
+<a href="{ data.Back }">Back</a>
+@Tail(cd, $)

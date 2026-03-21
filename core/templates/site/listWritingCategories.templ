@@ -1,0 +1,43 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ ListWritingCategories(cd *common.CoreData, data any) {
+
+    <span class="section-title">if $.WritingCategoryID {
+Sub-}
+Categories:</span><br>
+    <table>
+        { cats := cd.VisibleWritingCategories }
+
+        { found := false }
+
+        for _, item := range $cats {
+
+            if eq .WritingCategoryID.Int32 $.WritingCategoryID {
+
+                { found = true }
+
+                { title := data.Title.String }
+
+                { description := data.Description.String }
+
+                { id := data.Idwritingcategory }
+
+                <tr>
+                    <th><a href="/writings/category/{ id }">{ title }</a>if and cd.HasAdminRole cd.AdminMode {
+ [<a href="/admin/writings/categories/category/{ id }">ADMIN</a>]}
+</th>
+                    <td>{ description }</td>
+                </tr>
+            }
+
+        }
+
+        if !found {
+
+            <tr><td>There are no categories.</td></tr>
+        }
+
+    </table><br>
+}

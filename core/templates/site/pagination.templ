@@ -1,0 +1,63 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Pagination(cd *common.CoreData, data any) {
+
+    if cd.Pagination {
+
+        <div class="pagination-bar">
+            <div class="pagination-left">
+                if cd.Pagination.StartLink {
+<a href="{ cd.Pagination.StartLink }">The start</a>}
+
+                if cd.Pagination.PrevLink {
+<a href="{ cd.Pagination.PrevLink }">Previousif cd.PageSize {
+ { cd.PageSize }}
+</a>}
+
+            </div>
+            <div class="pagination-center">
+                for _, item := range cd.Pagination.GetLinks {
+
+                    if .Active {
+<strong>{ data.Num }</strong>} else {
+<a href="{ data.Link }">{ data.Num }</a>}
+
+                }
+
+            </div>
+            <div class="pagination-right">
+                if cd.Pagination.NextLink {
+<a href="{ cd.Pagination.NextLink }">Nextif cd.PageSize {
+ { cd.PageSize }}
+</a>}
+
+            </div>
+        </div>
+    } else if or cd.StartLink cd.PrevLink cd.NextLink {
+
+        <div class="pagination-bar">
+            <div class="pagination-left">
+                if cd.StartLink {
+<a href="{ cd.StartLink }">The start</a>}
+
+                if cd.PrevLink {
+<a href="{ cd.PrevLink }">Previousif cd.PageSize {
+ { cd.PageSize }}
+</a>}
+
+            </div>
+            <div class="pagination-center">
+            </div>
+            <div class="pagination-right">
+                if cd.NextLink {
+<a href="{ cd.NextLink }">Nextif cd.PageSize {
+ { cd.PageSize }}
+</a>}
+
+            </div>
+        </div>
+    }
+
+}

@@ -1,0 +1,90 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingComments(cd *common.CoreData, data any) {
+
+    if item := .Link; item != nil {
+
+        <section class="full-width link-list">
+            <article class="link-item">
+                <header class="bg-muted link-header">{ data.Title.String }: <a href="{ data.Url.String }" target="_BLANK">{ data.Title.String }</a></header>
+                <div class="link-body">
+                    { data.Description.String(|, a4code2html) }
+                    <hr>
+                    { data.Username.String } - Listed: { cd.LocalTimeIn(data.Listed.Time, data.Timezone.String) }
+                </div>
+            </article>
+        </section>
+
+        if item := .ThreadID; item != nil {
+
+            @ThreadComments(cd, )
+
+        }
+
+
+        if cd.SelectedThreadCanReply {
+
+            <div class="comment">
+                <aside class="author">
+                    <div class="avatar"></div>
+                    if u := cd.CurrentUserLoaded; u != nil {
+
+                        <div class="username">{ u.Username.String }</div>
+                    }
+
+                    <div class="meta">
+                        { comments := cd.SelectedSectionThreadComments }
+
+                        { num := add (add (len comments) (cd.Offset)) 1 }
+
+                        <div class="comment-id"><a class="comment-id" href="#bottom">#{ num }</a></div>
+                        { now := cd.LocalTime (now) }
+
+                        <div class="date">{ now.Format("2006-01-02") }</div>
+                        <div class="time">{ now.Format("15:04, MST") }</div>
+                        <div class="day">{ now.Format("Monday") }</div>
+                        <div class="zone">{ cd.Location }</div>
+                        if gt (len $comments) 0 {
+
+                            { prev := index comments (add (len comments) -1) }
+
+                            <div class="since">{ since((cd.LocalTime, prev.Written.Time), now) }</div>
+                        }
+
+                    </div>
+                </aside>
+                <section class="body">
+                    <a id="bottom"></a>
+                    <span class="section-title">Reply:</span><br>
+                    <form method="post">
+                { csrfField }
+                        <input type="hidden" name="replyTo" value="{ data.ThreadID }">
+                        <input type="hidden" name="lpid" value="{ data.ID }">
+                        <textarea name="replytext" cols="40" rows="20">{ data.Text }</textarea><br>
+                        @LanguageCombobox(cd, )
+
+                        <input type="submit" name="task" value="Reply">
+                    </form>
+                </section>
+            </div>
+        } else {
+
+            if cd.UserID {
+
+                You do not have permission to write a reply.<br>
+            } else {
+
+                Please sign-in (or sign-up) to write a reply.<br>
+            }
+
+        }
+
+
+    } else {
+
+        Dead. No LINK!<br>
+    }
+
+}

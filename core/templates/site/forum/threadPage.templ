@@ -1,0 +1,52 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    { base := "/forum" }
+
+    if item := .BasePath; item != nil {
+{ base = . }
+}
+
+    <div class="label-bar">
+        @TopicLabels(cd, .Labels)
+
+    </div>
+    @ThreadComments(cd, )
+
+    @ForumReply(cd, $)
+
+
+    <div class="label-editor">
+        <form method="post" action="{ base }/thread/{ data.Thread.Idforumthread }/labels" id="label-form">
+            { csrfField }
+            <input type="hidden" name="task" value="Set Labels"/>
+            <input type="hidden" name="back" value="{ data.BackURL }"/>
+            for _, item := range .Labels {
+
+                if eq .Type "public" {
+
+                <span class="label pill public">{ data.Name }<button type="button" class="remove" data-type="public">x</button><input type="hidden" name="public" value="{ data.Name }"/></span>
+                } else if eq .Type "private" {
+
+                <span class="label pill private">{ data.Name }<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{ data.Name }"/></span>
+                } else if eq .Type "author" {
+
+                <span class="label pill author">{ data.Name }</span>
+                }
+
+            }
+
+            <input type="text" class="label-input" data-type="public" placeholder="Add public label"/>
+            <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
+            <input type="submit" value="Save Labels"/>
+        </form>
+    </div>
+    <script src="{ assetHash("/forum/topic_labels.js") }"></script>
+
+    @_share(cd, (dict "module" "forum" "link" (printf "%s/topic/%d/thread/%d" $base .Topic.Idforumtopic .Thread.Idforumthread)))
+
+
+@Tail(cd, $)

@@ -1,0 +1,14 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ TopicLabels(cd *common.CoreData, data any) {
+
+<span class="labels">
+    for _, item := range . {
+
+    <span class="label pill { data.Type }" title="{ data.Type } label">{ data.Name }</span>
+    }
+
+</span>
+}

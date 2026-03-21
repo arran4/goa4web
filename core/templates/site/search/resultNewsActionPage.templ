@@ -1,0 +1,30 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    Search news:<br>
+    if .NoResults {
+
+        <p>Nothing found.</p>
+    } else if .EmptyWords {
+
+        <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+    } else {
+
+        <ul>
+        for i, result := range .News {
+
+            <li>{ i }: <a href="/news/news/{ result.Idsitenews }">{ highlightSearch(result.News.String) }</a></li>
+        }
+
+        </ul>
+    }
+
+   <br>
+    Comment search:<br>
+    @CommentSearchResults(cd, $)
+
+    <br>
+@Tail(cd, $)

@@ -1,0 +1,24 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div class="container mt-4">
+    <h1>Edit Topic</h1>
+    <p><a href="{ data.BasePath }/topic/{ data.Topic.Idforumtopic }">Back to Topic</a></p>
+
+    <form method="post" action="{ data.BasePath }/topic/{ data.Topic.Idforumtopic }/edit">
+        { csrfField }
+        <div class="form-group mb-3">
+            <label for="title">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{ data.Topic.Title.String }" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{ data.Topic.Description.String }</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+</div>
+@Tail(cd, $)

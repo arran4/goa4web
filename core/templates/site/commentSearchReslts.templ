@@ -1,0 +1,27 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ CommentSearchResults(cd *common.CoreData, data any) {
+
+    { cd := cd }
+
+    Forum search:<br>
+    if $cd.SearchCommentsNoResults {
+
+        <p>Nothing found.</p>
+    } else if $cd.SearchCommentsEmptyWords {
+
+        <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+    } else {
+
+        <ul>
+        for i, result := range $cd.SearchComments {
+
+            <li>{ i }: <a href="/forum/category/{ result.Idforumcategory }">{ result.ForumcategoryTitle.String }</a>: <a href="/forum/topic/{ result.Idforumtopic }">{ topicTitleOrDefault(result.ForumtopicTitle.String) }</a>: { result.Posterusername.String } on { cd.LocalTimeIn(result.Written.Time, result.Timezone.String) }: <a href="/forum/topic/{ result.Idforumtopic }/thread/{ result.Idforumthread }">{ highlightSearch(result.Text.String) }</a></li>
+        }
+
+        </ul>
+    }
+
+}

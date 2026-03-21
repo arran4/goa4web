@@ -1,0 +1,53 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<p><a href="/admin/grants">Back to grants</a></p>
+<table class="table table-bordered">
+    <tr><th>Field</th><th>Value</th></tr>
+<tr><td>User</td><td>if .Grant.UserID.Valid {
+<a href="/admin/user/{ data.Grant.UserID.Int32 }">{ data.Grant.UserName } ({ data.Grant.UserID.Int32 })</a>} else if !.Grant.RoleID.Valid {
+<a href="/admin/grants/anyone">{ data.Grant.UserName }</a>} else {
+-}
+</td></tr>
+    <tr><td>Role</td><td>if .Grant.RoleID.Valid {
+<a href="/admin/role/{ data.Grant.RoleID.Int32 }">{ data.Grant.RoleName } ({ data.Grant.RoleID.Int32 })</a>} else {
+-}
+</td></tr>
+    <tr><td>Section</td><td>{ data.Grant.Section }</td></tr>
+    <tr><td>Item</td><td>if .Grant.ItemLink {
+<a href="{ data.Grant.ItemLink }">{ data.Grant.Item.String }</a>} else {
+{ data.Grant.Item.String }}
+</td></tr>
+    <tr><td>Item ID</td><td>if .Grant.ItemID.Valid {
+if .Grant.ItemLink {
+<a href="{ data.Grant.ItemLink }">{ data.Grant.ItemID.Int32 }</a>} else {
+{ data.Grant.ItemID.Int32 }}
+} else {
+-}
+</td></tr>
+    <tr><td>Action</td><td>{ data.Grant.Action }</td></tr>
+    <tr><td>Active</td><td>if .Grant.Active {
+yes} else {
+no}
+</td></tr>
+</table>
+<h3>Edit</h3>
+<form method="post" action="/admin/grant/update">
+    { csrfField }
+    <input type="hidden" name="task" value="Update grant">
+    <input type="hidden" name="grantid" value="{ data.Grant.ID }">
+    <label>Active: <input type="checkbox" name="active" value="1" if .Grant.Active {
+checked}
+></label>
+    <input type="submit" value="Save">
+</form>
+<form method="post" action="/admin/grant/delete" onsubmit="return confirm('Delete grant?');">
+    { csrfField }
+    <input type="hidden" name="task" value="Delete grant">
+    <input type="hidden" name="grantid" value="{ data.Grant.ID }">
+    <input type="submit" value="Delete">
+</form>
+@Tail(cd, $)

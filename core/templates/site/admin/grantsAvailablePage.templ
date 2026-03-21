@@ -1,0 +1,32 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, .)
+
+<div class="admin-wrapper">
+    <h1>{ cd.PageTitle }</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Item</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            for _, item := range .Definitions {
+
+            <tr>
+                <td>{ data.Section }</td>
+                <td>{ data.Item }</td>
+                <td>{ data.Action }</td>
+                <td>{ data.Description }</td>
+            </tr>
+            }
+
+        </tbody>
+    </table>
+</div>
+@Tail(cd, .)

@@ -1,0 +1,35 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <form method="post">
+        { csrfField }
+    for _, item := range .LanguageOptions {
+
+        <input type="checkbox" name="language{ data.ID }"if .IsSelected {
+ checked}
+>{ data.Name }<br>
+    }
+
+    <input type="submit" name="task" value="Save languages"><br>
+    <br>
+    Please pick your default language:
+    <select name="defaultLanguage">
+        <option value="0"if .DefaultIsMultilingual {
+ selected}
+>Multi-lingual</option>
+    for _, item := range .LanguageOptions {
+
+        <option value="{ data.ID }"if .IsDefault {
+ selected}
+>{ data.Name }</option>
+    }
+
+    </select>
+    <input type="submit" name="task" value="Save language"><br>
+    <br>
+    <input type="submit" name="task" value="Save all">
+    </form>
+@Tail(cd, $)

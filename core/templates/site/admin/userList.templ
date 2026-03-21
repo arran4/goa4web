@@ -1,0 +1,25 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<ul>
+{ counts := cd.AdminUserPendingPasswordResetCounts }
+
+for _, item := range cd.AdminListUsers {
+
+    <li>
+        <a href="/admin/user/{ data.Idusers }">{ data.Username.String }</a>
+        { count := index counts data.Idusers }
+
+        if gt $count 0 {
+
+            <span style="color: red; font-weight: bold;">(p/w req #: { count })</span>
+        }
+
+    </li>
+}
+
+</ul>
+@Tail(cd, $)

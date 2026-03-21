@@ -1,0 +1,52 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <form method="get">
+        <label>Search <input name="search" value="{ data.Search }"></label>
+        <label>User <input name="user" value="{ data.User }"></label>
+        <label>Category <input name="category" value="{ data.Category }"></label>
+        <input type="submit" value="Filter">
+    </form>
+    <form method="post" id="bulkForm">
+        { csrfField }
+    <table>
+        <tr>
+            <th>Select</th>
+            <th>ID</th>
+            <th>Title</th>
+            <th>URL</th>
+            <th>Description</th>
+            <th>Poster</th>
+            <th>Category</th>
+            <th>Preview</th>
+            <th>Update</th>
+        </tr>
+        for _, item := range .Queue {
+
+            <tr>
+                <td><input type="checkbox" name="qid" value="{ data.ID }"></td>
+                <td>{ data.ID }</td>
+                <td><input name="title" form="u{ data.ID }" value="{ data.Title.String }"></td>
+                <td><input name="URL" form="u{ data.ID }" value="{ data.URL.String }"></td>
+                <td><textarea name="desc" form="u{ data.ID }">{ data.Description.String }</textarea></td>
+                <td>{ data.Username.String }</td>
+                <td><input type="hidden" name="category" form="u{ data.ID }" value="{ data.CategoryID }">{ data.CategoryTitle.String }</td>
+                <td>{ data.Preview }</td>
+                <td>
+                    <form method="post" id="u{ data.ID }">
+        { csrfField }
+                        <input type="hidden" name="qid" value="{ data.ID }">
+                        <input type="submit" name="task" value="Update">
+                    </form>
+                </td>
+            </tr>
+        }
+
+    </table>
+    <input type="submit" name="task" value="Bulk Approve">
+    <input type="submit" name="task" value="Bulk Delete">
+    </form>
+@Tail(cd, $)

@@ -1,0 +1,30 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>All Links</h2>
+for _, item := range cd.LinkerCategories {
+
+<h3>{ data.Title.String } ({ data.ID })</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Title</th><th>URL</th><th>Poster</th><th>View</th></tr>
+    for _, item := range cd.LinkerLinksByCategoryID .ID {
+
+    <tr>
+        <td><a href="/admin/linker/links/link/{ data.ID }">{ data.ID }</a></td>
+        <td>{ data.Title.String }</td>
+        <td><a href="{ data.Url.String }">{ data.Url.String }</a></td>
+        <td>{ data.Posterusername.String }</td>
+        <td><a href="/linker/show/{ data.ID }">View</a></td>
+    </tr>
+    } else {
+
+    <tr><td colspan="5">No links.</td></tr>
+    }
+
+</table>
+}
+
+@Tail(cd, $)

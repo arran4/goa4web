@@ -1,0 +1,34 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Linker Admin</h2>
+<ul>
+    <li><a href="/admin/linker/categories">Categories ({ data.CategoryCount })</a></li>
+    <li><a href="/admin/linker/links">Links ({ data.LinkCount })</a></li>
+    <li><a href="/admin/linker/queue">Queue</a></li>
+    <li><a href="/admin/linker/add">Add link</a></li>
+</ul>
+<h3>Roles</h3>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+    </tr>
+    for _, item := range .Roles {
+
+    <tr>
+        <td>{ data.ID }</td>
+        <td>{ data.Name }</td>
+    </tr>
+    } else {
+
+    <tr>
+        <td colspan="2">No roles</td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

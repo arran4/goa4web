@@ -1,0 +1,34 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+{ blog := cd.BlogPost }
+
+<h2>Blog { blog.Idblogs } Comments Admin</h2>
+<p><a href="/admin/blogs/blog/{ blog.Idblogs }">Back to blog</a></p>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Excerpt</th>
+        <th>Admin</th>
+    </tr>
+    for _, item := range cd.BlogComments {
+
+    <tr>
+        <td>{ data.Idcomments }</td>
+        <td>{ data.Posterusername.String }</td>
+        <td>if .Text.Valid {
+{ data.Text.String(|, left, 80) }}
+</td>
+        <td><a href="/admin/comment/{ data.Idcomments }">Admin</a></td>
+    </tr>
+    } else {
+
+    <tr><td colspan="4">No comments.</td></tr>
+    }
+
+</table>
+@Tail(cd, $)

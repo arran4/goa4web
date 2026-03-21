@@ -1,0 +1,19 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    if .Rows {
+
+        for _, item := range .Rows {
+
+            Blogger: <a href="/blogs/blogger/{ data.Username.String }">{ data.Username.String }</a> has { data.Count } blogs.<br>
+        }
+
+    } else {
+
+        No bloggers here.
+    }
+
+@Tail(cd, $)

@@ -1,0 +1,43 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Edit Category <a href="/admin/faq/categories/category/{ data.Category.ID }">{ data.Category.ID }</a></h1>
+<form method="post" action="/admin/faq/categories">
+{ csrfField }
+<input type="hidden" name="cid" value="{ data.Category.ID }">
+<div class="form-group">
+    <label for="cname">Name:</label>
+    <input id="cname" name="cname" value="{ data.Category.Name.String }">
+</div>
+<div class="form-group">
+    <label for="priority">Priority:</label>
+    <input id="priority" name="priority" type="number" value="{ data.Category.Priority }">
+</div>
+<div class="form-group">
+    <label for="parent_id">Parent Category:</label>
+    <select id="parent_id" name="parent_id">
+        <option value="0">None</option>
+        { currentParent := data.Category.ParentCategoryID.Int32 }
+
+        for _, item := range .Categories {
+
+            if ne .ID $.Category.ID {
+
+            <option value="{ data.ID }" if eq .ID $currentParent {
+selected}
+>{ data.Name.String }</option>
+            }
+
+        }
+
+    </select>
+</div>
+<p>
+    <input type="submit" name="task" value="Rename Category">
+    <input type="submit" name="task" value="Delete Category">
+</p>
+</form>
+@Tail(cd, $)

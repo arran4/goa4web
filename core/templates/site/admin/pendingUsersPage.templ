@@ -1,0 +1,29 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/users/pending">(This page/Refresh)</a>]</div>
+    <table class="table table-bordered">
+        <tr><th>ID</th><th>User</th><th>Email</th><th>Actions</th></tr>
+        for _, item := range .Rows {
+
+        <tr>
+            <td><a href="/admin/user/{ data.Idusers }">{ data.Idusers }</a></td><td>{ data.Username.String }</td><td>{ data.Email }</td>
+            <td>
+                <form class="inline-form" method="post" action="/admin/users/pending/approve">
+                    { csrfField }<input type="hidden" name="uid" value="{ data.Idusers }">
+                    <input type="submit" name="task" value="Approve">
+                </form>
+                <form class="inline-form" method="post" action="/admin/users/pending/reject">
+                    { csrfField }<input type="hidden" name="uid" value="{ data.Idusers }">
+                    Reason:<input name="reason">
+                    <input type="submit" name="task" value="Reject">
+                </form>
+            </td>
+        </tr>
+        }
+
+    </table>
+@Tail(cd, $)

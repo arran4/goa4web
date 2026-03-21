@@ -1,0 +1,60 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/users">(This page/Refresh)</a>]</div>
+    <h2>Users</h2>
+    <div style="margin-bottom: 20px;">
+        <p>Manage registered users on the platform.</p>
+        <p><strong>Usage:</strong></p>
+        <ul>
+            <li><strong>Search:</strong> Filter users by username/email query, role, or account status.</li>
+            <li><strong>View Details:</strong> Click a User ID to view full profile details and grants.</li>
+        </ul>
+    </div>
+    <form method="get">
+        <input name="search" value="{ data.Search }">
+        <select name="role">
+            <option value="">All Roles</option>
+            for _, item := range $.Roles {
+
+            <option value="{ data.Name }" if eq $.Role .Name {
+selected}
+>{ data.Name }</option>
+            }
+
+        </select>
+        <select name="status">
+            <option value="">All Statuses</option>
+            <option value="active" if eq $.Status "active" {
+selected}
+>active</option>
+            <option value="disabled" if eq $.Status "disabled" {
+selected}
+>disabled</option>
+        </select>
+        <input type="submit" name="task" value="Search">
+    </form>
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Latest Comment</th>
+        </tr>
+        for _, item := range $.Rows {
+
+            <tr>
+                <td><a href="/admin/user/{ data.Idusers }">{ data.Idusers }</a></td>
+                <td>{ data.Username.String }</td>
+                <td>{ data.Email.String }</td>
+                <td>if c := index $.Comments .Idusers; c != nil {
+{ cd.FormatLocalTime(c.CreatedAt) } - { c.Comment }}
+</td>
+            </tr>
+        }
+
+    </table>
+@Tail(cd, $)

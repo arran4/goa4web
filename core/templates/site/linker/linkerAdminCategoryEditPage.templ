@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if item := .Category; item != nil {
+
+<h2>Edit Category { data.ID }</h2>
+<form method="post" action="/admin/linker/categories">
+{ csrfField }
+<input type="hidden" name="cid" value="{ data.ID }">
+<label>Title: <input name="title" value="{ data.Title.String }"></label><br>
+<label>Position: <input type="number" name="position" value="{ data.Position }"></label><br>
+<label>Order: <input type="number" name="order" value="{ data.Sortorder }"></label><br>
+<input type="submit" name="task" value="Update">
+</form>
+<form method="post" action="/admin/linker/categories" style="margin-top:1em;">
+{ csrfField }
+<input type="hidden" name="cid" value="{ data.ID }">
+<input type="submit" name="task" value="Delete Category">
+</form>
+<p><a href="/admin/linker/categories/category/{ data.ID }/grants">Permissions</a></p>
+}
+
+@Tail(cd, $)

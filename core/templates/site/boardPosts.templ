@@ -1,0 +1,31 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ BoardPosts(cd *common.CoreData, data any) {
+
+    { cd := cd }
+
+    { posts := cd.SelectedBoardPosts }
+
+    if posts {
+
+        <font size="4">Pictures:</font><br>
+        <section class="board-posts">
+            <ul class="board-post-list">
+            for _, item := range $posts {
+
+                <li class="board-post-item">
+                    <a href="{ data.Fullimage.String }" target="_BLANK"><img src="{ data.Thumbnail.String }" alt=""></a>
+                    <div>{ data.Description.String }<hr>{ data.Username.String } - Posted: { cd.LocalTimeIn(data.Posted.Time, data.Timezone.String) } - [<a href="/imagebbs/board/{ cd.SelectedBoardID }/thread/{ data.ForumthreadID }">{ data.Comments.Int32 } COMMENTS</a>]</div>
+                </li>
+            }
+
+            </ul>
+        </section>
+    } else {
+
+        There isn't anything to see.
+    }
+
+}

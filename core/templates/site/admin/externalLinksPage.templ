@@ -1,0 +1,61 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>External Links</h2>
+<div style="margin-bottom: 20px;">
+    <p>Manage and audit external links posted on the site.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Update:</strong> Refresh link metadata (title, description, image).</li>
+        <li><strong>Delete:</strong> Remove link records (does not remove the link from the content).</li>
+    </ul>
+</div>
+<form method="get">
+    Search: <input name="q" value="{ data.Query }">
+    <input type="submit" value="Filter">
+    <a href="/admin/external-links">Clear</a>
+</form>
+if .ResultSummary {
+
+    <p><strong>Bulk action:</strong> { data.ResultSummary }</p>
+}
+
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="q" value="{ data.Query }">
+    <label><input type="checkbox" id="select-all-links"> Select all</label>
+<table class="table table-bordered">
+    <tr><th>Select</th><th>ID</th><th>URL</th><th>Clicks</th><th>Created</th><th>Updated</th><th>Card Title</th><th>Card Description</th><th>Card Image Cache</th><th>Favicon Cache</th></tr>
+    for _, item := range .Links {
+
+    <tr>
+        <td><input type="checkbox" name="id" value="{ data.ID }"></td>
+        <td><a href="/admin/external-links/{ data.ID }">{ data.ID }</a></td>
+        <td>{ data.Url }</td>
+        <td>{ data.Clicks }</td>
+        <td>{ cd.FormatLocalTime(data.CreatedAt) }</td>
+        <td>{ data.UpdatedAt }</td>
+        <td>{ data.CardTitle.String }</td>
+        <td>{ data.CardDescription.String }</td>
+        <td>if .CardImageCache.Valid {
+<a href="/admin/external-links/{ data.ID }">{ data.ID }</a>}
+</td>
+        <td>{ data.FaviconCache.String }</td>
+    </tr>
+    }
+
+</table>
+<input type="submit" name="task" value="Update">
+<input type="submit" name="task" value="Delete">
+</form>
+<script>
+    document.getElementById('select-all-links').addEventListener('change', function (event) {
+        document.querySelectorAll('input[name="id"]').forEach(function (checkbox) {
+            checkbox.checked = event.target.checked
+        })
+    })
+</script>
+@Tail(cd, $)

@@ -1,0 +1,32 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if eq .Topic.Handler "private" {
+
+<div class="alert alert-warning">Warning: This is a private forum topic.</div>
+}
+
+<h4>Edit Topic</h4>
+<p><a href="/admin/forum/topics/topic/{ data.Topic.Idforumtopic }">Back to Topic</a></p>
+<form method="post" action="/admin/forum/topics/topic/{ data.Topic.Idforumtopic }/edit">
+{ csrfField }
+Title: <input name="name" value="{ data.Topic.Title.String }"><br>
+Description:<br>
+<textarea name="desc">{ data.Topic.Description.String }</textarea><br>
+Category: <select name="cid"><option value="0">None</option>for _, item := range .Categories {
+<option value="{ data.Idforumcategory }" if eq $.Topic.ForumcategoryIdforumcategory .Idforumcategory {
+selected}
+>{ data.Title.String }</option>}
+</select><br>
+<input type="submit" name="task" value="Forum topic change">
+</form>
+
+<form method="post" action="/admin/forum/topics/topic/{ data.Topic.Idforumtopic }/delete">
+{ csrfField }
+<label><input type="checkbox" name="cascade" value="true"> Cascade Delete</label>
+<input type="submit" name="task" value="Forum topic delete">
+</form>
+@Tail(cd, $)

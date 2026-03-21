@@ -1,0 +1,18 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ UserPanel(cd *common.CoreData, data any) {
+
+    <hr>
+    if cd.UserID {
+
+        <a href="/usr">Preferences</a><br>
+        <a href="/usr/notifications" id="notif-index">Notificationsif gt cd.NotificationCount 0 {
+ ({ cd.NotificationCount })}
+</a><br>
+        <a href="/usr/logout">Logout</a><br>
+    }
+
+    <hr>
+}

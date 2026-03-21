@@ -1,0 +1,21 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form method="post">
+    { csrfField }
+    <label for="timezone-input">Timezone:</label>
+    <input type="text" id="timezone-input" name="timezone" value="{ data.Timezone }" list="timezones">
+    <datalist id="timezones">
+        for _, item := range .Timezones {
+
+            <option value="{ data }"></option>
+        }
+
+    </datalist>
+    <br>
+    <input type="submit" name="task" value="Save timezone">
+</form>
+@Tail(cd, $)

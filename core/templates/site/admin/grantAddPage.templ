@@ -1,0 +1,97 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Add Grants</h2>
+<p>This is a single-page workflow: pick subjects on the left, then build grant rows on the right. Use the drag-and-drop pills to move actions into the selected column for each row.</p>
+<form method="post" action="/admin/grant/bulk" id="grant-add-form">
+    { csrfField }
+    <input type="hidden" name="task" value="Create grants">
+    <div class="grant-add-grid">
+        <section class="grant-add-subjects">
+            <h3><span class="grant-step">Step 1</span> Subjects</h3>
+            <div class="grant-add-controls">
+                <label>Search subjects:
+                    <input type="search" id="grant-subject-search" placeholder="Name, ID, role, or verified email">
+                </label>
+                <label>Jump to user IDs:
+                    <input type="text" id="grant-user-ids" placeholder="e.g. 12, 44, 105">
+                </label>
+                <label>Jump to role IDs:
+                    <input type="text" id="grant-role-ids" placeholder="e.g. 1, 3">
+                </label>
+                <label class="grant-add-anyone">
+                    <input type="checkbox" name="anyone" value="1"> Anyone (public access)
+                </label>
+                <button type="button" id="grant-clear-search" class="button">Clear filters</button>
+            </div>
+            <div class="grant-add-summary">
+                <span id="grant-selected-count">0</span> subjects selected.
+            </div>
+            <div class="grant-add-columns">
+                <div class="grant-add-column">
+                    <h4>Users</h4>
+                    <div class="grant-add-scroll" id="grant-user-list">
+                        for _, item := range .Users {
+
+                        <label class="grant-subject" data-search="if .Username.Valid {
+{ data.Username.String }}
+ { data.ID } for _, item := range .Emails {
+{ data } }
+ for _, item := range .Roles {
+{ data } }
+">
+                            <input type="checkbox" name="user_id" value="{ data.ID }">
+                            <span class="subject-name">if .Username.Valid {
+{ data.Username.String }} else {
+User { data.ID }}
+</span>
+                            <span class="subject-meta">ID { data.ID }if .Emails {
+ • for _, item := range .Emails {
+{ data } }
+}
+if .Roles {
+ • Roles: for _, item := range .Roles {
+{ data } }
+}
+</span>
+                        </label>
+                        }
+
+                    </div>
+                </div>
+                <div class="grant-add-column">
+                    <h4>Roles</h4>
+                    <div class="grant-add-scroll" id="grant-role-list">
+                        for _, item := range .Roles {
+
+                        <label class="grant-subject" data-search="{ data.Name } { data.ID }">
+                            <input type="checkbox" name="role_id" value="{ data.ID }">
+                            <span class="subject-name">{ data.Name }</span>
+                            <span class="subject-meta">Role ID { data.ID }</span>
+                        </label>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="grant-add-grants">
+            <h3><span class="grant-step">Step 2</span> Grant rows</h3>
+            <p class="grant-hint">Choose section + item, then drag actions from Available into Selected. Add additional rows to batch multiple grants in one submission.</p>
+            <div id="grant-rows"></div>
+            <button type="button" id="grant-add-row" class="button">Add grant row</button>
+        </section>
+    </div>
+    <div class="grant-add-actions">
+        <input type="submit" value="Create grants">
+        <a href="/admin/grants">Back to grants</a>
+    </div>
+</form>
+<script>
+window.grantAddData = { toJSON((dict, "actions", data.GrantActions, "items", data.GrantItemLookup)) };
+</script>
+<script src="{ assetHash("/admin/grant-add.js") }"></script>
+@Tail(cd, $)

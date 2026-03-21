@@ -1,0 +1,29 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if cd.CurrentError {
+
+<p class="text-error">{ cd.CurrentError }</p>
+}
+
+Register:<br>
+<form method="post">
+        { csrfField }
+        if .Back {
+<input type="hidden" name="back" value="{ data.Back }">}
+
+        if .Method {
+<input type="hidden" name="method" value="{ data.Method }">}
+
+        if .Data {
+<input type="hidden" name="data" value="{ data.Data }">}
+
+    Username: <input name="username"><br>
+    Password: <input name="password" type="password"><br>
+    Email Address: <input name="email"><br>
+    <input type="submit" name="task" value="Register">
+</form>
+@Tail(cd, $)

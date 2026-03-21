@@ -1,0 +1,35 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+    @Head(cd, $)
+
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/search">(This page/Refresh)</a>]</div>
+                <p>Search index counts:</p>
+                <table class="table table-bordered">
+                        <tr><th>Section</th><th>Entries</th></tr>
+                        <tr><td>Total words</td><td>{ data.Stats.Words }</td></tr>
+                        <tr><td>Comments</td><td>{ data.Stats.Comments }</td></tr>
+                        <tr><td>News</td><td>{ data.Stats.News }</td></tr>
+                        <tr><td>Blogs</td><td>{ data.Stats.Blogs }</td></tr>
+                        <tr><td>Linker</td><td>{ data.Stats.Linker }</td></tr>
+                        <tr><td>Writing</td><td>{ data.Stats.Writing }</td></tr>
+                        <tr><td>Image posts</td><td>{ data.Stats.Images }</td></tr>
+                </table>
+                <br>
+                <strong>What shall we do?</strong><br>
+                View something:<br>
+                <a href="/admin/search/list">Show complete word list</a><br>
+                <a href="/admin/search/list.txt">Download word list</a><br>
+                <br>
+                Perform something:<br>
+                <form method="post">
+        { csrfField }
+                        <input type="submit" name="task" value="Remake comments search"><br>
+                        <input type="submit" name="task" value="Remake news search"><br>
+                        <input type="submit" name="task" value="Remake blog search"><br>
+            <input type="submit" name="task" value="Remake linker search"><br>
+                        <input type="submit" name="task" value="Remake writing search"><br>
+                        <input type="submit" name="task" value="Remake image search">
+                </form>
+    @Tail(cd, $)

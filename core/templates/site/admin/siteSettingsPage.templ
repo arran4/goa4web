@@ -1,0 +1,40 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Site Configuration</h2>
+<div style="margin-bottom: 20px;">
+    <p>Review the runtime configuration of the application.</p>
+    <p>This page displays all configuration values resolved from environment variables, flags, and default values at startup. These values are read-only.</p>
+</div>
+<p>Configuration values resolved at startup.</p>
+<p>Config file: { data.ConfigFile }</p>
+<table class="table table-bordered">
+    <tr>
+        <th>Env</th>
+        <th>Flag</th>
+        <th>Value</th>
+        <th>Default</th>
+        <th>Source</th>
+        <th>Description</th>
+        <th>Example</th>
+    </tr>
+    for _, item := range .Config {
+
+        <tr>
+            <td>{ data.Env }</td>
+            <td>{ data.Flag }</td>
+            <td>{ data.Value }</td>
+            <td>{ data.Default }</td>
+            <td>{ data.Source }</td>
+            <td>{ data.Usage }</td>
+            <td>if .Example {
+{ index(data.Example, 0) }}
+</td>
+        </tr>
+    }
+
+</table>
+@Tail(cd, $)

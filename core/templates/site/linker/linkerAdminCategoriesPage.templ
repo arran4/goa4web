@@ -1,0 +1,54 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <th>Order</th>
+            <th>Title</th>
+            <th>Links</th>
+            <th>Options</th>
+        </tr>
+        for _, item := range .Categories {
+
+            <tr>
+                <td><a id="lc{ data.ID }" href="/admin/linker/categories/category/{ data.ID }">{ data.ID }</a></td>
+                <td>
+                    <form method="post">
+        { csrfField }
+                        <input type="hidden" name="cid" value="{ data.ID }">
+                        <input type="number" name="position" value="{ data.Position }" size="3">
+                </td>
+                <td><input name="title" value="{ data.Title.String }"></td>
+                <td>{ data.Linkcount }</td>
+                <td>
+                    <input type="submit" name="task" value="Update">
+                    if eq .Linkcount 0 {
+<input type="submit" name="task" value="Delete Category">}
+<br>
+                    <a href="/admin/linker/categories/category/{ data.ID }/grants">Permissions</a>
+                    <a href="/linker/category/{ data.ID }">View</a>
+                    </form>
+                </td>
+            </tr>
+        }
+
+        <tr>
+            <td>NEW</td>
+            <td><input name="order" type="number" value="0" class="width-4em"></td>
+            <td>
+                <form method="post">
+        { csrfField }
+                    <input name="title" value="">
+            </td>
+            <td>0</td>
+            <td>
+                <input type="submit" name="task" value="Create Category">
+                </form>
+            </td>
+        </tr>
+    </table>
+@Tail(cd, $)

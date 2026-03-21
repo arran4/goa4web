@@ -1,0 +1,27 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Comments for Image Post { data.Post.Idimagepost }</h2>
+<p>
+    <a href="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }">Back to dashboard</a> |
+    <a href="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }/edit">Edit Post</a>
+</p>
+<table class="table table-bordered">
+<tr><th>ID</th><th>User</th><th>Excerpt</th><th>Link</th></tr>
+for _, item := range .Comments {
+
+<tr>
+    <td>{ data.Idcomments }</td>
+    <td>{ data.Posterusername.String }</td>
+    <td>if .Text.Valid {
+{ left(80, data.Text.String) }}
+</td>
+    <td><a href="/admin/comment/{ data.Idcomments }">View</a></td>
+</tr>
+}
+
+</table>
+@Tail(cd, $)

@@ -1,0 +1,44 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Unmanaged Files - { data.Path }</h2>
+<p><a href="/admin/files">Back to Managed Files</a></p>
+if .Parent {
+<a href="/admin/files/unmanaged?path={ data.Parent }">Parent</a><br>}
+
+<table class="table table-bordered">
+<tr><th>Name<th>Size<th>Type<th>Mod Time<th>Actions</tr>
+for _, item := range .Entries {
+
+<tr>
+<td>if .IsDir {
+<a href="/admin/files/unmanaged?path={ data.Path }">{ data.Name }/</a>} else {
+{ data.Name }}
+</td>
+<td>{ data.Size }</td>
+<td>if .IsDir {
+dir} else {
+file}
+</td>
+<td>{ data.ModTime }</td>
+<td>
+  if !.IsDir {
+
+  if .URL {
+<a href="{ data.URL }" target="_blank">view</a>}
+
+  <form method="POST" action="/admin/files/delete" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this file?');">
+    <input type="hidden" name="path" value="{ data.Path }">
+    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+  </form>
+  }
+
+</td>
+</tr>
+}
+
+</table>
+@Tail(cd, $)

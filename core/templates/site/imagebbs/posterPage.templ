@@ -1,0 +1,28 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <h1>{ data.Username }'s images.</h1>
+    if .Posts {
+
+        <h2>Pictures:</h2>
+        <section class="board-posts">
+            <ul class="board-post-list">
+            for _, item := range .Posts {
+
+                <li class="board-post-item">
+                    <a href="{ data.Fullimage.String }" target="_BLANK"><img src="{ data.Thumbnail.String }" alt=""></a>
+                    <div>{ data.Description.String }<hr>{ data.Username.String } - Posted: { cd.LocalTimeIn(data.Posted.Time, data.Timezone.String) } - [<a href="/imagebbs/board/{ data.ImageboardID }/thread/{ data.ForumthreadID }">{ data.Comments.Int32 } COMMENTS</a>]</div>
+                </li>
+            }
+
+            </ul>
+        </section>
+    } else {
+
+        There isn't anything to see.
+    }
+
+@Tail(cd, $)

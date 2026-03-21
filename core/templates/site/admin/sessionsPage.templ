@@ -1,0 +1,33 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Active Sessions</h2>
+<div style="margin-bottom: 20px;">
+    <p>Monitor and manage active user sessions.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Delete:</strong> Terminate a user's session immediately.</li>
+    </ul>
+</div>
+<table class="table table-bordered">
+    <tr><th>Session ID</th><th>User ID</th><th>Username</th><th>Delete</th></tr>
+    for _, item := range cd.AdminSessions {
+
+    <tr>
+        <td>{ data.SessionID }</td>
+        <td>{ data.UsersIdusers }</td>
+        <td>{ data.Username.String }</td>
+        <td>
+            <form method="POST" action="/admin/sessions/delete">
+                <input type="hidden" name="sid" value="{ data.SessionID }">
+                <button type="submit" name="task" value="Delete">Delete</button>
+            </form>
+        </td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

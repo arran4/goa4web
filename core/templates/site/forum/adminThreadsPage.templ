@@ -1,0 +1,33 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+{ cd := cd }
+
+for _, topic := range $cd.AdminForumTopics {
+
+    <h2>{ topicTitleOrDefault(topic.Title.String) }</h2>
+    <table class="table table-bordered">
+        <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
+        for _, item := range $cd.ForumThreads $topic.Idforumtopic {
+
+            <tr>
+                <td><a href="/admin/forum/thread/{ data.Idforumthread }">{ data.Idforumthread }</a></td>
+                <td>{ data.Comments.Int32 }</td>
+                <td>{ cd.LocalTime(data.Lastaddition.Time) }</td>
+                <td><a href="/forum/topic/{ data.ForumtopicIdforumtopic }/thread/{ data.Idforumthread }">View</a></td>
+            </tr>
+        } else {
+
+            <tr><td colspan="4">No threads</td></tr>
+        }
+
+    </table>
+} else {
+
+    <p>No topics</p>
+}
+
+@Tail(cd, $)

@@ -1,0 +1,19 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form action="{ data.BackURL }" method="{ data.Method }">
+    for key, vals := range .Values {
+
+        for _, item := range $vals {
+
+            <input type="hidden" name="{ key }" value="{ data }">
+        }
+
+    }
+
+    <input type="submit" name="task" value="Go Back">
+</form>
+@Tail(cd, $)

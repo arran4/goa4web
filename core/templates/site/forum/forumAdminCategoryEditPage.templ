@@ -1,0 +1,23 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Edit Forum Category { data.Category.Idforumcategory }</h2>
+<form method="post" action="/admin/forum/categories/category/{ data.Category.Idforumcategory }/edit">
+    { csrfField }
+    <p>Parent <select name="pcid" value="{ data.Category.ForumcategoryIdforumcategory }"><option value="0">None</option>for _, item := range .Categories {
+<option value="{ data.Idforumcategory }" if eq .Idforumcategory $.Category.ForumcategoryIdforumcategory {
+selected}
+>{ data.Title.String }</option>}
+</select></p>
+    <p>Title <input name="name" value="{ data.Category.Title.String }"></p>
+    <p>Description <textarea name="desc">{ data.Category.Description.String }</textarea></p>
+    <input type="submit" name="task" value="Forum category change">
+</form>
+<form method="post" action="/admin/forum/categories/category/{ data.Category.Idforumcategory }/delete" class="margin-top">
+    { csrfField }
+    <input type="submit" name="task" value="Delete Category">
+</form>
+@Tail(cd, $)

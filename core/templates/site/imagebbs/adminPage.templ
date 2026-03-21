@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+    @Head(cd, $)
+
+    <p>Please select an option:</p>
+    <ul>
+        <li><a href="/admin/imagebbs/boards">Manage Boards</a></li>
+        <li><a href="/admin/imagebbs/boards/new">Create New Board</a></li>
+    </ul>
+
+    if .Stats {
+
+    <p>Imageboard statistics:</p>
+    <table class="table table-bordered">
+        <tr><th>Board</th><th>Posts</th></tr>
+        for _, item := range .Stats {
+
+        <tr><td>{ data.Title.String }</td><td>{ data.Count }</td></tr>
+        }
+
+    </table>
+    }
+
+    @Tail(cd, $)

@@ -1,0 +1,65 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Index(cd *common.CoreData, data any) {
+
+    @IndexItems(cd, $)
+
+    @UserPanel(cd, $)
+
+    { advanced := false }
+
+    for _, i := range cd.CustomIndexItems {
+
+        if !$i.Folded {
+
+            if ne $i.TemplateName "" {
+
+                { include(i.TemplateName, i.TemplateData) }
+            } else {
+
+                <a href="{ addmode(i.Link) }">{ i.Name }</a><br>
+            }
+
+        } else {
+
+            { advanced = true }
+
+        }
+
+    }
+
+    if advanced {
+
+        <div class="folded-toggle" data-target="folded-items">Advanced / Danger Zone</div>
+        <div id="folded-items" class="folded-items hidden">
+            for _, i := range cd.CustomIndexItems {
+
+                if $i.Folded {
+
+                    if ne $i.TemplateName "" {
+
+                        { include(i.TemplateName, i.TemplateData) }
+                    } else {
+
+                        <a href="{ addmode(i.Link) }">{ i.Name }</a><br>
+                    }
+
+                }
+
+            }
+
+        </div>
+    }
+
+    if cd.HasAdminRole {
+
+        if cd.AdminMode {
+
+            <a href="{ addmode("/admin") }">Admin Dashboard</a><br>
+        }
+
+    }
+
+}

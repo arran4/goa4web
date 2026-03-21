@@ -1,0 +1,267 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Email Management</h2>
+<div style="margin-bottom: 20px;">
+    <p>Monitor and manage outgoing emails.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Tabs:</strong> Switch between Queue (pending), Failed, and Sent emails.</li>
+        <li><strong>Filter:</strong> Search by status, provider, or age.</li>
+        <li><strong>Actions:</strong> Resend, retry, or delete emails.</li>
+    </ul>
+</div>
+<div style="margin-bottom: 1em;">
+    <strong>View:</strong>
+    if eq .Mode "queue" {
+Queue} else {
+<a href="/admin/email/queue">Queue</a>}
+ |
+    if eq .Mode "failed" {
+Failed} else {
+<a href="/admin/email/failed">Failed</a>}
+ |
+    if eq .Mode "sent" {
+Sent} else {
+<a href="/admin/email/sent">Sent</a>}
+
+</div>
+
+<form method="get">
+    <fieldset>
+        <legend>Filters</legend>
+        if .Filters.LangID {
+
+        <input type="hidden" name="lang" value="{ data.Filters.LangID }">
+        }
+
+        if .Filters.Role {
+
+        <input type="hidden" name="role" value="{ data.Filters.Role }">
+        }
+
+
+        if eq .Mode "queue" {
+
+        <label>Status
+            <select name="status">
+                <option value="" if eq .Filters.Status "" {
+selected}
+>All</option>
+                <option value="pending" if eq .Filters.Status "pending" {
+selected}
+>Pending</option>
+                <option value="failed" if eq .Filters.Status "failed" {
+selected}
+>Failed</option>
+            </select>
+        </label>
+        }
+
+
+        <label>Provider
+            <select name="provider">
+                <option value="" if eq .Filters.Provider "" {
+selected}
+>All</option>
+                <option value="direct" if eq .Filters.Provider "direct" {
+selected}
+>Direct</option>
+                <option value="user" if eq .Filters.Provider "user" {
+selected}
+>User</option>
+                <option value="userless" if eq .Filters.Provider "userless" {
+selected}
+>Userless</option>
+            </select>
+        </label>
+
+        <label>Age
+            <select name="age">
+                <option value="" if eq .Filters.Age "" {
+selected}
+>Any</option>
+                <option value="24h" if eq .Filters.Age "24h" {
+selected}
+>Older than 24 hours</option>
+                <option value="7d" if eq .Filters.Age "7d" {
+selected}
+>Older than 7 days</option>
+                <option value="30d" if eq .Filters.Age "30d" {
+selected}
+>Older than 30 days</option>
+            </select>
+        </label>
+
+        <button type="submit">Apply filters</button>
+        <a href="/admin/email/{ data.Mode }">Reset</a>
+    </fieldset>
+</form>
+
+<form method="post" id="email-form">
+    { csrfField }
+    <!-- Pass filters to task -->
+    <input type="hidden" name="status" value="{ data.Filters.Status }">
+    <input type="hidden" name="provider" value="{ data.Filters.Provider }">
+    <input type="hidden" name="age" value="{ data.Filters.Age }">
+    if .Filters.LangID {
+
+    <input type="hidden" name="lang" value="{ data.Filters.LangID }">
+    }
+
+    if .Filters.Role {
+
+    <input type="hidden" name="role" value="{ data.Filters.Role }">
+    }
+
+
+    <input type="hidden" name="selection" value="ids">
+
+    <div style="margin: 1em 0;">
+        <p><strong>{ data.FilteredCount }</strong> emailif ne .FilteredCount 1 {
+s}
+ found.</p>
+        <div>
+            <button type="button" data-select-all-page>Select all on page</button>
+            <button type="button" data-select-all-filtered>Select all filtered ({ data.FilteredCount })</button>
+            <button type="button" data-clear-selection>Clear selection</button>
+            <span data-selection-note>Selection: manual</span>
+        </div>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>ID</th>
+                <th>To</th>
+                <th>Subject</th>
+                if eq .Mode "sent" {
+<th>Sent</th>} else {
+<th>Created</th>}
+
+                if ne .Mode "sent" {
+<th>Errors</th>}
+
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            for _, item := range .Emails {
+
+            <tr>
+                <td><input type="checkbox" name="id" value="{ data.ID }"></td>
+                <td>{ data.ID }</td>
+                <td>{ data.EmailStr }</td>
+                <td>{ data.Subject }</td>
+                <td>
+                    if eq $.Mode "sent" {
+
+                        if .SentAt.Valid {
+{ cd.FormatLocalTime(data.SentAt.Time) }}
+
+                    } else {
+
+                        { cd.FormatLocalTime(data.CreatedAt) }
+                    }
+
+                </td>
+                if ne $.Mode "sent" {
+<td>{ data.ErrorCount }</td>}
+
+                <td>if item := index $.StatusByID .ID; item != nil {
+{ data }} else {
+-}
+</td>
+            </tr>
+            }
+
+        </tbody>
+    </table>
+
+    <div style="margin-top: 1em;">
+        if ne .Mode "sent" {
+
+            <button type="submit" name="task" value="Resend">Resend Selected</button>
+            <button type="submit" name="task" value="Delete">Delete Selected</button>
+        } else {
+
+            <button type="submit" name="task" value="Resend">Resend (Copy)</button>
+            <button type="submit" name="task" value="Retry">Retry (Re-queue)</button>
+        }
+
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('email-form');
+        if (!form) {
+            return;
+        }
+        const selectionInput = form.querySelector('input[name="selection"]');
+        const note = form.querySelector('[data-selection-note]');
+        const checkboxes = form.querySelectorAll('input[type="checkbox"][name="id"]');
+
+        const updateNote = function(mode) {
+            if (!note) return;
+            if (mode === 'filtered') {
+                note.textContent = 'Selection: all filtered results';
+                return;
+            }
+            note.textContent = 'Selection: manual';
+        };
+
+        const setAll = function(checked) {
+            checkboxes.forEach(function(box) {
+                box.checked = checked;
+            });
+        };
+
+        const setMode = function(mode) {
+            if (selectionInput) {
+                selectionInput.value = mode;
+            }
+            updateNote(mode);
+        };
+
+        const selectAllPage = form.querySelector('[data-select-all-page]');
+        if (selectAllPage) {
+            selectAllPage.addEventListener('click', function() {
+                setAll(true);
+                setMode('ids');
+            });
+        }
+
+        const selectAllFiltered = form.querySelector('[data-select-all-filtered]');
+        if (selectAllFiltered) {
+            selectAllFiltered.addEventListener('click', function() {
+                setAll(true);
+                setMode('filtered');
+            });
+        }
+
+        const clearSelection = form.querySelector('[data-clear-selection]');
+        if (clearSelection) {
+            clearSelection.addEventListener('click', function() {
+                setAll(false);
+                setMode('ids');
+            });
+        }
+
+        checkboxes.forEach(function(box) {
+            box.addEventListener('change', function() {
+                // If unchecking manually while in filtered mode, switch to ids mode (manual)
+                if (!box.checked && selectionInput && selectionInput.value === 'filtered') {
+                    setMode('ids');
+                }
+            });
+        });
+
+        updateNote(selectionInput ? selectionInput.value : 'ids');
+    });
+</script>
+@Tail(cd, $)

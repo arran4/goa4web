@@ -1,0 +1,21 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h4>Revision History for FAQ { data.Faq.ID }</h4>
+<table>
+<tr><th>Date</th><th>User ID</th><th>Question</th><th>Answer</th></tr>
+for _, item := range .Revisions {
+
+<tr>
+  <td>{ cd.LocalTimeIn(data.CreatedAt, data.Timezone.String) }</td>
+  <td>{ data.UsersIdusers }</td>
+  <td>{ data.Question.String }</td>
+  <td>{ data.Answer.String }</td>
+</tr>
+}
+
+</table>
+@Tail(cd, $)

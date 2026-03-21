@@ -1,0 +1,48 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/requests">(This page/Refresh)</a> | <a href="/admin/requests/archive">Archive</a>]</div>
+if cd.PendingRequests {
+
+<table class="table table-bordered">
+<tr><th>ID</th><th>User</th><th>Field</th><th>Value</th><th>Contact</th><th>Actions</th></tr>
+for _, item := range cd.PendingRequests {
+
+<tr>
+    <td>{ data.ID }</td>
+    <td><a href="/admin/user/{ data.UsersIdusers }">if u := cd.UserByID .UsersIdusers; u != nil {
+if $u.Username.Valid {
+{ u.Username.String }}
+}
+</a></td>
+    <td>{ data.ChangeTable }.{ data.ChangeField } [{ data.ChangeRowID }]</td>
+    <td>{ data.ChangeValue.String }</td>
+    <td>{ data.ContactOptions.String }</td>
+    <td>
+        <form class="inline-form" method="post" action="/admin/request/{ data.ID }/accept">
+            { csrfField }<input type="submit" name="task" value="Accept">
+        </form>
+        <form class="inline-form" method="post" action="/admin/request/{ data.ID }/reject">
+            { csrfField }<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Reject">
+        </form>
+        <form class="inline-form" method="post" action="/admin/request/{ data.ID }/dismiss">
+            { csrfField }<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Dismiss">
+        </form>
+        <form class="inline-form" method="post" action="/admin/request/{ data.ID }/query">
+            { csrfField }<input name="comment" placeholder="Optional comment"><input type="submit" name="task" value="Query">
+        </form>
+        <a href="/admin/request/{ data.ID }">View</a>
+    </td>
+</tr>
+}
+
+</table>
+} else {
+
+<p>No pending requests.</p>
+}
+
+@Tail(cd, $)

@@ -123,3 +123,4 @@ jmap.env
 /*.txt
 cmd/goa4web/cert.pem
 cmd/goa4web/key.pem
+node_modules/\n__pycache__/\ntarget/\n*.templ

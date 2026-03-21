@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Blogs by <a href="/admin/user/{ data.User.Idusers }">{ data.User.Username.String }</a></h2>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Date</th><th>Comments</th><th>Language</th><th>Category</th><th>Snippet</th><th>Link</th></tr>
+    for _, item := range .Blogs {
+
+    <tr>
+        <td><a href="/admin/blogs/blog/{ data.Idblogs }">{ data.Idblogs }</a></td>
+        <td>{ cd.FormatLocalTimeIn(data.Written, data.Timezone.String) }</td>
+        <td>{ data.Comments }</td>
+        <td>{ data.LanguageID }</td>
+        <td>if .Idforumcategory.Valid {
+<a href="/forum/category/{ data.Idforumcategory.Int32 }">{ data.ForumcategoryTitle.String }</a>}
+</td>
+        <td>{ left 40 (firstli(a4code2string != data.Blog.String)) }</td>
+        <td><a href="/blogs/blog/{ data.Idblogs }">View</a></td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

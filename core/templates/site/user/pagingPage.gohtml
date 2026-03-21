@@ -1,8 +1,0 @@
-{{ template "head" $ }}
-<form method="post">
-        {{ csrfField }}
-    Page size:
-    <input type="number" name="size" value="{{ cd.PageSize }}" min="{{ cd.Config.PageSizeMin }}" max="{{ cd.Config.PageSizeMax }}"><br>
-    <input type="submit" name="task" value="Save size">
-</form>
-{{ template "tail" $ }}

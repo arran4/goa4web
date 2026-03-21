@@ -10,3 +10,8 @@ import (
 func TopicPage(w http.ResponseWriter, r *http.Request) {
 	forumhandlers.TopicsPageWithBasePath(w, r, "/private")
 }
+
+// UnreadThreadsPage serves the private forum unread threads page.
+func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
+	forumhandlers.UnreadThreadsPageWithBasePath(w, r, "/private")
+}

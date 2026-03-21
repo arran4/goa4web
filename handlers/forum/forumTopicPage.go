@@ -194,3 +194,103 @@ const ForumTopicsPageTmpl tasks.Template = "forum/topicsPage.gohtml"
 func TopicsPage(w http.ResponseWriter, r *http.Request) {
 	TopicsPageWithBasePath(w, r, "/forum")
 }
+
+func UnreadThreadsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
+	type threadWithLabels struct {
+		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
+		Labels   []templates.TopicLabel
+		IsUnread bool
+	}
+
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+	cd.ForumBasePath = basePath
+
+	type Data struct {
+		Admin      bool
+		BasePath   string
+		Threads    []*threadWithLabels
+		Categories []*ForumcategoryPlus
+		Category   *ForumcategoryPlus
+	}
+
+	data := &Data{
+		Admin:    cd.IsAdmin() && cd.IsAdminMode(),
+		BasePath: basePath,
+	}
+
+	cd.PageTitle = "Unread Threads"
+
+	var threads []*threadWithLabels
+	isPrivate := int32(0)
+	if basePath == "/private" {
+		isPrivate = 1
+	}
+
+	if cd.UserID != 0 {
+		unreadRows, err := cd.Queries().ListUnreadForumThreadsForUser(r.Context(), db.ListUnreadForumThreadsForUserParams{
+			ViewerID:      cd.UserID,
+			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: true},
+			IsPrivate:     isPrivate,
+		})
+		if err != nil {
+			log.Printf("ListUnreadForumThreadsForUser Error: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			return
+		}
+
+		for _, row := range unreadRows {
+			t := &threadWithLabels{
+				GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: &db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
+					Idforumthread:          row.Idforumthread,
+					Lastaddition:           row.Lastaddition,
+					ForumtopicIdforumtopic: row.ForumtopicIdforumtopic,
+					Comments:               row.Comments,
+					Lastposter:             row.Lastposter,
+					Firstpost:              row.Firstpost,
+					Lastposterusername:     row.Lastposterusername,
+					Lastposterid:           row.Lastposterid,
+					Firstpostusername:      row.Firstpostusername,
+					Firstpostuserid:        row.Firstpostuserid,
+					Firstpostwritten:       row.Firstpostwritten,
+					Firstposttext:          row.Firstposttext,
+				},
+				IsUnread: true,
+			}
+
+			var lbls []templates.TopicLabel
+			if pub, author, err := cd.ThreadPublicLabels(row.Idforumthread); err == nil {
+				for _, l := range pub {
+					lbls = append(lbls, templates.TopicLabel{Name: l, Type: "public"})
+				}
+				for _, l := range author {
+					lbls = append(lbls, templates.TopicLabel{Name: l, Type: "author"})
+				}
+			} else {
+				log.Printf("list public labels: %v", err)
+			}
+			if priv, err := cd.ThreadPrivateLabels(row.Idforumthread, row.Firstpostuserid.Int32); err == nil {
+				for _, l := range priv {
+					lbls = append(lbls, templates.TopicLabel{Name: l, Type: "private"})
+				}
+			} else {
+				log.Printf("list private labels: %v", err)
+			}
+			lbls = append(lbls, templates.TopicLabel{Name: "unread", Type: "private"})
+
+			sort.Slice(lbls, func(i, j int) bool { return lbls[i].Name < lbls[j].Name })
+			t.Labels = lbls
+			threads = append(threads, t)
+		}
+	}
+	data.Threads = threads
+
+	ForumUnreadPageTmpl.Handle(w, r, data)
+}
+
+const ForumUnreadPageTmpl tasks.Template = "forum/unreadThreadsPage.gohtml"
+
+func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
+	UnreadThreadsPageWithBasePath(w, r, "/forum")
+}

@@ -34,6 +34,12 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			}
 		}
 	}
+	if cd.UserID != 0 {
+		items = append(items, common.IndexItem{
+			Name: "Unread Threads",
+			Link: "/private/unread",
+		})
+	}
 	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r)...)
 	cd.CustomIndexItems = items
 }

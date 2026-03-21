@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -34,6 +35,7 @@ var (
 	addAuthorLabelTask     = &AddAuthorLabelTask{TaskString: TaskAddAuthorLabel}
 	removeAuthorLabelTask  = &RemoveAuthorLabelTask{TaskString: TaskRemoveAuthorLabel}
 	markThreadReadTask     = &MarkThreadReadTask{TaskString: TaskMarkThreadRead}
+	markAllUnreadReadTask  = &MarkAllUnreadReadTask{TaskString: "Mark all unread threads read"}
 	setLabelsTask          = &SetLabelsTask{TaskString: TaskSetLabels}
 )
 
@@ -47,6 +49,7 @@ var (
 	RemoveAuthorLabelTaskHandler  = removeAuthorLabelTask
 	MarkThreadReadTaskHandler     = markThreadReadTask
 	SetLabelsTaskHandler          = setLabelsTask
+	MarkAllUnreadReadTaskHandler  = markAllUnreadReadTask
 )
 
 // labelsRedirect determines the page to return to after processing a label task.
@@ -215,6 +218,60 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if target == "" {
 		target = strings.TrimSuffix(r.URL.Path, "/labels")
+	}
+	return handlers.RefreshDirectHandler{TargetURL: target}
+}
+
+// MarkAllUnreadReadTask clears the unread flags for all threads for the user.
+type MarkAllUnreadReadTask struct{ tasks.TaskString }
+
+func (t *MarkAllUnreadReadTask) Matcher() mux.MatcherFunc {
+	return func(r *http.Request, rm *mux.RouteMatch) bool { return true }
+}
+
+func (MarkAllUnreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	basePath := "/forum"
+	if strings.HasPrefix(r.URL.Path, "/private") {
+		basePath = "/private"
+	}
+
+	isPrivate := int32(0)
+	if basePath == "/private" {
+		isPrivate = 1
+	}
+
+	if cd.UserID != 0 && cd.Queries() != nil {
+		err := cd.Queries().MarkAllForumThreadsReadForUser(r.Context(), db.MarkAllForumThreadsReadForUserParams{
+			ViewerID:  cd.UserID,
+			IsPrivate: isPrivate,
+		})
+		if err != nil {
+			log.Printf("MarkAllForumThreadsReadForUser: %v", err)
+			return fmt.Errorf("mark all read %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+
+		err = cd.Queries().MarkAllForumThreadsNewReadForUser(r.Context(), db.MarkAllForumThreadsNewReadForUserParams{
+			ViewerID:  cd.UserID,
+			IsPrivate: isPrivate,
+		})
+		if err != nil {
+			log.Printf("MarkAllForumThreadsNewReadForUser: %v", err)
+			return fmt.Errorf("mark all new read %w", handlers.ErrRedirectOnSamePageHandler(err))
+		}
+	}
+
+	target := r.FormValue("redirect")
+	if target == "" {
+		target = r.Header.Get("Referer")
+	}
+	if target == "" {
+		target = basePath + "/unread"
 	}
 	return handlers.RefreshDirectHandler{TargetURL: target}
 }

@@ -1,0 +1,17 @@
+{{ template "head" $ }}
+<link rel="stylesheet" href="{{ assetHash "/forum/forum.css" }}">
+<script src="{{ assetHash "/forum/forum.js" }}"></script>
+<h1>Unread Threads</h1>
+
+<form action="{{ .BasePath }}/unread/mark-all" method="post" style="margin-bottom: 20px;">
+    {{ csrfField }}
+    <button type="submit" class="button button-primary">Mark All As Read</button>
+</form>
+
+{{ if gt (len .Threads) 0 }}
+    {{ template "topicThreads" $ }}
+{{ else }}
+    <p>You have no unread threads.</p>
+{{ end }}
+
+{{ template "tail" $ }}

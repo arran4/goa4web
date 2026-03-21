@@ -39,6 +39,8 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	fr.HandleFunc("", Page).Methods("GET")
 	fr.HandleFunc("/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/categories/category/{category}", Page).Methods("GET")
+	fr.HandleFunc("/unread", UnreadThreadsPage).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
+	fr.HandleFunc("/unread/mark-all", handlers.TaskHandler(markAllUnreadReadTask)).Methods("POST").MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(markAllUnreadReadTask.Matcher())
 	fr.HandleFunc("/topic/{topic}", TopicsPage).Methods("GET")
 	// Confirmation pages for subscribe/unsubscribe (GET), posting to task endpoints (POST)
 	fr.HandleFunc("/topic/{topic}/subscribe", SubscribeTopicPage).Methods("GET")

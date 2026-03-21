@@ -1483,6 +1483,150 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 	return items, nil
 }
 
+const listUnreadForumThreadsForUser = `-- name: ListUnreadForumThreadsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, t.title AS topic_title, t.handler AS topic_handler, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users lu ON lu.idusers = th.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
+WHERE
+  -- Thread is unread logic: it's unread if neither 'unread' nor 'new' has been inverted.
+  -- Or rather, the user is NOT the author and 'new' is not inverted, OR 'unread' is not inverted.
+  NOT (
+    EXISTS (SELECT 1 FROM content_private_labels cpl WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = sqlc.arg(viewer_id) AND cpl.label = 'unread' AND cpl.invert = 1)
+    AND (
+      fc.users_idusers = sqlc.arg(viewer_id)
+      OR EXISTS (SELECT 1 FROM content_private_labels cpl WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = sqlc.arg(viewer_id) AND cpl.label = 'new' AND cpl.invert = 1)
+    )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
+      AND (g.item='topic' OR g.item IS NULL)
+      AND g.action='view'
+      AND g.active=1
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (t.handler = 'private' AND ? = 1 OR t.handler <> 'private' AND ? = 0)
+ORDER BY th.lastaddition DESC
+`
+
+type ListUnreadForumThreadsForUserParams struct {
+	ViewerID      int32
+	ViewerMatchID sql.NullInt32
+	IsPrivate     interface{}
+}
+
+type ListUnreadForumThreadsForUserRow struct {
+	Idforumthread          int32
+	Firstpost              int32
+	Lastposter             int32
+	ForumtopicIdforumtopic int32
+	Comments               sql.NullInt32
+	Lastaddition           sql.NullTime
+	Locked                 sql.NullBool
+	DeletedAt              sql.NullTime
+	TopicTitle             sql.NullString
+	TopicHandler           string
+	Lastposterusername     sql.NullString
+	Lastposterid           sql.NullInt32
+	Firstpostusername      sql.NullString
+	Firstpostuserid        sql.NullInt32
+	Firstpostwritten       sql.NullTime
+	Firstposttext          sql.NullString
+}
+
+func (q *Queries) ListUnreadForumThreadsForUser(ctx context.Context, arg ListUnreadForumThreadsForUserParams) ([]*ListUnreadForumThreadsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUnreadForumThreadsForUser,
+		arg.ViewerID,
+		arg.ViewerMatchID,
+		arg.IsPrivate,
+		arg.IsPrivate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListUnreadForumThreadsForUserRow
+	for rows.Next() {
+		var i ListUnreadForumThreadsForUserRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.Firstpost,
+			&i.Lastposter,
+			&i.ForumtopicIdforumtopic,
+			&i.Comments,
+			&i.Lastaddition,
+			&i.Locked,
+			&i.DeletedAt,
+			&i.TopicTitle,
+			&i.TopicHandler,
+			&i.Lastposterusername,
+			&i.Lastposterid,
+			&i.Firstpostusername,
+			&i.Firstpostuserid,
+			&i.Firstpostwritten,
+			&i.Firstposttext,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markAllForumThreadsNewReadForUser = `-- name: MarkAllForumThreadsNewReadForUser :exec
+INSERT INTO content_private_labels (item, item_id, user_id, label, invert)
+SELECT 'thread', th.idforumthread, ?, 'new', 1
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+WHERE (t.handler = 'private' AND ? = 1 OR t.handler <> 'private' AND ? = 0)
+ON DUPLICATE KEY UPDATE invert = 1
+`
+
+type MarkAllForumThreadsNewReadForUserParams struct {
+	ViewerID  int32
+	IsPrivate interface{}
+}
+
+func (q *Queries) MarkAllForumThreadsNewReadForUser(ctx context.Context, arg MarkAllForumThreadsNewReadForUserParams) error {
+	_, err := q.db.ExecContext(ctx, markAllForumThreadsNewReadForUser, arg.ViewerID, arg.IsPrivate, arg.IsPrivate)
+	return err
+}
+
+const markAllForumThreadsReadForUser = `-- name: MarkAllForumThreadsReadForUser :exec
+INSERT INTO content_private_labels (item, item_id, user_id, label, invert)
+SELECT 'thread', th.idforumthread, ?, 'unread', 1
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+WHERE (t.handler = 'private' AND ? = 1 OR t.handler <> 'private' AND ? = 0)
+ON DUPLICATE KEY UPDATE invert = 1
+`
+
+type MarkAllForumThreadsReadForUserParams struct {
+	ViewerID  int32
+	IsPrivate interface{}
+}
+
+func (q *Queries) MarkAllForumThreadsReadForUser(ctx context.Context, arg MarkAllForumThreadsReadForUserParams) error {
+	_, err := q.db.ExecContext(ctx, markAllForumThreadsReadForUser, arg.ViewerID, arg.IsPrivate, arg.IsPrivate)
+	return err
+}
+
 const systemGetForumTopicByTitle = `-- name: SystemGetForumTopicByTitle :one
 SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_id, title, description, threads, comments, lastaddition, handler, deleted_at
 FROM forumtopic

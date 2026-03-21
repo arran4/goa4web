@@ -1,0 +1,10 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <span class="text-xlarge">{ data.Username }'s writings.</span><br>
+    @ListAbstracts(cd, $)
+
+@Tail(cd, $)

@@ -1,0 +1,133 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+[<a href="/admin">Admin</a>]<br />
+if item := .Infos; item != nil {
+
+<table class="table table-bordered">
+<tr><th>Section</th><th>Task</th><th>Self Email</th><th>Self Internal</th><th>Direct Email</th><th>Target Email</th><th>Target Internal</th><th>Subscribed Email</th><th>Subscribed Internal</th><th>Admin Email</th><th>Admin Internal</th></tr>
+for _, item := range . {
+
+<tr>
+    <td>{ data.Section }</td>
+    <td>{ data.Task }</td>
+    <td>if .SelfEmail {
+{ h := index data.SelfEmail 1 }
+{ t := index data.SelfEmail 0 }
+{ s := index data.SelfEmail 2 }
+{ sep := false }
+if h {
+<a href="/admin/email/template?name={ h }">html body</a>{ sep = true }
+}
+if t {
+if sep {
+, }
+<a href="/admin/email/template?name={ t }">text body</a>{ sep = true }
+}
+if s {
+if sep {
+, }
+<a href="/admin/email/template?name={ s }">subject</a>}
+}
+</td>
+    <td>if .SelfInternal {
+<a href="/admin/email/template?name={ data.SelfInternal }">{ data.SelfInternal }</a>}
+</td>
+    <td>if .DirectEmail {
+{ h := index data.DirectEmail 1 }
+{ t := index data.DirectEmail 0 }
+{ s := index data.DirectEmail 2 }
+{ sep := false }
+if h {
+<a href="/admin/email/template?name={ h }">html body</a>{ sep = true }
+}
+if t {
+if sep {
+, }
+<a href="/admin/email/template?name={ t }">text body</a>{ sep = true }
+}
+if s {
+if sep {
+, }
+<a href="/admin/email/template?name={ s }">subject</a>}
+}
+</td>
+    <td>if .TargetEmail {
+{ h := index data.TargetEmail 1 }
+{ t := index data.TargetEmail 0 }
+{ s := index data.TargetEmail 2 }
+{ sep := false }
+if h {
+<a href="/admin/email/template?name={ h }">html body</a>{ sep = true }
+}
+if t {
+if sep {
+, }
+<a href="/admin/email/template?name={ t }">text body</a>{ sep = true }
+}
+if s {
+if sep {
+, }
+<a href="/admin/email/template?name={ s }">subject</a>}
+}
+</td>
+    <td>if .TargetInternal {
+<a href="/admin/email/template?name={ data.TargetInternal }">{ data.TargetInternal }</a>}
+</td>
+    <td>if .SubEmail {
+{ h := index data.SubEmail 1 }
+{ t := index data.SubEmail 0 }
+{ s := index data.SubEmail 2 }
+{ sep := false }
+if h {
+<a href="/admin/email/template?name={ h }">html body</a>{ sep = true }
+}
+if t {
+if sep {
+, }
+<a href="/admin/email/template?name={ t }">text body</a>{ sep = true }
+}
+if s {
+if sep {
+, }
+<a href="/admin/email/template?name={ s }">subject</a>}
+}
+</td>
+    <td>if .SubInternal {
+<a href="/admin/email/template?name={ data.SubInternal }">{ data.SubInternal }</a>}
+</td>
+    <td>if .AdminEmail {
+{ h := index data.AdminEmail 1 }
+{ t := index data.AdminEmail 0 }
+{ s := index data.AdminEmail 2 }
+{ sep := false }
+if h {
+<a href="/admin/email/template?name={ h }">html body</a>{ sep = true }
+}
+if t {
+if sep {
+, }
+<a href="/admin/email/template?name={ t }">text body</a>{ sep = true }
+}
+if s {
+if sep {
+, }
+<a href="/admin/email/template?name={ s }">subject</a>}
+}
+</td>
+    <td>if .AdminInternal {
+<a href="/admin/email/template?name={ data.AdminInternal }">{ data.AdminInternal }</a>}
+</td>
+</tr>
+}
+
+</table>
+} else {
+
+<p>No templates found.</p>
+}
+
+@Tail(cd, $)

@@ -1,0 +1,49 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <table class="table table-bordered">
+        <tr>
+            <th>ID</th>
+            <th>Parent ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Options?</th>
+        </tr>
+        for _, item := range .Categories {
+
+        <tr>
+            <td><a id="wc{ data.Idwritingcategory }" href="/admin/writings/categories/category/{ data.Idwritingcategory }">{ data.Idwritingcategory }</a></td>
+            <td>{ fcid := data.WritingCategoryID }
+ <a href="#wc{ fcid }">{ fcid }</a></td>
+            <td>{ data.Title.String }</td>
+            <td>{ data.Description.String }</td>
+            <td>
+                <a href="/admin/writings/categories/category/{ data.Idwritingcategory }/edit">Edit</a><br>
+                <a href="/admin/writings/categories/category/{ data.Idwritingcategory }/grants">Grants</a><br>
+                <a href="/writings/category/{ data.Idwritingcategory }">View</a>
+            </td>
+        </tr>
+        }
+
+        <tr>
+            <form method="post" action="/admin/writings/categories">
+        { csrfField }
+                <td>NEW</td>
+                <td><select name="pcid"><option value="0">None</option>for _, item := range $.AllCategories {
+<option value="{ data.Idwritingcategory }">{ data.Title.String }</option>}
+</select></td>
+                <td><input name="name" value=""></td>
+                <td><textarea name="desc"></textarea></td>
+                <td>
+                    <input type="submit" name="task" value="writing category create">
+                </td>
+            </form>
+        </tr>
+    </table>
+<div>
+    { data.Tree }
+</div>
+@Tail(cd, $)

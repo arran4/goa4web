@@ -1,0 +1,43 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if item := cd.SelectedLinkerCategory .CategoryID; item != nil {
+
+<h2>Linker Category { data.ID } - { data.Title.String }</h2>
+<p>Order: { data.Position }</p>
+}
+
+<p>
+    <a href="/admin/linker/categories/category/{ data.CategoryID }/edit">Edit</a> |
+    <a href="/admin/linker/categories/category/{ data.CategoryID }/grants">Permissions</a>
+</p>
+<h3 id="links">Links</h3>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>URL</th>
+        <th>Poster</th>
+        <th>View</th>
+    </tr>
+    for _, item := range cd.LinkerLinksByCategoryID .CategoryID {
+
+    <tr>
+        <td><a href="/admin/linker/links/link/{ data.ID }">{ data.ID }</a></td>
+        <td>{ data.Title.String }</td>
+        <td><a href="{ data.Url.String }">{ data.Url.String }</a></td>
+        <td>{ data.Posterusername.String }</td>
+        <td><a href="/linker/show/{ data.ID }">View</a></td>
+    </tr>
+    } else {
+
+    <tr>
+        <td colspan="5">No links found.</td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

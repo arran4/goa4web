@@ -1,0 +1,10 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    Forum search:<br>
+    @CommentSearchResults(cd, $)
+
+@Tail(cd, $)

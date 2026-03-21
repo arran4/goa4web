@@ -1,0 +1,68 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+<h3>Grants</h3>
+<button id="commit-all" class="hidden">Commit All</button>
+<table class="table table-bordered">
+    <tr><th>Section</th><th>Item</th><th>Item ID</th><th>Info</th><th>Has</th><th>Disabled</th><th>Can Have</th><th>Commit</th></tr>
+    for _, item := range .GrantGroups {
+
+        <tr data-section="{ data.Section }" data-item="{ data.Item }" data-itemid="if .ItemID.Valid {
+{ data.ItemID.Int32 }}
+"if .Unsupported {
+ class="unsupported"}
+>
+            <td>{ data.Section }</td>
+            <td>{ data.Item }</td>
+            <td>if .ItemID.Valid {
+if .Link {
+<a href="{ data.Link }">{ data.ItemID.Int32 }</a>} else {
+{ data.ItemID.Int32 }}
+}
+</td>
+            <td>{ data.Info }</td>
+            <td class="have">
+                for _, item := range .Have {
+
+                    <span class="pillif .Unsupported {
+ unsupported}
+" draggable="true" data-default="have">{ data.Name }</span>
+                }
+
+            </td>
+            <td class="disabled">
+                for _, item := range .Disabled {
+
+                    <span class="pillif .Unsupported {
+ unsupported}
+" draggable="true" data-default="disabled">{ data.Name }</span>
+                }
+
+            </td>
+            <td class="available">
+                for _, item := range .Available {
+
+                    <span class="pill" draggable="true" data-default="available">{ data }</span>
+                }
+
+            </td>
+            <td>
+                <form method="post" action="/admin/user/{ data.User.Idusers }/grant/update" class="commit-form">
+                    { csrfField }
+                    <input type="hidden" name="task" value="Update grants">
+                    <input type="hidden" name="section" value="{ data.Section }">
+                    <input type="hidden" name="item" value="{ data.Item }">
+                    <input type="hidden" name="item_id" value="if .ItemID.Valid {
+{ data.ItemID.Int32 }}
+">
+                    <input type="hidden" name="actions" value="">
+                    <input type="hidden" name="disabled_actions" value="">
+                    <input type="submit" value="Commit" class="hidden">
+                </form>
+            </td>
+        </tr>
+    }
+
+</table>
+<script src="{ assetHash("/admin/role-grants-editor.js") }"></script>

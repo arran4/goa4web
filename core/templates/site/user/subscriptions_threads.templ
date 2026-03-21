@@ -1,0 +1,75 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Thread Subscriptions</h2>
+
+for _, item := range .Groups {
+
+<div class="subscription-group">
+    <h3>{ data.Name }</h3>
+    <p>{ data.Description }</p>
+
+    if .Instances {
+
+    <table>
+        <thead>
+            <tr>
+                <th>Target</th>
+                <th>Internal</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            for _, item := range .Instances {
+
+            <tr>
+                <td>
+                    { /*(Display, parameters, nicely, */) }
+                    if .Parameters {
+
+                        for _, item := range .Parameters {
+
+                            { data.Key }: if .Resolved {
+{ data.Resolved }} else {
+{ data.Value }}
+
+                        }
+
+                    } else {
+
+                        All
+                    }
+
+                </td>
+                <td>
+                    <input type="checkbox" disabled if .HasMethod "internal" {
+checked}
+>
+                </td>
+                <td>
+                    <input type="checkbox" disabled if .HasMethod "email" {
+checked}
+>
+                </td>
+            </tr>
+            }
+
+        </tbody>
+    </table>
+    } else {
+
+    <p>No subscriptions.</p>
+    }
+
+</div>
+}
+
+
+<p>
+    <a href="/usr/subscriptions" class="button">Back to Subscriptions</a>
+</p>
+
+@Tail(cd, $)

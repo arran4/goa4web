@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="task" value="Edit">
+    <textarea name="text" cols=40 rows=20>{ data.Post.News.String }</textarea><br>
+    @LanguageCombobox(cd, )
+
+    Author Labels:<br>
+    <div class="label-editor">
+    for _, item := range .AuthorLabels {
+
+        <span class="label pill author">{ data }<button type="button" class="remove" data-type="author">x</button><input type="hidden" name="author" value="{ data }"/></span>
+    }
+
+        <input type="text" class="label-input" data-type="author" placeholder="Add author label"/>
+    </div>
+    <input type="submit" value="Save">
+</form>
+<script src="{ assetHash("/forum/topic_labels.js") }"></script>
+<p><a href="/admin/news/article/{ data.Post.Idsitenews }">Cancel</a></p>
+@Tail(cd, $)

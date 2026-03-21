@@ -1,0 +1,13 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Create Category</h1>
+<form method="post" action="/admin/faq/categories">
+{ csrfField }
+<input name="cname">
+<p><input type="submit" name="task" value="Create Category"></p>
+</form>
+@Tail(cd, $)

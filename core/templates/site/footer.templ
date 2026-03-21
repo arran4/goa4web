@@ -1,0 +1,12 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Footer(cd *common.CoreData, data any) {
+
+<div>
+        Date and time is now: { now }<br>
+        <em>Arran 2004-2005, 2023-2025; All works on this page copyrighted to their respective authors.</em><br>
+        <a href="https://github.com/arran4/goa4web">GitHub</a> Version { version }
+</div>
+}

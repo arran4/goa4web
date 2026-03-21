@@ -1,0 +1,43 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+{ blog := cd.BlogPost }
+
+<h2>Blog { blog.Idblogs } Admin</h2>
+<p>By { blog.Username.String }</p>
+<div>{ blog.Blog.String(|, a4code2html) }</div>
+<p><a href="/admin/blogs/blog/{ blog.Idblogs }/edit">Edit</a> | <a href="/admin/blogs/blog/{ blog.Idblogs }/comments">Comments</a></p>
+<h3>Grants</h3>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>User / Role</th>
+        <th>Action</th>
+    </tr>
+    for _, item := range .Grants {
+
+    <tr>
+        <td>{ data.ID }</td>
+        <td>
+            if .Username.Valid {
+User: { data.Username.String }}
+
+            if and .Username.Valid .RoleName.Valid {
+<br>}
+
+            if .RoleName.Valid {
+Role: { data.RoleName.String }}
+
+        </td>
+        <td>{ data.Action }</td>
+    </tr>
+    } else {
+
+    <tr><td colspan="3">No grants.</td></tr>
+    }
+
+</table>
+@Tail(cd, $)

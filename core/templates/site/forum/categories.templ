@@ -1,0 +1,72 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ GetAllForumCategories(cd *common.CoreData, data any) {
+
+    if .Categories {
+
+        <table class="table table-bordered centered-table content-width">
+            for _, item := range .Categories {
+
+            <tr>
+                <td>
+                    if and $.Admin .Edit {
+
+                        <form method="post" action="/admin/forum/categories/category/{ data.Idforumcategory }">
+        { csrfField }
+                            Title <input name="name" value="{ data.Title.String }">: -
+                            Description: <textarea name="desc" cols="30" rows="2">{ data.Description.String }</textarea>
+                            { pid := data.ForumcategoryIdforumcategory }
+
+                            Parent <select name="pcid" value="{ pid }"><option value="0">None</option>for _, item := range $.Categories {
+<option value="{ data.Idforumcategory }" if eq $pid .Idforumcategory {
+selected}
+>{ data.Title.String }</option>}
+</select>
+                            ({ len(data.Topics) } topics)
+                            <input type="submit" name="task" value="Forum category change">
+                            if eq (len .Topics) 0 {
+
+                            <input type="submit" name="task" formaction="/admin/forum/categories/category/{ data.Idforumcategory }/delete" value="Delete Category">
+                            }
+
+                        </form>
+                    } else {
+
+                        <strong><a href="/forum/category/{ data.Idforumcategory }">{ data.Title.String }</a></strong> - { data.Description.String } ({ len(data.Topics) })<br>
+                    }
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @GetAllForumCategories(cd, (call $.CopyDataToSubCategories .))
+
+                    @TableTopics(cd, (dict "Topics" .Topics "IsAdmin" $.Admin))
+
+                    if $.Admin {
+
+                        <a href="/admin/forum/categories/create?category={ data.Idforumcategory }">Create Category</a><br>
+                    }
+
+                </td>
+            </tr>
+            }
+
+            if .Back {
+
+                <tr>
+                    <td>
+                        <a href="/forum">Back</a>
+                    </td>
+                </tr>
+            }
+
+        </table>
+    } else {
+
+        <p>No categories to show.</p>
+    }
+
+}

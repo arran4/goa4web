@@ -1,0 +1,20 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <p><strong>Title:</strong> { data.Link.Title.String }</p>
+    <p><strong>URL:</strong> <a href="{ data.Link.Url.String }">{ data.Link.Url.String }</a></p>
+    <p><strong>Description:</strong> { data.Link.Description.String }</p>
+    <p><strong>Category:</strong> { data.Link.Title_2.String }</p>
+    <p><strong>Poster:</strong> { data.Link.Username.String }</p>
+    <p><strong>Listed:</strong> if .Link.Listed.Valid {
+{ cd.LocalTimeIn(data.Link.Listed.Time, data.Link.Timezone.String) }}
+</p>
+    <p>
+        <a href="/admin/linker/links/link/{ data.Link.ID }/edit">Edit</a> |
+        <a href="/admin/linker/links/link/{ data.Link.ID }/grants">Permissions</a> |
+        <a href="/admin/linker/links/link/{ data.Link.ID }/comments">Comments</a>
+    </p>
+@Tail(cd, $)

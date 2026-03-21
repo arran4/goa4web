@@ -1,0 +1,47 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Role: { data.Role.Name } (ID { data.Role.ID })</h2>
+<p><a href="/admin/role/{ data.Role.ID }/edit">Edit Role</a></p>
+<table class="table table-bordered">
+    <tr><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th></tr>
+    <tr>
+        <td>if .Role.CanLogin {
+yes} else {
+no}
+</td>
+        <td>if .Role.IsAdmin {
+yes} else {
+no}
+</td>
+        <td>if .Role.PublicProfileAllowedAt.Valid {
+enabled} else {
+disabled}
+</td>
+    </tr>
+</table>
+<h3>Users</h3>
+<ul>
+    if .Users {
+
+        for _, item := range .Users {
+
+        <li><a href="/admin/user/{ data.ID }">{ data.User.String }</a> (if .EmailList {
+{ data.EmailList }} else {
+No email}
+)</li>
+        }
+
+    } else {
+
+        <li>No users</li>
+    }
+
+</ul>
+<p><a href="/admin/role/{ data.Role.ID }/grant/add">Add Grant</a></p>
+@Admin_roleGrantsEditor(cd, .)
+
+@Tail(cd, $)

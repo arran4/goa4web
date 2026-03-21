@@ -1,0 +1,36 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Images by { data.User.Username.String }</h2>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Date</th><th>Board</th><th>Approved</th><th>Link</th></tr>
+    for _, item := range .Posts {
+
+    <tr>
+        <td><a href="/admin/user/{ data.User.Idusers }/imagebbs/post/{ data.Idimagepost }">{ data.Idimagepost }</a></td>
+        <td>{ cd.FormatLocalTimeIn(data.Posted, data.Timezone.String) }</td>
+        <td>{ data.ImageboardIdimageboard.Int32 }</td>
+        <td>if .Approved {
+Yes} else {
+No}
+</td>
+        <td>
+            <a href="/admin/user/{ data.User.Idusers }/imagebbs/post/{ data.Idimagepost }">Dashboard</a> |
+            <a href="/admin/user/{ data.User.Idusers }/imagebbs/post/{ data.Idimagepost }/edit">Edit</a> |
+            <a href="/admin/user/{ data.User.Idusers }/imagebbs/post/{ data.Idimagepost }/comments">Comments</a>
+            if !.Approved {
+
+            <form class="inline-form" method="post" action="/admin/imagebbs/approve/{ data.Idimagepost }">
+                { csrfField }<input type="submit" name="task" value="Approve">
+            </form>
+            }
+
+        </td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

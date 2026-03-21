@@ -1,0 +1,16 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="task" value="Edit">
+    <textarea name="text" cols=40 rows=20>{ data.Post.News.String }</textarea><br>
+    @LanguageCombobox(cd, )
+
+    <input type="submit" value="Save">
+</form>
+<p><a href="/news/news/{ data.Post.Idsitenews }">Cancel</a></p>
+@Tail(cd, $)

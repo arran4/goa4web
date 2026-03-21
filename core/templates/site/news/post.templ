@@ -1,0 +1,76 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ NewsPostLabels(cd *common.CoreData, data any) {
+
+<span id="news-labels-{ data.PostID }" class="labels" data-timestamp="{ now.Unix }">
+    for _, item := range .Labels {
+
+        <span class="label pill { data.Type }" title="{ data.Type } label">{ data.Name }
+        if eq .Name "unread" {
+
+             <a href="/news/news/{ data.PostID }/labels?task=Mark+Thread+Read" onclick="replaceContent(event, this.href, 'news-labels-{ data.PostID }'); return false;" title="Dismiss unread">(x)</a>
+        }
+
+        </span>
+    }
+
+</span>
+}
+
+
+templ NewsPost(cd *common.CoreData, data any) {
+
+    { post := . }
+
+    <article class="thread">
+        <header class="thread-header">{ cd.LocalTimeIn(data.Occurred.Time, data.Timezone.String) }</header>
+        <div class="thread-content">{ data.News.String(|, a4code2html) }<br>-<br>{ data.Writername.String }
+            -
+            if cd.SelectedThreadID {
+
+                { data.Comments.Int32 } COMMENTS [<a href="#bottom">BOTTOM</a>]if cd.SelectedThreadCanReply {
+ [<a href="#bottom">REPLY</a>]}
+
+            } else {
+
+                [<a href="/news/news/{ data.Idsitenews }">{ data.Comments.Int32 } COMMENTS</a>]
+            }
+
+
+            if cd.ShowEditNews .Idsitenews .UsersIdusers {
+
+                [<a href="/news/news/{ data.Idsitenews }/edit">EDIT</a>]
+            }
+
+            if and cd.IsAdmin cd.IsAdminMode {
+[<a href="/admin/news/article/{ data.Idsitenews }">ADMIN</a>]}
+
+            if and cd.IsAdmin cd.IsAdminMode {
+
+                [<a href="/admin/announcements?news_id={ data.Idsitenews }">
+                    { ann := cd.NewsAnnouncement data.Idsitenews }
+
+                    if and $ann $ann.Active {
+
+                        MANAGE ANNOUNCEMENT
+                    } else {
+
+                        PROMOTE TO ANNOUNCEMENT
+                    }
+
+                </a>]
+            }
+
+            { labels := cd.NewsLabels data.Idsitenews data.UsersIdusers }
+
+            if labels {
+<section class="label-bar">
+                @NewsPostLabels(cd, (dict "PostID" .Idsitenews "Labels" $labels))
+
+            </section>}
+
+        </div>
+    </article>
+}

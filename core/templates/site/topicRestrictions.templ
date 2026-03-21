@@ -1,0 +1,60 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ TopicRestrictions(cd *common.CoreData, data any) {
+
+    <span class="section-title">Topic Restrictions:</span><br>
+    <div class="topic-restrictions">
+        <div class="topic-restrictions-row topic-restrictions-header">
+            <div>Topic</div>
+            <div>view level</div>
+            <div>reply level</div>
+            <div>new thread level</div>
+            <div>see level</div>
+            <div>Starting roles</div>
+            <div>read level</div>
+            <div>Moderator Level</div>
+            <div>Administrator level</div>
+            <div>Options</div>
+        </div>
+        for _, item := range .Restrictions {
+
+        <form method="post" class="topic-restrictions-row">
+            { csrfField }
+            <div><input type="hidden" name="ftid" value="{ data.ForumTopicID }">{ data.Title }</div>
+            <div><input name="view" value="{ data.ViewLevel }" size="8"></div>
+            <div><input name="reply" value="{ data.ReplyLevel }" size="8"></div>
+            <div><input name="newthread" value="{ data.NewThreadLevel }" size="8"></div>
+            <div><input name="see" value="{ data.SeeLevel }" size="8"></div>
+            <div><input name="invite" value="{ data.InviteLevel }" size="8"></div>
+            <div><input name="read" value="{ data.ReadLevel }" size="8"></div>
+            <div><input name="mod" value="{ data.ModeratorLevel }" size="8"></div>
+            <div><input name="admin" value="{ data.AdminLevel }" size="8"></div>
+            <div>
+                if .HasRestriction {
+
+                <input type="submit" name="task" value="Update topic restriction">
+                <input type="submit" name="task" value="Delete topic restriction">
+                } else {
+
+                <input type="submit" name="task" value="Set topic restriction">
+                }
+
+            </div>
+        </form>
+        }
+
+    </div><br>
+    Remember:
+    <ul>
+        <li>View threads
+        <li>Reply to thread
+        <li>Create new threads
+        <li>See the topic
+        <li>Invite new user to restricted topic
+        <li>Read threads
+        <li>Moderate threads
+        <li>Administrate users
+    </ul>
+}

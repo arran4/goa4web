@@ -1,0 +1,16 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/users">Users</a>: <a href="/admin/user/{ data.User.Idusers }/edit">(This page/Refresh)</a>]</div>
+    <form method="post">
+        { csrfField }
+        <input type="hidden" name="uid" value="{ data.User.Idusers }">
+        Username: <input name="username" value="{ data.User.Username.String }"><br>
+        Email: <input name="email" value="{ data.User.Email.String }"><br>
+        <input type="submit" name="task" value="Save">
+    </form>
+    <p><a href="/admin/user/{ data.User.Idusers }/reset">Reset password</a></p>
+@Tail(cd, $)

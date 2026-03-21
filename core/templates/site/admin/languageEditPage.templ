@@ -1,0 +1,20 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Edit Language { data.Language.Nameof.String }</h2>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="cid" value="{ data.Language.ID }">
+    <label>Name:<input name="cname" value="{ data.Language.Nameof.String }"></label>
+    <input type="submit" name="task" value="Rename Language">
+</form>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="cid" value="{ data.Language.ID }">
+    <input type="submit" name="task" value="Delete Language">
+</form>
+<p><a href="/admin/languages/language/{ data.Language.ID }">Back</a></p>
+@Tail(cd, $)

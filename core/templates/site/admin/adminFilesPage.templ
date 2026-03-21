@@ -1,0 +1,63 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Managed Files</h2>
+<p><a href="/admin/files/unmanaged">View Unmanaged Files</a></p>
+<p>Total: { data.Total }</p>
+
+<table class="table table-bordered">
+<tr>
+    <th>ID</th>
+    <th>Preview</th>
+    <th>Path</th>
+    <th>Description</th>
+    <th>User</th>
+    <th>Board</th>
+    <th>Size</th>
+    <th>Posted</th>
+    <th>Actions</th>
+</tr>
+for _, item := range .Entries {
+
+<tr>
+    <td>{ data.Idimagepost }</td>
+    <td>
+        if .Thumbnail.Valid {
+
+        <img src="{ data.Thumbnail.String }" style="max-height: 50px; max-width: 50px;">
+        }
+
+    </td>
+    <td>
+        if .Fullimage.Valid {
+
+        <a href="{ data.Fullimage.String }">{ data.Fullimage.String }</a>
+        }
+
+    </td>
+    <td>{ data.Description }</td>
+    <td>if .Username.Valid {
+{ data.Username.String }} else {
+?}
+</td>
+    <td>if .Title.Valid {
+{ data.Title.String }} else {
+?}
+</td>
+    <td>{ data.FileSize }</td>
+    <td>{ data.Posted }</td>
+    <td>
+        if .Fullimage.Valid {
+
+        <a href="{ data.Fullimage.String }" class="btn btn-sm btn-secondary" target="_blank">View</a>
+        }
+
+    </td>
+</tr>
+}
+
+</table>
+@Tail(cd, $)

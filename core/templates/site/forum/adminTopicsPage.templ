@@ -1,0 +1,73 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, .)
+
+
+<h1>Forum Topics</h1>
+<a href="/admin/forum/categories/create" class="btn btn-primary">Create Category</a>
+
+<table class="table table-striped mt-3">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Title</th>
+        <th>Threads</th>
+        <th>Posts</th>
+        <th>Access / Category / Participants</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    for _, item := range .Topics {
+
+        <tr>
+            <td>{ data.Idforumtopic }</td>
+            <td>
+                if .IsPrivate {
+
+                    <span class="badge badge-warning">Private</span>
+                } else {
+
+                    <span class="badge badge-success">Public</span>
+                }
+
+            </td>
+            <td>
+                <a href="/admin/forum/topics/topic/{ data.Idforumtopic }">{ data.DisplayTitle }</a>
+            </td>
+            <td>{ data.Threads }</td>
+            <td>{ data.Comments }</td>
+            <td>
+                if .IsPrivate {
+
+                    Private forumif .Participants {
+<br><strong>Participants:</strong> { data.Participants }}
+
+                } else {
+
+                    if .AccessInfo {
+<strong>Access:</strong> { data.AccessInfo }}
+
+                }
+
+            </td>
+            <td>
+                <a href="/admin/forum/topics/topic/{ data.Idforumtopic }" class="btn btn-sm btn-info">Edit</a>
+                <a href="/forum/topic/{ data.Idforumtopic }" class="btn btn-sm btn-secondary">View</a>
+            </td>
+        </tr>
+    } else {
+
+        <tr><td colspan="7">No topics</td></tr>
+    }
+
+    </tbody>
+</table>
+
+@Pagination(cd, .)
+
+
+@Tail(cd, .)

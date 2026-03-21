@@ -1,0 +1,14 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ IndexItems(cd *common.CoreData, data any) {
+
+    for _, i := range cd.IndexItems {
+
+        <a href="{ addmode(i.Link) }" if eq $i.Link "/usr/notifications" {
+id="notif-index"}
+>{ i.Name }</a><br>
+    }
+
+}

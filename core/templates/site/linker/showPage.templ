@@ -1,0 +1,30 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ LinkerShowPage(cd *common.CoreData, data any) {
+
+    <p>Link: <a href="{ data.Link.Link }" target="_blank" rel="noopener nofollow ugc" title="Created on { data.Link.CreatedAt } by { data.User.Username.String }">[{ data.Link.ID }] { data.Link.Title.String }</a></p>
+    if $.IsLoggedIn {
+
+        <form method="post" action="/linker/{ data.Link.ID }/edit-comment">
+            { data.csrfField }
+            Comment: <textarea name="comment">{ data.Link.Comment.String }</textarea>
+            <br>
+            <input type="submit" value="Save">
+        </form>
+    }
+
+    if and (not $.IsLoggedIn) (.Link.Comment.String) {
+
+        <p>Comment: { data.Link.Comment.String }</p>
+    }
+
+}
+
+
+@Head(cd, $)
+
+    @LinkerShowPage(cd, $)
+
+@Tail(cd, $)

@@ -1,0 +1,52 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ AdminQuestionTable(cd *common.CoreData, data any) {
+
+<table>
+<tr><th>ID</th><th>Question</th><th>Category</th><th><a href="/admin/faq/categories/category/0/questions">Priority</a></th><th>Actions</th></tr>
+for _, item := range .Rows {
+
+<tr>
+    <td>{ data.ID }</td>
+    <td>
+        <a href="/admin/faq/question/{ data.ID }">{ data.Question.String(|, truncateWords, 20) }</a>
+        <details>
+            <summary>Preview</summary>
+            <div>
+                <strong>Q:</strong> { data.Question.String(|, a4code2html) }
+                <hr>
+                <strong>A:</strong> { data.Answer.String(|, a4code2html) }
+            </div>
+        </details>
+    </td>
+    <td>
+        { cat := data.CategoryID.Int32 }
+
+        if eq $cat 0 {
+<a href="/admin/faq/questions?category=0">Unassigned</a>} else {
+
+            for _, item := range $.Categories {
+if eq $cat .ID {
+<a href="/admin/faq/categories/category/{ data.ID }">{ data.Name.String }</a>}
+}
+
+        }
+
+    </td>
+    <td>{ data.Priority }</td>
+    <td>
+        <a href="/admin/faq/question/{ data.ID }/edit">Edit</a> |
+        <a href="/admin/faq/revisions/{ data.ID }">History</a>
+        <form method="post" action="/admin/faq/questions" class="inline-form">
+            { csrfField }
+            <input type="hidden" name="faq" value="{ data.ID }">
+            <input type="submit" name="task" value="Remove">
+        </form>
+    </td>
+</tr>
+}
+
+</table>
+}

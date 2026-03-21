@@ -1,0 +1,49 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+    @Head(cd, $)
+
+    <p><a href="/blogs/add">New blog post</a></p>
+    <table class="table table-bordered">
+        <tr><th>ID<th>Date<th>Writer<th>Comments<th>View</tr>
+        for _, item := range cd.BlogList {
+
+            <tr>
+                <td><a href="/admin/blogs/blog/{ data.Idblogs }">{ data.Idblogs }</a></td>
+                <td><a href="/admin/blogs/blog/{ data.Idblogs }">{ cd.LocalTimeIn(data.Written, data.Timezone.String) }</a></td>
+                <td>if .Username.Valid {
+<a href="/admin/user/{ data.UsersIdusers }">{ data.Username.String }</a>} else {
+{ data.UsersIdusers }}
+</td>
+                <td><a href="/admin/blogs/blog/{ data.Idblogs }#comments">{ data.Comments }</a></td>
+                <td><a href="/blogs/blog/{ data.Idblogs }">Public</a></td>
+            </tr>
+        } else {
+
+            <tr><td colspan="5">No blogs.</td></tr>
+        }
+
+    </table>
+    <p>Blog roles:</p>
+    <table class="table table-bordered">
+        <tr><th>ID<th>User<th>Email<th>Role</tr>
+        for _, item := range .Rows {
+
+            <tr>
+                <td>if .Username.Valid {
+<a href="/admin/user/{ data.Idusers }">{ data.Username.String }</a>} else {
+{ data.Idusers }}
+</td>
+                <td>{ data.Email }</td>
+                <td>if .Roles.Valid {
+{ data.Roles.String }}
+</td>
+            </tr>
+        } else {
+
+            <tr><td colspan="2">No roles.</td></tr>
+        }
+
+    </table>
+    @Tail(cd, $)

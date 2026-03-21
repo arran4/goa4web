@@ -1,0 +1,35 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Board { data.Board.Idimageboard }</h2>
+<p>Title: { data.Board.Title.String }</p>
+<p>Description: { data.Board.Description.String }</p>
+<ul>
+    <li><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }/edit">Edit</a></li>
+    <li><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }/images">List Content</a></li>
+    <li><a href="/imagebbs/board/{ data.Board.Idimageboard }">Public View</a></li>
+    <li><form class="inline-form" method="post" action="/admin/imagebbs/board/{ data.Board.Idimageboard }/delete" onsubmit="return confirm('Delete board?');">{ csrfField }<input type="submit" name="task" value="Delete board"></form></li>
+    <li><a href="/admin/imagebbs/boards">Back to Boards</a></li>
+</ul>
+
+<h3>Recent Posts</h3>
+<table class="table table-bordered">
+<tr><th>ID</th><th>User</th><th>Description</th><th>Posted</th><th>View</th></tr>
+for _, item := range .Posts {
+
+<tr>
+<td><a href="/admin/user/{ data.UsersIdusers }/imagebbs/post/{ data.Idimagepost }">{ data.Idimagepost }</a></td>
+<td>{ data.Username.String }</td>
+<td>{ data.Description.String }</td>
+<td>if .Posted.Valid {
+{ cd.LocalTimeIn(data.Posted.Time, data.Timezone.String) }}
+</td>
+</tr>
+}
+
+</table>
+<p><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }/images">View all</a></p>
+@Tail(cd, $)

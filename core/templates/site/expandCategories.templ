@@ -1,0 +1,79 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ ExpandCategories(cd *common.CoreData, data any) {
+
+    <span class="section-title">Topics:</span><br>
+    for _, item := range .Categories {
+
+        <table class="table table-bordered centered-table content-width">
+            <tr>
+                <td>
+                    if .Admin {
+
+                        <form method="post">
+        { csrfField }
+                            Title <input name="name" value="{ data.Title }">: - Description:
+                            <textarea name="desc" cols="30" rows="2">{ data.Description }</textarea>
+                            <input type="hidden" name="cid" value="{ data.ID }">
+                            <input type="submit" name="task" value="Forum category change">
+                        </form>
+                    } else {
+
+                        <strong>{ data.Title }:</strong> - { data.Description }<br>
+                    }
+
+                </td>
+            </tr>
+        </table>
+        if .Admin {
+
+            <a href="?admin=createLinkerCategory&category={ data.ID }">Create Category</a><br>
+            if .ID {
+
+                <a href="?admin=createtopic&category={ data.ID }">Create Topic</a><br>
+            }
+
+        }
+
+        for _, item := range .Topics {
+
+            if eq .CategoryID .ID {
+
+                if .Admin {
+
+                    <form method="post">
+        { csrfField }
+                        <input name="name" value="{ data.Title }"><br>
+                        <textarea name="desc" cols="30" rows="3">{ data.Description }</textarea><br>
+                } else {
+
+                    <a href="?topic={ data.ID }">{ data.Title }</a><br>
+                    <em>{ data.Description }</em><br>
+                }
+
+                if .LastReply {
+
+                    <td class="text-centered">{ data.LastReply }<br>{ data.LastUser }</td>
+                    <td class="text-centered">{ data.Threads }<br>{ data.Replies }</td>
+                } else {
+
+                    <td>N/A</td><td>N/A</td>
+                }
+
+                if .Admin {
+
+                    <a href="?admin=topicrestrictions&topic={ data.ID }">Edit Topic Restrictions</a><br>
+                    <input type="hidden" name="tid" value="{ data.ID }">
+                    <input type="submit" name="task" value="Forum topic change">
+                    </form><br>
+                }
+
+            }
+
+        }
+
+    }
+
+}

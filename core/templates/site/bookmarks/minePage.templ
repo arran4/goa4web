@@ -1,0 +1,33 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<table>
+    <tr class="top-aligned">
+        for _, item := range .Columns {
+
+            <td>
+                for _, item := range .Categories {
+
+                    <ul>
+                        <h2>{ data.Name }</h2>
+                        for _, item := range .Entries {
+
+                            <li><a href="{ data.Url }" target="_blank">{ data.Name }</a></li>
+                        }
+
+                    </ul>
+                }
+
+            </td>
+        } else {
+
+            <td>No bookmarks saved. Use <a href="/bookmarks/edit">Edit</a> to add some.</td>
+        }
+
+    </tr>
+</table>
+<hr><a href="/bookmarks/edit">EDIT</a><br>
+@Tail(cd, $)

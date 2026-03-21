@@ -1,0 +1,57 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingLinks(cd *common.CoreData, data any) {
+
+    <section class="full-width link-list">
+        if .HasOffset {
+
+            for _, item := range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) (int32 .Offset) {
+
+                <article class="link-item">
+                    <header class="bg-muted link-header">{ data.CategoryTitle.String }: <a href="{ data.Url.String }" target="_BLANK">{ data.Title.String }</a></header>
+                    <div class="link-body">
+                        { data.Description.String(|, a4code2html) }<hr>
+                        { data.Posterusername.String } - Listed: { cd.LocalTimeIn(data.Listed.Time, data.Timezone.String) } - [<a href="/linker/comments/{ data.ID }">{ data.Comments.Int32 } COMMENTS</a>]<br>
+                    </div>
+                </article>
+            } else {
+
+                if .CatId {
+
+                    <div class="link-item"><div class="link-body">There are no more links under this category.</div></div>
+                } else {
+
+                    <div class="link-item"><div class="link-body">There are no more links.</div></div>
+                }
+
+            }
+
+        } else {
+
+            for _, item := range cd.SelectedLinkerItemsForCurrentUser (int32 .CatId) 0 {
+
+                <article class="link-item">
+                    <header class="bg-muted link-header">{ data.CategoryTitle.String }: <a href="{ data.Url.String }" target="_BLANK">{ data.Title.String }</a></header>
+                    <div class="link-body">
+                        { data.Description.String(|, a4code2html) }<hr>
+                        { data.Posterusername.String } - Listed: { cd.LocalTimeIn(data.Listed.Time, data.Timezone.String) } - [<a href="/linker/comments/{ data.ID }">{ data.Comments.Int32 } COMMENTS</a>]<br>
+                    </div>
+                </article>
+            } else {
+
+                if .CatId {
+
+                    <div class="link-item"><div class="link-body">Nothing under this category.</div></div>
+                } else {
+
+                    <div class="link-item"><div class="link-body">There are no links here.</div></div>
+                }
+
+            }
+
+        }
+
+    </section>
+}

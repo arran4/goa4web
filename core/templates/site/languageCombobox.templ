@@ -1,0 +1,23 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ LanguageCombobox(cd *common.CoreData, data any) {
+
+    Please select used language:
+    <select name="language">
+        <option value="0">Multi-lingual
+        { sel := cd.PreferredLanguageID cd.Config.DefaultLanguage }
+
+        for _, item := range cd.Languages {
+
+            <option value="{ data.ID }"if eq .ID $sel {
+ selected}
+>{ data.Nameof.String }
+        } else {
+
+            <option disabled>No languages</option>
+        }
+
+    </select><br>
+}

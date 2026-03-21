@@ -1,0 +1,37 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Parent ID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Child Category Count</th>
+        <th>Topic Count</th>
+        <th>Admin</th>
+    </tr>
+    for _, item := range .Categories {
+
+    <tr>
+        <td><a id="fc{ data.Idforumcategory }" href="/admin/forum/categories/category/{ data.Idforumcategory }">{ data.Idforumcategory }</a></td>
+        <td>{ fcid := data.ForumcategoryIdforumcategory }
+<a href="#fc{ fcid }">{ fcid }</a></td>
+        <td>{ data.Title.String }</td>
+        <td>{ data.Description.String }</td>
+        <td>{ data.Subcategorycount }</td>
+        <td>{ data.Topiccount }</td>
+        <td><a href="/admin/forum/categories/category/{ data.Idforumcategory }">Dashboard</a></td>
+    </tr>
+    }
+
+</table>
+<p><a href="/admin/forum/categories/create">Create Category</a></p>
+<h2>Category Tree</h2>
+<div>
+    { data.Tree }
+</div>
+@Tail(cd, $)

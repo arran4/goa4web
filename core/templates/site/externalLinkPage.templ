@@ -1,0 +1,60 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if $.Message {
+
+    <p style="color: green; font-weight: bold;">{ data.Message }</p>
+}
+
+<h2>Are you sure you want to visit:</h2>
+<p><a href="{ (cd).ExternalLinkTargetURL }" target="_blank">{ (cd).ExternalLinkTargetURL }</a></p>
+{ link := (cd).SelectedExternalLink }
+
+if link {
+
+    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; max-width: 600px;">
+        if $link.CardImageCache.Valid {
+
+            <img src="{ signCacheURL(link.CardImageCache.String) }" alt="preview" style="max-width: 100%;"><br>
+        }
+
+        if $link.FaviconCache.Valid {
+
+            <img src="{ signCacheURL(link.FaviconCache.String) }" alt="icon">
+        }
+
+        if $link.CardTitle.Valid {
+<p><strong>{ link.CardTitle.String }</strong></p>}
+
+        if $link.CardDescription.Valid {
+<p>{ link.CardDescription.String }</p>}
+
+        if $link.CardDuration.Valid {
+<p>Duration: { link.CardDuration.String }</p>}
+
+        if $link.CardUploadDate.Valid {
+<p>Upload Date: { link.CardUploadDate.String }</p>}
+
+        if $link.CardAuthor.Valid {
+<p>Author: { link.CardAuthor.String }</p>}
+
+    </div>
+}
+
+<p>
+    <a href="{ (cd).ExternalLinkRedirectURL }" class="button">Goto Link</a>
+    if $.BackURL {
+
+    <a href="{ data.BackURL }" class="button">Go Back</a>
+    }
+
+</p>
+<p>
+    <form action="{ (cd).ExternalLinkReloadURL }" method="post">
+        <button type="submit">Reload Open Graph Data</button>
+    </form>
+</p>
+@Tail(cd, $)

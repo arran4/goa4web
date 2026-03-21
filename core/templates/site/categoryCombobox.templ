@@ -1,0 +1,20 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ CategoryCombobox(cd *common.CoreData, data any) {
+
+    Please select appropriate category:
+    <select name="category">
+        for _, item := range cd.LinkerCategories {
+
+            <option value="{ data.ID }"if eq .ID $.Selected {
+ selected}
+>{ data.Title.String }</option>
+        } else {
+
+            <option disabled>No categories</option>
+        }
+
+    </select><br>
+}

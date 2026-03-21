@@ -1,0 +1,43 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h4>New Topic</h4>
+<form method="post" action="/admin/forum/topic">
+{ csrfField }
+Title: <input name="name"><br>
+Description:<br>
+<textarea name="desc"></textarea><br>
+Category: <select name="pcid"><option value="0">None</option>for _, item := range .Categories {
+<option value="{ data.Idforumcategory }">{ data.Title.String }</option>}
+</select><br>
+<h5>Grants</h5>
+View: <select name="view">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+Reply: <select name="reply">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+New thread: <select name="newthread">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+See: <select name="see">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+Starting roles: <select name="startingRoles">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+Read: <select name="read">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+Moderator: <select name="mod">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+Administrator: <select name="admin">for _, item := range $.Roles {
+<option value="{ data.ID }">{ data.Name }</option>}
+</select><br>
+<input type="submit" name="task" value="Forum topic create">
+</form>
+@Tail(cd, $)

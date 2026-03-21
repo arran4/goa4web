@@ -1,0 +1,30 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ ThreadComments(cd *common.CoreData, data any) {
+
+    if gt (cd.Offset) 0 {
+
+        <br>Skipping { cd.Offset } comments.<br><br><br>
+    }
+
+    <section class="comments">
+        { prev := 0 }
+
+        for i, c := range cd.SelectedSectionThreadComments {
+
+            { num := add (add i 1) (cd.Offset) }
+
+            <hr id="c{ num }">
+            @Comment(cd, (dict "Comment" $c "Number" $num "Prev" $prev))
+
+            { prev = c }
+
+        } else {
+
+            No comments.
+        }
+
+    </section>
+}

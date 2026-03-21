@@ -1,0 +1,56 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ UserTopicRestrictions(cd *common.CoreData, data any) {
+
+    <span class="section-title">Topic Restrictions:</span><br>
+    <table width="100%">
+        <tr>
+            <th>Topic
+            <th>User
+            <th>Level
+            <th>Starting roles
+            <th>Options
+        </tr>
+        for _, item := range .TopicRestrictions {
+
+        <form method="post">
+        { csrfField }
+            <tr>
+                <td><input type="hidden" name="tid" value="{ data.ForumTopicID }">{ data.Title }
+                <td><input type="hidden" name="uid" value="{ data.UserID }">{ data.Username }
+                <td><input name="level" value="{ data.Level }" size="8">
+                <td><input name="startingRoles" value="{ data.InviteMax }" size="8">
+                <td>
+                    <input type="submit" name="task" value="Update role">
+                    <input type="submit" name="task" value="Revoke role">
+            </tr>
+        </form>
+        }
+
+        <form method="post">
+        { csrfField }
+            <tr>
+                <td><input type="hidden" name="tid" value="{ data.TopicID }">
+                <td><input name="username" value="USERNAME">
+                <td><input name="level" value="0" size="8">
+                <td><input name="startingRoles" value="0" size="8">
+                <td>
+                    <input type="submit" name="task" value="Grant role">
+            </tr>
+        </form>
+    </table><br>
+    The most you can give someone as their level or starting role(s) is { data.MaxInvite }.<br>
+    Current restiction levels:
+    <ul>
+        <li>Level { data.ViewLevel } to View threads
+        <li>Level { data.ReplyLevel } to Reply to thread
+        <li>Level { data.NewThreadLevel } to Create new threads
+        <li>Level { data.SeeLevel } to See the topic
+        <li>Level { data.InviteLevel } to Invite new user to restricted topic
+        <li>Level { data.ReadLevel } to Read threads
+        <li>Level { data.ModLevel } to Moderate threads
+        <li>Level { data.AdminLevel } to Administrate users
+    </ul>
+}

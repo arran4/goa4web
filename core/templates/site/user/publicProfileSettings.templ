@@ -1,0 +1,17 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form method="post">
+    { csrfField }
+    <input type="checkbox" name="enable" value="1" if .Enabled {
+checked}
+> Enable my public profile<br>
+    <input type="submit" name="task" value="Save public profile">
+</form>
+<p>
+    Link to your public profile: <a href="/user/profile/{ data.Username }">{ data.Username }</a>
+</p>
+@Tail(cd, $)

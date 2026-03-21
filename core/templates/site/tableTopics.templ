@@ -1,0 +1,69 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ TableTopics(cd *common.CoreData, data any) {
+
+    { base := "/forum" }
+
+    if item := .BasePath; item != nil {
+{ base = . }
+}
+
+    { isAdmin := data.IsAdmin }
+
+    <section class="topics">
+        <div class="topic-controls">
+            <div class="sort-buttons">
+                <span>Sort by:</span>
+                <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
+                <button class="sort-button" data-sort="threads" data-order="desc">Threads</button>
+                <button class="sort-button" data-sort="replies" data-order="desc">Replies</button>
+                <button class="sort-button" data-sort="name" data-order="asc">Name</button>
+            </div>
+        </div>
+        <div class="topics-header">
+            <div class="topic-name">Topic name<br>Description</div>
+            <div class="last-reply">Last reply<br>By</div>
+            <div class="threads-replies">Threads<br>Replies</div>
+        </div>
+        <ul class="topic-list">
+    for _, item := range .Topics {
+
+        { title := topicTitleOrDefault data.Title.String }
+
+        if .DisplayTitle {
+{ title = topicTitleOrDefault data.DisplayTitle }
+}
+
+        <li class="topic-item" data-last-reply-time="{ data.Lastaddition.Time.Unix }" data-threads="{ data.Threads.Int32 }" data-replies="{ data.Comments.Int32 }" data-name="{ title }">
+            <div class="topic-name">
+                <a href="{ base }/topic/{ data.Idforumtopic }">{ title(|, a4code2html) }</a>if isAdmin {
+ [<a href="/admin/forum/topics/topic/{ data.Idforumtopic }/edit">ADMIN</a>]}
+<br>
+                { description := topicDescriptionOrDefault data.Description.String }
+<em>{ description(|, a4code2html) }</em>
+                if .Labels {
+<br>@TopicLabels(cd, .Labels)
+}
+
+                { participants := default "" data.ParticipantsString }
+
+                if participants {
+<br><small>Participants: { participants }</small>}
+
+            </div>
+                <div class="last-reply">{ cd.LocalTime(data.Lastaddition.Time) }<br>if ne .Lastposter cd.UserID {
+<strong>{ data.Lastposterusername.String }</strong>} else {
+{ data.Lastposterusername.String }}
+</div>
+                <div class="threads-replies">{ data.Threads.Int32 }<br>{ data.Comments.Int32 }</div>
+            </li>
+        } else {
+
+            <li class="topic-item no-topics"><div class="topic-name">No topics</div></li>
+        }
+
+        </ul>
+    </section>
+}

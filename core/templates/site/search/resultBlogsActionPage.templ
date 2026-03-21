@@ -1,0 +1,32 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    { cd := cd }
+
+    Search blogs:<br>
+    if $cd.SearchBlogsNoResults {
+
+        <p>Nothing found.</p>
+    } else if $cd.SearchBlogsEmptyWords {
+
+        <p>Not enough words, words too small, or no words. Please re-enter, add more, larger, or some words.</p>
+    } else {
+
+        <ul>
+        for i, result := range $cd.SearchBlogsResults {
+
+            <li>{ i }: <a href="/blogs/blog/{ result.Idblogs }">{ highlightSearch(result.Blog.String) }</a></li>
+        }
+
+        </ul>
+    }
+
+    <br>
+    Comment search:<br>
+    @CommentSearchResults(cd, $)
+
+    <br>
+@Tail(cd, $)

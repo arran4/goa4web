@@ -1,0 +1,55 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    if cd.CurrentNotice {
+
+    <p>{ cd.CurrentNotice }</p>
+    }
+
+    if cd.CurrentError {
+
+    <p class="text-error">{ cd.CurrentError }</p>
+    }
+
+    Login:<br>
+    <form method="post" action="/login">
+        { csrfField }
+        if $.Back {
+
+        <input type="hidden" name="back" value="{ data.Back }">
+        }
+
+        if $.BackSig {
+
+        <input type="hidden" name="back_sig" value="{ data.BackSig }">
+        }
+
+        if $.BackTS {
+
+        <input type="hidden" name="back_ts" value="{ data.BackTS }">
+        }
+
+        if $.Method {
+
+        <input type="hidden" name="method" value="{ data.Method }">
+        }
+
+        if $.Data {
+
+        <input type="hidden" name="data" value="{ data.Data }">
+        }
+
+        if $.Code {
+
+        <input type="hidden" name="code" value="{ data.Code }">
+        }
+
+        Username: <input name="username"><br>
+        Password: <input name="password" type="password"><br>
+        <input type="submit" name="task" value="Login">
+        <br><a href="/forgot">Forgot password?</a>
+    </form>
+@Tail(cd, $)

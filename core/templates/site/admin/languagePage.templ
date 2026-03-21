@@ -1,0 +1,19 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/languages">Languages</a> <a href="/admin/languages/language/{ data.Language.ID }">(This page/Refresh)</a>]</div>
+<h2>{ data.Language.Nameof.String }</h2>
+<table class="table table-bordered">
+    <tr><th>Type</th><th>Count</th></tr>
+    <tr><td>Comments</td><td>{ data.Counts.Comments }</td></tr>
+    <tr><td>Writings</td><td>{ data.Counts.Writings }</td></tr>
+    <tr><td>Blogs</td><td>{ data.Counts.Blogs }</td></tr>
+    <tr><td>News</td><td>{ data.Counts.News }</td></tr>
+    <tr><td>Links</td><td>{ data.Counts.Links }</td></tr>
+</table>
+<p><a href="/admin/languages/language/{ data.Language.ID }/edit">Edit</a></p>
+<p><a href="/admin/languages">Back to list</a></p>
+@Tail(cd, $)

@@ -1,0 +1,15 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <div>[<a href="/admin">Admin:</a> <a href="/admin/forum/list">(This page/Refresh)</a>]</div>
+            Complete word list:<ul>
+            for _, item := range $.Rows {
+
+                <li>{ data.String }</li>
+            }
+
+            </ul>
+@Tail(cd, $)

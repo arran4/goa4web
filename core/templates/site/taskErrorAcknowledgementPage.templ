@@ -1,0 +1,28 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if $.Error {
+
+<p class="text-error">{ data.Error }</p>
+}
+
+if $.BackURL {
+
+<form action="{ data.BackURL }" method="POST">
+    for k, v := range .Form {
+
+        for _, val := range $v {
+
+            <input type="hidden" name="{ k }" value="{ val }">
+        }
+
+    }
+
+    <button type="submit" onclick="if(history.length>1){history.back();return false;}">Return to editing</button>
+</form>
+}
+
+@Tail(cd, $)

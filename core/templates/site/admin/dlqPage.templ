@@ -1,0 +1,185 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/dlq">(This page/Refresh)</a>]</div>
+<h2>Dead Letter Queue (DLQ)</h2>
+<div style="margin-bottom: 20px;">
+    <p>Monitor and manage failed background tasks and messages.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Review:</strong> Inspect error messages and raw payloads for failed tasks.</li>
+        <li><strong>Retry:</strong> Select items and click "reenlist" to re-queue them for processing.</li>
+        <li><strong>Delete:</strong> Remove items that cannot be recovered.</li>
+    </ul>
+</div>
+Configured providers: { data.Providers }<br />
+if .FilePath {
+File: { data.FilePath } ({ data.FileSize } bytesif .FileMod {
+, updated { data.FileMod }}
+)<br />}
+
+if .DirPath {
+Directory: { data.DirPath } ({ data.DirCount } filesif .DirMod {
+, updated { data.DirMod }}
+)<br />}
+
+if .DBCount {
+Database entries: { data.DBCount }if .DBLatest {
+ (latest { data.DBLatest })}
+<br />}
+
+
+if .EditError {
+
+<h2>Edit Dead Letter { data.EditError.ID }</h2>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="id" value="{ data.EditError.ID }">
+    <div class="form-group">
+        <label>Message</label>
+        <textarea name="message" class="form-control" rows="10" style="width: 100%">{ data.EditError.Message }</textarea>
+    </div>
+    <input type="submit" name="task" value="Update" class="btn btn-primary">
+    <a href="/admin/dlq" class="btn btn-default">Cancel</a>
+</form>
+<hr />
+}
+
+
+if .FileErrors {
+
+<h2>File DLQ</h2>
+<table class="table table-bordered">
+<tr><th>Time</th><th>Message</th></tr>
+for _, item := range .FileErrors {
+
+<tr>
+    <td>if .Time {
+{ cd.FormatLocalTime(data.Time) }}
+</td>
+    <td>
+        if .Parsed {
+
+            <div><strong>Error:</strong> { data.Parsed.Error }</div>
+            if .Parsed.TaskName {
+<div><strong>Task:</strong> { data.Parsed.TaskName }</div>}
+
+            <details><summary>Raw</summary><pre>{ data.Raw }</pre></details>
+        } else {
+
+            { data.Message }
+        }
+
+    </td>
+</tr>
+}
+
+</table>
+}
+
+if .FileTail {
+
+<h3>File Tail</h3>
+<pre>
+for _, item := range .FileTail {
+
+{ data }
+}
+
+</pre>
+}
+
+if .FileErr {
+
+<p>Error reading file DLQ: { data.FileErr }</p>
+}
+
+
+if .DirErrors {
+
+<h2>Directory DLQ</h2>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="provider" value="dir">
+<table class="table table-bordered">
+<tr><th>Select</th><th>Name</th><th>Size</th><th>Message</th></tr>
+for _, item := range .DirErrors {
+
+<tr>
+    <td><input type="checkbox" name="id" value="{ data.ID }"></td>
+    <td><a href="/admin/dlq/{ data.Provider }/{ data.ID }">{ data.ID }</a></td>
+    <td>{ data.Size }</td>
+    <td>
+        if .Parsed {
+
+            <div><strong>Error:</strong> { data.Parsed.Error }</div>
+            if .Parsed.TaskName {
+<div><strong>Task:</strong> { data.Parsed.TaskName }</div>}
+
+            <details><summary>Raw</summary><pre>{ data.Raw }</pre></details>
+        } else {
+
+            { data.Message }
+        }
+
+    </td>
+</tr>
+}
+
+</table>
+<input type="submit" name="task" value="Delete">
+<input type="submit" name="task" value="reenlist">
+</form>
+}
+
+if .DirErr {
+
+<p>Error reading directory DLQ: { data.DirErr }</p>
+}
+
+
+if .Errors {
+
+<h2>Database DLQ</h2>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="provider" value="db">
+<table class="table table-bordered">
+<tr><th>Select</th><th>ID</th><th>Size</th><th>Message</th><th>Created</th><th>Actions</th></tr>
+for _, item := range .Errors {
+
+<tr>
+    <td><input type="checkbox" name="id" value="{ data.ID }"></td>
+    <td><a href="/admin/dlq/{ data.Provider }/{ data.ID }">{ data.ID }</a></td>
+    <td>{ data.Size }</td>
+    <td>
+        if .Parsed {
+
+            <div><strong>Error:</strong> { data.Parsed.Error }</div>
+            if .Parsed.TaskName {
+<div><strong>Task:</strong> { data.Parsed.TaskName }</div>}
+
+            <details><summary>Raw</summary><pre>{ data.Raw }</pre></details>
+        } else {
+
+            { data.Message }
+        }
+
+    </td>
+    <td>{ cd.FormatLocalTime(data.Time) }</td>
+    <td><a href="?edit={ data.ID }">Edit</a></td>
+</tr>
+}
+
+</table>
+Before: <input type="date" name="before">
+<input type="submit" name="task" value="Delete">
+<input type="submit" name="task" value="Purge">
+<input type="submit" name="task" value="reenlist">
+</form>
+}
+
+@Tail(cd, $)

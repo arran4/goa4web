@@ -1,0 +1,44 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<ul>
+    <li><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }">Dashboard</a></li>
+    <li><a href="/admin/imagebbs/board/{ data.Board.Idimageboard }/edit">Edit</a></li>
+    <li><a href="/imagebbs/board/{ data.Board.Idimageboard }">Public View</a></li>
+</ul>
+<h2>Images for Board { data.Board.Idimageboard }</h2>
+<table class="table table-bordered">
+<tr><th>ID<th>User<th>Description<th>Posted<th>Comments<th>Approved</tr>
+for _, item := range .Posts {
+
+<tr>
+<td>{ data.Idimagepost }</td>
+<td>{ data.Username.String }</td>
+<td>{ data.Description.String }</td>
+<td>if .Posted.Valid {
+{ cd.LocalTimeIn(data.Posted.Time, data.Timezone.String) }}
+</td>
+<td>{ data.Comments.Int32 }</td>
+<td>if .Approved {
+Yes} else {
+No}
+</td>
+</tr>
+}
+
+</table>
+<div>
+if .PrevPage {
+<a href="?page={ data.PrevPage }">Prev</a>}
+
+if and .PrevPage .NextPage {
+ | }
+
+if .NextPage {
+<a href="?page={ data.NextPage }">Next</a>}
+
+</div>
+@Tail(cd, $)

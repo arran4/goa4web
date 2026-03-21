@@ -1,0 +1,14 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<p>Are you sure you want to delete news post { data.PostID }?</p>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="task" value="Delete">
+    <input type="submit" value="{ data.ConfirmLabel }">
+</form>
+<a href="{ data.Back }">Cancel</a>
+@Tail(cd, $)

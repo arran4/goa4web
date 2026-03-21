@@ -1,0 +1,11 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+<article class="thread">
+    <header class="thread-header">{ cd.LocalTime((now)) }</header>
+    <div class="thread-content">{ data.Content(|, a4code2html) }<br>-<br>{ data.Username }
+        -
+        [<a href="#">0 COMMENTS</a>]
+    </div>
+</article>

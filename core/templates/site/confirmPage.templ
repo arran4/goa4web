@@ -1,0 +1,13 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<p>{ data.Message }</p>
+<form method="post">
+    { csrfField }
+    <input type="submit" name="task" value="{ data.ConfirmLabel }">
+</form>
+<a href="{ data.Back }">Cancel</a>
+@Tail(cd, $)

@@ -1,0 +1,178 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form method="post" action="/usr/notifications/dismiss" id="notifications-form">
+    { csrfField }
+    <input type="hidden" name="task" value="Dismiss">
+    <div id="notifications-actions" class="actions-bar">
+        <button type="button" id="btn-select-all">Select All</button>
+        <button type="button" id="btn-invert-selection">Invert Selection</button>
+        <input type="submit" value="Dismiss Selected">
+    </div>
+    <div id="notifications-list">
+    if .Request {
+
+    for _, item := range cd.Notifications .Request {
+
+        <div class="notification" id="notif-{ data.ID }" data-notification-id="{ data.ID }">
+            <label>
+                <input type="checkbox" name="id" value="{ data.ID }">
+                { cd.FormatLocalTime(data.CreatedAt) }
+                if .Link.Valid {
+<a href="/usr/notifications/open/{ data.ID }">}
+{ data.Message.String }if .Link.Valid {
+</a>}
+
+            </label>
+        </div>
+    } else {
+
+        <div id="notifications-empty">No notifications</div>
+    }
+
+    } else {
+
+        <div id="notifications-empty">No notifications</div>
+    }
+
+    </div>
+</form>
+<fieldset>
+    <legend>Notification Digests</legend>
+    <form method="post" action="/usr/notifications">
+        { csrfField }
+        <input type="hidden" name="task" value="SaveDigest">
+        <fieldset>
+            <legend>Daily Notification Digest</legend>
+            <label>
+                Hour of day:
+                <select name="daily_digest_hour">
+                    <option value="-1" if !.DigestEnabled {
+selected}
+>Disabled</option>
+                    for _, i := range seq 0 23 {
+
+                    <option value="{ i }" if and $.DigestEnabled (eq $.DigestHour $i) {
+selected}
+>{ printf("%02d:00", i) }</option>
+                    }
+
+                </select>
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Weekly Notification Digest</legend>
+            <label>
+                Day of week:
+                <select name="weekly_digest_day">
+                    <option value="-1" if !.WeeklyEnabled {
+selected}
+>Disabled</option>
+                    <option value="0" if and .WeeklyEnabled (eq .WeeklyDay 0) {
+selected}
+>Sunday</option>
+                    <option value="1" if and .WeeklyEnabled (eq .WeeklyDay 1) {
+selected}
+>Monday</option>
+                    <option value="2" if and .WeeklyEnabled (eq .WeeklyDay 2) {
+selected}
+>Tuesday</option>
+                    <option value="3" if and .WeeklyEnabled (eq .WeeklyDay 3) {
+selected}
+>Wednesday</option>
+                    <option value="4" if and .WeeklyEnabled (eq .WeeklyDay 4) {
+selected}
+>Thursday</option>
+                    <option value="5" if and .WeeklyEnabled (eq .WeeklyDay 5) {
+selected}
+>Friday</option>
+                    <option value="6" if and .WeeklyEnabled (eq .WeeklyDay 6) {
+selected}
+>Saturday</option>
+                </select>
+            </label>
+            <label>
+                Hour:
+                <select name="weekly_digest_hour">
+                    for _, i := range seq 0 23 {
+
+                    <option value="{ i }" if eq $.WeeklyHour $i {
+selected}
+>{ printf("%02d:00", i) }</option>
+                    }
+
+                </select>
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Monthly Notification Digest</legend>
+            <label>
+                Day of month:
+                <select name="monthly_digest_day">
+                    <option value="-1" if !.MonthlyEnabled {
+selected}
+>Disabled</option>
+                    for _, i := range seq 1 31 {
+
+                    <option value="{ i }" if and $.MonthlyEnabled (eq $.MonthlyDay $i) {
+selected}
+>{ i }</option>
+                    }
+
+                </select>
+            </label>
+            <label>
+                Hour:
+                <select name="monthly_digest_hour">
+                    for _, i := range seq 0 23 {
+
+                    <option value="{ i }" if eq $.MonthlyHour $i {
+selected}
+>{ printf("%02d:00", i) }</option>
+                    }
+
+                </select>
+            </label>
+        </fieldset>
+
+        <p class="help-text">
+            if .Timezone {
+
+                Based on your timezone: { data.Timezone } (Current time: { data.CurrentTime }).
+            } else {
+
+                Based on UTC (Current time: { data.CurrentTime }). Set your timezone in <a href="/usr/timezone">settings</a>.
+            }
+
+        </p>
+        <label>
+            <input type="checkbox" name="daily_digest_mark_read" if .DigestMarkRead {
+checked}
+>
+            Dismiss notifications once sent
+        </label>
+        <input type="submit" value="Save Settings">
+    </form>
+    <form method="post" action="/usr/notifications" style="display:inline;">
+        { csrfField }
+        <input type="hidden" name="task" value="SendDigestPreview">
+        <input type="submit" value="Send Preview Now">
+    </form>
+    <form method="post" action="/usr/notifications" style="display:inline;">
+        { csrfField }
+        <input type="hidden" name="task" value="SendDigestNow">
+        <input type="submit" value="Send Now">
+    </form>
+</fieldset>
+if cd.FeedsEnabled {
+
+    <p>Feeds: <a href="{ cd.RSSFeedURL }">RSS</a> | <a href="{ cd.AtomFeedURL }">Atom</a></p>
+}
+
+<p>Change your email address under <a href="/usr/email">Email and notification settings</a>.</p>
+@Tail(cd, $)

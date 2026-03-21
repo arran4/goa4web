@@ -3,8 +3,12 @@ package tasks
 import (
 	"fmt"
 	"net/http"
+	"context"
 
 	"github.com/arran4/goa4web/core/templates"
+	siteti "github.com/arran4/goa4web/core/templates/site"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // Template represents a template file path.
@@ -25,12 +29,24 @@ func (t Template) Handle(w http.ResponseWriter, r *http.Request, data any) error
 	if Handle == nil {
 		return fmt.Errorf("template handler not initialized")
 	}
+	// Bypass traditional Handle for known templ components
+	if compFunc, ok := siteti.Registry[string(t)]; ok {
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		comp := compFunc(cd, data)
+		return comp.Render(r.Context(), w)
+	}
 	return Handle(w, r, t, data)
 }
 
 func (t Template) TemplateExecute(w http.ResponseWriter, r *http.Request, data any) error {
 	if TemplateExecute == nil {
 		return fmt.Errorf("template executor not initialized")
+	}
+	// Bypass traditional TemplateExecute for known templ components
+	if compFunc, ok := siteti.Registry[string(t)]; ok {
+		cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		comp := compFunc(cd, data)
+		return comp.Render(r.Context(), w)
 	}
 	return TemplateExecute(w, r, t, data)
 }

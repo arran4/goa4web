@@ -1,0 +1,131 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+
+<h4>FAQ Templates</h4>
+
+if .CreatedFAQID {
+
+<p>Created FAQ <a href="{ data.CreatedFAQURL }">#{ data.CreatedFAQID }</a>.</p>
+}
+
+
+if .Templates {
+
+<div>
+    <h5>Available Templates</h5>
+    <ul>
+        <li>
+            if eq $.SelectedTemplate "" {
+
+                <strong>None</strong>
+            } else {
+
+                <a href="/admin/faq/templates">None</a>
+            }
+
+        </li>
+        for _, item := range .Templates {
+
+        <li>
+            if eq $.SelectedTemplate . {
+
+                <strong>{ data }</strong>
+            } else {
+
+                <a href="/admin/faq/templates?template={ data }">{ data }</a>
+            }
+
+        </li>
+        }
+
+    </ul>
+</div>
+
+if .SelectedTemplate {
+
+<div>
+    <h5>Template Source</h5>
+    if .Description {
+
+    <p><strong>Description</strong></p>
+    <div class="preview-box">{ data.Description }</div>
+    }
+
+    <p><strong>Question</strong></p>
+    <div class="preview-box"><div class="a4code-code-body">{ data.Question }</div></div>
+    <p><strong>Answer</strong></p>
+    <div class="preview-box"><div class="a4code-code-body">{ data.Answer }</div></div>
+</div>
+
+<div>
+    <h5>Create FAQ from template</h5>
+    <form method="post" action="/admin/faq/templates">
+        { csrfField }
+        <input type="hidden" name="template" value="{ data.SelectedTemplate }">
+        <label for="category">Category</label>
+        <select id="category" name="category">
+            <option value="0">Hidden</option>
+            for _, item := range .Categories {
+
+            <option value="{ data.ID }" if eq $.SelectedCategoryID .ID {
+selected}
+>{ data.Name.String }</option>
+            }
+
+        </select>
+        <label for="language">Language</label>
+        <select id="language" name="language">
+            for _, item := range .Languages {
+
+            <option value="{ data.ID }" if eq $.SelectedLanguageID .ID {
+selected}
+>{ data.Nameof.String }</option>
+            }
+
+        </select>
+        <label for="author">Author</label>
+        <select id="author" name="author">
+            for _, item := range .Authors {
+
+            <option value="{ data.Idusers }" if eq $.SelectedAuthorID .Idusers {
+selected}
+>
+                if .Username.Valid {
+
+                    { data.Username.String }
+                } else {
+
+                    User { data.Idusers }
+                }
+
+            </option>
+            }
+
+        </select>
+        <button type="submit" name="task" value="Create from Template">Create FAQ from template</button>
+    </form>
+</div>
+
+<div>
+    <h5>Preview as public FAQ</h5>
+    <section class="faq-section">
+        <h2>Section: Template Preview</h2>
+        <div class="faq-item">
+            <h3 class="faq-question">Q: { data.Question(|, a4code2html) }</h3>
+            <div class="faq-answer">A: { data.Answer(|, a4code2html) }</div>
+        </div>
+    </section>
+</div>
+}
+
+} else {
+
+<p>No FAQ templates are available.</p>
+}
+
+
+@Tail(cd, $)

@@ -1,0 +1,90 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    @NewsPost(cd, $.Post)
+
+    <hr><h2 class="section-heading">Replies:</h2>
+    @ThreadComments(cd, )
+
+    <div class="label-editor">
+        if .PublicLabels {
+<section class="label-list">@TopicLabels(cd, .PublicLabels)
+</section>}
+
+        <form method="post" action="/news/news/{ data.Post.Idsitenews }/labels" id="label-form">
+        { csrfField }
+            <input type="hidden" name="task" value="Set Labels"/>
+            <input type="hidden" name="back" value="{ data.BackURL }"/>
+            <span class="label-bar">
+            for _, item := range .Labels {
+
+                if eq .Type "private" {
+
+                <span class="label pill private">{ data.Name }<button type="button" class="remove" data-type="private">x</button><input type="hidden" name="private" value="{ data.Name }"/></span>
+                } else if eq .Type "author" {
+
+                <span class="label pill author">{ data.Name }</span>
+                }
+
+            }
+
+            </span>
+            <input type="text" class="label-input" data-type="private" placeholder="Add private label"/>
+            <input type="submit" value="Save Labels"/>
+        </form>
+    </div>
+
+    <script src="{ assetHash("/forum/topic_labels.js") }"></script>
+    if cd.SelectedThreadCanReply {
+
+        <div class="comment">
+            <aside class="author">
+                <div class="avatar"></div>
+                if u := cd.CurrentUserLoaded; u != nil {
+
+                    <div class="username">{ u.Username.String }</div>
+                }
+
+                <div class="meta">
+                    { comments := cd.SelectedSectionThreadComments }
+
+                    { num := add (add (len comments) (cd.Offset)) 1 }
+
+                    <div class="comment-id"><a class="comment-id" href="#bottom">#{ num }</a></div>
+                    { now := cd.LocalTime (now) }
+
+                    <div class="date">{ now.Format("2006-01-02") }</div>
+                    <div class="time">{ now.Format("15:04, MST") }</div>
+                    <div class="day">{ now.Format("Monday") }</div>
+                    <div class="zone">{ cd.Location }</div>
+                    if gt (len $comments) 0 {
+
+                        { prev := index comments (add (len comments) -1) }
+
+                        <div class="since">{ since((cd.LocalTime, prev.Written.Time), now) }</div>
+                    }
+
+                </div>
+            </aside>
+            <section class="body">
+                <a id="bottom"></a>
+                <h2 class="section-heading">Reply:</h2>
+                <form method="post" action="?#bottom">
+                { csrfField }
+                    <input type="hidden" name="replyto" value="{ data.Thread.Idforumthread }">
+                    <textarea name="replytext" cols=40 rows=20>{ data.ReplyText }</textarea><br>
+                    @LanguageCombobox(cd, )
+
+                    <input type="submit" name="task" value="Reply">
+                </form>
+            </section>
+        </div>
+    }
+
+
+    @_share(cd, (dict "module" "news" "link" (printf "/news/news/%d" .Post.Idsitenews)))
+
+@Tail(cd, $)

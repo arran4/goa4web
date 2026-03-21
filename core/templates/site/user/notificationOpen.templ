@@ -1,0 +1,49 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div id="notification-open">
+    <h3>Notification</h3>
+    <p><strong>Date:</strong> { cd.FormatLocalTime(data.Notification.CreatedAt) }</p>
+    if .SectionTitle {
+
+    <p><strong>Section:</strong> { data.SectionTitle }</p>
+    }
+
+    if .ThreadTitle {
+
+    <p><strong>Thread:</strong> { data.ThreadTitle }</p>
+    }
+
+    <p>{ data.Notification.Message.String }</p>
+
+    if .ReplyPreview {
+
+    <div class="notification-preview">
+        <div class="preview-header">
+            Reply Preview
+        </div>
+        <div class="preview-content">
+            { data.ReplyPreview }
+        </div>
+    </div>
+    }
+
+
+    if .RedirectURL {
+
+    <div class="actions">
+        <p>
+            <a href="{ data.RedirectURL }" class="button">Click here to view</a>
+        </p>
+        <form action="/usr/notifications/go/{ data.Notification.ID }" method="POST">
+            <input type="submit" value="Click here to dismiss and view" class="button">
+            { csrfField }
+        </form>
+    </div>
+    }
+
+</div>
+@Tail(cd, $)

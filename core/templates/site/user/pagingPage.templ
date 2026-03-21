@@ -1,0 +1,13 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<form method="post">
+        { csrfField }
+    Page size:
+    <input type="number" name="size" value="{ cd.PageSize }" min="{ cd.Config.PageSizeMin }" max="{ cd.Config.PageSizeMax }"><br>
+    <input type="submit" name="task" value="Save size">
+</form>
+@Tail(cd, $)

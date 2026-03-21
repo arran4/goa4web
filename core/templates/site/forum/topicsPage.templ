@@ -1,0 +1,33 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<link rel="stylesheet" href="{ assetHash("/forum/forum.css") }">
+<script src="{ assetHash("/forum/forum.js") }"></script>
+    if .Category {
+
+        <h1>Category: { data.Category.Title.String }</h1>
+    }
+
+{ topicTitle := topicTitleOrDefault data.Topic.Title.String }
+
+if .Topic.DisplayTitle {
+{ topicTitle = topicTitleOrDefault data.Topic.DisplayTitle }
+}
+
+<h2>Topic: { topicTitle }</h2>
+    if gt (len .Labels) 0 {
+
+        @TopicLabels(cd, .Labels)
+
+    }
+
+
+    @TopicThreads(cd, $)
+
+
+    @_share(cd, (dict "module" "forum" "link" (printf "/forum/topic/%d" .Topic.Idforumtopic)))
+
+@Tail(cd, $)

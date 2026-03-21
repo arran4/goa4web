@@ -1,0 +1,56 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Roles</h2>
+<div style="margin-bottom: 20px;">
+    <p>Define and manage user roles and their associated permissions.</p>
+    <p><strong>Usage:</strong></p>
+    <ul>
+        <li><strong>Load SQL:</strong> Import role definitions from SQL.</li>
+        <li><strong>Public Profiles:</strong> Toggle whether users with this role have publicly visible profiles.</li>
+        <li><strong>Edit:</strong> Modify role properties.</li>
+    </ul>
+</div>
+<p><a href="/admin/roles/load">Load role SQL</a></p>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Name</th><th>Can Login</th><th>Is Admin</th><th>Public Profiles</th><th>Edit</th></tr>
+    for _, item := range .Roles {
+
+    <tr>
+        <td><a href="/admin/role/{ data.ID }">{ data.ID }</a></td>
+        <td>{ data.Name }</td>
+        <td>if .CanLogin {
+yes} else {
+no}
+</td>
+        <td>if .IsAdmin {
+yes} else {
+no}
+</td>
+        <td>
+            <form method="post" class="inline-form">
+                { csrfField }
+                <input type="hidden" name="id" value="{ data.ID }">
+                if .PublicProfileAllowedAt.Valid {
+
+                    <input type="hidden" name="enable" value="0">
+                    <input type="hidden" name="task" value="Toggle role public profile">
+                    <input type="submit" value="Disable">
+                } else {
+
+                    <input type="hidden" name="enable" value="1">
+                    <input type="hidden" name="task" value="Toggle role public profile">
+                    <input type="submit" value="Enable">
+                }
+
+            </form>
+        </td>
+        <td><a href="/admin/role/{ data.ID }/edit">Edit</a></td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

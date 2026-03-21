@@ -1,0 +1,149 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if $.Errors {
+
+    Errors occurred:
+    <ul>
+    for _, item := range $.Errors {
+
+        <li>{ data }</li>
+    }
+
+    </ul>
+}
+
+<h2>Usage Statistics</h2>
+
+<h3>Threads per Forum Topic</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Topic</th><th>Handler</th><th>Threads</th><th>Comments</th></tr>
+    for _, item := range .ForumTopics {
+
+    <tr>
+        <td><a href="/admin/forum/topics/topic/{ data.Idforumtopic }/edit">{ data.Idforumtopic }</a></td>
+        <td><a href="/forum/topic/{ data.Idforumtopic }">{ topicTitleOrDefault(data.Title.String) }</a></td>
+        <td>{ data.Handler }</td>
+        <td>{ data.Threads }</td>
+        <td>{ data.Comments }</td>
+    </tr>
+    }
+
+</table>
+
+<h3>Threads per Forum Handler</h3>
+<table class="table table-bordered">
+    <tr><th>Handler</th><th>Threads</th><th>Comments</th></tr>
+    for _, item := range .ForumHandlers {
+
+    <tr><td>{ data.Handler }</td><td>{ data.Threads }</td><td>{ data.Comments }</td></tr>
+    }
+
+</table>
+
+<h3>Threads per Forum Category</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Category</th><th>Threads</th><th>Comments</th></tr>
+    for _, item := range .ForumCategories {
+
+    <tr>
+        <td><a href="/admin/forum/categories/category/{ data.Idforumcategory }">{ data.Idforumcategory }</a></td>
+        <td><a href="/forum/category/{ data.Idforumcategory }">{ data.Title.String }</a></td>
+        <td>{ data.Threads }</td>
+        <td>{ data.Comments }</td>
+    </tr>
+    }
+
+</table>
+
+<h3>Writings per Category</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Category</th><th>Writings</th></tr>
+    for _, item := range .WritingCategories {
+
+    <tr>
+        <td><a href="/admin/writings/categories/category/{ data.Idwritingcategory }">{ data.Idwritingcategory }</a></td>
+        <td>{ data.Title.String }</td>
+        <td>{ data.Count }</td>
+    </tr>
+    }
+
+</table>
+
+<h3>Links per Category</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Category</th><th>Links</th></tr>
+    for _, item := range .LinkerCategories {
+
+    <tr>
+        <td><a href="/admin/linker/categories/category/{ data.ID }">{ data.ID }</a></td>
+        <td><a href="/linker/category/{ data.ID }">{ data.Title.String }</a></td>
+        <td>{ data.Linkcount }</td>
+    </tr>
+    }
+
+</table>
+
+<h3>Posts per Imageboard</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>Board</th><th>Posts</th></tr>
+    for _, item := range .Imageboards {
+
+    <tr>
+        <td><a href="/admin/imagebbs/board/{ data.Idimageboard }">{ data.Idimageboard }</a></td>
+        <td><a href="/imagebbs/board/{ data.Idimageboard }">{ data.Title.String }</a></td>
+        <td>{ data.Count }</td>
+    </tr>
+    }
+
+</table>
+
+<h3>Posts by User</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>User</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
+    for _, item := range .Users {
+
+    <tr>
+        <td><a href="/admin/user/{ data.Idusers }">{ data.Idusers }</a></td>
+        <td>if .Username.Valid {
+<a href="/user/profile/{ data.Username.String }">{ data.Username.String }</a>}
+</td>
+        <td>{ data.Blogs }</td><td>{ data.News }</td><td>{ data.Comments }</td><td>{ data.Images }</td><td>{ data.Links }</td><td>{ data.Writings }</td>
+    </tr>
+    }
+
+</table>
+
+<h3>Monthly Usage (from { data.StartYear })</h3>
+<table class="table table-bordered">
+    <tr><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
+    for _, item := range .Monthly {
+
+    <tr><td>{ data.Year }</td><td>{ data.Month }</td><td>{ data.Blogs }</td><td>{ data.News }</td><td>{ data.Comments }</td><td>{ data.Images }</td><td>{ data.Links }</td><td>{ data.Writings }</td></tr>
+    }
+
+</table>
+
+<h3>Monthly Usage Per User (from { data.StartYear })</h3>
+<table class="table table-bordered">
+    <tr><th>ID</th><th>User</th><th>Year</th><th>Month</th><th>Blogs</th><th>News</th><th>Comments</th><th>Images</th><th>Links</th><th>Writings</th></tr>
+    for _, item := range .UserMonthly {
+
+    <tr>
+        if .RowSpan {
+
+        <td rowspan="{ data.RowSpan }"><a href="/admin/user/{ data.Idusers }">{ data.Idusers }</a></td>
+        <td rowspan="{ data.RowSpan }">if .Username.Valid {
+<a href="/user/profile/{ data.Username.String }">{ data.Username.String }</a>}
+</td>
+        }
+
+        <td>{ data.Year }</td><td>{ data.Month }</td><td>{ data.Blogs }</td><td>{ data.News }</td><td>{ data.Comments }</td><td>{ data.Images }</td><td>{ data.Links }</td><td>{ data.Writings }</td>
+    </tr>
+    }
+
+</table>
+@Tail(cd, $)

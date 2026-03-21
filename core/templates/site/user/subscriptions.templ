@@ -1,0 +1,260 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Your Subscriptions</h2>
+
+<form method="post" action="/usr/subscriptions/update">
+    { csrfField }
+
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+        <strong>Global Controls:</strong>
+        <span style="margin-left: 20px;">
+            Internal:
+            <button type="button" onclick="selectSubs(this, 'internal', 'all')">All</button>
+            <button type="button" onclick="selectSubs(this, 'internal', 'none')">None</button>
+            <button type="button" onclick="selectSubs(this, 'internal', 'invert')">Invert</button>
+        </span>
+        <span style="margin-left: 20px;">
+            Email:
+            <button type="button" onclick="selectSubs(this, 'email', 'all')">All</button>
+            <button type="button" onclick="selectSubs(this, 'email', 'none')">None</button>
+            <button type="button" onclick="selectSubs(this, 'email', 'invert')">Invert</button>
+        </span>
+    </div>
+
+    for _, item := range .Groups {
+
+        @SubscriptionGroup(cd, .)
+
+    }
+
+
+    if .IsAdminMode {
+
+        if .AdminGroups {
+
+            <hr>
+            <h2>Admin Subscriptions</h2>
+            for _, item := range .AdminGroups {
+
+                @SubscriptionGroup(cd, .)
+
+            }
+
+        }
+
+    }
+
+
+    <p>
+        <input type="submit" value="Update Subscriptions" class="button">
+    </p>
+</form>
+
+<p>
+    <a href="/usr/subscriptions/add" class="button">Add Subscription</a>
+    <a href="/usr/subscriptions/threads" class="button">Manage Thread Subscriptions</a>
+</p>
+
+<script>
+    let lastChecked = null;
+
+    function selectSubs(btn, type, action) {
+        // Find the closest table
+        const table = btn.closest('table');
+        let inputs;
+        if (table) {
+            inputs = table.querySelectorAll('input[type="checkbox"]');
+        } else {
+            inputs = document.querySelectorAll('input[name="subs"]');
+        }
+
+        inputs.forEach(input => {
+            if (input.disabled) return;
+            // value is "pattern|type"
+            if (input.value.endsWith('|' + type)) {
+                if (action === 'all') input.checked = true;
+                else if (action === 'none') input.checked = false;
+                else if (action === 'invert') input.checked = !input.checked;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[name="subs"]');
+        checkboxes.forEach(chk => {
+            chk.addEventListener('click', function(e) {
+                if (lastChecked && lastChecked !== this && e.shiftKey) {
+                    // Check if they are in the same table and same column (type)
+                    const thisType = this.value.split('|').pop();
+                    const lastType = lastChecked.value.split('|').pop();
+                    const thisTable = this.closest('table');
+                    const lastTable = lastChecked.closest('table');
+
+                    if (thisType === lastType && thisTable === lastTable) {
+                        const groupCheckboxes = Array.from(thisTable.querySelectorAll(`input[value$="|${thisType}"]`));
+                        const start = groupCheckboxes.indexOf(this);
+                        const end = groupCheckboxes.indexOf(lastChecked);
+
+                        if (start !== -1 && end !== -1) {
+                            const range = groupCheckboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+                            range.forEach(c => {
+                                if (!c.disabled) c.checked = this.checked;
+                            });
+                        }
+                    }
+                }
+                lastChecked = this;
+            });
+        });
+    });
+</script>
+@Tail(cd, $)
+
+
+templ SubscriptionGroup(cd *common.CoreData, data any) {
+
+    { group := . }
+
+    <div class="subscription-group">
+        <h3>{ data.Name }</h3>
+        <p>{ data.Description }</p>
+
+        if .Instances {
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Target</th>
+                    <th>
+                        Internal<br>
+                        <button type="button" onclick="selectSubs(this, 'internal', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'internal', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'internal', 'invert')">Invert</button>
+                    </th>
+                    <th>
+                        Email<br>
+                        <button type="button" onclick="selectSubs(this, 'email', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'email', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'email', 'invert')">Invert</button>
+                    </th>
+                    if .SupportsAutoSubscribe {
+
+                    <th>
+                        Auto-subscribe Internal<br>
+                        <button type="button" onclick="selectSubs(this, 'autosub_internal', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_internal', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_internal', 'invert')">Invert</button>
+                    </th>
+                    <th>
+                        Auto-subscribe Email<br>
+                        <button type="button" onclick="selectSubs(this, 'autosub_email', 'all')">All</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_email', 'none')">None</button>
+                        <button type="button" onclick="selectSubs(this, 'autosub_email', 'invert')">Invert</button>
+                    </th>
+                    }
+
+                </tr>
+            </thead>
+            <tbody>
+                { defPattern := data.Pattern }
+
+                for _, item := range .Instances {
+
+                { pattern := data.Original }
+
+                if eq $pattern "" {
+{ pattern = defPattern }
+}
+
+                <tr>
+                    <td>
+                        { /*(Display, parameters, nicely, */) }
+                        if .Parameters {
+
+                            for _, item := range .Parameters {
+
+                                { data.Key }:
+                                if .Link {
+
+                                    <a href="{ data.Link }">if .Resolved {
+{ data.Resolved }} else {
+{ data.Value }}
+</a>
+                                } else {
+
+                                    if .Resolved {
+{ data.Resolved }} else {
+{ data.Value }}
+
+                                }
+
+                            }
+
+                        } else {
+
+                            All
+                        }
+
+                    </td>
+                    <td>
+                        if $group.Mandatory {
+
+                            <input type="checkbox" checked disabled>
+                            <span style="font-size: 0.8em; color: gray;">(Mandatory)</span>
+                            <input type="hidden" name="presented_subs" value="{ pattern }|internal">
+                        } else {
+
+                            <input type="checkbox" name="subs" value="{ pattern }|internal" if .HasMethod "internal" {
+checked}
+>
+                            <input type="hidden" name="presented_subs" value="{ pattern }|internal">
+                        }
+
+                    </td>
+                    <td>
+                        if $group.Mandatory {
+
+                            <input type="checkbox" checked disabled>
+                            <span style="font-size: 0.8em; color: gray;">(Mandatory)</span>
+                            <input type="hidden" name="presented_subs" value="{ pattern }|email">
+                        } else {
+
+                            <input type="checkbox" name="subs" value="{ pattern }|email" if .HasMethod "email" {
+checked}
+>
+                            <input type="hidden" name="presented_subs" value="{ pattern }|email">
+                        }
+
+                    </td>
+                    if $group.SupportsAutoSubscribe {
+
+                    <td>
+                        <input type="checkbox" name="subs" value="{ pattern }|autosub_internal" if .HasMethod "autosub_internal" {
+checked}
+>
+                        <input type="hidden" name="presented_subs" value="{ pattern }|autosub_internal">
+                    </td>
+                    <td>
+                        <input type="checkbox" name="subs" value="{ pattern }|autosub_email" if .HasMethod "autosub_email" {
+checked}
+>
+                        <input type="hidden" name="presented_subs" value="{ pattern }|autosub_email">
+                    </td>
+                    }
+
+                </tr>
+                }
+
+            </tbody>
+        </table>
+        } else {
+
+        <p>No subscriptions.</p>
+        }
+
+    </div>
+}

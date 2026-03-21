@@ -1,0 +1,38 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Database Migrations</h1>
+
+<div style="display: flex; gap: 20px;">
+    <div style="width: 250px; flex-shrink: 0;">
+        <h3>Files</h3>
+        <ul>
+            for _, item := range .Files {
+
+            <li>
+                <a href="?name={ data }" if eq . $.SelectedFile {
+style="font-weight: bold;"}
+>{ data }</a>
+            </li>
+            }
+
+        </ul>
+    </div>
+    <div style="flex-grow: 1;">
+        <h3>Content</h3>
+        if .SelectedFile {
+
+            <h4>{ data.SelectedFile }</h4>
+            <pre style="background: #f4f4f4; padding: 1em; overflow-x: auto;">{ data.Content }</pre>
+        } else {
+
+            <p>Select a migration file to view its content.</p>
+        }
+
+    </div>
+</div>
+
+@Tail(cd, $)

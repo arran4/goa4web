@@ -1,0 +1,13 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<p>Please confirm verification of your email address { data.Email }.</p>
+<form method="post">
+    { csrfField }
+    <input type="hidden" name="code" value="{ data.Code }">
+    <input type="submit" name="task" value="Confirm">
+</form>
+@Tail(cd, $)

@@ -1,0 +1,32 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Questions in { data.Category.Name.String }</h1>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Question</th>
+            <th>Priority</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    for _, item := range .Questions {
+
+    <tr>
+        <td>{ data.ID }</td>
+        <td><a href="/admin/faq/question/{ data.ID }">{ data.Question.String }</a></td>
+        <td>{ data.Priority }</td>
+        <td>
+            <a href="/admin/faq/question/{ data.ID }/edit">Edit</a>
+        </td>
+    </tr>
+    }
+
+    </tbody>
+</table>
+@Tail(cd, $)

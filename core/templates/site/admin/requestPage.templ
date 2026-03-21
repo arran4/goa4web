@@ -1,0 +1,70 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+{ r:= == cd.CurrentRequest }
+
+{ user := cd.CurrentRequestUser }
+
+<h2>Request { req.ID } for user <a href="/admin/user/{ user.Idusers }">{ user.Username.String }</a></h2>
+
+if eq $req.ChangeTable "user_emails" {
+
+<h3>Request: Add Email Address</h3>
+<p><strong>Proposed Email:</strong> { req.ChangeValue.String }</p>
+
+<h4>Current Emails for User</h4>
+<ul>
+    for _, item := range cd.CurrentProfileEmails {
+
+    <li>
+        { data.Email }
+        if .VerifiedAt.Valid {
+
+        (Verified)
+        } else {
+
+        (Unverified)
+        }
+
+    </li>
+    }
+
+</ul>
+} else {
+
+<p>Field: { req.ChangeTable }.{ req.ChangeField } row { req.ChangeRowID }</p>
+<p>Value: { req.ChangeValue.String }</p>
+}
+
+
+<p>Contact: { req.ContactOptions.String }</p>
+<p>Status: { req.Status }</p>
+{ comments := cd.CurrentRequestComments }
+
+if comments {
+
+<h3>Comments</h3>
+<table class="table table-bordered">
+<tr><th>Date</th><th>Comment</th></tr>
+for _, item := range $comments {
+
+<tr><td>{ cd.FormatLocalTime(data.CreatedAt) }</td><td>{ data.Comment }</td></tr>
+}
+
+</table>
+} else {
+
+<p>No comments.</p>
+}
+
+<h3>Add Comment</h3>
+<form method="post" action="/admin/request/{ req.ID }/comment">
+    { csrfField }
+    <textarea name="comment" rows="3" cols="40"></textarea>
+    <input type="submit" name="task" value="Add Comment">
+</form>
+<a href="/admin/requests">Back</a>
+@Tail(cd, $)

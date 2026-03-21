@@ -1,0 +1,15 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if .ProfileOff {
+
+    <div class="notice">
+        <strong>Notice:</strong> Your profile is currently hidden from the public.
+    </div>
+}
+
+<h2>Profile for { data.User.Username.String }</h2>
+@Tail(cd, $)

@@ -1,0 +1,22 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+    @Head(cd, $)
+
+<p>Please select an option:</p>
+<ul>
+    <li><a href="/admin/forum/categories">Manage Categories</a></li>
+    <li><a href="/admin/forum/topics">Manage Topics</a></li>
+    <li><a href="/admin/forum/threads">Manage Threads</a></li>
+    <li><a href="/admin/user">Manage Users</a></li>
+</ul>
+
+<p>Forum statistics:</p>
+<table class="table table-bordered">
+    <tr><th>Item</th><th>Count</th></tr>
+    <tr><td>Categories</td><td>{ data.Stats.Categories }</td></tr>
+    <tr><td>Topics</td><td>{ data.Stats.Topics }</td></tr>
+    <tr><td>Threads</td><td>{ data.Stats.Threads }</td></tr>
+</table>
+    @Tail(cd, $)

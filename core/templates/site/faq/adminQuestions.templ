@@ -1,0 +1,37 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h4>Unanswered Questions</h4>
+@AdminQuestionTable(cd, (dict "Rows" .UnansweredQuestions "Categories" .Categories))
+
+
+<h4>FAQ Questions</h4>
+@AdminQuestionTable(cd, (dict "Rows" .Questions "Categories" .Categories))
+
+
+<h4>Dismissed Questions</h4>
+@AdminQuestionTable(cd, (dict "Rows" .DismissedQuestions "Categories" .Categories))
+
+
+<h4>Create Question from Template</h4>
+if .Templates {
+
+<ul>
+for _, item := range .Templates {
+
+    <li><a href="/admin/faq/templates?template={ data }">{ data }</a></li>
+}
+
+</ul>
+} else {
+
+<p>No templates available.</p>
+}
+
+
+<p><a href="/admin/faq/question/0/edit">Create New Question</a></p>
+
+@Tail(cd, $)

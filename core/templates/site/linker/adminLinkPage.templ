@@ -1,0 +1,18 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    <form method="post" action="">
+        { csrfField }
+        <label>Title <input name="title" value="{ data.Link.Title.String }"></label><br>
+        <label>URL <input name="URL" value="{ data.Link.Url.String }"></label><br>
+        <label>Description:<br><textarea name="desc" cols="40" rows="20">{ data.Link.Description.String }</textarea></label><br>
+        @CategoryCombobox(cd, $)
+
+        @LanguageCombobox(cd, )
+
+        <input type="submit" name="task" value="Update">
+    </form>
+@Tail(cd, $)

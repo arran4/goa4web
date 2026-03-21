@@ -1,0 +1,39 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Edit Image Post { data.Post.Idimagepost }</h2>
+<form method="post" action="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }/edit">
+    { csrfField }
+    <label>Board:
+        <select name="board">
+            for _, item := range .Boards {
+
+            <option value="{ data.Idimageboard }"if eq .Idimageboard $.Post.ImageboardIdimageboard.Int32 {
+ selected}
+>{ data.Title.String }</option>
+            }
+
+        </select>
+    </label><br>
+    <label>Description:<br>
+        <textarea name="desc">if .Post.Description.Valid {
+{ data.Post.Description.String }}
+</textarea>
+    </label><br>
+    <label><input type="checkbox" name="approved" value="1"if .Post.Approved {
+ checked}
+> Approved</label><br>
+    <input type="submit" name="task" value="Modify image post">
+</form>
+<form method="post" action="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }/edit" class="margin-top">
+    { csrfField }
+    <input type="submit" name="task" value="Delete image post" onclick="return confirm('Delete this post?')">
+</form>
+<p>
+    <a href="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }">Back to dashboard</a> |
+    <a href="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }/comments">Comments ({ data.Post.Comments })</a>
+</p>
+@Tail(cd, $)

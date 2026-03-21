@@ -1,0 +1,65 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+if $.Error {
+
+    <p class="text-error">{ data.Error }</p>
+}
+
+    <form method="post" action="/usr/email/add">
+        { csrfField }
+        Add Email: <input type="email" name="new_email">
+        <input type="submit" name="task" value="Add">
+    </form>
+
+    <h3>Verified Emails</h3>
+    <table class="table table-bordered">
+        <tr><th>Email</th><th>Verified</th><th>Actions</th></tr>
+    for _, item := range .Verified {
+
+        <tr><td>{ data.Email }</td><td>if .VerifiedAt.Valid {
+{ cd.LocalTime(data.VerifiedAt.Time) }}
+</td><td>
+            <form method="post" action="/usr/email/delete" class="inline-form">{ csrfField }<input type="hidden" name="id" value="{ data.ID }"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
+            <form method="post" action="/usr/email/notify" class="inline-form">{ csrfField }<input type="hidden" name="id" value="{ data.ID }"><input type="hidden" name="task" value="Add"><input type="submit" value="Make notification email"></form>
+        </td></tr>
+    } else {
+
+        <tr><td colspan="3">No verified emails - you won't receive notifications.</td></tr>
+    }
+
+    </table>
+
+    if .Unverified {
+
+    <h3>Unverified Emails</h3>
+    <table class="table table-bordered">
+        <tr><th>Email</th><th>Expires</th><th>Actions</th></tr>
+    for _, item := range .Unverified {
+
+        <tr><td>{ data.Email }</td><td>if .VerificationExpiresAt.Valid {
+{ cd.LocalTime(data.VerificationExpiresAt.Time) }}
+</td><td>
+            <form method="post" action="/usr/email/delete" class="inline-form">{ csrfField }<input type="hidden" name="id" value="{ data.ID }"><input type="hidden" name="task" value="Delete"><input type="submit" value="Delete"></form>
+            <form method="post" action="/usr/email/resend" class="inline-form">{ csrfField }<input type="hidden" name="id" value="{ data.ID }"><input type="hidden" name="task" value="Resend"><input type="submit" value="Send verification code again"></form>
+        </td></tr>
+    }
+
+    </table>
+    }
+
+
+    <form method="post">
+        { csrfField }
+        <input type="checkbox" name="emailupdates" if .UserPreferences.EmailUpdates {
+checked}
+>Receive replies notifications via email<br>
+        <input type="checkbox" name="autosubscribe" if .UserPreferences.AutoSubscribeReplies {
+checked}
+>Automatically subscribe to threads I reply to<br>
+        <input type="submit" name="task" value="Save all"><br>
+        <input type="submit" name="task" value="Test mail"><br>
+    </form>@Tail(cd, $)

@@ -1,0 +1,69 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+    @Head(cd, $)
+
+    <h2>Admin Dashboard</h2>
+    if cd.EmailProviderError {
+
+    <p class="text-error"><strong>Email Disabled:</strong> { cd.EmailProviderError }</p>
+    }
+
+    <p><a href="/admin">Refresh</a></p>
+    <p>Select an option:</p>
+    <ul>
+        if cd.Nav {
+
+            for _, s := range cd.Nav.AdminSections {
+
+            @AdminSection(cd, $s)
+
+            }
+
+        }
+
+    </ul>
+
+templ AdminSection(cd *common.CoreData, data any) {
+
+<li>
+    if .Link {
+<a href="{ data.Link }">{ data.Name }</a>} else {
+{ data.Name }}
+
+    <ul>
+        for _, l := range .Links {
+
+        <li><a href="{ l.Link }">{ l.Name }</a></li>
+        }
+
+        for _, s := range .SubSections {
+
+        @AdminSection(cd, $s)
+
+        }
+
+    </ul>
+</li>
+}
+
+
+    <h3>Site statistics</h3>
+    { stats := cd.AdminDashboardStats }
+
+    if stats {
+
+    <table class="table table-bordered">
+        <tr><th>Item</th><th>Count</th></tr>
+        <tr><td>Users</td><td>{ stats.Users }</td></tr>
+        <tr><td>Languages</td><td>{ stats.Languages }</td></tr>
+        <tr><td>News Posts</td><td>{ stats.News }</td></tr>
+        <tr><td>Blogs</td><td>{ stats.Blogs }</td></tr>
+        <tr><td>Forum Topics</td><td>{ stats.ForumTopics }</td></tr>
+        <tr><td>Forum Threads</td><td>{ stats.ForumThreads }</td></tr>
+        <tr><td>Writings</td><td>{ stats.Writings }</td></tr>
+    </table>
+    }
+
+    @Tail(cd, $)

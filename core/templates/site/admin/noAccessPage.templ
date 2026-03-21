@@ -1,0 +1,11 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+    if and cd.HasAdminRole cd.AdminMode {
+[<a href="/admin">Admin</a>]<br />}
+
+The requested content may not exist or you may not have permission to access it.
+@Tail(cd, $)

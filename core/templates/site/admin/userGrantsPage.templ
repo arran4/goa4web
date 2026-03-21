@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>User: { data.User.Username.String } (ID { data.User.Idusers })</h2>
+<h3>Roles</h3>
+<ul>
+    if .Roles {
+
+        for _, item := range .Roles {
+
+        <li><a href="/admin/role/{ data.RoleID }">{ data.Name }</a></li>
+        }
+
+    } else {
+
+        <li>No roles</li>
+    }
+
+</ul>
+<p><a href="/admin/user/{ data.User.Idusers }/grant/add">Add Grant</a></p>
+@Admin_userGrantsEditor(cd, .)
+
+@Tail(cd, $)

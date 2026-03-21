@@ -1,0 +1,21 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+templ Privateforum_topics_only(cd *common.CoreData, data any) {
+
+    @Head(cd, $)
+
+<link rel="stylesheet" href="{ assetHash("/forum/forum.css") }">
+<script src="{ assetHash("/forum/forum.js") }"></script>
+    <h1>Private Topics</h1>
+    if cd.CurrentError {
+
+        <p class="error-message">{ cd.CurrentError }</p>
+    }
+
+    @TableTopics(cd, (dict "Topics" cd.PrivateTopics "BasePath" "/private" "IsAdmin" (and cd.IsAdmin cd.IsAdminMode)))
+
+    @Tail(cd, $)
+
+}

@@ -1,0 +1,26 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Image Post { data.Post.Idimagepost }</h2>
+<p><img src="{ data.Post.Fullimage }" alt="post image"></p>
+<p>Description: if .Post.Description.Valid {
+{ data.Post.Description.String }}
+</p>
+<p>User: <a href="/admin/user/{ data.Post.UsersIdusers }">if .Post.Username.Valid {
+{ data.Post.Username.String }} else {
+{ data.Post.UsersIdusers }}
+</a></p>
+<p>Board: <a href="/admin/imagebbs/board/{ data.Post.ImageboardIdimageboard.Int32 }">{ data.Post.ImageboardIdimageboard.Int32 }</a> | <a href="/imagebbs/board/{ data.Post.ImageboardIdimageboard.Int32 }">Public View</a></p>
+<p>Approved: if .Post.Approved {
+Yes} else {
+No}
+</p>
+<p>
+    <a href="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }/edit">Edit</a> |
+    <a href="/admin/user/{ data.Post.UsersIdusers }/imagebbs/post/{ data.Post.Idimagepost }/comments">Comments ({ data.Post.Comments })</a> |
+    <a href="{ data.Post.Fullimage }">Image URL</a>
+</p>
+@Tail(cd, $)

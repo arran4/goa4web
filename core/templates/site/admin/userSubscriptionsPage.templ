@@ -1,0 +1,48 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Subscriptions of { data.User.Username.String }</h2>
+<table class="table table-bordered full-width">
+    <tr><th style="width: 1%">ID</th><th>Pattern</th><th style="width: 1%">Method</th><th style="width: 1%">Actions</th></tr>
+    for _, item := range .Subs {
+
+    <tr>
+        <form method="post" action="/admin/user/{ data.User.Idusers }/subscriptions">
+            { csrfField }
+            <td><input type="hidden" name="id" value="{ data.ID }">{ data.ID }</td>
+            <td><input type="text" name="pattern" value="{ data.Pattern }" class="full-width"></td>
+            <td>
+                <select name="method">
+                    <option value="internal" if eq .Method "internal" {
+selected}
+>Internal</option>
+                    <option value="email" if eq .Method "email" {
+selected}
+>Email</option>
+                </select>
+            </td>
+            <td>
+                <input type="submit" name="task" value="Update">
+                <input type="submit" name="task" value="Delete">
+            </td>
+        </form>
+    </tr>
+    }
+
+</table>
+
+<h3>Add Subscription</h3>
+<form method="post" action="/admin/user/{ data.User.Idusers }/subscriptions">
+    { csrfField }
+    Pattern <input type="text" name="pattern" class="full-width">
+    Method
+    <select name="method">
+        <option value="internal">Internal</option>
+        <option value="email">Email</option>
+    </select>
+    <input type="submit" name="task" value="Add">
+</form>
+@Tail(cd, $)

@@ -1,0 +1,17 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h2>Create Forum Category</h2>
+<form method="post" action="/admin/forum/categories/create">
+    { csrfField }
+    <p>Parent <select name="pcid" value=""><option value="0">None</option>for _, item := range .Categories {
+<option value="{ data.Idforumcategory }">{ data.Title.String }</option>}
+</select></p>
+    <p>Title <input name="name" value=""></p>
+    <p>Description <textarea name="desc"></textarea></p>
+    <input type="submit" name="task" value="Forum category create">
+</form>
+@Tail(cd, $)

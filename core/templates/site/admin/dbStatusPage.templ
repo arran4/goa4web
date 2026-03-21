@@ -1,0 +1,51 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<h1>Database Status</h1>
+<div style="margin-bottom: 20px;">
+    <p>Check the database schema version and seed status.</p>
+</div>
+<table class="table table-bordered">
+    <tr>
+        <th>Current schema version</th>
+        <td>{ data.CurrentVersion }</td>
+    </tr>
+    <tr>
+        <th>Expected schema version</th>
+        <td>{ data.ExpectedVersion }</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>if .VersionMatches {
+Up to date} else {
+Mismatch}
+</td>
+    </tr>
+</table>
+if !.VersionMatches {
+
+<p>Run database migrations to align the schema version with the expected value.</p>
+}
+
+<h2>Seed Data</h2>
+if .SeedAllowed {
+
+<form method="post" action="/admin/db/status" onsubmit="return confirm('Apply seed data to the database?');">
+    <input type="hidden" name="task" value="{ data.SeedTask }">
+    <label>
+        <input type="checkbox" name="confirm" value="yes" required>
+        I understand this will apply seed data to the database.
+    </label>
+    <div>
+        <input type="submit" value="Apply Seed Data">
+    </div>
+</form>
+} else {
+
+<p>Seeding is not available for this deployment.</p>
+}
+
+@Tail(cd, $)

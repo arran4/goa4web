@@ -1,0 +1,22 @@
+package templates
+
+import "github.com/arran4/goa4web/core/common"
+
+@Head(cd, $)
+
+<div>[<a href="/admin">Admin:</a> <a href="/admin/search/list">Word List</a>]</div>
+Jump to:
+for _, item := range $.Letters {
+ <a href="/admin/search/list?letter={ data }">{ data }</a> }
+<br />
+if $.CurrentLtr {
+Showing words starting with "{ data.CurrentLtr }"}
+
+<ul>
+for _, item := range $.Rows {
+
+    <li>{ data.Word.String } - { data.Count }</li>
+}
+
+</ul>
+@Tail(cd, $)

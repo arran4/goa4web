@@ -104,7 +104,7 @@ func NewBus() *Bus {
 // If no types are supplied the subscriber receives all messages.
 // It returns a read-only channel of Envelopes. Consumers must call Ack() on each envelope.
 func (b *Bus) Subscribe(types ...MessageType) <-chan Envelope {
-	ch := make(chan Envelope, 1)
+	ch := make(chan Envelope, 100)
 	set := make(map[MessageType]struct{}, len(types))
 	for _, t := range types {
 		set[t] = struct{}{}

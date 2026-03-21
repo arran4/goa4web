@@ -101,23 +101,28 @@ func TestBus_Ack(t *testing.T) {
 
 func TestBus_Backpressure(t *testing.T) {
 	bus := NewBus()
-	// Channel size is 1
+	// Channel size is 100
 	ch := bus.Subscribe(TaskMessageType)
 
 	// Fill channel
-	bus.Publish(TaskEvent{UserID: 1})
+	for i := 0; i < 100; i++ {
+		bus.Publish(TaskEvent{UserID: int32(i + 1)})
+	}
 
 	// Try to publish more (should be dropped but WG handled)
-	bus.Publish(TaskEvent{UserID: 2})
-	bus.Publish(TaskEvent{UserID: 3})
+	bus.Publish(TaskEvent{UserID: 101})
+	bus.Publish(TaskEvent{UserID: 102})
 
-	// Shutdown should succeed even if we only ack the one message we received
+	// Shutdown should succeed even if we only ack the messages we received
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		select {
-		case env := <-ch:
-			env.Ack()
-		default:
+		for {
+			select {
+			case env := <-ch:
+				env.Ack()
+			default:
+				return
+			}
 		}
 	}()
 
@@ -173,13 +178,13 @@ func TestSubscribe(t *testing.T) {
 	t.Run("SubscribeAll", func(t *testing.T) {
 		ch1 := bus.Subscribe()
 		require.NotNil(t, ch1)
-		assert.Equal(t, 1, cap(ch1))
+		assert.Equal(t, 100, cap(ch1))
 	})
 
 	t.Run("SubscribeSpecific", func(t *testing.T) {
 		ch2 := bus.Subscribe(TaskMessageType)
 		require.NotNil(t, ch2)
-		assert.Equal(t, 1, cap(ch2))
+		assert.Equal(t, 100, cap(ch2))
 	})
 }
 
@@ -271,9 +276,17 @@ func TestPublish_NonBlocking(t *testing.T) {
 	msg1 := TaskEvent{Task: mockTask("1")}
 	msg2 := TaskEvent{Task: mockTask("2")}
 
-	// Fill the buffer (capacity 1)
-	err := bus.Publish(msg1)
-	require.NoError(t, err)
+	// Wait a moment for the subscription to be established
+	time.Sleep(10 * time.Millisecond)
+
+	// Since channel capacity is 100, we can fill it up
+	// and only 100 will be buffered, wait! The capacity is exactly 100.
+	// We can loop over the capacity of ch directly.
+	capCh := cap(ch)
+	for i := 0; i < capCh; i++ {
+		err := bus.Publish(msg1)
+		require.NoError(t, err)
+	}
 
 	// This should not block, even though channel is full.
 	// The message will be dropped for this subscriber.
@@ -291,16 +304,18 @@ func TestPublish_NonBlocking(t *testing.T) {
 		t.Fatal("Publish blocked on full channel")
 	}
 
-	// Verify we received the first message
-	select {
-	case env := <-ch:
-		assert.Equal(t, msg1, env.Msg)
-		env.Ack()
-	default:
-		t.Fatal("Expected msg1 in channel")
+	// Verify we received the messages
+	for i := 0; i < capCh; i++ {
+		select {
+		case env := <-ch:
+			assert.Equal(t, msg1, env.Msg)
+			env.Ack()
+		case <-time.After(100 * time.Millisecond):
+			t.Fatalf("Expected msg1 in channel at index %d", i)
+		}
 	}
 
-	// Verify we DO NOT receive the second message (it was dropped)
+	// Verify we DO NOT receive the 101st message (it was dropped)
 	select {
 	case env := <-ch:
 		t.Fatalf("Received unexpected message (should have been dropped): %v", env.Msg)

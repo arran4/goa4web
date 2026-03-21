@@ -58,6 +58,10 @@ func (c *serveCmd) Run() error {
 	listenMsg += fmt.Sprintf(" (Base URL: %s)", cfg.BaseURL)
 	c.rootCmd.Infof("%s", listenMsg)
 
+	if !cfg.NotificationsEnabled {
+		c.rootCmd.Infof("WARNING: Internal notifications are disabled (NOTIFICATIONS_ENABLED=false)")
+	}
+
 	secret, err := config.LoadOrCreateSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile)
 	if err != nil {
 		return fmt.Errorf("session secret: %w", err)

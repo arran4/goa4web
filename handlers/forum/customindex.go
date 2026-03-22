@@ -30,6 +30,13 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	topicID := vars["topic"]
 
 	items := []common.IndexItem{}
+	if cd.UserID != 0 {
+		items = append(items, common.IndexItem{
+			Name: "Unread Threads",
+			Link: fmt.Sprintf("%s/unread", base),
+		})
+	}
+
 	if cd.FeedsEnabled && topicID != "" && threadID == "" {
 		cd.RSSFeedURL = fmt.Sprintf("%s/topic/%s.rss", base, topicID)
 		cd.RSSFeedTitle = "Topic RSS Feed"

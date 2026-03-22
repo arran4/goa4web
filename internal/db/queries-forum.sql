@@ -492,3 +492,54 @@ LEFT JOIN content_private_labels cpl
     AND cpl.item_id = th.idforumthread
     AND cpl.user_id = sqlc.arg(user_id)
 WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id);
+
+-- name: ListUnreadForumThreadsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
+SELECT th.*, t.title AS topic_title, t.handler AS topic_handler, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+LEFT JOIN users lu ON lu.idusers = th.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
+WHERE
+  -- Thread is unread logic: it's unread if neither 'unread' nor 'new' has been inverted.
+  -- Or rather, the user is NOT the author and 'new' is not inverted, OR 'unread' is not inverted.
+  NOT (
+    EXISTS (SELECT 1 FROM content_private_labels cpl WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = sqlc.arg(viewer_id) AND cpl.label = 'unread' AND cpl.invert = 1)
+    AND (
+      fc.users_idusers = sqlc.arg(viewer_id)
+      OR EXISTS (SELECT 1 FROM content_private_labels cpl WHERE cpl.item = 'thread' AND cpl.item_id = th.idforumthread AND cpl.user_id = sqlc.arg(viewer_id) AND cpl.label = 'new' AND cpl.invert = 1)
+    )
+  )
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
+      AND (g.item='topic' OR g.item IS NULL)
+      AND g.action='view'
+      AND g.active=1
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
+      AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (t.handler = 'private' AND sqlc.arg(is_private) = 1 OR t.handler <> 'private' AND sqlc.arg(is_private) = 0)
+ORDER BY th.lastaddition DESC;
+
+-- name: MarkAllForumThreadsReadForUser :exec
+INSERT INTO content_private_labels (item, item_id, user_id, label, invert)
+SELECT 'thread', th.idforumthread, sqlc.arg(viewer_id), 'unread', 1
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+WHERE (t.handler = 'private' AND sqlc.arg(is_private) = 1 OR t.handler <> 'private' AND sqlc.arg(is_private) = 0)
+ON DUPLICATE KEY UPDATE invert = 1;
+
+-- name: MarkAllForumThreadsNewReadForUser :exec
+INSERT INTO content_private_labels (item, item_id, user_id, label, invert)
+SELECT 'thread', th.idforumthread, sqlc.arg(viewer_id), 'new', 1
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+WHERE (t.handler = 'private' AND sqlc.arg(is_private) = 1 OR t.handler <> 'private' AND sqlc.arg(is_private) = 0)
+ON DUPLICATE KEY UPDATE invert = 1;

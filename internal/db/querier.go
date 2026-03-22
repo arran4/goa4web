@@ -503,6 +503,7 @@ type Querier interface {
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
 	ListThreadImagePaths(ctx context.Context, arg ListThreadImagePathsParams) ([]sql.NullString, error)
 	ListThreadSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListThreadSubscriptionsByUserRow, error)
+	ListUnreadForumThreadsForUser(ctx context.Context, arg ListUnreadForumThreadsForUserParams) ([]*ListUnreadForumThreadsForUserRow, error)
 	ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
 	ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
 	ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
@@ -515,6 +516,8 @@ type Querier interface {
 	ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
 	ListWritingcategoryPath(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
+	MarkAllForumThreadsNewReadForUser(ctx context.Context, arg MarkAllForumThreadsNewReadForUserParams) error
+	MarkAllForumThreadsReadForUser(ctx context.Context, arg MarkAllForumThreadsReadForUserParams) error
 	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
 	RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error
 	RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error

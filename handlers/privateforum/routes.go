@@ -27,6 +27,8 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("/topic/new", StartGroupDiscussionPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/topic/new", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
+	pr.HandleFunc("/unread", UnreadThreadsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/unread/mark-all", handlers.TaskHandler(forumhandlers.MarkAllUnreadReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.MarkAllUnreadReadTaskHandler.Matcher())
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

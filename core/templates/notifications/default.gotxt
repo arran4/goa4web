@@ -1,1 +1,0 @@
-{{ if .Item.Username }}User {{ .Item.Username }} triggered a notification.{{ else }}A new notification occurred.{{ end }}

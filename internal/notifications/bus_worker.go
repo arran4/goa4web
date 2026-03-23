@@ -371,7 +371,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	if et, send := tp.SubscribedEmailTemplate(evt); send {
 		for id := range emailSubs {
 			if err := n.sendSubscriberEmail(ctx, id, evt, et); err != nil {
-				log.Printf("deliver email to %d: %v", id, err)
+				return fmt.Errorf("deliver email to %d: %w", id, err)
 			}
 		}
 	}
@@ -383,7 +383,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 		for id := range internalSubs {
 			if err := n.sendInternalNotification(ctx, id, link, string(msg)); err != nil {
-				log.Printf("deliver internal to %d: %v", id, err)
+				return fmt.Errorf("deliver internal to %d: %w", id, err)
 			}
 		}
 	}

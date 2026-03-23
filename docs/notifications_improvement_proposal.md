@@ -1,35 +1,40 @@
-# Notification System Improvement Proposal
+# Notification System Complete Overhaul Proposal
 
-The current notification system in Goa4Web is robust but suffers from several design choices that make it fragile to code changes (indirect routing) and computationally expensive at runtime. This proposal outlines a path to simplify subscriptions, improve performance, and decouple notification logic from HTTP tasks.
+The current notification system tightly couples HTTP tasks to notification logic via interfaces (e.g., `SubscribersNotificationTemplateProvider`). This limits flexibility, makes code monolithic, and causes issues with runtime pattern subscriptions.
 
-## 1. Shift to Entity-Based Subscriptions
-**Current State:**
-Subscriptions are tracked via URL pattern matching strings (e.g., `notify:/forum/thread/1`).
-* **Problem:** If the routing structure or URL scheme changes, the `collectSubscribers` matching logic breaks, stranding old subscriptions.
+To create a more robust, scalable, and decoupled notification system, we propose a complete overhaul migrating away from interface-based triggers towards explicit asynchronous event triggers.
 
-**Proposed State:**
-Change the `subscriptions` database table to use explicit `entity_type` and `entity_id` columns.
-* Instead of inserting `pattern: notify:/forum/thread/1`, insert `entity_type: forum_thread, entity_id: 1`.
-* This creates a hard, database-level association that is immune to HTTP routing changes and allows for straightforward referential integrity.
+## 1. Explicit Async Event Triggers
+Instead of embedding notification template methods directly within HTTP Task structs, tasks will simply publish strongly-typed events to an Event Bus or a Database Queue.
 
-## 2. Decouple Task Definitions from Notification Execution
-**Current State:**
-HTTP tasks (e.g., `ForgotPasswordTask`) directly implement notification interfaces (`SubscribersNotificationTemplateProvider`, etc.) and dictate which templates are used. The event bus relies on the Task interface to execute logic during the worker thread.
-* **Problem:** Tasks become monolithic, mixing HTTP validation, database execution, and notification formatting.
+**Current:**
+Tasks implement multiple interfaces (`AdminEmailTemplateProvider`, etc.) to return filenames based on context.
 
-**Proposed State:**
-Introduce explicit `NotificationEvent` structures that are published to the event bus containing only metadata (actor ID, entity ID, action).
-* Move template resolution into the Notification worker based on the event type, rather than calling methods on the original HTTP Task.
-* Example: `eventbus.Publish(ThreadCreatedEvent{ThreadID: 1, UserID: 1})` -> The notifier resolves the subscribers for `entity_type: forum_thread, entity_id: 1` and uses the standard thread creation template.
+**Proposed:**
+In the task handler, after successful database commit:
+`cd.PublishEvent(eventbus.ThreadCreatedEvent{ThreadID: 1, ActorID: 123})`
 
-## 3. Simplify Permission Evaluation (SystemCheckGrant) in Workers
-**Current State:**
-`notifySubscribers` dynamically evaluates `SystemCheckGrant` in a loop for *every* individual subscriber to ensure they still have access to the object before sending the notification.
-* **Problem:** This leads to N+1 query problems and significantly degrades batch performance when notifying hundreds or thousands of users.
+A dedicated background worker or queue consumer will handle formatting and dispatching, separating the HTTP lifecycle from the notification delivery lifecycle.
 
-**Proposed State:**
-* **Option A (Eager Eviction):** When a user's role or grant is revoked, explicitly delete their associated subscriptions in the database.
-* **Option B (Optimized Bulk Query):** If runtime evaluation is strictly required, update `SystemCheckGrant` to allow bulk ID checking (e.g., `SELECT idusers FROM ... WHERE id IN (...) AND <grant_logic>`), fetching all authorized users in a single query rather than iterating.
+## 2. Event Bus vs. Database Queue
+*   **Database Queue (Recommended):** By persisting events to a new `notification_queue` table during the same transaction as the action (e.g., creating a post), we achieve high durability and guarantee notifications aren't lost if the server restarts. A background cron worker can then pull from this queue, evaluate subscriptions, and render templates.
+*   **Event Bus:** Alternatively, we continue using the current in-memory event bus but change the payload to specific entity events rather than general `TaskEvent` structs.
 
-## 4. Default Templates (Implemented)
-As a short-term resilience fix, default fallback templates (`default.gotxt`, `defaultEmail.txtar`) have been added. If a specific component forgets to register a template or it is deleted, the system falls back to a generic message rather than crashing the worker or throwing errors.
+## 3. Role-Based Template Defaults and Priorities
+To allow flexible templates while preventing "missing template" crashes, we will implement role-based default templates.
+
+Instead of hardcoded filenames, templates will be resolved via a hierarchy in the DB or a configuration map, checking the actor's or recipient's role.
+
+**Resolution Priority:**
+1.  **User Preference Override:** If a user specifies a specific template style (future feature).
+2.  **Role-Specific Template:** e.g., `core/templates/notifications/admin_thread_created.gotxt` if the recipient is an Admin.
+3.  **Action Default:** e.g., `core/templates/notifications/thread_created.gotxt`.
+4.  **System Fallback (Optional/Configurable):** Generic notification if specific ones are absent (can be disabled based on preference).
+
+## 4. Entity-Based Subscriptions
+Replace URL pattern matching (e.g., `notify:/forum/thread/1`) with explicit `entity_type` and `entity_id` in the database.
+*   **Why:** URL routing changes won't break subscriptions.
+*   **How:** `INSERT INTO subscriptions (user_id, entity_type, entity_id) VALUES (123, 'forum_thread', 1)`.
+
+## Next Steps
+This overhaul requires replacing the current `internal/notifications` package logic and updating all handlers. The proposed system maximizes decoupling, reliability (via DB queues), and flexibility (via priority-based templates).

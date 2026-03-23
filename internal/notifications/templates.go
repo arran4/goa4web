@@ -5,7 +5,6 @@ import (
 	"context"
 	htemplate "html/template"
 	"io"
-	"strings"
 	ttemplate "text/template"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -19,7 +18,7 @@ type NewTemplateEngine[TE TemplateEngine] interface {
 	Parse(string) (TE, error)
 }
 
-func renderTemplate[TE TemplateEngine](ctx context.Context, q db.Querier, filename string, data any, tmpls TE, templateNew func(string) NewTemplateEngine[TE], fallback string) ([]byte, error) {
+func renderTemplate[TE TemplateEngine](ctx context.Context, q db.Querier, filename string, data any, tmpls TE, templateNew func(string) NewTemplateEngine[TE]) ([]byte, error) {
 	var buf bytes.Buffer
 	if body, err := q.SystemGetTemplateOverride(ctx, filename); err == nil && body != "" {
 		if parsed, err := templateNew("").Parse(body); err != nil {
@@ -29,13 +28,6 @@ func renderTemplate[TE TemplateEngine](ctx context.Context, q db.Querier, filena
 		}
 	} else {
 		if err := tmpls.ExecuteTemplate(&buf, filename, data); err != nil {
-			if fallback != "" && strings.Contains(err.Error(), "is undefined") {
-				buf.Reset()
-				if fallbackErr := tmpls.ExecuteTemplate(&buf, fallback, data); fallbackErr != nil {
-					return nil, err // Return original error if fallback also fails
-				}
-				return buf.Bytes(), nil
-			}
 			return nil, err
 		}
 	}
@@ -70,20 +62,20 @@ func EmailSubjectTemplateFilenameGenerator(base string) string {
 // Database overrides are respected when present.
 func (n *Notifier) renderNotification(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.notificationTemplates()
-	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew, "default.gotxt")
+	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
 }
 
 func (n *Notifier) renderEmailSubject(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailTextTemplates()
-	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew, "defaultEmailSubject.gotxt")
+	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
 }
 
 func (n *Notifier) renderEmailText(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailTextTemplates()
-	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew, "defaultEmail.gotxt")
+	return renderTemplate[*ttemplate.Template](ctx, n.Queries, filename, data, tmpls, TextTemplatesNew)
 }
 
 func (n *Notifier) renderEmailHtml(ctx context.Context, filename string, data any) ([]byte, error) {
 	tmpls := n.emailHTMLTemplates()
-	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew, "defaultEmail.gohtml")
+	return renderTemplate[*htemplate.Template](ctx, n.Queries, filename, data, tmpls, HTMLTemplatesNew)
 }

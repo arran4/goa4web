@@ -10,6 +10,7 @@ Consolidate the entire configuration for a specific notification into a single `
 
 **Critical Analysis & Risks:**
 *   **Loss of Type Safety:** Currently, Go interfaces enforce that notification providers return necessary data. Moving logic and rules into text files removes compile-time checks. A malformed `txtar` file or a typo in a rule string won't be caught until runtime.
+    *   **Mitigation Strategy:** This risk can be effectively mitigated by implementing comprehensive test-time validation. A suite of unit tests will load all embedded `txtar` files during `go test` and validate their syntax, variable bindings, and embedded rule logic. Additionally, we will expose a CLI command (e.g., `goa4web validate-notifications`) and an Admin UI page that allows administrators to upload or edit a `txtar` file and run it against a validation engine (mocking event data) before it is saved or deployed.
 *   **Parsing Overhead & Complexity:** Designing a bespoke DSL (Domain Specific Language) inside a `txtar` file to evaluate "filters and rules" (like checking database grants) is a massive undertaking. It risks reinventing a slow, fragile interpreter within the notification worker.
 *   **Debugging Nightmare:** Tracing why a notification *didn't* send becomes much harder when the logic is buried in a parsed text file rather than step-through Go code.
 

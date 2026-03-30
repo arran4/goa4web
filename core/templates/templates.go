@@ -21,7 +21,7 @@ import (
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
 //
-//go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.txtar assets/*
+//go:embed site/*/*.gohtml site/*/*/*.gohtml notifications/*.gotxt email/*.txtar assets/*
 var embeddedFS embed.FS
 
 var (
@@ -240,7 +240,11 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 		}
 
 		// IMPORTANT: use path (the relative filename) as the template name.
-		_, err = root.New(path).Parse(string(b))
+		name := path
+		if strings.HasPrefix(name, "site/") {
+			name = name[len("site/"):]
+		}
+		_, err = root.New(name).Parse(string(b))
 		return err
 	})
 	if err != nil {
@@ -304,7 +308,11 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 			if err != nil {
 				return err
 			}
-			_, err = root.New(path).Parse(string(b))
+			name := path
+			if strings.HasPrefix(name, "site/") {
+				name = name[len("site/"):]
+			}
+			_, err = root.New(name).Parse(string(b))
 			return err
 		} else if ext == ".txtar" {
 			b, err := fs.ReadFile(fsys, path)
@@ -452,7 +460,11 @@ func ListSiteTemplateNames(opts ...Option) []string {
 		if filepath.Ext(path) != ".gohtml" {
 			return nil
 		}
-		names = append(names, path)
+		name := path
+		if strings.HasPrefix(name, "site/") {
+			name = name[len("site/"):]
+		}
+		names = append(names, name)
 		return nil
 	})
 	return names

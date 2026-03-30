@@ -80,7 +80,7 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 			CategoryId        int32
 			WritingCategoryID int32
 		}{req, 0, 0}},
-		{"domains/search/searchPage.gohtml", struct {
+		{"domains/admin/searchPage.gohtml", struct {
 			*common.CoreData
 			SearchWords string
 		}{&common.CoreData{}, ""}},

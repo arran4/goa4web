@@ -28,7 +28,7 @@ func TestUserPagingPage_Render(t *testing.T) {
 
 		userPagingPage(rr, req)
 
-		if strings.Contains(rr.Body.String(), `html/template: "pagingPage.gohtml" is undefined`) {
+		if strings.Contains(rr.Body.String(), `html/template: "domains/user/pagingPage.gohtml" is undefined`) {
 			t.Fatalf("Template not defined error detected in response: %s", rr.Body.String())
 		}
 

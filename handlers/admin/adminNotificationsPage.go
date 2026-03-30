@@ -63,4 +63,4 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	AdminNotificationsPageTmpl.Handle(w, r, data)
 }
 
-const AdminNotificationsPageTmpl tasks.Template = "admin/notificationsPage.gohtml"
+const AdminNotificationsPageTmpl tasks.Template = "domains/admin/notificationsPage.gohtml"

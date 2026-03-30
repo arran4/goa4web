@@ -175,4 +175,4 @@ func diffGrantKeys(current []*db.Grant, desired []*db.Grant) ([]string, []string
 }
 
 // AdminRoleLoadPageTmpl renders the role load admin page.
-const AdminRoleLoadPageTmpl tasks.Template = "admin/roleLoadPage.gohtml"
+const AdminRoleLoadPageTmpl tasks.Template = "domains/admin/roleLoadPage.gohtml"

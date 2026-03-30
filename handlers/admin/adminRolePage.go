@@ -81,4 +81,4 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	AdminRolePageTmpl.Handle(w, r, data)
 }
 
-const AdminRolePageTmpl tasks.Template = "admin/adminRolePage.gohtml"
+const AdminRolePageTmpl tasks.Template = "domains/admin/adminRolePage.gohtml"

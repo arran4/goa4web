@@ -90,4 +90,4 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 	AdminSiteSettingsPageTmpl.Handle(w, r, data)
 }
 
-const AdminSiteSettingsPageTmpl tasks.Template = "admin/siteSettingsPage.gohtml"
+const AdminSiteSettingsPageTmpl tasks.Template = "domains/admin/siteSettingsPage.gohtml"

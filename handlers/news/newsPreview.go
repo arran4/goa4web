@@ -49,4 +49,4 @@ func PreviewPage(w http.ResponseWriter, r *http.Request) {
 	_ = NewsPreviewPageTmpl.Handle(w, r, data)
 }
 
-const NewsPreviewPageTmpl tasks.Template = "news/preview.gohtml"
+const NewsPreviewPageTmpl tasks.Template = "domains/news/preview.gohtml"

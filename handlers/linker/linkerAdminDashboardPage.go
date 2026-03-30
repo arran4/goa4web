@@ -35,4 +35,4 @@ func AdminDashboardPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminDashboardPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminDashboardPageTmpl tasks.Template = "linker/linkerAdminDashboardPage.gohtml"
+const LinkerAdminDashboardPageTmpl tasks.Template = "domains/linker/linkerAdminDashboardPage.gohtml"

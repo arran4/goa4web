@@ -27,4 +27,4 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoryPageTmpl tasks.Template = "linker/linkerAdminCategoryPage.gohtml"
+const LinkerAdminCategoryPageTmpl tasks.Template = "domains/linker/linkerAdminCategoryPage.gohtml"

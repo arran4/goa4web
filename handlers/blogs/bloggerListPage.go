@@ -100,4 +100,4 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 	BloggerListPageTmpl.Handle(w, r, data)
 }
 
-const BloggerListPageTmpl tasks.Template = "blogs/bloggerListPage.gohtml"
+const BloggerListPageTmpl tasks.Template = "domains/blogs/bloggerListPage.gohtml"

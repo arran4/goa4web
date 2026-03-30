@@ -218,4 +218,4 @@ func getPrivateTopicTitle(ctx context.Context, queries db.Querier, topic *db.For
 	return fmt.Sprintf("Private forum with %s & %s", strings.Join(rest, ", "), last), nil
 }
 
-const SharedPreviewLoginPageTmpl tasks.Template = "sharedPreviewLogin.gohtml"
+const SharedPreviewLoginPageTmpl tasks.Template = "pages/auth/sharedPreviewLogin.gohtml"

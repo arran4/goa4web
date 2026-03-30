@@ -95,7 +95,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminPageTmpl tasks.Template = "forum/adminPage.gohtml"
+const ForumAdminPageTmpl tasks.Template = "domains/forum/adminPage.gohtml"
 
 func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -146,7 +146,7 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	RunTaskPageTmpl.Handle(w, r, data)
 }
 
-const RunTaskPageTmpl tasks.Template = "admin/runTaskPage.gohtml"
+const RunTaskPageTmpl tasks.Template = "domains/admin/runTaskPage.gohtml"
 
 func countForumThreads(ctx context.Context, q db.Querier) (int64, error) {
 	return q.AdminCountForumThreads(ctx)

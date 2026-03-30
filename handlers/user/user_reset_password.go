@@ -23,7 +23,7 @@ type UserResetPasswordTask struct{ tasks.TaskString }
 
 var userResetPasswordTask = &UserResetPasswordTask{TaskString: "Password Reset"}
 
-const TemplateUserResetPasswordPage tasks.Template = "userResetPasswordPage.gohtml"
+const TemplateUserResetPasswordPage tasks.Template = "pages/user/userResetPasswordPage.gohtml"
 
 var _ tasks.Task = (*UserResetPasswordTask)(nil)
 var _ tasks.TemplatesRequired = (*UserResetPasswordTask)(nil)

@@ -98,4 +98,4 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	BlogsAdminPageTmpl.Handle(w, r, data)
 }
 
-const BlogsAdminPageTmpl tasks.Template = "blogs/adminPage.gohtml"
+const BlogsAdminPageTmpl tasks.Template = "domains/blogs/adminPage.gohtml"

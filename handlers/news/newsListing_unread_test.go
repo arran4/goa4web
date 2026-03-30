@@ -78,7 +78,7 @@ func TestNewsListingDismissLink(t *testing.T) {
 			filepath.Join(base, "news", "page.gohtml"),
 			filepath.Join(base, "news", "post.gohtml"),
 			filepath.Join(base, "forum", "topicLabels.gohtml"), // Needed until we replace it
-			filepath.Join(base, "_share.gohtml"),
+			filepath.Join(base, "partials/common/_share.gohtml"),
 		))
 
 		// Define stubs for other templates used in page.gohtml

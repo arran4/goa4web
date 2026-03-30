@@ -39,4 +39,4 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	AdminForumWordListPageTmpl.Handle(w, r, data)
 }
 
-const AdminForumWordListPageTmpl tasks.Template = "admin/forumWordListPage.gohtml"
+const AdminForumWordListPageTmpl tasks.Template = "domains/admin/forumWordListPage.gohtml"

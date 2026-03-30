@@ -16,4 +16,4 @@ func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	AdminForumFlaggedPostsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminForumFlaggedPostsPageTmpl tasks.Template = "admin/forumFlaggedPostsPage.gohtml"
+const AdminForumFlaggedPostsPageTmpl tasks.Template = "domains/admin/forumFlaggedPostsPage.gohtml"

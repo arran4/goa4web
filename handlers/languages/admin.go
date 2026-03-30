@@ -27,7 +27,7 @@ func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	AdminLanguagesPage.Handle(w, r, struct{}{})
 }
 
-const AdminLanguagesPage tasks.Template = "admin/languagesPage.gohtml"
+const AdminLanguagesPage tasks.Template = "domains/admin/languagesPage.gohtml"
 
 // adminLanguagePage displays statistics for a specific language.
 func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,7 @@ func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 	AdminLanguagePage.Handle(w, r, data)
 }
 
-const AdminLanguagePage tasks.Template = "admin/languagePage.gohtml"
+const AdminLanguagePage tasks.Template = "domains/admin/languagePage.gohtml"
 
 // adminLanguageEditPage shows forms to rename or delete a language.
 func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +94,7 @@ func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
 	AdminLanguageEditPage.Handle(w, r, data)
 }
 
-const AdminLanguageEditPage tasks.Template = "admin/languageEditPage.gohtml"
+const AdminLanguageEditPage tasks.Template = "domains/admin/languageEditPage.gohtml"
 
 // adminLanguageNewPage shows the form to create a new language.
 func adminLanguageNewPage(w http.ResponseWriter, r *http.Request) {
@@ -103,4 +103,4 @@ func adminLanguageNewPage(w http.ResponseWriter, r *http.Request) {
 	AdminLanguageNewPage.Handle(w, r, struct{}{})
 }
 
-const AdminLanguageNewPage tasks.Template = "admin/languageNewPage.gohtml"
+const AdminLanguageNewPage tasks.Template = "domains/admin/languageNewPage.gohtml"

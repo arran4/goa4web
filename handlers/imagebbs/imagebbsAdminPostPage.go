@@ -93,7 +93,7 @@ func AdminPostEditPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminPostEditPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPostEditPageTmpl tasks.Template = "imagebbs/adminPostEditPage.gohtml"
+const ImageBBSAdminPostEditPageTmpl tasks.Template = "domains/imagebbs/adminPostEditPage.gohtml"
 
 // AdminPostDashboardPage shows an overview for a single image post with links.
 func AdminPostDashboardPage(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +120,7 @@ func AdminPostDashboardPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminPostDashboardPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPostDashboardPageTmpl tasks.Template = "imagebbs/adminPostDashboardPage.gohtml"
+const ImageBBSAdminPostDashboardPageTmpl tasks.Template = "domains/imagebbs/adminPostDashboardPage.gohtml"
 
 // AdminPostCommentsPage lists comments for an image post's thread.
 func AdminPostCommentsPage(w http.ResponseWriter, r *http.Request) {
@@ -159,4 +159,4 @@ func AdminPostCommentsPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminPostCommentsPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPostCommentsPageTmpl tasks.Template = "imagebbs/adminPostCommentsPage.gohtml"
+const ImageBBSAdminPostCommentsPageTmpl tasks.Template = "domains/imagebbs/adminPostCommentsPage.gohtml"

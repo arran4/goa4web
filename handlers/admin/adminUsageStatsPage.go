@@ -36,4 +36,4 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUsageStatsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUsageStatsPageTmpl tasks.Template = "admin/usageStatsPage.gohtml"
+const AdminUsageStatsPageTmpl tasks.Template = "domains/admin/usageStatsPage.gohtml"

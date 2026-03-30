@@ -27,4 +27,4 @@ func adminUserCommentsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserCommentsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminUserCommentsPageTmpl tasks.Template = "admin/userCommentsPage.gohtml"
+const AdminUserCommentsPageTmpl tasks.Template = "domains/admin/userCommentsPage.gohtml"

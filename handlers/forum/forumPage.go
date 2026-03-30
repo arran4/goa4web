@@ -111,4 +111,4 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	ForumPageTmpl.Handle(w, r, data)
 }
 
-const ForumPageTmpl tasks.Template = "forum/page.gohtml"
+const ForumPageTmpl tasks.Template = "domains/forum/page.gohtml"

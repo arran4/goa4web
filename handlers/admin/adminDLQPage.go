@@ -182,8 +182,8 @@ func AdminDLQPage(w http.ResponseWriter, r *http.Request) {
 	AdminDLQPageTmpl.Handle(w, r, data)
 }
 
-const AdminDLQPageTmpl tasks.Template = "admin/dlqPage.gohtml"
-const AdminDLQDetailsPageTmpl tasks.Template = "admin/dlqDetailsPage.gohtml"
+const AdminDLQPageTmpl tasks.Template = "domains/admin/dlqPage.gohtml"
+const AdminDLQDetailsPageTmpl tasks.Template = "domains/admin/dlqDetailsPage.gohtml"
 
 func AdminDLQDetailsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

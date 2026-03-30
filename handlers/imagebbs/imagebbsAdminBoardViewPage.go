@@ -66,4 +66,4 @@ func AdminBoardViewPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminBoardViewPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminBoardViewPageTmpl tasks.Template = "imagebbs/adminBoardViewPage.gohtml"
+const ImageBBSAdminBoardViewPageTmpl tasks.Template = "domains/imagebbs/adminBoardViewPage.gohtml"

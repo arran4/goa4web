@@ -85,7 +85,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 	UserLangPage.Handle(w, r, data)
 }
 
-const UserLangPage tasks.Template = "user/langPage.gohtml"
+const UserLangPage tasks.Template = "domains/user/langPage.gohtml"
 
 // updateLanguageSelections stores the languages selected by the user.
 func updateLanguageSelections(r *http.Request, cd *common.CoreData, queries db.Querier, uid int32) error {

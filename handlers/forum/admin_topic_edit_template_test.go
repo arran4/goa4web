@@ -37,7 +37,7 @@ func TestHappyPathAdminTopicEditTemplateDeleteTaskValue(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	if err := cd.ExecuteSiteTemplate(&out, req, "forum/adminTopicEditPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(&out, req, "domains/forum/adminTopicEditPage.gohtml", data); err != nil {
 		t.Fatalf("execute template: %v", err)
 	}
 	body := out.String()

@@ -38,4 +38,4 @@ func AdminBlogCommentsPage(w http.ResponseWriter, r *http.Request) {
 	BlogsAdminBlogCommentsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BlogsAdminBlogCommentsPageTmpl tasks.Template = "blogs/blogsAdminBlogCommentsPage.gohtml"
+const BlogsAdminBlogCommentsPageTmpl tasks.Template = "domains/blogs/blogsAdminBlogCommentsPage.gohtml"

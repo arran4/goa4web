@@ -10,4 +10,4 @@ func adminLoginAttemptsPage(w http.ResponseWriter, r *http.Request) {
 	AdminLoginAttemptsPage.Handle(w, r, struct{}{})
 }
 
-const AdminLoginAttemptsPage tasks.Template = "admin/loginAttemptsPage.gohtml"
+const AdminLoginAttemptsPage tasks.Template = "domains/admin/loginAttemptsPage.gohtml"

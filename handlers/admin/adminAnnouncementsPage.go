@@ -34,4 +34,4 @@ func AdminAnnouncementsPage(w http.ResponseWriter, r *http.Request) {
 	AdminAnnouncementsPageTmpl.Handle(w, r, data)
 }
 
-const AdminAnnouncementsPageTmpl tasks.Template = "admin/announcementsPage.gohtml"
+const AdminAnnouncementsPageTmpl tasks.Template = "domains/admin/announcementsPage.gohtml"

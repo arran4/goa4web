@@ -70,4 +70,4 @@ func AdminExternalLinkDetailsPage(w http.ResponseWriter, r *http.Request) {
 	AdminExternalLinkDetailsPageTmpl.Handle(w, r, data)
 }
 
-const AdminExternalLinkDetailsPageTmpl tasks.Template = "admin/externalLinkDetailsPage.gohtml"
+const AdminExternalLinkDetailsPageTmpl tasks.Template = "domains/admin/externalLinkDetailsPage.gohtml"

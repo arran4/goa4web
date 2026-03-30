@@ -46,7 +46,7 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 	RegisterPageTmpl.Handle(w, r, data)
 }
 
-const RegisterPageTmpl tasks.Template = "registerPage.gohtml"
+const RegisterPageTmpl tasks.Template = "pages/auth/registerPage.gohtml"
 
 // RegisterActionPage handles user creation from the registration form.
 func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {

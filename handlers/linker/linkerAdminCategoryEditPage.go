@@ -33,4 +33,4 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoryEditPageTmpl tasks.Template = "linker/linkerAdminCategoryEditPage.gohtml"
+const LinkerAdminCategoryEditPageTmpl tasks.Template = "domains/linker/linkerAdminCategoryEditPage.gohtml"

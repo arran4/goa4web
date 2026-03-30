@@ -49,7 +49,7 @@ func AdminNewsPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsListPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsListPageTmpl tasks.Template = "news/adminNewsListPage.gohtml"
+const AdminNewsListPageTmpl tasks.Template = "domains/news/adminNewsListPage.gohtml"
 
 func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
@@ -125,7 +125,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsPostPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsPostPageTmpl tasks.Template = "news/adminNewsPostPage.gohtml"
+const AdminNewsPostPageTmpl tasks.Template = "domains/news/adminNewsPostPage.gohtml"
 
 func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -165,7 +165,7 @@ func adminNewsEditFormPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsEditPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsEditPageTmpl tasks.Template = "news/adminNewsEditPage.gohtml"
+const AdminNewsEditPageTmpl tasks.Template = "domains/news/adminNewsEditPage.gohtml"
 
 func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -187,4 +187,4 @@ func AdminNewsDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	AdminNewsDeleteConfirmPageTmpl.Handle(w, r, data)
 }
 
-const AdminNewsDeleteConfirmPageTmpl tasks.Template = "news/adminNewsDeleteConfirmPage.gohtml"
+const AdminNewsDeleteConfirmPageTmpl tasks.Template = "domains/news/adminNewsDeleteConfirmPage.gohtml"

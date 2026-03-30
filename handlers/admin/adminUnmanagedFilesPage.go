@@ -66,4 +66,4 @@ func AdminUnmanagedFilesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminUnmanagedFilesPageTmpl renders the admin unmanaged files page.
-const AdminUnmanagedFilesPageTmpl tasks.Template = "admin/adminUnmanagedFilesPage.gohtml"
+const AdminUnmanagedFilesPageTmpl tasks.Template = "domains/admin/adminUnmanagedFilesPage.gohtml"

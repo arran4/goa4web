@@ -22,4 +22,4 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	WritingsCategoriesPageTmpl.Handle(w, r, data)
 }
 
-const WritingsCategoriesPageTmpl tasks.Template = "writings/writingsCategoriesPage.gohtml"
+const WritingsCategoriesPageTmpl tasks.Template = "domains/writings/writingsCategoriesPage.gohtml"

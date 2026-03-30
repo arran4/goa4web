@@ -137,7 +137,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 	AdminSearchWordListPageTmpl.Handle(w, r, data)
 }
 
-const AdminSearchWordListPageTmpl tasks.Template = "admin/searchWordListPage.gohtml"
+const AdminSearchWordListPageTmpl tasks.Template = "domains/admin/searchWordListPage.gohtml"
 
 // adminSearchWordListDownloadPage sends the full word list as a text file.
 func adminSearchWordListDownloadPage(w http.ResponseWriter, r *http.Request) {

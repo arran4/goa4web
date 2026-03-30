@@ -28,5 +28,5 @@
         <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
         {{ template "blogReply" $ }}
 
-        {{ template "_share.gohtml" (dict "module" "blogs" "link" (printf "/blogs/blog/%d" $blog.Idblogs)) }}
+        {{ template "partials/common/_share.gohtml" (dict "module" "blogs" "link" (printf "/blogs/blog/%d" $blog.Idblogs)) }}
 {{ template "tail" $ }}

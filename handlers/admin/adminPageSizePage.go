@@ -53,6 +53,6 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 	AdminPageSizePageTmpl.Handle(w, r, data)
 }
 
-const AdminPageSizePageTmpl tasks.Template = "admin/pageSizePage.gohtml"
+const AdminPageSizePageTmpl tasks.Template = "domains/admin/pageSizePage.gohtml"
 
-const RunTaskPageTmpl tasks.Template = "admin/runTaskPage.gohtml"
+const RunTaskPageTmpl tasks.Template = "domains/admin/runTaskPage.gohtml"

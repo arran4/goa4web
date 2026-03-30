@@ -19,7 +19,7 @@ import (
 )
 
 // AdminImageCacheDetailsPageTmpl renders the admin image cache details page.
-const AdminImageCacheDetailsPageTmpl tasks.Template = "admin/imageCacheDetailsPage.gohtml"
+const AdminImageCacheDetailsPageTmpl tasks.Template = "domains/admin/imageCacheDetailsPage.gohtml"
 
 func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

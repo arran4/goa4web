@@ -135,4 +135,4 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	BlogsBlogEditPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogEditPageTmpl tasks.Template = "blogs/blogEditPage.gohtml"
+const BlogsBlogEditPageTmpl tasks.Template = "domains/blogs/blogEditPage.gohtml"

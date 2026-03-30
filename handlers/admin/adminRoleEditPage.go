@@ -36,7 +36,7 @@ func adminRoleEditFormPage(w http.ResponseWriter, r *http.Request) {
 	AdminRoleEditPageTmpl.Handle(w, r, data)
 }
 
-const AdminRoleEditPageTmpl tasks.Template = "admin/roleEditPage.gohtml"
+const AdminRoleEditPageTmpl tasks.Template = "domains/admin/roleEditPage.gohtml"
 
 // adminRoleEditSavePage persists role updates.
 func adminRoleEditSavePage(w http.ResponseWriter, r *http.Request) {

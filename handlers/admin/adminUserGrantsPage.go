@@ -42,4 +42,4 @@ func adminUserGrantsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserGrantsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserGrantsPageTmpl tasks.Template = "admin/userGrantsPage.gohtml"
+const AdminUserGrantsPageTmpl tasks.Template = "domains/admin/userGrantsPage.gohtml"

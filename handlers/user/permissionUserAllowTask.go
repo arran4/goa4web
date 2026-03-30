@@ -73,7 +73,7 @@ func (PermissionUserAllowTask) Action(w http.ResponseWriter, r *http.Request) an
 		evt.Data["Username"] = u.Username.String
 		evt.Data["Role"] = role
 	}
-	return handlers.TemplateWithDataHandler("admin/runTaskPage.gohtml", data)
+	return handlers.TemplateWithDataHandler("domains/admin/runTaskPage.gohtml", data)
 }
 
 func (PermissionUserAllowTask) TargetUserIDs(evt eventbus.TaskEvent) ([]int32, error) {

@@ -58,7 +58,7 @@ func AdminAddPage(w http.ResponseWriter, r *http.Request) {
 	LinkerAdminAddPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminAddPageTmpl tasks.Template = "linker/adminAddPage.gohtml"
+const LinkerAdminAddPageTmpl tasks.Template = "domains/linker/adminAddPage.gohtml"
 
 type addTask struct{ tasks.TaskString }
 

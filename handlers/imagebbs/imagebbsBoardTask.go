@@ -16,7 +16,7 @@ type imagebbsBoardTask struct {
 var _ tasks.Task = (*imagebbsBoardTask)(nil)
 
 const (
-	ImagebbsBoardPageTmpl = "imagebbs/boardPage.gohtml"
+	ImagebbsBoardPageTmpl = "domains/imagebbs/boardPage.gohtml"
 )
 
 func NewImagebbsBoardTask() tasks.Task {

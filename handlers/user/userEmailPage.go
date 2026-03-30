@@ -62,7 +62,7 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 	UserEmailPage.Handle(w, r, data)
 }
 
-const UserEmailPage tasks.Template = "user/emailPage.gohtml"
+const UserEmailPage tasks.Template = "domains/user/emailPage.gohtml"
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -129,5 +129,5 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	UserEmailVerifyConfirmPage.Handle(w, r, data)
 }
 
-const UserEmailVerifyConfirmPage tasks.Template = "user/emailVerifyConfirmPage.gohtml"
-const UserEmailVerifiedPage tasks.Template = "user/emailVerifiedPage.gohtml"
+const UserEmailVerifyConfirmPage tasks.Template = "domains/user/emailVerifyConfirmPage.gohtml"
+const UserEmailVerifiedPage tasks.Template = "domains/user/emailVerifiedPage.gohtml"

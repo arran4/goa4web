@@ -437,7 +437,7 @@ func GetA4CodeJSData(opts ...Option) []byte { return readFile("assets/a4code.js"
 func GetRobotsTXTData(opts ...Option) []byte { return readFile("assets/robots.txt", opts...) }
 
 // ListSiteTemplateNames returns the relative paths of all site templates
-// (under the site/ directory), e.g. "news/postPage.gohtml".
+// (under the site/ directory), e.g. "domains/news/postPage.gohtml".
 func ListSiteTemplateNames(opts ...Option) []string {
 	cfg := newCfg(opts...)
 	var names []string

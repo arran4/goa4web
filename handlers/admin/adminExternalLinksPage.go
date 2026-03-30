@@ -63,7 +63,7 @@ func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 	AdminExternalLinksPageTmpl.Handle(w, r, data)
 }
 
-const AdminExternalLinksPageTmpl tasks.Template = "admin/externalLinksPage.gohtml"
+const AdminExternalLinksPageTmpl tasks.Template = "domains/admin/externalLinksPage.gohtml"
 
 // externalLinksFilterQueryParam names the query parameter for URL search filtering.
 const externalLinksFilterQueryParam = "q"

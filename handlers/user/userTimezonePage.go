@@ -37,4 +37,4 @@ func userTimezonePage(w http.ResponseWriter, r *http.Request) {
 	UserTimezonePage.Handle(w, r, data)
 }
 
-const UserTimezonePage tasks.Template = "user/timezonePage.gohtml"
+const UserTimezonePage tasks.Template = "domains/user/timezonePage.gohtml"

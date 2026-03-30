@@ -89,7 +89,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminTopicPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminTopicPageTmpl tasks.Template = "forum/adminTopicPage.gohtml"
+const ForumAdminTopicPageTmpl tasks.Template = "domains/forum/adminTopicPage.gohtml"
 
 // AdminTopicEditFormPage shows the edit form for a forum topic.
 func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -139,4 +139,4 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminTopicEditPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminTopicEditPageTmpl tasks.Template = "forum/adminTopicEditPage.gohtml"
+const ForumAdminTopicEditPageTmpl tasks.Template = "domains/forum/adminTopicEditPage.gohtml"

@@ -140,4 +140,4 @@ func (p *AdminQuestion) Load(ctx context.Context, d db.Querier, r *http.Request)
 	return err
 }
 
-const AdminQuestionPageTmpl tasks.Template = "faq/adminQuestionPage.gohtml"
+const AdminQuestionPageTmpl tasks.Template = "domains/faq/adminQuestionPage.gohtml"

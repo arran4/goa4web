@@ -50,4 +50,4 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 	AdminFaqRevisionPageTmpl.Handle(w, r, data)
 }
 
-const AdminFaqRevisionPageTmpl tasks.Template = "faq/adminFaqRevisionPage.gohtml"
+const AdminFaqRevisionPageTmpl tasks.Template = "domains/faq/adminFaqRevisionPage.gohtml"

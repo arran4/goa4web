@@ -211,4 +211,4 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 	})
 }
 
-const SharedPreviewLoginPageTmpl tasks.Template = "sharedPreviewLogin.gohtml"
+const SharedPreviewLoginPageTmpl tasks.Template = "pages/auth/sharedPreviewLogin.gohtml"

@@ -164,7 +164,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	ArticlePageTmpl.Handle(w, r, data)
 }
 
-const ArticlePageTmpl tasks.Template = "writings/articlePage.gohtml"
+const ArticlePageTmpl tasks.Template = "domains/writings/articlePage.gohtml"
 
 func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -227,4 +227,4 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 	handlers.TaskDoneAutoRefreshPage(w, r)
 }
 
-const AdminNoAccessPageTmpl tasks.Template = "admin/noAccessPage.gohtml"
+const AdminNoAccessPageTmpl tasks.Template = "domains/admin/noAccessPage.gohtml"

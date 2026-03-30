@@ -17,7 +17,7 @@ func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	AdminRequestQueuePageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminRequestQueuePageTmpl tasks.Template = "admin/requestQueuePage.gohtml"
+const AdminRequestQueuePageTmpl tasks.Template = "domains/admin/requestQueuePage.gohtml"
 
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -25,7 +25,7 @@ func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	AdminRequestArchivePageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminRequestArchivePageTmpl tasks.Template = "admin/requestArchivePage.gohtml"
+const AdminRequestArchivePageTmpl tasks.Template = "domains/admin/requestArchivePage.gohtml"
 
 func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -42,7 +42,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 	AdminRequestPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminRequestPageTmpl tasks.Template = "admin/requestPage.gohtml"
+const AdminRequestPageTmpl tasks.Template = "domains/admin/requestPage.gohtml"
 
 func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

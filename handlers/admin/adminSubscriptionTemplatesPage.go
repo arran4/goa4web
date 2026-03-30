@@ -175,4 +175,4 @@ func AdminSubscriptionTemplatesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminSubscriptionTemplatesPageTmpl renders the admin subscription templates page.
-const AdminSubscriptionTemplatesPageTmpl tasks.Template = "admin/subscriptionTemplatesPage.gohtml"
+const AdminSubscriptionTemplatesPageTmpl tasks.Template = "domains/admin/subscriptionTemplatesPage.gohtml"

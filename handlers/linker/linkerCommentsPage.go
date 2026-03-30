@@ -149,7 +149,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 	LinkerCommentsPageTmpl.Handle(w, r, data)
 }
 
-const LinkerCommentsPageTmpl tasks.Template = "linker/commentsPage.gohtml"
+const LinkerCommentsPageTmpl tasks.Template = "domains/linker/commentsPage.gohtml"
 
 type replyTask struct{ tasks.TaskString }
 
@@ -191,7 +191,7 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			if err := cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{}); err != nil {
+			if err := cd.ExecuteSiteTemplate(w, r, "domains/admin/noAccessPage.gohtml", struct{}{}); err != nil {
 				log.Printf("render no access page: %v", err)
 			}
 			return nil

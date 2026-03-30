@@ -46,4 +46,4 @@ func adminUserImagebbsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserImagebbsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserImagebbsPageTmpl tasks.Template = "admin/userImagebbsPage.gohtml"
+const AdminUserImagebbsPageTmpl tasks.Template = "domains/admin/userImagebbsPage.gohtml"

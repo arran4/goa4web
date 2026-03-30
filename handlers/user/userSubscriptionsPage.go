@@ -135,4 +135,4 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	UserSubscriptionsPage.Handle(w, r, data)
 }
 
-const UserSubscriptionsPage tasks.Template = "user/subscriptions.gohtml"
+const UserSubscriptionsPage tasks.Template = "domains/user/subscriptions.gohtml"

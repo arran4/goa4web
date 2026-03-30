@@ -26,7 +26,7 @@ type newsPostTask struct {
 var _ tasks.Task = (*newsPostTask)(nil)
 
 const (
-	NewsPostPageTmpl tasks.Template = "news/postPage.gohtml"
+	NewsPostPageTmpl tasks.Template = "domains/news/postPage.gohtml"
 )
 
 func NewNewsPostTask() tasks.Task {

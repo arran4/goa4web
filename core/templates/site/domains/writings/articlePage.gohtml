@@ -79,5 +79,5 @@
         Article doesn't exist.<br>
     {{ end }}
 
-    {{ template "_share.gohtml" (dict "module" "writings" "link" (printf "/writings/article/%d" $writing.Idwriting)) }}
+    {{ template "partials/common/_share.gohtml" (dict "module" "writings" "link" (printf "/writings/article/%d" $writing.Idwriting)) }}
 {{ template "tail" $ }}

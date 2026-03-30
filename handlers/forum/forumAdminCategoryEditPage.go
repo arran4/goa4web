@@ -50,7 +50,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryEditPageTmpl tasks.Template = "forum/forumAdminCategoryEditPage.gohtml"
+const ForumAdminCategoryEditPageTmpl tasks.Template = "domains/forum/forumAdminCategoryEditPage.gohtml"
 
 // AdminCategoryEditSubmit processes updates to an existing forum category.
 func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {

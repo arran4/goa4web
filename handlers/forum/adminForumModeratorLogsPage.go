@@ -16,4 +16,4 @@ func AdminForumModeratorLogsPage(w http.ResponseWriter, r *http.Request) {
 	AdminForumModeratorLogsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminForumModeratorLogsPageTmpl tasks.Template = "admin/forumModeratorLogsPage.gohtml"
+const AdminForumModeratorLogsPageTmpl tasks.Template = "domains/admin/forumModeratorLogsPage.gohtml"

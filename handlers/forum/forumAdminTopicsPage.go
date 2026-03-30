@@ -175,7 +175,7 @@ func AdminTopicsPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminTopicsPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminTopicsPageTmpl tasks.Template = "forum/adminTopicsPage.gohtml"
+const ForumAdminTopicsPageTmpl tasks.Template = "domains/forum/adminTopicsPage.gohtml"
 
 func AdminTopicEditPage(w http.ResponseWriter, r *http.Request) {
 	name := r.PostFormValue("name")
@@ -279,7 +279,7 @@ func AdminTopicDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminTopicDeletePageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminTopicDeletePageTmpl tasks.Template = "forum/adminTopicDeletePage.gohtml"
+const ForumAdminTopicDeletePageTmpl tasks.Template = "domains/forum/adminTopicDeletePage.gohtml"
 
 func AdminTopicDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

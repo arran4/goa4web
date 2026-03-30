@@ -15,5 +15,5 @@ const (
 	TaskField = "task"
 
 	// TemplateRunTaskPage is the template used for task execution feedback.
-	TemplateRunTaskPage Page = "admin/runTaskPage.gohtml"
+	TemplateRunTaskPage Page = "domains/admin/runTaskPage.gohtml"
 )

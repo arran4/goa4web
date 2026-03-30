@@ -87,7 +87,7 @@ func (t *AdminQuestionEditPageTask) Page(w http.ResponseWriter, r *http.Request)
 	AdminQuestionEditPageTmpl.Handle(w, r, data)
 }
 
-const AdminQuestionEditPageTmpl tasks.Template = "faq/adminQuestionEditPage.gohtml"
+const AdminQuestionEditPageTmpl tasks.Template = "domains/faq/adminQuestionEditPage.gohtml"
 
 // AdminCreateQuestionPage redirects to AdminEditQuestionPage with id zero to
 // display the form for creating a new FAQ entry.

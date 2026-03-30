@@ -48,4 +48,4 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	WritingsAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const WritingsAdminCategoryEditPageTmpl tasks.Template = "writings/writingsAdminCategoryEditPage.gohtml"
+const WritingsAdminCategoryEditPageTmpl tasks.Template = "domains/writings/writingsAdminCategoryEditPage.gohtml"

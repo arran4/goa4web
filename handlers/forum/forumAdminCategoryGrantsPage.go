@@ -70,4 +70,4 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	ForumAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryGrantsPageTmpl tasks.Template = "forum/adminCategoryGrantsPage.gohtml"
+const ForumAdminCategoryGrantsPageTmpl tasks.Template = "domains/forum/adminCategoryGrantsPage.gohtml"

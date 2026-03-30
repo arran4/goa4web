@@ -53,7 +53,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	AdminPendingUsersPage.Handle(w, r, data)
 }
 
-const AdminPendingUsersPage tasks.Template = "admin/pendingUsersPage.gohtml"
+const AdminPendingUsersPage tasks.Template = "domains/admin/pendingUsersPage.gohtml"
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

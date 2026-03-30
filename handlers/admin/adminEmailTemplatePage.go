@@ -94,6 +94,6 @@ func AdminEmailTemplatePage(w http.ResponseWriter, r *http.Request) {
 	AdminEmailTemplateEditPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminEmailTemplateListPageTmpl tasks.Template = "admin/emailTemplateListPage.gohtml"
+const AdminEmailTemplateListPageTmpl tasks.Template = "domains/admin/emailTemplateListPage.gohtml"
 
-const AdminEmailTemplateEditPageTmpl tasks.Template = "admin/emailTemplateEditPage.gohtml"
+const AdminEmailTemplateEditPageTmpl tasks.Template = "domains/admin/emailTemplateEditPage.gohtml"

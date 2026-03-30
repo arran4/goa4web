@@ -32,4 +32,4 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 	}{cols})
 }
 
-const MinePageTmpl tasks.Template = "bookmarks/minePage.gohtml"
+const MinePageTmpl tasks.Template = "domains/bookmarks/minePage.gohtml"

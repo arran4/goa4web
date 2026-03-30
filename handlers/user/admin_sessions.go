@@ -13,7 +13,7 @@ func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
 	AdminSessionsPage.Handle(w, r, struct{}{})
 }
 
-const AdminSessionsPage tasks.Template = "admin/sessionsPage.gohtml"
+const AdminSessionsPage tasks.Template = "domains/admin/sessionsPage.gohtml"
 
 func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

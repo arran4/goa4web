@@ -44,4 +44,4 @@ func CategoriesPage(w http.ResponseWriter, r *http.Request) {
 	LinkerCategoriesPageTmpl.Handle(w, r, data)
 }
 
-const LinkerCategoriesPageTmpl tasks.Template = "linker/linkerCategoriesPage.gohtml"
+const LinkerCategoriesPageTmpl tasks.Template = "domains/linker/linkerCategoriesPage.gohtml"

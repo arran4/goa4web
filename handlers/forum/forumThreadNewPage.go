@@ -219,7 +219,7 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	ForumThreadNewPageTmpl.Handle(w, r, data)
 }
 
-const ForumThreadNewPageTmpl tasks.Template = "forum/threadNewPage.gohtml"
+const ForumThreadNewPageTmpl tasks.Template = "domains/forum/threadNewPage.gohtml"
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

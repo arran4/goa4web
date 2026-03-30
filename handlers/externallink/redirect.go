@@ -110,7 +110,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Message:     r.URL.Query().Get("msg"),
 		BackURL:     r.Referer(),
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "pages/misc/externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)

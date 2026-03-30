@@ -49,4 +49,4 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	AdminSearchPageTmpl.Handle(w, r, data)
 }
 
-const AdminSearchPageTmpl tasks.Template = "admin/searchPage.gohtml"
+const AdminSearchPageTmpl tasks.Template = "domains/admin/searchPage.gohtml"

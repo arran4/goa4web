@@ -202,7 +202,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	ForumThreadPageTmpl.Handle(w, r, data)
 }
 
-const ForumThreadPageTmpl tasks.Template = "forum/threadPage.gohtml"
+const ForumThreadPageTmpl tasks.Template = "domains/forum/threadPage.gohtml"
 
 // ThreadPage serves the forum thread page at the default /forum prefix.
 func ThreadPage(w http.ResponseWriter, r *http.Request) {

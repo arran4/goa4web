@@ -34,10 +34,10 @@ var (
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	ForgotPasswordPageTmpl           tasks.Template = "forgotPasswordPage.gohtml"
-	ForgotPasswordNoEmailPageTmpl    tasks.Template = "forgotPasswordNoEmailPage.gohtml"
-	ForgotPasswordEmailSentPageTmpl  tasks.Template = "forgotPasswordEmailSentPage.gohtml"
-	PasswordResetRequestSentPageTmpl tasks.Template = "passwordResetRequestSentPage.gohtml"
+	ForgotPasswordPageTmpl           tasks.Template = "pages/auth/forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl    tasks.Template = "pages/auth/forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl  tasks.Template = "pages/auth/forgotPasswordEmailSentPage.gohtml"
+	PasswordResetRequestSentPageTmpl tasks.Template = "pages/auth/passwordResetRequestSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}

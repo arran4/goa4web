@@ -66,7 +66,7 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 	LinkerShowPageTmpl.Handle(w, r, data)
 }
 
-const LinkerShowPageTmpl tasks.Template = "linker/showPage.gohtml"
+const LinkerShowPageTmpl tasks.Template = "domains/linker/showPage.gohtml"
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

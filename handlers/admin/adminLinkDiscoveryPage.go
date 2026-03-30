@@ -59,4 +59,4 @@ func AdminLinkDiscoveryPage(w http.ResponseWriter, r *http.Request) {
 	AdminLinkDiscoveryPageTmpl.Handle(w, r, data)
 }
 
-const AdminLinkDiscoveryPageTmpl tasks.Template = "admin/linkDiscoveryPage.gohtml"
+const AdminLinkDiscoveryPageTmpl tasks.Template = "domains/admin/linkDiscoveryPage.gohtml"

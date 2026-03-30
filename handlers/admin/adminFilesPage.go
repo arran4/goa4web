@@ -87,4 +87,4 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 	AdminFilesPageTmpl.Handle(w, r, data)
 }
 
-const AdminFilesPageTmpl tasks.Template = "admin/adminFilesPage.gohtml"
+const AdminFilesPageTmpl tasks.Template = "domains/admin/adminFilesPage.gohtml"

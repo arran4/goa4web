@@ -20,4 +20,4 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserListPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminUserListPageTmpl tasks.Template = "admin/userList.gohtml"
+const AdminUserListPageTmpl tasks.Template = "domains/admin/userList.gohtml"

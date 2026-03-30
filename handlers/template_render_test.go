@@ -41,32 +41,32 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 		name string
 		data any
 	}{
-		{"news/page.gohtml", struct{}{}},
-		{"faq/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
-		{"user/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
-		{"linker/page.gohtml", struct {
+		{"domains/news/page.gohtml", struct{}{}},
+		{"domains/faq/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"domains/user/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"domains/linker/page.gohtml", struct {
 			*common.CoreData
 			Categories any
 			Links      any
 			HasOffset  bool
 			CatId      int32
 		}{&common.CoreData{}, nil, nil, false, 0}},
-		{"forum/page.gohtml", struct {
+		{"domains/forum/page.gohtml", struct {
 			*common.CoreData
 			Categories []*forum.ForumcategoryPlus
 			Category   *forum.ForumcategoryPlus
 			Admin      bool
 		}{&common.CoreData{}, nil, nil, false}},
-		{"bookmarks/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
-		{"imagebbs/page.gohtml", struct {
+		{"domains/bookmarks/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
+		{"domains/imagebbs/page.gohtml", struct {
 			*common.CoreData
 			Boards any
 		}{&common.CoreData{}, nil}},
-		{"blogs/page.gohtml", struct{}{}},
-		{"writings/page.gohtml", struct {
+		{"domains/blogs/page.gohtml", struct{}{}},
+		{"domains/writings/page.gohtml", struct {
 			WritingCategoryID int32
 		}{0}},
-		{"linker/categoryPage.gohtml", struct {
+		{"domains/linker/categoryPage.gohtml", struct {
 			*common.CoreData
 			Offset      int
 			HasOffset   bool
@@ -80,15 +80,15 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 			CategoryId        int32
 			WritingCategoryID int32
 		}{req, 0, 0}},
-		{"searchPage.gohtml", struct {
+		{"domains/search/searchPage.gohtml", struct {
 			*common.CoreData
 			SearchWords string
 		}{&common.CoreData{}, ""}},
-		{"admin/searchPage.gohtml", struct {
+		{"domains/admin/searchPage.gohtml", struct {
 			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
-		{"blogs/adminPage.gohtml", struct {
+		{"domains/blogs/adminPage.gohtml", struct {
 			*common.CoreData
 			Rows []struct {
 				Username sql.NullString
@@ -97,16 +97,16 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 				Idusers  int32
 			}
 		}{&common.CoreData{}, nil}},
-		{"admin/page.gohtml", struct {
+		{"domains/admin/page.gohtml", struct {
 			*common.CoreData
 			AdminSections []common.AdminSection
 			Stats         adminStats
 		}{&common.CoreData{}, nil, adminStats{}}},
-		{"forum/adminPage.gohtml", struct {
+		{"domains/forum/adminPage.gohtml", struct {
 			*common.CoreData
 			Stats struct{ Categories, Topics, Threads int64 }
 		}{&common.CoreData{}, struct{ Categories, Topics, Threads int64 }{}}},
-		{"imagebbs/adminPage.gohtml", struct {
+		{"domains/imagebbs/adminPage.gohtml", struct {
 			*common.CoreData
 			Stats []*db.AdminImageboardPostCountsRow
 		}{&common.CoreData{}, nil}},

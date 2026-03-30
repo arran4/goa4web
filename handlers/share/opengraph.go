@@ -104,7 +104,7 @@ type OpenGraphData struct {
 // RenderOpenGraph renders an OpenGraph preview page with the provided metadata.
 func RenderOpenGraph(w http.ResponseWriter, r *http.Request, data OpenGraphData) error {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	return templates.GetCompiledSiteTemplates(nil).ExecuteTemplate(w, "openGraphPreview.gohtml", data)
+	return templates.GetCompiledSiteTemplates(nil).ExecuteTemplate(w, "pages/misc/openGraphPreview.gohtml", data)
 }
 
 func (d OpenGraphData) URLMeta() template.HTML {

@@ -198,4 +198,4 @@ func parseShareToolsID(value string, label string) (int, error) {
 }
 
 // AdminShareToolsPageTmpl is the template for the admin share tools page.
-const AdminShareToolsPageTmpl tasks.Template = "admin/shareToolsPage.gohtml"
+const AdminShareToolsPageTmpl tasks.Template = "domains/admin/shareToolsPage.gohtml"

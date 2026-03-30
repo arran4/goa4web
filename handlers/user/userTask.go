@@ -18,7 +18,7 @@ type userTask struct {
 var _ tasks.Task = (*userTask)(nil)
 
 const (
-	UserPageTmpl tasks.Template = "user/page.gohtml"
+	UserPageTmpl tasks.Template = "domains/user/page.gohtml"
 )
 
 func NewUserTask() tasks.Task {

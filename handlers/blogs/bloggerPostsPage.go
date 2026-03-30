@@ -48,4 +48,4 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 	BloggerPostsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BloggerPostsPageTmpl tasks.Template = "blogs/bloggerPostsPage.gohtml"
+const BloggerPostsPageTmpl tasks.Template = "domains/blogs/bloggerPostsPage.gohtml"

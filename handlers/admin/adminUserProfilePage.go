@@ -24,7 +24,7 @@ func adminUserProfilePage(w http.ResponseWriter, r *http.Request) {
 	AdminUserProfilePageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminUserProfilePageTmpl tasks.Template = "admin/adminUserPage.gohtml"
+const AdminUserProfilePageTmpl tasks.Template = "domains/admin/adminUserPage.gohtml"
 
 func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

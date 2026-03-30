@@ -15,8 +15,8 @@ type bookmarksTask struct {
 var _ tasks.Task = (*bookmarksTask)(nil)
 
 const (
-	BookmarksPageTmpl = "bookmarks/page.gohtml"
-	InfoPageTmpl      = "bookmarks/infoPage.gohtml"
+	BookmarksPageTmpl = "domains/bookmarks/page.gohtml"
+	InfoPageTmpl      = "domains/bookmarks/infoPage.gohtml"
 )
 
 func NewBookmarksTask() tasks.Task {

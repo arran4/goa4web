@@ -58,7 +58,7 @@ func ArticleEditPage(w http.ResponseWriter, r *http.Request) {
 	WritingsArticleEditPageTmpl.Handle(w, r, data)
 }
 
-const WritingsArticleEditPageTmpl tasks.Template = "writings/articleEditPage.gohtml"
+const WritingsArticleEditPageTmpl tasks.Template = "domains/writings/articleEditPage.gohtml"
 
 func ArticleEditActionPage(w http.ResponseWriter, r *http.Request) {
 	// RequireWritingAuthor middleware loads the writing and validates access.

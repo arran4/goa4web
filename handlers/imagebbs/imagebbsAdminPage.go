@@ -28,4 +28,4 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	ImageBBSAdminPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPageTmpl tasks.Template = "imagebbs/adminPage.gohtml"
+const ImageBBSAdminPageTmpl tasks.Template = "domains/imagebbs/adminPage.gohtml"

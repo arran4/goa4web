@@ -35,7 +35,7 @@ type UserGenerateResetLinkTask struct{ tasks.TaskString }
 var userGenerateResetLinkTask = &UserGenerateResetLinkTask{TaskString: TaskUserGenerateResetLink}
 
 const (
-	TemplateUserResetPasswordConfirmPage tasks.Template          = "admin/userResetPasswordConfirmPage.gohtml"
+	TemplateUserResetPasswordConfirmPage tasks.Template          = "domains/admin/userResetPasswordConfirmPage.gohtml"
 	EmailTemplateUserMagicReset          notif.EmailTemplateName = "userMagicResetEmail"
 )
 

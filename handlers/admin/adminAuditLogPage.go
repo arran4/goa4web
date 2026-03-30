@@ -179,7 +179,7 @@ func AdminAuditLogPage(w http.ResponseWriter, r *http.Request) {
 	AdminAuditLogPageTmpl.Handle(w, r, data)
 }
 
-const AdminAuditLogPageTmpl tasks.Template = "admin/auditLogPage.gohtml"
+const AdminAuditLogPageTmpl tasks.Template = "domains/admin/auditLogPage.gohtml"
 
 func writeAuditLogCSV(w http.ResponseWriter, rows []*db.AdminListAuditLogsRow) {
 	w.Header().Set("Content-Type", "text/csv")

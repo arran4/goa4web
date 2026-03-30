@@ -188,7 +188,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	ForumTopicsPageTmpl.Handle(w, r, data)
 }
 
-const ForumTopicsPageTmpl tasks.Template = "forum/topicsPage.gohtml"
+const ForumTopicsPageTmpl tasks.Template = "domains/forum/topicsPage.gohtml"
 
 // TopicsPage serves the forum topic page at the default /forum prefix.
 func TopicsPage(w http.ResponseWriter, r *http.Request) {

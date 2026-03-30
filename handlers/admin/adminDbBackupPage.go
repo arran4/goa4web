@@ -28,4 +28,4 @@ func AdminDBBackupPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminDBBackupPageTmpl renders the admin database backup page.
-const AdminDBBackupPageTmpl tasks.Template = "admin/dbBackupPage.gohtml"
+const AdminDBBackupPageTmpl tasks.Template = "domains/admin/dbBackupPage.gohtml"

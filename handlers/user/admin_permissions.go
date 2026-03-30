@@ -53,4 +53,4 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserPermissionsPage.Handle(w, r, data)
 }
 
-const AdminUserPermissionsPage tasks.Template = "admin/userPermissionsPage.gohtml"
+const AdminUserPermissionsPage tasks.Template = "domains/admin/userPermissionsPage.gohtml"

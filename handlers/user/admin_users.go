@@ -123,7 +123,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 	AdminUsersPage.Handle(w, r, data)
 }
 
-const AdminUsersPage tasks.Template = "admin/usersPage.gohtml"
+const AdminUsersPage tasks.Template = "domains/admin/usersPage.gohtml"
 
 func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -150,7 +150,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 	AdminConfirmPage.Handle(w, r, data)
 }
 
-const AdminConfirmPage tasks.Template = "confirmPage.gohtml"
+const AdminConfirmPage tasks.Template = "pages/misc/confirmPage.gohtml"
 
 func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -192,7 +192,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserEditPage.Handle(w, r, data)
 }
 
-const AdminUserEditPage tasks.Template = "admin/userEditPage.gohtml"
+const AdminUserEditPage tasks.Template = "domains/admin/userEditPage.gohtml"
 
 func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -233,7 +233,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 	AdminRunTaskPage.Handle(w, r, data)
 }
 
-const AdminRunTaskPage tasks.Template = "admin/runTaskPage.gohtml"
+const AdminRunTaskPage tasks.Template = "domains/admin/runTaskPage.gohtml"
 
 func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -269,4 +269,4 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserResetPasswordPage.Handle(w, r, data)
 }
 
-const AdminUserResetPasswordPage tasks.Template = "admin/userResetPasswordPage.gohtml"
+const AdminUserResetPasswordPage tasks.Template = "domains/admin/userResetPasswordPage.gohtml"

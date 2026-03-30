@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	NewsCreatePageTmpl tasks.Template = "news/createPage.gohtml"
+	NewsCreatePageTmpl tasks.Template = "domains/news/createPage.gohtml"
 )
 
 func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {

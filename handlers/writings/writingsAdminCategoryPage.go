@@ -43,4 +43,4 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	WritingsAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const WritingsAdminCategoryPageTmpl tasks.Template = "writings/writingsAdminCategoryPage.gohtml"
+const WritingsAdminCategoryPageTmpl tasks.Template = "domains/writings/writingsAdminCategoryPage.gohtml"

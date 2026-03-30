@@ -48,4 +48,4 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	UserLogoutPage.Handle(w, r, struct{}{})
 }
 
-const UserLogoutPage tasks.Template = "user/logoutPage.gohtml"
+const UserLogoutPage tasks.Template = "domains/user/logoutPage.gohtml"

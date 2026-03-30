@@ -72,7 +72,7 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 	AskPageTmpl.Handle(w, r, data)
 }
 
-const AskPageTmpl tasks.Template = "faq/askPage.gohtml"
+const AskPageTmpl tasks.Template = "domains/faq/askPage.gohtml"
 
 func (AskTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := handlers.ValidateForm(r, []string{"language", "text"}, []string{"language", "text"}); err != nil {

@@ -58,4 +58,4 @@ func adminCommentPage(w http.ResponseWriter, r *http.Request) {
 	AdminCommentPageTmpl.Handle(w, r, data)
 }
 
-const AdminCommentPageTmpl tasks.Template = "admin/adminCommentPage.gohtml"
+const AdminCommentPageTmpl tasks.Template = "domains/admin/adminCommentPage.gohtml"

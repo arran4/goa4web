@@ -61,7 +61,7 @@ func AdminGrantsAvailablePage(w http.ResponseWriter, r *http.Request) {
 	AdminGrantsAvailablePageTmpl.Handle(w, r, data)
 }
 
-const AdminGrantsAvailablePageTmpl tasks.Template = "admin/grantsAvailablePage.gohtml"
+const AdminGrantsAvailablePageTmpl tasks.Template = "domains/admin/grantsAvailablePage.gohtml"
 
 // AdminGrantsPage lists all grants.
 func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +122,7 @@ func AdminGrantsPage(w http.ResponseWriter, r *http.Request) {
 	AdminGrantsPageTmpl.Handle(w, r, data)
 }
 
-const AdminGrantsPageTmpl tasks.Template = "admin/grantsPage.gohtml"
+const AdminGrantsPageTmpl tasks.Template = "domains/admin/grantsPage.gohtml"
 
 // AdminAnyoneGrantsPage lists grants applying to all users.
 func AdminAnyoneGrantsPage(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +194,7 @@ func adminGrantPage(w http.ResponseWriter, r *http.Request) {
 	GrantPageTmpl.Handle(w, r, data)
 }
 
-const GrantPageTmpl tasks.Template = "admin/grantPage.gohtml"
+const GrantPageTmpl tasks.Template = "domains/admin/grantPage.gohtml"
 
 // grantItemLink returns the admin page URL for a grant's item, or "" if none.
 func grantItemLink(g *db.Grant) string {

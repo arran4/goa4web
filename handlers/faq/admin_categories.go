@@ -38,4 +38,4 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	FaqAdminCategoriesPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoriesPageTmpl tasks.Template = "faq/faqAdminCategoriesPage.gohtml"
+const FaqAdminCategoriesPageTmpl tasks.Template = "domains/faq/faqAdminCategoriesPage.gohtml"

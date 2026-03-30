@@ -32,4 +32,4 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	AdminServerStatsPageTmpl.Handle(w, r, data)
 }
 
-const AdminServerStatsPageTmpl tasks.Template = "admin/serverStatsPage.gohtml"
+const AdminServerStatsPageTmpl tasks.Template = "domains/admin/serverStatsPage.gohtml"

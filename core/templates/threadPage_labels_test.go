@@ -34,7 +34,7 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 	tmpl := template.New("test").Funcs(funcMap)
 
 	// Provide stub templates used by threadPage.gohtml.
-	if _, err := tmpl.Parse(`{{define "head"}}{{end}}{{define "tail"}}{{end}}{{define "threadComments"}}{{end}}{{define "forumReply"}}{{end}}{{define "_share.gohtml"}}{{end}}`); err != nil {
+	if _, err := tmpl.Parse(`{{define "head"}}{{end}}{{define "tail"}}{{end}}{{define "threadComments"}}{{end}}{{define "forumReply"}}{{end}}{{define "partials/common/_share.gohtml"}}{{end}}`); err != nil {
 		t.Fatalf("parse stubs: %v", err)
 	}
 	if _, err := tmpl.ParseFiles("site/forum/topicLabels.gohtml", "site/forum/threadPage.gohtml"); err != nil {

@@ -64,4 +64,4 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 	WritingsWriterPageTmpl.Handle(w, r, data)
 }
 
-const WritingsWriterPageTmpl tasks.Template = "writings/writerPage.gohtml"
+const WritingsWriterPageTmpl tasks.Template = "domains/writings/writerPage.gohtml"

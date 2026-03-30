@@ -42,4 +42,4 @@ func adminUserSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	AdminUserSubscriptionsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserSubscriptionsPageTmpl tasks.Template = "admin/userSubscriptionsPage.gohtml"
+const AdminUserSubscriptionsPageTmpl tasks.Template = "domains/admin/userSubscriptionsPage.gohtml"

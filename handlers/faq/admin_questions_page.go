@@ -64,4 +64,4 @@ func AdminQuestionsPage(w http.ResponseWriter, r *http.Request) {
 	AdminQuestionsPageTmpl.Handle(w, r, data)
 }
 
-const AdminQuestionsPageTmpl tasks.Template = "faq/adminQuestions.gohtml"
+const AdminQuestionsPageTmpl tasks.Template = "domains/faq/adminQuestions.gohtml"

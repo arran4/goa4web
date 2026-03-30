@@ -50,8 +50,8 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 		}
 
 		var buf bytes.Buffer
-		if err := tmpl.ExecuteTemplate(&buf, "domains/user/subscriptions.gohtml", data); err != nil {
-			t.Fatalf("render user/subscriptions.gohtml: %v", err)
+		if err := tmpl.ExecuteTemplate(&buf, "domains/domains/user/subscriptions.gohtml", data); err != nil {
+			t.Fatalf("render domains/user/subscriptions.gohtml: %v", err)
 		}
 
 		if !bytes.Contains(buf.Bytes(), []byte("<form method=\"post\" action=\"/usr/subscriptions/update\">")) {

@@ -62,7 +62,7 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 			*common.CoreData
 			Boards any
 		}{&common.CoreData{}, nil}},
-		{"domains/blogs/page.gohtml", struct{}{}},
+		{"domains/domains/blogs/page.gohtml", struct{}{}},
 		{"domains/writings/page.gohtml", struct {
 			WritingCategoryID int32
 		}{0}},
@@ -80,15 +80,15 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 			CategoryId        int32
 			WritingCategoryID int32
 		}{req, 0, 0}},
-		{"domains/admin/searchPage.gohtml", struct {
+		{"domains/domains/admin/searchPage.gohtml", struct {
 			*common.CoreData
 			SearchWords string
 		}{&common.CoreData{}, ""}},
-		{"domains/admin/searchPage.gohtml", struct {
+		{"domains/domains/admin/searchPage.gohtml", struct {
 			*common.CoreData
 			Stats struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }
 		}{&common.CoreData{}, struct{ Words, Comments, News, Blogs, Linker, Writing, Writings, Images int64 }{}}},
-		{"domains/blogs/adminPage.gohtml", struct {
+		{"domains/domains/blogs/adminPage.gohtml", struct {
 			*common.CoreData
 			Rows []struct {
 				Username sql.NullString

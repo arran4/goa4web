@@ -75,9 +75,9 @@ func TestNewsListingDismissLink(t *testing.T) {
 
 		base := filepath.Join("..", "..", "core", "templates", "site")
 		tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-			filepath.Join(base, "news", "domains/domains/blogs/page.gohtml"),
-			filepath.Join(base, "news", "domains/domains/news/post.gohtml"),
-			filepath.Join(base, "forum", "domains/domains/forum/topicLabels.gohtml"), // Needed until we replace it
+			filepath.Join(base, "news", "domains/blogs/page.gohtml"),
+			filepath.Join(base, "news", "domains/news/post.gohtml"),
+			filepath.Join(base, "forum", "domains/forum/topicLabels.gohtml"), // Needed until we replace it
 			filepath.Join(base, "partials/common/_share.gohtml"),
 		))
 
@@ -89,7 +89,7 @@ func TestNewsListingDismissLink(t *testing.T) {
 {{ define "languageCombobox" }}{{ end }}`))
 
 		var buf bytes.Buffer
-		if err := tmpl.ExecuteTemplate(&buf, "domains/domains/blogs/page.gohtml", nil); err != nil {
+		if err := tmpl.ExecuteTemplate(&buf, "domains/blogs/page.gohtml", nil); err != nil {
 			t.Fatalf("render: %v", err)
 		}
 

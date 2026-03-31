@@ -50,7 +50,7 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 		}
 
 		var buf bytes.Buffer
-		if err := tmpl.ExecuteTemplate(&buf, "domains/domains/user/subscriptions.gohtml", data); err != nil {
+		if err := tmpl.ExecuteTemplate(&buf, "domains/user/subscriptions.gohtml", data); err != nil {
 			t.Fatalf("render domains/user/subscriptions.gohtml: %v", err)
 		}
 

@@ -116,7 +116,7 @@ func writeTempCommentsTemplate(t *testing.T, content string) string {
 	if err := os.Mkdir(filepath.Join(siteDir, "linker"), 0o755); err != nil {
 		t.Fatalf("create site/linker dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(siteDir, "linker", "domains/domains/admin/commentsPage.gohtml"), []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(siteDir, "linker", "domains/admin/commentsPage.gohtml"), []byte(content), 0o644); err != nil {
 		t.Fatalf("write template: %v", err)
 	}
 	return dir

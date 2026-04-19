@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -99,7 +100,7 @@ func (r *MemoryRegistry) LoadFromFS(fsys fs.FS, dir string) error {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".txtar" {
 			continue
 		}
-		data, err := fs.ReadFile(fsys, filepath.Join(dir, entry.Name()))
+		data, err := fs.ReadFile(fsys, path.Join(dir, entry.Name()))
 		if err != nil {
 			return err
 		}

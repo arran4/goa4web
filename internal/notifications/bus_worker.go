@@ -139,6 +139,16 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	}
 
+	if n.Registry != nil {
+		if err := n.Registry.ProcessEvent(ctx, evt); err != nil {
+			errW := fmt.Errorf("Registry.ProcessEvent: %w", err)
+			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("registry process event: %v", errW), &evt); dlqErr != nil {
+				return dlqErr
+			}
+			return errW
+		}
+	}
+
 	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
 		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
 			errW := fmt.Errorf("SubscribersNotificationTemplateProvider: %w", err)

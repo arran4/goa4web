@@ -24,6 +24,7 @@ import (
 // Notifier dispatches updates via email and internal notifications.
 // Notifier dispatches updates via email and internal notifications.
 type Notifier struct {
+	Registry       Registry
 	Bus            *eventbus.Bus
 	EmailProvider  email.Provider
 	Queries        db.Querier
@@ -80,6 +81,7 @@ func New(opts ...Option) *Notifier {
 	for _, o := range opts {
 		o(n)
 	}
+	n.Registry = NewRegistry(n)
 	return n
 }
 

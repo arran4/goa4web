@@ -50,14 +50,16 @@ func ParseTxtarConfig(data []byte) (*NotificationConfig, error) {
 		case "EventPattern":
 			config.EventPattern = val
 		case "DefaultRoles":
-			config.DefaultRoles = strings.Split(val, ",")
-			for i := range config.DefaultRoles {
-				config.DefaultRoles[i] = strings.TrimSpace(config.DefaultRoles[i])
+			for _, s := range strings.Split(val, ",") {
+				if t := strings.TrimSpace(s); t != "" {
+					config.DefaultRoles = append(config.DefaultRoles, t)
+				}
 			}
 		case "RequiredTiers":
-			config.RequiredTiers = strings.Split(val, ",")
-			for i := range config.RequiredTiers {
-				config.RequiredTiers[i] = strings.TrimSpace(config.RequiredTiers[i])
+			for _, s := range strings.Split(val, ",") {
+				if t := strings.TrimSpace(s); t != "" {
+					config.RequiredTiers = append(config.RequiredTiers, t)
+				}
 			}
 		}
 	}

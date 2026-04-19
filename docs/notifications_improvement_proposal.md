@@ -57,3 +57,27 @@ The permission system for notifications should be layered to ensure both flexibi
   2. Apply role-based and tier-based overrides (e.g., "premium tier adds SMS").
   3. Apply the user's personal preferences (opt-in/opt-out) against the remaining allowable set.
 - **Preference Persistence**: A user can register their interest (opt-in) or disinterest (opt-out) for any notification in the system. However, the system will actively filter delivery based on their *current* effective permissions (roles/tiers) at the time the event fires.
+
+## 8. High-Level Migration Plan
+The migration requires updates across multiple layers of the application. Here is the high-level plan for execution:
+
+### Phase 1: Foundation (Completed)
+- **`internal/notifications/registry.go` & `registry_test.go`**: Built the `MemoryRegistry` to parse `.txtar` configurations (`EventPattern`, `DefaultRoles`, `RequiredTiers`) and store templates.
+- **`internal/notifications/notifier.go` & `bus_worker.go`**: Wired the `Registry` into the `Notifier` struct and updated `bus_worker.go`'s `ProcessEvent` loop to intercept `TaskEvent` triggers via the registry before falling back to legacy interfaces.
+
+### Phase 2: Schema & Data Access Updates
+- **`migrations/`**: Add a new schema version to define new tables (e.g., `notification_configs`, `notification_tier_requirements`) if DB persistence is required for dynamic admin updates, or update `user_preferences` to support granular opt-in/opt-out per `EventPattern` instead of legacy boolean flags. Update `handlers/constants.go` `ExpectedSchemaVersion`.
+- **`internal/db/*.sql`**: Write queries to fetch user preferences by `EventPattern`, and query user roles/tiers to evaluate `Permission to Opt-In/Opt-Out`. Run `sqlc generate`.
+
+### Phase 3: Core Notification Refactoring
+- **`internal/notifications/`**: Refactor `bus_worker.go` to fully implement the "Layered Permissions and Tiers Model" logic inside `Registry.ProcessEvent`. It needs to fetch the user's role, tier, and explicit preferences using the new DB queries before enqueuing templates.
+- **`core/templates/notifications/` & `core/templates/email/`**: Convert existing hardcoded templates (e.g., `linker.gohtml`, `updateEmail.gotxt`) into unified `.txtar` bundles containing the `EventPattern` metadata block.
+
+### Phase 4: Dispatcher & Event Refactoring
+- **`handlers/*/` (e.g., `handlers/linker`, `handlers/forum`)**: Find all usages of legacy interface implementations like `SubscribersNotificationTemplateProvider` and `SelfNotificationTemplateProvider`. Convert these actions to strictly fire explicit `TaskEvent` messages onto the event bus.
+- **`internal/eventbus/`**: Ensure all events consistently provide the required `Path`, `Data`, and `UserID` contexts needed by the `.txtar` templates.
+
+### Phase 5: Administration & User Preferences UI
+- **`handlers/admin/` & `core/templates/site/admin/`**: Implement the web administration UI for viewing and editing `.txtar` configurations dynamically from the DB/Registry.
+- **`handlers/user/` & `core/templates/site/user/`**: Rewrite the user preferences page to dynamically generate the subscription checklist based on the `Registry`'s loaded events, enforcing tier/role visibility.
+- **`cmd/goa4web/`**: Add CLI commands under the `admin notifications` subcommand for listing, rendering, and exporting configurations.

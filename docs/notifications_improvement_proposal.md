@@ -66,8 +66,11 @@ The migration requires updates across multiple layers of the application. Here i
 - **`internal/notifications/notifier.go` & `bus_worker.go`**: Wired the `Registry` into the `Notifier` struct and updated `bus_worker.go`'s `ProcessEvent` loop to intercept `TaskEvent` triggers via the registry before falling back to legacy interfaces.
 
 ### Phase 2: Schema & Data Access Updates
-- **`migrations/`**: Add a new schema version to define new tables (e.g., `notification_configs`, `notification_tier_requirements`) if DB persistence is required for dynamic admin updates, or update `user_preferences` to support granular opt-in/opt-out per `EventPattern` instead of legacy boolean flags. Update `handlers/constants.go` `ExpectedSchemaVersion`.
-- **`internal/db/*.sql`**: Write queries to fetch user preferences by `EventPattern`, and query user roles/tiers to evaluate `Permission to Opt-In/Opt-Out`. Run `sqlc generate`.
+- **`migrations/XXXX.mysql.sql`**: Create a new sequential migration script defining the required tables for granular notification management. Bump the `ExpectedSchemaVersion` in `handlers/constants.go`.
+  - **`notification_templates`**: Stores dynamic overrides for the embedded .txtar configurations. Columns: `event_pattern` (PK), `content` (TEXT).
+  - **`user_notification_preferences`**: Stores the user's granular opt-in/opt-out states. Columns: `user_id` (FK), `event_pattern` (VARCHAR), `is_subscribed` (BOOLEAN).
+  - **`notification_tier_requirements`**: Maps events to required tiers. Columns: `event_pattern` (FK), `tier_id` (FK).
+- **`internal/db/queries-notifications.sql`**: Write queries to fetch `user_notification_preferences` filtered by `event_pattern`, and queries to load dynamic `notification_templates` overrides on startup. Run `sqlc generate`.
 
 ### Phase 3: Core Notification Refactoring
 - **`internal/notifications/`**: Refactor `bus_worker.go` to fully implement the "Layered Permissions and Tiers Model" logic inside `Registry.ProcessEvent`. It needs to fetch the user's role, tier, and explicit preferences using the new DB queries before enqueuing templates.

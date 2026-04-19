@@ -31,3 +31,17 @@ To make it easier for users to manage their preferences and to support advanced 
 4. **Update the event bus listeners** to trigger the new registry logic instead of the legacy interface-based handlers.
 5. **Implement role-based defaults and tier checks** in the subscription API and delivery pipeline.
 6. **Migrate existing user preferences** to the new schema and update the frontend UI.
+
+## 6. Administration and Tooling
+To manage the notification configurations effectively without requiring codebase redeployments for text changes:
+
+- **Web Administration UI**:
+  - The admin panel will have a dedicated "Notification Templates" section.
+  - It will display all loaded `txtar` configurations from the memory registry.
+  - Administrators with the `manage_notifications` grant will be able to edit the metadata (e.g., changing required tiers or default roles) and update the email/internal templates directly in the browser.
+  - Changes made via the UI will be saved back into the database or configuration directory, overriding the compiled defaults.
+
+- **CLI Tooling**:
+  - `goa4web admin notifications list` - Displays all registered notifications and their trigger patterns.
+  - `goa4web admin notifications render <event_pattern> --data <path_to_json>` - Allows an admin to test template rendering locally by feeding mock event data into the `txtar` configuration to verify the generated email or internal HTML output.
+  - `goa4web admin notifications export` - Dumps the current configurations into raw `.txtar` files for backup or version control.

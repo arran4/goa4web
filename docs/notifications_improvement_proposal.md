@@ -45,3 +45,15 @@ To manage the notification configurations effectively without requiring codebase
   - `goa4web admin notifications list` - Displays all registered notifications and their trigger patterns.
   - `goa4web admin notifications render <event_pattern> --data <path_to_json>` - Allows an admin to test template rendering locally by feeding mock event data into the `txtar` configuration to verify the generated email or internal HTML output.
   - `goa4web admin notifications export` - Dumps the current configurations into raw `.txtar` files for backup or version control.
+
+## 7. Layered Permissions and Tiers Model
+The permission system for notifications should be layered to ensure both flexibility and security:
+
+- **Subscription Control**:
+  - `Permission to Opt-In`: Dictates if a user role/tier is allowed to subscribe to a notification.
+  - `Permission to Opt-Out`: Dictates if a user role/tier is allowed to unsubscribe. Certain system-critical alerts (e.g., account security warnings) might deny opt-out.
+- **Resolution Strategy**:
+  1. Evaluate if the notification is available at the user's base level (e.g., "everyone").
+  2. Apply role-based and tier-based overrides (e.g., "premium tier adds SMS").
+  3. Apply the user's personal preferences (opt-in/opt-out) against the remaining allowable set.
+- **Preference Persistence**: A user can register their interest (opt-in) or disinterest (opt-out) for any notification in the system. However, the system will actively filter delivery based on their *current* effective permissions (roles/tiers) at the time the event fires.

@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	coreconsts "github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -101,18 +102,44 @@ type TaskEventMiddleware struct {
 	bus   *eventbus.Bus
 	queue *eventQueue
 	log   *log.Logger
+	dlq   dlq.DLQ
+}
+
+// TaskEventMiddlewareOption customizes TaskEventMiddleware behavior.
+type TaskEventMiddlewareOption func(*TaskEventMiddleware)
+
+// WithLogger overrides the logger used by TaskEventMiddleware.
+func WithLogger(l *log.Logger) TaskEventMiddlewareOption {
+	return func(m *TaskEventMiddleware) {
+		if l != nil {
+			m.log = l
+		}
+	}
+}
+
+// WithDLQ configures optional DLQ reporting for middleware warnings/errors.
+func WithDLQ(q dlq.DLQ) TaskEventMiddlewareOption {
+	return func(m *TaskEventMiddleware) {
+		m.dlq = q
+	}
 }
 
 // NewTaskEventMiddleware creates a middleware instance using the provided bus.
-func NewTaskEventMiddleware(bus *eventbus.Bus) *TaskEventMiddleware {
+func NewTaskEventMiddleware(bus *eventbus.Bus, opts ...TaskEventMiddlewareOption) *TaskEventMiddleware {
 	if bus == nil {
 		panic("TaskEventMiddleware requires a bus")
 	}
-	return &TaskEventMiddleware{
+	m := &TaskEventMiddleware{
 		bus:   bus,
 		queue: newEventQueue(maxQueuedTaskEvents, bus),
 		log:   log.Default(),
 	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(m)
+		}
+	}
+	return m
 }
 
 func (r *statusRecorder) WriteHeader(code int) {
@@ -158,15 +185,26 @@ func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 					if err == eventbus.ErrBusClosed {
 						m.queue.enqueue(*evt)
 					} else {
-						m.log.Printf("publish task event: %v", err)
+						m.reportIssue(r.Context(), "publish task event: %v", err)
 					}
 				}
 			} else if isStateChangingMethod(r.Method) {
-				m.log.Printf("TaskEventMiddleware: successful state-changing request without attached task for %s %s", r.Method, r.URL.Path)
+				m.reportIssue(r.Context(), "TaskEventMiddleware: successful state-changing request without attached task for %s %s", r.Method, r.URL.Path)
 			}
 		}
 		m.queue.flush(r.Context())
 	})
+}
+
+func (m *TaskEventMiddleware) reportIssue(ctx context.Context, format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	m.log.Print(msg)
+	if m.dlq == nil {
+		return
+	}
+	if err := m.dlq.Record(ctx, msg); err != nil {
+		m.log.Printf("task middleware dlq record: %v", err)
+	}
 }
 
 func eventHasTask(evt *eventbus.TaskEvent) bool {

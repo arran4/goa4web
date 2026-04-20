@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	dlqmock "github.com/arran4/goa4web/internal/dlq/mock"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -251,9 +252,8 @@ func TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue(t *testing.T) {
 
 func TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask(t *testing.T) {
 	bus := eventbus.NewBus()
-	mw := NewTaskEventMiddleware(bus)
 	var buf bytes.Buffer
-	mw.log = log.New(&buf, "", 0)
+	mw := NewTaskEventMiddleware(bus, WithLogger(log.New(&buf, "", 0)))
 	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -279,9 +279,8 @@ func TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask(t *testing.T) {
 
 func TestTaskEventMiddleware_DoesNotLogForGetWithoutTask(t *testing.T) {
 	bus := eventbus.NewBus()
-	mw := NewTaskEventMiddleware(bus)
 	var buf bytes.Buffer
-	mw.log = log.New(&buf, "", 0)
+	mw := NewTaskEventMiddleware(bus, WithLogger(log.New(&buf, "", 0)))
 	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -294,6 +293,29 @@ func TestTaskEventMiddleware_DoesNotLogForGetWithoutTask(t *testing.T) {
 
 	if buf.Len() != 0 {
 		t.Fatalf("expected no missing-task logs for GET request, got %q", buf.String())
+	}
+}
+
+func TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured(t *testing.T) {
+	bus := eventbus.NewBus()
+	mockDLQ := &dlqmock.Provider{}
+	mw := NewTaskEventMiddleware(bus, WithDLQ(mockDLQ))
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("PATCH", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if len(mockDLQ.Records) != 1 {
+		t.Fatalf("expected one DLQ record, got %d", len(mockDLQ.Records))
+	}
+	if !strings.Contains(mockDLQ.Records[0].Message, "successful state-changing request without attached task") {
+		t.Fatalf("unexpected DLQ message: %q", mockDLQ.Records[0].Message)
 	}
 }
 

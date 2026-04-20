@@ -100,6 +100,7 @@ func (q *eventQueue) flush(ctx context.Context) {
 type TaskEventMiddleware struct {
 	bus   *eventbus.Bus
 	queue *eventQueue
+	log   *log.Logger
 }
 
 // NewTaskEventMiddleware creates a middleware instance using the provided bus.
@@ -110,6 +111,7 @@ func NewTaskEventMiddleware(bus *eventbus.Bus) *TaskEventMiddleware {
 	return &TaskEventMiddleware{
 		bus:   bus,
 		queue: newEventQueue(maxQueuedTaskEvents, bus),
+		log:   log.Default(),
 	}
 }
 
@@ -146,16 +148,21 @@ func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 			evt.Outcome = eventbus.TaskOutcomeSuccess
 		}
 		if sr.status < http.StatusBadRequest {
+			if !eventHasTask(evt) {
+				if task := strings.TrimSpace(r.PostFormValue("task")); task != "" {
+					evt.Task = tasks.TaskString(task)
+				}
+			}
 			if eventHasTask(evt) {
 				if err := m.bus.Publish(*evt); err != nil {
 					if err == eventbus.ErrBusClosed {
 						m.queue.enqueue(*evt)
 					} else {
-						log.Printf("publish task event: %v", err)
+						m.log.Printf("publish task event: %v", err)
 					}
 				}
-			} else {
-				log.Printf("TaskEventMiddleware: successful request without attached task for %s %s", r.Method, r.URL.Path)
+			} else if isStateChangingMethod(r.Method) {
+				m.log.Printf("TaskEventMiddleware: successful state-changing request without attached task for %s %s", r.Method, r.URL.Path)
 			}
 		}
 		m.queue.flush(r.Context())
@@ -172,6 +179,15 @@ func eventHasTask(evt *eventbus.TaskEvent) bool {
 	}
 	name := strings.TrimSpace(named.Name())
 	return name != "" && name != "MISSING"
+}
+
+func isStateChangingMethod(method string) bool {
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return true
+	default:
+		return false
+	}
 }
 
 // Events returns a copy of the currently queued events.

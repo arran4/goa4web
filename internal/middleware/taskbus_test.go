@@ -218,17 +218,45 @@ func TestTaskEventMiddleware_PublishesWhenTaskComesFromContext(t *testing.T) {
 	}
 }
 
-func TestTaskEventMiddleware_LogsWhenSuccessHasNoTask(t *testing.T) {
+func TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue(t *testing.T) {
 	bus := eventbus.NewBus()
 	mw := NewTaskEventMiddleware(bus)
 	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
+	req := httptest.NewRequest("POST", "/legacy/form-task", strings.NewReader("task=LegacyAction"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	select {
+	case env := <-ch:
+		evt, ok := env.Msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", env.Msg)
+		}
+		named, ok := evt.Task.(tasks.Name)
+		if !ok || named.Name() != "LegacyAction" {
+			t.Fatalf("unexpected task %+v", evt.Task)
+		}
+		env.Ack()
+	default:
+		t.Fatal("expected event when task comes from form value")
+	}
+}
+
+func TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask(t *testing.T) {
+	bus := eventbus.NewBus()
+	mw := NewTaskEventMiddleware(bus)
 	var buf bytes.Buffer
-	originalOutput := log.Writer()
-	log.SetOutput(&buf)
-	defer log.SetOutput(originalOutput)
+	mw.log = log.New(&buf, "", 0)
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
 
 	req := httptest.NewRequest("POST", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -244,8 +272,28 @@ func TestTaskEventMiddleware_LogsWhenSuccessHasNoTask(t *testing.T) {
 	default:
 	}
 
-	if !strings.Contains(buf.String(), "successful request without attached task") {
+	if !strings.Contains(buf.String(), "successful state-changing request without attached task") {
 		t.Fatalf("expected missing-task warning log, got %q", buf.String())
+	}
+}
+
+func TestTaskEventMiddleware_DoesNotLogForGetWithoutTask(t *testing.T) {
+	bus := eventbus.NewBus()
+	mw := NewTaskEventMiddleware(bus)
+	var buf bytes.Buffer
+	mw.log = log.New(&buf, "", 0)
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/page", nil)
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if buf.Len() != 0 {
+		t.Fatalf("expected no missing-task logs for GET request, got %q", buf.String())
 	}
 }
 

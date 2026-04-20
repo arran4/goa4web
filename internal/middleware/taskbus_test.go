@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +21,9 @@ func TestTaskEventMiddleware(t *testing.T) {
 	bus := eventbus.NewBus()
 	mw := NewTaskEventMiddleware(bus)
 	successHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("Add"))
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 	req := httptest.NewRequest("POST", "/admin/p", strings.NewReader("task=Add"))
@@ -34,7 +39,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 			t.Fatalf("wrong type %T", env.Msg)
 		}
 		named, ok := evt.Task.(tasks.Name)
-		if !ok || named.Name() != "MISSING" || evt.Path != "/admin/p" {
+		if !ok || named.Name() != "Add" || evt.Path != "/admin/p" {
 			t.Fatalf("unexpected event %+v", evt)
 		}
 		env.Ack()
@@ -64,6 +69,9 @@ func TestTaskEventMiddleware(t *testing.T) {
 	}
 
 	failureHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("Add"))
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("fail"))
 	}))
@@ -83,6 +91,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	// ensure handlers can attach event data
 	itemHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			cd.SetEventTask(tasks.TaskString("Add"))
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -146,6 +155,9 @@ func TestTaskEventQueue(t *testing.T) {
 	}
 
 	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("Add"))
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -169,6 +181,71 @@ func TestTaskEventQueue(t *testing.T) {
 		env.Ack()
 	default:
 		t.Fatalf("expected flushed event")
+	}
+}
+
+func TestTaskEventMiddleware_PublishesWhenTaskComesFromContext(t *testing.T) {
+	bus := eventbus.NewBus()
+	mw := NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("AgentAction"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	select {
+	case env := <-ch:
+		evt, ok := env.Msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", env.Msg)
+		}
+		named, ok := evt.Task.(tasks.Name)
+		if !ok || named.Name() != "AgentAction" {
+			t.Fatalf("unexpected task %+v", evt.Task)
+		}
+		env.Ack()
+	default:
+		t.Fatal("expected event when task is attached to context")
+	}
+}
+
+func TestTaskEventMiddleware_LogsWhenSuccessHasNoTask(t *testing.T) {
+	bus := eventbus.NewBus()
+	mw := NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	var buf bytes.Buffer
+	originalOutput := log.Writer()
+	log.SetOutput(&buf)
+	defer log.SetOutput(originalOutput)
+
+	req := httptest.NewRequest("POST", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	select {
+	case env := <-ch:
+		t.Fatalf("did not expect event for missing task, got %T", env.Msg)
+	default:
+	}
+
+	if !strings.Contains(buf.String(), "successful request without attached task") {
+		t.Fatalf("expected missing-task warning log, got %q", buf.String())
 	}
 }
 

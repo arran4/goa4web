@@ -125,7 +125,6 @@ func (r *statusRecorder) WriteHeader(code int) {
 // Middleware returns a http.Handler middleware that records task events.
 func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		task := r.PostFormValue("task")
 		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
 		if !ok || cd == nil {
 			log.Panicf("TaskEventMiddleware: missing CoreData for %s", r.URL.Path)
@@ -146,17 +145,33 @@ func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 		if sr.status < http.StatusBadRequest && evt.Outcome == "" {
 			evt.Outcome = eventbus.TaskOutcomeSuccess
 		}
-		if task != "" && sr.status < http.StatusBadRequest {
-			if err := m.bus.Publish(*evt); err != nil {
-				if err == eventbus.ErrBusClosed {
-					m.queue.enqueue(*evt)
-				} else {
-					log.Printf("publish task event: %v", err)
+		if sr.status < http.StatusBadRequest {
+			if eventHasTask(evt) {
+				if err := m.bus.Publish(*evt); err != nil {
+					if err == eventbus.ErrBusClosed {
+						m.queue.enqueue(*evt)
+					} else {
+						log.Printf("publish task event: %v", err)
+					}
 				}
+			} else {
+				log.Printf("TaskEventMiddleware: successful request without attached task for %s %s", r.Method, r.URL.Path)
 			}
 		}
 		m.queue.flush(r.Context())
 	})
+}
+
+func eventHasTask(evt *eventbus.TaskEvent) bool {
+	if evt == nil || evt.Task == nil {
+		return false
+	}
+	named, ok := evt.Task.(tasks.Name)
+	if !ok {
+		return true
+	}
+	name := strings.TrimSpace(named.Name())
+	return name != "" && name != "MISSING"
 }
 
 // Events returns a copy of the currently queued events.

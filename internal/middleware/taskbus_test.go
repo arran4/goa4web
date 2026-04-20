@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	dlqmock "github.com/arran4/goa4web/internal/dlq/mock"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -19,6 +22,9 @@ func TestTaskEventMiddleware(t *testing.T) {
 	bus := eventbus.NewBus()
 	mw := NewTaskEventMiddleware(bus)
 	successHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("Add"))
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 	req := httptest.NewRequest("POST", "/admin/p", strings.NewReader("task=Add"))
@@ -34,7 +40,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 			t.Fatalf("wrong type %T", env.Msg)
 		}
 		named, ok := evt.Task.(tasks.Name)
-		if !ok || named.Name() != "MISSING" || evt.Path != "/admin/p" {
+		if !ok || named.Name() != "Add" || evt.Path != "/admin/p" {
 			t.Fatalf("unexpected event %+v", evt)
 		}
 		env.Ack()
@@ -64,6 +70,9 @@ func TestTaskEventMiddleware(t *testing.T) {
 	}
 
 	failureHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("Add"))
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("fail"))
 	}))
@@ -83,6 +92,7 @@ func TestTaskEventMiddleware(t *testing.T) {
 	// ensure handlers can attach event data
 	itemHandler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			cd.SetEventTask(tasks.TaskString("Add"))
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
 					evt.Data = map[string]any{}
@@ -146,6 +156,9 @@ func TestTaskEventQueue(t *testing.T) {
 	}
 
 	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("Add"))
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -169,6 +182,140 @@ func TestTaskEventQueue(t *testing.T) {
 		env.Ack()
 	default:
 		t.Fatalf("expected flushed event")
+	}
+}
+
+func TestTaskEventMiddleware_PublishesWhenTaskComesFromContext(t *testing.T) {
+	bus := eventbus.NewBus()
+	mw := NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("AgentAction"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	select {
+	case env := <-ch:
+		evt, ok := env.Msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", env.Msg)
+		}
+		named, ok := evt.Task.(tasks.Name)
+		if !ok || named.Name() != "AgentAction" {
+			t.Fatalf("unexpected task %+v", evt.Task)
+		}
+		env.Ack()
+	default:
+		t.Fatal("expected event when task is attached to context")
+	}
+}
+
+func TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue(t *testing.T) {
+	bus := eventbus.NewBus()
+	mw := NewTaskEventMiddleware(bus)
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/legacy/form-task", strings.NewReader("task=LegacyAction"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	select {
+	case env := <-ch:
+		evt, ok := env.Msg.(eventbus.TaskEvent)
+		if !ok {
+			t.Fatalf("wrong type %T", env.Msg)
+		}
+		named, ok := evt.Task.(tasks.Name)
+		if !ok || named.Name() != "LegacyAction" {
+			t.Fatalf("unexpected task %+v", evt.Task)
+		}
+		env.Ack()
+	default:
+		t.Fatal("expected event when task comes from form value")
+	}
+}
+
+func TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask(t *testing.T) {
+	bus := eventbus.NewBus()
+	var buf bytes.Buffer
+	mw := NewTaskEventMiddleware(bus, WithLogger(log.New(&buf, "", 0)))
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	ch := bus.Subscribe(eventbus.TaskMessageType)
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	select {
+	case env := <-ch:
+		t.Fatalf("did not expect event for missing task, got %T", env.Msg)
+	default:
+	}
+
+	if !strings.Contains(buf.String(), "successful state-changing request without attached task") {
+		t.Fatalf("expected missing-task warning log, got %q", buf.String())
+	}
+}
+
+func TestTaskEventMiddleware_DoesNotLogForGetWithoutTask(t *testing.T) {
+	bus := eventbus.NewBus()
+	var buf bytes.Buffer
+	mw := NewTaskEventMiddleware(bus, WithLogger(log.New(&buf, "", 0)))
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/page", nil)
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if buf.Len() != 0 {
+		t.Fatalf("expected no missing-task logs for GET request, got %q", buf.String())
+	}
+}
+
+func TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured(t *testing.T) {
+	bus := eventbus.NewBus()
+	mockDLQ := &dlqmock.Provider{}
+	mw := NewTaskEventMiddleware(bus, WithDLQ(mockDLQ))
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("PATCH", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if len(mockDLQ.Records) != 1 {
+		t.Fatalf("expected one DLQ record, got %d", len(mockDLQ.Records))
+	}
+	if !strings.Contains(mockDLQ.Records[0].Message, "successful state-changing request without attached task") {
+		t.Fatalf("unexpected DLQ message: %q", mockDLQ.Records[0].Message)
 	}
 }
 

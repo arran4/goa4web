@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	coreconsts "github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
@@ -100,17 +101,45 @@ func (q *eventQueue) flush(ctx context.Context) {
 type TaskEventMiddleware struct {
 	bus   *eventbus.Bus
 	queue *eventQueue
+	log   *log.Logger
+	dlq   dlq.DLQ
+}
+
+// TaskEventMiddlewareOption customizes TaskEventMiddleware behavior.
+type TaskEventMiddlewareOption func(*TaskEventMiddleware)
+
+// WithLogger overrides the logger used by TaskEventMiddleware.
+func WithLogger(l *log.Logger) TaskEventMiddlewareOption {
+	return func(m *TaskEventMiddleware) {
+		if l != nil {
+			m.log = l
+		}
+	}
+}
+
+// WithDLQ configures optional DLQ reporting for middleware warnings/errors.
+func WithDLQ(q dlq.DLQ) TaskEventMiddlewareOption {
+	return func(m *TaskEventMiddleware) {
+		m.dlq = q
+	}
 }
 
 // NewTaskEventMiddleware creates a middleware instance using the provided bus.
-func NewTaskEventMiddleware(bus *eventbus.Bus) *TaskEventMiddleware {
+func NewTaskEventMiddleware(bus *eventbus.Bus, opts ...TaskEventMiddlewareOption) *TaskEventMiddleware {
 	if bus == nil {
 		panic("TaskEventMiddleware requires a bus")
 	}
-	return &TaskEventMiddleware{
+	m := &TaskEventMiddleware{
 		bus:   bus,
 		queue: newEventQueue(maxQueuedTaskEvents, bus),
+		log:   log.Default(),
 	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(m)
+		}
+	}
+	return m
 }
 
 func (r *statusRecorder) WriteHeader(code int) {
@@ -125,7 +154,6 @@ func (r *statusRecorder) WriteHeader(code int) {
 // Middleware returns a http.Handler middleware that records task events.
 func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		task := r.PostFormValue("task")
 		cd, ok := r.Context().Value(coreconsts.KeyCoreData).(*common.CoreData)
 		if !ok || cd == nil {
 			log.Panicf("TaskEventMiddleware: missing CoreData for %s", r.URL.Path)
@@ -146,17 +174,58 @@ func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 		if sr.status < http.StatusBadRequest && evt.Outcome == "" {
 			evt.Outcome = eventbus.TaskOutcomeSuccess
 		}
-		if task != "" && sr.status < http.StatusBadRequest {
-			if err := m.bus.Publish(*evt); err != nil {
-				if err == eventbus.ErrBusClosed {
-					m.queue.enqueue(*evt)
-				} else {
-					log.Printf("publish task event: %v", err)
+		if sr.status < http.StatusBadRequest {
+			if !eventHasTask(evt) {
+				if task := strings.TrimSpace(r.PostFormValue("task")); task != "" {
+					evt.Task = tasks.TaskString(task)
 				}
+			}
+			if eventHasTask(evt) {
+				if err := m.bus.Publish(*evt); err != nil {
+					if err == eventbus.ErrBusClosed {
+						m.queue.enqueue(*evt)
+					} else {
+						m.reportIssue(r.Context(), "publish task event: %v", err)
+					}
+				}
+			} else if isStateChangingMethod(r.Method) {
+				m.reportIssue(r.Context(), "TaskEventMiddleware: successful state-changing request without attached task for %s %s", r.Method, r.URL.Path)
 			}
 		}
 		m.queue.flush(r.Context())
 	})
+}
+
+func (m *TaskEventMiddleware) reportIssue(ctx context.Context, format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	m.log.Print(msg)
+	if m.dlq == nil {
+		return
+	}
+	if err := m.dlq.Record(ctx, msg); err != nil {
+		m.log.Printf("task middleware dlq record: %v", err)
+	}
+}
+
+func eventHasTask(evt *eventbus.TaskEvent) bool {
+	if evt == nil || evt.Task == nil {
+		return false
+	}
+	named, ok := evt.Task.(tasks.Name)
+	if !ok {
+		return true
+	}
+	name := strings.TrimSpace(named.Name())
+	return name != "" && name != "MISSING"
+}
+
+func isStateChangingMethod(method string) bool {
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return true
+	default:
+		return false
+	}
 }
 
 // Events returns a copy of the currently queued events.

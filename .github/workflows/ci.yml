@@ -430,7 +430,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Install sqlc
-        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
       - name: Generate code
         run: sqlc generate
       - name: Check for changes

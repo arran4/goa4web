@@ -246,7 +246,6 @@ func TestHappyPathForumReply(t *testing.T) {
 			if !findNotification(subscriberUID, expectedSubscriberNotif, expectedLink) {
 				t.Fatalf("expected subscriber notification %q with link %q, got %q with links %q", expectedSubscriberNotif, expectedLink, notificationsByRecipient[subscriberUID], notificationsLinksByRecipient[subscriberUID])
 			}
-
 			expectedAdminNotif := "User replier replied to the forum thread.\nOriginal thread content"
 			if !findNotification(adminUID, expectedAdminNotif, "") {
 				// If mismatch, try with trailing newline (template artifact)
@@ -302,7 +301,6 @@ func TestHappyPathForumReply(t *testing.T) {
 			if subBody != expectedSubBody {
 				t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
 			}
-
 			if adminEmail == nil {
 				t.Fatal("admin email not found")
 			}

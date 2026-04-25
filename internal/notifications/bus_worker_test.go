@@ -83,6 +83,35 @@ func TestBuildPatternsAdditional(t *testing.T) {
 	}
 }
 
+func TestExpandPatternSeparators(t *testing.T) {
+	got := expandPatternSeparators([]string{"reply:/aaa", "reply:/bbb/*", "reply:/ccc/", "reply:/*"})
+	want := map[string]bool{
+		"reply:/aaa":   true,
+		"reply:/aaa/*": true,
+		"reply:/aaa/":  true,
+		"reply:/bbb/*": true,
+		"reply:/bbb":   true,
+		"reply:/bbb/":  true,
+		"reply:/ccc/":  true,
+		"reply:/ccc":   true,
+		"reply:/ccc/*": true,
+		"reply:/*":     true,
+		"reply:/":      true,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d patterns got %d: %v", len(want), len(got), got)
+	}
+	for _, p := range got {
+		if !want[p] {
+			t.Fatalf("unexpected pattern %q in %v", p, got)
+		}
+		delete(want, p)
+	}
+	if len(want) > 0 {
+		t.Fatalf("missing patterns: %v", want)
+	}
+}
+
 type querierStub struct {
 	db.QuerierStub
 	mu sync.Mutex
@@ -175,8 +204,16 @@ func TestCollectSubscribersQuery(t *testing.T) {
 		t.Fatalf("expected 1 call, got %d", len(q.ListSubscribersForPatternsParams))
 	}
 	args := q.ListSubscribersForPatternsParams[0]
-	if len(args.Patterns) != 2 {
-		t.Fatalf("expected 2 patterns, got %d", len(args.Patterns))
+	want := map[string]bool{"post:/blog/1": false, "post:/blog/*": false, "post:/blog/1/*": false, "post:/blog/1/": false, "post:/blog": false, "post:/blog/": false}
+	for _, p := range args.Patterns {
+		if _, ok := want[p]; ok {
+			want[p] = true
+		}
+	}
+	for p, seen := range want {
+		if !seen {
+			t.Fatalf("missing expected expanded pattern %q in %v", p, args.Patterns)
+		}
 	}
 	if args.Method != "email" {
 		t.Fatalf("expected method email, got %s", args.Method)
@@ -557,12 +594,13 @@ func assertSubscriberCall(t *testing.T, calls []db.ListSubscribersForPatternsPar
 	t.Helper()
 	for _, call := range calls {
 		if call.Method == method {
-			if len(call.Patterns) != len(patterns) {
-				t.Fatalf("expected %d patterns for %s got %d", len(patterns), method, len(call.Patterns))
+			seen := map[string]bool{}
+			for _, p := range call.Patterns {
+				seen[p] = true
 			}
-			for i, p := range patterns {
-				if call.Patterns[i] != p {
-					t.Fatalf("%s pattern %d = %s want %s", method, i, call.Patterns[i], p)
+			for _, p := range patterns {
+				if !seen[p] {
+					t.Fatalf("missing base pattern %q for %s in %v", p, method, call.Patterns)
 				}
 			}
 			return

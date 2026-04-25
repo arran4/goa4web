@@ -68,8 +68,6 @@ var AdminAddTask = &addTask{TaskString: TaskAdd}
 // alert subscribers of new content and notify administrators so they can review
 // it for publication.
 var _ tasks.Task = (*addTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*addTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*addTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*addTask)(nil)
 
 func (addTask) Action(w http.ResponseWriter, r *http.Request) any {

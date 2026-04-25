@@ -24,8 +24,7 @@ type PrivateTopicCreateTask struct{ tasks.TaskString }
 var privateTopicCreateTask = &PrivateTopicCreateTask{TaskString: TaskPrivateTopicCreate}
 
 var (
-	_ tasks.Task                  = (*PrivateTopicCreateTask)(nil)
-	_ notif.AutoSubscribeProvider = (*PrivateTopicCreateTask)(nil)
+	_ tasks.Task = (*PrivateTopicCreateTask)(nil)
 )
 
 // Action creates a new private topic and assigns view permissions to participants.

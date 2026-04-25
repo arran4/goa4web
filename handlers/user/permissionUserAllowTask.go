@@ -20,8 +20,6 @@ type PermissionUserAllowTask struct{ tasks.TaskString }
 var permissionUserAllowTask = &PermissionUserAllowTask{TaskString: TaskUserAllow}
 
 var _ tasks.Task = (*PermissionUserAllowTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*PermissionUserAllowTask)(nil)
-var _ notif.TargetUsersNotificationProvider = (*PermissionUserAllowTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*PermissionUserAllowTask)(nil)
 
 func (PermissionUserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

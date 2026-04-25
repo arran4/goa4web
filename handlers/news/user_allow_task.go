@@ -19,7 +19,6 @@ type UserAllowTask struct{ tasks.TaskString }
 var userAllowTask = &UserAllowTask{TaskString: TaskUserAllow}
 
 var _ tasks.Task = (*UserAllowTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*UserAllowTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*UserAllowTask)(nil)
 
 func (UserAllowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

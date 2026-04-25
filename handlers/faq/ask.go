@@ -24,7 +24,6 @@ type AskTask struct{ tasks.TaskString }
 var askTask = &AskTask{TaskString: TaskAsk}
 
 var _ tasks.Task = (*AskTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*AskTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AskTask)(nil)
 
 func (AskTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

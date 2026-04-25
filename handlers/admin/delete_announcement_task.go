@@ -23,7 +23,6 @@ var _ tasks.Task = (*DeleteAnnouncementTask)(nil)
 var _ tasks.AuditableTask = (*DeleteAnnouncementTask)(nil)
 
 // deleteAnnouncementTask also notifies admins of changes for transparency.
-var _ notif.AdminEmailTemplateProvider = (*DeleteAnnouncementTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*DeleteAnnouncementTask)(nil)
 
 func (DeleteAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {

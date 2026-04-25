@@ -15,8 +15,6 @@ type RemakeNewsFinishedTask struct{ tasks.TaskString }
 var remakeNewsFinishedTask = &RemakeNewsFinishedTask{TaskString: TaskRemakeNewsSearchComplete}
 
 var _ tasks.Task = (*RemakeNewsFinishedTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*RemakeNewsFinishedTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*RemakeNewsFinishedTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*RemakeNewsFinishedTask)(nil)
 
 func (RemakeNewsFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }

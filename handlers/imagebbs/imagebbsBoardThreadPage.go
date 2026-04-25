@@ -31,8 +31,6 @@ var _ tasks.Task = (*ReplyTask)(nil)
 
 // ReplyTask alerts watchers of new posts and auto-subscribes the replier so
 // they see further responses.
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*ReplyTask)(nil)
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }

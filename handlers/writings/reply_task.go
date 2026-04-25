@@ -24,9 +24,6 @@ type ReplyTask struct{ tasks.TaskString }
 var replyTask = &ReplyTask{TaskString: TaskReply}
 
 var _ tasks.Task = (*ReplyTask)(nil)
-var _ notif.GrantsRequiredProvider = (*ReplyTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-var _ notif.AutoSubscribeProvider = (*ReplyTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*ReplyTask)(nil)
 var _ searchworker.IndexedTask = ReplyTask{}
 

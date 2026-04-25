@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func checkIPBanEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
@@ -26,12 +27,13 @@ func checkIPBanEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 }
 
 func TestHappyPathAdminIPBanTemplatesExist(t *testing.T) {
-	admins := []notif.AdminEmailTemplateProvider{
+	admins := []tasks.Task{
 		&AddIPBanTask{TaskString: TaskAdd},
 		&DeleteIPBanTask{TaskString: TaskDelete},
 	}
 	for _, p := range admins {
-		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+		et, _, ok := notif.AdminTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		if ok && et != nil {
 			checkIPBanEmailTemplates(t, et)
 		}
 	}

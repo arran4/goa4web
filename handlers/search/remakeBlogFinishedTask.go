@@ -15,8 +15,6 @@ type RemakeBlogFinishedTask struct{ tasks.TaskString }
 var remakeBlogFinishedTask = &RemakeBlogFinishedTask{TaskString: TaskRemakeBlogSearchComplete}
 
 var _ tasks.Task = (*RemakeBlogFinishedTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*RemakeBlogFinishedTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*RemakeBlogFinishedTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*RemakeBlogFinishedTask)(nil)
 
 func (RemakeBlogFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }

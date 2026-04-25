@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
@@ -37,44 +38,47 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestHappyPathImageBbsTemplatesExist(t *testing.T) {
-	admins := []notif.AdminEmailTemplateProvider{
+	admins := []tasks.Task{
 		newBoardTask,
 		modifyBoardTask,
 	}
 	for i, p := range admins {
 		t.Run(fmt.Sprintf("AdminProvider_%d", i), func(t *testing.T) {
-			if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			et, nt, ok := notif.AdminTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+			if ok && et != nil {
 				checkEmailTemplates(t, et)
 			}
 			if p != newBoardTask {
-				checkNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+				checkNotificationTemplate(t, nt)
 			}
 		})
 	}
 
-	selfProviders := []notif.SelfNotificationTemplateProvider{
+	selfProviders := []tasks.Task{
 		approvePostTask,
 	}
 	for i, p := range selfProviders {
 		t.Run(fmt.Sprintf("SelfProvider_%d", i), func(t *testing.T) {
-			if et, send := p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); send {
+			et, nt, ok := notif.SelfTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+			if ok && et != nil {
 				checkEmailTemplates(t, et)
 			} else {
 				t.Errorf("expected self email to be sent")
 			}
-			checkNotificationTemplate(t, p.SelfInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+			checkNotificationTemplate(t, nt)
 		})
 	}
 
-	subs := []notif.SubscribersNotificationTemplateProvider{
+	subs := []tasks.Task{
 		replyTask,
 	}
 	for i, p := range subs {
 		t.Run(fmt.Sprintf("SubProvider_%d", i), func(t *testing.T) {
-			if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			et, nt, ok := notif.SubscriberTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+			if ok && et != nil {
 				checkEmailTemplates(t, et)
 			}
-			checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+			checkNotificationTemplate(t, nt)
 		})
 	}
 }

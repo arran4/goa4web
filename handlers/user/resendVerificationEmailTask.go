@@ -15,7 +15,6 @@ type ResendVerificationEmailTask struct{ tasks.TaskString }
 var resendVerificationEmailTask = &ResendVerificationEmailTask{TaskString: TaskResend}
 
 var _ tasks.Task = (*ResendVerificationEmailTask)(nil)
-var _ notif.DirectEmailNotificationTemplateProvider = (*ResendVerificationEmailTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*ResendVerificationEmailTask)(nil)
 
 func (ResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) any {

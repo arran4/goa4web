@@ -18,21 +18,25 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
 )
 
 func TestPermissionUserTasksTemplates(t *testing.T) {
-	admins := []notifications.AdminEmailTemplateProvider{
+	admins := []tasks.Task{
 		&PermissionUserAllowTask{TaskString: TaskUserAllow},
 		&PermissionUserDisallowTask{TaskString: TaskUserDisallow},
 	}
 	for _, p := range admins {
-		et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		et, nt, ok := notifications.AdminTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		if !ok {
+			t.Errorf("expected admin templates for %T", p)
+			continue
+		}
 		if et == nil || et.Text == "" || et.HTML == "" || et.Subject == "" {
 			t.Errorf("incomplete templates for %T", p)
 		}
-		nt := p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
 		if nt == nil || *nt == "" {
 			t.Errorf("missing internal template for %T", p)
 		}

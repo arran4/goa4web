@@ -29,11 +29,8 @@ var replyBlogTask = &ReplyBlogTask{TaskString: TaskReply}
 // compile-time assertions that ReplyBlogTask sends notifications and
 // auto-subscribes blog commenters.
 var (
-	_ tasks.Task                                    = (*ReplyBlogTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*ReplyBlogTask)(nil)
-	_ notif.AutoSubscribeProvider                   = (*ReplyBlogTask)(nil)
-	_ notif.GrantsRequiredProvider                  = (*ReplyBlogTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*ReplyBlogTask)(nil)
+	_ tasks.Task                   = (*ReplyBlogTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*ReplyBlogTask)(nil)
 )
 
 func (ReplyBlogTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

@@ -41,19 +41,16 @@ const (
 
 var _ tasks.Task = (*UserForcePasswordChangeTask)(nil)
 var _ tasks.AuditableTask = (*UserForcePasswordChangeTask)(nil)
-var _ notif.TargetUsersNotificationProvider = (*UserForcePasswordChangeTask)(nil)
 var _ tasks.TemplatesRequired = (*UserForcePasswordChangeTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*UserForcePasswordChangeTask)(nil)
 
 var _ tasks.Task = (*UserSendResetEmailTask)(nil)
 var _ tasks.AuditableTask = (*UserSendResetEmailTask)(nil)
-var _ notif.TargetUsersNotificationProvider = (*UserSendResetEmailTask)(nil)
 var _ tasks.TemplatesRequired = (*UserSendResetEmailTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*UserSendResetEmailTask)(nil)
 
 var _ tasks.Task = (*UserGenerateResetLinkTask)(nil)
 var _ tasks.AuditableTask = (*UserGenerateResetLinkTask)(nil)
-var _ notif.TargetUsersNotificationProvider = (*UserGenerateResetLinkTask)(nil)
 var _ tasks.TemplatesRequired = (*UserGenerateResetLinkTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*UserGenerateResetLinkTask)(nil)
 

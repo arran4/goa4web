@@ -37,12 +37,9 @@ var (
 	// Interface checks ensure the new thread hooks into notifications so
 	// authors follow replies, administrators are alerted and subscribers see
 	// new discussions.
-	_ tasks.Task                                    = (*CreateThreadTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
-	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*CreateThreadTask)(nil)
-	_ searchworker.IndexedTask                      = CreateThreadTask{}
+	_ tasks.Task                   = (*CreateThreadTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*CreateThreadTask)(nil)
+	_ searchworker.IndexedTask     = CreateThreadTask{}
 )
 
 func (CreateThreadTask) IndexType() string { return searchworker.TypeComment }

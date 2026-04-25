@@ -23,8 +23,6 @@ type SubmitWritingTask struct{ tasks.TaskString }
 var submitWritingTask = &SubmitWritingTask{TaskString: TaskSubmitWriting}
 
 var _ tasks.Task = (*SubmitWritingTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*SubmitWritingTask)(nil)
-var _ notif.GrantsRequiredProvider = (*SubmitWritingTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*SubmitWritingTask)(nil)
 
 func (SubmitWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleAddPage(w, r) }

@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func requireEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
@@ -37,16 +38,17 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 
 func TestLanguageTaskTemplates(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
-		admins := []notif.AdminEmailTemplateProvider{
+		admins := []tasks.Task{
 			renameLanguageTask,
 			deleteLanguageTask,
 			createLanguageTask,
 		}
 		for _, a := range admins {
-			if et, _ := a.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+			et, nt, ok := notif.AdminTemplates(a, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+			if ok && et != nil {
 				requireEmailTemplates(t, et)
 			}
-			requireNotificationTemplate(t, a.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+			requireNotificationTemplate(t, nt)
 		}
 	})
 }

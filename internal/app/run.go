@@ -247,6 +247,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	r.NotFoundHandler = srv.NotFoundHandler
 
 	taskEventMW := middleware.NewTaskEventMiddleware(o.Bus)
+	srv.TaskEventMW = taskEventMW
 	handler := middleware.NewMiddlewareChain(
 		middleware.RecoverMiddleware,
 		srv.CoreDataMiddleware(),

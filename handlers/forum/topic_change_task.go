@@ -12,9 +12,8 @@ type TopicChangeTask struct{ tasks.TaskString }
 var topicChangeTask = &TopicChangeTask{TaskString: TaskForumTopicChange}
 
 var (
-	_ tasks.Task                       = (*TopicChangeTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*TopicChangeTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*TopicChangeTask)(nil)
+	_ tasks.Task                   = (*TopicChangeTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*TopicChangeTask)(nil)
 )
 
 func (TopicChangeTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

@@ -20,7 +20,6 @@ type RenameLanguageTask struct{ tasks.TaskString }
 var renameLanguageTask = &RenameLanguageTask{TaskString: tasks.TaskString("Rename Language")}
 
 var _ tasks.Task = (*RenameLanguageTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*RenameLanguageTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*RenameLanguageTask)(nil)
 
 func (RenameLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {

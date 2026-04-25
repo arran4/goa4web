@@ -22,7 +22,6 @@ type PermissionUpdateTask struct{ tasks.TaskString }
 var permissionUpdateTask = &PermissionUpdateTask{TaskString: TaskUpdate}
 
 var _ tasks.Task = (*PermissionUpdateTask)(nil)
-var _ notif.TargetUsersNotificationProvider = (*PermissionUpdateTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*PermissionUpdateTask)(nil)
 
 func (PermissionUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {

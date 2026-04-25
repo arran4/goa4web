@@ -21,8 +21,6 @@ type UpdateWritingTask struct{ tasks.TaskString }
 var updateWritingTask = &UpdateWritingTask{TaskString: TaskUpdateWriting}
 
 var _ tasks.Task = (*UpdateWritingTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*UpdateWritingTask)(nil)
-var _ notif.GrantsRequiredProvider = (*UpdateWritingTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*UpdateWritingTask)(nil)
 
 func (UpdateWritingTask) Page(w http.ResponseWriter, r *http.Request) { ArticleEditPage(w, r) }

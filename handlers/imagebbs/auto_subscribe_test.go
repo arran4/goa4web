@@ -8,7 +8,7 @@ import (
 
 // Test that replyTask auto subscribes commenters so they see responses.
 func TestHappyPathReplyTaskAutoSubscribe(t *testing.T) {
-	if _, ok := interface{}(replyTask).(notif.AutoSubscribeProvider); !ok {
+	if !notif.HasAutoSubscribe(replyTask) {
 		t.Fatalf("ReplyTask should implement AutoSubscribeProvider so commenters are notified about replies")
 	}
 }

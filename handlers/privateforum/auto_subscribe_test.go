@@ -9,7 +9,7 @@ import (
 )
 
 func TestHappyPathPrivateTopicCreateTaskAutoSubscribe(t *testing.T) {
-	if _, ok := interface{}(privateTopicCreateTask).(notif.AutoSubscribeProvider); !ok {
+	if !notif.HasAutoSubscribe(privateTopicCreateTask) {
 		t.Fatalf("PrivateTopicCreateTask should implement AutoSubscribeProvider so creators follow replies")
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/arran4/goa4web/core/templates"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func requireAdminEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
@@ -28,7 +29,7 @@ func requireAdminEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 }
 
 func TestForumAdminTemplatesExist(t *testing.T) {
-	admins := []notif.AdminEmailTemplateProvider{
+	admins := []tasks.Task{
 		createThreadTask,
 		replyTask,
 		categoryChangeTask,
@@ -37,7 +38,8 @@ func TestForumAdminTemplatesExist(t *testing.T) {
 		threadDeleteTask,
 	}
 	for _, p := range admins {
-		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+		et, _, ok := notif.AdminTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		if ok && et != nil {
 			requireAdminEmailTemplates(t, et)
 		}
 	}

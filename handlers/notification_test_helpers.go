@@ -86,7 +86,10 @@ func TestNotificationTemplates(t TestingT, tests []NotificationTemplateTest) {
 		task := tc.Task
 
 		// Test admin email templates
-		if provider, ok := task.(notif.AdminEmailTemplateProvider); ok {
+		if provider, ok := task.(interface {
+			AdminEmailTemplate(eventbus.TaskEvent) (*notif.EmailTemplates, bool)
+			AdminInternalNotificationTemplate(eventbus.TaskEvent) *string
+		}); ok {
 			et, send := provider.AdminEmailTemplate(evt)
 			if send && et != nil {
 				RequireEmailTemplates(t, et, evt)
@@ -95,7 +98,10 @@ func TestNotificationTemplates(t TestingT, tests []NotificationTemplateTest) {
 		}
 
 		// Test self notification templates
-		if provider, ok := task.(notif.SelfNotificationTemplateProvider); ok {
+		if provider, ok := task.(interface {
+			SelfEmailTemplate(eventbus.TaskEvent) (*notif.EmailTemplates, bool)
+			SelfInternalNotificationTemplate(eventbus.TaskEvent) *string
+		}); ok {
 			et, send := provider.SelfEmailTemplate(evt)
 			if send && et != nil {
 				RequireEmailTemplates(t, et, evt)
@@ -104,7 +110,10 @@ func TestNotificationTemplates(t TestingT, tests []NotificationTemplateTest) {
 		}
 
 		// Test target user templates
-		if provider, ok := task.(notif.TargetUsersNotificationProvider); ok {
+		if provider, ok := task.(interface {
+			TargetEmailTemplate(eventbus.TaskEvent) (*notif.EmailTemplates, bool)
+			TargetInternalNotificationTemplate(eventbus.TaskEvent) *string
+		}); ok {
 			et, send := provider.TargetEmailTemplate(evt)
 			if send && et != nil {
 				RequireEmailTemplates(t, et, evt)
@@ -113,7 +122,10 @@ func TestNotificationTemplates(t TestingT, tests []NotificationTemplateTest) {
 		}
 
 		// Test subscriber templates
-		if provider, ok := task.(notif.SubscribersNotificationTemplateProvider); ok {
+		if provider, ok := task.(interface {
+			SubscribedEmailTemplate(eventbus.TaskEvent) (*notif.EmailTemplates, bool)
+			SubscribedInternalNotificationTemplate(eventbus.TaskEvent) *string
+		}); ok {
 			et, send := provider.SubscribedEmailTemplate(evt)
 			if send && et != nil {
 				RequireEmailTemplates(t, et, evt)
@@ -122,7 +134,9 @@ func TestNotificationTemplates(t TestingT, tests []NotificationTemplateTest) {
 		}
 
 		// Test direct email templates
-		if provider, ok := task.(notif.DirectEmailNotificationTemplateProvider); ok {
+		if provider, ok := task.(interface {
+			DirectEmailTemplate(eventbus.TaskEvent) (*notif.EmailTemplates, bool)
+		}); ok {
 			et, send := provider.DirectEmailTemplate(evt)
 			if send && et != nil {
 				RequireEmailTemplates(t, et, evt)

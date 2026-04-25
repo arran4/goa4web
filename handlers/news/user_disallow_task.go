@@ -20,7 +20,6 @@ type UserDisallowTask struct{ tasks.TaskString }
 var userDisallowTask = &UserDisallowTask{TaskString: TaskUserDisallow}
 
 var _ tasks.Task = (*UserDisallowTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*UserDisallowTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*UserDisallowTask)(nil)
 
 func (UserDisallowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

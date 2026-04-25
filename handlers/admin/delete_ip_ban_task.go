@@ -21,7 +21,6 @@ var deleteIPBanTask = &DeleteIPBanTask{TaskString: TaskDelete}
 
 var _ tasks.Task = (*DeleteIPBanTask)(nil)
 var _ tasks.AuditableTask = (*DeleteIPBanTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*DeleteIPBanTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*DeleteIPBanTask)(nil)
 
 func (DeleteIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {

@@ -24,11 +24,9 @@ type bulkApproveTask struct{ tasks.TaskString }
 var AdminBulkApproveTask = &bulkApproveTask{TaskString: TaskBulkApprove}
 
 var (
-	_ tasks.Task                                    = (*bulkApproveTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*bulkApproveTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*bulkApproveTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*bulkApproveTask)(nil)
-	_ searchworker.IndexedTask                      = bulkApproveTask{}
+	_ tasks.Task                   = (*bulkApproveTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*bulkApproveTask)(nil)
+	_ searchworker.IndexedTask     = bulkApproveTask{}
 )
 
 func (bulkApproveTask) IndexType() string { return searchworker.TypeLinker }

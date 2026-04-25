@@ -25,11 +25,9 @@ var AdminApproveTask = &approveTask{TaskString: TaskApprove}
 var _ tasks.Task = (*approveTask)(nil)
 
 var (
-	_ tasks.Task                                    = (*approveTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*approveTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*approveTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*approveTask)(nil)
-	_ searchworker.IndexedTask                      = approveTask{}
+	_ tasks.Task                   = (*approveTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*approveTask)(nil)
+	_ searchworker.IndexedTask     = approveTask{}
 )
 
 func (approveTask) IndexType() string { return searchworker.TypeLinker }

@@ -15,8 +15,6 @@ type RemakeImageFinishedTask struct{ tasks.TaskString }
 var remakeImageFinishedTask = &RemakeImageFinishedTask{TaskString: TaskRemakeImageSearchComplete}
 
 var _ tasks.Task = (*RemakeImageFinishedTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*RemakeImageFinishedTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*RemakeImageFinishedTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*RemakeImageFinishedTask)(nil)
 
 func (RemakeImageFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }

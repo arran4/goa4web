@@ -24,7 +24,6 @@ var addIPBanTask = &AddIPBanTask{TaskString: TaskAdd}
 
 var _ tasks.Task = (*AddIPBanTask)(nil)
 var _ tasks.AuditableTask = (*AddIPBanTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*AddIPBanTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AddIPBanTask)(nil)
 
 func (AddIPBanTask) Action(w http.ResponseWriter, r *http.Request) any {

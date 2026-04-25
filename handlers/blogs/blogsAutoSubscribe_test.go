@@ -16,7 +16,7 @@ func TestHappyPathBlogsAutoSubscribeTasks(t *testing.T) {
 		{"ReplyBlogTask", replyBlogTask},
 	}
 	for _, tt := range tests {
-		if _, ok := tt.task.(notif.AutoSubscribeProvider); !ok {
+		if !notif.HasAutoSubscribe(tt.task) {
 			t.Fatalf("%s should implement AutoSubscribeProvider to notify commenters of new replies", tt.name)
 		}
 	}

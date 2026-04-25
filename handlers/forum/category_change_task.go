@@ -16,9 +16,8 @@ const (
 )
 
 var (
-	_ tasks.Task                       = (*CategoryChangeTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*CategoryChangeTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*CategoryChangeTask)(nil)
+	_ tasks.Task                   = (*CategoryChangeTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*CategoryChangeTask)(nil)
 )
 
 func (CategoryChangeTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

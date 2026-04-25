@@ -8,11 +8,12 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
-func requireAutoSubscribeProvider(t *testing.T, task any) {
+func requireAutoSubscribeProvider(t *testing.T, task tasks.Task) {
 	t.Helper()
-	if _, ok := task.(notif.AutoSubscribeProvider); !ok {
+	if !notif.HasAutoSubscribe(task) {
 		t.Fatalf("%T should auto subscribe so participants stay updated", task)
 	}
 }

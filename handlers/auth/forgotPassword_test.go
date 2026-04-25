@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func requireEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
@@ -36,26 +37,28 @@ func requireNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestForgotPasswordTemplatesExist(t *testing.T) {
-	admins := []notif.AdminEmailTemplateProvider{
+	admins := []tasks.Task{
 		forgotPasswordTask,
 		emailAssociationRequestTask,
 	}
 	for _, p := range admins {
-		if et, _ := p.AdminEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+		et, nt, ok := notif.AdminTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		if ok && et != nil {
 			requireEmailTemplates(t, et)
 		}
-		requireNotificationTemplate(t, p.AdminInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireNotificationTemplate(t, nt)
 	}
 
-	selfProviders := []notif.SelfNotificationTemplateProvider{
+	selfProviders := []tasks.Task{
 		forgotPasswordTask,
 	}
 	for _, p := range selfProviders {
-		if et, send := p.SelfEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); send {
+		et, nt, ok := notif.SelfTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		if ok && et != nil {
 			requireEmailTemplates(t, et)
 		} else {
 			t.Errorf("expected self email to be sent")
 		}
-		requireNotificationTemplate(t, p.SelfInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		requireNotificationTemplate(t, nt)
 	}
 }

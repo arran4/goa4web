@@ -23,7 +23,6 @@ type EditReplyTask struct{ tasks.TaskString }
 var editReplyTask = &EditReplyTask{TaskString: TaskEditReply}
 
 var _ tasks.Task = (*EditReplyTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*EditReplyTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*EditReplyTask)(nil)
 
 func (EditReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

@@ -94,10 +94,16 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 		return nil
 	}
 
-	if tp, ok := evt.Task.(AdminEmailTemplateProvider); ok {
-		if et, send := tp.AdminEmailTemplate(evt); send {
-			if err := n.notifyAdmins(ctx, et, tp.AdminInternalNotificationTemplate(evt), evt.Data, evt.Path, evt.UserID, &evt); err != nil {
-				errW := fmt.Errorf("AdminEmailTemplateProvider: %w", err)
+	wf := WorkflowForTask(evt.Task)
+
+	if wf.AdminEmail != nil {
+		et, nt, ok := wf.AdminEmail(evt)
+		if !ok {
+			et = nil
+		}
+		if et != nil || nt != nil {
+			if err := n.notifyAdmins(ctx, et, nt, evt.Data, evt.Path, evt.UserID, &evt); err != nil {
+				errW := fmt.Errorf("admin notifications: %w", err)
 				if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("admin notify: %v", errW), &evt); dlqErr != nil {
 					return dlqErr
 				}
@@ -106,9 +112,9 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 		}
 	}
 
-	if tp, ok := evt.Task.(SelfNotificationTemplateProvider); ok {
-		if err := n.notifySelf(ctx, evt, tp); err != nil {
-			errW := fmt.Errorf("SelfNotificationTemplateProvider: %w", err)
+	if wf.SelfNotify != nil {
+		if err := n.notifySelf(ctx, evt, wf); err != nil {
+			errW := fmt.Errorf("self notifications: %w", err)
 			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("deliver self to %d: %v", evt.UserID, errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
@@ -117,9 +123,9 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	}
 
-	if tp, ok := evt.Task.(DirectEmailNotificationTemplateProvider); ok {
-		if err := n.notifyDirectEmail(ctx, evt, tp); err != nil {
-			errW := fmt.Errorf("DirectEmailNotificationTemplateProvider: %w", err)
+	if wf.DirectEmail != nil {
+		if err := n.notifyDirectEmail(ctx, evt, wf); err != nil {
+			errW := fmt.Errorf("direct email notifications: %w", err)
 			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("direct email notify: %v", errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
@@ -128,9 +134,9 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	}
 
-	if tp, ok := evt.Task.(TargetUsersNotificationProvider); ok {
-		if err := n.notifyTargetUsers(ctx, evt, tp); err != nil {
-			errW := fmt.Errorf("TargetUsersNotificationProvider: %w", err)
+	if wf.TargetUsers != nil {
+		if err := n.notifyTargetUsers(ctx, evt, wf); err != nil {
+			errW := fmt.Errorf("target user notifications: %w", err)
 			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify target users: %v", errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
@@ -139,9 +145,9 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	}
 
-	if tp, ok := evt.Task.(SubscribersNotificationTemplateProvider); ok {
-		if err := n.notifySubscribers(ctx, evt, tp); err != nil {
-			errW := fmt.Errorf("SubscribersNotificationTemplateProvider: %w", err)
+	if wf.SubscriberNotify != nil {
+		if err := n.notifySubscribers(ctx, evt, wf); err != nil {
+			errW := fmt.Errorf("subscriber notifications: %w", err)
 			if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("notify subscribers: %v", errW), &evt); dlqErr != nil {
 				return dlqErr
 			}
@@ -150,9 +156,9 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 
 	}
 
-	if tp, ok := evt.Task.(AutoSubscribeProvider); ok {
-		if err := n.handleAutoSubscribe(ctx, evt, tp); err != nil {
-			errW := fmt.Errorf("AutoSubscribeProvider: %w", err)
+	if wf.AutoSubscribe != nil {
+		if err := n.handleAutoSubscribe(ctx, evt, wf); err != nil {
+			errW := fmt.Errorf("auto subscribe: %w", err)
 			return errW
 		}
 
@@ -161,7 +167,7 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 	return nil
 }
 
-func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp SelfNotificationTemplateProvider) error {
+func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, wf Workflow) error {
 	name := ""
 	if tn, ok := evt.Task.(tasks.Name); ok {
 		name = tn.Name()
@@ -192,8 +198,9 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 		_, shouldSendInternal = internalSubs[evt.UserID]
 	}
 
-	if et, send := tp.SelfEmailTemplate(evt); send && shouldSendEmail {
-		if b, ok := evt.Task.(SelfEmailBroadcaster); ok && b.SelfEmailBroadcast() {
+	et, nt, _ := wf.SelfNotify(evt)
+	if et != nil && shouldSendEmail {
+		if wf.SelfBroadcast != nil && wf.SelfBroadcast() {
 			emails, err := n.Queries.SystemListVerifiedEmailsByUserID(ctx, evt.UserID)
 			if err == nil {
 				for _, e := range emails {
@@ -215,7 +222,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			}
 		}
 	}
-	if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil && shouldSendInternal {
+	if nt != nil && shouldSendInternal {
 		user, err := n.Queries.SystemGetUserByID(ctx, evt.UserID)
 		if err != nil {
 			return fmt.Errorf("getting user %d for self-notification: %w", evt.UserID, err)
@@ -248,26 +255,30 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 	return nil
 }
 
-func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent, tp DirectEmailNotificationTemplateProvider) error {
-	addr, err := tp.DirectEmailAddress(evt)
+func (n *Notifier) notifyDirectEmail(ctx context.Context, evt eventbus.TaskEvent, wf Workflow) error {
+	et, addr, ok, err := wf.DirectEmail(evt)
 	if err != nil {
 		return err
 	}
-	if addr == "" {
+	if !ok || addr == "" {
 		return nil
 	}
-	if et, send := tp.DirectEmailTemplate(evt); send {
-		if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data); err != nil {
-			return err
-		}
+	if err := n.renderAndQueueEmailFromTemplates(ctx, nil, addr, et, evt.Data); err != nil {
+		return err
 	}
 	return nil
 }
 
-func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent, tp TargetUsersNotificationProvider) error {
-	ids, err := tp.TargetUserIDs(evt)
+func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent, wf Workflow) error {
+	ids, et, nt, ok, err := wf.TargetUsers(evt)
+	if !ok {
+		return nil
+	}
 	if err != nil {
 		return err
+	}
+	if et == nil && nt == nil {
+		return nil
 	}
 	for _, id := range ids {
 		user, err := n.Queries.SystemGetUserByID(ctx, id)
@@ -275,14 +286,12 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 			if nmErr := notifyMissingEmail(ctx, n.Queries, id); nmErr != nil {
 				log.Printf("notify missing email: %v", nmErr)
 			}
-		} else {
-			if et, send := tp.TargetEmailTemplate(evt); send {
-				if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data); err != nil {
-					return err
-				}
+		} else if et != nil {
+			if err := n.renderAndQueueEmailFromTemplates(ctx, &id, user.Email.String, et, evt.Data); err != nil {
+				return err
 			}
 		}
-		if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
+		if nt != nil {
 			data := struct {
 				TaskEvent eventbus.TaskEvent
 				Path      string
@@ -310,7 +319,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 	return nil
 }
 
-func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent, tp SubscribersNotificationTemplateProvider) error {
+func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent, wf Workflow) error {
 	name := ""
 	if tn, ok := evt.Task.(tasks.Name); ok {
 		name = tn.Name()
@@ -329,12 +338,12 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	delete(emailSubs, evt.UserID)
 	delete(internalSubs, evt.UserID)
 
-	if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
-		reqs, err := gp.GrantsRequired(evt)
+	if wf.Grants != nil {
+		reqs, ok, err := wf.Grants(evt)
 		if err != nil {
 			return err
 		}
-		if len(reqs) != 0 {
+		if ok && len(reqs) != 0 {
 			filterSubs := func(m map[int32]struct{}) {
 				for id := range m {
 					for _, g := range reqs {
@@ -357,9 +366,10 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 	}
 
+	et, nt, _ := wf.SubscriberNotify(evt)
 	var msg []byte
 	data := EmailData{Item: evt.Data, any: evt.Data}
-	if nt := tp.SubscribedInternalNotificationTemplate(evt); nt != nil {
+	if nt != nil {
 		var err error
 		msg, err = n.renderNotification(ctx, *nt, data)
 		if err != nil {
@@ -368,7 +378,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 	}
 
-	if et, send := tp.SubscribedEmailTemplate(evt); send {
+	if et != nil {
 		for id := range emailSubs {
 			if err := n.sendSubscriberEmail(ctx, id, evt, et); err != nil {
 				return fmt.Errorf("deliver email to %d: %w", id, err)
@@ -388,65 +398,59 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 		}
 	}
 
-	if asp, ok := evt.Task.(AutoSubscribeProvider); ok {
-		newTaskName, newPath, err := asp.AutoSubscribePath(evt)
-		if err == nil {
-			// Find who is subscribed to the current event with "autosub_*"
-			autoInternalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_internal")
-			if err != nil {
-				log.Printf("collect auto internal subs: %v", err)
-			}
-			autoEmailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_email")
-			if err != nil {
-				log.Printf("collect auto email subs: %v", err)
-			}
-
-			// We need to build the new pattern for the target subscription
-			newPatterns := buildPatterns(tasks.TaskString(newTaskName), newPath)
-			if len(newPatterns) > 0 {
-				newPattern := newPatterns[0]
-
-				reqs, err := asp.AutoSubscribeGrants(evt)
+	if wf.AutoSubscribe != nil {
+		newTaskName, newPath, reqs, ok, err := wf.AutoSubscribe(evt)
+		if ok {
+			if err == nil {
+				// Find who is subscribed to the current event with "autosub_*"
+				autoInternalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_internal")
 				if err != nil {
-					log.Printf("auto subscribe grants: %v", err)
+					log.Printf("collect auto internal subs: %v", err)
+				}
+				autoEmailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_email")
+				if err != nil {
+					log.Printf("collect auto email subs: %v", err)
 				}
 
-				checkGrants := func(userID int32) bool {
-					if err != nil {
-						return false
-					}
-					if len(reqs) == 0 {
+				// We need to build the new pattern for the target subscription
+				newPatterns := buildPatterns(tasks.TaskString(newTaskName), newPath)
+				if len(newPatterns) > 0 {
+					newPattern := newPatterns[0]
+
+					checkGrants := func(userID int32) bool {
+						if len(reqs) == 0 {
+							return true
+						}
+						for _, g := range reqs {
+							if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
+								ViewerID: userID,
+								Section:  g.Section,
+								Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
+								Action:   g.Action,
+								ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
+								UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
+							}); err != nil {
+								return false
+							}
+						}
 						return true
 					}
-					for _, g := range reqs {
-						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
-							ViewerID: userID,
-							Section:  g.Section,
-							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
-							Action:   g.Action,
-							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
-							UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
-						}); err != nil {
-							return false
+
+					for id := range autoInternalSubs {
+						if id == evt.UserID {
+							continue
+						}
+						if checkGrants(id) {
+							ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
 						}
 					}
-					return true
-				}
-
-				for id := range autoInternalSubs {
-					if id == evt.UserID {
-						continue
-					}
-					if checkGrants(id) {
-						ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
-					}
-				}
-				for id := range autoEmailSubs {
-					if id == evt.UserID {
-						continue
-					}
-					if checkGrants(id) {
-						ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+					for id := range autoEmailSubs {
+						if id == evt.UserID {
+							continue
+						}
+						if checkGrants(id) {
+							ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+						}
 					}
 				}
 			}
@@ -456,7 +460,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	return nil
 }
 
-func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) error {
+func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, wf Workflow) error {
 	var auto bool
 	var email bool
 	pref, err := n.Queries.GetPreferenceForLister(ctx, evt.UserID)
@@ -475,7 +479,10 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 		}
 	}
 	if auto {
-		task, path, err := tp.AutoSubscribePath(evt)
+		task, path, _, ok, err := wf.AutoSubscribe(evt)
+		if !ok {
+			return nil
+		}
 		if err != nil {
 			log.Printf("auto subscribe path: %v", err)
 			return fmt.Errorf("auto subscribe path: %w", err)

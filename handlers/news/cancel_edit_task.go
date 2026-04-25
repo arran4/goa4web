@@ -20,7 +20,6 @@ type CancelTask struct{ tasks.TaskString }
 var cancelTask = &CancelTask{TaskString: TaskCancel}
 
 var _ tasks.Task = (*CancelTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*CancelTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*CancelTask)(nil)
 
 func (CancelTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

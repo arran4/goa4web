@@ -26,7 +26,6 @@ type EditBlogTask struct{ tasks.TaskString }
 var editBlogTask = &EditBlogTask{TaskString: TaskEdit}
 
 var _ tasks.Task = (*EditBlogTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*EditBlogTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*EditBlogTask)(nil)
 
 func (EditBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

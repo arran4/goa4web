@@ -49,7 +49,6 @@ type AdminAddEmailTask struct {
 var adminAddEmailTask = &AdminAddEmailTask{TaskString: TaskAddEmail}
 
 var _ tasks.Task = (*AdminAddEmailTask)(nil)
-var _ notif.DirectEmailNotificationTemplateProvider = (*AdminAddEmailTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AdminAddEmailTask)(nil)
 
 func (t AdminAddEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
@@ -282,7 +281,6 @@ type AdminResendVerificationEmailTask struct {
 var adminResendVerificationEmailTask = &AdminResendVerificationEmailTask{TaskString: TaskResendVerification}
 
 var _ tasks.Task = (*AdminResendVerificationEmailTask)(nil)
-var _ notif.DirectEmailNotificationTemplateProvider = (*AdminResendVerificationEmailTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AdminResendVerificationEmailTask)(nil)
 
 func (t AdminResendVerificationEmailTask) Action(w http.ResponseWriter, r *http.Request) any {

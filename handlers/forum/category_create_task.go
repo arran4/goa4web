@@ -12,9 +12,8 @@ type CategoryCreateTask struct{ tasks.TaskString }
 var categoryCreateTask = &CategoryCreateTask{TaskString: TaskForumCategoryCreate}
 
 var (
-	_ tasks.Task                       = (*CategoryCreateTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*CategoryCreateTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*CategoryCreateTask)(nil)
+	_ tasks.Task                   = (*CategoryCreateTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*CategoryCreateTask)(nil)
 )
 
 func (CategoryCreateTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

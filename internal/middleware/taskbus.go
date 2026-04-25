@@ -99,14 +99,21 @@ func (q *eventQueue) flush(ctx context.Context) {
 
 // TaskEventMiddleware provides middleware for publishing task events.
 type TaskEventMiddleware struct {
-	bus   *eventbus.Bus
-	queue *eventQueue
-	log   *log.Logger
-	dlq   dlq.DLQ
+	bus       *eventbus.Bus
+	queue     *eventQueue
+	log       *log.Logger
+	dlq       dlq.DLQ
+	processor TaskEventProcessor
 }
 
 // TaskEventMiddlewareOption customizes TaskEventMiddleware behavior.
 type TaskEventMiddlewareOption func(*TaskEventMiddleware)
+
+// TaskEventProcessor handles task events explicitly instead of consuming them via
+// an event bus worker.
+type TaskEventProcessor interface {
+	ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q dlq.DLQ) error
+}
 
 // WithLogger overrides the logger used by TaskEventMiddleware.
 func WithLogger(l *log.Logger) TaskEventMiddlewareOption {
@@ -122,6 +129,11 @@ func WithDLQ(q dlq.DLQ) TaskEventMiddlewareOption {
 	return func(m *TaskEventMiddleware) {
 		m.dlq = q
 	}
+}
+
+// WithTaskEventProcessor configures explicit task event processing.
+func WithTaskEventProcessor(p TaskEventProcessor) TaskEventMiddlewareOption {
+	return func(m *TaskEventMiddleware) { m.processor = p }
 }
 
 // NewTaskEventMiddleware creates a middleware instance using the provided bus.
@@ -181,6 +193,11 @@ func (m *TaskEventMiddleware) Middleware(next http.Handler) http.Handler {
 				}
 			}
 			if eventHasTask(evt) {
+				if m.processor != nil {
+					if err := m.processor.ProcessEvent(r.Context(), *evt, m.dlq); err != nil {
+						m.reportIssue(r.Context(), "explicit task event processing failed: %v", err)
+					}
+				}
 				if err := m.bus.Publish(*evt); err != nil {
 					if err == eventbus.ErrBusClosed {
 						m.queue.enqueue(*evt)
@@ -244,6 +261,11 @@ func (m *TaskEventMiddleware) Flush(ctx context.Context) {
 func (m *TaskEventMiddleware) SetBus(bus *eventbus.Bus) {
 	m.bus = bus
 	m.queue.bus = bus
+}
+
+// SetTaskEventProcessor updates the explicit task event processor.
+func (m *TaskEventMiddleware) SetTaskEventProcessor(p TaskEventProcessor) {
+	m.processor = p
 }
 
 // TaskEventMiddlewareWithBus wraps NewTaskEventMiddleware for backward compatibility.

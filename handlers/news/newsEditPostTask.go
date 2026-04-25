@@ -25,7 +25,6 @@ var editTask = &EditTask{TaskString: TaskEdit}
 
 var _ tasks.Task = (*EditTask)(nil)
 var _ tasks.TemplatesRequired = (*EditTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*EditTask)(nil)
 
 const NewsEditPageTmpl tasks.Template = "news/newsEditPage.gohtml"

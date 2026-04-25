@@ -12,9 +12,8 @@ type TopicDeleteTask struct{ tasks.TaskString }
 var topicDeleteTask = &TopicDeleteTask{TaskString: TaskForumTopicDelete}
 
 var (
-	_ tasks.Task                       = (*TopicDeleteTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*TopicDeleteTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*TopicDeleteTask)(nil)
+	_ tasks.Task                   = (*TopicDeleteTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*TopicDeleteTask)(nil)
 )
 
 func (TopicDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

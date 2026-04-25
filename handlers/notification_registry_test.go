@@ -53,7 +53,7 @@ func (r *TaskRegistry) TestAll(t *testing.T) {
 	}
 }
 
-// AutoDiscoverTasks automatically discovers tasks that implement notification interfaces.
+// AutoDiscoverTasks automatically discovers tasks that expose notification templates.
 // This is useful for ensuring all tasks are tested.
 func AutoDiscoverTasks(t *testing.T, taskInstances ...tasks.Task) []TaskInfo {
 	t.Helper()
@@ -63,23 +63,11 @@ func AutoDiscoverTasks(t *testing.T, taskInstances ...tasks.Task) []TaskInfo {
 	for _, task := range taskInstances {
 		name := reflect.TypeOf(task).String()
 
-		// Check if it implements any notification interface
-		hasNotifications := false
-		if _, ok := task.(notif.AdminEmailTemplateProvider); ok {
-			hasNotifications = true
-		}
-		if _, ok := task.(notif.SelfNotificationTemplateProvider); ok {
-			hasNotifications = true
-		}
-		if _, ok := task.(notif.TargetUsersNotificationProvider); ok {
-			hasNotifications = true
-		}
-		if _, ok := task.(notif.SubscribersNotificationTemplateProvider); ok {
-			hasNotifications = true
-		}
-		if _, ok := task.(notif.DirectEmailNotificationTemplateProvider); ok {
-			hasNotifications = true
-		}
+		hasNotifications := notif.HasAdminTemplates(task) ||
+			notif.HasSelfTemplates(task) ||
+			notif.HasTargetUsersTemplates(task) ||
+			notif.HasSubscriberTemplates(task) ||
+			notif.HasDirectEmailTemplate(task)
 
 		if hasNotifications {
 			discovered = append(discovered, TaskInfo{

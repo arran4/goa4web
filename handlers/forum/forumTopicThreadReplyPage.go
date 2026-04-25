@@ -37,12 +37,9 @@ var (
 	// ReplyTaskHandler exposes the reply task for registration on other routes.
 	ReplyTaskHandler = replyTask
 
-	_ tasks.Task                                    = (*ReplyTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
-	_ notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*ReplyTask)(nil)
-	_ searchworker.IndexedTask                      = ReplyTask{}
+	_ tasks.Task                   = (*ReplyTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*ReplyTask)(nil)
+	_ searchworker.IndexedTask     = ReplyTask{}
 )
 
 func (ReplyTask) IndexType() string { return searchworker.TypeComment }

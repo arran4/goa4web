@@ -21,11 +21,8 @@ var newPostTask = &NewPostTask{TaskString: TaskNewPost}
 
 // NewPostTask sends notifications when a new post is created and automatically subscribes the author to future replies.
 var (
-	_ tasks.Task                                    = (*NewPostTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*NewPostTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*NewPostTask)(nil)
-	_ notif.AutoSubscribeProvider                   = (*NewPostTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*NewPostTask)(nil)
+	_ tasks.Task                   = (*NewPostTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*NewPostTask)(nil)
 )
 
 func (NewPostTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

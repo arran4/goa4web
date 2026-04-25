@@ -20,8 +20,6 @@ type PermissionUserDisallowTask struct{ tasks.TaskString }
 var permissionUserDisallowTask = &PermissionUserDisallowTask{TaskString: TaskUserDisallow}
 
 var _ tasks.Task = (*PermissionUserDisallowTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*PermissionUserDisallowTask)(nil)
-var _ notif.TargetUsersNotificationProvider = (*PermissionUserDisallowTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*PermissionUserDisallowTask)(nil)
 
 func (PermissionUserDisallowTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

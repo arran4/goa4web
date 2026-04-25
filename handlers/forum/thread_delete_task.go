@@ -12,9 +12,8 @@ type ThreadDeleteTask struct{ tasks.TaskString }
 var threadDeleteTask = &ThreadDeleteTask{TaskString: TaskForumThreadDelete}
 
 var (
-	_ tasks.Task                       = (*ThreadDeleteTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*ThreadDeleteTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*ThreadDeleteTask)(nil)
+	_ tasks.Task                   = (*ThreadDeleteTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*ThreadDeleteTask)(nil)
 )
 
 func (ThreadDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

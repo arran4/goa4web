@@ -19,10 +19,8 @@ type bulkDeleteTask struct{ tasks.TaskString }
 var AdminBulkDeleteTask = &bulkDeleteTask{TaskString: TaskBulkDelete}
 
 var (
-	_ tasks.Task                                    = (*bulkDeleteTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*bulkDeleteTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*bulkDeleteTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*bulkDeleteTask)(nil)
+	_ tasks.Task                   = (*bulkDeleteTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*bulkDeleteTask)(nil)
 )
 
 func (bulkDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {

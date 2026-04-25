@@ -25,7 +25,6 @@ type NewBoardTask struct{ tasks.TaskString }
 var newBoardTask = &NewBoardTask{TaskString: TaskNewBoard}
 
 var _ tasks.Task = (*NewBoardTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*NewBoardTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*NewBoardTask)(nil)
 
 func (NewBoardTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

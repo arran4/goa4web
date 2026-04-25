@@ -22,7 +22,6 @@ type TestMailTask struct{ tasks.TaskString }
 var testMailTask = &TestMailTask{TaskString: tasks.TaskString(TaskTestMail)}
 
 var _ tasks.Task = (*TestMailTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*TestMailTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*TestMailTask)(nil)
 
 func (TestMailTask) Action(w http.ResponseWriter, r *http.Request) any {

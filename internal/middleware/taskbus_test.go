@@ -13,10 +13,23 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/dlq"
 	dlqmock "github.com/arran4/goa4web/internal/dlq/mock"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
 )
+
+type recordingTaskEventProcessor struct {
+	lastEvent *eventbus.TaskEvent
+	calls     int
+}
+
+func (p *recordingTaskEventProcessor) ProcessEvent(_ context.Context, evt eventbus.TaskEvent, _ dlq.DLQ) error {
+	p.calls++
+	copyEvt := evt
+	p.lastEvent = &copyEvt
+	return nil
+}
 
 func TestTaskEventMiddleware(t *testing.T) {
 	bus := eventbus.NewBus()
@@ -216,6 +229,35 @@ func TestTaskEventMiddleware_PublishesWhenTaskComesFromContext(t *testing.T) {
 		env.Ack()
 	default:
 		t.Fatal("expected event when task is attached to context")
+	}
+}
+
+func TestTaskEventMiddleware_ExplicitProcessorRunsOnSuccessfulTask(t *testing.T) {
+	bus := eventbus.NewBus()
+	processor := &recordingTaskEventProcessor{}
+	mw := NewTaskEventMiddleware(bus, WithTaskEventProcessor(processor))
+	handler := mw.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData); cd != nil {
+			cd.SetEventTask(tasks.TaskString("AgentAction"))
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/agent/run", strings.NewReader(`{"prompt":"execute"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, &common.CoreData{})
+	handler.ServeHTTP(rec, req.WithContext(ctx))
+
+	if processor.calls != 1 {
+		t.Fatalf("expected one processor call, got %d", processor.calls)
+	}
+	if processor.lastEvent == nil || processor.lastEvent.Path != "/agent/run" {
+		t.Fatalf("unexpected event recorded: %+v", processor.lastEvent)
+	}
+	named, ok := processor.lastEvent.Task.(tasks.Name)
+	if !ok || named.Name() != "AgentAction" {
+		t.Fatalf("unexpected task recorded: %#v", processor.lastEvent.Task)
 	}
 }
 

@@ -30,40 +30,40 @@ func taskTemplateInfos(reg *tasks.Registry) []taskTemplateInfo {
 		info := taskTemplateInfo{Section: e.Section, Task: e.Task.Name()}
 		t := e.Task
 		evt := eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}
-		if tp, ok := t.(notif.SelfNotificationTemplateProvider); ok {
-			if et, _ := tp.SelfEmailTemplate(evt); et != nil {
+		if et, nt, ok := notif.SelfTemplates(t, evt); ok {
+			if et != nil {
 				info.SelfEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.SelfInternalNotificationTemplate(evt); nt != nil {
+			if nt != nil {
 				info.SelfInternal = *nt
 			}
 		}
-		if tp, ok := t.(notif.DirectEmailNotificationTemplateProvider); ok {
-			if et, _ := tp.DirectEmailTemplate(evt); et != nil {
+		if et, _, ok, _ := notif.DirectEmailTemplate(t, evt); ok {
+			if et != nil {
 				info.DirectEmail = []string{et.Text, et.HTML, et.Subject}
 			}
 		}
-		if tp, ok := t.(notif.SubscribersNotificationTemplateProvider); ok {
-			if et, _ := tp.SubscribedEmailTemplate(evt); et != nil {
+		if et, nt, ok := notif.SubscriberTemplates(t, evt); ok {
+			if et != nil {
 				info.SubEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.SubscribedInternalNotificationTemplate(evt); nt != nil {
+			if nt != nil {
 				info.SubInternal = *nt
 			}
 		}
-		if tp, ok := t.(notif.AdminEmailTemplateProvider); ok {
-			if et, _ := tp.AdminEmailTemplate(evt); et != nil {
+		if et, nt, ok := notif.AdminTemplates(t, evt); ok {
+			if et != nil {
 				info.AdminEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.AdminInternalNotificationTemplate(evt); nt != nil {
+			if nt != nil {
 				info.AdminInternal = *nt
 			}
 		}
-		if tp, ok := t.(notif.TargetUsersNotificationProvider); ok {
-			if et, _ := tp.TargetEmailTemplate(evt); et != nil {
+		if _, et, nt, ok, _ := notif.TargetUsersTemplates(t, evt); ok {
+			if et != nil {
 				info.TargetEmail = []string{et.Text, et.HTML, et.Subject}
 			}
-			if nt := tp.TargetInternalNotificationTemplate(evt); nt != nil {
+			if nt != nil {
 				info.TargetInternal = *nt
 			}
 		}

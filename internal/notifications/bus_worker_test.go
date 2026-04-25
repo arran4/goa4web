@@ -354,7 +354,7 @@ func TestNotifySubscribersNews(t *testing.T) {
 		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 
-	if err := n.notifySubscribers(ctx, evt, task); err != nil {
+	if err := n.notifySubscribers(ctx, evt, WorkflowForTask(evt.Task)); err != nil {
 		t.Fatalf("notifySubscribers: %v", err)
 	}
 
@@ -433,6 +433,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 
 	evt := eventbus.TaskEvent{
 		Path:   "/forum/topic/7/thread/42/reply",
+		Task:   autoSubTask{TaskString: "AutoSub"},
 		UserID: 1,
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{CommentID: 1, ThreadID: 42, TopicID: 7},
@@ -440,7 +441,7 @@ func TestProcessEventAutoSubscribe(t *testing.T) {
 		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 
-	if err := n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"}); err != nil {
+	if err := n.handleAutoSubscribe(ctx, evt, WorkflowForTask(evt.Task)); err != nil {
 		t.Fatalf("handleAutoSubscribe: %v", err)
 	}
 
@@ -468,6 +469,7 @@ func TestProcessEventAutoSubscribeMissingPreference(t *testing.T) {
 
 	evt := eventbus.TaskEvent{
 		Path:   "/forum/topic/7/thread/42/reply",
+		Task:   autoSubTask{TaskString: "AutoSub"},
 		UserID: 1,
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{CommentID: 1, ThreadID: 42, TopicID: 7},
@@ -477,7 +479,7 @@ func TestProcessEventAutoSubscribeMissingPreference(t *testing.T) {
 
 	initialStats := stats.AutoSubscribePreferenceFailures.Load()
 
-	if err := n.handleAutoSubscribe(ctx, evt, autoSubTask{TaskString: "AutoSub"}); err != nil {
+	if err := n.handleAutoSubscribe(ctx, evt, WorkflowForTask(evt.Task)); err != nil {
 		t.Fatalf("handleAutoSubscribe: %v", err)
 	}
 

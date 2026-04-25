@@ -7,7 +7,6 @@ import (
 )
 
 var _ tasks.Task = (*AnnouncementAddTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*AnnouncementAddTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AnnouncementAddTask)(nil)
 
 func (AnnouncementAddTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
@@ -24,7 +23,6 @@ func (AnnouncementAddTask) RequiredTemplates() []tasks.Template {
 }
 
 var _ tasks.Task = (*AnnouncementDeleteTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*AnnouncementDeleteTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AnnouncementDeleteTask)(nil)
 
 func (AnnouncementDeleteTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

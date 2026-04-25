@@ -15,8 +15,6 @@ type RemakeLinkerFinishedTask struct{ tasks.TaskString }
 var remakeLinkerFinishedTask = &RemakeLinkerFinishedTask{TaskString: TaskRemakeLinkerSearchComplete}
 
 var _ tasks.Task = (*RemakeLinkerFinishedTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*RemakeLinkerFinishedTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*RemakeLinkerFinishedTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*RemakeLinkerFinishedTask)(nil)
 
 func (RemakeLinkerFinishedTask) Action(http.ResponseWriter, *http.Request) any { return nil }

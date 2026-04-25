@@ -29,6 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/stats"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -64,6 +65,7 @@ type Server struct {
 	LanguageCache  *common.LanguageCache
 
 	WorkerCancel context.CancelFunc
+	TaskEventMW  *middleware.TaskEventMiddleware
 
 	addr       string
 	httpServer *http.Server
@@ -403,6 +405,15 @@ func (s *Server) startWorkers(ctx context.Context) {
 	}
 	workerCtx, cancel := context.WithCancel(ctx)
 	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
+	notifier := notifications.New(
+		notifications.WithQueries(q),
+		notifications.WithEmailProvider(emailProvider),
+		notifications.WithBus(s.Bus),
+		notifications.WithConfig(s.Config),
+	)
+	if s.TaskEventMW != nil {
+		s.TaskEventMW.SetTaskEventProcessor(notifier)
+	}
 	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus)
 	s.WorkerCancel = cancel
 }

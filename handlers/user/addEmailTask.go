@@ -31,7 +31,6 @@ type AddEmailTask struct {
 var addEmailTask = &AddEmailTask{TaskString: tasks.TaskString(TaskAdd)}
 
 var _ tasks.Task = (*AddEmailTask)(nil)
-var _ notif.DirectEmailNotificationTemplateProvider = (*AddEmailTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AddEmailTask)(nil)
 
 func (t AddEmailTask) generateVerificationCode() string {

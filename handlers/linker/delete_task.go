@@ -22,10 +22,8 @@ var AdminDeleteTask = &deleteTask{TaskString: TaskDelete}
 var _ tasks.Task = (*deleteTask)(nil)
 
 var (
-	_ tasks.Task                                    = (*deleteTask)(nil)
-	_ notif.SubscribersNotificationTemplateProvider = (*deleteTask)(nil)
-	_ notif.AdminEmailTemplateProvider              = (*deleteTask)(nil)
-	_ tasks.EmailTemplatesRequired                  = (*deleteTask)(nil)
+	_ tasks.Task                   = (*deleteTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*deleteTask)(nil)
 )
 
 func (deleteTask) Action(w http.ResponseWriter, r *http.Request) any {

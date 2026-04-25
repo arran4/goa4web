@@ -19,7 +19,6 @@ type CreateLanguageTask struct{ tasks.TaskString }
 var createLanguageTask = &CreateLanguageTask{TaskString: tasks.TaskString("Create Language")}
 
 var _ tasks.Task = (*CreateLanguageTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*CreateLanguageTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*CreateLanguageTask)(nil)
 
 func (CreateLanguageTask) Action(w http.ResponseWriter, r *http.Request) any {

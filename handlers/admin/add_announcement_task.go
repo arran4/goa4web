@@ -23,7 +23,6 @@ var _ tasks.Task = (*AddAnnouncementTask)(nil)
 var _ tasks.AuditableTask = (*AddAnnouncementTask)(nil)
 
 // addAnnouncementTask notifies admins so they know announcements were updated.
-var _ notif.AdminEmailTemplateProvider = (*AddAnnouncementTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AddAnnouncementTask)(nil)
 
 func (AddAnnouncementTask) Action(w http.ResponseWriter, r *http.Request) any {

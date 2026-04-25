@@ -22,12 +22,9 @@ type ForgotPasswordTask struct {
 }
 
 var (
-	_ tasks.Task                             = (*ForgotPasswordTask)(nil)
-	_ tasks.AuditableTask                    = (*ForgotPasswordTask)(nil)
-	_ notif.SelfNotificationTemplateProvider = (*ForgotPasswordTask)(nil)
-	_ notif.AdminEmailTemplateProvider       = (*ForgotPasswordTask)(nil)
-	_ notif.SelfEmailBroadcaster             = (*ForgotPasswordTask)(nil)
-	_ tasks.EmailTemplatesRequired           = (*ForgotPasswordTask)(nil)
+	_ tasks.Task                   = (*ForgotPasswordTask)(nil)
+	_ tasks.AuditableTask          = (*ForgotPasswordTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*ForgotPasswordTask)(nil)
 )
 
 // Ensure template requirements are declared for this task.

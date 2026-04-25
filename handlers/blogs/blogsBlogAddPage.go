@@ -26,9 +26,6 @@ type AddBlogTask struct{ tasks.TaskString }
 var addBlogTask = &AddBlogTask{TaskString: TaskAdd}
 
 var _ tasks.Task = (*AddBlogTask)(nil)
-var _ notif.SubscribersNotificationTemplateProvider = (*AddBlogTask)(nil)
-var _ notif.AdminEmailTemplateProvider = (*AddBlogTask)(nil)
-var _ notif.GrantsRequiredProvider = (*AddBlogTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*AddBlogTask)(nil)
 
 func (AddBlogTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

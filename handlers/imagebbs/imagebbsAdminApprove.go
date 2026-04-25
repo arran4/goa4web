@@ -21,7 +21,6 @@ import (
 type ApprovePostTask struct{ tasks.TaskString }
 
 var _ tasks.Task = (*ApprovePostTask)(nil)
-var _ notif.SelfNotificationTemplateProvider = (*ApprovePostTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*ApprovePostTask)(nil)
 var _ tasks.AuditableTask = (*ApprovePostTask)(nil)
 

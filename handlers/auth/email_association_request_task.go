@@ -8,7 +8,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -16,10 +15,9 @@ import (
 type EmailAssociationRequestTask struct{ tasks.TaskString }
 
 var (
-	_ tasks.Task                       = (*EmailAssociationRequestTask)(nil)
-	_ tasks.AuditableTask              = (*EmailAssociationRequestTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*EmailAssociationRequestTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*EmailAssociationRequestTask)(nil)
+	_ tasks.Task                   = (*EmailAssociationRequestTask)(nil)
+	_ tasks.AuditableTask          = (*EmailAssociationRequestTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*EmailAssociationRequestTask)(nil)
 )
 
 var emailAssociationRequestTask = &EmailAssociationRequestTask{TaskString: TaskEmailAssociationRequest}

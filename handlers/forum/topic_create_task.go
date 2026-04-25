@@ -12,9 +12,8 @@ type TopicCreateTask struct{ tasks.TaskString }
 var topicCreateTask = &TopicCreateTask{TaskString: TaskForumTopicCreate}
 
 var (
-	_ tasks.Task                       = (*TopicCreateTask)(nil)
-	_ notif.AdminEmailTemplateProvider = (*TopicCreateTask)(nil)
-	_ tasks.EmailTemplatesRequired     = (*TopicCreateTask)(nil)
+	_ tasks.Task                   = (*TopicCreateTask)(nil)
+	_ tasks.EmailTemplatesRequired = (*TopicCreateTask)(nil)
 )
 
 func (TopicCreateTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {

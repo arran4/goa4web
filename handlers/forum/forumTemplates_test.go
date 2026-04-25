@@ -8,6 +8,7 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers/handlertest"
 	notif "github.com/arran4/goa4web/internal/notifications"
+	"github.com/arran4/goa4web/internal/tasks"
 )
 
 func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
@@ -39,14 +40,15 @@ func checkNotificationTemplate(t *testing.T, name *string) {
 }
 
 func TestForumTemplatesExist(t *testing.T) {
-	providers := []notif.SubscribersNotificationTemplateProvider{
+	providers := []tasks.Task{
 		createThreadTask,
 		replyTask,
 	}
 	for _, p := range providers {
-		if et, _ := p.SubscribedEmailTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}); et != nil {
+		et, nt, ok := notif.SubscriberTemplates(p, eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess})
+		if ok && et != nil {
 			checkEmailTemplates(t, et)
 		}
-		checkNotificationTemplate(t, p.SubscribedInternalNotificationTemplate(eventbus.TaskEvent{Outcome: eventbus.TaskOutcomeSuccess}))
+		checkNotificationTemplate(t, nt)
 	}
 }

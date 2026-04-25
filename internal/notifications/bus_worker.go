@@ -27,18 +27,59 @@ func buildPatterns(task tasks.Name, path string) []string {
 	patterns := []string{fmt.Sprintf("%s:/%s", name, path)}
 	for i := len(parts) - 1; i >= 1; i-- {
 		prefix := strings.Join(parts[:i], "/")
-		patterns = append(patterns, fmt.Sprintf("%s:/%s", name, prefix))
 		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", name, prefix))
 	}
 	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
 	return patterns
 }
 
+func expandPatternSeparators(patterns []string) []string {
+	seen := map[string]struct{}{}
+	expanded := make([]string, 0, len(patterns)*3)
+	add := func(pattern string) {
+		if pattern == "" {
+			return
+		}
+		if _, ok := seen[pattern]; ok {
+			return
+		}
+		seen[pattern] = struct{}{}
+		expanded = append(expanded, pattern)
+	}
+	for _, pattern := range patterns {
+		add(pattern)
+		sep := strings.Index(pattern, ":")
+		if sep < 0 || sep+1 >= len(pattern) {
+			continue
+		}
+		prefix := pattern[:sep+1]
+		path := pattern[sep+1:]
+		switch {
+		case path == "/*":
+			add(prefix + "/")
+		case strings.HasSuffix(path, "/*"):
+			base := strings.TrimSuffix(path, "/*")
+			add(prefix + base)
+			add(prefix + base + "/")
+		case strings.HasSuffix(path, "/"):
+			base := strings.TrimSuffix(path, "/")
+			add(prefix + base)
+			if base != "" {
+				add(prefix + base + "/*")
+			}
+		default:
+			add(prefix + path + "/")
+			add(prefix + path + "/*")
+		}
+	}
+	return expanded
+}
+
 // collectSubscribers returns a set of user IDs subscribed to any of the
 // patterns using the specified delivery method.
 func collectSubscribers(ctx context.Context, q db.Querier, patterns []string, method string) (map[int32]struct{}, error) {
 	subs := map[int32]struct{}{}
-	ids, err := q.ListSubscribersForPatterns(ctx, db.ListSubscribersForPatternsParams{Patterns: patterns, Method: method})
+	ids, err := q.ListSubscribersForPatterns(ctx, db.ListSubscribersForPatternsParams{Patterns: expandPatternSeparators(patterns), Method: method})
 	if err != nil {
 		return nil, fmt.Errorf("list subscribers: %w", err)
 	}

@@ -38,10 +38,10 @@ func (r *recordDLQ) Record(_ context.Context, m string) error {
 
 func TestBuildPatterns(t *testing.T) {
 	cases := map[string][]string{
-		"/blog/a/b": {"reply:/blog/a/b", "reply:/blog/a", "reply:/blog/a/*", "reply:/blog", "reply:/blog/*", "reply:/*"},
+		"/blog/a/b": {"reply:/blog/a/b", "reply:/blog/a/*", "reply:/blog/*", "reply:/*"},
 		"/":         {"reply:/*"},
 		"":          {"reply:/*"},
-		"/x/y/":     {"reply:/x/y", "reply:/x", "reply:/x/*", "reply:/*"},
+		"/x/y/":     {"reply:/x/y", "reply:/x/*", "reply:/*"},
 	}
 	for path, expected := range cases {
 		got := buildPatterns(tasks.TaskString("Reply"), path)
@@ -63,12 +63,12 @@ func TestBuildPatternsAdditional(t *testing.T) {
 		want []string
 	}
 	cases := []testCase{
-		{tasks.TaskString("Reply"), "/writings/article/2", []string{"reply:/writings/article/2", "reply:/writings/article", "reply:/writings/article/*", "reply:/writings", "reply:/writings/*", "reply:/*"}},
-		{tasks.TaskString("Reply"), "/news/news/14", []string{"reply:/news/news/14", "reply:/news/news", "reply:/news/news/*", "reply:/news", "reply:/news/*", "reply:/*"}},
-		{tasks.TaskString("Post"), "/blog/3", []string{"post:/blog/3", "post:/blog", "post:/blog/*", "post:/*"}},
-		{tasks.TaskString("Post"), "/writing/5", []string{"post:/writing/5", "post:/writing", "post:/writing/*", "post:/*"}},
-		{tasks.TaskString("Post"), "/news/8", []string{"post:/news/8", "post:/news", "post:/news/*", "post:/*"}},
-		{tasks.TaskString("Post"), "/image/9", []string{"post:/image/9", "post:/image", "post:/image/*", "post:/*"}},
+		{tasks.TaskString("Reply"), "/writings/article/2", []string{"reply:/writings/article/2", "reply:/writings/article/*", "reply:/writings/*", "reply:/*"}},
+		{tasks.TaskString("Reply"), "/news/news/14", []string{"reply:/news/news/14", "reply:/news/news/*", "reply:/news/*", "reply:/*"}},
+		{tasks.TaskString("Post"), "/blog/3", []string{"post:/blog/3", "post:/blog/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/writing/5", []string{"post:/writing/5", "post:/writing/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/news/8", []string{"post:/news/8", "post:/news/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/image/9", []string{"post:/image/9", "post:/image/*", "post:/*"}},
 	}
 	for _, tc := range cases {
 		got := buildPatterns(tc.task, tc.path)
@@ -80,6 +80,35 @@ func TestBuildPatternsAdditional(t *testing.T) {
 				t.Fatalf("%s pattern %d = %s want %s", tc.path, i, got[i], p)
 			}
 		}
+	}
+}
+
+func TestExpandPatternSeparators(t *testing.T) {
+	got := expandPatternSeparators([]string{"reply:/aaa", "reply:/bbb/*", "reply:/ccc/", "reply:/*"})
+	want := map[string]bool{
+		"reply:/aaa":   true,
+		"reply:/aaa/*": true,
+		"reply:/aaa/":  true,
+		"reply:/bbb/*": true,
+		"reply:/bbb":   true,
+		"reply:/bbb/":  true,
+		"reply:/ccc/":  true,
+		"reply:/ccc":   true,
+		"reply:/ccc/*": true,
+		"reply:/*":     true,
+		"reply:/":      true,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d patterns got %d: %v", len(want), len(got), got)
+	}
+	for _, p := range got {
+		if !want[p] {
+			t.Fatalf("unexpected pattern %q in %v", p, got)
+		}
+		delete(want, p)
+	}
+	if len(want) > 0 {
+		t.Fatalf("missing patterns: %v", want)
 	}
 }
 
@@ -175,8 +204,16 @@ func TestCollectSubscribersQuery(t *testing.T) {
 		t.Fatalf("expected 1 call, got %d", len(q.ListSubscribersForPatternsParams))
 	}
 	args := q.ListSubscribersForPatternsParams[0]
-	if len(args.Patterns) != 2 {
-		t.Fatalf("expected 2 patterns, got %d", len(args.Patterns))
+	want := map[string]bool{"post:/blog/1": false, "post:/blog/*": false, "post:/blog/1/*": false, "post:/blog/1/": false, "post:/blog": false, "post:/blog/": false}
+	for _, p := range args.Patterns {
+		if _, ok := want[p]; ok {
+			want[p] = true
+		}
+	}
+	for p, seen := range want {
+		if !seen {
+			t.Fatalf("missing expected expanded pattern %q in %v", p, args.Patterns)
+		}
 	}
 	if args.Method != "email" {
 		t.Fatalf("expected method email, got %s", args.Method)
@@ -557,12 +594,13 @@ func assertSubscriberCall(t *testing.T, calls []db.ListSubscribersForPatternsPar
 	t.Helper()
 	for _, call := range calls {
 		if call.Method == method {
-			if len(call.Patterns) != len(patterns) {
-				t.Fatalf("expected %d patterns for %s got %d", len(patterns), method, len(call.Patterns))
+			seen := map[string]bool{}
+			for _, p := range call.Patterns {
+				seen[p] = true
 			}
-			for i, p := range patterns {
-				if call.Patterns[i] != p {
-					t.Fatalf("%s pattern %d = %s want %s", method, i, call.Patterns[i], p)
+			for _, p := range patterns {
+				if !seen[p] {
+					t.Fatalf("missing base pattern %q for %s in %v", p, method, call.Patterns)
 				}
 			}
 			return

@@ -83,6 +83,16 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	safeGo(func() { logworker.Worker(ctx, bus) })
 	log.Printf("Starting audit worker")
 	safeGo(func() { auditworker.Worker(ctx, bus, q) })
+	log.Printf("Starting notification database feeder worker")
+	safeGo(func() {
+		n := notifications.New(
+			notifications.WithQueries(q),
+			notifications.WithEmailProvider(provider),
+			notifications.WithBus(bus),
+			notifications.WithConfig(cfg),
+		)
+		n.DatabaseFeederWorker(ctx, 3*time.Second)
+	})
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, bus, q) })
 	log.Printf("Starting background task worker")

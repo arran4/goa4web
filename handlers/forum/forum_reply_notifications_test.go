@@ -58,6 +58,7 @@ func TestHappyPathForumReply(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		replierUID := int32(1)
 		subscriberUID := int32(2)
+		exactPathSubscriberUID := int32(4)
 		missingEmailUID := int32(3)
 		adminUID := int32(99)
 		topicID := int32(5)
@@ -85,6 +86,12 @@ func TestHappyPathForumReply(t *testing.T) {
 				return &db.SystemGetUserByIDRow{
 					Idusers:  missingEmailUID,
 					Username: sql.NullString{String: "missing-email", Valid: true},
+				}, nil
+			case exactPathSubscriberUID:
+				return &db.SystemGetUserByIDRow{
+					Idusers:  exactPathSubscriberUID,
+					Username: sql.NullString{String: "exact-path-subscriber", Valid: true},
+					Email:    sql.NullString{String: "exact-path-subscriber@example.com", Valid: true},
 				}, nil
 			case adminUID:
 				return &db.SystemGetUserByIDRow{
@@ -131,11 +138,13 @@ func TestHappyPathForumReply(t *testing.T) {
 		}
 		qs.ListSubscribersForPatternsReturn = map[string][]int32{
 			fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID): {subscriberUID, missingEmailUID},
+			fmt.Sprintf("reply:/forum/topic/%d/thread/%d", topicID, threadID):   {exactPathSubscriberUID},
 			"notify:/admin/*": {adminUID},
 		}
 		qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
-			replierUID:    {AutoSubscribeReplies: true},
-			subscriberUID: {AutoSubscribeReplies: true},
+			replierUID:             {AutoSubscribeReplies: true},
+			subscriberUID:          {AutoSubscribeReplies: true},
+			exactPathSubscriberUID: {AutoSubscribeReplies: true},
 		}
 		qs.AdminListAdministratorEmailsReturns = []string{"admin@example.com"}
 		qs.SystemGetLastNotificationForRecipientByMessageErr = sql.ErrNoRows
@@ -246,6 +255,9 @@ func TestHappyPathForumReply(t *testing.T) {
 			if !findNotification(subscriberUID, expectedSubscriberNotif, expectedLink) {
 				t.Fatalf("expected subscriber notification %q with link %q, got %q with links %q", expectedSubscriberNotif, expectedLink, notificationsByRecipient[subscriberUID], notificationsLinksByRecipient[subscriberUID])
 			}
+			if !findNotification(exactPathSubscriberUID, expectedSubscriberNotif, expectedLink) {
+				t.Fatalf("expected exact-path subscriber notification %q with link %q, got %q with links %q", expectedSubscriberNotif, expectedLink, notificationsByRecipient[exactPathSubscriberUID], notificationsLinksByRecipient[exactPathSubscriberUID])
+			}
 
 			expectedAdminNotif := "User replier replied to the forum thread.\nOriginal thread content"
 			if !findNotification(adminUID, expectedAdminNotif, "") {
@@ -273,11 +285,11 @@ func TestHappyPathForumReply(t *testing.T) {
 			for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
 			}
 
-			if len(mockProvider.SentMessages) != 2 {
-				t.Fatalf("expected 2 emails sent, got %d", len(mockProvider.SentMessages))
+			if len(mockProvider.SentMessages) != 3 {
+				t.Fatalf("expected 3 emails sent, got %d", len(mockProvider.SentMessages))
 			}
 
-			var subscriberEmail, adminEmail *mail.Message
+			var subscriberEmail, exactPathSubscriberEmail, adminEmail *mail.Message
 			for i, raw := range mockProvider.SentMessages {
 				msg, err := mail.ReadMessage(strings.NewReader(string(raw)))
 				if err != nil {
@@ -286,6 +298,8 @@ func TestHappyPathForumReply(t *testing.T) {
 				to := mockProvider.Recipients[i].Address
 				if to == "subscriber@example.com" {
 					subscriberEmail = msg
+				} else if to == "exact-path-subscriber@example.com" {
+					exactPathSubscriberEmail = msg
 				} else if to == "admin@example.com" {
 					adminEmail = msg
 				}
@@ -301,6 +315,12 @@ func TestHappyPathForumReply(t *testing.T) {
 			expectedSubBody := "Hi subscriber,\n\nreplier posted a reply in Test Topic:\n\nThis is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words limit plus more.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
 			if subBody != expectedSubBody {
 				t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
+			}
+			if exactPathSubscriberEmail == nil {
+				t.Fatal("exact path subscriber email not found")
+			}
+			if exactPathSubscriberEmail.Header.Get("Subject") != "[goa4web] Reply in Test Topic - Original thread content" {
+				t.Errorf("exact path subscriber email subject mismatch: %s", exactPathSubscriberEmail.Header.Get("Subject"))
 			}
 
 			if adminEmail == nil {

@@ -27,6 +27,7 @@ func buildPatterns(task tasks.Name, path string) []string {
 	patterns := []string{fmt.Sprintf("%s:/%s", name, path)}
 	for i := len(parts) - 1; i >= 1; i-- {
 		prefix := strings.Join(parts[:i], "/")
+		patterns = append(patterns, fmt.Sprintf("%s:/%s", name, prefix))
 		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", name, prefix))
 	}
 	patterns = append(patterns, fmt.Sprintf("%s:/*", name))

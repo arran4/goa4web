@@ -38,10 +38,10 @@ func (r *recordDLQ) Record(_ context.Context, m string) error {
 
 func TestBuildPatterns(t *testing.T) {
 	cases := map[string][]string{
-		"/blog/a/b": {"reply:/blog/a/b", "reply:/blog/a/*", "reply:/blog/*", "reply:/*"},
+		"/blog/a/b": {"reply:/blog/a/b", "reply:/blog/a", "reply:/blog/a/*", "reply:/blog", "reply:/blog/*", "reply:/*"},
 		"/":         {"reply:/*"},
 		"":          {"reply:/*"},
-		"/x/y/":     {"reply:/x/y", "reply:/x/*", "reply:/*"},
+		"/x/y/":     {"reply:/x/y", "reply:/x", "reply:/x/*", "reply:/*"},
 	}
 	for path, expected := range cases {
 		got := buildPatterns(tasks.TaskString("Reply"), path)
@@ -63,12 +63,12 @@ func TestBuildPatternsAdditional(t *testing.T) {
 		want []string
 	}
 	cases := []testCase{
-		{tasks.TaskString("Reply"), "/writings/article/2", []string{"reply:/writings/article/2", "reply:/writings/article/*", "reply:/writings/*", "reply:/*"}},
-		{tasks.TaskString("Reply"), "/news/news/14", []string{"reply:/news/news/14", "reply:/news/news/*", "reply:/news/*", "reply:/*"}},
-		{tasks.TaskString("Post"), "/blog/3", []string{"post:/blog/3", "post:/blog/*", "post:/*"}},
-		{tasks.TaskString("Post"), "/writing/5", []string{"post:/writing/5", "post:/writing/*", "post:/*"}},
-		{tasks.TaskString("Post"), "/news/8", []string{"post:/news/8", "post:/news/*", "post:/*"}},
-		{tasks.TaskString("Post"), "/image/9", []string{"post:/image/9", "post:/image/*", "post:/*"}},
+		{tasks.TaskString("Reply"), "/writings/article/2", []string{"reply:/writings/article/2", "reply:/writings/article", "reply:/writings/article/*", "reply:/writings", "reply:/writings/*", "reply:/*"}},
+		{tasks.TaskString("Reply"), "/news/news/14", []string{"reply:/news/news/14", "reply:/news/news", "reply:/news/news/*", "reply:/news", "reply:/news/*", "reply:/*"}},
+		{tasks.TaskString("Post"), "/blog/3", []string{"post:/blog/3", "post:/blog", "post:/blog/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/writing/5", []string{"post:/writing/5", "post:/writing", "post:/writing/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/news/8", []string{"post:/news/8", "post:/news", "post:/news/*", "post:/*"}},
+		{tasks.TaskString("Post"), "/image/9", []string{"post:/image/9", "post:/image", "post:/image/*", "post:/*"}},
 	}
 	for _, tc := range cases {
 		got := buildPatterns(tc.task, tc.path)

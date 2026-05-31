@@ -17,6 +17,9 @@
         el.style.height = el.scrollHeight + 'px';
     }
     function handlePaste(e){
+        if (e.target.readOnly || e.target.disabled) {
+            return;
+        }
         if (e.shiftKey) {
             return;
         }
@@ -90,7 +93,7 @@
         }
 
         if (!hasImage) {
-            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const pastedText = e.clipboardData.getData('text');
             if (pastedText && pastedText.trim() !== '') {
                 const urlStr = pastedText.trim();
                 if (/^https?:\/\/[^\s]+$/.test(urlStr)) {
@@ -101,16 +104,18 @@
                         const start = e.target.selectionStart;
                         const end = e.target.selectionEnd;
                         const selectedText = e.target.value.substring(start, end);
+                        const cleanSelected = selectedText.trim();
+                        const hasNewline = cleanSelected.includes('\n') || cleanSelected.includes('\r');
 
                         let replacement = '';
-                        if (selectedText.length > 0) {
-                            replacement = `[link ${urlStr} ${selectedText}]`;
+                        if (cleanSelected.length > 0 && !hasNewline) {
+                            replacement = `[link ${urlStr} ${cleanSelected}]`;
                         } else {
                             replacement = `[link ${urlStr}]`;
                         }
 
                         e.target.setRangeText(replacement, start, end, 'end');
-                        autoSize(e.target);
+                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
                     } catch (err) {}
                 }
             }

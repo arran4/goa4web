@@ -8,6 +8,8 @@ import (
 	"github.com/anthonynsimon/bild/transform"
 )
 
+var DefaultThumbSize = 200
+
 // GenerateThumbnail creates a 200x200 center-cropped thumbnail from the source image.
 func GenerateThumbnail(srcImage image.Image, ext string) ([]byte, error) {
 	src := srcImage.Bounds()
@@ -30,7 +32,7 @@ func GenerateThumbnail(srcImage image.Image, ext string) ([]byte, error) {
 	} else {
 		croppedImg = transform.Crop(srcImage, crop)
 	}
-	thumb := transform.Resize(croppedImg, 200, 200, transform.Linear)
+	thumb := transform.Resize(croppedImg, DefaultThumbSize, DefaultThumbSize, transform.Linear)
 
 	var tbuf bytes.Buffer
 	enc, err := EncoderByExtension(ext)

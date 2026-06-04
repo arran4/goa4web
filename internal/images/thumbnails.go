@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"image"
 
-	"golang.org/x/image/draw"
+	"github.com/anthonynsimon/bild/transform"
 )
 
 // GenerateThumbnail creates a 200x200 center-cropped thumbnail from the source image.
@@ -21,9 +21,11 @@ func GenerateThumbnail(srcImage image.Image, ext string) ([]byte, error) {
 		y0 := src.Min.Y + (src.Dy()-side)/2
 		crop = image.Rect(src.Min.X, y0, src.Min.X+side, y0+side)
 	}
+
+	croppedImg := transform.Crop(srcImage, crop)
+	thumb := transform.Resize(croppedImg, 200, 200, transform.Linear)
+
 	var tbuf bytes.Buffer
-	thumb := image.NewRGBA(image.Rect(0, 0, 200, 200))
-	draw.CatmullRom.Scale(thumb, thumb.Bounds(), srcImage, crop, draw.Over, nil)
 	enc, err := EncoderByExtension(ext)
 	if err != nil {
 		return nil, fmt.Errorf("encoder ext %w", err)

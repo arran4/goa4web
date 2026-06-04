@@ -22,14 +22,7 @@ func GenerateThumbnail(srcImage image.Image, ext string) ([]byte, error) {
 		crop = image.Rect(src.Min.X, y0, src.Min.X+side, y0+side)
 	}
 
-	var croppedImg image.Image
-	if sub, ok := srcImage.(interface {
-		SubImage(r image.Rectangle) image.Image
-	}); ok {
-		croppedImg = sub.SubImage(crop)
-	} else {
-		croppedImg = transform.Crop(srcImage, crop)
-	}
+	croppedImg := transform.Crop(srcImage, crop)
 	thumb := transform.Resize(croppedImg, 200, 200, transform.Linear)
 
 	var tbuf bytes.Buffer

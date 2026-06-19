@@ -41,13 +41,9 @@ type BildThumbnailGenerator struct{}
 // DrawThumbnailGenerator uses the standard golang.org/x/image/draw library.
 type DrawThumbnailGenerator struct{}
 
-// DefaultThumbnailGeneratorName can be configured or changed elsewhere.
-var DefaultThumbnailGeneratorName = "bild"
-
-// GenerateThumbnail creates a 200x200 center-cropped thumbnail from the source image.
-// It uses the configured default generator.
-func GenerateThumbnail(srcImage image.Image, ext string) ([]byte, error) {
-	return GetThumbnailGenerator(DefaultThumbnailGeneratorName).Generate(srcImage, ext)
+// GenerateThumbnail creates a 200x200 center-cropped thumbnail from the source image using a specific generator.
+func GenerateThumbnail(srcImage image.Image, ext string, generatorName string) ([]byte, error) {
+	return GetThumbnailGenerator(generatorName).Generate(srcImage, ext)
 }
 
 func getCrop(srcImage image.Image) image.Rectangle {

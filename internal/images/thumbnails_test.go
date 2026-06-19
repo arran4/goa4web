@@ -26,7 +26,7 @@ func TestGenerateThumbnail(t *testing.T) {
 
 		for _, ext := range formats {
 			t.Run(ext, func(t *testing.T) {
-				thumbData, err := GenerateThumbnail(src, ext)
+				thumbData, err := GenerateThumbnail(src, ext, "bild")
 				if err != nil {
 					t.Fatalf("GenerateThumbnail failed for %s: %v", ext, err)
 				}
@@ -58,7 +58,7 @@ func TestGenerateThumbnail(t *testing.T) {
 	// 2. Test Invalid Extension
 	t.Run("InvalidExtension", func(t *testing.T) {
 		src := createImage(100, 100, color.Black)
-		_, err := GenerateThumbnail(src, ".bmp")
+		_, err := GenerateThumbnail(src, ".bmp", "bild")
 		if err == nil {
 			t.Error("GenerateThumbnail should fail for .bmp")
 		}
@@ -77,7 +77,7 @@ func TestGenerateThumbnail(t *testing.T) {
 		draw.Draw(src, image.Rect(100, 0, 200, 100), &image.Uniform{green}, image.Point{}, draw.Src)
 		draw.Draw(src, image.Rect(200, 0, 300, 100), &image.Uniform{blue}, image.Point{}, draw.Src)
 
-		thumbData, err := GenerateThumbnail(src, ".png")
+		thumbData, err := GenerateThumbnail(src, ".png", "bild")
 		if err != nil {
 			t.Fatalf("GenerateThumbnail failed: %v", err)
 		}
@@ -112,7 +112,7 @@ func TestGenerateThumbnail(t *testing.T) {
 		draw.Draw(src, image.Rect(0, 100, 100, 200), &image.Uniform{green}, image.Point{}, draw.Src)
 		draw.Draw(src, image.Rect(0, 200, 100, 300), &image.Uniform{blue}, image.Point{}, draw.Src)
 
-		thumbData, err := GenerateThumbnail(src, ".png")
+		thumbData, err := GenerateThumbnail(src, ".png", "bild")
 		if err != nil {
 			t.Fatalf("GenerateThumbnail failed: %v", err)
 		}

@@ -139,10 +139,11 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	width := p.Image.Bounds().Dx()
 	height := p.Image.Bounds().Dy()
 
+	generator := "bild"
 	if cfg != nil && cfg.ImageThumbnailGenerator != "" {
-		imagesign.DefaultThumbnailGeneratorName = cfg.ImageThumbnailGenerator
+		generator = cfg.ImageThumbnailGenerator
 	}
-	thumbBytes, err := imagesign.GenerateThumbnail(p.Image, p.Ext)
+	thumbBytes, err := imagesign.GenerateThumbnail(p.Image, p.Ext, generator)
 	if err != nil {
 		return "", fmt.Errorf("generate thumbnail %w", err)
 	}

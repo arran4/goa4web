@@ -73,6 +73,7 @@ var StringOptions = []StringOption{
 	{"image-cache-provider", EnvImageCacheProvider, "The provider to use for the image cache. Supported providers are 'local' and 's3'.", "local", nil, "", func(c *RuntimeConfig) *string { return &c.ImageCacheProvider }},
 	{"image-cache-s3-url", EnvImageCacheS3URL, "The S3 prefix URL for the image cache.", "", []string{"s3://mybucket/cache"}, "", func(c *RuntimeConfig) *string { return &c.ImageCacheS3URL }},
 	{"image-cache-dir", EnvImageCacheDir, "The directory for cached thumbnails when using the 'local' provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.ImageCacheDir }},
+	{"image-thumbnail-generator", EnvImageThumbnailGenerator, "The thumbnail generator backend to use ('bild' or 'draw').", "bild", nil, "", func(c *RuntimeConfig) *string { return &c.ImageThumbnailGenerator }},
 	{"dlq-provider", EnvDLQProvider, "The provider for the dead letter queue. Supported providers are 'file' and 'memory'.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DLQProvider }},
 	{"dlq-file", EnvDLQFile, "The file path for the dead letter queue when using the 'file' provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DLQFile }},
 	{"session-name", EnvSessionName, "The name of the session cookie.", "my-session", nil, "", func(c *RuntimeConfig) *string { return &c.SessionName }},

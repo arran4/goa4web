@@ -113,6 +113,7 @@ type RuntimeConfig struct {
 	ImageCacheS3URL     string
 	ImageMaxBytes       int
 	ImageCacheMaxBytes  int
+	ImageThumbnailGenerator string
 
 	DLQProvider string
 	DLQFile     string

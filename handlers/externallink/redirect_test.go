@@ -58,8 +58,8 @@ func TestRedirectHandler(t *testing.T) {
 
 			RedirectHandler(rec, req)
 
-			if rec.Code != http.StatusTemporaryRedirect {
-				t.Errorf("expected status %d, got %d", http.StatusTemporaryRedirect, rec.Code)
+			if rec.Code != http.StatusSeeOther {
+				t.Errorf("expected status %d, got %d", http.StatusSeeOther, rec.Code)
 			}
 			if loc := rec.Header().Get("Location"); loc != urlStr {
 				t.Errorf("expected location %s, got %s", urlStr, loc)

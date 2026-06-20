@@ -79,5 +79,5 @@ func loginRedirect(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusSeeOther)
 }

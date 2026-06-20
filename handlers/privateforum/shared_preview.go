@@ -29,7 +29,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		if cd.UserID != 0 {
 			vars := mux.Vars(r)
 			actualURL := fmt.Sprintf("/private/topic/%s/thread/%s", vars["topic"], vars["thread"])
-			http.Redirect(w, r, actualURL, http.StatusFound)
+			http.Redirect(w, r, actualURL, http.StatusSeeOther)
 			return
 		}
 		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
@@ -43,7 +43,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
 		actualURL := fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
-		http.Redirect(w, r, actualURL, http.StatusFound)
+		http.Redirect(w, r, actualURL, http.StatusSeeOther)
 		return
 	}
 
@@ -93,7 +93,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			topicID, _ := strconv.Atoi(vars["topic"])
 			actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
-			http.Redirect(w, r, actualURL, http.StatusFound)
+			http.Redirect(w, r, actualURL, http.StatusSeeOther)
 			return
 		}
 		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
@@ -105,7 +105,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	if cd.UserID != 0 {
 		actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
-		http.Redirect(w, r, actualURL, http.StatusFound)
+		http.Redirect(w, r, actualURL, http.StatusSeeOther)
 		return
 	}
 

@@ -54,7 +54,7 @@ func TestAdminAddEmailTask(t *testing.T) {
 			t.Errorf("expected email to be added, got %s", qs.InsertUserEmailCalls[0].Email)
 		}
 
-		if rr.Code != http.StatusFound {
+		if rr.Code != http.StatusSeeOther {
 			// ...
 		}
 	})

@@ -24,7 +24,11 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		case RedirectHandler:
 			// Use 303 See Other so POST actions redirect to a GET of the target resource.
 			// 307 would preserve the HTTP method and often breaks when the target only supports GET.
-			http.Redirect(w, r, string(result), http.StatusSeeOther)
+			status := http.StatusSeeOther
+			if r.Method == http.MethodGet {
+				status = http.StatusTemporaryRedirect
+			}
+			http.Redirect(w, r, string(result), status)
 		case RefreshDirectHandler:
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			cd.AutoRefresh = result.Content()
@@ -79,5 +83,9 @@ func loginRedirect(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusTemporaryRedirect)
+	status := http.StatusSeeOther
+	if r.Method == http.MethodGet {
+		status = http.StatusTemporaryRedirect
+	}
+	http.Redirect(w, r, "/login?"+vals.Encode(), status)
 }

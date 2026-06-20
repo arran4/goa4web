@@ -150,6 +150,8 @@ const (
 	EnvImageCacheDir = "IMAGE_CACHE_DIR"
 	// EnvImageThumbnailGenerator selects the backend used for generating thumbnails.
 	EnvImageThumbnailGenerator = "IMAGE_THUMBNAIL_GENERATOR"
+	// EnvImageThumbnailSize sets the size of the generated thumbnails.
+	EnvImageThumbnailSize = "IMAGE_THUMBNAIL_SIZE"
 	// EnvImageCacheProvider selects the cache storage backend.
 	EnvImageCacheProvider = "IMAGE_CACHE_PROVIDER"
 	// EnvImageCacheS3URL defines the S3 bucket and prefix used by the S3

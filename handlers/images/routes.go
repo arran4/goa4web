@@ -145,10 +145,16 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 						if err == nil {
 							ext := filepath.Ext(id)
 							generator := "bild"
-							if cfg != nil && cfg.ImageThumbnailGenerator != "" {
-								generator = cfg.ImageThumbnailGenerator
+							size := 200
+							if cfg != nil {
+								if cfg.ImageThumbnailGenerator != "" {
+									generator = cfg.ImageThumbnailGenerator
+								}
+								if cfg.ImageThumbnailSize > 0 {
+									size = cfg.ImageThumbnailSize
+								}
 							}
-							thumbBytes, err := intimages.GenerateThumbnail(img, ext, generator)
+							thumbBytes, err := intimages.GenerateThumbnail(img, ext, generator, size)
 							if err == nil {
 								if err := p.Write(r.Context(), key, thumbBytes); err == nil {
 									data = thumbBytes

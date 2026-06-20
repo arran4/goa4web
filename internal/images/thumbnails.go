@@ -9,11 +9,9 @@ import (
 	"golang.org/x/image/draw"
 )
 
-var DefaultThumbSize = 200
-
 // ThumbnailGenerator represents a strategy for generating thumbnails.
 type ThumbnailGenerator interface {
-	Generate(srcImage image.Image, ext string) ([]byte, error)
+	Generate(srcImage image.Image, ext string, size int) ([]byte, error)
 }
 
 // thumbnailGenerators holds the registered thumbnail generator implementations.
@@ -41,9 +39,9 @@ type BildThumbnailGenerator struct{}
 // DrawThumbnailGenerator uses the standard golang.org/x/image/draw library.
 type DrawThumbnailGenerator struct{}
 
-// GenerateThumbnail creates a 200x200 center-cropped thumbnail from the source image using a specific generator.
-func GenerateThumbnail(srcImage image.Image, ext string, generatorName string) ([]byte, error) {
-	return GetThumbnailGenerator(generatorName).Generate(srcImage, ext)
+// GenerateThumbnail creates a center-cropped thumbnail from the source image using a specific generator and size.
+func GenerateThumbnail(srcImage image.Image, ext string, generatorName string, size int) ([]byte, error) {
+	return GetThumbnailGenerator(generatorName).Generate(srcImage, ext, size)
 }
 
 func getCrop(srcImage image.Image) image.Rectangle {
@@ -61,7 +59,7 @@ func getCrop(srcImage image.Image) image.Rectangle {
 	return crop
 }
 
-func (g *BildThumbnailGenerator) Generate(srcImage image.Image, ext string) ([]byte, error) {
+func (g *BildThumbnailGenerator) Generate(srcImage image.Image, ext string, size int) ([]byte, error) {
 	crop := getCrop(srcImage)
 
 	var croppedImg image.Image
@@ -72,7 +70,7 @@ func (g *BildThumbnailGenerator) Generate(srcImage image.Image, ext string) ([]b
 	} else {
 		croppedImg = transform.Crop(srcImage, crop)
 	}
-	thumb := transform.Resize(croppedImg, DefaultThumbSize, DefaultThumbSize, transform.Linear)
+	thumb := transform.Resize(croppedImg, size, size, transform.Linear)
 
 	var tbuf bytes.Buffer
 	enc, err := EncoderByExtension(ext)
@@ -85,10 +83,10 @@ func (g *BildThumbnailGenerator) Generate(srcImage image.Image, ext string) ([]b
 	return tbuf.Bytes(), nil
 }
 
-func (g *DrawThumbnailGenerator) Generate(srcImage image.Image, ext string) ([]byte, error) {
+func (g *DrawThumbnailGenerator) Generate(srcImage image.Image, ext string, size int) ([]byte, error) {
 	crop := getCrop(srcImage)
 	var tbuf bytes.Buffer
-	thumb := image.NewRGBA(image.Rect(0, 0, DefaultThumbSize, DefaultThumbSize))
+	thumb := image.NewRGBA(image.Rect(0, 0, size, size))
 	draw.CatmullRom.Scale(thumb, thumb.Bounds(), srcImage, crop, draw.Over, nil)
 	enc, err := EncoderByExtension(ext)
 	if err != nil {

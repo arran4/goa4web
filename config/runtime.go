@@ -114,6 +114,7 @@ type RuntimeConfig struct {
 	ImageMaxBytes       int
 	ImageCacheMaxBytes  int
 	ImageThumbnailGenerator string
+	ImageThumbnailSize  int
 
 	DLQProvider string
 	DLQFile     string

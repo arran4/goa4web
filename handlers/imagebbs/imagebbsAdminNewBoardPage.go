@@ -42,7 +42,7 @@ func (NewBoardTask) RequiredTemplates() []tasks.Template {
 }
 
 func AdminNewBoardPage(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/imagebbs/boards", http.StatusTemporaryRedirect)
 }
 
 func (NewBoardTask) Action(w http.ResponseWriter, r *http.Request) any {

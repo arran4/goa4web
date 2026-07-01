@@ -418,21 +418,27 @@ function quote(type, commentId) {
 // Helper to calculate absolute source offset based on data attributes
 function calculateSourceOffset(node, offset) {
     if (node.nodeType === Node.TEXT_NODE) {
-        // Look for parent with data-start-pos
+        // Look for parent with data-start-pos or data-comment-offset
         const parent = node.parentElement;
-        if (parent && parent.hasAttribute('data-start-pos')) {
-            const baseStart = parseInt(parent.getAttribute('data-start-pos'), 10);
-            const textContent = node.textContent;
-            const prefix = textContent.substring(0, offset);
-            const byteLen = new TextEncoder().encode(prefix).length;
-            return baseStart + byteLen;
+        if (parent) {
+            let startAttr = parent.getAttribute('data-comment-offset') || parent.getAttribute('data-start-pos');
+            if (startAttr !== null) {
+                const baseStart = parseInt(startAttr, 10);
+                const textContent = node.textContent;
+                const prefix = textContent.substring(0, offset);
+                const byteLen = new TextEncoder().encode(prefix).length;
+                return baseStart + byteLen;
+            }
         }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
         // If offset points to a child, try to find start pos of that child
         if (offset < node.childNodes.length) {
             const child = node.childNodes[offset];
-            if (child.nodeType === Node.ELEMENT_NODE && child.hasAttribute('data-start-pos')) {
-                return parseInt(child.getAttribute('data-start-pos'), 10);
+            if (child.nodeType === Node.ELEMENT_NODE) {
+                let startAttr = child.getAttribute('data-comment-offset') || child.getAttribute('data-start-pos');
+                if (startAttr !== null) {
+                    return parseInt(startAttr, 10);
+                }
             } else if (child.nodeType === Node.TEXT_NODE) {
                  return calculateSourceOffset(child, 0);
             }
@@ -446,8 +452,11 @@ function calculateSourceOffset(node, offset) {
     // Fallback: try to find nearest ancestor with data-start-pos
     let current = node;
     while (current) {
-        if (current.nodeType === Node.ELEMENT_NODE && current.hasAttribute('data-start-pos')) {
-             return parseInt(current.getAttribute('data-start-pos'), 10);
+        if (current.nodeType === Node.ELEMENT_NODE) {
+            let startAttr = current.getAttribute('data-comment-offset') || current.getAttribute('data-start-pos');
+            if (startAttr !== null) {
+                return parseInt(startAttr, 10);
+            }
         }
         current = current.parentNode;
     }

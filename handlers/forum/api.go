@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/gorilla/mux"
@@ -31,7 +32,18 @@ func QuoteApi(w http.ResponseWriter, r *http.Request) {
 			start, _ := strconv.Atoi(r.URL.Query().Get("start"))
 			end, _ := strconv.Atoi(r.URL.Query().Get("end"))
 			sub, _ := a4code.Substring(c.Text.String, start, end)
-			text = a4code.QuoteText(c.Username.String, sub)
+
+			tree, err := a4code.ParseString(sub)
+			if err == nil && len(tree.Children) == 1 {
+				switch tree.Children[0].(type) {
+				case *ast.QuoteOf, *ast.Quote:
+					text = sub
+				default:
+					text = a4code.QuoteText(c.Username.String, sub)
+				}
+			} else {
+				text = a4code.QuoteText(c.Username.String, sub)
+			}
 		default:
 			text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
 		}

@@ -422,7 +422,7 @@ function calculateSourceOffset(node, offset) {
         const parent = node.parentElement;
         if (parent) {
             let startAttr = parent.getAttribute('data-comment-offset') || parent.getAttribute('data-start-pos');
-            if (startAttr !== null) {
+            if (startAttr !== null && startAttr !== undefined) {
                 const baseStart = parseInt(startAttr, 10);
                 const textContent = node.textContent;
                 const prefix = textContent.substring(0, offset);
@@ -436,7 +436,7 @@ function calculateSourceOffset(node, offset) {
             const child = node.childNodes[offset];
             if (child.nodeType === Node.ELEMENT_NODE) {
                 let startAttr = child.getAttribute('data-comment-offset') || child.getAttribute('data-start-pos');
-                if (startAttr !== null) {
+                if (startAttr !== null && startAttr !== undefined) {
                     return parseInt(startAttr, 10);
                 }
             } else if (child.nodeType === Node.TEXT_NODE) {
@@ -454,7 +454,7 @@ function calculateSourceOffset(node, offset) {
     while (current) {
         if (current.nodeType === Node.ELEMENT_NODE) {
             let startAttr = current.getAttribute('data-comment-offset') || current.getAttribute('data-start-pos');
-            if (startAttr !== null) {
+            if (startAttr !== null && startAttr !== undefined) {
                 return parseInt(startAttr, 10);
             }
         }

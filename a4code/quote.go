@@ -281,7 +281,7 @@ func nodeToString(n ast.Node) string {
 
 func IsQuoteBlock(s string) bool {
 	s = strings.TrimSpace(s)
-	if !strings.HasPrefix(strings.ToLower(s), "[quoteof") && !strings.HasPrefix(strings.ToLower(s), "[quote") {
+	if !strings.HasPrefix(strings.ToLower(s), "[quote") {
 		return false
 	}
 	// Verify it's a single block by balancing brackets

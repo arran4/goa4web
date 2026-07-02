@@ -24,11 +24,11 @@ func TestCodeBlockEscaping(t *testing.T) {
 			input:    `[code C:\]path ]`,
 			expected: `C:]path `,
 		},
-        {
-            name:     "Escaped bracket prevents termination (EOF case)",
-            input:    `[code C:\]path]`,
-            expected: `C:]path`, // Captures C:]path, last bracket terminates block
-        },
+		{
+			name:     "Escaped bracket prevents termination (EOF case)",
+			input:    `[code C:\]path]`,
+			expected: `C:]path`, // Captures C:]path, last bracket terminates block
+		},
 		{
 			name:     "Standard block content (not balanced anymore)",
 			input:    `[code [b]bold[/b]]`,
@@ -54,24 +54,24 @@ func TestCodeBlockEscaping(t *testing.T) {
 			input:    `[code \[literal]`,
 			expected: `[literal`,
 		},
-        {
-            name:     "Escaped open bracket literal closed",
-            input:    `[code \[literal\]]`,
-            expected: `[literal]`,
-        },
-        {
-            name: "New line handling",
-            input: "[code \nline1\nline2\n]",
-            expected: "line1\nline2\n", // Leading newline consumed by parser
-        },
 		{
-			name: "Comment case 1",
-			input: "[code [b]",
+			name:     "Escaped open bracket literal closed",
+			input:    `[code \[literal\]]`,
+			expected: `[literal]`,
+		},
+		{
+			name:     "New line handling",
+			input:    "[code \nline1\nline2\n]",
+			expected: "line1\nline2\n", // Leading newline consumed by parser
+		},
+		{
+			name:     "Comment case 1",
+			input:    "[code [b]",
 			expected: `[b`,
 		},
 		{
-			name: "Comment case 2",
-			input: "[code [ [ ] ]",
+			name:     "Comment case 2",
+			input:    "[code [ [ ] ]",
 			expected: `[ [ `, // Stops at first ]
 		},
 	}

@@ -16,7 +16,10 @@ import (
 
 	"github.com/arran4/goa4web"
 
+	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/a4code2html"
+	"github.com/arran4/goa4web/a4code/ast"
+	"github.com/arran4/goa4web/a4code/goa4webhtml"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -239,17 +242,22 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 			}
 			funcs["a4code2html"] = func(s string) template.HTML {
 				provider := NewGoa4WebLinkProvider(cd, r.Context())
-				c := a4code2html.New(mapper, getColor, provider)
-				c.CodeType = a4code2html.CTHTML
-				c.SetInput(s)
-				out, err := io.ReadAll(c.Process())
+				root, err := a4code.ParseString(s)
 				if err != nil {
-					log.Printf("read markup: %v", err)
+					log.Printf("parse markup: %v", err)
+					return template.HTML("")
 				}
-				if cerr := c.Error(); cerr != nil {
-					log.Printf("process markup: %v", cerr)
+				var buf bytes.Buffer
+				gen := goa4webhtml.NewGenerator(
+					goa4webhtml.WithImageMapper(mapper),
+					goa4webhtml.WithUserColorMapper(getColor),
+					goa4webhtml.WithLinkProvider(provider),
+				)
+				if err := ast.Generate(&buf, root, gen); err != nil {
+					log.Printf("generate markup: %v", err)
+					return template.HTML("")
 				}
-				return template.HTML(out)
+				return template.HTML(buf.String())
 			}
 			funcs["addmode"] = func(u string) string {
 				cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
@@ -270,11 +278,18 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 	} else {
 		// Provide basic defaults if CD is missing
 		funcs["a4code2html"] = func(s string) template.HTML {
-			c := a4code2html.New(nil, getColor, nil)
-			c.CodeType = a4code2html.CTHTML
-			c.SetInput(s)
-			out, _ := io.ReadAll(c.Process())
-			return template.HTML(out)
+			root, err := a4code.ParseString(s)
+			if err != nil {
+				log.Printf("parse markup: %v", err)
+				return template.HTML("")
+			}
+			var buf bytes.Buffer
+			gen := goa4webhtml.NewGenerator(goa4webhtml.WithUserColorMapper(getColor))
+			if err := ast.Generate(&buf, root, gen); err != nil {
+				log.Printf("generate markup: %v", err)
+				return template.HTML("")
+			}
+			return template.HTML(buf.String())
 		}
 	}
 

@@ -429,7 +429,8 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			}
 		}
 		n := &ast.Image{Src: raw}
-		n.SetPos(startPos, visiblePos) // Self-closing, 0-width in visible space
+		n.SetPos(visiblePos, visiblePos+1)
+		visiblePos++
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
 			children := p.GetChildren()
@@ -598,4 +599,3 @@ func skipArgPrefix(s *scanner) {
 
 	s.UnreadByte()
 }
-

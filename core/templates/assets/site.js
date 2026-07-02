@@ -75,6 +75,10 @@ function insertA4CodeTag(targetId, tag) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
 
+    if (tag === 'quote' && quoteDocumentSelectionIntoEditor(targetId)) {
+        return;
+    }
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -115,6 +119,123 @@ function insertA4CodeTag(targetId, tag) {
     }
 
     textarea.setRangeText(replacement, start, end, 'select');
+}
+
+function quoteDocumentSelectionIntoEditor(targetId) {
+    const ranges = selectedCommentRanges();
+    if (ranges.length === 0) {
+        return false;
+    }
+
+    const textarea = document.getElementById(targetId);
+    if (!textarea) {
+        return false;
+    }
+
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+    const csrfToken = document.querySelector('input[name="csrf_token"]');
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken.value;
+    }
+
+    fetch('/api/forum/quote-selection', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ ranges: ranges })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Quote selection request failed');
+        }
+        return response.json();
+    })
+    .then(data => {
+        insertTextIntoEditor(textarea, data.text || '');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while quoting the selection.');
+    });
+
+    return true;
+}
+
+function selectedCommentRanges() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        return [];
+    }
+
+    const result = [];
+    for (let i = 0; i < selection.rangeCount; i++) {
+        const selectionRange = selection.getRangeAt(i);
+        const comments = document.querySelectorAll('section.body > div[id^="comment-"], .body > div[id^="comment-"]');
+        comments.forEach(comment => {
+            if (!rangeIntersectsNode(selectionRange, comment)) {
+                return;
+            }
+
+            const commentID = parseInt(comment.id.replace('comment-', ''), 10);
+            if (Number.isNaN(commentID)) {
+                return;
+            }
+
+            const start = commentContainsNode(comment, selectionRange.startContainer)
+                ? calculateSourceOffset(selectionRange.startContainer, selectionRange.startOffset)
+                : calculateSourceOffset(comment, 0);
+            const end = commentContainsNode(comment, selectionRange.endContainer)
+                ? calculateSourceOffset(selectionRange.endContainer, selectionRange.endOffset)
+                : calculateSourceOffset(comment, comment.childNodes.length);
+
+            if (start !== -1 && end !== -1 && end > start) {
+                result.push({ comment_id: commentID, start: start, end: end });
+            }
+        });
+    }
+
+    result.sort((a, b) => {
+        const aNode = document.getElementById('comment-' + a.comment_id);
+        const bNode = document.getElementById('comment-' + b.comment_id);
+        if (!aNode || !bNode || aNode === bNode) {
+            return a.start - b.start;
+        }
+        const pos = aNode.compareDocumentPosition(bNode);
+        return pos & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1;
+    });
+    return result;
+}
+
+function rangeIntersectsNode(range, node) {
+    if (typeof range.intersectsNode === 'function') {
+        try {
+            return range.intersectsNode(node);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    const nodeRange = document.createRange();
+    nodeRange.selectNodeContents(node);
+    return range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+        range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0;
+}
+
+function commentContainsNode(comment, node) {
+    return node === comment || comment.contains(node);
+}
+
+function insertTextIntoEditor(textarea, text) {
+    if (!text) {
+        return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const prefix = start > 0 && textarea.value.charAt(start - 1) !== '\n' ? '\n' : '';
+    const suffix = end < textarea.value.length && !text.endsWith('\n') ? '\n' : '';
+    textarea.setRangeText(prefix + text + suffix, start, end, 'end');
+    textarea.focus();
 }
 
 function setupKeyboardShortcuts() {
@@ -417,41 +538,196 @@ function quote(type, commentId) {
 
 // Helper to calculate absolute source offset based on data attributes
 function calculateSourceOffset(node, offset) {
-    if (node.nodeType === Node.TEXT_NODE) {
-        // Look for parent with data-start-pos
-        const parent = node.parentElement;
-        if (parent && parent.hasAttribute('data-start-pos')) {
-            const baseStart = parseInt(parent.getAttribute('data-start-pos'), 10);
-            const textContent = node.textContent;
-            const prefix = textContent.substring(0, offset);
-            const byteLen = new TextEncoder().encode(prefix).length;
-            return baseStart + byteLen;
-        }
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // If offset points to a child, try to find start pos of that child
-        if (offset < node.childNodes.length) {
-            const child = node.childNodes[offset];
-            if (child.nodeType === Node.ELEMENT_NODE && child.hasAttribute('data-start-pos')) {
-                return parseInt(child.getAttribute('data-start-pos'), 10);
-            } else if (child.nodeType === Node.TEXT_NODE) {
-                 return calculateSourceOffset(child, 0);
+    const boundaryOffset = sourceBoundaryOffset(node, offset);
+    if (boundaryOffset !== -1) {
+        return boundaryOffset;
+    }
+
+    const annotated = nearestSourceAnnotatedElement(node);
+    if (!annotated) {
+        return -1;
+    }
+
+    const startAttr = annotated.getAttribute('data-comment-offset') || annotated.getAttribute('data-start-pos');
+    if (startAttr === null || startAttr === undefined) {
+        return -1;
+    }
+
+    const relative = sourceOffsetWithin(annotated, node, offset);
+    if (relative === -1) {
+        return -1;
+    }
+
+    return parseInt(startAttr, 10) + relative;
+}
+
+function sourceBoundaryOffset(node, offset) {
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+        return -1;
+    }
+
+    if (offset < node.childNodes.length) {
+        const child = node.childNodes[offset];
+        if (child.nodeType === Node.ELEMENT_NODE) {
+            const startAttr = child.getAttribute('data-comment-offset') || child.getAttribute('data-start-pos');
+            if (startAttr !== null && startAttr !== undefined) {
+                return parseInt(startAttr, 10);
             }
-        } else {
-             // Offset at end.
-             if (node.hasAttribute('data-end-pos')) {
-                 return parseInt(node.getAttribute('data-end-pos'), 10);
-             }
         }
     }
-    // Fallback: try to find nearest ancestor with data-start-pos
-    let current = node;
-    while (current) {
-        if (current.nodeType === Node.ELEMENT_NODE && current.hasAttribute('data-start-pos')) {
-             return parseInt(current.getAttribute('data-start-pos'), 10);
+
+    if (offset > 0 && offset <= node.childNodes.length) {
+        const previous = node.childNodes[offset - 1];
+        if (previous.nodeType === Node.ELEMENT_NODE) {
+            const endAttr = previous.getAttribute('data-end-pos');
+            if (endAttr !== null && endAttr !== undefined) {
+                return parseInt(endAttr, 10);
+            }
         }
-        current = current.parentNode;
     }
+
+    if (offset === node.childNodes.length && node.hasAttribute('data-end-pos')) {
+        return parseInt(node.getAttribute('data-end-pos'), 10);
+    }
+
     return -1;
+}
+
+function nearestSourceAnnotatedElement(node) {
+    let current = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+    while (current) {
+        if (current.nodeType === Node.ELEMENT_NODE &&
+            (current.hasAttribute('data-comment-offset') || current.hasAttribute('data-start-pos'))) {
+            return current;
+        }
+        current = current.parentElement || current.parentNode;
+    }
+    return null;
+}
+
+function sourceOffsetWithin(root, targetNode, targetOffset) {
+    let total = 0;
+    let found = false;
+
+    function walk(node) {
+        if (found) {
+            return;
+        }
+
+        if (node === targetNode) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                total += byteLength(node.textContent.substring(0, targetOffset));
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const limit = Math.min(targetOffset, node.childNodes.length);
+                for (let i = 0; i < limit; i++) {
+                    total += sourceLength(node.childNodes[i]);
+                }
+            }
+            found = true;
+            return;
+        }
+
+        total += sourceLength(node);
+    }
+
+    if (root === targetNode) {
+        walk(root);
+    } else {
+        for (let i = 0; i < root.childNodes.length && !found; i++) {
+            walkUntilTarget(root.childNodes[i]);
+        }
+    }
+
+    return found ? total : -1;
+
+    function walkUntilTarget(node) {
+        if (found) {
+            return;
+        }
+        if (node === targetNode) {
+            walk(node);
+            return;
+        }
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (!nodeContainsTarget(node, targetNode)) {
+                total += sourceLength(node);
+                return;
+            }
+            for (let i = 0; i < node.childNodes.length && !found; i++) {
+                walkUntilTarget(node.childNodes[i]);
+            }
+            if (!found) {
+                total += elementOwnSourceLength(node);
+            }
+            return;
+        }
+        total += sourceLength(node);
+    }
+}
+
+function nodeContainsTarget(node, targetNode) {
+    if (node === targetNode) {
+        return true;
+    }
+    for (let i = 0; i < node.childNodes.length; i++) {
+        if (nodeContainsTarget(node.childNodes[i], targetNode)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function sourceLength(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+        return byteLength(node.textContent);
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+        if (isLineBreak(node)) {
+            return 1;
+        }
+        const annotatedLength = sourceAnnotatedLength(node);
+        if (annotatedLength !== -1) {
+            return annotatedLength;
+        }
+        let total = elementOwnSourceLength(node);
+        for (let i = 0; i < node.childNodes.length; i++) {
+            total += sourceLength(node.childNodes[i]);
+        }
+        return total;
+    }
+    return 0;
+}
+
+function elementOwnSourceLength(node) {
+    if (isLineBreak(node)) {
+        return 1;
+    }
+    return 0;
+}
+
+function isLineBreak(node) {
+    return node.nodeType === Node.ELEMENT_NODE && node.tagName && node.tagName.toLowerCase() === 'br';
+}
+
+function sourceAnnotatedLength(node) {
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+        return -1;
+    }
+    const startAttr = node.getAttribute('data-comment-offset') || node.getAttribute('data-start-pos');
+    const endAttr = node.getAttribute('data-end-pos');
+    if (startAttr === null || startAttr === undefined || endAttr === null || endAttr === undefined) {
+        return -1;
+    }
+    const start = parseInt(startAttr, 10);
+    const end = parseInt(endAttr, 10);
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) {
+        return -1;
+    }
+    return end - start;
+}
+
+function byteLength(text) {
+    return new TextEncoder().encode(text).length;
 }
 
 function share(link, module, button) {

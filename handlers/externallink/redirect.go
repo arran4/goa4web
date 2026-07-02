@@ -59,12 +59,12 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
 		if err == nil {
 			if linkID == 0 {
-			res, err := cd.EnsureExternalLink(r.Context(), rawURL)
+				res, err := cd.EnsureExternalLink(r.Context(), rawURL)
 				if err == nil {
 					id, _ := res.LastInsertId()
 					linkID = int32(id)
 				} else {
-				log.Printf("EnsureExternalLink error: %v", err)
+					log.Printf("EnsureExternalLink error: %v", err)
 				}
 			}
 			if linkID != 0 {
@@ -102,13 +102,13 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type Data struct {
-		Message     string
-		BackURL     string
+		Message string
+		BackURL string
 	}
 	cd.PageTitle = "External Link"
 	data := Data{
-		Message:     r.URL.Query().Get("msg"),
-		BackURL:     r.Referer(),
+		Message: r.URL.Query().Get("msg"),
+		BackURL: r.Referer(),
 	}
 	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)

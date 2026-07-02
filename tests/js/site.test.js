@@ -11,9 +11,10 @@ global.Node = {
 global.TextEncoder = TextEncoder;
 
 class MockNode {
-    constructor(type, content = "") {
+    constructor(type, content = "", tagName = "") {
         this.nodeType = type;
         this.textContent = content;
+        this.tagName = tagName;
         this.childNodes = [];
         this.parentElement = null;
         this.attributes = {};
@@ -136,5 +137,66 @@ const div5 = new MockNode(Node.ELEMENT_NODE);
 div5.setAttribute('data-end-pos', '300');
 const res5 = calculateSourceOffset(div5, 0);
 assert(res5 === 300, `End pos. Got ${res5}, want 300`);
+
+// Test 6: Text after a rendered <br> inside one annotated span.
+// <span data-start-pos="0" data-end-pos="11">Hello<br>World</span>
+// Select "Wo" in the second text node. Expected: 0 + len("Hello\nWo") = 8.
+const span6 = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+span6.setAttribute('data-start-pos', '0');
+span6.setAttribute('data-end-pos', '11');
+const text6a = new MockNode(Node.TEXT_NODE, "Hello");
+const br6 = new MockNode(Node.ELEMENT_NODE, "", "BR");
+const text6b = new MockNode(Node.TEXT_NODE, "World");
+span6.appendChild(text6a);
+span6.appendChild(br6);
+span6.appendChild(text6b);
+
+const res6 = calculateSourceOffset(text6b, 2);
+assert(res6 === 8, `Text after br offset. Got ${res6}, want 8`);
+
+// Test 7: Element boundary after a <br> inside one annotated span.
+// Boundary before "World" should account for "Hello\n".
+const res7 = calculateSourceOffset(span6, 2);
+assert(res7 === 6, `Element boundary after br. Got ${res7}, want 6`);
+
+// Test 8: Text after an annotated inline sibling should use the sibling's source length.
+// <span data-start-pos="10"><strong data-start-pos="10" data-end-pos="14">Bold</strong> tail</span>
+const span8 = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+span8.setAttribute('data-start-pos', '10');
+span8.setAttribute('data-end-pos', '19');
+const strong8 = new MockNode(Node.ELEMENT_NODE, "", "STRONG");
+strong8.setAttribute('data-start-pos', '10');
+strong8.setAttribute('data-end-pos', '14');
+const strongText8 = new MockNode(Node.TEXT_NODE, "Bold");
+const tail8 = new MockNode(Node.TEXT_NODE, " tail");
+strong8.appendChild(strongText8);
+span8.appendChild(strong8);
+span8.appendChild(tail8);
+
+const res8 = calculateSourceOffset(tail8, 3);
+assert(res8 === 17, `Text after annotated sibling. Got ${res8}, want 17`);
+
+// Test 9: Text after an annotated image should use the image's source length.
+// <span data-start-pos="0"><img data-start-pos="1" data-end-pos="2">b</span>
+const span9 = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+span9.setAttribute('data-start-pos', '0');
+span9.setAttribute('data-end-pos', '3');
+const text9a = new MockNode(Node.TEXT_NODE, "a");
+const img9 = new MockNode(Node.ELEMENT_NODE, "", "IMG");
+img9.setAttribute('data-start-pos', '1');
+img9.setAttribute('data-end-pos', '2');
+const text9b = new MockNode(Node.TEXT_NODE, "b");
+span9.appendChild(text9a);
+span9.appendChild(img9);
+span9.appendChild(text9b);
+
+const res9 = calculateSourceOffset(text9b, 1);
+assert(res9 === 3, `Text after annotated image. Got ${res9}, want 3`);
+
+const res10 = calculateSourceOffset(span9, 1);
+assert(res10 === 1, `Boundary before annotated image. Got ${res10}, want 1`);
+
+const res11 = calculateSourceOffset(span9, 2);
+assert(res11 === 2, `Boundary after annotated image. Got ${res11}, want 2`);
 
 console.log("All JS tests passed.");

@@ -83,6 +83,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 
 	api := r.PathPrefix("/api/forum").Subrouter()
 	api.HandleFunc("/quote/{commentid}", QuoteApi).Methods("GET")
+	api.HandleFunc("/quote-selection", QuoteSelectionApi).Methods("POST")
 	api.HandleFunc("/share", share.ShareLink).Methods("GET")
 	return opts
 }

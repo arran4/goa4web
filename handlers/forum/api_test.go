@@ -1,8 +1,10 @@
 package forum
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -125,4 +127,61 @@ func TestQuoteApi(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestQuoteSelectionApiGroupsConsecutiveSelectionsByUser(t *testing.T) {
+	body, err := json.Marshal(quoteSelectionRequest{
+		Ranges: []quoteSelectionRange{
+			{CommentID: 1, Start: 0, End: 5},
+			{CommentID: 2, Start: 0, End: 1},
+			{CommentID: 3, Start: 0, End: 4},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "/api/forum/quote-selection", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	comments := map[int32]*db.GetCommentByIdForUserRow{
+		1: {
+			Username: sql.NullString{String: "arran", Valid: true},
+			Text:     sql.NullString{String: "hello world", Valid: true},
+		},
+		2: {
+			Username: sql.NullString{String: "arran", Valid: true},
+			Text:     sql.NullString{String: "[img=image.jpg]", Valid: true},
+		},
+		3: {
+			Username: sql.NullString{String: "casey", Valid: true},
+			Text:     sql.NullString{String: "done", Valid: true},
+		},
+	}
+	q := testhelpers.NewQuerierStub()
+	q.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return comments[arg.ID], nil
+	}
+
+	cd := common.NewCoreData(context.Background(), q, nil)
+	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	QuoteSelectionApi(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Fatalf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(rr.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	want := "[quoteof \"arran\" hello\n\n[img=image.jpg]]\n\n\n[quoteof \"casey\" done]\n"
+	if got["text"] != want {
+		t.Fatalf("handler returned unexpected text: got %q want %q", got["text"], want)
+	}
 }

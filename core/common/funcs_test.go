@@ -3,7 +3,9 @@ package common_test
 import (
 	"context"
 	"database/sql"
+	"html/template"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -133,6 +135,26 @@ func TestTemplateFuncsCSRFToken(t *testing.T) {
 	}
 	if _, ok := funcs["csrf"]; ok {
 		t.Errorf("csrf func should not be present")
+	}
+}
+
+func TestA4Code2HTMLIncludesSourceOffsets(t *testing.T) {
+	funcs := common.GetTemplateFuncs()
+	render, ok := funcs["a4code2html"].(func(string) template.HTML)
+	if !ok {
+		t.Fatalf("a4code2html func missing or has unexpected type")
+	}
+
+	got := string(render(`[quoteof arran hello [b world]]`))
+	for _, want := range []string{
+		`data-start-pos=`,
+		`data-end-pos=`,
+		`<blockquote class="a4code-block a4code-quoteof`,
+		`<strong data-start-pos=`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("rendered a4code missing %q: %s", want, got)
+		}
 	}
 }
 

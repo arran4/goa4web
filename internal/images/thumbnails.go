@@ -16,8 +16,8 @@ type ThumbnailGenerator interface {
 
 // thumbnailGenerators holds the registered thumbnail generator implementations.
 var thumbnailGenerators = map[string]ThumbnailGenerator{
-	"bild":   &BildThumbnailGenerator{},
-	"draw":   &DrawThumbnailGenerator{},
+	"bild": &BildThumbnailGenerator{},
+	"draw": &DrawThumbnailGenerator{},
 }
 
 // GetThumbnailGenerator returns the thumbnail generator by name, defaulting to "bild".

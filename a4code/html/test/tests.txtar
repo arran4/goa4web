@@ -13,7 +13,7 @@
 -- image.txt --
 [img=http://example.com/image.jpg]
 -- image.expect.txt --
-<img src="http://example.com/image.jpg" data-start-pos="0" data-end-pos="0" />
+<img src="http://example.com/image.jpg" data-start-pos="0" data-end-pos="1" />
 -- code.txt --
 [code func]
 -- code.expect.txt --

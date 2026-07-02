@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/gorilla/sessions"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 )
 

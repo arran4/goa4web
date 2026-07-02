@@ -75,6 +75,10 @@ function insertA4CodeTag(targetId, tag) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
 
+    if (tag === 'quote' && quoteDocumentSelectionIntoEditor(targetId)) {
+        return;
+    }
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -115,6 +119,123 @@ function insertA4CodeTag(targetId, tag) {
     }
 
     textarea.setRangeText(replacement, start, end, 'select');
+}
+
+function quoteDocumentSelectionIntoEditor(targetId) {
+    const ranges = selectedCommentRanges();
+    if (ranges.length === 0) {
+        return false;
+    }
+
+    const textarea = document.getElementById(targetId);
+    if (!textarea) {
+        return false;
+    }
+
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+    const csrfToken = document.querySelector('input[name="csrf_token"]');
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken.value;
+    }
+
+    fetch('/api/forum/quote-selection', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ ranges: ranges })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Quote selection request failed');
+        }
+        return response.json();
+    })
+    .then(data => {
+        insertTextIntoEditor(textarea, data.text || '');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while quoting the selection.');
+    });
+
+    return true;
+}
+
+function selectedCommentRanges() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        return [];
+    }
+
+    const result = [];
+    for (let i = 0; i < selection.rangeCount; i++) {
+        const selectionRange = selection.getRangeAt(i);
+        const comments = document.querySelectorAll('section.body > div[id^="comment-"], .body > div[id^="comment-"]');
+        comments.forEach(comment => {
+            if (!rangeIntersectsNode(selectionRange, comment)) {
+                return;
+            }
+
+            const commentID = parseInt(comment.id.replace('comment-', ''), 10);
+            if (Number.isNaN(commentID)) {
+                return;
+            }
+
+            const start = commentContainsNode(comment, selectionRange.startContainer)
+                ? calculateSourceOffset(selectionRange.startContainer, selectionRange.startOffset)
+                : calculateSourceOffset(comment, 0);
+            const end = commentContainsNode(comment, selectionRange.endContainer)
+                ? calculateSourceOffset(selectionRange.endContainer, selectionRange.endOffset)
+                : calculateSourceOffset(comment, comment.childNodes.length);
+
+            if (start !== -1 && end !== -1 && end > start) {
+                result.push({ comment_id: commentID, start: start, end: end });
+            }
+        });
+    }
+
+    result.sort((a, b) => {
+        const aNode = document.getElementById('comment-' + a.comment_id);
+        const bNode = document.getElementById('comment-' + b.comment_id);
+        if (!aNode || !bNode || aNode === bNode) {
+            return a.start - b.start;
+        }
+        const pos = aNode.compareDocumentPosition(bNode);
+        return pos & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1;
+    });
+    return result;
+}
+
+function rangeIntersectsNode(range, node) {
+    if (typeof range.intersectsNode === 'function') {
+        try {
+            return range.intersectsNode(node);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    const nodeRange = document.createRange();
+    nodeRange.selectNodeContents(node);
+    return range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 &&
+        range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0;
+}
+
+function commentContainsNode(comment, node) {
+    return node === comment || comment.contains(node);
+}
+
+function insertTextIntoEditor(textarea, text) {
+    if (!text) {
+        return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const prefix = start > 0 && textarea.value.charAt(start - 1) !== '\n' ? '\n' : '';
+    const suffix = end < textarea.value.length && !text.endsWith('\n') ? '\n' : '';
+    textarea.setRangeText(prefix + text + suffix, start, end, 'end');
+    textarea.focus();
 }
 
 function setupKeyboardShortcuts() {
@@ -528,6 +649,10 @@ function sourceOffsetWithin(root, targetNode, targetOffset) {
             return;
         }
         if (node.nodeType === Node.ELEMENT_NODE) {
+            if (!nodeContainsTarget(node, targetNode)) {
+                total += sourceLength(node);
+                return;
+            }
             for (let i = 0; i < node.childNodes.length && !found; i++) {
                 walkUntilTarget(node.childNodes[i]);
             }
@@ -538,6 +663,18 @@ function sourceOffsetWithin(root, targetNode, targetOffset) {
         }
         total += sourceLength(node);
     }
+}
+
+function nodeContainsTarget(node, targetNode) {
+    if (node === targetNode) {
+        return true;
+    }
+    for (let i = 0; i < node.childNodes.length; i++) {
+        if (nodeContainsTarget(node.childNodes[i], targetNode)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function sourceLength(node) {

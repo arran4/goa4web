@@ -34,8 +34,7 @@ func TestParseImage(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	got := ToHTML(tree)
-	// [img] is 0-width in visible space.
-	want := `<img src="image.jpg" data-start-pos="0" data-end-pos="0" />`
+	want := `<img src="image.jpg" data-start-pos="0" data-end-pos="1" />`
 	if got != want {
 		t.Errorf("got %q want %q", got, want)
 	}

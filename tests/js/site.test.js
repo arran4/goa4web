@@ -176,4 +176,27 @@ span8.appendChild(tail8);
 const res8 = calculateSourceOffset(tail8, 3);
 assert(res8 === 17, `Text after annotated sibling. Got ${res8}, want 17`);
 
+// Test 9: Text after an annotated image should use the image's source length.
+// <span data-start-pos="0"><img data-start-pos="1" data-end-pos="2">b</span>
+const span9 = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+span9.setAttribute('data-start-pos', '0');
+span9.setAttribute('data-end-pos', '3');
+const text9a = new MockNode(Node.TEXT_NODE, "a");
+const img9 = new MockNode(Node.ELEMENT_NODE, "", "IMG");
+img9.setAttribute('data-start-pos', '1');
+img9.setAttribute('data-end-pos', '2');
+const text9b = new MockNode(Node.TEXT_NODE, "b");
+span9.appendChild(text9a);
+span9.appendChild(img9);
+span9.appendChild(text9b);
+
+const res9 = calculateSourceOffset(text9b, 1);
+assert(res9 === 3, `Text after annotated image. Got ${res9}, want 3`);
+
+const res10 = calculateSourceOffset(span9, 1);
+assert(res10 === 1, `Boundary before annotated image. Got ${res10}, want 1`);
+
+const res11 = calculateSourceOffset(span9, 2);
+assert(res11 === 2, `Boundary after annotated image. Got ${res11}, want 2`);
+
 console.log("All JS tests passed.");

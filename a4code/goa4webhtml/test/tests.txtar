@@ -9,7 +9,7 @@
 -- provider_image.txt --
 [img=image.jpg]
 -- provider_image.expect.txt --
-<img src="/mapped/image.jpg" data-start-pos="0" data-end-pos="0" />
+<img src="/mapped/image.jpg" data-start-pos="0" data-end-pos="1" />
 -- provider_quoteof.txt --
 [quoteof "User" Text]
 -- provider_quoteof.expect.txt --

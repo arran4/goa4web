@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"html/template"
@@ -9,7 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/core/common"
@@ -135,6 +138,27 @@ func TestTemplateFuncsCSRFToken(t *testing.T) {
 	}
 	if _, ok := funcs["csrf"]; ok {
 		t.Errorf("csrf func should not be present")
+	}
+}
+
+func TestFooterLinksReleaseVersion(t *testing.T) {
+	origVersion := goa4web.Version
+	goa4web.Version = "v1.2.3"
+	defer func() {
+		goa4web.Version = origVersion
+	}()
+
+	cd := &common.CoreData{}
+	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(httptest.NewRequest("GET", "/", nil)), templates.WithSilence(true))
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "footer", nil); err != nil {
+		t.Fatalf("ExecuteTemplate footer: %v", err)
+	}
+
+	want := `<a href="https://github.com/arran4/goa4web/releases/tag/v1.2.3">v1.2.3</a>`
+	if !strings.Contains(buf.String(), want) {
+		t.Fatalf("footer missing version release link %q in %s", want, buf.String())
 	}
 }
 

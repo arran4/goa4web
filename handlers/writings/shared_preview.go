@@ -64,7 +64,6 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		jsonLdData.DateModified = writing.LastIndex.Time.Format("2006-01-02T15:04:05Z07:00")
 	}
 
-
 	ogData := share.OpenGraphData{
 		Title:         ogTitle,
 		JSONLD:        jsonLdData,

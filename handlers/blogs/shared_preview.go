@@ -57,8 +57,6 @@ func SharedPreviewPage(w http.ResponseWriter, r *http.Request) {
 		Author:        author,
 	}
 
-
-
 	ogData := share.OpenGraphData{
 		Title:       ogTitle,
 		JSONLD:      jsonLdData,

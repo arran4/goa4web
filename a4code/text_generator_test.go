@@ -25,11 +25,11 @@ func TestToText_Code(t *testing.T) {
 			input: "[codein \"go\" func main() {}]",
 			want:  "func main() {}",
 		},
-        {
-            name: "Code with brackets",
-            input: "[code [b\\]bold[/b\\]]",
-            want: "[b]bold[/b]",
-        },
+		{
+			name:  "Code with brackets",
+			input: "[code [b\\]bold[/b\\]]",
+			want:  "[b]bold[/b]",
+		},
 	}
 
 	for _, tt := range tests {
@@ -43,11 +43,11 @@ func TestToText_Code(t *testing.T) {
 				t.Errorf("ToText() = %q, want %q", got, tt.want)
 			}
 
-            // Also check ToCleanText
-            clean := ToCleanText(root)
-            if clean != tt.want {
-                t.Errorf("ToCleanText() = %q, want %q", clean, tt.want)
-            }
+			// Also check ToCleanText
+			clean := ToCleanText(root)
+			if clean != tt.want {
+				t.Errorf("ToCleanText() = %q, want %q", clean, tt.want)
+			}
 		})
 	}
 }

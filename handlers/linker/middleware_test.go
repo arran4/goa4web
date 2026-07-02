@@ -28,10 +28,10 @@ func TestEnforceLinkerCommentsAccess(t *testing.T) {
 func enforceLinkerCommentsAccessDeniedAccess(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	q.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow = &db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow{
-		ID:         1,
-		ThreadID:   1,
-		Title:      sql.NullString{String: "t", Valid: true},
-		Listed:     sql.NullTime{Time: time.Unix(0, 0), Valid: true},
+		ID:       1,
+		ThreadID: 1,
+		Title:    sql.NullString{String: "t", Valid: true},
+		Listed:   sql.NullTime{Time: time.Unix(0, 0), Valid: true},
 	}
 	// Deny everything
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {

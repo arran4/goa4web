@@ -123,6 +123,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 		ImageMapper:     g.ImageMapper,
 		UserColorMapper: g.UserColorMapper,
 	}
+	childGen.Generator.Self = childGen
 
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {

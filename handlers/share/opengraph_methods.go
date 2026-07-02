@@ -3,8 +3,6 @@ package share
 import (
 	"fmt"
 	"html/template"
-
-
 )
 
 func (d OpenGraphData) JSONLDScript() template.HTML {

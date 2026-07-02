@@ -598,4 +598,3 @@ func skipArgPrefix(s *scanner) {
 
 	s.UnreadByte()
 }
-

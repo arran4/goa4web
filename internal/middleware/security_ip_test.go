@@ -13,7 +13,7 @@ func TestRequestIPSpoofing_Untrusted(t *testing.T) {
 	// requestIP should ignore X-Forwarded-For.
 
 	req := httptest.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "1.2.3.4:1234" // Real IP
+	req.RemoteAddr = "1.2.3.4:1234"              // Real IP
 	req.Header.Set("X-Forwarded-For", "6.6.6.6") // Spoofed IP
 
 	var trusted []netip.Prefix
@@ -27,7 +27,7 @@ func TestRequestIPSpoofing_Trusted(t *testing.T) {
 	// We trust 10.0.0.1.
 
 	req := httptest.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "10.0.0.1:1234" // Trusted Proxy IP
+	req.RemoteAddr = "10.0.0.1:1234"             // Trusted Proxy IP
 	req.Header.Set("X-Forwarded-For", "6.6.6.6") // Client IP
 
 	trusted := []netip.Prefix{
@@ -75,19 +75,19 @@ func TestRequestIPSpoofing_UntrustedInChain(t *testing.T) {
 }
 
 func TestRequestIPSpoofing_GarbageHeader(t *testing.T) {
-    // Case 5: Garbage in header
-    req := httptest.NewRequest("GET", "/", nil)
-    req.RemoteAddr = "10.0.0.1:1234"
-    req.Header.Set("X-Forwarded-For", "garbage")
+	// Case 5: Garbage in header
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "10.0.0.1:1234"
+	req.Header.Set("X-Forwarded-For", "garbage")
 
 	trusted := []netip.Prefix{
 		netip.MustParsePrefix("10.0.0.1/32"),
 	}
-    ip := requestIP(req, trusted)
-    // Should fallback to RemoteAddr because parsing failed?
-    // Wait, my logic: netip.ParseAddr("garbage") fails. Returns normalizeIP(currentIP.String()).
-    // currentIP is RemoteAddr.
-    assert.Equal(t, "10.0.0.1", ip)
+	ip := requestIP(req, trusted)
+	// Should fallback to RemoteAddr because parsing failed?
+	// Wait, my logic: netip.ParseAddr("garbage") fails. Returns normalizeIP(currentIP.String()).
+	// currentIP is RemoteAddr.
+	assert.Equal(t, "10.0.0.1", ip)
 }
 
 func TestRequestIPSpoofing_IPv6_CIDR(t *testing.T) {
@@ -95,7 +95,7 @@ func TestRequestIPSpoofing_IPv6_CIDR(t *testing.T) {
 	// We trust 2001:db8::/32 and 192.168.0.0/24.
 
 	req := httptest.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "[2001:db8:1234::1]:1234" // IP inside 2001:db8::/32
+	req.RemoteAddr = "[2001:db8:1234::1]:1234"    // IP inside 2001:db8::/32
 	req.Header.Set("X-Forwarded-For", "10.0.0.1") // Client IP
 
 	trusted := []netip.Prefix{

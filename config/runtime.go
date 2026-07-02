@@ -105,16 +105,16 @@ type RuntimeConfig struct {
 	// specified their own.
 	Timezone string
 
-	ImageUploadProvider string
-	ImageUploadDir      string
-	ImageUploadS3URL    string
-	ImageCacheProvider  string
-	ImageCacheDir       string
-	ImageCacheS3URL     string
-	ImageMaxBytes       int
-	ImageCacheMaxBytes  int
+	ImageUploadProvider     string
+	ImageUploadDir          string
+	ImageUploadS3URL        string
+	ImageCacheProvider      string
+	ImageCacheDir           string
+	ImageCacheS3URL         string
+	ImageMaxBytes           int
+	ImageCacheMaxBytes      int
 	ImageThumbnailGenerator string
-	ImageThumbnailSize  int
+	ImageThumbnailSize      int
 
 	DLQProvider string
 	DLQFile     string

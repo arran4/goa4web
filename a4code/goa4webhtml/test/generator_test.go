@@ -99,3 +99,32 @@ func TestGenerator(t *testing.T) {
 		return nil
 	})
 }
+
+func TestGeneratorWithDataOffset(t *testing.T) {
+	root, err := a4code.ParseString(`[quoteof "User" [img=image.jpg]]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := goa4webhtml.NewGenerator(
+		goa4webhtml.WithImageMapper(func(tag, val string) string {
+			return "/mapped/" + val
+		}),
+		goa4webhtml.WithUserColorMapper(func(username string) string {
+			return "user-color-" + username
+		}),
+		goa4webhtml.WithDataOffset(),
+	)
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, `<blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-offset="0" data-start-pos="0" data-end-pos="1">`) {
+		t.Fatalf("missing quote data-offset in %q", got)
+	}
+	if !strings.Contains(got, `<img src="/mapped/image.jpg" data-offset="0" data-start-pos="0" data-end-pos="1" />`) {
+		t.Fatalf("missing mapped image data-offset in %q", got)
+	}
+}

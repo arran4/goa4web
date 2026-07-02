@@ -56,7 +56,7 @@ func TestPreviewRoute(t *testing.T) {
 		bodyBuf.ReadFrom(resp.Body)
 		body := bodyBuf.String()
 
-		if !strings.Contains(body, `<strong data-start-pos="0" data-end-pos="4">`) ||
+		if !strings.Contains(body, `<strong data-offset="0" data-start-pos="0" data-end-pos="4">`) ||
 			!strings.Contains(body, `>Bold</span></strong>`) {
 			t.Errorf("Expected bold rendered content with source offsets, got %q", body)
 		}
@@ -88,7 +88,7 @@ func TestPreviewHandler(t *testing.T) {
 				status, http.StatusOK)
 		}
 
-		if !strings.Contains(rr.Body.String(), `<strong data-start-pos="0" data-end-pos="4">`) ||
+		if !strings.Contains(rr.Body.String(), `<strong data-offset="0" data-start-pos="0" data-end-pos="4">`) ||
 			!strings.Contains(rr.Body.String(), `>Bold</span></strong>`) {
 			t.Errorf("handler returned unexpected body: got %v",
 				rr.Body.String())

@@ -147,10 +147,11 @@ func TestA4Code2HTMLIncludesSourceOffsets(t *testing.T) {
 
 	got := string(render(`[quoteof arran hello [b world]]`))
 	for _, want := range []string{
+		`data-offset=`,
 		`data-start-pos=`,
 		`data-end-pos=`,
 		`<blockquote class="a4code-block a4code-quoteof`,
-		`<strong data-start-pos=`,
+		`<strong data-offset=`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("rendered a4code missing %q: %s", want, got)

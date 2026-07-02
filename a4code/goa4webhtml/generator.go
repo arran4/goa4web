@@ -41,6 +41,11 @@ func WithUserColorMapper(ucm UserColorMapper) Option {
 	return func(g *Generator) { g.UserColorMapper = ucm }
 }
 
+// WithDataOffset emits data-offset attributes for source-positioned nodes.
+func WithDataOffset() Option {
+	return func(g *Generator) { g.Generator.DataOffset = true }
+}
+
 func NewGenerator(opts ...interface{}) *Generator {
 	g := &Generator{
 		Generator: html.NewGenerator(),
@@ -99,7 +104,7 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 	if _, err := io.WriteString(w, htmlstd.EscapeString(src)); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(w, `" data-start-pos="%d" data-end-pos="%d" />`, n.Start, n.End); err != nil {
+	if _, err := fmt.Fprintf(w, `"%s data-start-pos="%d" data-end-pos="%d" />`, gDataOffsetAttr(g, n.Start), n.Start, n.End); err != nil {
 		return err
 	}
 	return nil
@@ -110,7 +115,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	if g.UserColorMapper != nil {
 		colorClass = g.UserColorMapper(n.Name) + " " + colorClass
 	}
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s" data-start-pos="%d" data-end-pos="%d">`, colorClass, n.Start, n.End)
+	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s data-start-pos="%d" data-end-pos="%d">`, colorClass, gDataOffsetAttr(g, n.Start), n.Start, n.End)
 	io.WriteString(w, "<div class=\"quote-header\">Quote of ")
 	io.WriteString(w, htmlstd.EscapeString(n.Name))
 	io.WriteString(w, ":</div>")
@@ -118,7 +123,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 
 	// We need to create a child generator that maintains the structure and increments depth
 	childGen := &Generator{
-		Generator:       &html.Generator{Depth: g.Depth + 1},
+		Generator:       &html.Generator{Depth: g.Depth + 1, DataOffset: g.DataOffset},
 		LinkProvider:    g.LinkProvider,
 		ImageMapper:     g.ImageMapper,
 		UserColorMapper: g.UserColorMapper,
@@ -133,4 +138,11 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	io.WriteString(w, "</div>")
 	io.WriteString(w, "</blockquote>")
 	return nil
+}
+
+func gDataOffsetAttr(g *Generator, offset int) string {
+	if !g.DataOffset {
+		return ""
+	}
+	return fmt.Sprintf(` data-offset="%d"`, offset)
 }

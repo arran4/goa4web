@@ -73,3 +73,24 @@ func TestGenerator(t *testing.T) {
 		return nil
 	})
 }
+
+func TestGeneratorWithDataOffset(t *testing.T) {
+	root, err := a4code.ParseString(`[quoteof "User" Hi]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := html.NewGenerator(html.WithDataOffset())
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, `<blockquote class="a4code-block a4code-quoteof quote-color-0" data-offset="0" data-start-pos="0" data-end-pos="2">`) {
+		t.Fatalf("missing quote data-offset in %q", got)
+	}
+	if !strings.Contains(got, `<span data-offset="0" data-start-pos="0" data-end-pos="2">Hi</span>`) {
+		t.Fatalf("missing text data-offset in %q", got)
+	}
+}

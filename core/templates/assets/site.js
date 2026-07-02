@@ -548,7 +548,7 @@ function calculateSourceOffset(node, offset) {
         return -1;
     }
 
-    const startAttr = annotated.getAttribute('data-comment-offset') || annotated.getAttribute('data-start-pos');
+    const startAttr = sourceStartAttr(annotated);
     if (startAttr === null || startAttr === undefined) {
         return -1;
     }
@@ -569,7 +569,7 @@ function sourceBoundaryOffset(node, offset) {
     if (offset < node.childNodes.length) {
         const child = node.childNodes[offset];
         if (child.nodeType === Node.ELEMENT_NODE) {
-            const startAttr = child.getAttribute('data-comment-offset') || child.getAttribute('data-start-pos');
+            const startAttr = sourceStartAttr(child);
             if (startAttr !== null && startAttr !== undefined) {
                 return parseInt(startAttr, 10);
             }
@@ -597,7 +597,7 @@ function nearestSourceAnnotatedElement(node) {
     let current = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
     while (current) {
         if (current.nodeType === Node.ELEMENT_NODE &&
-            (current.hasAttribute('data-comment-offset') || current.hasAttribute('data-start-pos'))) {
+            sourceStartAttr(current) !== null) {
             return current;
         }
         current = current.parentElement || current.parentNode;
@@ -713,7 +713,7 @@ function sourceAnnotatedLength(node) {
     if (node.nodeType !== Node.ELEMENT_NODE) {
         return -1;
     }
-    const startAttr = node.getAttribute('data-comment-offset') || node.getAttribute('data-start-pos');
+    const startAttr = sourceStartAttr(node);
     const endAttr = node.getAttribute('data-end-pos');
     if (startAttr === null || startAttr === undefined || endAttr === null || endAttr === undefined) {
         return -1;
@@ -724,6 +724,10 @@ function sourceAnnotatedLength(node) {
         return -1;
     }
     return end - start;
+}
+
+function sourceStartAttr(node) {
+    return node.getAttribute('data-offset') || node.getAttribute('data-comment-offset') || node.getAttribute('data-start-pos');
 }
 
 function byteLength(text) {

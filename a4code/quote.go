@@ -181,8 +181,11 @@ func processQuoteBlock(s string, opts quoteOptions) (string, bool) {
 	if err != nil || len(root.Children) != 1 {
 		return s, true
 	}
-	q, ok := root.Children[0].(*ast.QuoteOf)
-	if !ok {
+	q := root.Children[0]
+	switch q.(type) {
+	case *ast.QuoteOf, *ast.Quote:
+		// continue
+	default:
 		return s, true
 	}
 
@@ -219,7 +222,7 @@ func isPureQuote(node ast.Node) bool {
 	hasQuote := false
 	for _, child := range children {
 		switch child.(type) {
-		case *ast.QuoteOf:
+		case *ast.QuoteOf, *ast.Quote:
 			hasQuote = true
 		case *ast.Text:
 			// Check for non-empty text
@@ -236,7 +239,8 @@ func isPureQuote(node ast.Node) bool {
 func getPureQuoteDepth(node ast.Node) int {
 	max := 0
 	for _, child := range nodeChildren(node) {
-		if q, ok := child.(*ast.QuoteOf); ok {
+		switch q := child.(type) {
+		case *ast.QuoteOf, *ast.Quote:
 			d := 1
 			if isPureQuote(q) {
 				d += getPureQuoteDepth(q)
@@ -255,6 +259,8 @@ func nodeChildren(n ast.Node) []ast.Node {
 		return v.Children
 	case *ast.QuoteOf:
 		return v.Children
+	case *ast.Quote:
+		return v.Children
 	default:
 		return nil
 	}
@@ -263,7 +269,15 @@ func nodeChildren(n ast.Node) []ast.Node {
 func truncateQuotes(node ast.Node, currentDepth int, limit int) {
 	children := nodeChildren(node)
 	for _, child := range children {
-		if q, ok := child.(*ast.QuoteOf); ok {
+		switch q := child.(type) {
+		case *ast.QuoteOf:
+			childDepth := currentDepth + 1
+			if childDepth > limit {
+				q.Children = nil
+			} else {
+				truncateQuotes(q, childDepth, limit)
+			}
+		case *ast.Quote:
 			childDepth := currentDepth + 1
 			if childDepth > limit {
 				q.Children = nil

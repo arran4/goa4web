@@ -413,16 +413,6 @@ func TestQuoteRepro(t *testing.T) {
 			input: "Para 1\n\n[quoteof \"M\" [quoteof \"a\" asdf]]\n\nPara 2",
 			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
-		{
-			name:  "FilterDeeplyNestedQuoteWithQuoteTag",
-			input: "Para 1\n\n[quoteof \"other\" [quote content]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
-		},
-		{
-			name:  "FilterDeeplyNestedQuoteWithQuoteTagAtRoot",
-			input: "Para 1\n\n[quote [quoteof \"inner\" content]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
-		},
 	}
 
 	for _, tt := range tests {

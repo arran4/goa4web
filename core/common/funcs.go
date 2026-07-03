@@ -311,9 +311,9 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 	return funcs
 }
 
-func versionReleaseURL() string {
-	version := strings.TrimSpace(goa4web.Version)
-	if version == "" || version == "dev" {
+func versionReleaseURL(version string) string {
+	version = strings.TrimSpace(version)
+	if version == "" || strings.ToLower(version) == "dev" {
 		return ""
 	}
 	return "https://github.com/arran4/goa4web/releases/tag/" + url.PathEscape(version)

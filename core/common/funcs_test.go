@@ -162,6 +162,29 @@ func TestFooterLinksReleaseVersion(t *testing.T) {
 	}
 }
 
+func TestFooterDoesNotLinkDevVersionCaseInsensitive(t *testing.T) {
+	origVersion := goa4web.Version
+	goa4web.Version = "DEV"
+	defer func() {
+		goa4web.Version = origVersion
+	}()
+
+	cd := &common.CoreData{}
+	tmpl := templates.GetCompiledSiteTemplates(cd.Funcs(httptest.NewRequest("GET", "/", nil)), templates.WithSilence(true))
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "footer", nil); err != nil {
+		t.Fatalf("ExecuteTemplate footer: %v", err)
+	}
+
+	if strings.Contains(buf.String(), "releases/tag/") {
+		t.Fatalf("footer linked dev version: %s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "Version DEV") {
+		t.Fatalf("footer missing plain dev version in %s", buf.String())
+	}
+}
+
 func TestA4Code2HTMLIncludesSourceOffsets(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
 	render, ok := funcs["a4code2html"].(func(string) template.HTML)

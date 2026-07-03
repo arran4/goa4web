@@ -727,7 +727,8 @@ function sourceAnnotatedLength(node) {
 }
 
 function sourceStartAttr(node) {
-    return node.getAttribute('data-offset') || node.getAttribute('data-comment-offset') || node.getAttribute('data-start-pos');
+    const startAttr = node.getAttribute('data-offset') || node.getAttribute('data-comment-offset') || node.getAttribute('data-start-pos');
+    return startAttr === undefined ? null : startAttr;
 }
 
 function byteLength(text) {

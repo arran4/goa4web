@@ -197,7 +197,23 @@ func processQuoteBlock(s string, opts quoteOptions) (string, bool) {
 	} else {
 		// Default behavior: filter if it is a pure quote block (matching original isQuoteOfQuote)
 		if isPureQuote(q) {
-			return "", false
+			var flattened bytes.Buffer
+			for _, innerQ := range stripPureQuotes(q) {
+				if t, ok := innerQ.(*ast.Text); ok {
+					if strings.TrimSpace(t.Value) == "" {
+						continue
+					}
+					flattened.WriteString(t.Value)
+				} else {
+					flattened.WriteString(nodeToString(innerQ))
+				}
+				flattened.WriteString("\n\n\n")
+			}
+			sTrim := strings.TrimSpace(flattened.String())
+			if sTrim == "" {
+			    return "", false
+			}
+			return sTrim, true
 		}
 	}
 
@@ -272,6 +288,22 @@ func truncateQuotes(node ast.Node, currentDepth int, limit int) {
 			}
 		}
 	}
+}
+
+func stripPureQuotes(node ast.Node) []ast.Node {
+	if isPureQuote(node) {
+		var res []ast.Node
+		for _, child := range nodeChildren(node) {
+			switch child.(type) {
+			case *ast.QuoteOf, *ast.Quote:
+				res = append(res, stripPureQuotes(child)...)
+			default:
+				res = append(res, child)
+			}
+		}
+		return res
+	}
+	return []ast.Node{node}
 }
 
 // Need a helper to write AST back to string.

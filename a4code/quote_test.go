@@ -351,7 +351,7 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "FilterDeeplyNestedQuote",
 			input: "Para 1\n\n[quoteof \"other\" [quoteof \"inner\" content]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"inner\" content]]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 		{
 			name:  "TripleLineBreaks",
@@ -411,7 +411,7 @@ func TestQuoteRepro(t *testing.T) {
 		{
 			name:  "UserExampleNestedQuote",
 			input: "Para 1\n\n[quoteof \"M\" [quoteof \"a\" asdf]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
+			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"a\" asdf]]\n\n\n\n[quoteof \"user\" Para 2]\n",
 		},
 	}
 

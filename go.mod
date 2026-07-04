@@ -30,7 +30,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/jedib0t/go-pretty/v6 v6.7.1
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/image v0.38.0
+	golang.org/x/image v0.41.0
 	golang.org/x/sys v0.45.0
 	golang.org/x/tools v0.44.0
 )

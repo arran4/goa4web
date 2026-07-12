@@ -43,12 +43,12 @@ func WithUserColorMapper(ucm UserColorMapper) Option {
 
 // WithDataOffset emits data-offset attributes for source-positioned nodes.
 func WithDataOffset() Option {
-	return func(g *Generator) { g.Generator.DataOffset = true }
+	return func(g *Generator) { html.WithDataOffset()(g.Generator) }
 }
 
 // WithoutDataPositions omits data-start-pos and data-end-pos attributes.
 func WithoutDataPositions() Option {
-	return func(g *Generator) { g.Generator.OmitDataPositions = true }
+	return func(g *Generator) { html.WithoutDataPositions()(g.Generator) }
 }
 
 func NewGenerator(opts ...interface{}) *Generator {
@@ -128,7 +128,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 
 	// We need to create a child generator that maintains the structure and increments depth
 	childGen := &Generator{
-		Generator:       &html.Generator{Depth: g.Depth + 1, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions},
+		Generator:       &html.Generator{Depth: g.Depth + 1, SourceAttrBuilders: g.SourceAttrBuilders},
 		LinkProvider:    g.LinkProvider,
 		ImageMapper:     g.ImageMapper,
 		UserColorMapper: g.UserColorMapper,

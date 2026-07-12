@@ -12,10 +12,14 @@ import (
 )
 
 type Generator struct {
-	Depth             int
-	Self              ast.Generator
-	DataOffset        bool
-	OmitDataPositions bool
+	Depth              int
+	Self               ast.Generator
+	SourceAttrBuilders []SourceAttrBuilder
+}
+
+// SourceAttrBuilder renders source-related HTML attributes for an AST node span.
+type SourceAttrBuilder interface {
+	SourceAttrs(start, end int) string
 }
 
 // Option configures an HTML generator.
@@ -23,16 +27,32 @@ type Option func(*Generator)
 
 // WithDataOffset emits data-offset attributes for source-positioned nodes.
 func WithDataOffset() Option {
-	return func(g *Generator) { g.DataOffset = true }
+	return func(g *Generator) {
+		g.SourceAttrBuilders = append([]SourceAttrBuilder{DataOffsetAttr{}}, g.sourceAttrBuilders()...)
+	}
+}
+
+// WithSourceAttrBuilder appends a source-related attribute builder.
+func WithSourceAttrBuilder(builder SourceAttrBuilder) Option {
+	return func(g *Generator) { g.SourceAttrBuilders = append(g.sourceAttrBuilders(), builder) }
 }
 
 // WithoutDataPositions omits data-start-pos and data-end-pos attributes.
 func WithoutDataPositions() Option {
-	return func(g *Generator) { g.OmitDataPositions = true }
+	return func(g *Generator) {
+		builders := make([]SourceAttrBuilder, 0, len(g.sourceAttrBuilders()))
+		for _, builder := range g.sourceAttrBuilders() {
+			if _, ok := builder.(DataPositionAttrs); ok {
+				continue
+			}
+			builders = append(builders, builder)
+		}
+		g.SourceAttrBuilders = builders
+	}
 }
 
 func NewGenerator(opts ...Option) *Generator {
-	g := &Generator{}
+	g := &Generator{SourceAttrBuilders: defaultSourceAttrBuilders()}
 	for _, opt := range opts {
 		opt(g)
 	}
@@ -195,7 +215,7 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 		fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
 		io.WriteString(w, "<div class=\"quote-body\">")
 
-		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions}
+		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, SourceAttrBuilders: g.sourceAttrBuilders()}
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, childGen); err != nil {
 				return err
@@ -205,7 +225,7 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 		io.WriteString(w, "</blockquote>")
 	} else {
 		fmt.Fprintf(w, `<q class="a4code-inline a4code-quote"%s>`, g.SourceAttrs(n.Start, n.End))
-		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions}
+		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, SourceAttrBuilders: g.sourceAttrBuilders()}
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, childGen); err != nil {
 				return err
@@ -224,7 +244,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	io.WriteString(w, ":</div>")
 	io.WriteString(w, "<div class=\"quote-body\">")
 
-	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions}
+	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, SourceAttrBuilders: g.sourceAttrBuilders()}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {
 			return err
@@ -276,20 +296,40 @@ func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
 	return nil
 }
 
-// SourceAttrs returns enabled source-position attributes for start and end offsets.
+// SourceAttrs returns enabled source-related attributes for start and end offsets.
 func (g *Generator) SourceAttrs(start, end int) string {
-	attrs := g.dataOffsetAttr(start)
-	if !g.OmitDataPositions {
-		attrs += fmt.Sprintf(` data-start-pos="%d" data-end-pos="%d"`, start, end)
+	attrs := ""
+	for _, builder := range g.sourceAttrBuilders() {
+		attrs += builder.SourceAttrs(start, end)
 	}
 	return attrs
 }
 
-func (g *Generator) dataOffsetAttr(offset int) string {
-	if !g.DataOffset {
-		return ""
+func (g *Generator) sourceAttrBuilders() []SourceAttrBuilder {
+	if g.SourceAttrBuilders == nil {
+		return defaultSourceAttrBuilders()
 	}
-	return fmt.Sprintf(` data-offset="%d"`, offset)
+	return g.SourceAttrBuilders
+}
+
+func defaultSourceAttrBuilders() []SourceAttrBuilder {
+	return []SourceAttrBuilder{DataPositionAttrs{}}
+}
+
+// DataOffsetAttr renders a data-offset attribute.
+type DataOffsetAttr struct{}
+
+// SourceAttrs renders a data-offset attribute using the start position.
+func (DataOffsetAttr) SourceAttrs(start, end int) string {
+	return fmt.Sprintf(` data-offset="%d"`, start)
+}
+
+// DataPositionAttrs renders data-start-pos and data-end-pos attributes.
+type DataPositionAttrs struct{}
+
+// SourceAttrs renders data-start-pos and data-end-pos attributes.
+func (DataPositionAttrs) SourceAttrs(start, end int) string {
+	return fmt.Sprintf(` data-start-pos="%d" data-end-pos="%d"`, start, end)
 }
 
 func writeByte(w io.Writer, b byte) {

@@ -115,3 +115,27 @@ func TestGeneratorWithoutDataPositions(t *testing.T) {
 		t.Fatalf("unexpected markup without source positions: %q", got)
 	}
 }
+
+type testSourceAttr struct{}
+
+func (testSourceAttr) SourceAttrs(start, end int) string {
+	return ` data-test-source="yes"`
+}
+
+func TestGeneratorWithCustomSourceAttrBuilder(t *testing.T) {
+	root, err := a4code.ParseString(`Hi`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := html.NewGenerator(html.WithSourceAttrBuilder(testSourceAttr{}))
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if got != `<span data-start-pos="0" data-end-pos="2" data-test-source="yes">Hi</span>` {
+		t.Fatalf("unexpected markup with custom source attribute: %q", got)
+	}
+}

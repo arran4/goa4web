@@ -94,3 +94,24 @@ func TestGeneratorWithDataOffset(t *testing.T) {
 		t.Fatalf("missing text data-offset in %q", got)
 	}
 }
+
+func TestGeneratorWithoutDataPositions(t *testing.T) {
+	root, err := a4code.ParseString(`[b Bold] [img=image.jpg]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := html.NewGenerator(html.WithoutDataPositions())
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if strings.Contains(got, `data-start-pos=`) || strings.Contains(got, `data-end-pos=`) {
+		t.Fatalf("source position attributes should be omitted from %q", got)
+	}
+	if got != `<strong><span>Bold</span></strong><span> </span><img src="image.jpg" />` {
+		t.Fatalf("unexpected markup without source positions: %q", got)
+	}
+}

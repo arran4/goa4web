@@ -12,9 +12,10 @@ import (
 )
 
 type Generator struct {
-	Depth      int
-	Self       ast.Generator
-	DataOffset bool
+	Depth             int
+	Self              ast.Generator
+	DataOffset        bool
+	OmitDataPositions bool
 }
 
 // Option configures an HTML generator.
@@ -23,6 +24,11 @@ type Option func(*Generator)
 // WithDataOffset emits data-offset attributes for source-positioned nodes.
 func WithDataOffset() Option {
 	return func(g *Generator) { g.DataOffset = true }
+}
+
+// WithoutDataPositions omits data-start-pos and data-end-pos attributes.
+func WithoutDataPositions() Option {
+	return func(g *Generator) { g.OmitDataPositions = true }
 }
 
 func NewGenerator(opts ...Option) *Generator {
@@ -50,7 +56,7 @@ func (g *Generator) Root(w io.Writer, n *ast.Root) error {
 }
 
 func (g *Generator) Text(w io.Writer, t *ast.Text) error {
-	fmt.Fprintf(w, `<span%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(t.Start), t.Start, t.End)
+	fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(t.Start, t.End))
 	for i := 0; i < len(t.Value); i++ {
 		switch t.Value[i] {
 		case '&':
@@ -71,7 +77,7 @@ func (g *Generator) Text(w io.Writer, t *ast.Text) error {
 }
 
 func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
-	fmt.Fprintf(w, `<strong%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<strong%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -82,7 +88,7 @@ func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
 }
 
 func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
-	fmt.Fprintf(w, `<i%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<i%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -93,7 +99,7 @@ func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
 }
 
 func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
-	fmt.Fprintf(w, `<u%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<u%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -104,7 +110,7 @@ func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
 }
 
 func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
-	fmt.Fprintf(w, `<sup%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<sup%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -115,7 +121,7 @@ func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
 }
 
 func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
-	fmt.Fprintf(w, `<sub%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<sub%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -129,7 +135,7 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 	if safe, ok := SanitizeURL(n.Href); ok {
 		fmt.Fprintf(w, `<a href="`)
 		io.WriteString(w, safe)
-		fmt.Fprintf(w, `" target="_BLANK"%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+		fmt.Fprintf(w, `" target="_BLANK"%s>`, g.SourceAttrs(n.Start, n.End))
 		if isEffectivelyEmpty(n.Children) {
 			io.WriteString(w, safe)
 		} else {
@@ -141,7 +147,7 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 		}
 		io.WriteString(w, "</a>")
 	} else {
-		fmt.Fprintf(w, `<span%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+		fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.Start, n.End))
 		io.WriteString(w, safe)
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, g.self()); err != nil {
@@ -156,18 +162,18 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 	io.WriteString(w, "<img src=\"")
 	io.WriteString(w, htmlEscape(n.Src))
-	fmt.Fprintf(w, `"%s data-start-pos="%d" data-end-pos="%d" />`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `"%s />`, g.SourceAttrs(n.Start, n.End))
 	return nil
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	if n.IsBlock {
-		fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
-		fmt.Fprintf(w, `<span%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.InnerStart), n.InnerStart, n.InnerEnd)
+		fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
+		fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
 		io.WriteString(w, htmlEscape(n.Value))
 		io.WriteString(w, "</span></pre>")
 	} else {
-		fmt.Fprintf(w, `<code class="a4code-inline a4code-code"%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+		fmt.Fprintf(w, `<code class="a4code-inline a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
 		io.WriteString(w, htmlEscape(n.Value))
 		io.WriteString(w, "</code>")
 	}
@@ -175,9 +181,9 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
-	fmt.Fprintf(w, `<pre class="a4code-block a4code-code a4code-language-%s"%s data-start-pos="%d" data-end-pos="%d">`, htmlEscape(n.Language), g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<pre class="a4code-block a4code-code a4code-language-%s"%s>`, htmlEscape(n.Language), g.SourceAttrs(n.Start, n.End))
 	fmt.Fprintf(w, `<code class="language-%s">`, htmlEscape(n.Language))
-	fmt.Fprintf(w, `<span%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.InnerStart), n.InnerStart, n.InnerEnd)
+	fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
 	io.WriteString(w, htmlEscape(n.Value))
 	io.WriteString(w, "</span></code></pre>")
 	return nil
@@ -186,10 +192,10 @@ func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	if n.IsBlock {
 		colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
-		fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s"%s data-start-pos="%d" data-end-pos="%d">`, colorClass, g.dataOffsetAttr(n.Start), n.Start, n.End)
+		fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
 		io.WriteString(w, "<div class=\"quote-body\">")
 
-		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset}
+		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions}
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, childGen); err != nil {
 				return err
@@ -198,8 +204,8 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 		io.WriteString(w, "</div>")
 		io.WriteString(w, "</blockquote>")
 	} else {
-		fmt.Fprintf(w, `<q class="a4code-inline a4code-quote"%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
-		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset}
+		fmt.Fprintf(w, `<q class="a4code-inline a4code-quote"%s>`, g.SourceAttrs(n.Start, n.End))
+		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions}
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, childGen); err != nil {
 				return err
@@ -212,13 +218,13 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s data-start-pos="%d" data-end-pos="%d">`, colorClass, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
 	io.WriteString(w, "<div class=\"quote-header\">Quote of ")
 	io.WriteString(w, htmlEscape(n.Name))
 	io.WriteString(w, ":</div>")
 	io.WriteString(w, "<div class=\"quote-body\">")
 
-	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset}
+	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, DataOffset: g.DataOffset, OmitDataPositions: g.OmitDataPositions}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {
 			return err
@@ -230,7 +236,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
-	fmt.Fprintf(w, `<span class="spoiler"%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<span class="spoiler"%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -241,7 +247,7 @@ func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
 }
 
 func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
-	fmt.Fprintf(w, `<div class="a4code-block a4code-indent"%s data-start-pos="%d" data-end-pos="%d"><div>`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<div class="a4code-block a4code-indent"%s><div>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
@@ -252,12 +258,12 @@ func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
-	fmt.Fprintf(w, `<hr%s data-start-pos="%d" data-end-pos="%d" />`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<hr%s />`, g.SourceAttrs(n.Start, n.End))
 	return nil
 }
 
 func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
-	fmt.Fprintf(w, `<span%s data-start-pos="%d" data-end-pos="%d">`, g.dataOffsetAttr(n.Start), n.Start, n.End)
+	fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.Start, n.End))
 	io.WriteString(w, "[")
 	io.WriteString(w, htmlEscape(n.Tag))
 	for _, ch := range n.Children {
@@ -268,6 +274,15 @@ func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
 	io.WriteString(w, "]")
 	io.WriteString(w, "</span>")
 	return nil
+}
+
+// SourceAttrs returns enabled source-position attributes for start and end offsets.
+func (g *Generator) SourceAttrs(start, end int) string {
+	attrs := g.dataOffsetAttr(start)
+	if !g.OmitDataPositions {
+		attrs += fmt.Sprintf(` data-start-pos="%d" data-end-pos="%d"`, start, end)
+	}
+	return attrs
 }
 
 func (g *Generator) dataOffsetAttr(offset int) string {

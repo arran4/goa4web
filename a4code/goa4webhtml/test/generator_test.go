@@ -128,3 +128,32 @@ func TestGeneratorWithDataOffset(t *testing.T) {
 		t.Fatalf("missing mapped image data-offset in %q", got)
 	}
 }
+
+func TestGeneratorWithoutDataPositions(t *testing.T) {
+	root, err := a4code.ParseString(`[quoteof "User" [img=image.jpg]]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := goa4webhtml.NewGenerator(
+		goa4webhtml.WithImageMapper(func(tag, val string) string {
+			return "/mapped/" + val
+		}),
+		goa4webhtml.WithoutDataPositions(),
+	)
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if strings.Contains(got, `data-start-pos=`) || strings.Contains(got, `data-end-pos=`) {
+		t.Fatalf("source position attributes should be omitted from %q", got)
+	}
+	if !strings.Contains(got, `<blockquote class="a4code-block a4code-quoteof quote-color-0">`) {
+		t.Fatalf("quote markup should remain without source positions in %q", got)
+	}
+	if !strings.Contains(got, `<img src="/mapped/image.jpg" />`) {
+		t.Fatalf("mapped image markup should remain without source positions in %q", got)
+	}
+}

@@ -44,7 +44,7 @@ func TestLinkWithWhitespaceChildren(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			gen := NewGenerator()
+			gen := NewGenerator(WithDataPositions())
 			if err := gen.Link(&buf, tt.node); err != nil {
 				t.Fatalf("Generate error: %v", err)
 			}

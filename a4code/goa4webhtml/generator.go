@@ -41,14 +41,9 @@ func WithUserColorMapper(ucm UserColorMapper) Option {
 	return func(g *Generator) { g.UserColorMapper = ucm }
 }
 
-// WithDataOffset emits data-offset attributes for source-positioned nodes.
-func WithDataOffset() Option {
-	return func(g *Generator) { html.WithDataOffset()(g.Generator) }
-}
-
-// WithoutDataPositions omits data-start-pos and data-end-pos attributes.
-func WithoutDataPositions() Option {
-	return func(g *Generator) { html.WithoutDataPositions()(g.Generator) }
+// WithDataPositions emits data-start-pos and data-end-pos attributes.
+func WithDataPositions() Option {
+	return func(g *Generator) { html.WithDataPositions()(g.Generator) }
 }
 
 func NewGenerator(opts ...interface{}) *Generator {

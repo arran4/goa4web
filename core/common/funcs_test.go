@@ -138,7 +138,7 @@ func TestTemplateFuncsCSRFToken(t *testing.T) {
 	}
 }
 
-func TestA4Code2HTMLIncludesSourceOffsets(t *testing.T) {
+func TestA4Code2HTMLIncludesSourcePositions(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
 	render, ok := funcs["a4code2html"].(func(string) template.HTML)
 	if !ok {
@@ -147,11 +147,10 @@ func TestA4Code2HTMLIncludesSourceOffsets(t *testing.T) {
 
 	got := string(render(`[quoteof arran hello [b world]]`))
 	for _, want := range []string{
-		`data-offset=`,
 		`data-start-pos=`,
 		`data-end-pos=`,
 		`<blockquote class="a4code-block a4code-quoteof`,
-		`<strong data-offset=`,
+		`<strong data-start-pos=`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("rendered a4code missing %q: %s", want, got)

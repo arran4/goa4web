@@ -25,11 +25,9 @@ type SourceAttrBuilder interface {
 // Option configures an HTML generator.
 type Option func(*Generator)
 
-// WithDataOffset emits data-offset attributes for source-positioned nodes.
-func WithDataOffset() Option {
-	return func(g *Generator) {
-		g.SourceAttrBuilders = append([]SourceAttrBuilder{DataOffsetAttr{}}, g.sourceAttrBuilders()...)
-	}
+// WithDataPositions emits data-start-pos and data-end-pos attributes.
+func WithDataPositions() Option {
+	return WithSourceAttrBuilder(DataPositionAttrs{})
 }
 
 // WithSourceAttrBuilder appends a source-related attribute builder.
@@ -37,22 +35,8 @@ func WithSourceAttrBuilder(builder SourceAttrBuilder) Option {
 	return func(g *Generator) { g.SourceAttrBuilders = append(g.sourceAttrBuilders(), builder) }
 }
 
-// WithoutDataPositions omits data-start-pos and data-end-pos attributes.
-func WithoutDataPositions() Option {
-	return func(g *Generator) {
-		builders := make([]SourceAttrBuilder, 0, len(g.sourceAttrBuilders()))
-		for _, builder := range g.sourceAttrBuilders() {
-			if _, ok := builder.(DataPositionAttrs); ok {
-				continue
-			}
-			builders = append(builders, builder)
-		}
-		g.SourceAttrBuilders = builders
-	}
-}
-
 func NewGenerator(opts ...Option) *Generator {
-	g := &Generator{SourceAttrBuilders: defaultSourceAttrBuilders()}
+	g := &Generator{}
 	for _, opt := range opts {
 		opt(g)
 	}
@@ -306,22 +290,7 @@ func (g *Generator) SourceAttrs(start, end int) string {
 }
 
 func (g *Generator) sourceAttrBuilders() []SourceAttrBuilder {
-	if g.SourceAttrBuilders == nil {
-		return defaultSourceAttrBuilders()
-	}
 	return g.SourceAttrBuilders
-}
-
-func defaultSourceAttrBuilders() []SourceAttrBuilder {
-	return []SourceAttrBuilder{DataPositionAttrs{}}
-}
-
-// DataOffsetAttr renders a data-offset attribute.
-type DataOffsetAttr struct{}
-
-// SourceAttrs renders a data-offset attribute using the start position.
-func (DataOffsetAttr) SourceAttrs(start, end int) string {
-	return fmt.Sprintf(` data-offset="%d"`, start)
 }
 
 // DataPositionAttrs renders data-start-pos and data-end-pos attributes.

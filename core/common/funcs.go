@@ -128,6 +128,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"dict":                      Dict,
 		"toJSON":                    ToJSON,
 		"version":                   func() string { return goa4web.Version },
+		"versionReleaseURL":         versionReleaseURL,
 		"lower":                     strings.ToLower,
 		"default": func(def any, item any) any {
 			switch v := item.(type) {
@@ -312,6 +313,14 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 	}
 
 	return funcs
+}
+
+func versionReleaseURL(version string) string {
+	version = strings.TrimSpace(version)
+	if version == "" || strings.ToLower(version) == "dev" {
+		return ""
+	}
+	return "https://github.com/arran4/goa4web/releases/tag/" + url.PathEscape(version)
 }
 
 // A4Code2String converts a4code to plain text words.

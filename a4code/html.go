@@ -10,7 +10,7 @@ import (
 // ToHTML converts a node tree to HTML.
 func ToHTML(n ast.Node) string {
 	var buf bytes.Buffer
-	if err := ast.Generate(&buf, n, html.NewGenerator()); err != nil {
+	if err := ast.Generate(&buf, n, html.NewGenerator(html.WithDataPositions())); err != nil {
 		return ""
 	}
 	return buf.String()

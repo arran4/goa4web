@@ -202,7 +202,7 @@ func TestFooterLinksReleaseVersion(t *testing.T) {
 	}
 }
 
-func TestA4Code2HTMLIncludesSourceOffsets(t *testing.T) {
+func TestA4Code2HTMLIncludesSourcePositions(t *testing.T) {
 	funcs := common.GetTemplateFuncs()
 	render, ok := funcs["a4code2html"].(func(string) template.HTML)
 	if !ok {

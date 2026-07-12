@@ -59,7 +59,7 @@ func TestGenerator(t *testing.T) {
 				}
 
 				var buf bytes.Buffer
-				gen := html.NewGenerator()
+				gen := html.NewGenerator(html.WithDataPositions())
 				if err := ast.Generate(&buf, root, gen); err != nil {
 					t.Fatalf("Generate error: %v", err)
 				}
@@ -72,4 +72,70 @@ func TestGenerator(t *testing.T) {
 		}
 		return nil
 	})
+}
+
+func TestGeneratorWithDataPositions(t *testing.T) {
+	root, err := a4code.ParseString(`[quoteof "User" Hi]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := html.NewGenerator(html.WithDataPositions())
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, `<blockquote class="a4code-block a4code-quoteof quote-color-0" data-start-pos="0" data-end-pos="2">`) {
+		t.Fatalf("missing quote data positions in %q", got)
+	}
+	if !strings.Contains(got, `<span data-start-pos="0" data-end-pos="2">Hi</span>`) {
+		t.Fatalf("missing text data positions in %q", got)
+	}
+}
+
+func TestGeneratorWithoutSourceAttrs(t *testing.T) {
+	root, err := a4code.ParseString(`[b Bold] [img=image.jpg]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := html.NewGenerator()
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if strings.Contains(got, `data-start-pos=`) || strings.Contains(got, `data-end-pos=`) {
+		t.Fatalf("source attributes should be omitted from %q", got)
+	}
+	if got != `<strong><span>Bold</span></strong><span> </span><img src="image.jpg" />` {
+		t.Fatalf("unexpected markup without source positions: %q", got)
+	}
+}
+
+type testSourceAttr struct{}
+
+func (testSourceAttr) SourceAttrs(start, end int) string {
+	return ` data-test-source="yes"`
+}
+
+func TestGeneratorWithCustomSourceAttrBuilder(t *testing.T) {
+	root, err := a4code.ParseString(`Hi`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := html.NewGenerator(html.WithDataPositions(), html.WithSourceAttrBuilder(testSourceAttr{}))
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if got != `<span data-start-pos="0" data-end-pos="2" data-test-source="yes">Hi</span>` {
+		t.Fatalf("unexpected markup with custom source attribute: %q", got)
+	}
 }

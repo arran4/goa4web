@@ -58,7 +58,7 @@ func TestPreviewRoute(t *testing.T) {
 
 		if !strings.Contains(body, `<strong data-start-pos="0" data-end-pos="4">`) ||
 			!strings.Contains(body, `>Bold</span></strong>`) {
-			t.Errorf("Expected bold rendered content with source offsets, got %q", body)
+			t.Errorf("Expected bold rendered content with source positions, got %q", body)
 		}
 		if !strings.Contains(body, "<article class=\"thread\">") {
 			t.Errorf("Expected article frame, got %q", body)

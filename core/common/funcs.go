@@ -253,6 +253,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 					goa4webhtml.WithImageMapper(mapper),
 					goa4webhtml.WithUserColorMapper(getColor),
 					goa4webhtml.WithLinkProvider(provider),
+					goa4webhtml.WithDataPositions(),
 				)
 				if err := ast.Generate(&buf, root, gen); err != nil {
 					log.Printf("generate markup: %v", err)
@@ -285,7 +286,10 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 				return template.HTML("")
 			}
 			var buf bytes.Buffer
-			gen := goa4webhtml.NewGenerator(goa4webhtml.WithUserColorMapper(getColor))
+			gen := goa4webhtml.NewGenerator(
+				goa4webhtml.WithUserColorMapper(getColor),
+				goa4webhtml.WithDataPositions(),
+			)
 			if err := ast.Generate(&buf, root, gen); err != nil {
 				log.Printf("generate markup: %v", err)
 				return template.HTML("")

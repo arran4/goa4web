@@ -85,7 +85,7 @@ func TestGenerator(t *testing.T) {
 					}))
 				}
 
-				gen := goa4webhtml.NewGenerator(opts...)
+				gen := goa4webhtml.NewGenerator(append(opts, goa4webhtml.WithDataPositions())...)
 				if err := ast.Generate(&buf, root, gen); err != nil {
 					t.Fatalf("Generate error: %v", err)
 				}
@@ -98,4 +98,61 @@ func TestGenerator(t *testing.T) {
 		}
 		return nil
 	})
+}
+
+func TestGeneratorWithDataPositions(t *testing.T) {
+	root, err := a4code.ParseString(`[quoteof "User" [img=image.jpg]]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := goa4webhtml.NewGenerator(
+		goa4webhtml.WithImageMapper(func(tag, val string) string {
+			return "/mapped/" + val
+		}),
+		goa4webhtml.WithUserColorMapper(func(username string) string {
+			return "user-color-" + username
+		}),
+		goa4webhtml.WithDataPositions(),
+	)
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if !strings.Contains(got, `<blockquote class="a4code-block a4code-quoteof user-color-User quote-color-0" data-start-pos="0" data-end-pos="1">`) {
+		t.Fatalf("missing quote data positions in %q", got)
+	}
+	if !strings.Contains(got, `<img src="/mapped/image.jpg" data-start-pos="0" data-end-pos="1" />`) {
+		t.Fatalf("missing mapped image data positions in %q", got)
+	}
+}
+
+func TestGeneratorWithoutSourceAttrs(t *testing.T) {
+	root, err := a4code.ParseString(`[quoteof "User" [img=image.jpg]]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := goa4webhtml.NewGenerator(
+		goa4webhtml.WithImageMapper(func(tag, val string) string {
+			return "/mapped/" + val
+		}),
+	)
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+
+	got := buf.String()
+	if strings.Contains(got, `data-start-pos=`) || strings.Contains(got, `data-end-pos=`) {
+		t.Fatalf("source attributes should be omitted from %q", got)
+	}
+	if !strings.Contains(got, `<blockquote class="a4code-block a4code-quoteof quote-color-0">`) {
+		t.Fatalf("quote markup should remain without source positions in %q", got)
+	}
+	if !strings.Contains(got, `<img src="/mapped/image.jpg" />`) {
+		t.Fatalf("mapped image markup should remain without source positions in %q", got)
+	}
 }

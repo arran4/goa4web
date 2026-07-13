@@ -1,0 +1,118 @@
+-- AllowSingleLevelQuote.in --
+Para 1
+
+[quoteof "other" inner]
+
+Para 2
+-- AllowSingleLevelQuote.out --
+Para 1
+
+[quoteof "other" inner]
+
+Para 2
+-- FilterDeeplyNestedQuote.in --
+Para 1
+
+[quoteof "other" [quoteof "inner" content]]
+
+Para 2
+-- FilterDeeplyNestedQuote.out --
+Para 1
+
+[quoteof "inner" content]
+
+Para 2
+-- TripleLineBreaks.in --
+Para 1
+
+Para 2
+-- TripleLineBreaks.out --
+Para 1
+
+Para 2
+-- ParagraphStartingWithBracket.in --
+Para 1
+
+[b bold]
+-- ParagraphStartingWithBracket.out --
+Para 1
+
+[b bold]
+-- NotFilterMixedQuotes.in --
+[quoteof "other" inner] and more
+-- NotFilterMixedQuotes.out --
+[quoteof "other" inner] and more
+-- EmptyInput.in --
+-- EmptyInput.out --
+-- WhitespaceOnly.in --
+
+-- WhitespaceOnly.out --
+
+-- NewlinesOnly.in --
+
+
+
+-- NewlinesOnly.out --
+
+
+
+-- MixedContentPreQuote.in --
+Prefix [quoteof "other" inner]
+-- MixedContentPreQuote.out --
+Prefix [quoteof "other" inner]
+-- MultipleNestedQuotesSameParagraph.in --
+[quoteof "A" 1] [quoteof "B" 2]
+-- MultipleNestedQuotesSameParagraph.out --
+[quoteof "A" 1] [quoteof "B" 2]
+-- CaseInsensitiveFilter.in --
+[QUOTEOF "other" inner]
+-- CaseInsensitiveFilter.out --
+[quoteof "other" inner]
+-- ParagraphStartingWithCloseBracket.in --
+
+
+Next
+-- ParagraphStartingWithCloseBracket.out --
+
+
+Next
+-- ParagraphStartingWithBackslash.in --
+\[
+
+Next
+-- ParagraphStartingWithBackslash.out --
+\[
+
+Next
+-- UserExampleNestedQuote.in --
+Para 1
+
+[quoteof "M" [quoteof "a" asdf]]
+
+Para 2
+-- UserExampleNestedQuote.out --
+Para 1
+
+[quoteof "a" asdf]
+
+Para 2
+-- UserExampleNestedQuote_Rules_1.in --
+[quote [quote text]]
+-- UserExampleNestedQuote_Rules_1.out --
+[quote text]
+-- UserExampleNestedQuote_Rules_2.in --
+[quoteof "anotheruser" [quote text]]
+-- UserExampleNestedQuote_Rules_2.out --
+[quoteof "anotheruser" [quote text]]
+-- UserExampleNestedQuote_Rules_3.in --
+[quote [quoteof "user" text]]
+-- UserExampleNestedQuote_Rules_3.out --
+[quoteof "user" text]
+-- UserExampleNestedQuote_Rules_4.in --
+[quoteof "user2" [quoteof "user" text]]
+-- UserExampleNestedQuote_Rules_4.out --
+[quoteof "user" text]
+-- UserExampleNestedQuote_Rules_5.in --
+[quoteof "user2" [quoteof "user" text] some more text]
+-- UserExampleNestedQuote_Rules_5.out --
+[quoteof "user" text][quoteof "user2"  some more text]

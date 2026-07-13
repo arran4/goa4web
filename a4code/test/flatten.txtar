@@ -1,0 +1,165 @@
+-- description --
+This txtar file covers the test cases for flattening nested quotes.
+The flattening rules as requested by the user are:
+1. The lowest depth quote (ie who is saying it) is never removed, ie [quoteof user text]
+2. [quote [quote text]] becomes [quote text]
+3. [quoteof anotheruser [quote text]] stays as is
+4. [quote [quoteof user text]] becomes [quoteof user text]
+5. [quoteof user2 [quoteof user text]] becomes [quoteof user text]
+6. [quoteof user2 [quoteof user text] some more text] becomes [quoteof user text] [quoteof user2 some more text]
+
+The overall logic: tree propagation rules where we flatten the quotes so that they don't bleed out or result in heavily nested quote trees, but the innermost speaker attributes are preserved. Empty nodes are eliminated.
+-- test: AllowSingleLevelQuote --
+-- input --
+Para 1
+
+[quoteof "other" inner]
+
+Para 2
+-- expected --
+[quoteof "user" Para 1]
+
+
+
+[quoteof "other" inner]
+
+
+
+[quoteof "user" Para 2]
+-- test: FilterDeeplyNestedQuote --
+-- input --
+Para 1
+
+[quoteof "other" [quoteof "inner" content]]
+
+Para 2
+-- expected --
+[quoteof "user" Para 1]
+
+
+
+[quoteof "inner" content]
+
+
+
+[quoteof "user" Para 2]
+-- test: TripleLineBreaks --
+-- input --
+Para 1
+
+Para 2
+-- expected --
+[quoteof "user" Para 1]
+
+
+
+[quoteof "user" Para 2]
+-- test: ParagraphStartingWithBracket --
+-- input --
+Para 1
+
+[b bold]
+-- expected --
+[quoteof "user" Para 1]
+
+
+
+[quoteof "user" [b bold]]
+-- test: NotFilterMixedQuotes --
+-- input --
+[quoteof "other" inner] and more
+-- expected --
+[quoteof "user" [quoteof "other" inner] and more]
+-- test: EmptyInput --
+-- input --
+-- expected --
+-- test: WhitespaceOnly --
+-- input --
+
+-- expected --
+-- test: NewlinesOnly --
+-- input --
+
+
+
+-- expected --
+-- test: MixedContentPreQuote --
+-- input --
+Prefix [quoteof "other" inner]
+-- expected --
+[quoteof "user" Prefix [quoteof "other" inner]]
+-- test: MultipleNestedQuotesSameParagraph --
+-- input --
+[quoteof "A" 1] [quoteof "B" 2]
+-- expected --
+[quoteof "user" [quoteof "A" 1] [quoteof "B" 2]]
+-- test: CaseInsensitiveFilter --
+-- input --
+[QUOTEOF "other" inner]
+-- expected --
+[quoteof "user" [QUOTEOF "other" inner]]
+-- test: ParagraphStartingWithCloseBracket --
+-- input --
+]
+
+Next
+-- expected --
+[quoteof "user" ]]
+
+
+
+[quoteof "user" Next]
+-- test: ParagraphStartingWithBackslash --
+-- input --
+\[
+
+Next
+-- expected --
+[quoteof "user" []
+
+
+
+[quoteof "user" Next]
+-- test: UserExampleNestedQuote --
+-- input --
+Para 1
+
+[quoteof "M" [quoteof "a" asdf]]
+
+Para 2
+-- expected --
+[quoteof "user" Para 1]
+
+
+
+[quoteof "a" asdf]
+
+
+
+[quoteof "user" Para 2]
+-- test: UserExampleNestedQuote_Rules_1 --
+-- input --
+[quote [quote text]]
+-- expected --
+[quote text]
+-- test: UserExampleNestedQuote_Rules_2 --
+-- input --
+[quoteof "anotheruser" [quote text]]
+-- expected --
+[quoteof "anotheruser" [quote text]]
+-- test: UserExampleNestedQuote_Rules_3 --
+-- input --
+[quote [quoteof "user" text]]
+-- expected --
+[quoteof "user" text]
+-- test: UserExampleNestedQuote_Rules_4 --
+-- input --
+[quoteof "user2" [quoteof "user" text]]
+-- expected --
+[quoteof "user" text]
+-- test: UserExampleNestedQuote_Rules_5 --
+-- input --
+[quoteof "user2" [quoteof "user" text] some more text]
+-- expected --
+[quoteof "user" text]
+[quoteof "user2"  some more text]

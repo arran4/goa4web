@@ -1,6 +1,8 @@
 package a4code
 
 import (
+	"golang.org/x/tools/txtar"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -337,89 +339,43 @@ func intPtr(i int) *int {
 	return &i
 }
 
-func TestQuoteRepro(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		want  string
-	}{
-		{
-			name:  "AllowSingleLevelQuote",
-			input: "Para 1\n\n[quoteof \"other\" inner]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"other\" inner]]\n\n\n\n[quoteof \"user\" Para 2]\n",
-		},
-		{
-			name:  "FilterDeeplyNestedQuote",
-			input: "Para 1\n\n[quoteof \"other\" [quoteof \"inner\" content]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"inner\" content]]\n\n\n\n[quoteof \"user\" Para 2]\n",
-		},
-		{
-			name:  "TripleLineBreaks",
-			input: "Para 1\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" Para 2]\n",
-		},
-		{
-			name:  "ParagraphStartingWithBracket",
-			input: "Para 1\n\n[b bold]",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [b bold]]\n",
-		},
-		{
-			name:  "NotFilterMixedQuotes",
-			input: "[quoteof \"other\" inner] and more",
-			want:  "[quoteof \"user\" [quoteof \"other\" inner] and more]\n",
-		},
-		{
-			name:  "EmptyInput",
-			input: "",
-			want:  "",
-		},
-		{
-			name:  "WhitespaceOnly",
-			input: "   \t   ",
-			want:  "",
-		},
-		{
-			name:  "NewlinesOnly",
-			input: "\n\n\n",
-			want:  "",
-		},
-		{
-			name:  "MixedContentPreQuote",
-			input: "Prefix [quoteof \"other\" inner]",
-			want:  "[quoteof \"user\" Prefix [quoteof \"other\" inner]]\n",
-		},
-		{
-			name:  "MultipleNestedQuotesSameParagraph",
-			input: "[quoteof \"A\" 1] [quoteof \"B\" 2]",
-			want:  "[quoteof \"user\" [quoteof \"A\" 1] [quoteof \"B\" 2]]\n",
-		},
-		{
-			name:  "CaseInsensitiveFilter",
-			input: "[QUOTEOF \"other\" inner]",
-			want:  "[quoteof \"user\" [QUOTEOF \"other\" inner]]\n",
-		},
-		{
-			name:  "ParagraphStartingWithCloseBracket",
-			input: "]\n\nNext",
-			want:  "[quoteof \"user\" ]]\n\n\n\n[quoteof \"user\" Next]\n",
-		},
-		{
-			name:  "ParagraphStartingWithBackslash",
-			input: "\\[\n\nNext",
-			want:  "[quoteof \"user\" []\n\n\n\n[quoteof \"user\" Next]\n",
-		},
-		{
-			name:  "UserExampleNestedQuote",
-			input: "Para 1\n\n[quoteof \"M\" [quoteof \"a\" asdf]]\n\nPara 2",
-			want:  "[quoteof \"user\" Para 1]\n\n\n\n[quoteof \"user\" [quoteof \"a\" asdf]]\n\n\n\n[quoteof \"user\" Para 2]\n",
-		},
+func TestQuoteTxtar(t *testing.T) {
+	ar, err := txtar.ParseFile("test/flatten.txtar")
+	if err != nil {
+		t.Fatalf("failed to read test/flatten.txtar: %v", err)
+	}
+
+	type testCase struct {
+		name     string
+		input    string
+		expected string
+	}
+	var tests []testCase
+	var current testCase
+
+	for _, f := range ar.Files {
+		name := strings.TrimSpace(f.Name)
+		if strings.HasPrefix(name, "test: ") {
+			if current.name != "" {
+				tests = append(tests, current)
+			}
+			current = testCase{name: strings.TrimPrefix(name, "test: ")}
+		} else if name == "input" {
+			current.input = string(f.Data)
+		} else if name == "expected" {
+			current.expected = string(f.Data)
+		}
+	}
+	if current.name != "" {
+		tests = append(tests, current)
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := QuoteText("user", tt.input, WithParagraphQuote())
-			if got != tt.want {
-				t.Errorf("QuoteText() = %q, want %q", got, tt.want)
+			got, _ := QuoteReduce(tt.input)
+			// Note: The tests in txtar are comparing against QuoteReduce outcomes
+			if got != tt.expected {
+				t.Errorf("got:\n%q\nwant:\n%q", got, tt.expected)
 			}
 		})
 	}

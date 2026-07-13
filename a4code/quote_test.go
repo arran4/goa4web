@@ -1,8 +1,8 @@
 package a4code
 
 import (
-	"golang.org/x/tools/txtar"
 	"strings"
+	"golang.org/x/tools/txtar"
 	"testing"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -340,40 +340,34 @@ func intPtr(i int) *int {
 }
 
 func TestQuoteTxtar(t *testing.T) {
-	ar, err := txtar.ParseFile("test/flatten.txtar")
+	ar, err := txtar.ParseFile("testdata/flatten.txtar")
 	if err != nil {
-		t.Fatalf("failed to read test/flatten.txtar: %v", err)
+		t.Fatalf("failed to read testdata/flatten.txtar: %v", err)
 	}
 
-	type testCase struct {
-		name     string
+	tests := make(map[string]struct {
 		input    string
 		expected string
-	}
-	var tests []testCase
-	var current testCase
+	})
 
 	for _, f := range ar.Files {
 		name := strings.TrimSpace(f.Name)
-		if strings.HasPrefix(name, "test: ") {
-			if current.name != "" {
-				tests = append(tests, current)
-			}
-			current = testCase{name: strings.TrimPrefix(name, "test: ")}
-		} else if name == "input" {
-			current.input = string(f.Data)
-		} else if name == "expected" {
-			current.expected = string(f.Data)
+		if strings.HasSuffix(name, ".in") {
+			base := strings.TrimSuffix(name, ".in")
+			tc := tests[base]
+			tc.input = string(f.Data)
+			tests[base] = tc
+		} else if strings.HasSuffix(name, ".out") {
+			base := strings.TrimSuffix(name, ".out")
+			tc := tests[base]
+			tc.expected = string(f.Data)
+			tests[base] = tc
 		}
 	}
-	if current.name != "" {
-		tests = append(tests, current)
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			got, _ := QuoteReduce(tt.input)
-			// Note: The tests in txtar are comparing against QuoteReduce outcomes
 			if got != tt.expected {
 				t.Errorf("got:\n%q\nwant:\n%q", got, tt.expected)
 			}

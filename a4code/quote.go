@@ -315,5 +315,81 @@ func isQuoteOf(s string) bool {
 // It implements rules to prevent deep quote nesting while preserving the innermost speaker attribute.
 // If empty quote nodes remain after processing, they are eliminated.
 func QuoteReduce(original string) (string, error) {
-    return original, nil
+	root, err := ParseString(original)
+	if err != nil {
+		return "", err
+	}
+	reduced := reduceQuoteNode(root, nil)
+	if len(reduced) > 0 {
+		return ToCode(&ast.Root{Children: reduced}), nil
+	}
+	return "", nil
+}
+
+func reduceQuoteNode(node ast.Node, parentQuote ast.Node) []ast.Node {
+	switch n := node.(type) {
+	case *ast.Root:
+		var result []ast.Node
+		for _, child := range n.Children {
+			result = append(result, reduceQuoteNode(child, nil)...)
+		}
+		return []ast.Node{&ast.Root{Children: result}}
+
+	case *ast.Quote:
+		var children []ast.Node
+		for _, child := range n.Children {
+			children = append(children, reduceQuoteNode(child, n)...)
+		}
+		if len(children) == 0 {
+			return nil
+		}
+
+		allQuotes := true
+		for _, c := range children {
+			if _, isQ := c.(*ast.Quote); !isQ {
+				if _, isQOf := c.(*ast.QuoteOf); !isQOf {
+					allQuotes = false
+					break
+				}
+			}
+		}
+		if allQuotes {
+			return children
+		}
+		return []ast.Node{&ast.Quote{Children: children}}
+
+	case *ast.QuoteOf:
+		var children []ast.Node
+		for _, child := range n.Children {
+			children = append(children, reduceQuoteNode(child, n)...)
+		}
+		if len(children) == 0 {
+			return nil
+		}
+
+		var result []ast.Node
+		var currentText []ast.Node
+
+		for _, child := range children {
+			switch c := child.(type) {
+			case *ast.QuoteOf:
+				if len(currentText) > 0 {
+					result = append(result, &ast.QuoteOf{Name: n.Name, Children: currentText})
+					currentText = nil
+				}
+				result = append(result, c)
+			case *ast.Quote:
+				currentText = append(currentText, c)
+			default:
+				currentText = append(currentText, c)
+			}
+		}
+		if len(currentText) > 0 {
+			result = append(result, &ast.QuoteOf{Name: n.Name, Children: currentText})
+		}
+		return result
+
+	default:
+		return []ast.Node{node}
+	}
 }

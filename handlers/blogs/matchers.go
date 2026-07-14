@@ -53,7 +53,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			return
 		}
 		if cd != nil {
-			cd.BlogEntryByID(int32(blogID), lazy.Set[*db.GetBlogEntryForListerByIDRow](row))
+			cd.BlogEntryByID(int32(blogID), lazy.Set[int32, *db.GetBlogEntryForListerByIDRow](row))
 			cd.SetCurrentBlog(int32(blogID))
 		}
 		if cd == nil {

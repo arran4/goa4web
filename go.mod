@@ -22,7 +22,7 @@ require (
 
 require (
 	github.com/anthonynsimon/bild v0.13.0
-	github.com/arran4/go-be-lazy v0.1.0
+	github.com/arran4/go-be-lazy v0.3.1
 	github.com/arran4/go-pattern v0.0.6
 	github.com/arran4/golang-wordwrap v0.0.4
 	github.com/chzyer/readline v1.5.1

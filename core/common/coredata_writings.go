@@ -21,7 +21,7 @@ const (
 )
 
 // Article returns the currently requested writing.
-func (cd *CoreData) Article(ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
+func (cd *CoreData) Article(ops ...lazy.Option[int32, *db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	return cd.CurrentWriting(ops...)
 }
 
@@ -57,7 +57,7 @@ func (cd *CoreData) EditableArticle() (*db.GetWritingForListerByIDRow, error) {
 }
 
 // ArticleComment returns the requested comment for the article.
-func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[int32, *db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
 	return cd.CurrentComment(r, ops...)
 }
 

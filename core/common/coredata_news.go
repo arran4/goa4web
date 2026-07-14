@@ -95,6 +95,7 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 	if cd.queries == nil {
 		return ThreadInfo{}, nil
 	}
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return ThreadInfo{}, fmt.Errorf("parse images: %w", err)

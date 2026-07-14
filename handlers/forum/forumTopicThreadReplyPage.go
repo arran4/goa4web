@@ -150,12 +150,26 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	if err != nil {
 		log.Printf("Error: CreateComment: %s", err)
-		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+		cd.SetCurrentError(fmt.Sprintf("Error creating comment: %v", err))
+		r.Method = http.MethodPost
+		if r.Form == nil {
+			r.ParseForm()
+		}
+		r.Form.Set("replytext", text)
+		ThreadPageWithBasePath(w, r, base)
+		return nil
 	}
 	if cid == 0 {
 		err := handlers.ErrForbidden
 		log.Printf("Error: CreateComment: %s", err)
-		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+		cd.SetCurrentError(fmt.Sprintf("Error creating comment: %v", err))
+		r.Method = http.MethodPost
+		if r.Form == nil {
+			r.ParseForm()
+		}
+		r.Form.Set("replytext", text)
+		ThreadPageWithBasePath(w, r, base)
+		return nil
 	}
 
 	anchor := fmt.Sprintf("c%d", cid)

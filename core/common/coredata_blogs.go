@@ -66,6 +66,7 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	if cd.queries == nil {
 		return nil
 	}
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)

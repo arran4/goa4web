@@ -24,6 +24,9 @@
             <section class="body">
                 <a id="bottom"></a>
                 <span class="section-title">Reply:</span><br>
+                {{ if cd.CurrentError }}
+                    <p class="error-message">{{ cd.CurrentError }}</p>
+                {{ end }}
                 {{ $base := "/forum" }}
                 {{ with $.BasePath }}{{ $base = . }}{{ end }}
                 <form method="post" action="{{$base}}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">

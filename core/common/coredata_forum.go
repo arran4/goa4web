@@ -152,6 +152,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if cd.queries == nil {
 		return nil
 	}
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -183,6 +184,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if cd.queries == nil {
 		return nil
 	}
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)

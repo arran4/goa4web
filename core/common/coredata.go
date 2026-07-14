@@ -2169,10 +2169,14 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if err != nil {
 		return 0, fmt.Errorf("parse images: %w", err)
 	}
+		text = cd.sanitizeCodeImages(text)
+		paths, err = cd.imagePathsFromText(text)
+		if err != nil {
+			return 0, fmt.Errorf("parse images: %w", err)
+		}
 	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
 	}
-	text = sanitizeCodeImages(text)
 	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
@@ -3112,7 +3116,7 @@ func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
 	}
 }
 
-func sanitizeCodeImages(text string) string {
+func (cd *CoreData) sanitizeCodeImages(text string) string {
 	root, err := a4code.ParseString(text)
 	if err != nil {
 		return text
@@ -3120,6 +3124,16 @@ func sanitizeCodeImages(text string) string {
 	root.Transform(func(n ast.Node) (ast.Node, error) {
 		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
+			if parsed, err := url.Parse(t.Src); err == nil && parsed.IsAbs() {
+				if !strings.HasPrefix(parsed.Path, "/images/image/") &&
+				   !strings.HasPrefix(parsed.Path, "/uploads/") &&
+				   !strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
+					// External URL. Try to import it.
+					if cached, err := cd.DownloadAndCacheImage(t.Src); err == nil && cached != "" {
+						t.Src = cached
+					}
+				}
+			}
 		}
 		return n, nil
 	})
@@ -3333,8 +3347,14 @@ func imageRefToPath(ref string) (string, error) {
 		id = cleanSignedParam(id)
 		return imageIDToUploadPath(id)
 	}
-	if u, err := url.Parse(ref); err == nil && u.Path != "" {
-		ref = u.Path
+	parsed, err := url.Parse(ref)
+	if err == nil {
+		if parsed.IsAbs() || parsed.Host != "" {
+			return "", nil
+		}
+		if parsed.Path != "" {
+			ref = parsed.Path
+		}
 	}
 	ref = cleanSignedParam(ref)
 	switch {

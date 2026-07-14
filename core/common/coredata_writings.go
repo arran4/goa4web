@@ -64,6 +64,7 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[*db.GetCo
 // UpdateArticleComment updates a comment on a writing.
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -141,6 +142,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	uid := cd.UserID
+		text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return nil, fmt.Errorf("parse images: %w", err)

@@ -218,12 +218,12 @@ func isPureQuote(node ast.Node) bool {
 
 	hasQuote := false
 	for _, child := range children {
-		switch child.(type) {
+		switch t := child.(type) {
 		case *ast.QuoteOf:
 			hasQuote = true
 		case *ast.Text:
 			// Check for non-empty text
-			if t, ok := child.(*ast.Text); ok && strings.TrimSpace(t.Value) != "" {
+			if strings.TrimSpace(t.Value) != "" {
 				return false
 			}
 		default:

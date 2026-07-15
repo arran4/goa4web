@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/mail"
 	"net/netip"
@@ -24,7 +25,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/arran4/go-be-lazy"
+	lazy "github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/config"
@@ -3121,9 +3122,9 @@ func (cd *CoreData) sanitizeCodeImages(text string) string {
 		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
 			if parsed, err := url.Parse(t.Src); err == nil && parsed.IsAbs() {
-				if !strings.HasPrefix(parsed.Path, "/images/image/") &&
-				   !strings.HasPrefix(parsed.Path, "/uploads/") &&
-				   !strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
+				if parsed.Host != cd.Config.HTTPHostname && !isPrivateOrLocalhost(parsed.Host) && !strings.HasPrefix(parsed.Path, "/images/image/") &&
+					!strings.HasPrefix(parsed.Path, "/uploads/") &&
+					!strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
 					// External URL. Try to import it.
 					if cached, err := cd.DownloadAndCacheImage(t.Src); err == nil && cached != "" {
 						t.Src = cached
@@ -3264,7 +3265,9 @@ func imagePathsFromA4Code(root *ast.Root) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("[img %s]: %w", ref, err)
 		}
-		paths = append(paths, pathVal)
+		if pathVal != "" {
+				paths = append(paths, pathVal)
+			}
 	}
 	return paths, nil
 }
@@ -3348,7 +3351,7 @@ func imageRefToPath(ref string) (string, error) {
 		if parsed.IsAbs() || parsed.Host != "" {
 			return "", nil
 		}
-		if parsed.Path != "" {
+		if parsed.Path != "" && ref != "" {
 			ref = parsed.Path
 		}
 	}
@@ -3468,4 +3471,22 @@ func (cd *CoreData) externalLinkParams() (string, string) {
 		return "u", url.QueryEscape(cd.currentExternalLinkURL)
 	}
 	return "id", fmt.Sprintf("%d", cd.currentExternalLinkID)
+}
+
+func isPrivateOrLocalhost(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		ips, err := net.LookupIP(host)
+		if err != nil || len(ips) == 0 {
+			return true // fail closed
+		}
+		ip = ips[0]
+	}
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		return true
+	}
+	return false
 }

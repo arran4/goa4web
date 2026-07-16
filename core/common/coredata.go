@@ -3122,7 +3122,7 @@ func (cd *CoreData) sanitizeCodeImages(text string) string {
 		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
 			if parsed, err := url.Parse(t.Src); err == nil && parsed.IsAbs() {
-				if parsed.Host != cd.Config.HTTPHostname && !isPrivateOrLocalhost(parsed.Host) && !strings.HasPrefix(parsed.Path, "/images/image/") &&
+				if cd.Config != nil && parsed.Host != cd.Config.HTTPHostname && !isPrivateOrLocalhost(parsed.Host) && !strings.HasPrefix(parsed.Path, "/images/image/") &&
 					!strings.HasPrefix(parsed.Path, "/uploads/") &&
 					!strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
 					// External URL. Queue it for the image cache and render a placeholder until materialized.

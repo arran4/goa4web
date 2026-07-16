@@ -69,7 +69,12 @@ func Fetch(urlStr string, client *http.Client) (*Info, error) {
 
 		client = NewSafeClient()
 	}
-	resp, err := client.Get(urlStr)
+	req, err := http.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "goa4web/1.0 (+https://github.com/arran4/goa4web)")
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

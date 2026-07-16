@@ -4,19 +4,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"strings"
 )
 
 func TestFetchWikipedia(t *testing.T) {
 	html := `<!DOCTYPE html><html><head><title>Gödel, Escher, Bach - Wikipedia</title><meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/8/8b/Godel%2C_Escher%2C_Bach_%28first_edition%29.jpg"><meta property="og:title" content="Gödel, Escher, Bach - Wikipedia"></head>`
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(html))
-	}))
-	defer server.Close()
-
-	info, err := Fetch(server.URL, http.DefaultClient)
+	info, err := Parse(strings.NewReader(html))
 	if err != nil {
-		t.Fatalf("Fetch() error = %v", err)
+		t.Fatalf("Parse() error = %v", err)
 	}
 
 	if info.Title != "Gödel, Escher, Bach - Wikipedia" {

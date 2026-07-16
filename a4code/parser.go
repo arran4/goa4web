@@ -99,7 +99,7 @@ func isBlockContext(n ast.Node) bool {
 
 func isBlockTag(tag string) bool {
 	switch strings.ToLower(tag) {
-	case "quote", "quoteof", "qo", "spoiler", "indent":
+	case "quote", "q", "quoteof", "qo", "spoiler", "sp", "indent":
 		return true
 	}
 	return false

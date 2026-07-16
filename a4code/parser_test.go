@@ -363,8 +363,11 @@ func TestQOMarkup(t *testing.T) {
 	if len(tree.Children) != 1 {
 		t.Fatalf("expected 1 child, got %d", len(tree.Children))
 	}
-	_, ok := tree.Children[0].(*ast.QuoteOf)
+	q, ok := tree.Children[0].(*ast.QuoteOf)
 	if !ok {
 		t.Fatalf("expected QuoteOf node, got %T", tree.Children[0])
+	}
+	if q.Name != "user" {
+		t.Errorf("expected Name %q, got %q", "user", q.Name)
 	}
 }

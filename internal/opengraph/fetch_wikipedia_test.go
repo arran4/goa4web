@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestFetchWikipediaReal(t *testing.T) {
-	html := `<!DOCTYPE html> <html class="client-nojs vector-feature-language-in-header-enabled vector-feature-language-in-main-menu-disabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-1 vector-feature-appearance-pinned-clientpref-1 skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available skin-thumbsize-clientpref-standard" lang="en" dir="ltr"> <head> <meta charset="UTF-8"> <title>Gödel, Escher, Bach - Wikipedia</title> <meta name="generator" content="MediaWiki 1.47.0-wmf.4"> <meta name="referrer" content="origin"> <meta name="referrer" content="origin-when-cross-origin"> <meta name="robots" content="max-image-preview:standard"> <meta name="format-detection" content="telephone=no"> <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/8/8b/Godel%2C_Escher%2C_Bach_%28first_edition%29.jpg"> <meta property="og:image:width" content="780"> <meta property="og:image:height" content="1200"> <meta name="viewport" content="width=1120"> <meta property="og:title" content="Gödel, Escher, Bach - Wikipedia"> <meta property="og:type" content="website"> </head>`
+func TestFetchWikipedia(t *testing.T) {
+	html := `<!DOCTYPE html><html><head><title>Gödel, Escher, Bach - Wikipedia</title><meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/8/8b/Godel%2C_Escher%2C_Bach_%28first_edition%29.jpg"><meta property="og:title" content="Gödel, Escher, Bach - Wikipedia"></head>`
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(html))

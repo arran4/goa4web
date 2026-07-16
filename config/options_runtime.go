@@ -111,6 +111,8 @@ var IntOptions = []IntOption{
 	{"image-max-bytes", EnvImageMaxBytes, "The maximum allowed size for uploaded images in bytes.", 0, "", func(c *RuntimeConfig) *int { return &c.ImageMaxBytes }},
 	{"image-cache-max-bytes", EnvImageCacheMaxBytes, "The maximum size of the image cache in bytes. A value of -1 means no limit.", -1, "", func(c *RuntimeConfig) *int { return &c.ImageCacheMaxBytes }},
 	{"image-cache-fetch-max-retries", EnvImageCacheFetchMaxRetries, "The maximum number of remote image cache fetch attempts before marking the entry failed.", 3, "", func(c *RuntimeConfig) *int { return &c.ImageCacheFetchMaxRetries }},
+	{"image-cache-placeholder-min-width", EnvImageCachePlaceholderMinWidth, "The minimum SVG width for image cache diagnostic placeholders.", DefaultImageCachePlaceholderMinWidth, "", func(c *RuntimeConfig) *int { return &c.ImageCachePlaceholderMinWidth }},
+	{"image-cache-placeholder-min-height", EnvImageCachePlaceholderMinHeight, "The minimum SVG height for image cache diagnostic placeholders.", DefaultImageCachePlaceholderMinHeight, "", func(c *RuntimeConfig) *int { return &c.ImageCachePlaceholderMinHeight }},
 	{"image-thumbnail-size", EnvImageThumbnailSize, "The size (width and height) of the generated thumbnails.", 200, "", func(c *RuntimeConfig) *int { return &c.ImageThumbnailSize }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "The interval in seconds between runs of the email worker.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
 	{"email-verification-expiry-hours", EnvEmailVerificationExpiryHours, "The number of hours an email verification request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailVerificationExpiryHours }},

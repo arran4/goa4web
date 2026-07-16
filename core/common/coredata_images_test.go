@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"database/sql"
+	"net/url"
 	"path"
 	"strings"
 	"testing"
@@ -132,4 +133,30 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))
 		}
 	})
+}
+
+func TestSanitizeCodeImagesQueuesImageAliasGoogleRedirect(t *testing.T) {
+	queries := testhelpers.NewQuerierStub()
+	cfg := config.NewRuntimeConfig()
+	cd := NewCoreData(context.Background(), queries, cfg)
+	target := "https://www.pinterest.com/pin/88383211424382477/"
+	googleURL := "https://www.google.com/url?sa=t&source=web&rct=j&url=" + url.QueryEscape(target) + "&ved=0CBYQjRxqFwoTCODsyOfE1pUDFQAAAAAdAAAAABBq&opi=89978449"
+
+	got, queued := cd.sanitizeCodeImagesAndQueue("[image " + googleURL + "]")
+	if !strings.Contains(got, "[img=cache:") {
+		t.Fatalf("sanitized code = %q, want cache image", got)
+	}
+	if len(queued) != 1 {
+		t.Fatalf("queued fetches = %d, want 1", len(queued))
+	}
+	if queued[0].sourceURL != target {
+		t.Fatalf("queued source url = %q, want %q", queued[0].sourceURL, target)
+	}
+	if len(queries.CreatePendingImageCacheEntryCalls) != 1 {
+		t.Fatalf("pending cache calls = %d, want 1", len(queries.CreatePendingImageCacheEntryCalls))
+	}
+	call := queries.CreatePendingImageCacheEntryCalls[0]
+	if !call.SourceUrl.Valid || call.SourceUrl.String != target {
+		t.Fatalf("pending source url = %#v, want %q", call.SourceUrl, target)
+	}
 }

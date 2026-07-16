@@ -410,6 +410,7 @@ type MissingImageData struct {
 	Description string
 	Line1       string
 	Line2       string
+	DetailLines []string
 	TitleSize   int
 	DetailSize  int
 }
@@ -448,6 +449,14 @@ func GetMissingImageSVG(data MissingImageData, opts ...Option) []byte {
 	}
 	if data.DetailSize <= 0 {
 		data.DetailSize = 12
+	}
+	if len(data.DetailLines) == 0 {
+		if data.Line1 != "" {
+			data.DetailLines = append(data.DetailLines, data.Line1)
+		}
+		if data.Line2 != "" {
+			data.DetailLines = append(data.DetailLines, data.Line2)
+		}
 	}
 	tmpl, err := htemplate.New("missing_image.svg").Parse(string(readFile("assets/missing_image.svg", opts...)))
 	if err != nil {

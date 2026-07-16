@@ -202,27 +202,34 @@ func serveMissingCacheImage(w http.ResponseWriter, r *http.Request, cfg *config.
 	if cfg != nil && cfg.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
 	}
-	data := missingCacheImageData(id, entry)
+	data := missingCacheImageData(cfg, id, entry)
 	w.Header().Set("Content-Type", "image/svg+xml")
 	http.ServeContent(w, r, "missing_image.svg", time.Time{}, bytes.NewReader(templates.GetMissingImageSVG(data, opts...)))
 }
 
-func missingCacheImageData(id string, entry *db.ImageCacheEntry) templates.MissingImageData {
+func missingCacheImageData(cfg *config.RuntimeConfig, id string, entry *db.ImageCacheEntry) templates.MissingImageData {
+	minWidth := imageCachePlaceholderMinWidth(cfg)
+	minHeight := imageCachePlaceholderMinHeight(cfg)
 	data := templates.MissingImageData{
-		Title: "Image Pending",
-		Line1: "cache:" + id,
-		Line2: "waiting for download",
+		Title:  "Image Pending",
+		Line1:  "cache:" + id,
+		Line2:  "waiting for download",
+		Width:  minWidth,
+		Height: minHeight,
 	}
 	if entry == nil {
 		data.Title = "Missing Image"
+		data.DetailLines = wrapMissingImageLines(data.Width, "cache: "+id, "metadata: not found")
 		return data
 	}
 	if entry.Width.Valid && entry.Width.Int32 > 0 {
-		data.Width = int(entry.Width.Int32)
+		data.Width = max(int(entry.Width.Int32), minWidth)
 	}
 	if entry.Height.Valid && entry.Height.Int32 > 0 {
-		data.Height = int(entry.Height.Int32)
+		data.Height = max(int(entry.Height.Int32), minHeight)
 	}
+	var detailLines []string
+	detailLines = append(detailLines, "cache: "+id)
 	switch entry.Status {
 	case "failed":
 		data.Title = "Image Unavailable"
@@ -234,9 +241,13 @@ func missingCacheImageData(id string, entry *db.ImageCacheEntry) templates.Missi
 		data.Title = "Missing Image"
 		data.Line2 = entry.Status
 	}
+	if entry.Status != "" {
+		detailLines = append(detailLines, "status: "+entry.Status)
+	}
 	if entry.SourceUrl.Valid && entry.SourceUrl.String != "" {
 		data.Line1 = originSummary(entry.SourceUrl.String)
 		data.Description = "Original image: " + entry.SourceUrl.String
+		detailLines = append(detailLines, wrapMissingImageLine(data.Width, "source: ", entry.SourceUrl.String)...)
 	}
 	if entry.ErrorMessage.Valid && entry.ErrorMessage.String != "" {
 		data.Line2 = fmt.Sprintf("attempt %d failed: %s", entry.RetryCount, entry.ErrorMessage.String)
@@ -250,8 +261,17 @@ func missingCacheImageData(id string, entry *db.ImageCacheEntry) templates.Missi
 		if entry.LastAttemptAt.Valid {
 			data.Description += "\nLast attempt: " + entry.LastAttemptAt.Time.Format(time.RFC3339)
 		}
+		detailLines = append(detailLines, fmt.Sprintf("attempts: %d", entry.RetryCount))
+		if entry.LastAttemptAt.Valid {
+			detailLines = append(detailLines, "last attempt: "+entry.LastAttemptAt.Time.Format(time.RFC3339))
+		}
+		if entry.NextAttemptAt.Valid {
+			detailLines = append(detailLines, "next retry: "+entry.NextAttemptAt.Time.Format(time.RFC3339))
+		}
+		detailLines = append(detailLines, wrapMissingImageLine(data.Width, "error: ", entry.ErrorMessage.String)...)
 	}
 	if entry.ErrorMessage.Valid && entry.ErrorMessage.String != "" {
+		data.DetailLines = trimMissingImageLines(detailLines)
 		return data
 	}
 	if entry.ContentType.Valid && entry.SizeBytes.Valid {
@@ -261,7 +281,86 @@ func missingCacheImageData(id string, entry *db.ImageCacheEntry) templates.Missi
 	} else if entry.SizeBytes.Valid {
 		data.Line2 = fmt.Sprintf("%d bytes", entry.SizeBytes.Int64)
 	}
+	if data.Line2 != "" {
+		detailLines = append(detailLines, data.Line2)
+	}
+	data.DetailLines = trimMissingImageLines(detailLines)
 	return data
+}
+
+func imageCachePlaceholderMinWidth(cfg *config.RuntimeConfig) int {
+	if cfg == nil || cfg.ImageCachePlaceholderMinWidth <= 0 {
+		return config.DefaultImageCachePlaceholderMinWidth
+	}
+	return cfg.ImageCachePlaceholderMinWidth
+}
+
+func imageCachePlaceholderMinHeight(cfg *config.RuntimeConfig) int {
+	if cfg == nil || cfg.ImageCachePlaceholderMinHeight <= 0 {
+		return config.DefaultImageCachePlaceholderMinHeight
+	}
+	return cfg.ImageCachePlaceholderMinHeight
+}
+
+func wrapMissingImageLines(width int, lines ...string) []string {
+	var out []string
+	for _, line := range lines {
+		out = append(out, wrapMissingImageLine(width, "", line)...)
+	}
+	return trimMissingImageLines(out)
+}
+
+func wrapMissingImageLine(width int, prefix, value string) []string {
+	value = strings.TrimSpace(value)
+	prefix = strings.TrimSpace(prefix)
+	if prefix != "" {
+		prefix += " "
+	}
+	if value == "" {
+		return nil
+	}
+	maxChars := (width - 48) / 7
+	if maxChars < 32 {
+		maxChars = 32
+	}
+	if len(prefix)+len(value) <= maxChars {
+		return []string{prefix + value}
+	}
+	var out []string
+	remaining := value
+	firstPrefix := prefix
+	nextPrefix := strings.Repeat(" ", len(prefix))
+	for remaining != "" {
+		linePrefix := firstPrefix
+		if len(out) > 0 {
+			linePrefix = nextPrefix
+		}
+		limit := maxChars - len(linePrefix)
+		if limit < 12 {
+			limit = 12
+		}
+		if len(remaining) <= limit {
+			out = append(out, linePrefix+remaining)
+			break
+		}
+		cut := strings.LastIndexAny(remaining[:limit], "/?&=.-_")
+		if cut < limit/2 {
+			cut = limit
+		} else {
+			cut++
+		}
+		out = append(out, linePrefix+remaining[:cut])
+		remaining = strings.TrimLeft(remaining[cut:], " ")
+	}
+	return out
+}
+
+func trimMissingImageLines(lines []string) []string {
+	const maxPlaceholderDetailLines = 10 // Maximum diagnostic rows shown inside the SVG placeholder.
+	if len(lines) <= maxPlaceholderDetailLines {
+		return lines
+	}
+	return append(lines[:maxPlaceholderDetailLines-1], "…")
 }
 
 func originSummary(raw string) string {

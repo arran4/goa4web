@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -220,6 +221,96 @@ func TestQueueRemoteImageCacheCreatesPendingEntry(t *testing.T) {
 	}
 	if !got.NextAttemptAt.Valid {
 		t.Fatal("expected pending entry to have next attempt time")
+	}
+}
+
+func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
+	var imageBytes bytes.Buffer
+	img := image.NewRGBA(image.Rect(0, 0, 4, 3))
+	for y := 0; y < 3; y++ {
+		for x := 0; x < 4; x++ {
+			img.Set(x, y, color.RGBA{R: 0x10, G: 0x20, B: 0x30, A: 0xff})
+		}
+	}
+	if err := png.Encode(&imageBytes, img); err != nil {
+		t.Fatalf("encode png: %v", err)
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/pin":
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = fmt.Fprintf(w, `<html><head><meta property="og:image" content="%s/photo.png"></head><body></body></html>`, "http://"+r.Host)
+		case "/photo.png":
+			w.Header().Set("Content-Type", "image/png")
+			_, _ = w.Write(imageBytes.Bytes())
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	cd := NewCoreData(context.Background(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig())
+	got, err := cd.downloadExternalImage(srv.URL + "/pin")
+	if err != nil {
+		t.Fatalf("downloadExternalImage: %v", err)
+	}
+	if got == nil || !got.width.Valid || got.width.Int32 != 4 || !got.height.Valid || got.height.Int32 != 3 {
+		t.Fatalf("dimensions = %#v x %#v, want 4x3", got.width, got.height)
+	}
+	if got.contentType != "image/png" {
+		t.Fatalf("content type = %q, want image/png", got.contentType)
+	}
+}
+
+func TestCreateCommentStartsImmediateRemoteImageFetch(t *testing.T) {
+	var imageBytes bytes.Buffer
+	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	if err := png.Encode(&imageBytes, img); err != nil {
+		t.Fatalf("encode png: %v", err)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		_, _ = w.Write(imageBytes.Bytes())
+	}))
+	defer srv.Close()
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	dialer := &net.Dialer{}
+	transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		return dialer.DialContext(ctx, network, srv.Listener.Addr().String())
+	}
+	client := &http.Client{Transport: transport, Timeout: 2 * time.Second}
+
+	provider := newMemoryCacheProvider()
+	providerName := registerMemoryCacheProvider(t, provider)
+	upsertCh := make(chan db.UpsertImageCacheEntryParams, 1)
+	queries := testhelpers.NewQuerierStub()
+	queries.CreateCommentInSectionForCommenterResult = 42
+	queries.UpsertImageCacheEntryFn = func(_ context.Context, arg db.UpsertImageCacheEntryParams) error {
+		select {
+		case upsertCh <- arg:
+		default:
+		}
+		return nil
+	}
+	cfg := config.NewRuntimeConfig()
+	cfg.ImageCacheProvider = providerName
+	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
+
+	if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, "[image http://93.184.216.34/logo.png]"); err != nil {
+		t.Fatalf("CreateCommentInSectionForCommenter: %v", err)
+	}
+	select {
+	case got := <-upsertCh:
+		if got.Status != imageCacheStatusReady {
+			t.Fatalf("status = %q, want ready", got.Status)
+		}
+		if !got.SourceUrl.Valid || got.SourceUrl.String != "http://93.184.216.34/logo.png" {
+			t.Fatalf("source url = %#v", got.SourceUrl)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for immediate image cache fetch")
 	}
 }
 

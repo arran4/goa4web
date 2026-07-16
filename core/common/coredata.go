@@ -2166,7 +2166,8 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if cd.queries == nil {
 		return 0, nil
 	}
-	text = cd.sanitizeCodeImages(text)
+	var queuedFetches []queuedRemoteImageCacheFetch
+	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return 0, fmt.Errorf("parse images: %w", err)
@@ -2190,6 +2191,9 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	}
 	if err := cd.recordThreadImages(threadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return commentID, nil
 }
@@ -3113,11 +3117,22 @@ func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
 	}
 }
 
+type queuedRemoteImageCacheFetch struct {
+	id        string
+	sourceURL string
+}
+
 func (cd *CoreData) sanitizeCodeImages(text string) string {
+	text, _ = cd.sanitizeCodeImagesAndQueue(text)
+	return text
+}
+
+func (cd *CoreData) sanitizeCodeImagesAndQueue(text string) (string, []queuedRemoteImageCacheFetch) {
 	root, err := a4code.ParseString(text)
 	if err != nil {
-		return text
+		return text, nil
 	}
+	var queued []queuedRemoteImageCacheFetch
 	root.Transform(func(n ast.Node) (ast.Node, error) {
 		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
@@ -3127,6 +3142,12 @@ func (cd *CoreData) sanitizeCodeImages(text string) string {
 					!strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
 					// External URL. Queue it for the image cache and render a placeholder until materialized.
 					if cached, err := cd.QueueRemoteImageCache(t.Src); err == nil && cached != "" {
+						if id := strings.TrimPrefix(cached, "cache:"); id != cached && imagesign.ValidID(id) {
+							queued = append(queued, queuedRemoteImageCacheFetch{
+								id:        id,
+								sourceURL: canonicalRemoteImageSourceURL(t.Src),
+							})
+						}
 						t.Src = cached
 					}
 				}
@@ -3134,7 +3155,7 @@ func (cd *CoreData) sanitizeCodeImages(text string) string {
 		}
 		return n, nil
 	})
-	return a4code.ToCode(root)
+	return a4code.ToCode(root), queued
 }
 
 func (cd *CoreData) imagePathsFromText(text string) ([]string, error) {

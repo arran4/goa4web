@@ -5,11 +5,12 @@
  {{- end }}
  <rect width="100%" height="100%" fill="#f0f0f0"/>
  <rect x="1" y="1" width="{{ .InnerWidth }}" height="{{ .InnerHeight }}" fill="none" stroke="#d0d0d0" stroke-width="2" stroke-dasharray="8 6"/>
- <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="{{ .TitleSize }}" fill="#777">{{ .Title }}</text>
- {{- if .Line1 }}
- <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="{{ .DetailSize }}" fill="#888">{{ .Line1 }}</text>
+ <text x="24" y="40" dominant-baseline="middle" text-anchor="start" font-family="sans-serif" font-size="{{ .TitleSize }}" font-weight="600" fill="#666">{{ .Title }}</text>
+ {{- if .DetailLines }}
+ <text x="24" y="70" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="{{ .DetailSize }}" fill="#777">
+ {{- range .DetailLines }}
+  <tspan x="24" dy="1.35em">{{ . }}</tspan>
  {{- end }}
- {{- if .Line2 }}
- <text x="50%" y="68%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="{{ .DetailSize }}" fill="#888">{{ .Line2 }}</text>
+ </text>
  {{- end }}
 </svg>

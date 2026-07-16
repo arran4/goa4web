@@ -219,8 +219,8 @@ func isPureQuote(node ast.Node) bool {
 	hasQuote := false
 	for _, child := range children {
 		switch t := child.(type) {
-			case *ast.Quote:
-				hasQuote = true
+		case *ast.Quote:
+			hasQuote = true
 		case *ast.QuoteOf:
 			hasQuote = true
 		case *ast.Text:

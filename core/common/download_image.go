@@ -11,6 +11,7 @@ import (
 	_ "image/jpeg" // Register format
 	_ "image/png"  // Register format
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -87,6 +88,7 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 // QueueRemoteImageCache records a pending remote image cache entry and returns
 // its stable cache reference. A background worker can later materialize it.
 func (cd *CoreData) QueueRemoteImageCache(imgURL string) (string, error) {
+	imgURL = canonicalRemoteImageSourceURL(imgURL)
 	if cd == nil || cd.queries == nil {
 		return cd.DownloadAndCacheImage(imgURL)
 	}
@@ -106,6 +108,37 @@ func (cd *CoreData) QueueRemoteImageCache(imgURL string) (string, error) {
 		return "", err
 	}
 	return "cache:" + id, nil
+}
+
+// StartRemoteImageCacheFetch starts a best-effort immediate fetch for a queued
+// remote cache entry. The scheduled worker remains responsible for retries.
+func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
+	if cd == nil || cd.queries == nil || id == "" || sourceURL == "" {
+		return
+	}
+	sourceURL = canonicalRemoteImageSourceURL(sourceURL)
+	go func() {
+		ctx := context.Background()
+		attemptTime := time.Now().UTC()
+		log.Printf("image cache fetch start: mode=immediate id=%s source=%q attempt_at=%s", id, sourceURL, attemptTime.Format(time.RFC3339))
+		if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
+			log.Printf("image cache fetch failed: mode=immediate id=%s source=%q error=%q", id, sourceURL, err.Error())
+			retryDelay := cd.imageCacheFetchRetryDelay()
+			maxRetries := cd.imageCacheFetchMaxRetries()
+			if recErr := cd.queries.RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
+				ID:            id,
+				RetryCount:    int32(maxRetries),
+				RetryCount_2:  int32(maxRetries),
+				ErrorMessage:  sql.NullString{String: err.Error(), Valid: true},
+				LastAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
+				NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
+			}); recErr != nil {
+				log.Printf("record immediate image cache fetch failure: %v", recErr)
+			}
+			return
+		}
+		log.Printf("image cache fetch complete: mode=immediate id=%s source=%q", id, sourceURL)
+	}()
 }
 
 // ProcessPendingRemoteImageCacheEntries materializes queued remote cache
@@ -133,17 +166,23 @@ func (cd *CoreData) ProcessPendingRemoteImageCacheEntries(ctx context.Context, l
 			continue
 		}
 		attemptTime := time.Now().UTC()
+		log.Printf("image cache fetch start: mode=worker id=%s source=%q attempt_at=%s retry_count=%d", entry.ID, entry.SourceUrl.String, attemptTime.Format(time.RFC3339), entry.RetryCount)
 		if err := cd.refreshRemoteImageCacheEntry(ctx, entry.ID, entry.SourceUrl.String, attemptTime); err != nil {
+			log.Printf("image cache fetch failed: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, err.Error())
 			retryDelay := cd.imageCacheFetchRetryDelay()
-			_ = cd.queries.RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
+			if recErr := cd.queries.RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
 				ID:            entry.ID,
 				RetryCount:    int32(maxRetries),
 				RetryCount_2:  int32(maxRetries),
 				ErrorMessage:  sql.NullString{String: err.Error(), Valid: true},
 				LastAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
 				NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
-			})
+			}); recErr != nil {
+				log.Printf("record worker image cache fetch failure: id=%s source=%q error=%q", entry.ID, entry.SourceUrl.String, recErr.Error())
+			}
+			continue
 		}
+		log.Printf("image cache fetch complete: mode=worker id=%s source=%q", entry.ID, entry.SourceUrl.String)
 	}
 	return nil
 }
@@ -162,14 +201,65 @@ func remoteImageCacheIDForURL(imgURL string) (string, error) {
 	return hash + ext, nil
 }
 
+func canonicalRemoteImageSourceURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || !u.IsAbs() {
+		return raw
+	}
+	host := strings.ToLower(u.Hostname())
+	if isGoogleRedirectHost(host) && (u.Path == "/url" || u.Path == "/imgres") {
+		for _, key := range []string{"url", "q", "imgurl"} {
+			next := u.Query().Get(key)
+			if next == "" {
+				continue
+			}
+			nu, err := url.Parse(next)
+			if err == nil && nu.IsAbs() && (nu.Scheme == "http" || nu.Scheme == "https") {
+				return nu.String()
+			}
+		}
+	}
+	return raw
+}
+
+func isGoogleRedirectHost(host string) bool {
+	return host == "google.com" || host == "www.google.com" || strings.HasSuffix(host, ".google.com")
+}
+
+func isImageContentType(contentType string) bool {
+	contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+	return strings.HasPrefix(contentType, "image/")
+}
+
+func isHTMLContentType(contentType string) bool {
+	contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+	return contentType == "text/html" || contentType == "application/xhtml+xml"
+}
+
+func looksLikeHTML(body []byte) bool {
+	s := strings.TrimSpace(strings.ToLower(string(body[:min(len(body), 512)])))
+	return strings.HasPrefix(s, "<!doctype html") || strings.HasPrefix(s, "<html") || strings.Contains(s, "<head")
+}
+
 func (cd *CoreData) downloadExternalImage(imgURL string) (*downloadedImage, error) {
+	return cd.downloadExternalImageAtDepth(canonicalRemoteImageSourceURL(imgURL), 0)
+}
+
+func (cd *CoreData) downloadExternalImageAtDepth(imgURL string, depth int) (*downloadedImage, error) {
+	if depth > 3 {
+		return nil, fmt.Errorf("too many image metadata redirects")
+	}
 	client := opengraph.NewSafeClient() // Always use a safe client for external URLs
+	if cd != nil && cd.HTTPClient() != nil {
+		client = cd.HTTPClient()
+	}
 
 	resp, err := client.Get(imgURL)
 	if err != nil {
 		return nil, fmt.Errorf("http get: %w", err)
 	}
 	defer resp.Body.Close()
+	log.Printf("image cache fetch http response: url=%q status=%q content_type=%q", imgURL, resp.Status, resp.Header.Get("Content-Type"))
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("http status: %s", resp.Status)
 	}
@@ -181,10 +271,12 @@ func (cd *CoreData) downloadExternalImage(imgURL string) (*downloadedImage, erro
 	if len(body) == 0 {
 		return nil, fmt.Errorf("empty body")
 	}
+	log.Printf("image cache fetch http body: url=%q bytes=%d", imgURL, len(body))
 	hashBytes := sha256.Sum256(body)
+	contentType := resp.Header.Get("Content-Type")
 	img := &downloadedImage{
 		body:             body,
-		contentType:      resp.Header.Get("Content-Type"),
+		contentType:      contentType,
 		contentExpiresAt: httpContentExpiresAt(resp.Header, time.Now().UTC()),
 		checksum:         fmt.Sprintf("%x", hashBytes[:]),
 	}
@@ -192,8 +284,35 @@ func (cd *CoreData) downloadExternalImage(imgURL string) (*downloadedImage, erro
 	if err == nil {
 		img.width = sql.NullInt32{Int32: int32(cfg.Width), Valid: cfg.Width > 0}
 		img.height = sql.NullInt32{Int32: int32(cfg.Height), Valid: cfg.Height > 0}
+		return img, nil
 	}
-	return img, nil
+	if isImageContentType(contentType) {
+		return img, nil
+	}
+	if !isHTMLContentType(contentType) && !looksLikeHTML(body) {
+		return nil, fmt.Errorf("not an image: %s", contentType)
+	}
+	info, err := opengraph.Fetch(imgURL, client)
+	if err != nil {
+		return nil, fmt.Errorf("fetch image metadata: %w", err)
+	}
+	if info == nil || info.Image == "" {
+		return nil, fmt.Errorf("html document did not expose an image")
+	}
+	nextURL, err := url.Parse(info.Image)
+	if err != nil {
+		return nil, fmt.Errorf("parse metadata image url: %w", err)
+	}
+	baseURL, err := url.Parse(imgURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse base image url: %w", err)
+	}
+	resolved := baseURL.ResolveReference(nextURL).String()
+	if resolved == imgURL {
+		return nil, fmt.Errorf("metadata image points to same url")
+	}
+	log.Printf("image cache fetch metadata image: page=%q image=%q", imgURL, resolved)
+	return cd.downloadExternalImageAtDepth(resolved, depth+1)
 }
 
 func (cd *CoreData) writeImageCacheBytes(ctx context.Context, key, id string, body []byte) error {

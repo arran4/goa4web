@@ -124,3 +124,4 @@ jmap.env
 cmd/goa4web/cert.pem
 cmd/goa4web/key.pem
 node_modules
+/.data/cache/

@@ -8,7 +8,7 @@ import (
 )
 
 type DataCache struct {
-	mapMu sync.Mutex
+	mapMu sync.RWMutex
 	// Keep this sorted
 	adminLatestNews               lazy.Value[[]*db.AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow]
 	adminLinkerItemRows           map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]

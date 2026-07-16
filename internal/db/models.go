@@ -315,6 +315,28 @@ type Grant struct {
 	Active    bool
 }
 
+type ImageCacheEntry struct {
+	ID               string
+	SourceUrl        sql.NullString
+	SourceKind       string
+	Status           string
+	CreatedAt        time.Time
+	LastUsedAt       sql.NullTime
+	FetchedAt        sql.NullTime
+	ExpiresAt        sql.NullTime
+	ContentExpiresAt sql.NullTime
+	ContentType      sql.NullString
+	SizeBytes        sql.NullInt64
+	Width            sql.NullInt32
+	Height           sql.NullInt32
+	Checksum         sql.NullString
+	ThumbnailID      sql.NullString
+	ErrorMessage     sql.NullString
+	RetryCount       int32
+	LastAttemptAt    sql.NullTime
+	NextAttemptAt    sql.NullTime
+}
+
 type Imageboard struct {
 	Idimageboard           int32
 	ImageboardIdimageboard sql.NullInt32

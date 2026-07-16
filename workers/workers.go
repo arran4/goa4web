@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
@@ -75,6 +76,16 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 			},
 			Type:      scheduler.TaskTypePeriodic,
 			Interval:  time.Duration(cfg.EmailWorkerInterval) * time.Second,
+			Ephemeral: true,
+		})
+		s.Register(scheduler.Task{
+			Name: "image_cache_fetch",
+			Handler: func(ctx context.Context, t time.Time) error {
+				cd := common.NewCoreData(ctx, q, cfg)
+				return cd.ProcessPendingRemoteImageCacheEntries(ctx, 10)
+			},
+			Type:      scheduler.TaskTypePeriodic,
+			Interval:  time.Minute,
 			Ephemeral: true,
 		})
 		s.Run(ctx, 1*time.Second)

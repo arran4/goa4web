@@ -44,9 +44,7 @@ func (ResendSentEmailTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if err != nil {
 			return fmt.Errorf("list sent email ids fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		for _, id := range rows {
-			ids = append(ids, id)
-		}
+		ids = append(ids, rows...)
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {

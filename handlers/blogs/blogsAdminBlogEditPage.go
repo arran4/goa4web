@@ -10,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
@@ -29,7 +30,7 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
 		return
 	}
-	cd.BlogEntryByID(int32(blogID), lazy.Set(row))
+	cd.BlogEntryByID(int32(blogID), lazy.Set[int32, *db.GetBlogEntryForListerByIDRow](row))
 	cd.SetCurrentBlog(int32(blogID))
 	cd.PageTitle = "Admin Edit Blog"
 	if _, err := cd.Languages(); err != nil {

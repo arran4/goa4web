@@ -1,8 +1,8 @@
 package a4code
 
 import (
-	"strings"
 	"golang.org/x/tools/txtar"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/a4code/ast"
@@ -372,5 +372,21 @@ func TestQuoteTxtar(t *testing.T) {
 				t.Errorf("got:\n%q\nwant:\n%q", got, tt.expected)
 			}
 		})
+	}
+}
+
+func TestIsPureQuote(t *testing.T) {
+	node := &ast.QuoteOf{
+		Name: "test",
+		Children: []ast.Node{
+			&ast.Quote{
+				Children: []ast.Node{
+					&ast.Text{Value: "   \n"},
+				},
+			},
+		},
+	}
+	if !isPureQuote(node) {
+		t.Errorf("Expected pure quote")
 	}
 }

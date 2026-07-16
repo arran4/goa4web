@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/mail"
 	"net/netip"
@@ -24,7 +25,7 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/arran4/go-be-lazy"
+	lazy "github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/config"
@@ -356,7 +357,7 @@ func (cd *CoreData) AdminSessions() ([]*db.AdminListSessionsRow, error) {
 }
 
 // AdminLinkerItemByID returns a single linker item lazily loading it once per ID.
-func (cd *CoreData) AdminLinkerItemByID(id int32, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
+func (cd *CoreData) AdminLinkerItemByID(id int32, ops ...lazy.Option[int32, *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
 	fetch := func(i int32) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -417,7 +418,7 @@ func (cd *CoreData) AllRoles() ([]*db.Role, error) {
 }
 
 // RoleByID returns a role lazily loading it once per ID.
-func (cd *CoreData) RoleByID(id int32, ops ...lazy.Option[*db.Role]) (*db.Role, error) {
+func (cd *CoreData) RoleByID(id int32, ops ...lazy.Option[int32, *db.Role]) (*db.Role, error) {
 	fetch := func(i int32) (*db.Role, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -428,7 +429,7 @@ func (cd *CoreData) RoleByID(id int32, ops ...lazy.Option[*db.Role]) (*db.Role, 
 }
 
 // SelectedRole returns the role referenced by the current request.
-func (cd *CoreData) SelectedRole(ops ...lazy.Option[*db.Role]) (*db.Role, error) {
+func (cd *CoreData) SelectedRole(ops ...lazy.Option[int32, *db.Role]) (*db.Role, error) {
 	if cd.currentRoleID == 0 {
 		return nil, nil
 	}
@@ -476,7 +477,7 @@ func (cd *CoreData) ArchivedRequests() []*db.AdminRequestQueue {
 }
 
 // BlogEntryByID returns a blog entry lazily loading it once per ID.
-func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
+func (cd *CoreData) BlogEntryByID(id int32, ops ...lazy.Option[int32, *db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
 	fetch := func(i int32) (*db.GetBlogEntryForListerByIDRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -652,7 +653,7 @@ func (cd *CoreData) ShowEditNews(id, ownerID int32) bool {
 }
 
 // CommentByID returns a forum comment lazily loading it once per ID.
-func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) CommentByID(id int32, ops ...lazy.Option[int32, *db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
 	fetch := func(i int32) (*db.GetCommentByIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -691,7 +692,7 @@ func (cd *CoreData) composeMapper() {
 }
 
 // CurrentBlog returns the currently requested blog entry lazily loaded.
-func (cd *CoreData) CurrentBlog(ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
+func (cd *CoreData) CurrentBlog(ops ...lazy.Option[int32, *db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
 	if cd.currentBlogID == 0 {
 		return nil, nil
 	}
@@ -715,7 +716,7 @@ func (cd *CoreData) CurrentBlogLoaded() *db.GetBlogEntryForListerByIDRow {
 }
 
 // CurrentComment returns the current comment lazily loaded.
-func (cd *CoreData) CurrentComment(r *http.Request, ops ...lazy.Option[*db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
+func (cd *CoreData) CurrentComment(r *http.Request, ops ...lazy.Option[int32, *db.GetCommentByIdForUserRow]) (*db.GetCommentByIdForUserRow, error) {
 	if cd.currentCommentID == 0 {
 		if r != nil {
 			idStr := r.URL.Query().Get("comment")
@@ -756,7 +757,7 @@ func (cd *CoreData) CurrentCommentLoaded() *db.GetCommentByIdForUserRow {
 }
 
 // CurrentNewsPost returns the current news post lazily loaded.
-func (cd *CoreData) CurrentNewsPost(ops ...lazy.Option[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
+func (cd *CoreData) CurrentNewsPost(ops ...lazy.Option[int32, *db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 	if cd.currentNewsPostID == 0 {
 		return nil, nil
 	}
@@ -1045,7 +1046,7 @@ func (cd *CoreData) CurrentRequestUser() *db.SystemGetUserByIDRow {
 }
 
 // CurrentTopic returns the currently requested topic lazily loaded.
-func (cd *CoreData) CurrentTopic(ops ...lazy.Option[*db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
+func (cd *CoreData) CurrentTopic(ops ...lazy.Option[int32, *db.GetForumTopicByIdForUserRow]) (*db.GetForumTopicByIdForUserRow, error) {
 	if cd.currentTopicID == 0 {
 		return nil, nil
 	}
@@ -1095,7 +1096,7 @@ func (cd *CoreData) CurrentUserLoaded() *db.User {
 }
 
 // CurrentWriting returns the currently requested writing lazily loaded.
-func (cd *CoreData) CurrentWriting(ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
+func (cd *CoreData) CurrentWriting(ops ...lazy.Option[int32, *db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	if cd.currentWritingID == 0 {
 		return nil, nil
 	}
@@ -1315,7 +1316,7 @@ func (cd *CoreData) ImageBoards() ([]*db.Imageboard, error) {
 }
 
 // ImagePostByID returns an image post once per ID using caching.
-func (cd *CoreData) ImagePostByID(id int32, ops ...lazy.Option[*db.GetImagePostByIDForListerRow]) (*db.GetImagePostByIDForListerRow, error) {
+func (cd *CoreData) ImagePostByID(id int32, ops ...lazy.Option[int32, *db.GetImagePostByIDForListerRow]) (*db.GetImagePostByIDForListerRow, error) {
 	fetch := func(i int32) (*db.GetImagePostByIDForListerRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -1501,7 +1502,7 @@ func (cd *CoreData) LinkerCategoriesForUser() ([]*db.LinkerCategory, error) {
 }
 
 // LinkerCategoryByID returns a linker category lazily loading it once per ID.
-func (cd *CoreData) LinkerCategoryByID(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
+func (cd *CoreData) LinkerCategoryByID(id int32, ops ...lazy.Option[int32, *db.LinkerCategory]) (*db.LinkerCategory, error) {
 	fetch := func(i int32) (*db.LinkerCategory, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -1563,7 +1564,7 @@ func (cd *CoreData) LinkerItemsForUser(catID, offset int32) ([]*db.GetAllLinkerI
 }
 
 // LinkerLinksByCategoryID returns the links for a category lazily loading them once per ID.
-func (cd *CoreData) LinkerLinksByCategoryID(id int32, ops ...lazy.Option[[]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
+func (cd *CoreData) LinkerLinksByCategoryID(id int32, ops ...lazy.Option[int32, []*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow]) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
 	fetch := func(i int32) ([]*db.GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -1632,7 +1633,7 @@ func (cd *CoreData) NewsAnnouncementWithErr(id int32) (*db.SiteAnnouncement, err
 }
 
 // NewsPostByID returns the news post lazily loading it once per ID.
-func (cd *CoreData) NewsPostByID(id int32, ops ...lazy.Option[*db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
+func (cd *CoreData) NewsPostByID(id int32, ops ...lazy.Option[int32, *db.GetForumThreadIdByNewsPostIdRow]) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 	fetch := func(i int32) (*db.GetForumThreadIdByNewsPostIdRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -1919,7 +1920,7 @@ func (cd *CoreData) Role() string {
 }
 
 // SelectedAdminLinkerItem returns the linker item for the ID found in the request.
-func (cd *CoreData) SelectedAdminLinkerItem(r *http.Request, ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, int32, error) {
+func (cd *CoreData) SelectedAdminLinkerItem(r *http.Request, ops ...lazy.Option[int32, *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingRow, int32, error) {
 	id, err := cd.SelectedAdminLinkerItemID(r)
 	if err != nil {
 		return nil, 0, err
@@ -1970,12 +1971,12 @@ func (cd *CoreData) SelectedCategoryPublicWritings(categoryID int32, r *http.Req
 }
 
 // SelectedLinkerCategory returns the linker category for the given ID.
-func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[*db.LinkerCategory]) (*db.LinkerCategory, error) {
+func (cd *CoreData) SelectedLinkerCategory(id int32, ops ...lazy.Option[int32, *db.LinkerCategory]) (*db.LinkerCategory, error) {
 	return cd.LinkerCategoryByID(id, ops...)
 }
 
 // SelectedLinkerItem returns the currently selected linker item.
-func (cd *CoreData) SelectedLinkerItem(ops ...lazy.Option[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
+func (cd *CoreData) SelectedLinkerItem(ops ...lazy.Option[int32, *db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {
 	if cd.currentLinkID == 0 {
 		return nil, nil
 	}
@@ -2004,7 +2005,7 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 }
 
 // SelectedThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) SelectedThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) SelectedThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	if cd.currentThreadID == 0 {
 		// Attempt to resolve thread ID from selected linker item
 		if cd.currentLinkID != 0 {
@@ -2165,6 +2166,8 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if cd.queries == nil {
 		return 0, nil
 	}
+	var queuedFetches []queuedRemoteImageCacheFetch
+	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return 0, fmt.Errorf("parse images: %w", err)
@@ -2172,7 +2175,6 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
 	}
-	text = sanitizeCodeImages(text)
 	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
@@ -2189,6 +2191,9 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	}
 	if err := cd.recordThreadImages(threadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return commentID, nil
 }
@@ -2549,7 +2554,7 @@ func (cd *CoreData) NotificationTemplateOverride() string {
 }
 
 // ThreadComments returns comments for the thread lazily loading once per thread ID.
-func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[int32, []*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
 	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -2565,7 +2570,7 @@ func (cd *CoreData) ThreadComments(id int32, ops ...lazy.Option[[]*db.GetComment
 
 // SectionThreadComments returns comments for a thread within the given section
 // and item type, lazily loading once per thread ID.
-func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, ops ...lazy.Option[[]*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, ops ...lazy.Option[int32, []*db.GetCommentsByThreadIdForUserRow]) ([]*db.GetCommentsByThreadIdForUserRow, error) {
 	fetch := func(i int32) ([]*db.GetCommentsByThreadIdForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -2746,7 +2751,7 @@ func (cd *CoreData) Writers(r *http.Request) ([]*db.ListWritersForListerRow, err
 
 // WriterWritings returns public writings for the specified author respecting cd's permissions.
 // WritingByID returns a single writing lazily loading it once per ID.
-func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[*db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
+func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[int32, *db.GetWritingForListerByIDRow]) (*db.GetWritingForListerByIDRow, error) {
 	fetch := func(i int32) (*db.GetWritingForListerByIDRow, error) {
 		if cd.queries == nil {
 			return nil, nil
@@ -3112,18 +3117,45 @@ func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
 	}
 }
 
-func sanitizeCodeImages(text string) string {
+type queuedRemoteImageCacheFetch struct {
+	id        string
+	sourceURL string
+}
+
+func (cd *CoreData) sanitizeCodeImages(text string) string {
+	text, _ = cd.sanitizeCodeImagesAndQueue(text)
+	return text
+}
+
+func (cd *CoreData) sanitizeCodeImagesAndQueue(text string) (string, []queuedRemoteImageCacheFetch) {
 	root, err := a4code.ParseString(text)
 	if err != nil {
-		return text
+		return text, nil
 	}
+	var queued []queuedRemoteImageCacheFetch
 	root.Transform(func(n ast.Node) (ast.Node, error) {
 		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
+			if parsed, err := url.Parse(t.Src); err == nil && parsed.IsAbs() {
+				if cd.Config != nil && parsed.Host != cd.Config.HTTPHostname && !isPrivateOrLocalhost(parsed.Host) && !strings.HasPrefix(parsed.Path, "/images/image/") &&
+					!strings.HasPrefix(parsed.Path, "/uploads/") &&
+					!strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
+					// External URL. Queue it for the image cache and render a placeholder until materialized.
+					if cached, err := cd.QueueRemoteImageCache(t.Src); err == nil && cached != "" {
+						if id := strings.TrimPrefix(cached, "cache:"); id != cached && imagesign.ValidID(id) {
+							queued = append(queued, queuedRemoteImageCacheFetch{
+								id:        id,
+								sourceURL: canonicalRemoteImageSourceURL(t.Src),
+							})
+						}
+						t.Src = cached
+					}
+				}
+			}
 		}
 		return n, nil
 	})
-	return a4code.ToCode(root)
+	return a4code.ToCode(root), queued
 }
 
 func (cd *CoreData) imagePathsFromText(text string) ([]string, error) {
@@ -3254,7 +3286,9 @@ func imagePathsFromA4Code(root *ast.Root) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("[img %s]: %w", ref, err)
 		}
-		paths = append(paths, pathVal)
+		if pathVal != "" {
+			paths = append(paths, pathVal)
+		}
 	}
 	return paths, nil
 }
@@ -3325,7 +3359,12 @@ func imageRefToPath(ref string) (string, error) {
 		return "", fmt.Errorf("image upload pending")
 	}
 	if strings.HasPrefix(ref, "cache:") {
-		return "", fmt.Errorf("cache images are not allowed")
+		id := strings.TrimPrefix(ref, "cache:")
+		id = cleanSignedParam(id)
+		if !imagesign.ValidID(id) {
+			return "", fmt.Errorf("invalid cache image id")
+		}
+		return "", nil
 	}
 	if strings.HasPrefix(ref, "image:") || strings.HasPrefix(ref, "img:") {
 		id := strings.TrimPrefix(ref, "image:")
@@ -3333,8 +3372,14 @@ func imageRefToPath(ref string) (string, error) {
 		id = cleanSignedParam(id)
 		return imageIDToUploadPath(id)
 	}
-	if u, err := url.Parse(ref); err == nil && u.Path != "" {
-		ref = u.Path
+	parsed, err := url.Parse(ref)
+	if err == nil {
+		if parsed.IsAbs() || parsed.Host != "" {
+			return "", nil
+		}
+		if parsed.Path != "" && ref != "" {
+			ref = parsed.Path
+		}
 	}
 	ref = cleanSignedParam(ref)
 	switch {
@@ -3452,4 +3497,22 @@ func (cd *CoreData) externalLinkParams() (string, string) {
 		return "u", url.QueryEscape(cd.currentExternalLinkURL)
 	}
 	return "id", fmt.Sprintf("%d", cd.currentExternalLinkID)
+}
+
+func isPrivateOrLocalhost(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		ips, err := net.LookupIP(host)
+		if err != nil || len(ips) == 0 {
+			return true // fail closed
+		}
+		ip = ips[0]
+	}
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		return true
+	}
+	return false
 }

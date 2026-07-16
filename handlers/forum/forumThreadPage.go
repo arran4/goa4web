@@ -119,16 +119,15 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	data.Comments = commentRows
 
 	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err == nil {
-			if val := r.PostFormValue("replytext"); val != "" {
-				data.Text = val
-			}
-			if val := r.PostFormValue("text"); val != "" && commentId != 0 {
-				for _, c := range data.Comments {
-					if c.Idcomments == commentId {
-						c.Text.String = val
-						c.Text.Valid = true
-					}
+		_ = r.ParseForm()
+		if val := r.PostFormValue("replytext"); val != "" {
+			data.Text = val
+		}
+		if val := r.PostFormValue("text"); val != "" && commentId != 0 {
+			for _, c := range data.Comments {
+				if c.Idcomments == commentId {
+					c.Text.String = val
+					c.Text.Valid = true
 				}
 			}
 		}

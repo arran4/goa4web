@@ -16,6 +16,13 @@ import (
 // DefaultPageSize defines the number of items shown per page.
 const DefaultPageSize = 15
 
+const (
+	// DefaultImageCachePlaceholderMinWidth is the default cache placeholder diagnostic SVG width.
+	DefaultImageCachePlaceholderMinWidth = 760
+	// DefaultImageCachePlaceholderMinHeight is the default cache placeholder diagnostic SVG height.
+	DefaultImageCachePlaceholderMinHeight = 260
+)
+
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
 type RuntimeConfig struct {
@@ -105,16 +112,28 @@ type RuntimeConfig struct {
 	// specified their own.
 	Timezone string
 
-	ImageUploadProvider     string
-	ImageUploadDir          string
-	ImageUploadS3URL        string
-	ImageCacheProvider      string
-	ImageCacheDir           string
-	ImageCacheS3URL         string
-	ImageMaxBytes           int
-	ImageCacheMaxBytes      int
-	ImageThumbnailGenerator string
-	ImageThumbnailSize      int
+	ImageUploadProvider string
+	ImageUploadDir      string
+	ImageUploadS3URL    string
+	ImageCacheProvider  string
+	ImageCacheDir       string
+	ImageCacheS3URL     string
+	ImageMaxBytes       int
+	ImageCacheMaxBytes  int
+	// ImageCacheMode selects the cache retention policy.
+	ImageCacheMode string
+	// ImageCacheTTL sets the time-based cache retention duration.
+	ImageCacheTTL string
+	// ImageCacheFetchMaxRetries sets the maximum remote image fetch attempts.
+	ImageCacheFetchMaxRetries int
+	// ImageCacheFetchRetryDelay sets the delay between remote image fetch retries.
+	ImageCacheFetchRetryDelay string
+	// ImageCachePlaceholderMinWidth sets the minimum cache diagnostic placeholder width.
+	ImageCachePlaceholderMinWidth int
+	// ImageCachePlaceholderMinHeight sets the minimum cache diagnostic placeholder height.
+	ImageCachePlaceholderMinHeight int
+	ImageThumbnailGenerator        string
+	ImageThumbnailSize             int
 
 	DLQProvider string
 	DLQFile     string

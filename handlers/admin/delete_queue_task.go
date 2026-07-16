@@ -41,9 +41,7 @@ func (DeleteQueueTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if err != nil {
 				return fmt.Errorf("list failed emails fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 			}
-			for _, id := range rows {
-				ids = append(ids, id)
-			}
+			ids = append(ids, rows...)
 		} else {
 			rows, err := queries.AdminListUnsentPendingEmails(r.Context(), db.AdminListUnsentPendingEmailsParams{
 				LanguageID:    filters.LangIDParam(),

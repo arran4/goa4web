@@ -12,7 +12,7 @@ import (
 )
 
 // BlogPost returns the currently requested blog entry.
-func (cd *CoreData) BlogPost(ops ...lazy.Option[*db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
+func (cd *CoreData) BlogPost(ops ...lazy.Option[int32, *db.GetBlogEntryForListerByIDRow]) (*db.GetBlogEntryForListerByIDRow, error) {
 	return cd.CurrentBlog(ops...)
 }
 
@@ -43,7 +43,7 @@ func (cd *CoreData) EditableBlogPost(id int32) (*db.GetBlogEntryForListerByIDRow
 
 // BlogCommentThread returns the thread associated with the current blog
 // and ensures it is selected for comment helpers.
-func (cd *CoreData) BlogCommentThread(ops ...lazy.Option[*db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) BlogCommentThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
 	blog, err := cd.BlogPost()
 	if err != nil {
 		return nil, err
@@ -66,6 +66,7 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	if cd.queries == nil {
 		return nil
 	}
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)

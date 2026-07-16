@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"database/sql"
+	"net/url"
 	"path"
 	"strings"
 	"testing"
@@ -67,6 +68,25 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 		}
 	})
 
+	t.Run("accepts cached image without gallery validation", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+		queries.CreateCommentInSectionForCommenterResult = 42
+		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		cacheText := "[img cache:58f3984f584548271144122c7d139e9a6a8a1ad3.png]"
+		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, cacheText); err != nil {
+			t.Fatalf("expected cache image acceptance: %v", err)
+		}
+		if len(queries.ListUploadedImagePathsByUserCalls) != 0 {
+			t.Fatalf("expected no gallery lookup, got %d calls", len(queries.ListUploadedImagePathsByUserCalls))
+		}
+		if len(queries.ListThreadImagePathsCalls) != 0 {
+			t.Fatalf("expected no thread image lookup, got %d calls", len(queries.ListThreadImagePathsCalls))
+		}
+		if len(queries.CreateThreadImageCalls) != 0 {
+			t.Fatalf("expected no thread image record, got %d calls", len(queries.CreateThreadImageCalls))
+		}
+	})
+
 	t.Run("rejects missing gallery image", func(t *testing.T) {
 		queries := testhelpers.NewQuerierStub()
 		queries.ListUploadedImagePathsByUserFn = func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
@@ -97,4 +117,46 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 			t.Errorf("error %q should contain 'invalid'", err)
 		}
 	})
+
+	t.Run("rejects invalid cache image ref", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		invalidText := "[img cache:../secret.png]"
+		_, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, invalidText)
+		if err == nil {
+			t.Fatal("expected error for invalid cache image ref")
+		}
+		if !strings.Contains(err.Error(), "invalid cache image id") {
+			t.Errorf("error %q should contain 'invalid cache image id'", err)
+		}
+		if len(queries.CreateCommentInSectionForCommenterCalls) != 0 {
+			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))
+		}
+	})
+}
+
+func TestSanitizeCodeImagesQueuesImageAliasGoogleRedirect(t *testing.T) {
+	queries := testhelpers.NewQuerierStub()
+	cfg := config.NewRuntimeConfig()
+	cd := NewCoreData(context.Background(), queries, cfg)
+	target := "https://www.pinterest.com/pin/88383211424382477/"
+	googleURL := "https://www.google.com/url?sa=t&source=web&rct=j&url=" + url.QueryEscape(target) + "&ved=0CBYQjRxqFwoTCODsyOfE1pUDFQAAAAAdAAAAABBq&opi=89978449"
+
+	got, queued := cd.sanitizeCodeImagesAndQueue("[image " + googleURL + "]")
+	if !strings.Contains(got, "[img=cache:") {
+		t.Fatalf("sanitized code = %q, want cache image", got)
+	}
+	if len(queued) != 1 {
+		t.Fatalf("queued fetches = %d, want 1", len(queued))
+	}
+	if queued[0].sourceURL != target {
+		t.Fatalf("queued source url = %q, want %q", queued[0].sourceURL, target)
+	}
+	if len(queries.CreatePendingImageCacheEntryCalls) != 1 {
+		t.Fatalf("pending cache calls = %d, want 1", len(queries.CreatePendingImageCacheEntryCalls))
+	}
+	call := queries.CreatePendingImageCacheEntryCalls[0]
+	if !call.SourceUrl.Valid || call.SourceUrl.String != target {
+		t.Fatalf("pending source url = %#v, want %q", call.SourceUrl, target)
+	}
 }

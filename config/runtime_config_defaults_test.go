@@ -41,6 +41,9 @@ func TestRuntimeConfigDefaultsFromOptions(t *testing.T) {
 	if cfg.ImageCacheProvider != "local" {
 		t.Fatalf("image cache provider default = %q", cfg.ImageCacheProvider)
 	}
+	if cfg.ImageCachePlaceholderMinWidth != config.DefaultImageCachePlaceholderMinWidth || cfg.ImageCachePlaceholderMinHeight != config.DefaultImageCachePlaceholderMinHeight {
+		t.Fatalf("image cache placeholder defaults = %dx%d", cfg.ImageCachePlaceholderMinWidth, cfg.ImageCachePlaceholderMinHeight)
+	}
 	if cfg.LoginAttemptWindow != 15 || cfg.LoginAttemptThreshold != 5 {
 		t.Fatalf("login attempt defaults = %d/%d", cfg.LoginAttemptWindow, cfg.LoginAttemptThreshold)
 	}

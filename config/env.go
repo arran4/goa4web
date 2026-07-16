@@ -159,6 +159,18 @@ const (
 	EnvImageCacheS3URL = "IMAGE_CACHE_S3_URL"
 	// EnvImageCacheMaxBytes sets the maximum cache size in bytes.
 	EnvImageCacheMaxBytes = "IMAGE_CACHE_MAX_BYTES"
+	// EnvImageCacheMode selects cache retention mode.
+	EnvImageCacheMode = "IMAGE_CACHE_MODE"
+	// EnvImageCacheTTL sets the time-based cache retention duration.
+	EnvImageCacheTTL = "IMAGE_CACHE_TTL"
+	// EnvImageCacheFetchMaxRetries sets the maximum remote image fetch attempts.
+	EnvImageCacheFetchMaxRetries = "IMAGE_CACHE_FETCH_MAX_RETRIES"
+	// EnvImageCacheFetchRetryDelay sets the delay between remote image fetch retries.
+	EnvImageCacheFetchRetryDelay = "IMAGE_CACHE_FETCH_RETRY_DELAY"
+	// EnvImageCachePlaceholderMinWidth sets the minimum diagnostic placeholder width.
+	EnvImageCachePlaceholderMinWidth = "IMAGE_CACHE_PLACEHOLDER_MIN_WIDTH"
+	// EnvImageCachePlaceholderMinHeight sets the minimum diagnostic placeholder height.
+	EnvImageCachePlaceholderMinHeight = "IMAGE_CACHE_PLACEHOLDER_MIN_HEIGHT"
 	// EnvImageSignSecret provides the signing key for image URLs.
 	EnvImageSignSecret = "IMAGE_SIGN_SECRET"
 	// EnvImageSignSecretFile specifies the file containing the signing key.

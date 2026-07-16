@@ -11,8 +11,7 @@ textarea {
         box-sizing: border-box;
         overflow-y: hidden;
         min-height: 5em;
-        font-size: inherit;
-        font-family: inherit;
+        font: inherit;
 }
 
 #bottom {

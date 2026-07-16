@@ -13,8 +13,11 @@
         return start;
     }
     function autoSize(el){
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
+        window.scrollTo(scrollX, scrollY);
     }
     function handleImagePaste(e, item) {
         e.preventDefault();

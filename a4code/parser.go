@@ -99,7 +99,7 @@ func isBlockContext(n ast.Node) bool {
 
 func isBlockTag(tag string) bool {
 	switch strings.ToLower(tag) {
-	case "quote", "quoteof", "spoiler", "indent":
+	case "quote", "quoteof", "qo", "spoiler", "indent":
 		return true
 	}
 	return false
@@ -523,7 +523,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 			p.AddChild(n)
 		}
 		yield(n, depth)
-	case "quoteof":
+	case "quoteof", "qo":
 		skipArgPrefix(s)
 		name, err := GetNextArg(s)
 		if err != nil && err != io.EOF {

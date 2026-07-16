@@ -353,3 +353,18 @@ func TestCodeWithNestedQuote(t *testing.T) {
 		t.Errorf("expected value [quote], got %q", codeNode.Value)
 	}
 }
+
+func TestQOMarkup(t *testing.T) {
+	input := "[qo user text]"
+	tree, err := ParseString(input)
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+	if len(tree.Children) != 1 {
+		t.Fatalf("expected 1 child, got %d", len(tree.Children))
+	}
+	_, ok := tree.Children[0].(*ast.QuoteOf)
+	if !ok {
+		t.Fatalf("expected QuoteOf node, got %T", tree.Children[0])
+	}
+}

@@ -431,7 +431,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 				return err
 			}
 		}
-	case "quoteof":
+	case "quoteof", "qo":
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:

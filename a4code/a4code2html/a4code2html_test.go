@@ -525,3 +525,13 @@ func TestCodeInWithQuotesAndSpaces(t *testing.T) {
 		t.Errorf("got %q want %q", string(got), want)
 	}
 }
+
+func TestQOMarkup(t *testing.T) {
+	c := New()
+	c.SetInput("[qo bob hi]")
+	got := testhelpers.Must(io.ReadAll(c.Process()))
+	want := "<blockquote class=\"a4code-block a4code-quoteof quote-color-0\"><div class=\"quote-header\">Quote of bob:</div><div class=\"quote-body\"> hi</div></blockquote>"
+	if string(got) != want {
+		t.Errorf("got %q want %q", string(got), want)
+	}
+}

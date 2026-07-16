@@ -13,8 +13,27 @@
         return start;
     }
     function autoSize(el){
+        const scrollableParents = [];
+        let parent = el.parentNode;
+        while (parent && parent instanceof HTMLElement && parent !== document.body && parent !== document.documentElement) {
+            if (parent.scrollHeight > parent.clientHeight || parent.scrollWidth > parent.clientWidth) {
+                scrollableParents.push({
+                    el: parent,
+                    top: parent.scrollTop,
+                    left: parent.scrollLeft
+                });
+            }
+            parent = parent.parentNode;
+        }
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
+        window.scrollTo(scrollX, scrollY);
+        scrollableParents.forEach(p => {
+            p.el.scrollTop = p.top;
+            p.el.scrollLeft = p.left;
+        });
     }
     function handleImagePaste(e, item) {
         e.preventDefault();

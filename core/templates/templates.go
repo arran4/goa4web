@@ -400,8 +400,65 @@ func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg
 // GetFaviconPNG returns the site's favicon image as PNG.
 func GetFaviconPNG(opts ...Option) []byte { return readFile("assets/favicon.png", opts...) }
 
+// MissingImageData describes the SVG placeholder for unavailable images.
+type MissingImageData struct {
+	Width       int
+	Height      int
+	InnerWidth  int
+	InnerHeight int
+	Title       string
+	Description string
+	Line1       string
+	Line2       string
+	TitleSize   int
+	DetailSize  int
+}
+
 // GetMissingImageData returns the missing image placeholder.
-func GetMissingImageData(opts ...Option) []byte { return readFile("assets/missing_image.svg", opts...) }
+func GetMissingImageData(opts ...Option) []byte {
+	return GetMissingImageSVG(MissingImageData{}, opts...)
+}
+
+// GetMissingImageSVG renders the missing image placeholder with optional
+// metadata while preserving a useful intrinsic size for layout stability.
+func GetMissingImageSVG(data MissingImageData, opts ...Option) []byte {
+	if data.Width <= 0 {
+		data.Width = 200
+	}
+	if data.Height <= 0 {
+		data.Height = 200
+	}
+	if data.InnerWidth <= 0 {
+		data.InnerWidth = data.Width - 2
+	}
+	if data.InnerHeight <= 0 {
+		data.InnerHeight = data.Height - 2
+	}
+	if data.InnerWidth < 1 {
+		data.InnerWidth = 1
+	}
+	if data.InnerHeight < 1 {
+		data.InnerHeight = 1
+	}
+	if data.Title == "" {
+		data.Title = "Missing Image"
+	}
+	if data.TitleSize <= 0 {
+		data.TitleSize = 20
+	}
+	if data.DetailSize <= 0 {
+		data.DetailSize = 12
+	}
+	tmpl, err := htemplate.New("missing_image.svg").Parse(string(readFile("assets/missing_image.svg", opts...)))
+	if err != nil {
+		panic(err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		panic(err)
+	}
+	return buf.Bytes()
+}
 
 // GetPasteImageJSData returns the JavaScript that enables image pasting.
 func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }

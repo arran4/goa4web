@@ -307,6 +307,7 @@ type Querier interface {
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
 	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error
+	CreatePendingImageCacheEntry(ctx context.Context, arg CreatePendingImageCacheEntryParams) error
 	CreateSubscriptionArchetype(ctx context.Context, arg CreateSubscriptionArchetypeParams) error
 	CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
@@ -314,6 +315,7 @@ type Querier interface {
 	DeactivateNewsPost(ctx context.Context, idsitenews int32) error
 	DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error
 	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error
+	DeleteImageCacheEntry(ctx context.Context, id string) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
 	DeletePendingPassword(ctx context.Context, userID int32) error
 	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
@@ -373,6 +375,7 @@ type Querier interface {
 	GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error)
 	GetGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) ([]*Grant, error)
 	GetImageBoardById(ctx context.Context, idimageboard int32) (*Imageboard, error)
+	GetImageCacheEntry(ctx context.Context, id string) (*ImageCacheEntry, error)
 	GetImagePostByIDForLister(ctx context.Context, arg GetImagePostByIDForListerParams) (*GetImagePostByIDForListerRow, error)
 	GetImagePostInfoByPath(ctx context.Context, arg GetImagePostInfoByPathParams) (*GetImagePostInfoByPathRow, error)
 	GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error)
@@ -481,7 +484,9 @@ type Querier interface {
 	ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error)
 	ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
 	ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
+	ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
+	ListExpiredExternalImageCacheEntries(ctx context.Context, arg ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
 	ListGrants(ctx context.Context) ([]*Grant, error)
 	ListGrantsByUserID(ctx context.Context, userID sql.NullInt32) ([]*Grant, error)
@@ -491,6 +496,7 @@ type Querier interface {
 	ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
 	ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
 	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
+	ListOldestUsedImageCacheEntries(ctx context.Context, limit int32) ([]*ImageCacheEntry, error)
 	ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
 	ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
 	ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error)
@@ -515,6 +521,7 @@ type Querier interface {
 	ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int32, error)
 	ListWritingcategoryPath(ctx context.Context, categoryID int32) ([]*ListWritingcategoryPathRow, error)
 	ListWritingsByIDsForLister(ctx context.Context, arg ListWritingsByIDsForListerParams) ([]*ListWritingsByIDsForListerRow, error)
+	RecordImageCacheFetchFailure(ctx context.Context, arg RecordImageCacheFetchFailureParams) error
 	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
 	RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error
 	RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error
@@ -633,6 +640,7 @@ type Querier interface {
 	SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error
 	SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error
 	SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error
+	TouchImageCacheEntry(ctx context.Context, arg TouchImageCacheEntryParams) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
 	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
 	// This query updates the "list" column in the "bookmarks" table for a specific lister.
@@ -654,6 +662,7 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
 	UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error
+	UpsertImageCacheEntry(ctx context.Context, arg UpsertImageCacheEntryParams) error
 	UpsertSchedulerState(ctx context.Context, arg UpsertSchedulerStateParams) error
 }
 

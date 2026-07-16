@@ -87,7 +87,7 @@ func TestForumReplyErrorRetainsText(t *testing.T) {
 	tasks.Handle = func(ww http.ResponseWriter, r *http.Request, p tasks.Template, data any) error {
 		s := fmt.Sprintf("%#v", data)
 		if strings.Contains(s, "This is my thoughtful reply") {
-		    fmt.Fprintf(w, "This is my thoughtful reply")
+			fmt.Fprintf(w, "This is my thoughtful reply")
 		}
 		if cd.CurrentError() != "" {
 			fmt.Fprintf(w, "simulated failure")

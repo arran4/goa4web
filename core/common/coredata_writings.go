@@ -142,7 +142,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	uid := cd.UserID
-		text = cd.sanitizeCodeImages(text)
+	text = cd.sanitizeCodeImages(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return nil, fmt.Errorf("parse images: %w", err)

@@ -67,6 +67,25 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 		}
 	})
 
+	t.Run("accepts cached image without gallery validation", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+		queries.CreateCommentInSectionForCommenterResult = 42
+		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		cacheText := "[img cache:58f3984f584548271144122c7d139e9a6a8a1ad3.png]"
+		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, cacheText); err != nil {
+			t.Fatalf("expected cache image acceptance: %v", err)
+		}
+		if len(queries.ListUploadedImagePathsByUserCalls) != 0 {
+			t.Fatalf("expected no gallery lookup, got %d calls", len(queries.ListUploadedImagePathsByUserCalls))
+		}
+		if len(queries.ListThreadImagePathsCalls) != 0 {
+			t.Fatalf("expected no thread image lookup, got %d calls", len(queries.ListThreadImagePathsCalls))
+		}
+		if len(queries.CreateThreadImageCalls) != 0 {
+			t.Fatalf("expected no thread image record, got %d calls", len(queries.CreateThreadImageCalls))
+		}
+	})
+
 	t.Run("rejects missing gallery image", func(t *testing.T) {
 		queries := testhelpers.NewQuerierStub()
 		queries.ListUploadedImagePathsByUserFn = func(ctx context.Context, arg db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
@@ -95,6 +114,22 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 		// Expect the error to contain the invalid reference
 		if !strings.Contains(err.Error(), "invalid") {
 			t.Errorf("error %q should contain 'invalid'", err)
+		}
+	})
+
+	t.Run("rejects invalid cache image ref", func(t *testing.T) {
+		queries := testhelpers.NewQuerierStub()
+		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+		invalidText := "[img cache:../secret.png]"
+		_, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, invalidText)
+		if err == nil {
+			t.Fatal("expected error for invalid cache image ref")
+		}
+		if !strings.Contains(err.Error(), "invalid cache image id") {
+			t.Errorf("error %q should contain 'invalid cache image id'", err)
+		}
+		if len(queries.CreateCommentInSectionForCommenterCalls) != 0 {
+			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))
 		}
 	})
 }

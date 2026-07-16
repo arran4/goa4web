@@ -2,9 +2,11 @@ package images
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"image"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,6 +21,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
@@ -129,6 +132,15 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
+	ok, err := cd.PrepareImageCacheEntryForServe(r.Context(), id)
+	if err != nil || !ok {
+		entry, entryErr := cd.ImageCacheEntry(r.Context(), id)
+		if entryErr != nil && entryErr != sql.ErrNoRows {
+			entry = nil
+		}
+		serveMissingCacheImage(w, r, cfg, id, entry)
+		return
+	}
 	sub1, sub2 := id[:2], id[2:4]
 	key := path.Join(sub1, sub2, id)
 	if p := upload.CacheProviderFromConfig(cfg); p != nil {
@@ -174,6 +186,93 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	}
 	full := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
 	http.ServeFile(w, r, full)
+}
+
+func serveMissingImage(w http.ResponseWriter, r *http.Request, cfg *config.RuntimeConfig) {
+	var opts []templates.Option
+	if cfg != nil && cfg.TemplatesDir != "" {
+		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+	}
+	w.Header().Set("Content-Type", "image/svg+xml")
+	http.ServeContent(w, r, "missing_image.svg", time.Time{}, bytes.NewReader(templates.GetMissingImageData(opts...)))
+}
+
+func serveMissingCacheImage(w http.ResponseWriter, r *http.Request, cfg *config.RuntimeConfig, id string, entry *db.ImageCacheEntry) {
+	var opts []templates.Option
+	if cfg != nil && cfg.TemplatesDir != "" {
+		opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+	}
+	data := missingCacheImageData(id, entry)
+	w.Header().Set("Content-Type", "image/svg+xml")
+	http.ServeContent(w, r, "missing_image.svg", time.Time{}, bytes.NewReader(templates.GetMissingImageSVG(data, opts...)))
+}
+
+func missingCacheImageData(id string, entry *db.ImageCacheEntry) templates.MissingImageData {
+	data := templates.MissingImageData{
+		Title: "Image Pending",
+		Line1: "cache:" + id,
+		Line2: "waiting for download",
+	}
+	if entry == nil {
+		data.Title = "Missing Image"
+		return data
+	}
+	if entry.Width.Valid && entry.Width.Int32 > 0 {
+		data.Width = int(entry.Width.Int32)
+	}
+	if entry.Height.Valid && entry.Height.Int32 > 0 {
+		data.Height = int(entry.Height.Int32)
+	}
+	switch entry.Status {
+	case "failed":
+		data.Title = "Image Unavailable"
+		data.Line2 = "download failed"
+	case "pending":
+		data.Title = "Image Pending"
+		data.Line2 = "waiting for download"
+	default:
+		data.Title = "Missing Image"
+		data.Line2 = entry.Status
+	}
+	if entry.SourceUrl.Valid && entry.SourceUrl.String != "" {
+		data.Line1 = originSummary(entry.SourceUrl.String)
+		data.Description = "Original image: " + entry.SourceUrl.String
+	}
+	if entry.ErrorMessage.Valid && entry.ErrorMessage.String != "" {
+		data.Line2 = fmt.Sprintf("attempt %d failed: %s", entry.RetryCount, entry.ErrorMessage.String)
+		if entry.NextAttemptAt.Valid {
+			data.Line2 = fmt.Sprintf("attempt %d failed; retry %s", entry.RetryCount, entry.NextAttemptAt.Time.Format(time.RFC3339))
+		}
+		if data.Description != "" {
+			data.Description += "\n"
+		}
+		data.Description += "Last error: " + entry.ErrorMessage.String
+		if entry.LastAttemptAt.Valid {
+			data.Description += "\nLast attempt: " + entry.LastAttemptAt.Time.Format(time.RFC3339)
+		}
+	}
+	if entry.ErrorMessage.Valid && entry.ErrorMessage.String != "" {
+		return data
+	}
+	if entry.ContentType.Valid && entry.SizeBytes.Valid {
+		data.Line2 = fmt.Sprintf("%s, %d bytes", entry.ContentType.String, entry.SizeBytes.Int64)
+	} else if entry.ContentType.Valid {
+		data.Line2 = entry.ContentType.String
+	} else if entry.SizeBytes.Valid {
+		data.Line2 = fmt.Sprintf("%d bytes", entry.SizeBytes.Int64)
+	}
+	return data
+}
+
+func originSummary(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return raw
+	}
+	if u.Path == "" || u.Path == "/" {
+		return u.Host
+	}
+	return u.Host + "/" + path.Base(u.Path)
 }
 
 // Register registers the images router module.

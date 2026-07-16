@@ -1,4 +1,15 @@
-<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+<svg width="{{ .Width }}" height="{{ .Height }}" viewBox="0 0 {{ .Width }} {{ .Height }}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{{ .Title }}">
+ <title>{{ .Title }}</title>
+ {{- if .Description }}
+ <desc>{{ .Description }}</desc>
+ {{- end }}
  <rect width="100%" height="100%" fill="#f0f0f0"/>
- <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#888">Missing Image</text>
+ <rect x="1" y="1" width="{{ .InnerWidth }}" height="{{ .InnerHeight }}" fill="none" stroke="#d0d0d0" stroke-width="2" stroke-dasharray="8 6"/>
+ <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="{{ .TitleSize }}" fill="#777">{{ .Title }}</text>
+ {{- if .Line1 }}
+ <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="{{ .DetailSize }}" fill="#888">{{ .Line1 }}</text>
+ {{- end }}
+ {{- if .Line2 }}
+ <text x="50%" y="68%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="{{ .DetailSize }}" fill="#888">{{ .Line2 }}</text>
+ {{- end }}
 </svg>

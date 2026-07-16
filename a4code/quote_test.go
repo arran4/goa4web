@@ -1,8 +1,8 @@
 package a4code
 
 import (
-	"strings"
 	"golang.org/x/tools/txtar"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/a4code/ast"

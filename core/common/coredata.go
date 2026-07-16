@@ -3125,8 +3125,8 @@ func (cd *CoreData) sanitizeCodeImages(text string) string {
 				if parsed.Host != cd.Config.HTTPHostname && !isPrivateOrLocalhost(parsed.Host) && !strings.HasPrefix(parsed.Path, "/images/image/") &&
 					!strings.HasPrefix(parsed.Path, "/uploads/") &&
 					!strings.HasPrefix(parsed.Path, "/imagebbs/images/") {
-					// External URL. Try to import it.
-					if cached, err := cd.DownloadAndCacheImage(t.Src); err == nil && cached != "" {
+					// External URL. Queue it for the image cache and render a placeholder until materialized.
+					if cached, err := cd.QueueRemoteImageCache(t.Src); err == nil && cached != "" {
 						t.Src = cached
 					}
 				}
@@ -3266,8 +3266,8 @@ func imagePathsFromA4Code(root *ast.Root) ([]string, error) {
 			return nil, fmt.Errorf("[img %s]: %w", ref, err)
 		}
 		if pathVal != "" {
-				paths = append(paths, pathVal)
-			}
+			paths = append(paths, pathVal)
+		}
 	}
 	return paths, nil
 }
@@ -3338,7 +3338,12 @@ func imageRefToPath(ref string) (string, error) {
 		return "", fmt.Errorf("image upload pending")
 	}
 	if strings.HasPrefix(ref, "cache:") {
-		return "", fmt.Errorf("cache images are not allowed")
+		id := strings.TrimPrefix(ref, "cache:")
+		id = cleanSignedParam(id)
+		if !imagesign.ValidID(id) {
+			return "", fmt.Errorf("invalid cache image id")
+		}
+		return "", nil
 	}
 	if strings.HasPrefix(ref, "image:") || strings.HasPrefix(ref, "img:") {
 		id := strings.TrimPrefix(ref, "image:")

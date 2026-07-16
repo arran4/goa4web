@@ -426,6 +426,46 @@ type QuerierStub struct {
 	UpdateExternalLinkImageCacheErr   error
 	UpdateExternalLinkImageCacheFn    func(context.Context, UpdateExternalLinkImageCacheParams) error
 
+	GetImageCacheEntryCalls   []string
+	GetImageCacheEntryReturns *ImageCacheEntry
+	GetImageCacheEntryErr     error
+	GetImageCacheEntryFn      func(context.Context, string) (*ImageCacheEntry, error)
+
+	CreatePendingImageCacheEntryCalls []CreatePendingImageCacheEntryParams
+	CreatePendingImageCacheEntryErr   error
+	CreatePendingImageCacheEntryFn    func(context.Context, CreatePendingImageCacheEntryParams) error
+
+	UpsertImageCacheEntryCalls []UpsertImageCacheEntryParams
+	UpsertImageCacheEntryErr   error
+	UpsertImageCacheEntryFn    func(context.Context, UpsertImageCacheEntryParams) error
+
+	RecordImageCacheFetchFailureCalls []RecordImageCacheFetchFailureParams
+	RecordImageCacheFetchFailureErr   error
+	RecordImageCacheFetchFailureFn    func(context.Context, RecordImageCacheFetchFailureParams) error
+
+	TouchImageCacheEntryCalls []TouchImageCacheEntryParams
+	TouchImageCacheEntryErr   error
+	TouchImageCacheEntryFn    func(context.Context, TouchImageCacheEntryParams) error
+
+	DeleteImageCacheEntryCalls []string
+	DeleteImageCacheEntryErr   error
+	DeleteImageCacheEntryFn    func(context.Context, string) error
+
+	ListExpiredExternalImageCacheEntriesCalls   []ListExpiredExternalImageCacheEntriesParams
+	ListExpiredExternalImageCacheEntriesReturns []*ImageCacheEntry
+	ListExpiredExternalImageCacheEntriesErr     error
+	ListExpiredExternalImageCacheEntriesFn      func(context.Context, ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error)
+
+	ListDuePendingImageCacheEntriesCalls   []ListDuePendingImageCacheEntriesParams
+	ListDuePendingImageCacheEntriesReturns []*ImageCacheEntry
+	ListDuePendingImageCacheEntriesErr     error
+	ListDuePendingImageCacheEntriesFn      func(context.Context, ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error)
+
+	ListOldestUsedImageCacheEntriesCalls   []int32
+	ListOldestUsedImageCacheEntriesReturns []*ImageCacheEntry
+	ListOldestUsedImageCacheEntriesErr     error
+	ListOldestUsedImageCacheEntriesFn      func(context.Context, int32) ([]*ImageCacheEntry, error)
+
 	AdminInsertRequestCommentCalls []AdminInsertRequestCommentParams
 	AdminInsertRequestCommentErr   error
 	AdminInsertRequestCommentFn    func(context.Context, AdminInsertRequestCommentParams) error
@@ -2801,6 +2841,118 @@ func (s *QuerierStub) UpdateExternalLinkImageCache(ctx context.Context, arg Upda
 		return fn(ctx, arg)
 	}
 	return err
+}
+
+func (s *QuerierStub) GetImageCacheEntry(ctx context.Context, id string) (*ImageCacheEntry, error) {
+	s.mu.Lock()
+	s.GetImageCacheEntryCalls = append(s.GetImageCacheEntryCalls, id)
+	fn := s.GetImageCacheEntryFn
+	ret := s.GetImageCacheEntryReturns
+	err := s.GetImageCacheEntryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) CreatePendingImageCacheEntry(ctx context.Context, arg CreatePendingImageCacheEntryParams) error {
+	s.mu.Lock()
+	s.CreatePendingImageCacheEntryCalls = append(s.CreatePendingImageCacheEntryCalls, arg)
+	fn := s.CreatePendingImageCacheEntryFn
+	err := s.CreatePendingImageCacheEntryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) UpsertImageCacheEntry(ctx context.Context, arg UpsertImageCacheEntryParams) error {
+	s.mu.Lock()
+	s.UpsertImageCacheEntryCalls = append(s.UpsertImageCacheEntryCalls, arg)
+	fn := s.UpsertImageCacheEntryFn
+	err := s.UpsertImageCacheEntryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) RecordImageCacheFetchFailure(ctx context.Context, arg RecordImageCacheFetchFailureParams) error {
+	s.mu.Lock()
+	s.RecordImageCacheFetchFailureCalls = append(s.RecordImageCacheFetchFailureCalls, arg)
+	fn := s.RecordImageCacheFetchFailureFn
+	err := s.RecordImageCacheFetchFailureErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) TouchImageCacheEntry(ctx context.Context, arg TouchImageCacheEntryParams) error {
+	s.mu.Lock()
+	s.TouchImageCacheEntryCalls = append(s.TouchImageCacheEntryCalls, arg)
+	fn := s.TouchImageCacheEntryFn
+	err := s.TouchImageCacheEntryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) DeleteImageCacheEntry(ctx context.Context, id string) error {
+	s.mu.Lock()
+	s.DeleteImageCacheEntryCalls = append(s.DeleteImageCacheEntryCalls, id)
+	fn := s.DeleteImageCacheEntryFn
+	err := s.DeleteImageCacheEntryErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) ListExpiredExternalImageCacheEntries(ctx context.Context, arg ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
+	s.mu.Lock()
+	s.ListExpiredExternalImageCacheEntriesCalls = append(s.ListExpiredExternalImageCacheEntriesCalls, arg)
+	fn := s.ListExpiredExternalImageCacheEntriesFn
+	ret := s.ListExpiredExternalImageCacheEntriesReturns
+	err := s.ListExpiredExternalImageCacheEntriesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
+	s.mu.Lock()
+	s.ListDuePendingImageCacheEntriesCalls = append(s.ListDuePendingImageCacheEntriesCalls, arg)
+	fn := s.ListDuePendingImageCacheEntriesFn
+	ret := s.ListDuePendingImageCacheEntriesReturns
+	err := s.ListDuePendingImageCacheEntriesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListOldestUsedImageCacheEntries(ctx context.Context, limit int32) ([]*ImageCacheEntry, error) {
+	s.mu.Lock()
+	s.ListOldestUsedImageCacheEntriesCalls = append(s.ListOldestUsedImageCacheEntriesCalls, limit)
+	fn := s.ListOldestUsedImageCacheEntriesFn
+	ret := s.ListOldestUsedImageCacheEntriesReturns
+	err := s.ListOldestUsedImageCacheEntriesErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, limit)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error {

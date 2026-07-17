@@ -134,6 +134,8 @@ type RuntimeConfig struct {
 	ImageCachePlaceholderMinHeight int
 	ImageThumbnailGenerator        string
 	ImageThumbnailSize             int
+	ImageMaxResizeBytes            int
+	ImageSafeDimensions            string
 
 	DLQProvider string
 	DLQFile     string

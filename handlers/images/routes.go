@@ -110,8 +110,10 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 	sub1, sub2 := id[:2], id[2:4]
+
 	full := filepath.Join(cfg.ImageUploadDir, sub1, sub2, id)
-	if _, err := os.Stat(full); os.IsNotExist(err) {
+	info, err := os.Stat(full)
+	if os.IsNotExist(err) {
 		var opts []templates.Option
 		if cfg != nil && cfg.TemplatesDir != "" {
 			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
@@ -120,6 +122,54 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, "missing_image.svg", time.Time{}, bytes.NewReader(templates.GetMissingImageData(opts...)))
 		return
 	}
+
+	// Get preferred dimension
+	safeDim := ""
+	if cd.Config != nil && cd.Config.ImageSafeDimensions != "" {
+		dims := strings.Split(cd.Config.ImageSafeDimensions, ",")
+		safeDim = dims[0]
+	}
+	if pref, err := cd.Preference(); err == nil && pref != nil && pref.ImageSafeDimension.Valid {
+		safeDim = pref.ImageSafeDimension.String
+	}
+
+	maxW, maxH := 0, 0
+	if safeDim != "" {
+		maxW, maxH, _ = intimages.ParseDimension(safeDim)
+	}
+
+	key := path.Join(sub1, sub2, id)
+
+	// Check size before reading into memory
+	if int(info.Size()) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 {
+		if up := upload.ProviderFromConfig(cfg); up != nil {
+			safeKey := key + "_safe_" + safeDim
+			safeBytes, safeErr := up.Read(r.Context(), safeKey)
+			if safeErr == nil {
+				http.ServeContent(w, r, id, time.Now(), bytes.NewReader(safeBytes))
+				return
+			}
+
+			origBytes, err := up.Read(r.Context(), key)
+			if err == nil {
+				img, _, err := image.Decode(bytes.NewReader(origBytes))
+				if err == nil {
+					ext := filepath.Ext(id)
+					generator := "bild"
+					if cfg != nil && cfg.ImageThumbnailGenerator != "" {
+						generator = cfg.ImageThumbnailGenerator
+					}
+					resizedBytes, err := intimages.GenerateSafeSize(img, ext, generator, maxW, maxH)
+					if err == nil {
+						up.Write(r.Context(), safeKey, resizedBytes)
+						http.ServeContent(w, r, id, time.Now(), bytes.NewReader(resizedBytes))
+						return
+					}
+				}
+			}
+		}
+	}
+
 	http.ServeFile(w, r, full)
 }
 
@@ -143,8 +193,52 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	}
 	sub1, sub2 := id[:2], id[2:4]
 	key := path.Join(sub1, sub2, id)
+	// Get preferred dimension
+	safeDim := ""
+	if cd.Config != nil && cd.Config.ImageSafeDimensions != "" {
+		dims := strings.Split(cd.Config.ImageSafeDimensions, ",")
+		safeDim = dims[0]
+	}
+	if pref, err := cd.Preference(); err == nil && pref != nil && pref.ImageSafeDimension.Valid {
+		safeDim = pref.ImageSafeDimension.String
+	}
+
+	maxW, maxH := 0, 0
+	if safeDim != "" {
+		maxW, maxH, _ = intimages.ParseDimension(safeDim)
+	}
+
 	if p := upload.CacheProviderFromConfig(cfg); p != nil {
+		// If safe resizing is needed, check for cached scaled version first
+		if maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
+			safeKey := key + "_safe_" + safeDim
+			safeData, safeErr := p.Read(r.Context(), safeKey)
+			if safeErr == nil {
+				http.ServeContent(w, r, id, time.Now(), bytes.NewReader(safeData))
+				return
+			}
+		}
+
 		data, err := p.Read(r.Context(), key)
+		if err == nil {
+			if len(data) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
+				safeKey := key + "_safe_" + safeDim
+				img, _, err := image.Decode(bytes.NewReader(data))
+				if err == nil {
+					ext := filepath.Ext(id)
+					generator := "bild"
+					if cfg != nil && cfg.ImageThumbnailGenerator != "" {
+						generator = cfg.ImageThumbnailGenerator
+					}
+					safeData, err := intimages.GenerateSafeSize(img, ext, generator, maxW, maxH)
+					if err == nil {
+						p.Write(r.Context(), safeKey, safeData)
+						data = safeData
+					}
+				}
+			}
+		}
+
 		if err != nil {
 			// Try to regenerate
 			if strings.Contains(id, "_thumb.") {

@@ -64,6 +64,9 @@ func TestAppearanceSaveTask(t *testing.T) {
 			css = arg.CustomCss.String
 			return nil
 		}
+		queries.UpdateImageSafeDimensionForListerFn = func(ctx context.Context, arg db.UpdateImageSafeDimensionForListerParams) error {
+			return nil
+		}
 
 		store := sessions.NewCookieStore([]byte("test"))
 		core.Store = store

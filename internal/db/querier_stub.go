@@ -609,6 +609,10 @@ type QuerierStub struct {
 	UpdateCustomCssForListerErr   error
 	UpdateCustomCssForListerFn    func(context.Context, UpdateCustomCssForListerParams) error
 
+	UpdateImageSafeDimensionForListerCalls []UpdateImageSafeDimensionForListerParams
+	UpdateImageSafeDimensionForListerErr   error
+	UpdateImageSafeDimensionForListerFn    func(context.Context, UpdateImageSafeDimensionForListerParams) error
+
 	GetUserEmailByIDCalls   []int32
 	GetUserEmailByIDReturns *UserEmail
 	GetUserEmailByIDErr     error
@@ -1681,6 +1685,18 @@ func (s *QuerierStub) UpdateCustomCssForLister(ctx context.Context, arg UpdateCu
 	s.UpdateCustomCssForListerCalls = append(s.UpdateCustomCssForListerCalls, arg)
 	fn := s.UpdateCustomCssForListerFn
 	err := s.UpdateCustomCssForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error {
+	s.mu.Lock()
+	s.UpdateImageSafeDimensionForListerCalls = append(s.UpdateImageSafeDimensionForListerCalls, arg)
+	fn := s.UpdateImageSafeDimensionForListerFn
+	err := s.UpdateImageSafeDimensionForListerErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

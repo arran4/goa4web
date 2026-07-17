@@ -295,6 +295,7 @@ CREATE TABLE `preferences` (
   `monthly_digest_day` INT DEFAULT NULL,
   `monthly_digest_hour` INT DEFAULT NULL,
   `last_monthly_digest_sent_at` DATETIME DEFAULT NULL,
+  `image_safe_dimension` TEXT DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
@@ -794,5 +795,5 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (85)
+INSERT INTO `schema_version` (`version`) VALUES (86)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

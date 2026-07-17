@@ -847,6 +847,21 @@ function replaceContent(event, url, targetId) {
 
                 if (newTs > currentTs) {
                     currentElement.replaceWith(newElement);
+
+                    // Re-bind image viewer for new content
+                    newElement.querySelectorAll('.a4code-image').forEach(img => {
+                        if (img.parentElement.classList.contains('image-scroll-wrapper')) return;
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'image-scroll-wrapper';
+                        img.parentNode.insertBefore(wrapper, img);
+                        wrapper.appendChild(img);
+                        img.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (window.openFullscreenImage) {
+                                window.openFullscreenImage(img.src);
+                            }
+                        });
+                    });
                 }
             }
         })
@@ -855,3 +870,92 @@ function replaceContent(event, url, targetId) {
         });
     return false;
 }
+
+// Fullscreen Image Viewer
+document.addEventListener('DOMContentLoaded', () => {
+    // Wrap all a4code-images in a scrolling wrapper
+    document.querySelectorAll('.a4code-image').forEach(img => {
+        // Prevent re-wrapping
+        if (img.parentElement.classList.contains('image-scroll-wrapper')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-scroll-wrapper';
+        img.parentNode.insertBefore(wrapper, img);
+        wrapper.appendChild(img);
+
+        img.addEventListener('click', (e) => {
+            e.preventDefault();
+            openFullscreenImage(img.src);
+        });
+    });
+
+    window.openFullscreenImage = function openFullscreenImage(src) {
+        const overlay = document.createElement('div');
+        overlay.className = 'fullscreen-overlay';
+
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'fullscreen-close';
+        closeBtn.innerHTML = '&times;';
+
+        const fullImg = document.createElement('img');
+        fullImg.src = src;
+
+        let scale = 1;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+
+        function updateTransform() {
+            fullImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        fullImg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomAmount = 0.1;
+            if (e.deltaY < 0) {
+                scale += zoomAmount;
+            } else {
+                scale = Math.max(0.1, scale - zoomAmount);
+            }
+            updateTransform();
+        });
+
+        fullImg.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        function closeOverlay() {
+            if (document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+            }
+        }
+
+        closeBtn.addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeOverlay();
+        });
+
+        document.addEventListener('keydown', function escListener(e) {
+            if (e.key === 'Escape') {
+                closeOverlay();
+                document.removeEventListener('keydown', escListener);
+            }
+        });
+
+        overlay.appendChild(fullImg);
+        overlay.appendChild(closeBtn);
+        document.body.appendChild(overlay);
+    }
+});

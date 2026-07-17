@@ -474,6 +474,7 @@ type Preference struct {
 	MonthlyDigestDay        sql.NullInt32
 	MonthlyDigestHour       sql.NullInt32
 	LastMonthlyDigestSentAt sql.NullTime
+	ImageSafeDimension      sql.NullString
 }
 
 type Role struct {

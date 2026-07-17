@@ -230,6 +230,13 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			if cfg != nil && len(data) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
 				safeKey := key + "_safe_" + safeDim
+				if config, _, err := image.DecodeConfig(bytes.NewReader(data)); err == nil {
+					if config.Width <= maxW && config.Height <= maxH {
+						p.Write(r.Context(), safeKey, data)
+						http.ServeContent(w, r, id, time.Now(), bytes.NewReader(data))
+						return
+					}
+				}
 				img, _, err := image.Decode(bytes.NewReader(data))
 				if err == nil {
 					ext := filepath.Ext(id)

@@ -71,9 +71,11 @@
                 e.target.setSelectionRange(pos+finalText.length, pos+finalText.length);
                 autoSize(e.target);
             } else if (xhr.status === 403) {
+                console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);
+                const failedText = '[img upload denied]';
                 const v = e.target.value;
-                e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, '');
-                e.target.setSelectionRange(pos, pos);
+                e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
+                e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
                 autoSize(e.target);
             } else {
                 console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);

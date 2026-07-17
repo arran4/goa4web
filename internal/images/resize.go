@@ -32,9 +32,17 @@ func ParseDimension(dimStr string) (int, int, error) {
 // GenerateSafeSize creates a resized version of an image if it exceeds the maximum dimensions.
 // It preserves the aspect ratio.
 func GenerateSafeSize(srcImage image.Image, ext string, generatorName string, maxWidth, maxHeight int) ([]byte, error) {
+	if maxWidth <= 0 || maxHeight <= 0 {
+		return nil, fmt.Errorf("max dimensions must be greater than zero")
+	}
+
 	bounds := srcImage.Bounds()
 	w := bounds.Dx()
 	h := bounds.Dy()
+
+	if w <= 0 || h <= 0 {
+		return nil, fmt.Errorf("invalid source image dimensions: %dx%d", w, h)
+	}
 
 	if w <= maxWidth && h <= maxHeight {
 		// Image is already safe size, return original encoded
@@ -53,6 +61,12 @@ func GenerateSafeSize(srcImage image.Image, ext string, generatorName string, ma
 	ratio := math.Min(float64(maxWidth)/float64(w), float64(maxHeight)/float64(h))
 	newW := int(float64(w) * ratio)
 	newH := int(float64(h) * ratio)
+	if newW < 1 {
+		newW = 1
+	}
+	if newH < 1 {
+		newH = 1
+	}
 
 	if generatorName == "draw" {
 		thumb := image.NewRGBA(image.Rect(0, 0, newW, newH))

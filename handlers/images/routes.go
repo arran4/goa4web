@@ -141,17 +141,24 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	key := path.Join(sub1, sub2, id)
 
 	// Check size before reading into memory
-	if int(info.Size()) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 {
+	if cfg != nil && info.Size() > int64(cfg.ImageMaxResizeBytes) && maxW > 0 && maxH > 0 {
 		if up := upload.ProviderFromConfig(cfg); up != nil {
 			safeKey := key + "_safe_" + safeDim
 			safeBytes, safeErr := up.Read(r.Context(), safeKey)
 			if safeErr == nil {
-				http.ServeContent(w, r, id, time.Now(), bytes.NewReader(safeBytes))
+				http.ServeContent(w, r, id, info.ModTime(), bytes.NewReader(safeBytes))
 				return
 			}
 
 			origBytes, err := up.Read(r.Context(), key)
 			if err == nil {
+				if config, _, err := image.DecodeConfig(bytes.NewReader(origBytes)); err == nil {
+					if config.Width <= maxW && config.Height <= maxH {
+						up.Write(r.Context(), safeKey, origBytes)
+						http.ServeContent(w, r, id, info.ModTime(), bytes.NewReader(origBytes))
+						return
+					}
+				}
 				img, _, err := image.Decode(bytes.NewReader(origBytes))
 				if err == nil {
 					ext := filepath.Ext(id)
@@ -162,7 +169,7 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 					resizedBytes, err := intimages.GenerateSafeSize(img, ext, generator, maxW, maxH)
 					if err == nil {
 						up.Write(r.Context(), safeKey, resizedBytes)
-						http.ServeContent(w, r, id, time.Now(), bytes.NewReader(resizedBytes))
+						http.ServeContent(w, r, id, info.ModTime(), bytes.NewReader(resizedBytes))
 						return
 					}
 				}
@@ -221,7 +228,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 
 		data, err := p.Read(r.Context(), key)
 		if err == nil {
-			if len(data) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
+			if cfg != nil && len(data) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
 				safeKey := key + "_safe_" + safeDim
 				img, _, err := image.Decode(bytes.NewReader(data))
 				if err == nil {

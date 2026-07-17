@@ -925,21 +925,35 @@ document.addEventListener('DOMContentLoaded', () => {
             startY = e.clientY - translateY;
         });
 
-        window.addEventListener('mousemove', (e) => {
+        function handleMouseMove(e) {
             if (!isDragging) return;
             translateX = e.clientX - startX;
             translateY = e.clientY - startY;
             updateTransform();
-        });
+        }
 
-        window.addEventListener('mouseup', () => {
+        function handleMouseUp() {
             isDragging = false;
-        });
+        }
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        function escListener(e) {
+            if (e.key === 'Escape') {
+                closeOverlay();
+            }
+        }
+
+        document.addEventListener('keydown', escListener);
 
         function closeOverlay() {
             if (document.body.contains(overlay)) {
                 document.body.removeChild(overlay);
             }
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('keydown', escListener);
         }
 
         closeBtn.addEventListener('click', closeOverlay);
@@ -947,12 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === overlay) closeOverlay();
         });
 
-        document.addEventListener('keydown', function escListener(e) {
-            if (e.key === 'Escape') {
-                closeOverlay();
-                document.removeEventListener('keydown', escListener);
-            }
-        });
+
 
         overlay.appendChild(fullImg);
         overlay.appendChild(closeBtn);

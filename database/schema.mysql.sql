@@ -295,7 +295,7 @@ CREATE TABLE `preferences` (
   `monthly_digest_day` INT DEFAULT NULL,
   `monthly_digest_hour` INT DEFAULT NULL,
   `last_monthly_digest_sent_at` DATETIME DEFAULT NULL,
-  `image_safe_dimension` TEXT DEFAULT NULL,
+  `image_safe_dimension` VARCHAR(50) DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)

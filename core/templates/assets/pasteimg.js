@@ -72,11 +72,14 @@
                 autoSize(e.target);
             } else if (xhr.status === 403) {
                 let reason = xhr.responseText;
-                if (!reason || reason.trim() === '') {
+                if (reason) {
+                    reason = reason.replace(/<[^>]*>?/gm, '').trim();
+                }
+                if (!reason || reason === '') {
                     reason = 'Permission Denied';
                 }
                 console.error('Image upload forbidden:', reason);
-                const failedText = '[img upload denied: ' + reason.replace(/<[^>]*>?/gm, '').substring(0, 30) + ']';
+                const failedText = '[img upload denied: ' + reason.substring(0, 30) + ']';
                 const v = e.target.value;
                 e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
                 e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);

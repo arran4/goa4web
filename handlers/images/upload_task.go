@@ -40,7 +40,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	// Then check specific image upload grant
 	if !cd.HasGrant("images", "upload", "post", 0) {
-		return fmt.Errorf("image upload grant denied for user %d: %w", cd.UserID, handlers.ErrForbidden)
+		return handlers.WrapForbidden(fmt.Errorf("image upload permissions denied"))
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cfg.ImageMaxBytes))

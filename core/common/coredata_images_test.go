@@ -15,7 +15,7 @@ import (
 
 func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 	imageID := "abcd1234.jpg"
-	imagePath := path.Join("/uploads", imageID[:2], imageID[2:4], imageID)
+	imagePath := path.Join("/", imageID[:2], imageID[2:4], imageID)
 	text := "[img image:" + imageID + "]"
 
 	t.Run("accepts gallery image and records thread usage", func(t *testing.T) {

@@ -166,7 +166,7 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 			}
 		}
 	}
-	url := path.Join("/", sub1, sub2, fname)
+	url := path.Join("/uploads", sub1, sub2, fname)
 	_, err = cd.queries.CreateUploadedImageForUploader(cd.ctx, db.CreateUploadedImageForUploaderParams{
 		UploaderID: p.UploaderID,
 		Path:       sql.NullString{String: url, Valid: true},

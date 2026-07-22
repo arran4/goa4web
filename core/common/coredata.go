@@ -3399,7 +3399,7 @@ func imageIDToUploadPath(id string) (string, error) {
 	if !imagesign.ValidID(id) {
 		return "", fmt.Errorf("invalid image id")
 	}
-	return path.Join("/uploads", id[:2], id[2:4], id), nil
+	return path.Join("/", id[:2], id[2:4], id), nil
 }
 
 func cleanSignedParam(urlStr string) string {

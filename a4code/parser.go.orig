@@ -113,7 +113,7 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			startsNewline := false
 
 			isQuote := false
-			switch t := newChild.(type) {
+			switch newChild.(type) {
 			case *ast.Quote:
 				isQuote = t.IsBlock
 			case *ast.QuoteOf:
@@ -145,7 +145,7 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 				lastChild := children[idx]
 
 				isQuote := false
-				switch t := lastChild.(type) {
+				switch lastChild.(type) {
 				case *ast.Quote:
 				isQuote = t.IsBlock
 			case *ast.QuoteOf:

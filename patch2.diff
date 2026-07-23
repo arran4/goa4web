@@ -1,0 +1,27 @@
+--- a4code/parser.go
++++ a4code/parser.go
+@@ -113,8 +113,11 @@
+			startsNewline := false
+
+			isQuote := false
+-			switch newChild.(type) {
+-			case *ast.Quote, *ast.QuoteOf:
++			switch t := newChild.(type) {
++			case *ast.Quote:
++				isQuote = t.IsBlock
++			case *ast.QuoteOf:
+				isQuote = true
+			}
+
+@@ -143,8 +146,11 @@
+				lastChild := children[idx]
+
+				isQuote := false
+-				switch lastChild.(type) {
+-				case *ast.Quote, *ast.QuoteOf:
++				switch t := lastChild.(type) {
++				case *ast.Quote:
++					isQuote = t.IsBlock
++				case *ast.QuoteOf:
+					isQuote = true
+				}

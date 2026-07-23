@@ -112,7 +112,13 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			// Check if newChild starts with newline or is a block element
 			startsNewline := false
 
-			if isBlockContext(newChild) {
+			isQuote := false
+			switch newChild.(type) {
+			case *ast.Quote, *ast.QuoteOf:
+				isQuote = true
+			}
+
+			if isBlockContext(newChild) || isQuote {
 				startsNewline = true
 			} else if txt, ok := newChild.(*ast.Text); ok {
 				if strings.HasPrefix(txt.Value, "\n") {
@@ -136,7 +142,13 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			for idx >= 0 {
 				lastChild := children[idx]
 
-				if isBlockContext(lastChild) {
+				isQuote := false
+				switch lastChild.(type) {
+				case *ast.Quote, *ast.QuoteOf:
+					isQuote = true
+				}
+
+				if isBlockContext(lastChild) || isQuote {
 					prevIsNewline = true
 					break
 				} else if txt, ok := lastChild.(*ast.Text); ok {

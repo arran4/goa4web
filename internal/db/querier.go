@@ -424,6 +424,7 @@ type Querier interface {
 	// Parameters:
 	//   lister_id - ID of the lister to count notifications for
 	GetUnreadNotificationCountForLister(ctx context.Context, listerID int32) (int64, error)
+	GetUploadedImageByPath(ctx context.Context, path sql.NullString) (*UploadedImage, error)
 	GetUserEmailByCode(ctx context.Context, lastVerificationCode sql.NullString) (*UserEmail, error)
 	GetUserEmailByEmail(ctx context.Context, email string) (*UserEmail, error)
 	GetUserEmailByID(ctx context.Context, id int32) (*UserEmail, error)
@@ -650,6 +651,7 @@ type Querier interface {
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
+	UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error
 	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateLastMonthlyDigestSentAt(ctx context.Context, arg UpdateLastMonthlyDigestSentAtParams) error
 	UpdateLastWeeklyDigestSentAt(ctx context.Context, arg UpdateLastWeeklyDigestSentAtParams) error

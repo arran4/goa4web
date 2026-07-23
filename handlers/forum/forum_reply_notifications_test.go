@@ -375,10 +375,10 @@ func getEmailBody(t *testing.T, msg *mail.Message) string {
 }
 
 func TestForumAutoSubscribeTasks(t *testing.T) {
-	if _, ok := interface{}(replyTask).(notifications.AutoSubscribeProvider); !ok {
+	if _, ok := any(replyTask).(notifications.AutoSubscribeProvider); !ok {
 		t.Fatalf("ReplyTask should implement AutoSubscribeProvider so users get notified about thread replies")
 	}
-	if _, ok := interface{}(createThreadTask).(notifications.AutoSubscribeProvider); !ok {
+	if _, ok := any(createThreadTask).(notifications.AutoSubscribeProvider); !ok {
 		t.Fatalf("CreateThreadTask should implement AutoSubscribeProvider so thread authors follow their threads")
 	}
 

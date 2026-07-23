@@ -69,8 +69,8 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 	cd := NewCoreData(context.Background(), queries, cfg)
 	var imageBytes bytes.Buffer
 	img := image.NewRGBA(image.Rect(0, 0, 3, 2))
-	for y := 0; y < 2; y++ {
-		for x := 0; x < 3; x++ {
+	for y := range 2 {
+		for x := range 3 {
 			img.Set(x, y, color.RGBA{R: 0x20, G: 0x40, B: 0x80, A: 0xff})
 		}
 	}
@@ -96,8 +96,8 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 	if _, err := provider.Read(context.Background(), key); err != nil {
 		t.Fatalf("expected cache write at %s: %v", key, err)
 	}
-	if len(queries.UpsertImageCacheEntryCalls) != 1 {
-		t.Fatalf("expected one metadata upsert, got %d", len(queries.UpsertImageCacheEntryCalls))
+	if len(queries.UpsertImageCacheEntryCalls) != 2 {
+		t.Fatalf("expected original and thumbnail metadata upserts, got %d", len(queries.UpsertImageCacheEntryCalls))
 	}
 	got := queries.UpsertImageCacheEntryCalls[0]
 	if got.ID != id {
@@ -138,6 +138,13 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 	}
 	if !got.ContentExpiresAt.Valid || !got.ContentExpiresAt.Time.Equal(expires) {
 		t.Fatalf("content expiry = %#v, want %s", got.ContentExpiresAt, expires)
+	}
+	thumbnail := queries.UpsertImageCacheEntryCalls[1]
+	if !got.ThumbnailID.Valid || thumbnail.ID != got.ThumbnailID.String {
+		t.Fatalf("thumbnail entry id = %q, parent thumbnail id = %#v", thumbnail.ID, got.ThumbnailID)
+	}
+	if thumbnail.SourceKind != imageCacheSourceKindRemote || !thumbnail.SizeBytes.Valid {
+		t.Fatalf("thumbnail cache entry = %#v", thumbnail)
 	}
 }
 
@@ -227,8 +234,8 @@ func TestQueueRemoteImageCacheCreatesPendingEntry(t *testing.T) {
 func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 	var imageBytes bytes.Buffer
 	img := image.NewRGBA(image.Rect(0, 0, 4, 3))
-	for y := 0; y < 3; y++ {
-		for x := 0; x < 4; x++ {
+	for y := range 3 {
+		for x := range 4 {
 			img.Set(x, y, color.RGBA{R: 0x10, G: 0x20, B: 0x30, A: 0xff})
 		}
 	}

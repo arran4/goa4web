@@ -2,6 +2,7 @@ package common
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -104,13 +105,70 @@ func (cd *CoreData) MapImageURL(tag, val string) string {
 	case strings.HasPrefix(val, "uploading:"):
 		return val
 	case strings.HasPrefix(val, "image:") || strings.HasPrefix(val, "img:"):
+		if thumbnailRef := cd.ThumbnailReferenceForImage(val); thumbnailRef != "" {
+			return cd.SignCacheURL(thumbnailRef, 24*time.Hour)
+		}
 		return cd.SignImageURL(val, 24*time.Hour)
 	case strings.HasPrefix(val, "cache:"):
 		cacheRef := strings.TrimPrefix(val, "cache:")
+		if thumbnailRef := cd.ThumbnailReferenceForCache(cacheRef); thumbnailRef != "" {
+			return cd.SignCacheURL(thumbnailRef, 24*time.Hour)
+		}
 		return cd.SignCacheURL(cacheRef, 24*time.Hour)
 	default:
 		return val
 	}
+}
+
+// MapFullImageURL maps image references to their signed full-size source URLs.
+func (cd *CoreData) MapFullImageURL(tag, val string) string {
+	if tag != "img" {
+		return val
+	}
+	switch {
+	case strings.HasPrefix(val, "image:"), strings.HasPrefix(val, "img:"):
+		return cd.SignImageURL(val, 24*time.Hour)
+	case strings.HasPrefix(val, "cache:"):
+		return cd.SignCacheURL(strings.TrimPrefix(val, "cache:"), 24*time.Hour)
+	default:
+		return val
+	}
+}
+
+// ThumbnailReferenceForImage returns the default thumbnail for an oversized uploaded image.
+func (cd *CoreData) ThumbnailReferenceForImage(imageRef string) string {
+	imageID := strings.TrimPrefix(strings.TrimPrefix(cleanSignedParam(imageRef), "image:"), "img:")
+	image, err := cd.UploadedImageByImageID(imageID)
+	if err != nil || image == nil || !image.Width.Valid || !image.Height.Valid {
+		return ""
+	}
+	size := cd.Config.ThumbnailSizes()[0]
+	if int(image.Width.Int32) <= size.Width && int(image.Height.Int32) <= size.Height {
+		return ""
+	}
+	ext := filepath.Ext(imageID)
+	if ext == "" {
+		return ""
+	}
+	return thumbnailFilename(strings.TrimSuffix(imageID, ext), ext, size)
+}
+
+// ThumbnailReferenceForCache returns the default thumbnail for an oversized cached image.
+func (cd *CoreData) ThumbnailReferenceForCache(cacheRef string) string {
+	cacheRef = cleanSignedParam(cacheRef)
+	entry, err := cd.ImageCacheEntry(cd.ctx, cacheRef)
+	if err != nil {
+		return ""
+	}
+	size := cd.Config.ThumbnailSizes()[0]
+	if entry != nil && entry.Width.Valid && entry.Height.Valid && int(entry.Width.Int32) <= size.Width && int(entry.Height.Int32) <= size.Height {
+		return ""
+	}
+	ext := filepath.Ext(cacheRef)
+	if ext == "" {
+		return ""
+	}
+	return thumbnailFilename(strings.TrimSuffix(cacheRef, ext), ext, size)
 }
 
 // MapLinkURL converts external links to signed redirect URLs.

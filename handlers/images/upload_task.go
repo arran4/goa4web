@@ -33,8 +33,14 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 
+	// First verify they have an account, as this handler requires one
+	if cd.UserID == 0 {
+		return fmt.Errorf("upload requires account: %w", handlers.ErrForbidden)
+	}
+
+	// Then check specific image upload grant
 	if !cd.HasGrant("images", "upload", "post", 0) {
-		return fmt.Errorf("upload denied: %w", handlers.ErrForbidden)
+		return handlers.WrapForbidden(fmt.Errorf("image upload permissions denied"))
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(cfg.ImageMaxBytes))

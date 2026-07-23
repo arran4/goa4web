@@ -4,6 +4,12 @@ INSERT INTO uploaded_images (
 )
 VALUES (sqlc.arg(uploader_id), sqlc.arg(path), sqlc.arg(width), sqlc.arg(height), sqlc.arg(file_size), NOW());
 
+-- name: GetUploadedImageByPath :one
+SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
+FROM uploaded_images
+WHERE path = sqlc.arg(path)
+LIMIT 1;
+
 -- name: ListUploadedImagePathsByUser :many
 SELECT path
 FROM uploaded_images

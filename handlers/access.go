@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -34,13 +35,7 @@ func RequireRole(h http.HandlerFunc, err error, roles ...string) http.HandlerFun
 	if err == nil {
 		err = ErrForbidden
 	}
-	isPublic := false
-	for _, role := range roles {
-		if role == "anyone" {
-			isPublic = true
-			break
-		}
-	}
+	isPublic := slices.Contains(roles, "anyone")
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !isPublic {
 			DisableCaching(w)

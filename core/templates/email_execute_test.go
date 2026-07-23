@@ -17,14 +17,14 @@ type emailData struct {
 	UnsubscribeUrl string
 	SignOff        string
 	SignOffHTML    htemplate.HTML
-	Item           interface{}
-	Recipient      interface{}
-	Notifications  []interface{}
+	Item           any
+	Recipient      any
+	Notifications  []any
 	BaseURL        string
 }
 
 func sampleEmailData() emailData {
-	item := map[string]interface{}{
+	item := map[string]any{
 		"Action":       "action",
 		"Author":       "author",
 		"Body":         "body",
@@ -47,28 +47,28 @@ func sampleEmailData() emailData {
 		"Reason":       "reason",
 		"ResetURL":     "https://example.com/reset",
 		"Role":         "role",
-		"Thread": map[string]interface{}{
-			"Lastposterusername": map[string]interface{}{"String": "poster"},
-			"Comments":           map[string]interface{}{"Int32": 1},
+		"Thread": map[string]any{
+			"Lastposterusername": map[string]any{"String": "poster"},
+			"Comments":           map[string]any{"Int32": 1},
 		},
 		"ThreadID":           1,
 		"ThreadURL":          "https://example.com/thread",
 		"Time":               time.Now(),
-		"Title":              map[string]interface{}{"String": "title"},
+		"Title":              map[string]any{"String": "title"},
 		"TopicTitle":         "topic title",
 		"UnsubURL":           "https://example.com/unsub",
 		"UserPermissionsURL": "https://example.com/perm",
 		"UserURL":            "https://example.com/user",
 		"Username":           "username",
 		"BaseURL":            "https://example.com",
-		"Notifications": []interface{}{
-			map[string]interface{}{
-				"Link":      map[string]interface{}{"Valid": true, "String": "/link"},
-				"Message":   map[string]interface{}{"String": "message"},
+		"Notifications": []any{
+			map[string]any{
+				"Link":      map[string]any{"Valid": true, "String": "/link"},
+				"Message":   map[string]any{"String": "message"},
 				"CreatedAt": time.Now(),
 			},
 		},
-		"LastSentAt": map[string]interface{}{"Valid": true, "Time": time.Now()},
+		"LastSentAt": map[string]any{"Valid": true, "Time": time.Now()},
 
 		"DigestTitle": "Daily Digest",
 	}
@@ -80,13 +80,13 @@ func sampleEmailData() emailData {
 		SignOff:        "signoff",
 		SignOffHTML:    htemplate.HTML("signoff"),
 		Item:           item,
-		Recipient: map[string]interface{}{
-			"Username": map[string]interface{}{"String": "recipient"},
+		Recipient: map[string]any{
+			"Username": map[string]any{"String": "recipient"},
 		},
-		Notifications: []interface{}{
-			map[string]interface{}{
-				"Link":      map[string]interface{}{"Valid": true, "String": "/link"},
-				"Message":   map[string]interface{}{"String": "message"},
+		Notifications: []any{
+			map[string]any{
+				"Link":      map[string]any{"Valid": true, "String": "/link"},
+				"Message":   map[string]any{"String": "message"},
 				"CreatedAt": time.Now(),
 			},
 		},

@@ -39,9 +39,32 @@ type BildThumbnailGenerator struct{}
 // DrawThumbnailGenerator uses the standard golang.org/x/image/draw library.
 type DrawThumbnailGenerator struct{}
 
-// GenerateThumbnail creates a center-cropped thumbnail from the source image using a specific generator and size.
+// GenerateThumbnail creates a center-cropped square thumbnail from the source image using a specific generator and size.
 func GenerateThumbnail(srcImage image.Image, ext string, generatorName string, size int) ([]byte, error) {
 	return GetThumbnailGenerator(generatorName).Generate(srcImage, ext, size)
+}
+
+// GenerateThumbnailWithinBounds scales an image to fit the supplied height and width while preserving its aspect ratio.
+func GenerateThumbnailWithinBounds(srcImage image.Image, ext string, generatorName string, maxHeight, maxWidth int) ([]byte, error) {
+	return GenerateSafeSize(srcImage, ext, generatorName, maxWidth, maxHeight)
+}
+
+// DimensionsWithinBounds returns the aspect-ratio-preserving dimensions that fit within the supplied bounds.
+func DimensionsWithinBounds(srcImage image.Image, maxHeight, maxWidth int) (height, width int, err error) {
+	if maxHeight <= 0 || maxWidth <= 0 {
+		return 0, 0, fmt.Errorf("thumbnail bounds must be greater than zero")
+	}
+	bounds := srcImage.Bounds()
+	width = bounds.Dx()
+	height = bounds.Dy()
+	if width <= 0 || height <= 0 {
+		return 0, 0, fmt.Errorf("invalid source dimensions: %dx%d", width, height)
+	}
+	if height <= maxHeight && width <= maxWidth {
+		return height, width, nil
+	}
+	ratio := min(float64(maxHeight)/float64(height), float64(maxWidth)/float64(width))
+	return max(1, int(float64(height)*ratio)), max(1, int(float64(width)*ratio)), nil
 }
 
 func getCrop(srcImage image.Image) image.Rectangle {

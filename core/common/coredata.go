@@ -9,12 +9,14 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"maps"
 	"net"
 	"net/http"
 	"net/mail"
 	"net/netip"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1255,10 +1257,8 @@ func (cd *CoreData) HasContentWriterRole() bool {
 
 // HasRole reports whether the current user explicitly has the named role.
 func (cd *CoreData) HasRole(role string) bool {
-	for _, r := range cd.UserRoles() {
-		if r == role {
-			return true
-		}
+	if slices.Contains(cd.UserRoles(), role) {
+		return true
 	}
 	if cd.HasAdminRole() {
 		if role == "user" {
@@ -2170,7 +2170,7 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
-		return 0, fmt.Errorf("parse images: %w", err)
+		return 0, fmt.Errorf("parse images: %w", imageValidationUserError(err))
 	}
 	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
@@ -3091,9 +3091,7 @@ func defaultNotificationTemplate(name string, cd *CoreData) string {
 		}
 	} else {
 		txtFuncs := ttemplate.FuncMap{}
-		for k, v := range funcs {
-			txtFuncs[k] = v
-		}
+		maps.Copy(txtFuncs, funcs)
 
 		tmpl := templates.GetCompiledEmailTextTemplates(txtFuncs, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
@@ -3175,7 +3173,7 @@ func (cd *CoreData) validateCodeImagesForUser(userID int32, text string) error {
 	}
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
-		return err
+		return imageValidationUserError(err)
 	}
 	return cd.validateImagePathsForUser(userID, paths)
 }
@@ -3196,7 +3194,7 @@ func (cd *CoreData) validateImagePathsForUser(userID int32, paths []string) erro
 	}
 	for _, p := range paths {
 		if _, ok := found[p]; !ok {
-			return fmt.Errorf("image '%s' not in gallery", p)
+			return imageValidationUserError(fmt.Errorf("image '%s' not in gallery", p))
 		}
 	}
 	return nil
@@ -3220,10 +3218,10 @@ func (cd *CoreData) validateImagePathsForThread(userID, threadID int32, paths []
 	if threadID == 0 {
 		for _, p := range paths {
 			if _, ok := found[p]; !ok {
-				return fmt.Errorf("image '%s' not in gallery", p)
+				return imageValidationUserError(fmt.Errorf("image '%s' not in gallery", p))
 			}
 		}
-		return fmt.Errorf("image not in gallery")
+		return imageValidationUserError(fmt.Errorf("image not in gallery"))
 	}
 	threadFound, err := cd.listThreadImagePathSet(threadID, lookupPaths)
 	if err != nil {
@@ -3236,7 +3234,7 @@ func (cd *CoreData) validateImagePathsForThread(userID, threadID int32, paths []
 		if _, ok := threadFound[p]; ok {
 			continue
 		}
-		return fmt.Errorf("image '%s' not in gallery", p)
+		return imageValidationUserError(fmt.Errorf("image '%s' not in gallery", p))
 	}
 	return nil
 }
@@ -3250,9 +3248,16 @@ func (cd *CoreData) ValidateCodeImagesForUser(userID int32, text string) error {
 func (cd *CoreData) ValidateCodeImagesForThread(userID, threadID int32, text string) error {
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
-		return err
+		return imageValidationUserError(err)
 	}
 	return cd.validateImagePathsForThread(userID, threadID, paths)
+}
+
+func imageValidationUserError(err error) error {
+	return UserError{
+		Err:          err,
+		ErrorMessage: "One or more images are unavailable. Please upload them again.",
+	}
 }
 
 // RecordThreadImages stores image references for the specified thread.
@@ -3358,8 +3363,8 @@ func imageRefToPath(ref string) (string, error) {
 	if strings.HasPrefix(ref, "uploading:") {
 		return "", fmt.Errorf("image upload pending")
 	}
-	if strings.HasPrefix(ref, "cache:") {
-		id := strings.TrimPrefix(ref, "cache:")
+	if after, ok := strings.CutPrefix(ref, "cache:"); ok {
+		id := after
 		id = cleanSignedParam(id)
 		if !imagesign.ValidID(id) {
 			return "", fmt.Errorf("invalid cache image id")
@@ -3399,7 +3404,7 @@ func imageIDToUploadPath(id string) (string, error) {
 	if !imagesign.ValidID(id) {
 		return "", fmt.Errorf("invalid image id")
 	}
-	return path.Join("/uploads", id[:2], id[2:4], id), nil
+	return path.Join("/", id[:2], id[2:4], id), nil
 }
 
 func cleanSignedParam(urlStr string) string {

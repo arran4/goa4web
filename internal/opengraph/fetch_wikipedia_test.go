@@ -3,8 +3,8 @@ package opengraph
 import (
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestFetchWikipedia(t *testing.T) {

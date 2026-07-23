@@ -2,6 +2,7 @@ package admin
 
 import (
 	"log"
+	"maps"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -65,21 +66,14 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 
 	if hasMore {
 		nextVals := url.Values{}
-		for k, v := range params {
-			nextVals[k] = v
-		}
+		maps.Copy(nextVals, params)
 		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
 		cd.NextLink = r.URL.Path + "?" + nextVals.Encode()
 	}
 	if offset > 0 {
-		prev := offset - pageSize
-		if prev < 0 {
-			prev = 0
-		}
+		prev := max(offset-pageSize, 0)
 		prevVals := url.Values{}
-		for k, v := range params {
-			prevVals[k] = v
-		}
+		maps.Copy(prevVals, params)
 		prevVals.Set("offset", strconv.Itoa(prev))
 		cd.PrevLink = r.URL.Path + "?" + prevVals.Encode()
 	}

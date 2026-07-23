@@ -73,10 +73,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	if sampleSize <= 0 {
 		sampleSize = 5
 	}
-	thresholdPercent := cfg.StartupMediaCheckThresholdPercent
-	if thresholdPercent < 0 {
-		thresholdPercent = 0
-	}
+	thresholdPercent := max(cfg.StartupMediaCheckThresholdPercent, 0)
 	maxAllowedMissing := int(float64(sampleSize) * (float64(thresholdPercent) / 100.0))
 
 	q := db.New(dbPool)

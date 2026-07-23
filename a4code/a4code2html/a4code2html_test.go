@@ -35,6 +35,19 @@ func TestA4code2html_Process(t *testing.T) {
 	}
 }
 
+func TestA4code2htmlResizedImageIncludesFullSizeSource(t *testing.T) {
+	c := New(
+		func(tag, value string) string { return "https://example.test/thumb.png" },
+		FullImageURLMapper(func(tag, value string) string { return "https://example.test/full.png" }),
+	)
+	c.SetInput("[img image:example.png]")
+	got := string(testhelpers.Must(io.ReadAll(c.Process())))
+	want := `<img class="a4code-image" src="https://example.test/thumb.png" data-full-src="https://example.test/full.png" />`
+	if got != want {
+		t.Fatalf("rendered image = %q, want %q", got, want)
+	}
+}
+
 func TestA4code2htmlEscape(t *testing.T) {
 	c := New()
 	if got := c.Escape('&'); got != "&amp;" {
@@ -230,6 +243,21 @@ func TestImageURLMapper(t *testing.T) {
 	want := "<img class=\"a4code-image\" src=\"map:img:image:abc\" />"
 	if string(got) != want {
 		t.Fatalf("img map got %q want %q", got, want)
+	}
+}
+
+func TestImageURLMapperSupportsEqualsSyntaxForCacheImages(t *testing.T) {
+	c := New(func(tag, value string) string {
+		if tag != "img" || value != "cache:58f3984f584548271144122c7d139e9a6a8a1ad3.png" {
+			t.Fatalf("mapper input = (%q, %q)", tag, value)
+		}
+		return "/images/cache/signed-thumbnail.png"
+	})
+	c.SetInput("[img=cache:58f3984f584548271144122c7d139e9a6a8a1ad3.png]")
+	got := string(testhelpers.Must(io.ReadAll(c.Process())))
+	want := `<img class="a4code-image" src="/images/cache/signed-thumbnail.png" />`
+	if got != want {
+		t.Fatalf("rendered image = %q, want %q", got, want)
 	}
 }
 

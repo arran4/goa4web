@@ -60,7 +60,7 @@ func buildPatterns(task, path string) []string {
 // NewNotificationsHandler returns a handler using bus for events.
 func parseHosts(s string) []string {
 	var hosts []string
-	for _, part := range strings.Split(s, ",") {
+	for part := range strings.SplitSeq(s, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

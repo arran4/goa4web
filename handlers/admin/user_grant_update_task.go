@@ -52,13 +52,13 @@ func (UserGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("missing item id %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
 	desiredActive := map[string]struct{}{}
-	for _, a := range strings.Split(actionsStr, ",") {
+	for a := range strings.SplitSeq(actionsStr, ",") {
 		if a != "" {
 			desiredActive[a] = struct{}{}
 		}
 	}
 	desiredDisabled := map[string]struct{}{}
-	for _, a := range strings.Split(disabledStr, ",") {
+	for a := range strings.SplitSeq(disabledStr, ",") {
 		if a != "" {
 			desiredDisabled[a] = struct{}{}
 		}

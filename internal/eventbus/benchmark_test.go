@@ -18,11 +18,9 @@ func BenchmarkShutdown(b *testing.B) {
 		ch := bus.Subscribe(TaskMessageType)
 
 		var wg sync.WaitGroup
-		wg.Add(1)
 
 		// Consumer that delays reading
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			// Wait 5ms before starting to consume
 			time.Sleep(5 * time.Millisecond)
 			for {
@@ -37,7 +35,7 @@ func BenchmarkShutdown(b *testing.B) {
 					env.Ack()
 				}
 			}
-		}()
+		})
 
 		// Publish a message to fill buffer (size 1)
 		bus.Publish(TaskEvent{Task: nil})

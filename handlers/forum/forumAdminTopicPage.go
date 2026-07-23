@@ -130,7 +130,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Topic       *db.Forumtopic
 		Categories  []*db.Forumcategory
 		Roles       []*db.Role
-		Restriction interface{}
+		Restriction any
 	}{
 		Topic:      topic,
 		Categories: categories,

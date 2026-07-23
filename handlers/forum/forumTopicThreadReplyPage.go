@@ -1,6 +1,7 @@
 package forum
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -140,7 +141,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			err = handlers.ErrForbidden
 		}
 		log.Printf("Error: CreateComment: %s", err)
-		cd.SetCurrentError(fmt.Sprintf("Error creating comment: %v", err))
+		message := fmt.Sprintf("Error creating comment: %v", err)
+		var userError interface{ UserErrorMessage() string }
+		if errors.As(err, &userError) && userError.UserErrorMessage() != "" {
+			message = userError.UserErrorMessage()
+		}
+		cd.SetCurrentError(message)
 		if r.Form == nil {
 			r.Form = make(url.Values)
 		}

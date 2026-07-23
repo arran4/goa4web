@@ -16,7 +16,7 @@ func BenchmarkListImageCacheEntries(b *testing.B) {
 	defer os.RemoveAll(dir)
 
 	// Create 1000 files
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		filename := fmt.Sprintf("image_%d.jpg", i)
 		path := filepath.Join(dir, filename)
 		if err := os.WriteFile(path, []byte("dummy content"), 0644); err != nil {

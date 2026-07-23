@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
+	"maps"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -215,21 +216,14 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 
 	if hasMore {
 		nextVals := url.Values{}
-		for k, v := range params {
-			nextVals[k] = v
-		}
+		maps.Copy(nextVals, params)
 		nextVals.Set("offset", strconv.Itoa(offset+pageSize))
 		cd.NextLink = r.URL.Path + "?" + nextVals.Encode()
 	}
 	if offset > 0 {
-		prev := offset - pageSize
-		if prev < 0 {
-			prev = 0
-		}
+		prev := max(offset-pageSize, 0)
 		prevVals := url.Values{}
-		for k, v := range params {
-			prevVals[k] = v
-		}
+		maps.Copy(prevVals, params)
 		prevVals.Set("offset", strconv.Itoa(prev))
 		cd.PrevLink = r.URL.Path + "?" + prevVals.Encode()
 	}

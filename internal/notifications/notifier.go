@@ -134,7 +134,7 @@ func (n *Notifier) adminEmails(ctx context.Context) []string {
 	}
 	var emails []string
 	if env != "" {
-		for _, e := range strings.Split(env, ",") {
+		for e := range strings.SplitSeq(env, ",") {
 			if addr := strings.TrimSpace(e); addr != "" {
 				emails = append(emails, addr)
 			}
@@ -161,7 +161,7 @@ func (n *Notifier) NotifyAdmins(ctx context.Context, et *EmailTemplates, data Em
 	return n.notifyAdmins(ctx, et, nil, data, "", 0, nil)
 }
 
-func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data interface{}, link string, actorID int32, evt *eventbus.TaskEvent) error {
+func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *string, data any, link string, actorID int32, evt *eventbus.TaskEvent) error {
 	if n.Queries == nil {
 		return nil
 	}

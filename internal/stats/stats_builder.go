@@ -70,7 +70,7 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 				}
 				sb.WriteString(line + "\n")
 				if e := ext[k]; e != "" {
-					for _, ln := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
+					for ln := range strings.SplitSeq(strings.TrimSuffix(e, "\n"), "\n") {
 						sb.WriteString("# " + ln + "\n")
 					}
 				}

@@ -295,6 +295,7 @@ CREATE TABLE `preferences` (
   `monthly_digest_day` INT DEFAULT NULL,
   `monthly_digest_hour` INT DEFAULT NULL,
   `last_monthly_digest_sent_at` DATETIME DEFAULT NULL,
+  `image_safe_dimension` VARCHAR(50) DEFAULT NULL,
   PRIMARY KEY (`idpreferences`),
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
@@ -782,6 +783,7 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
   height int DEFAULT NULL,
   checksum varchar(128) DEFAULT NULL,
   thumbnail_id varchar(255) DEFAULT NULL,
+  uploaded_image_id int DEFAULT NULL,
   error_message text DEFAULT NULL,
   retry_count int NOT NULL DEFAULT 0,
   last_attempt_at datetime DEFAULT NULL,
@@ -790,9 +792,10 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
   KEY image_cache_entries_source_kind_expires_idx (source_kind, expires_at),
   KEY image_cache_entries_status_created_idx (status, created_at),
   KEY image_cache_entries_last_used_idx (last_used_at),
-  KEY image_cache_entries_next_attempt_idx (status, next_attempt_at)
+  KEY image_cache_entries_next_attempt_idx (status, next_attempt_at),
+  KEY image_cache_entries_uploaded_image_idx (uploaded_image_id)
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (85)
+INSERT INTO `schema_version` (`version`) VALUES (88)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

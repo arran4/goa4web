@@ -448,8 +448,8 @@ func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
 		link = n.Link.String
 	}
 	if link != "" {
-		if strings.HasSuffix(link, "/reply") {
-			link = strings.TrimSuffix(link, "/reply") + "#bottom"
+		if before, ok := strings.CutSuffix(link, "/reply"); ok {
+			link = before + "#bottom"
 		}
 		http.Redirect(w, r, link, http.StatusSeeOther)
 		return

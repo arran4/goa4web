@@ -42,11 +42,11 @@ func TestGenerator(t *testing.T) {
 		expects := make(map[string]string)
 
 		for _, file := range archive.Files {
-			if strings.HasSuffix(file.Name, ".expect.txt") {
-				name := strings.TrimSuffix(file.Name, ".expect.txt")
+			if before, ok := strings.CutSuffix(file.Name, ".expect.txt"); ok {
+				name := before
 				expects[name] = string(file.Data)
-			} else if strings.HasSuffix(file.Name, ".txt") {
-				name := strings.TrimSuffix(file.Name, ".txt")
+			} else if before, ok := strings.CutSuffix(file.Name, ".txt"); ok {
+				name := before
 				inputs[name] = string(file.Data)
 			}
 		}
@@ -70,7 +70,7 @@ func TestGenerator(t *testing.T) {
 
 				var buf bytes.Buffer
 				// Use mocked providers for specific tests via With... options
-				var opts []interface{}
+				var opts []any
 				if strings.Contains(name, "provider_link") {
 					opts = append(opts, goa4webhtml.WithLinkProvider(&mockLinkProvider{}))
 				}
@@ -154,5 +154,24 @@ func TestGeneratorWithoutSourceAttrs(t *testing.T) {
 	}
 	if !strings.Contains(got, `<img src="/mapped/image.jpg" />`) {
 		t.Fatalf("mapped image markup should remain without source positions in %q", got)
+	}
+}
+
+func TestGeneratorResizedImageIncludesFullSizeSource(t *testing.T) {
+	root, err := a4code.ParseString(`[img image.jpg]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := goa4webhtml.NewGenerator(
+		goa4webhtml.WithImageMapper(func(tag, value string) string { return "/thumb.jpg" }),
+		goa4webhtml.WithFullImageMapper(func(tag, value string) string { return "/full.jpg" }),
+	)
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if got, want := buf.String(), `<img src="/thumb.jpg" data-full-src="/full.jpg" />`; got != want {
+		t.Fatalf("rendered image = %q, want %q", got, want)
 	}
 }

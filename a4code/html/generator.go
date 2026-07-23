@@ -282,11 +282,11 @@ func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
 
 // SourceAttrs returns enabled source-related attributes for start and end offsets.
 func (g *Generator) SourceAttrs(start, end int) string {
-	attrs := ""
+	var attrs strings.Builder
 	for _, builder := range g.sourceAttrBuilders() {
-		attrs += builder.SourceAttrs(start, end)
+		attrs.WriteString(builder.SourceAttrs(start, end))
 	}
-	return attrs
+	return attrs.String()
 }
 
 func (g *Generator) sourceAttrBuilders() []SourceAttrBuilder {

@@ -3,6 +3,8 @@ package common
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"image"
 	"net/url"
 	"path"
 	"strings"
@@ -15,7 +17,7 @@ import (
 
 func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 	imageID := "abcd1234.jpg"
-	imagePath := path.Join("/uploads", imageID[:2], imageID[2:4], imageID)
+	imagePath := path.Join("/", imageID[:2], imageID[2:4], imageID)
 	text := "[img image:" + imageID + "]"
 
 	t.Run("accepts gallery image and records thread usage", func(t *testing.T) {
@@ -96,8 +98,16 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 			return []sql.NullString{}, nil
 		}
 		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
-		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text); err == nil {
+		_, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text)
+		if err == nil {
 			t.Fatal("expected error for missing gallery image")
+		}
+		var userError UserError
+		if !errors.As(err, &userError) {
+			t.Fatalf("expected user error, got %T: %v", err, err)
+		}
+		if userError.UserErrorMessage() != "One or more images are unavailable. Please upload them again." {
+			t.Fatalf("user error = %q", userError.UserErrorMessage())
 		}
 		if len(queries.CreateCommentInSectionForCommenterCalls) != 0 {
 			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))
@@ -133,6 +143,142 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))
 		}
 	})
+}
+
+func TestMapImageURLUsesDefaultThumbnailForLargeUploadedImage(t *testing.T) {
+	imageID := "abcd1234.png"
+	imagePath := path.Join("/", imageID[:2], imageID[2:4], imageID)
+	queries := testhelpers.NewQuerierStub()
+	queries.GetUploadedImageByPathReturns = &db.UploadedImage{
+		Iduploadedimage: 42,
+		Path:            sql.NullString{String: imagePath, Valid: true},
+		Width:           sql.NullInt32{Int32: 640, Valid: true},
+		Height:          sql.NullInt32{Int32: 480, Valid: true},
+	}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "256x128,512x256"}
+	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
+
+	mapped := cd.MapImageURL("img", "image:"+imageID)
+	parsed, err := url.Parse(mapped)
+	if err != nil {
+		t.Fatalf("parse mapped URL: %v", err)
+	}
+	if parsed.Path != "/images/cache/abcd1234_thumb_256x128.png" {
+		t.Fatalf("mapped path = %q", parsed.Path)
+	}
+	if len(queries.GetUploadedImageByPathCalls) != 1 || queries.GetUploadedImageByPathCalls[0].String != imagePath {
+		t.Fatalf("uploaded image lookup = %#v", queries.GetUploadedImageByPathCalls)
+	}
+}
+
+func TestMapImageURLUsesDefaultThumbnailForLargeCachedImage(t *testing.T) {
+	imageID := "abcd1234.jpg"
+	queries := testhelpers.NewQuerierStub()
+	queries.GetImageCacheEntryFn = func(ctx context.Context, id string) (*db.ImageCacheEntry, error) {
+		if id != imageID {
+			return nil, nil
+		}
+		return &db.ImageCacheEntry{
+			ID:     imageID,
+			Width:  sql.NullInt32{Int32: 1600, Valid: true},
+			Height: sql.NullInt32{Int32: 1200, Valid: true},
+		}, nil
+	}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "800x400"}
+	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
+
+	mapped := cd.MapImageURL("img", "cache:"+imageID)
+	parsed, err := url.Parse(mapped)
+	if err != nil {
+		t.Fatalf("parse mapped URL: %v", err)
+	}
+	if parsed.Path != "/images/cache/abcd1234_thumb_800x400.jpg" {
+		t.Fatalf("mapped path = %q", parsed.Path)
+	}
+
+	full := cd.MapFullImageURL("img", "cache:"+imageID)
+	fullParsed, err := url.Parse(full)
+	if err != nil {
+		t.Fatalf("parse full URL: %v", err)
+	}
+	if fullParsed.Path != "/images/cache/"+imageID {
+		t.Fatalf("full-size path = %q", fullParsed.Path)
+	}
+}
+
+func TestMapImageURLUsesThumbnailForCachedImageWithoutMetadata(t *testing.T) {
+	imageID := "abcd1234.png"
+	queries := testhelpers.NewQuerierStub()
+	queries.GetImageCacheEntryReturns = nil
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "800x400"}
+	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
+
+	mapped := cd.MapImageURL("img", "cache:"+imageID)
+	parsed, err := url.Parse(mapped)
+	if err != nil {
+		t.Fatalf("parse mapped URL: %v", err)
+	}
+	if parsed.Path != "/images/cache/abcd1234_thumb_800x400.png" {
+		t.Fatalf("mapped path = %q", parsed.Path)
+	}
+}
+
+func TestRecordUploadedImageThumbnailLinksSourceImage(t *testing.T) {
+	queries := testhelpers.NewQuerierStub()
+	cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
+	source := &db.UploadedImage{
+		Iduploadedimage: 42,
+		Path:            sql.NullString{String: "/ab/cd/abcd1234.png", Valid: true},
+	}
+	if err := cd.RecordUploadedImageThumbnail(context.Background(), "abcd1234_thumb_256x128.png", source, []byte("thumbnail"), 128, 256); err != nil {
+		t.Fatalf("RecordUploadedImageThumbnail: %v", err)
+	}
+	if len(queries.UpsertImageCacheEntryCalls) != 1 {
+		t.Fatalf("cache entry calls = %d", len(queries.UpsertImageCacheEntryCalls))
+	}
+	entry := queries.UpsertImageCacheEntryCalls[0]
+	if !entry.UploadedImageID.Valid || entry.UploadedImageID.Int32 != source.Iduploadedimage {
+		t.Fatalf("uploaded image back reference = %#v", entry.UploadedImageID)
+	}
+	if entry.ID != "abcd1234_thumb_256x128.png" || entry.SourceKind != imageCacheSourceKindUploaded {
+		t.Fatalf("cache entry = %#v", entry)
+	}
+}
+
+func TestStoreImageRecordsDefaultThumbnail(t *testing.T) {
+	provider := newMemoryCacheProvider()
+	providerName := registerMemoryCacheProvider(t, provider)
+	queries := testhelpers.NewQuerierStub(testhelpers.WithGrant("images", "upload", "post"))
+	queries.CreateUploadedImageForUploaderResult = 42
+	cfg := config.NewRuntimeConfig()
+	cfg.ImageUploadProvider = providerName
+	cfg.ImageCacheProvider = providerName
+	cfg.ImageThumbnailSizes = "128x64,256x128"
+	cd := NewCoreData(context.Background(), queries, cfg)
+	cd.UserID = 1
+
+	imageID := "abcd1234"
+	if _, err := cd.StoreImage(StoreImageParams{
+		ID:         imageID,
+		Ext:        ".png",
+		Data:       []byte("image"),
+		Image:      image.NewRGBA(image.Rect(0, 0, 640, 480)),
+		UploaderID: 1,
+	}); err != nil {
+		t.Fatalf("StoreImage: %v", err)
+	}
+	thumbnailID := "abcd1234_thumb_128x64.png"
+	key := path.Join(imageID[:2], imageID[2:4], thumbnailID)
+	if _, err := provider.Read(context.Background(), key); err != nil {
+		t.Fatalf("read default thumbnail: %v", err)
+	}
+	if len(queries.UpsertImageCacheEntryCalls) != 1 {
+		t.Fatalf("cache entry calls = %d", len(queries.UpsertImageCacheEntryCalls))
+	}
+	entry := queries.UpsertImageCacheEntryCalls[0]
+	if entry.ID != thumbnailID || !entry.UploadedImageID.Valid || entry.UploadedImageID.Int32 != 42 {
+		t.Fatalf("cache entry = %#v", entry)
+	}
 }
 
 func TestSanitizeCodeImagesQueuesImageAliasGoogleRedirect(t *testing.T) {

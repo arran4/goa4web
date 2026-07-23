@@ -20,108 +20,88 @@ func BuildUsageStatsData(ctx context.Context, queries db.Querier, customQueries 
 	errCh := make(chan string)
 	var errWG sync.WaitGroup
 
-	errWG.Add(1)
-	go func() {
-		defer errWG.Done()
+	errWG.Go(func() {
 		for e := range errCh {
 			data.Errors = append(data.Errors, e)
 		}
-	}()
+	})
 
 	addErr := func(name string, err error) {
 		errCh <- fmt.Errorf("%s: %w", name, err).Error()
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.AdminForumTopicThreadCounts(ctx); err == nil {
 			data.ForumTopics = rows
 		} else {
 			addErr("forum topic counts", err)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.AdminForumHandlerThreadCounts(ctx); err == nil {
 			data.ForumHandlers = rows
 		} else {
 			addErr("forum handler counts", err)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.AdminForumCategoryThreadCounts(ctx); err == nil {
 			data.ForumCategories = rows
 		} else {
 			addErr("forum category counts", err)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.AdminImageboardPostCounts(ctx); err == nil {
 			data.Imageboards = rows
 		} else {
 			addErr("imageboard post counts", err)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.AdminUserPostCounts(ctx); err == nil {
 			data.Users = rows
 		} else {
 			addErr("user post counts", err)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.AdminWritingCategoryCounts(ctx); err == nil {
 			data.WritingCategories = rows
 		} else {
 			addErr("writing category counts", err)
 		}
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if rows, err := queries.GetLinkerCategoryLinkCounts(ctx); err == nil {
 			data.LinkerCategories = rows
 		} else {
 			addErr("linker category counts", err)
 		}
-	}()
+	})
 
 	if customQueries != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if rows, err := customQueries.MonthlyUsageCounts(ctx, int32(startYear)); err == nil {
 				data.Monthly = rows
 			} else {
 				addErr("monthly usage counts", err)
 			}
-		}()
+		})
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if rows, err := customQueries.UserMonthlyUsageCounts(ctx, int32(startYear)); err == nil {
 				data.UserMonthly = rows
 			} else {
 				addErr("user monthly usage counts", err)
 			}
-		}()
+		})
 	} else {
 		log.Printf("stats: customQueries is nil, skipping monthly usage counts")
 	}

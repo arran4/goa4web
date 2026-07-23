@@ -37,7 +37,7 @@ func linkerFeed(r *http.Request, rows []*db.GetAllLinkerItemsByCategoryIdWitherP
 		}
 		desc := ""
 		if row.Description.Valid {
-			conv := a4code2html.New(cd.ImageURLMapper)
+			conv := a4code2html.New(cd.ImageURLMapper, a4code2html.FullImageURLMapper(cd.MapFullImageURL))
 			conv.CodeType = a4code2html.CTTagStrip
 			conv.SetInput(row.Description.String)
 			out, _ := io.ReadAll(conv.Process())

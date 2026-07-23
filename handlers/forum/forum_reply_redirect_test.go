@@ -65,7 +65,7 @@ func TestHappyPathForumReplyRedirect(t *testing.T) {
 	// This will be used when we fix the code.
 	qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
 		comments := make([]*db.GetCommentsByThreadIdForUserRow, 6)
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			comments[i] = &db.GetCommentsByThreadIdForUserRow{
 				Idcomments: int32(100 + i), // Arbitrary IDs
 			}

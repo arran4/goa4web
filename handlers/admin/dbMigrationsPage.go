@@ -3,6 +3,7 @@ package admin
 import (
 	"io/fs"
 	"net/http"
+	"slices"
 	"sort"
 
 	"github.com/arran4/goa4web/core/common"
@@ -35,13 +36,7 @@ func (h *Handlers) AdminDBMigrationsPage(w http.ResponseWriter, r *http.Request)
 	var content string
 
 	if selectedFile != "" {
-		valid := false
-		for _, f := range filenames {
-			if f == selectedFile {
-				valid = true
-				break
-			}
-		}
+		valid := slices.Contains(filenames, selectedFile)
 		if valid {
 			b, err := fs.ReadFile(migrations.FS, selectedFile)
 			if err == nil {

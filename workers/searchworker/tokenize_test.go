@@ -95,7 +95,7 @@ type stubDB struct {
 	err  error
 }
 
-func (s *stubDB) ExecContext(ctx context.Context, q string, args ...interface{}) (sql.Result, error) {
+func (s *stubDB) ExecContext(ctx context.Context, q string, args ...any) (sql.Result, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -105,10 +105,10 @@ func (s *stubDB) ExecContext(ctx context.Context, q string, args ...interface{})
 	return stubResult{}, nil
 }
 func (s *stubDB) PrepareContext(context.Context, string) (*sql.Stmt, error) { return nil, nil }
-func (s *stubDB) QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error) {
+func (s *stubDB) QueryContext(context.Context, string, ...any) (*sql.Rows, error) {
 	return nil, nil
 }
-func (s *stubDB) QueryRowContext(context.Context, string, ...interface{}) *sql.Row { return &sql.Row{} }
+func (s *stubDB) QueryRowContext(context.Context, string, ...any) *sql.Row { return &sql.Row{} }
 
 type stubResult struct{}
 

@@ -73,15 +73,15 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 		return fmt.Errorf("failed to resolve mailbox for import: %w", err)
 	}
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{"urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Email/import",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
-					"emails": map[string]interface{}{
-						"msg": map[string]interface{}{
+					"emails": map[string]any{
+						"msg": map[string]any{
 							"blobId":     up.BlobID,
 							"mailboxIds": map[string]bool{mailboxID: true},
 						},
@@ -91,10 +91,10 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 			},
 			{
 				"EmailSubmission/set",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
-					"create": map[string]interface{}{
-						"sub": map[string]interface{}{
+					"create": map[string]any{
+						"sub": map[string]any{
 							"emailId":    "#msg",
 							"identityId": j.Identity,
 						},
@@ -126,7 +126,7 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 	}
 
 	var res struct {
-		MethodResponses [][]interface{} `json:"methodResponses"`
+		MethodResponses [][]any `json:"methodResponses"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return err
@@ -140,21 +140,21 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 		if !ok {
 			continue
 		}
-		args, ok := mr[1].(map[string]interface{})
+		args, ok := mr[1].(map[string]any)
 		if !ok {
 			continue
 		}
 
 		if methodName == "Email/import" {
-			if notCreated, ok := args["notCreated"].(map[string]interface{}); ok && len(notCreated) > 0 {
+			if notCreated, ok := args["notCreated"].(map[string]any); ok && len(notCreated) > 0 {
 				return fmt.Errorf("email import failed (notCreated): %v", notCreated)
 			}
-			if notImported, ok := args["notImported"].(map[string]interface{}); ok && len(notImported) > 0 {
+			if notImported, ok := args["notImported"].(map[string]any); ok && len(notImported) > 0 {
 				return fmt.Errorf("email import failed (notImported): %v", notImported)
 			}
 		}
 		if methodName == "EmailSubmission/set" {
-			if notCreated, ok := args["notCreated"].(map[string]interface{}); ok && len(notCreated) > 0 {
+			if notCreated, ok := args["notCreated"].(map[string]any); ok && len(notCreated) > 0 {
 				return fmt.Errorf("email submission failed: %v", notCreated)
 			}
 		}
@@ -314,8 +314,8 @@ const coreCapabilityURN = "urn:ietf:params:jmap:core"
 const sieveCapabilityURN = "urn:ietf:params:jmap:sieve"
 
 type Account struct {
-	Name         string                 `json:"name"`
-	Capabilities map[string]interface{} `json:"capabilities"`
+	Name         string         `json:"name"`
+	Capabilities map[string]any `json:"capabilities"`
 }
 
 type SessionResponse struct {
@@ -412,12 +412,12 @@ func SelectIdentityID(session *SessionResponse) string {
 }
 
 func DiscoverIdentityID(ctx context.Context, client *http.Client, apiURL, username, password, accountID string) (string, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, submissionCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Identity/get",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": accountID,
 				},
 				"c1",
@@ -448,7 +448,7 @@ func DiscoverIdentityID(ctx context.Context, client *http.Client, apiURL, userna
 	}
 
 	var jmapResp struct {
-		MethodResponses [][]interface{} `json:"methodResponses"`
+		MethodResponses [][]any `json:"methodResponses"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&jmapResp); err != nil {
 		return "", err
@@ -456,16 +456,16 @@ func DiscoverIdentityID(ctx context.Context, client *http.Client, apiURL, userna
 
 	for _, methodResponse := range jmapResp.MethodResponses {
 		if len(methodResponse) >= 2 && methodResponse[0] == "Identity/get" {
-			args, ok := methodResponse[1].(map[string]interface{})
+			args, ok := methodResponse[1].(map[string]any)
 			if !ok {
 				continue
 			}
-			list, ok := args["list"].([]interface{})
+			list, ok := args["list"].([]any)
 			if !ok {
 				continue
 			}
 			for _, item := range list {
-				identity, ok := item.(map[string]interface{})
+				identity, ok := item.(map[string]any)
 				if !ok {
 					continue
 				}
@@ -490,14 +490,14 @@ type EmailHeader struct {
 }
 
 func (j *Provider) GetInboxID(ctx context.Context) (string, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Mailbox/query",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
-					"filter":    map[string]interface{}{"role": "inbox"},
+					"filter":    map[string]any{"role": "inbox"},
 				},
 				"c1",
 			},
@@ -507,15 +507,15 @@ func (j *Provider) GetInboxID(ctx context.Context) (string, error) {
 }
 
 func (j *Provider) QueryInbox(ctx context.Context, inboxID string, limit int) ([]string, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Email/query",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
-					"filter":    map[string]interface{}{"inMailbox": inboxID},
-					"sort":      []interface{}{map[string]interface{}{"property": "receivedAt", "isAscending": false}},
+					"filter":    map[string]any{"inMailbox": inboxID},
+					"sort":      []any{map[string]any{"property": "receivedAt", "isAscending": false}},
 					"limit":     limit,
 				},
 				"c1",
@@ -526,12 +526,12 @@ func (j *Provider) QueryInbox(ctx context.Context, inboxID string, limit int) ([
 }
 
 func (j *Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Email/get",
-				map[string]interface{}{
+				map[string]any{
 					"accountId":  j.AccountID,
 					"ids":        ids,
 					"properties": []string{"id", "subject", "from", "receivedAt"},
@@ -548,7 +548,7 @@ func (j *Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader
 	defer resp.Body.Close()
 
 	var jmapResp struct {
-		MethodResponses [][]interface{} `json:"methodResponses"`
+		MethodResponses [][]any `json:"methodResponses"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&jmapResp); err != nil {
 		return nil, err
@@ -556,11 +556,11 @@ func (j *Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader
 
 	for _, methodResponse := range jmapResp.MethodResponses {
 		if len(methodResponse) >= 2 && methodResponse[0] == "Email/get" {
-			args, ok := methodResponse[1].(map[string]interface{})
+			args, ok := methodResponse[1].(map[string]any)
 			if !ok {
 				continue
 			}
-			list, ok := args["list"].([]interface{})
+			list, ok := args["list"].([]any)
 			if !ok {
 				continue
 			}
@@ -579,14 +579,14 @@ func (j *Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader
 }
 
 func (j *Provider) GetAllMessages(ctx context.Context, limit int) ([]string, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Email/query",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
-					"sort":      []interface{}{map[string]interface{}{"property": "receivedAt", "isAscending": false}},
+					"sort":      []any{map[string]any{"property": "receivedAt", "isAscending": false}},
 					"limit":     limit,
 				},
 				"c1",
@@ -615,14 +615,14 @@ func (j *Provider) getBestMailboxID(ctx context.Context) (string, error) {
 }
 
 func (j *Provider) getMailboxIDByRole(ctx context.Context, role string) (string, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Mailbox/query",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
-					"filter":    map[string]interface{}{"role": role},
+					"filter":    map[string]any{"role": role},
 					"limit":     1,
 				},
 				"c1",
@@ -633,12 +633,12 @@ func (j *Provider) getMailboxIDByRole(ctx context.Context, role string) (string,
 }
 
 func (j *Provider) getAnyMailboxID(ctx context.Context) (string, error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"using": []string{coreCapabilityURN, mailCapabilityURN},
-		"methodCalls": [][]interface{}{
+		"methodCalls": [][]any{
 			{
 				"Mailbox/query",
-				map[string]interface{}{
+				map[string]any{
 					"accountId": j.AccountID,
 					"limit":     1,
 				},
@@ -649,7 +649,7 @@ func (j *Provider) getAnyMailboxID(ctx context.Context) (string, error) {
 	return j.extractIDFromResponse(ctx, payload, "Mailbox/query")
 }
 
-func (j *Provider) extractIDFromResponse(ctx context.Context, payload interface{}, methodName string) (string, error) {
+func (j *Provider) extractIDFromResponse(ctx context.Context, payload any, methodName string) (string, error) {
 	ids, err := j.extractIDsFromResponse(ctx, payload, methodName)
 	if err != nil {
 		return "", err
@@ -660,25 +660,25 @@ func (j *Provider) extractIDFromResponse(ctx context.Context, payload interface{
 	return "", nil
 }
 
-func (j *Provider) extractIDsFromResponse(ctx context.Context, payload interface{}, methodName string) ([]string, error) {
+func (j *Provider) extractIDsFromResponse(ctx context.Context, payload any, methodName string) ([]string, error) {
 	resp, err := j.doCall(ctx, payload)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	var jmapResp struct {
-		MethodResponses [][]interface{} `json:"methodResponses"`
+		MethodResponses [][]any `json:"methodResponses"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&jmapResp); err != nil {
 		return nil, err
 	}
 	for _, methodResponse := range jmapResp.MethodResponses {
 		if len(methodResponse) >= 2 && methodResponse[0] == methodName {
-			args, ok := methodResponse[1].(map[string]interface{})
+			args, ok := methodResponse[1].(map[string]any)
 			if !ok {
 				continue
 			}
-			list, ok := args["ids"].([]interface{})
+			list, ok := args["ids"].([]any)
 			if !ok {
 				continue
 			}
@@ -694,7 +694,7 @@ func (j *Provider) extractIDsFromResponse(ctx context.Context, payload interface
 	return nil, nil
 }
 
-func (j *Provider) doCall(ctx context.Context, payload interface{}) (*http.Response, error) {
+func (j *Provider) doCall(ctx context.Context, payload any) (*http.Response, error) {
 	buf, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err

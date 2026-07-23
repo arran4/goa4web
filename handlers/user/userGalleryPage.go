@@ -69,11 +69,12 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		imgPath := img.Path.String
-		if strings.HasPrefix(imgPath, "/uploads/") {
+		if strings.HasPrefix(imgPath, "/uploads/") || (strings.HasPrefix(imgPath, "/") && !strings.HasPrefix(imgPath, "/imagebbs/")) {
 			fname := path.Base(imgPath)
 			ext := filepath.Ext(fname)
 			id := strings.TrimSuffix(fname, ext)
-			thumb := id + "_thumb" + ext
+			thumbnailSize := cd.Config.ThumbnailSizes()[0]
+			thumb := id + "_thumb_" + strconv.Itoa(thumbnailSize.Width) + "x" + strconv.Itoa(thumbnailSize.Height) + ext
 			full := imgPath
 			thumbURL := thumb
 			if cd.ImageSignKey != "" {

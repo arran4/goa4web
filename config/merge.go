@@ -5,13 +5,13 @@ import "reflect"
 // Merge copies non-zero exported fields from src into dst using reflection.
 // dst must be a pointer to a struct and src must be a struct or pointer to the
 // same type. Fields are merged by field index.
-func Merge(dst, src interface{}) {
+func Merge(dst, src any) {
 	dv := reflect.ValueOf(dst)
-	if dv.Kind() != reflect.Ptr || dv.Elem().Kind() != reflect.Struct {
+	if dv.Kind() != reflect.Pointer || dv.Elem().Kind() != reflect.Struct {
 		panic("dst must be pointer to struct")
 	}
 	sv := reflect.ValueOf(src)
-	if sv.Kind() == reflect.Ptr {
+	if sv.Kind() == reflect.Pointer {
 		sv = sv.Elem()
 	}
 	if sv.Kind() != reflect.Struct {

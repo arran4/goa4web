@@ -38,6 +38,9 @@ type LinkProvider interface {
 	MapImageURL(tag, val string) string
 }
 
+// FullImageURLMapper maps an image reference to the full-size source used by the image viewer.
+type FullImageURLMapper func(tag, val string) string
+
 type A4code2html struct {
 	r        *bufio.Reader
 	w        io.Writer
@@ -48,6 +51,8 @@ type A4code2html struct {
 	// ImageURLMapper optionally maps tag URLs to fully qualified versions.
 	// The first parameter provides the tag name, e.g. "img" or "a".
 	ImageURLMapper func(tag, val string) string
+	// FullImageURLMapper optionally maps a resized image to its full-size source.
+	FullImageURLMapper FullImageURLMapper
 	// UserColorMapper optionally maps a username to a CSS class for styling quotes.
 	UserColorMapper func(username string) string
 	quoteDepth      int
@@ -63,7 +68,7 @@ type WithTOC bool
 // the output CodeType, enable table of contents generation or provide a custom
 // ImageURLMapper. A *bufio.Reader, io.Reader or io.Writer may be supplied to
 // configure the input or output streams.
-func New(opts ...interface{}) *A4code2html {
+func New(opts ...any) *A4code2html {
 	c := &A4code2html{
 		CodeType:    CTHTML,
 		w:           new(bytes.Buffer),
@@ -75,6 +80,8 @@ func New(opts ...interface{}) *A4code2html {
 			c.CodeType = v
 		case func(tag, val string) string:
 			c.ImageURLMapper = v
+		case FullImageURLMapper:
+			c.FullImageURLMapper = v
 		case func(string) string:
 			c.UserColorMapper = v
 		case LinkProvider:
@@ -267,6 +274,7 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		if err != nil && err != io.EOF {
 			return err
 		}
+		fullRaw := raw
 		if a.Provider != nil {
 			raw = a.Provider.MapImageURL("img", raw)
 		} else if a.ImageURLMapper != nil {
@@ -275,7 +283,15 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 		switch a.CodeType {
 		case CTTableOfContents, CTTagStrip, CTWordsOnly:
 		default:
-			if _, err := io.WriteString(w, "<img class=\"a4code-image\" src=\""+html.EscapeString(raw)+"\" />"); err != nil {
+			fullSrc := ""
+			if a.FullImageURLMapper != nil {
+				fullSrc = a.FullImageURLMapper("img", fullRaw)
+			}
+			attrs := ""
+			if fullSrc != "" && fullSrc != raw {
+				attrs = ` data-full-src="` + html.EscapeString(fullSrc) + `"`
+			}
+			if _, err := io.WriteString(w, "<img class=\"a4code-image\" src=\""+html.EscapeString(raw)+"\""+attrs+" />"); err != nil {
 				return err
 			}
 		}

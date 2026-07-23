@@ -56,14 +56,14 @@ func (c *announcementListCmd) Run() error {
 	}
 
 	if c.jsonOut {
-		out := make([]map[string]interface{}, 0, len(rows))
+		out := make([]map[string]any, 0, len(rows))
 		for _, row := range rows {
 			var title *string
 			if row.News.Valid {
 				t := row.News.String
 				title = &t
 			}
-			item := map[string]interface{}{
+			item := map[string]any{
 				"id":         row.ID,
 				"news_id":    row.SiteNewsID,
 				"active":     row.Active,

@@ -52,10 +52,7 @@ func (op *OffsetPagination) PrevLink() string {
 	if op.Offset <= 0 {
 		return ""
 	}
-	prev := op.Offset - op.PageSize
-	if prev < 0 {
-		prev = 0
-	}
+	prev := max(op.Offset-op.PageSize, 0)
 	return op.fmtLink(prev)
 }
 

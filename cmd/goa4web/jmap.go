@@ -88,7 +88,7 @@ func (c *jmapCmd) discoverJmapSession() (*jmapSessionInfo, error) {
 	var session *jmap.SessionResponse
 	var err error
 	if acc == "" || id == "" {
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			session, err = jmap.DiscoverSession(context.Background(), httpClient, ep, cfg.EmailJMAPUser, cfg.EmailJMAPPass)
 			if err == nil {
 				break

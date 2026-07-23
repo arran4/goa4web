@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -38,12 +39,7 @@ type SubscriptionInstance struct {
 
 // HasMethod checks if the instance has the given method.
 func (si *SubscriptionInstance) HasMethod(method string) bool {
-	for _, m := range si.Methods {
-		if m == method {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(si.Methods, method)
 }
 
 // SubscriptionGroup groups instances by their definition.
@@ -334,13 +330,7 @@ func GetUserSubscriptions(dbSubs []*db.ListSubscriptionsByUserRow) []*Subscripti
 		}
 
 		// Add method if not present
-		found := false
-		for _, m := range instance.Methods {
-			if m == sub.Method {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(instance.Methods, sub.Method)
 		if !found {
 			instance.Methods = append(instance.Methods, sub.Method)
 		}

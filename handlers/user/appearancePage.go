@@ -29,10 +29,21 @@ func userAppearancePage(w http.ResponseWriter, r *http.Request) {
 		customCSS = pref.CustomCss.String
 	}
 	type Data struct {
-		CustomCSS string
+		CustomCSS      string
+		SafeDimensions []string
+		SafeDimension  string
 	}
+
+	safeDims := cd.Config.SafeImageDimensions()
+	safeDim := safeDims[0] // default
+	if pref != nil && pref.ImageSafeDimension.Valid {
+		safeDim = pref.ImageSafeDimension.String
+	}
+
 	data := Data{
-		CustomCSS: customCSS,
+		CustomCSS:      customCSS,
+		SafeDimensions: safeDims,
+		SafeDimension:  safeDim,
 	}
 	AppearancePage.Handle(w, r, data)
 }
@@ -58,6 +69,7 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	customCSS := r.FormValue("custom_css")
+	imageSafeDimension := r.FormValue("image_safe_dimension")
 
 	// Ensure preference row exists
 	pref, err := cd.Preference()
@@ -83,6 +95,14 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CustomCss: sql.NullString{String: customCSS, Valid: customCSS != ""},
 	}); err != nil {
 		log.Printf("update custom css: %v", err)
+		return common.ErrInternalServerError
+	}
+
+	if err := queries.UpdateImageSafeDimensionForLister(r.Context(), db.UpdateImageSafeDimensionForListerParams{
+		ListerID:           uid,
+		ImageSafeDimension: sql.NullString{String: imageSafeDimension, Valid: imageSafeDimension != ""},
+	}); err != nil {
+		log.Printf("update image safe dimension: %v", err)
 		return common.ErrInternalServerError
 	}
 
@@ -119,9 +139,13 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	// Render directly with the new value to ensure it is displayed even if pref was not cached
 	cd.PageTitle = "Appearance Settings"
 	data := struct {
-		CustomCSS string
+		CustomCSS      string
+		SafeDimensions []string
+		SafeDimension  string
 	}{
-		CustomCSS: customCSS,
+		CustomCSS:      customCSS,
+		SafeDimensions: cd.Config.SafeImageDimensions(),
+		SafeDimension:  imageSafeDimension,
 	}
 	AppearancePage.Handle(w, r, data)
 	return nil

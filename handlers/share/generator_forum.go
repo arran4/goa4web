@@ -23,7 +23,7 @@ func (g *ForumGenerator) Name() string {
 	return "forum"
 }
 
-func (g *ForumGenerator) Generate(options ...interface{}) (image.Image, error) {
+func (g *ForumGenerator) Generate(options ...any) (image.Image, error) {
 	var title, body, section string
 	var avatar image.Image
 	for _, opt := range options {

@@ -103,10 +103,7 @@ func (c *userPasswordListCmd) Run() error {
 		return c.renderOutput(nil, nil)
 	}
 
-	limit := int64(count)
-	if limit > maxQueryLimit {
-		limit = maxQueryLimit
-	}
+	limit := min(int64(count), maxQueryLimit)
 
 	rows, err := queries.AdminListPasswordResets(ctx, db.AdminListPasswordResetsParams{
 		Status:        statusFilter,
@@ -130,14 +127,8 @@ func (c *userPasswordListCmd) Run() error {
 		filtered = append(filtered, row)
 	}
 
-	start := (c.page - 1) * c.limit
-	if start > len(filtered) {
-		start = len(filtered)
-	}
-	end := start + c.limit
-	if end > len(filtered) {
-		end = len(filtered)
-	}
+	start := min((c.page-1)*c.limit, len(filtered))
+	end := min(start+c.limit, len(filtered))
 
 	return c.renderOutput(filtered[start:end], filtered)
 }

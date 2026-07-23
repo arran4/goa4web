@@ -1316,3 +1316,93 @@ kbd {
     border: none;
     display: inline-block;
 }
+
+/* Image Scroll Wrapper and Fullscreen Overlay */
+.image-scroll-wrapper {
+    max-width: 100%;
+    max-height: 80vh;
+    overflow: auto;
+    display: inline-block;
+    border: 1px solid #ccc; /* optional visual cue */
+}
+
+.a4code-image {
+    cursor: zoom-in;
+    max-width: none;
+}
+
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    cursor: zoom-out;
+}
+
+.fullscreen-overlay img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    transition: transform 0.1s ease-out;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.fullscreen-overlay.fullscreen-background-site img {
+    background-color: var(--fullscreen-image-site-background, #ffffff);
+}
+
+.fullscreen-overlay.fullscreen-background-light img {
+    background-color: #ffffff;
+}
+
+.fullscreen-overlay.fullscreen-background-dark img {
+    background-color: #1a1a1a;
+}
+
+.fullscreen-overlay.fullscreen-background-checkerboard img {
+    background-color: #ffffff;
+    background-image:
+        linear-gradient(45deg, #d0d0d0 25%, transparent 25%),
+        linear-gradient(-45deg, #d0d0d0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #d0d0d0 75%),
+        linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    background-size: 20px 20px;
+}
+
+.fullscreen-overlay img:active {
+    cursor: grabbing;
+}
+
+.fullscreen-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.fullscreen-background-toggle {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 10000;
+    padding: 0.5em 0.75em;
+    border: 1px solid #ffffff;
+    border-radius: 0.25em;
+    background: rgba(0, 0, 0, 0.65);
+    color: #ffffff;
+    cursor: pointer;
+}

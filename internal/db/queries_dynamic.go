@@ -25,7 +25,7 @@ type UserFilteredRow struct {
 
 func (q *Queries) AdminListUsersFiltered(ctx context.Context, arg AdminListUsersFilteredParams) ([]*UserFilteredRow, error) {
 	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
-	var args []interface{}
+	var args []any
 	var cond []string
 	if arg.Role != "" {
 		query += " JOIN user_roles ur ON ur.users_idusers = u.idusers JOIN roles r ON ur.role_id = r.id"
@@ -75,7 +75,7 @@ type AdminSearchUsersFilteredParams struct {
 func (q *Queries) AdminSearchUsersFiltered(ctx context.Context, arg AdminSearchUsersFilteredParams) ([]*UserFilteredRow, error) {
 	like := "%" + arg.Query + "%"
 	query := "SELECT u.idusers, (SELECT email FROM user_emails ue WHERE ue.user_id = u.idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1) AS email, u.username FROM users u"
-	var args []interface{}
+	var args []any
 	var cond []string
 	if arg.Role != "" {
 		query += " JOIN user_roles ur ON ur.users_idusers = u.idusers JOIN roles r ON ur.role_id = r.id"

@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"net/mail"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -159,14 +160,8 @@ func (c *emailSentListCmd) Run() error {
 		return err
 	}
 
-	start := c.offset
-	if start > len(filtered) {
-		start = len(filtered)
-	}
-	end := start + c.limit
-	if end > len(filtered) {
-		end = len(filtered)
-	}
+	start := min(c.offset, len(filtered))
+	end := min(start+c.limit, len(filtered))
 
 	return c.renderListOutput(filtered[start:end], len(filtered))
 }
@@ -296,7 +291,7 @@ func lookupUserEmails(ctx context.Context, queries *db.Queries, ids []int32) (ma
 	for id := range unique {
 		keys = append(keys, id)
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	slices.Sort(keys)
 	results := make(map[int32]string, len(keys))
 	for _, id := range keys {
 		user, err := queries.SystemGetUserByID(ctx, id)
@@ -384,8 +379,8 @@ func (c *emailSentRetryCmd) parseIDs() ([]int32, error) {
 	if c.ids == "" {
 		return ids, nil
 	}
-	parts := strings.Split(c.ids, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(c.ids, ",")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

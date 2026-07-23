@@ -131,3 +131,29 @@ func TestGenerateThumbnail(t *testing.T) {
 		}
 	})
 }
+
+func TestGenerateThumbnailWithinBoundsPreservesAspectRatio(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 1200, 400))
+	thumbData, err := GenerateThumbnailWithinBounds(src, ".png", "bild", 400, 800)
+	if err != nil {
+		t.Fatalf("GenerateThumbnailWithinBounds: %v", err)
+	}
+	thumb, _, err := image.Decode(bytes.NewReader(thumbData))
+	if err != nil {
+		t.Fatalf("decode thumbnail: %v", err)
+	}
+	if got, want := thumb.Bounds().Dx(), 800; got != want {
+		t.Fatalf("thumbnail width = %d, want %d", got, want)
+	}
+	if got, want := thumb.Bounds().Dy(), 266; got != want {
+		t.Fatalf("thumbnail height = %d, want %d", got, want)
+	}
+
+	height, width, err := DimensionsWithinBounds(src, 400, 800)
+	if err != nil {
+		t.Fatalf("DimensionsWithinBounds: %v", err)
+	}
+	if height != 266 || width != 800 {
+		t.Fatalf("thumbnail dimensions = %dx%d, want 266x800", height, width)
+	}
+}

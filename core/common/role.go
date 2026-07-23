@@ -2,6 +2,7 @@ package common
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/arran4/goa4web/core/consts"
 )
@@ -15,10 +16,5 @@ func Allowed(r *http.Request, roles ...string) bool {
 	if cd == nil {
 		return false
 	}
-	for _, lvl := range roles {
-		if cd.HasRole(lvl) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(roles, cd.HasRole)
 }

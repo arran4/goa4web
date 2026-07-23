@@ -21,7 +21,70 @@ const (
 	DefaultImageCachePlaceholderMinWidth = 760
 	// DefaultImageCachePlaceholderMinHeight is the default cache placeholder diagnostic SVG height.
 	DefaultImageCachePlaceholderMinHeight = 260
+	// DefaultImageThumbnailWidth is the default thumbnail width bound.
+	DefaultImageThumbnailWidth = 1024
+	// DefaultImageThumbnailHeight is the default thumbnail height bound.
+	DefaultImageThumbnailHeight = 800
 )
+
+// ThumbnailSize represents a thumbnail's maximum width and height.
+type ThumbnailSize struct {
+	Width  int
+	Height int
+}
+
+// ThumbnailSizes returns the allowed thumbnail bounds in default-first width-by-height order.
+func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
+	if c != nil {
+		sizes := make([]ThumbnailSize, 0)
+		seen := make(map[ThumbnailSize]struct{})
+		for value := range strings.SplitSeq(c.ImageThumbnailSizes, ",") {
+			parts := strings.Split(strings.TrimSpace(value), "x")
+			var width, height int
+			switch len(parts) {
+			case 1:
+				// Preserve support for the former square-size configuration.
+				width, _ = strconv.Atoi(strings.TrimSpace(parts[0]))
+				height = width
+			case 2:
+				var heightErr, widthErr error
+				width, widthErr = strconv.Atoi(strings.TrimSpace(parts[0]))
+				height, heightErr = strconv.Atoi(strings.TrimSpace(parts[1]))
+				if heightErr != nil || widthErr != nil {
+					continue
+				}
+			default:
+				continue
+			}
+			if height <= 0 || width <= 0 {
+				continue
+			}
+			size := ThumbnailSize{Width: width, Height: height}
+			if _, ok := seen[size]; ok {
+				continue
+			}
+			seen[size] = struct{}{}
+			sizes = append(sizes, size)
+		}
+		if len(sizes) > 0 {
+			return sizes
+		}
+		if c.ImageThumbnailSize > 0 {
+			return []ThumbnailSize{{Width: c.ImageThumbnailSize, Height: c.ImageThumbnailSize}}
+		}
+	}
+	return []ThumbnailSize{{Width: DefaultImageThumbnailWidth, Height: DefaultImageThumbnailHeight}}
+}
+
+// SafeImageDimensions returns the user-selectable resize dimensions from the thumbnail configuration.
+func (c *RuntimeConfig) SafeImageDimensions() []string {
+	sizes := c.ThumbnailSizes()
+	dimensions := make([]string, 0, len(sizes))
+	for _, size := range sizes {
+		dimensions = append(dimensions, strconv.Itoa(size.Width)+"x"+strconv.Itoa(size.Height))
+	}
+	return dimensions
+}
 
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
@@ -134,6 +197,9 @@ type RuntimeConfig struct {
 	ImageCachePlaceholderMinHeight int
 	ImageThumbnailGenerator        string
 	ImageThumbnailSize             int
+	// ImageThumbnailSizes lists allowed thumbnail bounds in default-first width-by-height order.
+	ImageThumbnailSizes string
+	ImageMaxResizeBytes int
 
 	DLQProvider string
 	DLQFile     string

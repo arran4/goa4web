@@ -127,7 +127,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, redirectPath string, ops ...interface{}) {
+func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, redirectPath string, ops ...any) {
 
 	// Determine auth style: check if mux vars for ts/nonce are present
 	vars := mux.Vars(r)

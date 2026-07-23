@@ -7,13 +7,13 @@ import (
 )
 
 func TestHappyPathNewsReplyAutoSubscribe(t *testing.T) {
-	if _, ok := interface{}(replyTask).(notif.AutoSubscribeProvider); !ok {
+	if _, ok := any(replyTask).(notif.AutoSubscribeProvider); !ok {
 		t.Fatalf("ReplyTask must auto subscribe so commenters are notified of responses")
 	}
 }
 
 func TestHappyPathNewsPostAutoSubscribe(t *testing.T) {
-	if _, ok := interface{}(newPostTask).(notif.AutoSubscribeProvider); !ok {
+	if _, ok := any(newPostTask).(notif.AutoSubscribeProvider); !ok {
 		t.Fatalf("NewPostTask must auto subscribe so authors follow replies")
 	}
 }

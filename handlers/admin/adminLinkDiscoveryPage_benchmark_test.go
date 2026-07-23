@@ -10,7 +10,7 @@ import (
 
 func BenchmarkRegexCompileInLoop(b *testing.B) {
 	rows := make([]*db.GetAllSiteNewsForIndexRow, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		rows[i] = &db.GetAllSiteNewsForIndexRow{
 			News: sql.NullString{String: "Some text with a link http://example.com/foo and more text.", Valid: true},
 		}
@@ -29,7 +29,7 @@ func BenchmarkRegexCompileInLoop(b *testing.B) {
 
 func BenchmarkRegexCompileOutside(b *testing.B) {
 	rows := make([]*db.GetAllSiteNewsForIndexRow, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		rows[i] = &db.GetAllSiteNewsForIndexRow{
 			News: sql.NullString{String: "Some text with a link http://example.com/foo and more text.", Valid: true},
 		}

@@ -58,7 +58,7 @@ func (c *announcementAddCmd) Run() error {
 		return fmt.Errorf("promote announcement: %w", err)
 	}
 	if c.jsonOut {
-		out := map[string]interface{}{
+		out := map[string]any{
 			"news_id": c.newsID,
 			"status":  "added",
 		}

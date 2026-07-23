@@ -597,9 +597,9 @@ type QuerierStub struct {
 	SetNotificationPriorityForListerFn    func(context.Context, SetNotificationPriorityForListerParams) error
 
 	GetMaxNotificationPriorityCalls   []int32
-	GetMaxNotificationPriorityReturns interface{}
+	GetMaxNotificationPriorityReturns any
 	GetMaxNotificationPriorityErr     error
-	GetMaxNotificationPriorityFn      func(context.Context, int32) (interface{}, error)
+	GetMaxNotificationPriorityFn      func(context.Context, int32) (any, error)
 
 	InsertPreferenceForListerCalls []InsertPreferenceForListerParams
 	InsertPreferenceForListerErr   error
@@ -608,6 +608,10 @@ type QuerierStub struct {
 	UpdateCustomCssForListerCalls []UpdateCustomCssForListerParams
 	UpdateCustomCssForListerErr   error
 	UpdateCustomCssForListerFn    func(context.Context, UpdateCustomCssForListerParams) error
+
+	UpdateImageSafeDimensionForListerCalls []UpdateImageSafeDimensionForListerParams
+	UpdateImageSafeDimensionForListerErr   error
+	UpdateImageSafeDimensionForListerFn    func(context.Context, UpdateImageSafeDimensionForListerParams) error
 
 	GetUserEmailByIDCalls   []int32
 	GetUserEmailByIDReturns *UserEmail
@@ -683,10 +687,18 @@ type QuerierStub struct {
 	CreateCommentInSectionForCommenterResult int64
 	CreateCommentInSectionForCommenterErr    error
 
-	ListUploadedImagePathsByUserCalls   []ListUploadedImagePathsByUserParams
-	ListUploadedImagePathsByUserFn      func(context.Context, ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
-	ListUploadedImagePathsByUserReturns []sql.NullString
-	ListUploadedImagePathsByUserErr     error
+	ListUploadedImagePathsByUserCalls    []ListUploadedImagePathsByUserParams
+	ListUploadedImagePathsByUserFn       func(context.Context, ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
+	ListUploadedImagePathsByUserReturns  []sql.NullString
+	ListUploadedImagePathsByUserErr      error
+	GetUploadedImageByPathCalls          []sql.NullString
+	GetUploadedImageByPathFn             func(context.Context, sql.NullString) (*UploadedImage, error)
+	GetUploadedImageByPathReturns        *UploadedImage
+	GetUploadedImageByPathErr            error
+	CreateUploadedImageForUploaderCalls  []CreateUploadedImageForUploaderParams
+	CreateUploadedImageForUploaderFn     func(context.Context, CreateUploadedImageForUploaderParams) (int64, error)
+	CreateUploadedImageForUploaderResult int64
+	CreateUploadedImageForUploaderErr    error
 
 	ListThreadImagePathsCalls   []ListThreadImagePathsParams
 	ListThreadImagePathsFn      func(context.Context, ListThreadImagePathsParams) ([]sql.NullString, error)
@@ -982,10 +994,10 @@ type QuerierStub struct {
 	AdminGetFAQDismissedQuestionsErr     error
 	AdminGetFAQDismissedQuestionsFn      func(context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
 
-	AdminListTopicsWithUserGrantsNoRolesCalls   []interface{}
+	AdminListTopicsWithUserGrantsNoRolesCalls   []any
 	AdminListTopicsWithUserGrantsNoRolesReturns []*AdminListTopicsWithUserGrantsNoRolesRow
 	AdminListTopicsWithUserGrantsNoRolesErr     error
-	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
+	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, any) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
 
 	AdminCreateGrantCalls   []AdminCreateGrantParams
 	AdminCreateGrantReturns int64
@@ -1157,6 +1169,33 @@ func (s *QuerierStub) ListUploadedImagePathsByUser(ctx context.Context, arg List
 		return nil, s.ListUploadedImagePathsByUserErr
 	}
 	return s.ListUploadedImagePathsByUserReturns, nil
+}
+
+// GetUploadedImageByPath records the call and returns the configured uploaded image.
+func (s *QuerierStub) GetUploadedImageByPath(ctx context.Context, path sql.NullString) (*UploadedImage, error) {
+	s.mu.Lock()
+	s.GetUploadedImageByPathCalls = append(s.GetUploadedImageByPathCalls, path)
+	fn := s.GetUploadedImageByPathFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, path)
+	}
+	if s.GetUploadedImageByPathErr != nil {
+		return nil, s.GetUploadedImageByPathErr
+	}
+	return s.GetUploadedImageByPathReturns, nil
+}
+
+// CreateUploadedImageForUploader records the call and returns the configured upload ID.
+func (s *QuerierStub) CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error) {
+	s.mu.Lock()
+	s.CreateUploadedImageForUploaderCalls = append(s.CreateUploadedImageForUploaderCalls, arg)
+	fn := s.CreateUploadedImageForUploaderFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.CreateUploadedImageForUploaderResult, s.CreateUploadedImageForUploaderErr
 }
 
 // ListThreadImagePaths records the call and returns stored paths.
@@ -1651,7 +1690,7 @@ func (s *QuerierStub) SetNotificationPriorityForLister(ctx context.Context, arg 
 	return err
 }
 
-func (s *QuerierStub) GetMaxNotificationPriority(ctx context.Context, listerID int32) (interface{}, error) {
+func (s *QuerierStub) GetMaxNotificationPriority(ctx context.Context, listerID int32) (any, error) {
 	s.mu.Lock()
 	s.GetMaxNotificationPriorityCalls = append(s.GetMaxNotificationPriorityCalls, listerID)
 	fn := s.GetMaxNotificationPriorityFn
@@ -1681,6 +1720,18 @@ func (s *QuerierStub) UpdateCustomCssForLister(ctx context.Context, arg UpdateCu
 	s.UpdateCustomCssForListerCalls = append(s.UpdateCustomCssForListerCalls, arg)
 	fn := s.UpdateCustomCssForListerFn
 	err := s.UpdateCustomCssForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
+func (s *QuerierStub) UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error {
+	s.mu.Lock()
+	s.UpdateImageSafeDimensionForListerCalls = append(s.UpdateImageSafeDimensionForListerCalls, arg)
+	fn := s.UpdateImageSafeDimensionForListerFn
+	err := s.UpdateImageSafeDimensionForListerErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
@@ -1726,7 +1777,7 @@ func (s *QuerierStub) SystemInsertUser(ctx context.Context, username sql.NullStr
 	return ret, err
 }
 
-func (s *QuerierStub) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
+func (s *QuerierStub) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin any) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.AdminListTopicsWithUserGrantsNoRolesCalls = append(s.AdminListTopicsWithUserGrantsNoRolesCalls, includeAdmin)

@@ -38,14 +38,11 @@ func (cd *CoreData) ImageBBSFeed(r *http.Request, title string, boardID int, row
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.New(cd.ImageURLMapper)
+		conv := a4code2html.New(cd.ImageURLMapper, a4code2html.FullImageURLMapper(cd.MapFullImageURL))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())
-		i := len(desc)
-		if i > 255 {
-			i = 255
-		}
+		i := min(len(desc), 255)
 		item := &feeds.Item{
 			Title:   desc[:i],
 			Link:    &feeds.Link{Href: fmt.Sprintf("/imagebbs/board/%d/thread/%d", boardID, row.ForumthreadID)},

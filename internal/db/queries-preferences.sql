@@ -52,7 +52,7 @@ WHERE p.daily_digest_hour = sqlc.arg(hour)
 SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css,
        daily_digest_hour, daily_digest_mark_read, last_digest_sent_at,
        weekly_digest_day, weekly_digest_hour, last_weekly_digest_sent_at,
-       monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at
+       monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at, image_safe_dimension
 FROM preferences
 WHERE users_idusers = sqlc.arg(lister_id);
 
@@ -155,3 +155,8 @@ WHERE p.monthly_digest_day = sqlc.arg(day)
   AND p.monthly_digest_hour = sqlc.arg(hour)
   AND (p.timezone IS NULL OR p.timezone = '')
   AND (p.last_monthly_digest_sent_at IS NULL OR p.last_monthly_digest_sent_at < sqlc.arg(cutoff));
+
+-- name: UpdateImageSafeDimensionForLister :exec
+UPDATE preferences
+SET image_safe_dimension = sqlc.arg(image_safe_dimension)
+WHERE users_idusers = sqlc.arg(lister_id);

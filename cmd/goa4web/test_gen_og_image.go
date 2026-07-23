@@ -41,7 +41,7 @@ func parseTestGenOgImageCmd(parent *testCmd, args []string) (*testGenOgImageCmd,
 }
 
 func (c *testGenOgImageCmd) Run() error {
-	var opts []interface{}
+	var opts []any
 	opts = append(opts, share.WithGeneratorType(c.Type))
 
 	if c.Title != "" {

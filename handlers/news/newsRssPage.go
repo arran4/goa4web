@@ -53,14 +53,11 @@ func NewsRssPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		text := row.News.String
-		conv := a4code2html.New(cd.ImageURLMapper)
+		conv := a4code2html.New(cd.ImageURLMapper, a4code2html.FullImageURLMapper(cd.MapFullImageURL))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())
-		i := len(text)
-		if i > 255 {
-			i = 255
-		}
+		i := min(len(text), 255)
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title: text[:i],
 			Link:  &feeds.Link{Href: fmt.Sprintf("/news/news/%d", row.Idsitenews)},

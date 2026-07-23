@@ -173,14 +173,11 @@ func FeedGen(r *http.Request, queries db.Querier, uid int, username string) (*fe
 		q := u.Query()
 		q.Set("show", fmt.Sprintf("%d", row.Idblogs))
 		u.RawQuery = q.Encode()
-		conv := a4code2html.New(cd.ImageURLMapper)
+		conv := a4code2html.New(cd.ImageURLMapper, a4code2html.FullImageURLMapper(cd.MapFullImageURL))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(row.Blog.String)
 		out, _ := io.ReadAll(conv.Process())
-		i := len(row.Blog.String)
-		if i > 255 {
-			i = 255
-		}
+		i := min(len(row.Blog.String), 255)
 		feed.Items = append(feed.Items, &feeds.Item{
 			Title: row.Blog.String[:i],
 			Link: &feeds.Link{

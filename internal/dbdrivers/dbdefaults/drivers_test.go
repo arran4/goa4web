@@ -3,6 +3,7 @@ package dbdefaults_test
 import (
 	"context"
 	"database/sql/driver"
+	"slices"
 	"testing"
 
 	"github.com/arran4/goa4web/internal/dbdrivers"
@@ -28,13 +29,7 @@ func TestRegistryNames(t *testing.T) {
 	want := []string{"mysql"}
 	names := reg.Names()
 	for _, n := range want {
-		found := false
-		for _, rn := range names {
-			if rn == n {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(names, n)
 		if !found {
 			t.Fatalf("%s not listed in registry", n)
 		}

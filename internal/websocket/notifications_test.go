@@ -102,7 +102,7 @@ func TestNotificationsHandlerAuthenticationRequired(t *testing.T) {
 	core.Store = sessions.NewCookieStore([]byte("test"))
 	core.SessionName = "test"
 	sess := sessions.NewSession(core.Store, core.SessionName)
-	sess.Values = map[interface{}]interface{}{}
+	sess.Values = map[any]any{}
 
 	h := NewNotificationsHandler(nil, &config.RuntimeConfig{})
 	req := httptest.NewRequest("GET", "http://example.com/ws/notifications", nil)

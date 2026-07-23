@@ -58,7 +58,7 @@ func (c *jmapTestSendCmd) Run() error {
 	}
 	c.rootCmd.Infof("Inbox ID: %s. Checking inbox...\n", inboxID)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		c.rootCmd.Infof("Attempt %d/10...\n", i+1)
 		msgIDs, err := provider.QueryInbox(ctx, inboxID, 10)
 		if err != nil {

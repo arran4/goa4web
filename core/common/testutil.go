@@ -18,7 +18,7 @@ type QuerierFake struct {
 	SystemCheckRoleGrantCalls []db.SystemCheckRoleGrantParams
 
 	AdminListTopicsWithUserGrantsNoRolesRows  []*db.AdminListTopicsWithUserGrantsNoRolesRow
-	AdminListTopicsWithUserGrantsNoRolesCalls []interface{}
+	AdminListTopicsWithUserGrantsNoRolesCalls []any
 }
 
 // SystemCheckGrant records the call and returns a stubbed or delegated result.
@@ -46,7 +46,7 @@ func (q *QuerierFake) SystemCheckRoleGrant(ctx context.Context, arg db.SystemChe
 }
 
 // AdminListTopicsWithUserGrantsNoRoles records the call and returns stubbed topics or a delegated result.
-func (q *QuerierFake) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*db.AdminListTopicsWithUserGrantsNoRolesRow, error) {
+func (q *QuerierFake) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin any) ([]*db.AdminListTopicsWithUserGrantsNoRolesRow, error) {
 	q.AdminListTopicsWithUserGrantsNoRolesCalls = append(q.AdminListTopicsWithUserGrantsNoRolesCalls, includeAdmin)
 	if q.Querier != nil {
 		return q.Querier.AdminListTopicsWithUserGrantsNoRoles(ctx, includeAdmin)

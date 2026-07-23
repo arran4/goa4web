@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 	"sort"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -39,13 +40,7 @@ func LoadUserRoleInfo(ctx context.Context, queries db.Querier, roleFilter func(s
 			u = &UserRoleInfo{ID: row.UserID}
 			userMap[row.UserID] = u
 		}
-		duplicate := false
-		for _, existing := range u.Emails {
-			if existing == row.Email {
-				duplicate = true
-				break
-			}
-		}
+		duplicate := slices.Contains(u.Emails, row.Email)
 		if !duplicate {
 			u.Emails = append(u.Emails, row.Email)
 		}
@@ -64,13 +59,7 @@ func LoadUserRoleInfo(ctx context.Context, queries db.Querier, roleFilter func(s
 			u = &UserRoleInfo{ID: row.UsersIdusers, Username: row.Username}
 			userMap[row.UsersIdusers] = u
 		}
-		roleDuplicate := false
-		for _, role := range u.Roles {
-			if role == row.Role {
-				roleDuplicate = true
-				break
-			}
-		}
+		roleDuplicate := slices.Contains(u.Roles, row.Role)
 		if !roleDuplicate {
 			u.Roles = append(u.Roles, row.Role)
 		}

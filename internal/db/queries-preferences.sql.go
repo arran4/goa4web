@@ -45,7 +45,7 @@ const getPreferenceForLister = `-- name: GetPreferenceForLister :one
 SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css,
        daily_digest_hour, daily_digest_mark_read, last_digest_sent_at,
        weekly_digest_day, weekly_digest_hour, last_weekly_digest_sent_at,
-       monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at
+       monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at, image_safe_dimension
 FROM preferences
 WHERE users_idusers = ?
 `
@@ -71,6 +71,7 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int32) (*
 		&i.MonthlyDigestDay,
 		&i.MonthlyDigestHour,
 		&i.LastMonthlyDigestSentAt,
+		&i.ImageSafeDimension,
 	)
 	return &i, err
 }
@@ -507,6 +508,22 @@ type UpdateEmailForumUpdatesForListerParams struct {
 
 func (q *Queries) UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error {
 	_, err := q.db.ExecContext(ctx, updateEmailForumUpdatesForLister, arg.EmailForumUpdates, arg.ListerID)
+	return err
+}
+
+const updateImageSafeDimensionForLister = `-- name: UpdateImageSafeDimensionForLister :exec
+UPDATE preferences
+SET image_safe_dimension = ?
+WHERE users_idusers = ?
+`
+
+type UpdateImageSafeDimensionForListerParams struct {
+	ImageSafeDimension sql.NullString
+	ListerID           int32
+}
+
+func (q *Queries) UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error {
+	_, err := q.db.ExecContext(ctx, updateImageSafeDimensionForLister, arg.ImageSafeDimension, arg.ListerID)
 	return err
 }
 

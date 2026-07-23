@@ -54,6 +54,7 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 				UserErrorMessage() string
 			}
 			if errors.As(result, &ue) {
+				log.Printf("task action: %v", result)
 				if msg := ue.UserErrorMessage(); msg != "" {
 					r.URL.RawQuery = "error=" + url.QueryEscape(msg)
 				} else {

@@ -847,6 +847,22 @@ function replaceContent(event, url, targetId) {
 
                 if (newTs > currentTs) {
                     currentElement.replaceWith(newElement);
+
+                    // Re-bind the image viewer for resized images in new content.
+                    newElement.querySelectorAll('[data-full-src]').forEach(img => {
+                        if (!img.dataset.fullSrc) return;
+                        if (img.parentElement.classList.contains('image-scroll-wrapper')) return;
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'image-scroll-wrapper';
+                        img.parentNode.insertBefore(wrapper, img);
+                        wrapper.appendChild(img);
+                        img.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (window.openFullscreenImage) {
+                                window.openFullscreenImage(img.dataset.fullSrc);
+                            }
+                        });
+                    });
                 }
             }
         })
@@ -855,3 +871,138 @@ function replaceContent(event, url, targetId) {
         });
     return false;
 }
+
+// Fullscreen Image Viewer
+document.addEventListener('DOMContentLoaded', () => {
+    // Wrap resized images in a scrolling wrapper and make them open their full-size source.
+    document.querySelectorAll('[data-full-src]').forEach(img => {
+        if (!img.dataset.fullSrc) return;
+        // Prevent re-wrapping
+        if (img.parentElement.classList.contains('image-scroll-wrapper')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-scroll-wrapper';
+        img.parentNode.insertBefore(wrapper, img);
+        wrapper.appendChild(img);
+
+        img.addEventListener('click', (e) => {
+            e.preventDefault();
+            openFullscreenImage(img.dataset.fullSrc);
+        });
+    });
+
+    window.openFullscreenImage = function openFullscreenImage(src) {
+        const overlay = document.createElement('div');
+        overlay.className = 'fullscreen-overlay';
+
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'fullscreen-close';
+        closeBtn.innerHTML = '&times;';
+
+        const backgroundBtn = document.createElement('button');
+        backgroundBtn.type = 'button';
+        backgroundBtn.className = 'fullscreen-background-toggle';
+
+        const fullImg = document.createElement('img');
+        fullImg.src = src;
+        fullImg.draggable = false;
+
+        // Prevent the browser from starting a native drag-and-drop operation
+        // while the image is being panned.
+        fullImg.addEventListener('dragstart', (e) => e.preventDefault());
+
+        let scale = 1;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+        const backgrounds = [
+            { name: 'site', label: 'Site' },
+            { name: 'light', label: 'Light' },
+            { name: 'dark', label: 'Dark' },
+            { name: 'checkerboard', label: 'Checkerboard' },
+        ];
+        let backgroundIndex = 0;
+
+        const siteBackground = getComputedStyle(document.body).backgroundColor;
+        overlay.style.setProperty('--fullscreen-image-site-background', siteBackground || '#ffffff');
+
+        function setBackground() {
+            const background = backgrounds[backgroundIndex];
+            backgrounds.forEach(({ name }) => overlay.classList.remove(`fullscreen-background-${name}`));
+            overlay.classList.add(`fullscreen-background-${background.name}`);
+            backgroundBtn.textContent = `Background: ${background.label}`;
+            backgroundBtn.setAttribute('aria-label', `Image background: ${background.label}. Click to change.`);
+        }
+
+        backgroundBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            backgroundIndex = (backgroundIndex + 1) % backgrounds.length;
+            setBackground();
+        });
+        setBackground();
+
+        function updateTransform() {
+            fullImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        fullImg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomAmount = 0.1;
+            if (e.deltaY < 0) {
+                scale += zoomAmount;
+            } else {
+                scale = Math.max(0.1, scale - zoomAmount);
+            }
+            updateTransform();
+        });
+
+        fullImg.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+        });
+
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        function escListener(e) {
+            if (e.key === 'Escape') {
+                closeOverlay();
+            }
+        }
+
+        document.addEventListener('keydown', escListener);
+
+        function closeOverlay() {
+            if (document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+            }
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('keydown', escListener);
+        }
+
+        closeBtn.addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeOverlay();
+        });
+
+
+
+        overlay.appendChild(fullImg);
+        overlay.appendChild(closeBtn);
+        overlay.appendChild(backgroundBtn);
+        document.body.appendChild(overlay);
+    }
+});

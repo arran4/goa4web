@@ -81,10 +81,7 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 	if data.Offset > len(filtered) {
 		data.Offset = len(filtered)
 	}
-	end := data.Offset + pageSize
-	if end > len(filtered) {
-		end = len(filtered)
-	}
+	end := min(data.Offset+pageSize, len(filtered))
 	data.Queue = filtered[data.Offset:end]
 
 	baseURL := "/admin/linker/queue"

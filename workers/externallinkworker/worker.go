@@ -80,7 +80,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 					}
 
 					var info *opengraph.Info
-					for i := 0; i < 3; i++ {
+					for i := range 3 {
 						info, err = opengraph.Fetch(url, nil)
 						if err == nil {
 							break

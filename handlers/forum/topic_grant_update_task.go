@@ -36,13 +36,13 @@ func (TopicGrantUpdateTask) Action(w http.ResponseWriter, r *http.Request) any {
 	activeStr := r.PostFormValue("actions")
 	disabledStr := r.PostFormValue("disabled_actions")
 	desiredActive := map[string]struct{}{}
-	for _, n := range strings.Split(activeStr, ",") {
+	for n := range strings.SplitSeq(activeStr, ",") {
 		if n != "" {
 			desiredActive[n] = struct{}{}
 		}
 	}
 	desiredDisabled := map[string]struct{}{}
-	for _, n := range strings.Split(disabledStr, ",") {
+	for n := range strings.SplitSeq(disabledStr, ",") {
 		if n != "" {
 			desiredDisabled[n] = struct{}{}
 		}

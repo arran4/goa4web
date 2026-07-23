@@ -19,6 +19,18 @@
                 </small>
             </div>
 
+            <div class="form-group">
+                <label for="image_safe_dimension">Default Image Safe Dimension</label>
+                <select class="form-control" id="image_safe_dimension" name="image_safe_dimension">
+                    {{ range .SafeDimensions }}
+                    <option value="{{ . }}" {{ if eq . $.SafeDimension }}selected{{ end }}>{{ . }}</option>
+                    {{ end }}
+                </select>
+                <small class="form-text text-muted">
+                    Images larger than this will be resized. You can still click to view the original size.
+                </small>
+            </div>
+
             <button type="submit" class="btn btn-primary">Save Settings</button>
         </form>
 

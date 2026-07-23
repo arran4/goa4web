@@ -36,8 +36,8 @@ func (c *Configuration) readConfiguration(fs core.FileSystem, filename string) {
 	scanner := bufio.NewScanner(bytes.NewReader(b))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if sep := strings.Index(line, "="); sep >= 0 {
-			c.set(line[:sep], line[sep+1:])
+		if before, after, ok := strings.Cut(line, "="); ok {
+			c.set(before, after)
 		}
 	}
 }

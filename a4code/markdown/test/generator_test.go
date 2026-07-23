@@ -35,11 +35,11 @@ func TestGenerator(t *testing.T) {
 		expects := make(map[string]string)
 
 		for _, file := range archive.Files {
-			if strings.HasSuffix(file.Name, ".expect.txt") {
-				name := strings.TrimSuffix(file.Name, ".expect.txt")
+			if before, ok := strings.CutSuffix(file.Name, ".expect.txt"); ok {
+				name := before
 				expects[name] = string(file.Data)
-			} else if strings.HasSuffix(file.Name, ".txt") {
-				name := strings.TrimSuffix(file.Name, ".txt")
+			} else if before, ok := strings.CutSuffix(file.Name, ".txt"); ok {
+				name := before
 				inputs[name] = string(file.Data)
 			}
 		}

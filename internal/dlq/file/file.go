@@ -171,8 +171,8 @@ func List(path string, limit int) ([]Record, error) {
 				if headerLine == "" {
 					break
 				}
-				if strings.HasPrefix(headerLine, "Date: ") {
-					t, err := time.Parse(time.RFC1123Z, strings.TrimPrefix(headerLine, "Date: "))
+				if after, ok := strings.CutPrefix(headerLine, "Date: "); ok {
+					t, err := time.Parse(time.RFC1123Z, after)
 					if err == nil {
 						currentTime = t
 					}

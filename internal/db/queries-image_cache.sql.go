@@ -61,7 +61,7 @@ func (q *Queries) DeleteImageCacheEntry(ctx context.Context, id string) error {
 }
 
 const getImageCacheEntry = `-- name: GetImageCacheEntry :one
-SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, error_message, retry_count, last_attempt_at, next_attempt_at
+SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, uploaded_image_id, error_message, retry_count, last_attempt_at, next_attempt_at
 FROM image_cache_entries
 WHERE id = ?
 LIMIT 1
@@ -86,6 +86,7 @@ func (q *Queries) GetImageCacheEntry(ctx context.Context, id string) (*ImageCach
 		&i.Height,
 		&i.Checksum,
 		&i.ThumbnailID,
+		&i.UploadedImageID,
 		&i.ErrorMessage,
 		&i.RetryCount,
 		&i.LastAttemptAt,
@@ -95,7 +96,7 @@ func (q *Queries) GetImageCacheEntry(ctx context.Context, id string) (*ImageCach
 }
 
 const listDuePendingImageCacheEntries = `-- name: ListDuePendingImageCacheEntries :many
-SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, error_message, retry_count, last_attempt_at, next_attempt_at
+SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, uploaded_image_id, error_message, retry_count, last_attempt_at, next_attempt_at
 FROM image_cache_entries
 WHERE source_kind = 'remote'
   AND status = 'pending'
@@ -136,6 +137,7 @@ func (q *Queries) ListDuePendingImageCacheEntries(ctx context.Context, arg ListD
 			&i.Height,
 			&i.Checksum,
 			&i.ThumbnailID,
+			&i.UploadedImageID,
 			&i.ErrorMessage,
 			&i.RetryCount,
 			&i.LastAttemptAt,
@@ -155,7 +157,7 @@ func (q *Queries) ListDuePendingImageCacheEntries(ctx context.Context, arg ListD
 }
 
 const listExpiredExternalImageCacheEntries = `-- name: ListExpiredExternalImageCacheEntries :many
-SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, error_message, retry_count, last_attempt_at, next_attempt_at
+SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, uploaded_image_id, error_message, retry_count, last_attempt_at, next_attempt_at
 FROM image_cache_entries
 WHERE source_kind = 'remote'
   AND status = 'ready'
@@ -195,6 +197,7 @@ func (q *Queries) ListExpiredExternalImageCacheEntries(ctx context.Context, arg 
 			&i.Height,
 			&i.Checksum,
 			&i.ThumbnailID,
+			&i.UploadedImageID,
 			&i.ErrorMessage,
 			&i.RetryCount,
 			&i.LastAttemptAt,
@@ -214,7 +217,7 @@ func (q *Queries) ListExpiredExternalImageCacheEntries(ctx context.Context, arg 
 }
 
 const listOldestUsedImageCacheEntries = `-- name: ListOldestUsedImageCacheEntries :many
-SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, error_message, retry_count, last_attempt_at, next_attempt_at
+SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, uploaded_image_id, error_message, retry_count, last_attempt_at, next_attempt_at
 FROM image_cache_entries
 WHERE status = 'ready'
 ORDER BY COALESCE(last_used_at, created_at) ASC
@@ -246,6 +249,7 @@ func (q *Queries) ListOldestUsedImageCacheEntries(ctx context.Context, limit int
 			&i.Height,
 			&i.Checksum,
 			&i.ThumbnailID,
+			&i.UploadedImageID,
 			&i.ErrorMessage,
 			&i.RetryCount,
 			&i.LastAttemptAt,
@@ -328,11 +332,12 @@ INSERT INTO image_cache_entries (
   height,
   checksum,
   thumbnail_id,
+  uploaded_image_id,
   error_message,
   retry_count,
   last_attempt_at,
   next_attempt_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
   source_url = VALUES(source_url),
   source_kind = VALUES(source_kind),
@@ -347,6 +352,7 @@ ON DUPLICATE KEY UPDATE
   height = VALUES(height),
   checksum = VALUES(checksum),
   thumbnail_id = VALUES(thumbnail_id),
+  uploaded_image_id = VALUES(uploaded_image_id),
   error_message = VALUES(error_message),
   retry_count = VALUES(retry_count),
   last_attempt_at = VALUES(last_attempt_at),
@@ -369,6 +375,7 @@ type UpsertImageCacheEntryParams struct {
 	Height           sql.NullInt32
 	Checksum         sql.NullString
 	ThumbnailID      sql.NullString
+	UploadedImageID  sql.NullInt32
 	ErrorMessage     sql.NullString
 	RetryCount       int32
 	LastAttemptAt    sql.NullTime
@@ -392,6 +399,7 @@ func (q *Queries) UpsertImageCacheEntry(ctx context.Context, arg UpsertImageCach
 		arg.Height,
 		arg.Checksum,
 		arg.ThumbnailID,
+		arg.UploadedImageID,
 		arg.ErrorMessage,
 		arg.RetryCount,
 		arg.LastAttemptAt,

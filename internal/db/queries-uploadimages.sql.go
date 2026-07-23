@@ -132,6 +132,28 @@ func (q *Queries) CreateUploadedImageForUploader(ctx context.Context, arg Create
 	return result.LastInsertId()
 }
 
+const getUploadedImageByPath = `-- name: GetUploadedImageByPath :one
+SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
+FROM uploaded_images
+WHERE path = ?
+LIMIT 1
+`
+
+func (q *Queries) GetUploadedImageByPath(ctx context.Context, path sql.NullString) (*UploadedImage, error) {
+	row := q.db.QueryRowContext(ctx, getUploadedImageByPath, path)
+	var i UploadedImage
+	err := row.Scan(
+		&i.Iduploadedimage,
+		&i.UsersIdusers,
+		&i.Path,
+		&i.Width,
+		&i.Height,
+		&i.FileSize,
+		&i.Uploaded,
+	)
+	return &i, err
+}
+
 const listUploadedImagePathsByUser = `-- name: ListUploadedImagePathsByUser :many
 SELECT path
 FROM uploaded_images

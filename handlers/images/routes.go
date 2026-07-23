@@ -2,9 +2,11 @@ package images
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"image"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -142,9 +144,9 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 
 	// Check size before reading into memory
 	if cfg != nil && info.Size() > int64(cfg.ImageMaxResizeBytes) && maxW > 0 && maxH > 0 {
-		if up := upload.ProviderFromConfig(cfg); up != nil {
+		if up, cacheProvider := upload.ProviderFromConfig(cfg), upload.CacheProviderFromConfig(cfg); up != nil && cacheProvider != nil {
 			safeKey := key + "_safe_" + safeDim
-			safeBytes, safeErr := up.Read(r.Context(), safeKey)
+			safeBytes, safeErr := cacheProvider.Read(r.Context(), safeKey)
 			if safeErr == nil {
 				http.ServeContent(w, r, id, info.ModTime(), bytes.NewReader(safeBytes))
 				return
@@ -154,7 +156,9 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				if config, _, err := image.DecodeConfig(bytes.NewReader(origBytes)); err == nil {
 					if config.Width <= maxW && config.Height <= maxH {
-						up.Write(r.Context(), safeKey, origBytes)
+						if err := cacheProvider.Write(r.Context(), safeKey, origBytes); err == nil {
+							recordUploadedImageDerivative(r.Context(), cd, path.Base(safeKey), id, origBytes, config.Height, config.Width)
+						}
 						http.ServeContent(w, r, id, info.ModTime(), bytes.NewReader(origBytes))
 						return
 					}
@@ -168,7 +172,12 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 					}
 					resizedBytes, err := intimages.GenerateSafeSize(img, ext, generator, maxW, maxH)
 					if err == nil {
-						up.Write(r.Context(), safeKey, resizedBytes)
+						if err := cacheProvider.Write(r.Context(), safeKey, resizedBytes); err == nil {
+							height, width, dimensionsErr := intimages.DimensionsWithinBounds(img, maxH, maxW)
+							if dimensionsErr == nil {
+								recordUploadedImageDerivative(r.Context(), cd, path.Base(safeKey), id, resizedBytes, height, width)
+							}
+						}
 						http.ServeContent(w, r, id, info.ModTime(), bytes.NewReader(resizedBytes))
 						return
 					}
@@ -178,6 +187,17 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, full)
+}
+
+func recordUploadedImageDerivative(ctx context.Context, cd *common.CoreData, cacheID, imageID string, body []byte, height, width int) {
+	source, err := cd.UploadedImageByImageID(imageID)
+	if err != nil {
+		log.Printf("find cached image source: %v", err)
+		return
+	}
+	if err := cd.RecordUploadedImageDerivative(ctx, cacheID, source, body, height, width); err != nil {
+		log.Printf("record uploaded image cache entry: %v", err)
+	}
 }
 
 func serveCache(w http.ResponseWriter, r *http.Request) {
@@ -218,7 +238,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 
 	if p := upload.CacheProviderFromConfig(cfg); p != nil {
 		// If safe resizing is needed, check for cached scaled version first
-		if maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
+		if maxW > 0 && maxH > 0 && !isThumbnail {
 			safeKey := key + "_safe_" + safeDim
 			safeData, safeErr := p.Read(r.Context(), safeKey)
 			if safeErr == nil {
@@ -229,11 +249,15 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 
 		data, err := p.Read(r.Context(), key)
 		if err == nil {
-			if cfg != nil && len(data) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 && !strings.Contains(id, "_thumb.") {
+			if cfg != nil && len(data) > cfg.ImageMaxResizeBytes && maxW > 0 && maxH > 0 && !isThumbnail {
 				safeKey := key + "_safe_" + safeDim
 				if config, _, err := image.DecodeConfig(bytes.NewReader(data)); err == nil {
 					if config.Width <= maxW && config.Height <= maxH {
-						p.Write(r.Context(), safeKey, data)
+						if err := p.Write(r.Context(), safeKey, data); err == nil {
+							if err := cd.RecordDerivedImageCacheEntry(r.Context(), path.Base(safeKey), data); err != nil {
+								log.Printf("record safe image cache entry: %v", err)
+							}
+						}
 						http.ServeContent(w, r, id, time.Now(), bytes.NewReader(data))
 						return
 					}
@@ -247,7 +271,11 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 					}
 					safeData, err := intimages.GenerateSafeSize(img, ext, generator, maxW, maxH)
 					if err == nil {
-						p.Write(r.Context(), safeKey, safeData)
+						if err := p.Write(r.Context(), safeKey, safeData); err == nil {
+							if err := cd.RecordDerivedImageCacheEntry(r.Context(), path.Base(safeKey), safeData); err != nil {
+								log.Printf("record safe image cache entry: %v", err)
+							}
+						}
 						data = safeData
 					}
 				}
@@ -258,23 +286,58 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 			// Try to regenerate
 			if isThumbnail {
 				origKey := path.Join(originalID[:2], originalID[2:4], originalID)
-				if up := upload.ProviderFromConfig(cfg); up != nil {
-					origBytes, err := up.Read(r.Context(), origKey)
-					if err == nil {
-						img, _, err := image.Decode(bytes.NewReader(origBytes))
-						if err == nil {
-							ext := filepath.Ext(originalID)
-							generator := "bild"
-							size := thumbnailSize
-							if cfg != nil {
-								if cfg.ImageThumbnailGenerator != "" {
-									generator = cfg.ImageThumbnailGenerator
+				if origBytes, origErr := p.Read(r.Context(), origKey); origErr == nil {
+					if img, _, decodeErr := image.Decode(bytes.NewReader(origBytes)); decodeErr == nil {
+						ext := filepath.Ext(originalID)
+						generator := "bild"
+						if cfg != nil && cfg.ImageThumbnailGenerator != "" {
+							generator = cfg.ImageThumbnailGenerator
+						}
+						if thumbBytes, generateErr := intimages.GenerateThumbnailWithinBounds(img, ext, generator, thumbnailSize.Height, thumbnailSize.Width); generateErr == nil {
+							if writeErr := p.Write(r.Context(), key, thumbBytes); writeErr == nil {
+								parent, parentErr := cd.ImageCacheEntry(r.Context(), originalID)
+								if parentErr != nil {
+									log.Printf("find cached thumbnail source: %v", parentErr)
+								} else if height, width, dimensionErr := intimages.DimensionsWithinBounds(img, thumbnailSize.Height, thumbnailSize.Width); dimensionErr != nil {
+									log.Printf("thumbnail dimensions: %v", dimensionErr)
+								} else if recordErr := cd.RecordCachedImageThumbnail(r.Context(), id, parent, thumbBytes, height, width); recordErr != nil {
+									log.Printf("record cached image thumbnail entry: %v", recordErr)
 								}
+								data = thumbBytes
 							}
-							thumbBytes, err := intimages.GenerateThumbnail(img, ext, generator, size)
+						}
+					}
+				}
+				if data != nil {
+					err = nil
+				}
+				if data == nil {
+					if up := upload.ProviderFromConfig(cfg); up != nil {
+						origBytes, err := up.Read(r.Context(), origKey)
+						if err == nil {
+							img, _, err := image.Decode(bytes.NewReader(origBytes))
 							if err == nil {
-								if err := p.Write(r.Context(), key, thumbBytes); err == nil {
-									data = thumbBytes
+								ext := filepath.Ext(originalID)
+								generator := "bild"
+								size := thumbnailSize
+								if cfg != nil {
+									if cfg.ImageThumbnailGenerator != "" {
+										generator = cfg.ImageThumbnailGenerator
+									}
+								}
+								thumbBytes, err := intimages.GenerateThumbnailWithinBounds(img, ext, generator, size.Height, size.Width)
+								if err == nil {
+									if err := p.Write(r.Context(), key, thumbBytes); err == nil {
+										source, sourceErr := cd.UploadedImageByImageID(originalID)
+										if sourceErr != nil {
+											log.Printf("find thumbnail source image: %v", sourceErr)
+										} else if height, width, err := intimages.DimensionsWithinBounds(img, size.Height, size.Width); err != nil {
+											log.Printf("thumbnail dimensions: %v", err)
+										} else if err := cd.RecordUploadedImageThumbnail(r.Context(), id, source, thumbBytes, height, width); err != nil {
+											log.Printf("record uploaded image thumbnail cache entry: %v", err)
+										}
+										data = thumbBytes
+									}
 								}
 							}
 						}
@@ -294,10 +357,10 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 }
 
 // thumbnailRequest identifies a permitted thumbnail request and its source image.
-func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, int, bool) {
+func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, config.ThumbnailSize, bool) {
 	ext := filepath.Ext(id)
 	if ext == "" {
-		return "", 0, false
+		return "", config.ThumbnailSize{}, false
 	}
 	base := strings.TrimSuffix(id, ext)
 	sizes := cfg.ThumbnailSizes()
@@ -307,12 +370,18 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, int, bool) 
 	}
 	index := strings.LastIndex(base, "_thumb_")
 	if index < 0 {
-		return "", 0, false
+		return "", config.ThumbnailSize{}, false
 	}
-	size, err := strconv.Atoi(base[index+len("_thumb_"):])
-	if err != nil || size <= 0 {
-		return "", 0, false
+	dimensions := strings.Split(base[index+len("_thumb_"):], "x")
+	if len(dimensions) != 2 {
+		return "", config.ThumbnailSize{}, false
 	}
+	height, heightErr := strconv.Atoi(dimensions[0])
+	width, widthErr := strconv.Atoi(dimensions[1])
+	if heightErr != nil || widthErr != nil || height <= 0 || width <= 0 {
+		return "", config.ThumbnailSize{}, false
+	}
+	size := config.ThumbnailSize{Height: height, Width: width}
 	allowed := false
 	for _, configured := range sizes {
 		if size == configured {
@@ -321,7 +390,7 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, int, bool) 
 		}
 	}
 	if !allowed {
-		return "", 0, false
+		return "", config.ThumbnailSize{}, false
 	}
 	originalID := base[:index] + ext
 	return originalID, size, intimages.ValidID(originalID)

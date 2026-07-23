@@ -21,11 +21,12 @@ INSERT INTO image_cache_entries (
   height,
   checksum,
   thumbnail_id,
+  uploaded_image_id,
   error_message,
   retry_count,
   last_attempt_at,
   next_attempt_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
   source_url = VALUES(source_url),
   source_kind = VALUES(source_kind),
@@ -40,6 +41,7 @@ ON DUPLICATE KEY UPDATE
   height = VALUES(height),
   checksum = VALUES(checksum),
   thumbnail_id = VALUES(thumbnail_id),
+  uploaded_image_id = VALUES(uploaded_image_id),
   error_message = VALUES(error_message),
   retry_count = VALUES(retry_count),
   last_attempt_at = VALUES(last_attempt_at),

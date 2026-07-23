@@ -3,6 +3,7 @@ package images
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"image"
 	"image/color"
 	"image/png"
@@ -20,8 +21,10 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/sign"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/internal/upload/local"
 )
@@ -59,23 +62,24 @@ func TestImageRoutes(t *testing.T) {
 }
 
 func TestThumbnailRequest(t *testing.T) {
-	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "100,200"}
+	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "100x200,200x400"}
 	imageID := "abcd1234.png"
 	cases := []struct {
 		id       string
 		wantID   string
-		wantSize int
+		wantSize config.ThumbnailSize
 		wantOK   bool
 	}{
-		{id: "abcd1234_thumb.png", wantID: imageID, wantSize: 100, wantOK: true},
-		{id: "abcd1234_thumb_200.png", wantID: imageID, wantSize: 200, wantOK: true},
-		{id: "abcd1234_thumb_300.png", wantOK: false},
+		{id: "abcd1234_thumb_100x200.png", wantID: imageID, wantSize: config.ThumbnailSize{Height: 100, Width: 200}, wantOK: true},
+		{id: "abcd1234_thumb.png", wantID: imageID, wantSize: config.ThumbnailSize{Height: 100, Width: 200}, wantOK: true},
+		{id: "abcd1234_thumb_200x400.png", wantID: imageID, wantSize: config.ThumbnailSize{Height: 200, Width: 400}, wantOK: true},
+		{id: "abcd1234_thumb_300x600.png", wantOK: false},
 		{id: "abcd1234_thumb_nope.png", wantOK: false},
 	}
 	for _, tc := range cases {
 		gotID, gotSize, gotOK := thumbnailRequest(tc.id, cfg)
 		if gotID != tc.wantID || gotSize != tc.wantSize || gotOK != tc.wantOK {
-			t.Errorf("thumbnailRequest(%q) = (%q, %d, %t), want (%q, %d, %t)", tc.id, gotID, gotSize, gotOK, tc.wantID, tc.wantSize, tc.wantOK)
+			t.Errorf("thumbnailRequest(%q) = (%q, %#v, %t), want (%q, %#v, %t)", tc.id, gotID, gotSize, gotOK, tc.wantID, tc.wantSize, tc.wantOK)
 		}
 	}
 }
@@ -227,16 +231,31 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	cfg.ImageUploadDir = uploadDir
 	cfg.ImageCacheDir = cacheDir
 	cfg.BaseURL = "http://localhost"
-	cfg.ImageThumbnailSizes = "32,64"
+	cfg.ImageThumbnailSizes = "32x64,64x128"
 
 	req := httptest.NewRequest("GET", "/", nil)
 	key := "test-key"
-	cd := common.NewCoreData(req.Context(), nil, cfg, common.WithImageSignKey(key))
+	queries := testhelpers.NewQuerierStub()
+	queries.GetUploadedImageByPathReturns = &db.UploadedImage{
+		Iduploadedimage: 42,
+		Path:            sql.NullString{String: "/te/st/test1234.png", Valid: true},
+	}
+	queries.GetImageCacheEntryFn = func(ctx context.Context, cacheID string) (*db.ImageCacheEntry, error) {
+		if cacheID != "test1234.png" {
+			return nil, nil
+		}
+		return &db.ImageCacheEntry{
+			ID:         cacheID,
+			SourceKind: "remote",
+			SourceUrl:  sql.NullString{String: "https://example.test/source.png", Valid: true},
+		}, nil
+	}
+	cd := common.NewCoreData(req.Context(), queries, cfg, common.WithImageSignKey(key))
 
 	// Create image
-	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	img := image.NewRGBA(image.Rect(0, 0, 300, 100))
 	for y := 0; y < 100; y++ {
-		for x := 0; x < 100; x++ {
+		for x := 0; x < 300; x++ {
 			img.Set(x, y, color.RGBA{255, 0, 0, 255})
 		}
 	}
@@ -263,10 +282,13 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	}
 
 	// Ensure cache is EMPTY for this file
-	thumbID := id + "_thumb" + ext
+	thumbID := id + "_thumb_32x64" + ext
 	cacheKey := path.Join(sub1, sub2, thumbID)
 	// We can try to read from cache provider to ensure it's not there
 	cacheProv := upload.CacheProviderFromConfig(cfg)
+	if err := cacheProv.Write(context.Background(), path.Join(sub1, sub2, fname), imgData); err != nil {
+		t.Fatalf("write cached original image: %v", err)
+	}
 	if _, err := cacheProv.Read(context.Background(), cacheKey); err == nil {
 		t.Fatal("Thumbnail should not exist yet")
 	}
@@ -308,11 +330,14 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Decode default thumbnail: %v", err)
 	}
-	if thumb.Bounds().Dx() != 32 || thumb.Bounds().Dy() != 32 {
-		t.Errorf("default thumbnail dimensions = %dx%d, want 32x32", thumb.Bounds().Dx(), thumb.Bounds().Dy())
+	if thumb.Bounds().Dx() != 64 || thumb.Bounds().Dy() != 21 {
+		t.Errorf("default thumbnail dimensions = %dx%d, want 64x21", thumb.Bounds().Dx(), thumb.Bounds().Dy())
+	}
+	if len(queries.UpsertImageCacheEntryCalls) != 1 || queries.UpsertImageCacheEntryCalls[0].SourceKind != "remote" {
+		t.Fatalf("default thumbnail cache entry = %#v", queries.UpsertImageCacheEntryCalls)
 	}
 
-	onDemandID := id + "_thumb_64" + ext
+	onDemandID := id + "_thumb_64x128" + ext
 	signedURLStr = cd.SignCacheURL(onDemandID, 1*time.Hour)
 	u, err = url.Parse(signedURLStr)
 	if err != nil {
@@ -334,7 +359,10 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Decode on-demand thumbnail: %v", err)
 	}
-	if onDemand.Bounds().Dx() != 64 || onDemand.Bounds().Dy() != 64 {
-		t.Errorf("on-demand thumbnail dimensions = %dx%d, want 64x64", onDemand.Bounds().Dx(), onDemand.Bounds().Dy())
+	if onDemand.Bounds().Dx() != 128 || onDemand.Bounds().Dy() != 42 {
+		t.Errorf("on-demand thumbnail dimensions = %dx%d, want 128x42", onDemand.Bounds().Dx(), onDemand.Bounds().Dy())
+	}
+	if len(queries.UpsertImageCacheEntryCalls) != 2 || queries.UpsertImageCacheEntryCalls[1].SourceKind != "remote" {
+		t.Fatalf("on-demand thumbnail cache entry = %#v", queries.UpsertImageCacheEntryCalls)
 	}
 }

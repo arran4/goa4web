@@ -848,8 +848,9 @@ function replaceContent(event, url, targetId) {
                 if (newTs > currentTs) {
                     currentElement.replaceWith(newElement);
 
-                    // Re-bind image viewer for new content
-                    newElement.querySelectorAll('.a4code-image').forEach(img => {
+                    // Re-bind the image viewer for resized images in new content.
+                    newElement.querySelectorAll('[data-full-src]').forEach(img => {
+                        if (!img.dataset.fullSrc) return;
                         if (img.parentElement.classList.contains('image-scroll-wrapper')) return;
                         const wrapper = document.createElement('div');
                         wrapper.className = 'image-scroll-wrapper';
@@ -858,7 +859,7 @@ function replaceContent(event, url, targetId) {
                         img.addEventListener('click', (e) => {
                             e.preventDefault();
                             if (window.openFullscreenImage) {
-                                window.openFullscreenImage(img.src);
+                                window.openFullscreenImage(img.dataset.fullSrc);
                             }
                         });
                     });
@@ -873,8 +874,9 @@ function replaceContent(event, url, targetId) {
 
 // Fullscreen Image Viewer
 document.addEventListener('DOMContentLoaded', () => {
-    // Wrap all a4code-images in a scrolling wrapper
-    document.querySelectorAll('.a4code-image').forEach(img => {
+    // Wrap resized images in a scrolling wrapper and make them open their full-size source.
+    document.querySelectorAll('[data-full-src]').forEach(img => {
+        if (!img.dataset.fullSrc) return;
         // Prevent re-wrapping
         if (img.parentElement.classList.contains('image-scroll-wrapper')) return;
 
@@ -885,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         img.addEventListener('click', (e) => {
             e.preventDefault();
-            openFullscreenImage(img.src);
+            openFullscreenImage(img.dataset.fullSrc);
         });
     });
 
@@ -897,12 +899,46 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBtn.className = 'fullscreen-close';
         closeBtn.innerHTML = '&times;';
 
+        const backgroundBtn = document.createElement('button');
+        backgroundBtn.type = 'button';
+        backgroundBtn.className = 'fullscreen-background-toggle';
+
         const fullImg = document.createElement('img');
         fullImg.src = src;
+        fullImg.draggable = false;
+
+        // Prevent the browser from starting a native drag-and-drop operation
+        // while the image is being panned.
+        fullImg.addEventListener('dragstart', (e) => e.preventDefault());
 
         let scale = 1;
         let isDragging = false;
         let startX, startY, translateX = 0, translateY = 0;
+        const backgrounds = [
+            { name: 'site', label: 'Site' },
+            { name: 'light', label: 'Light' },
+            { name: 'dark', label: 'Dark' },
+            { name: 'checkerboard', label: 'Checkerboard' },
+        ];
+        let backgroundIndex = 0;
+
+        const siteBackground = getComputedStyle(document.body).backgroundColor;
+        overlay.style.setProperty('--fullscreen-image-site-background', siteBackground || '#ffffff');
+
+        function setBackground() {
+            const background = backgrounds[backgroundIndex];
+            backgrounds.forEach(({ name }) => overlay.classList.remove(`fullscreen-background-${name}`));
+            overlay.classList.add(`fullscreen-background-${background.name}`);
+            backgroundBtn.textContent = `Background: ${background.label}`;
+            backgroundBtn.setAttribute('aria-label', `Image background: ${background.label}. Click to change.`);
+        }
+
+        backgroundBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            backgroundIndex = (backgroundIndex + 1) % backgrounds.length;
+            setBackground();
+        });
+        setBackground();
 
         function updateTransform() {
             fullImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
@@ -920,6 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         fullImg.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             isDragging = true;
             startX = e.clientX - translateX;
             startY = e.clientY - translateY;
@@ -965,6 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         overlay.appendChild(fullImg);
         overlay.appendChild(closeBtn);
+        overlay.appendChild(backgroundBtn);
         document.body.appendChild(overlay);
     }
 });

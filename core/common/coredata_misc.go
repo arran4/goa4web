@@ -6,6 +6,7 @@ import (
 	"image"
 	"log"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
@@ -95,6 +96,22 @@ type StoreImageParams struct {
 	UploaderID int32
 }
 
+func thumbnailFilename(imageID, ext string, size config.ThumbnailSize) string {
+	return imageID + "_thumb_" + strconv.Itoa(size.Height) + "x" + strconv.Itoa(size.Width) + ext
+}
+
+// UploadedImageByImageID returns an uploaded image using its file identifier.
+func (cd *CoreData) UploadedImageByImageID(imageID string) (*db.UploadedImage, error) {
+	if cd == nil || cd.queries == nil {
+		return nil, nil
+	}
+	imagePath, err := imageIDToUploadPath(imageID)
+	if err != nil {
+		return nil, err
+	}
+	return cd.queries.GetUploadedImageByPath(cd.ctx, sql.NullString{String: imagePath, Valid: true})
+}
+
 // StoreImage stores the image bytes, generates thumbnails and records metadata.
 func (cd *CoreData) StoreImage(p StoreImageParams) (string, error) {
 	if cd == nil || cd.queries == nil {
@@ -141,32 +158,21 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	height := p.Image.Bounds().Dy()
 
 	generator := "bild"
-	size := config.DefaultImageThumbnailSize
+	size := config.ThumbnailSize{Height: config.DefaultImageThumbnailHeight, Width: config.DefaultImageThumbnailWidth}
 	if cfg != nil {
 		if cfg.ImageThumbnailGenerator != "" {
 			generator = cfg.ImageThumbnailGenerator
 		}
 		size = cfg.ThumbnailSizes()[0]
 	}
-	thumbBytes, err := imagesign.GenerateThumbnail(p.Image, p.Ext, generator, size)
+	thumbBytes, err := imagesign.GenerateThumbnailWithinBounds(p.Image, p.Ext, generator, size.Height, size.Width)
 	if err != nil {
 		return "", fmt.Errorf("generate thumbnail %w", err)
 	}
 
-	thumbName := p.ID + "_thumb" + p.Ext
-	if cp := upload.CacheProviderFromConfig(cfg); cp != nil {
-		if err := cp.Write(cd.ctx, path.Join(sub1, sub2, thumbName), thumbBytes); err != nil {
-			log.Printf("cache write: %v", err)
-			return "", fmt.Errorf("cache write %w", err)
-		}
-		if ccp, ok := cp.(upload.CacheProvider); ok {
-			if err := ccp.Cleanup(cd.ctx, int64(cfg.ImageCacheMaxBytes)); err != nil {
-				log.Printf("cache cleanup: %v", err)
-			}
-		}
-	}
+	thumbName := thumbnailFilename(p.ID, p.Ext, size)
 	url := path.Join("/", sub1, sub2, fname)
-	_, err = cd.queries.CreateUploadedImageForUploader(cd.ctx, db.CreateUploadedImageForUploaderParams{
+	uploadedImageID, err := cd.queries.CreateUploadedImageForUploader(cd.ctx, db.CreateUploadedImageForUploaderParams{
 		UploaderID: p.UploaderID,
 		Path:       sql.NullString{String: url, Valid: true},
 		Width:      sql.NullInt32{Int32: int32(width), Valid: true},
@@ -176,7 +182,27 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create uploaded image %w", err)
 	}
-	// If this is a cached external image, we might want to register it somewhere specific,
-	// but CreateUploadedImageForUploader is generic enough.
+	if cp := upload.CacheProviderFromConfig(cfg); cp != nil {
+		if err := cp.Write(cd.ctx, path.Join(sub1, sub2, thumbName), thumbBytes); err != nil {
+			log.Printf("cache write: %v", err)
+			return "", fmt.Errorf("cache write %w", err)
+		}
+		source := &db.UploadedImage{
+			Iduploadedimage: int32(uploadedImageID),
+			Path:            sql.NullString{String: url, Valid: true},
+		}
+		thumbnailHeight, thumbnailWidth, err := imagesign.DimensionsWithinBounds(p.Image, size.Height, size.Width)
+		if err != nil {
+			return "", fmt.Errorf("thumbnail dimensions %w", err)
+		}
+		if err := cd.RecordUploadedImageThumbnail(cd.ctx, thumbName, source, thumbBytes, thumbnailHeight, thumbnailWidth); err != nil {
+			return "", fmt.Errorf("record image cache entry %w", err)
+		}
+		if ccp, ok := cp.(upload.CacheProvider); ok {
+			if err := ccp.Cleanup(cd.ctx, int64(cfg.ImageCacheMaxBytes)); err != nil {
+				log.Printf("cache cleanup: %v", err)
+			}
+		}
+	}
 	return fname, nil
 }

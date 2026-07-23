@@ -38,7 +38,7 @@ func (cd *CoreData) ImageBBSFeed(r *http.Request, title string, boardID int, row
 			continue
 		}
 		desc := row.Description.String
-		conv := a4code2html.New(cd.ImageURLMapper)
+		conv := a4code2html.New(cd.ImageURLMapper, a4code2html.FullImageURLMapper(cd.MapFullImageURL))
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(desc)
 		out, _ := io.ReadAll(conv.Process())

@@ -687,10 +687,18 @@ type QuerierStub struct {
 	CreateCommentInSectionForCommenterResult int64
 	CreateCommentInSectionForCommenterErr    error
 
-	ListUploadedImagePathsByUserCalls   []ListUploadedImagePathsByUserParams
-	ListUploadedImagePathsByUserFn      func(context.Context, ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
-	ListUploadedImagePathsByUserReturns []sql.NullString
-	ListUploadedImagePathsByUserErr     error
+	ListUploadedImagePathsByUserCalls    []ListUploadedImagePathsByUserParams
+	ListUploadedImagePathsByUserFn       func(context.Context, ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
+	ListUploadedImagePathsByUserReturns  []sql.NullString
+	ListUploadedImagePathsByUserErr      error
+	GetUploadedImageByPathCalls          []sql.NullString
+	GetUploadedImageByPathFn             func(context.Context, sql.NullString) (*UploadedImage, error)
+	GetUploadedImageByPathReturns        *UploadedImage
+	GetUploadedImageByPathErr            error
+	CreateUploadedImageForUploaderCalls  []CreateUploadedImageForUploaderParams
+	CreateUploadedImageForUploaderFn     func(context.Context, CreateUploadedImageForUploaderParams) (int64, error)
+	CreateUploadedImageForUploaderResult int64
+	CreateUploadedImageForUploaderErr    error
 
 	ListThreadImagePathsCalls   []ListThreadImagePathsParams
 	ListThreadImagePathsFn      func(context.Context, ListThreadImagePathsParams) ([]sql.NullString, error)
@@ -1161,6 +1169,33 @@ func (s *QuerierStub) ListUploadedImagePathsByUser(ctx context.Context, arg List
 		return nil, s.ListUploadedImagePathsByUserErr
 	}
 	return s.ListUploadedImagePathsByUserReturns, nil
+}
+
+// GetUploadedImageByPath records the call and returns the configured uploaded image.
+func (s *QuerierStub) GetUploadedImageByPath(ctx context.Context, path sql.NullString) (*UploadedImage, error) {
+	s.mu.Lock()
+	s.GetUploadedImageByPathCalls = append(s.GetUploadedImageByPathCalls, path)
+	fn := s.GetUploadedImageByPathFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, path)
+	}
+	if s.GetUploadedImageByPathErr != nil {
+		return nil, s.GetUploadedImageByPathErr
+	}
+	return s.GetUploadedImageByPathReturns, nil
+}
+
+// CreateUploadedImageForUploader records the call and returns the configured upload ID.
+func (s *QuerierStub) CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error) {
+	s.mu.Lock()
+	s.CreateUploadedImageForUploaderCalls = append(s.CreateUploadedImageForUploaderCalls, arg)
+	fn := s.CreateUploadedImageForUploaderFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return s.CreateUploadedImageForUploaderResult, s.CreateUploadedImageForUploaderErr
 }
 
 // ListThreadImagePaths records the call and returns stored paths.

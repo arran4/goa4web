@@ -44,7 +44,7 @@ func TestRuntimeConfigDefaultsFromOptions(t *testing.T) {
 	if cfg.ImageCachePlaceholderMinWidth != config.DefaultImageCachePlaceholderMinWidth || cfg.ImageCachePlaceholderMinHeight != config.DefaultImageCachePlaceholderMinHeight {
 		t.Fatalf("image cache placeholder defaults = %dx%d", cfg.ImageCachePlaceholderMinWidth, cfg.ImageCachePlaceholderMinHeight)
 	}
-	if sizes := cfg.ThumbnailSizes(); len(sizes) != 1 || sizes[0] != config.DefaultImageThumbnailSize {
+	if sizes := cfg.ThumbnailSizes(); len(sizes) != 2 || sizes[0] != (config.ThumbnailSize{Height: config.DefaultImageThumbnailHeight, Width: config.DefaultImageThumbnailWidth}) || sizes[1] != (config.ThumbnailSize{Height: 800, Width: 1600}) {
 		t.Fatalf("thumbnail sizes = %v", sizes)
 	}
 	if cfg.LoginAttemptWindow != 15 || cfg.LoginAttemptThreshold != 5 {
@@ -53,9 +53,9 @@ func TestRuntimeConfigDefaultsFromOptions(t *testing.T) {
 }
 
 func TestThumbnailSizes(t *testing.T) {
-	cfg := &config.RuntimeConfig{ImageThumbnailSize: 100, ImageThumbnailSizes: "64, 128, 64, invalid, 0"}
+	cfg := &config.RuntimeConfig{ImageThumbnailSize: 100, ImageThumbnailSizes: "64x128, 128x256, 64x128, 100, invalid, 0"}
 	got := cfg.ThumbnailSizes()
-	want := []int{64, 128}
+	want := []config.ThumbnailSize{{Height: 64, Width: 128}, {Height: 128, Width: 256}, {Height: 100, Width: 100}}
 	if len(got) != len(want) {
 		t.Fatalf("thumbnail sizes = %v, want %v", got, want)
 	}

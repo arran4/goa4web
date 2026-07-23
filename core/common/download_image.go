@@ -12,10 +12,12 @@ import (
 	_ "image/png"  // Register format
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +32,10 @@ import (
 const (
 	// imageCacheSourceKindRemote identifies cache entries fetched from an external URL.
 	imageCacheSourceKindRemote = "remote"
+	// imageCacheSourceKindUploaded identifies cache entries derived from an uploaded image.
+	imageCacheSourceKindUploaded = "uploaded"
+	// imageCacheSourceKindDerived identifies cache entries derived from another cached image.
+	imageCacheSourceKindDerived = "derived"
 	// imageCacheStatusReady identifies cache entries with materialized content.
 	imageCacheStatusReady = "ready"
 	// imageCacheStatusPending identifies cache entries awaiting download.
@@ -44,6 +50,9 @@ type downloadedImage struct {
 	height           sql.NullInt32
 	checksum         string
 	thumbnailID      sql.NullString
+	thumbnailBytes   []byte
+	thumbnailHeight  int
+	thumbnailWidth   int
 }
 
 // DownloadAndCacheImage downloads an image from a URL, stores it in the image
@@ -343,18 +352,18 @@ func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext strin
 		return nil
 	}
 	generator := "bild"
-	size := config.DefaultImageThumbnailSize
+	size := config.ThumbnailSize{Height: config.DefaultImageThumbnailHeight, Width: config.DefaultImageThumbnailWidth}
 	if cd != nil && cd.Config != nil {
 		if cd.Config.ImageThumbnailGenerator != "" {
 			generator = cd.Config.ImageThumbnailGenerator
 		}
 		size = cd.Config.ThumbnailSizes()[0]
 	}
-	thumbBytes, err := intimages.GenerateThumbnail(src, ext, generator, size)
+	thumbBytes, err := intimages.GenerateThumbnailWithinBounds(src, ext, generator, size.Height, size.Width)
 	if err != nil {
 		return fmt.Errorf("generate cache thumbnail: %w", err)
 	}
-	thumbID := strings.TrimSuffix(id, ext) + "_thumb" + ext
+	thumbID := thumbnailFilename(strings.TrimSuffix(id, ext), ext, size)
 	key, err := imageCacheKey(thumbID)
 	if err != nil {
 		return err
@@ -363,6 +372,11 @@ func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext strin
 		return err
 	}
 	img.thumbnailID = sql.NullString{String: thumbID, Valid: true}
+	img.thumbnailBytes = thumbBytes
+	img.thumbnailHeight, img.thumbnailWidth, err = intimages.DimensionsWithinBounds(src, size.Height, size.Width)
+	if err != nil {
+		return fmt.Errorf("cache thumbnail dimensions: %w", err)
+	}
 	return nil
 }
 
@@ -370,7 +384,7 @@ func (cd *CoreData) recordRemoteImageCacheEntry(ctx context.Context, id, sourceU
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	return cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+	if err := cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
 		ID:               id,
 		SourceUrl:        sql.NullString{String: sourceURL, Valid: sourceURL != ""},
 		SourceKind:       imageCacheSourceKindRemote,
@@ -386,6 +400,101 @@ func (cd *CoreData) recordRemoteImageCacheEntry(ctx context.Context, id, sourceU
 		Height:           img.height,
 		Checksum:         sql.NullString{String: img.checksum, Valid: img.checksum != ""},
 		ThumbnailID:      img.thumbnailID,
+	}); err != nil {
+		return err
+	}
+	if !img.thumbnailID.Valid || len(img.thumbnailBytes) == 0 {
+		return nil
+	}
+	return cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+		ID:          img.thumbnailID.String,
+		SourceUrl:   sql.NullString{String: sourceURL, Valid: sourceURL != ""},
+		SourceKind:  imageCacheSourceKindRemote,
+		Status:      imageCacheStatusReady,
+		CreatedAt:   now,
+		LastUsedAt:  sql.NullTime{Time: now, Valid: true},
+		FetchedAt:   sql.NullTime{Time: now, Valid: true},
+		ContentType: sql.NullString{String: mime.TypeByExtension(filepath.Ext(img.thumbnailID.String)), Valid: true},
+		SizeBytes:   sql.NullInt64{Int64: int64(len(img.thumbnailBytes)), Valid: true},
+		Width:       sql.NullInt32{Int32: int32(img.thumbnailWidth), Valid: img.thumbnailWidth > 0},
+		Height:      sql.NullInt32{Int32: int32(img.thumbnailHeight), Valid: img.thumbnailHeight > 0},
+	})
+}
+
+// RecordUploadedImageThumbnail records a generated thumbnail and its uploaded-image source.
+func (cd *CoreData) RecordUploadedImageThumbnail(ctx context.Context, thumbnailID string, source *db.UploadedImage, body []byte, height, width int) error {
+	return cd.recordUploadedImageCacheEntry(ctx, thumbnailID, source, body, height, width, imageCacheSourceKindUploaded)
+}
+
+// RecordUploadedImageDerivative records a non-thumbnail cache derivative of an uploaded image.
+func (cd *CoreData) RecordUploadedImageDerivative(ctx context.Context, id string, source *db.UploadedImage, body []byte, height, width int) error {
+	return cd.recordUploadedImageCacheEntry(ctx, id, source, body, height, width, imageCacheSourceKindDerived)
+}
+
+// RecordCachedImageThumbnail records a generated thumbnail for a cached image.
+func (cd *CoreData) RecordCachedImageThumbnail(ctx context.Context, thumbnailID string, source *db.ImageCacheEntry, body []byte, height, width int) error {
+	if source == nil {
+		return cd.RecordDerivedImageCacheEntry(ctx, thumbnailID, body)
+	}
+	if cd == nil || cd.queries == nil {
+		return nil
+	}
+	sourceKind := source.SourceKind
+	if sourceKind == "" {
+		sourceKind = imageCacheSourceKindDerived
+	}
+	now := time.Now().UTC()
+	return cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+		ID:          thumbnailID,
+		SourceUrl:   source.SourceUrl,
+		SourceKind:  sourceKind,
+		Status:      imageCacheStatusReady,
+		CreatedAt:   now,
+		LastUsedAt:  sql.NullTime{Time: now, Valid: true},
+		FetchedAt:   sql.NullTime{Time: now, Valid: true},
+		ContentType: sql.NullString{String: mime.TypeByExtension(filepath.Ext(thumbnailID)), Valid: true},
+		SizeBytes:   sql.NullInt64{Int64: int64(len(body)), Valid: true},
+		Width:       sql.NullInt32{Int32: int32(width), Valid: width > 0},
+		Height:      sql.NullInt32{Int32: int32(height), Valid: height > 0},
+	})
+}
+
+func (cd *CoreData) recordUploadedImageCacheEntry(ctx context.Context, id string, source *db.UploadedImage, body []byte, height, width int, sourceKind string) error {
+	if cd == nil || cd.queries == nil || source == nil || source.Iduploadedimage == 0 {
+		return nil
+	}
+	now := time.Now().UTC()
+	return cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+		ID:              id,
+		SourceUrl:       source.Path,
+		SourceKind:      sourceKind,
+		Status:          imageCacheStatusReady,
+		CreatedAt:       now,
+		LastUsedAt:      sql.NullTime{Time: now, Valid: true},
+		FetchedAt:       sql.NullTime{Time: now, Valid: true},
+		ContentType:     sql.NullString{String: mime.TypeByExtension(filepath.Ext(id)), Valid: true},
+		SizeBytes:       sql.NullInt64{Int64: int64(len(body)), Valid: true},
+		Width:           sql.NullInt32{Int32: int32(width), Valid: width > 0},
+		Height:          sql.NullInt32{Int32: int32(height), Valid: height > 0},
+		UploadedImageID: sql.NullInt32{Int32: source.Iduploadedimage, Valid: true},
+	})
+}
+
+// RecordDerivedImageCacheEntry records a non-thumbnail derivative stored in the image cache.
+func (cd *CoreData) RecordDerivedImageCacheEntry(ctx context.Context, id string, body []byte) error {
+	if cd == nil || cd.queries == nil {
+		return nil
+	}
+	now := time.Now().UTC()
+	return cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+		ID:          id,
+		SourceKind:  imageCacheSourceKindDerived,
+		Status:      imageCacheStatusReady,
+		CreatedAt:   now,
+		LastUsedAt:  sql.NullTime{Time: now, Valid: true},
+		FetchedAt:   sql.NullTime{Time: now, Valid: true},
+		ContentType: sql.NullString{String: mime.TypeByExtension(filepath.Ext(id)), Valid: true},
+		SizeBytes:   sql.NullInt64{Int64: int64(len(body)), Valid: true},
 	})
 }
 

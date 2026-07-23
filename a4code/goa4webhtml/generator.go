@@ -17,6 +17,9 @@ type LinkProvider interface {
 // ImageMapper maps tag and value to an image URL.
 type ImageMapper func(tag, val string) string
 
+// FullImageMapper maps an image reference to the full-size source used by the image viewer.
+type FullImageMapper func(tag, val string) string
+
 // UserColorMapper maps a username to a CSS class.
 type UserColorMapper func(username string) string
 
@@ -24,6 +27,7 @@ type Generator struct {
 	*html.Generator
 	LinkProvider    LinkProvider
 	ImageMapper     ImageMapper
+	FullImageMapper FullImageMapper
 	UserColorMapper UserColorMapper
 }
 
@@ -35,6 +39,11 @@ func WithLinkProvider(lp LinkProvider) Option {
 
 func WithImageMapper(im ImageMapper) Option {
 	return func(g *Generator) { g.ImageMapper = im }
+}
+
+// WithFullImageMapper configures full-size image URLs for resized images.
+func WithFullImageMapper(im FullImageMapper) Option {
+	return func(g *Generator) { g.FullImageMapper = im }
 }
 
 func WithUserColorMapper(ucm UserColorMapper) Option {
@@ -59,6 +68,8 @@ func NewGenerator(opts ...interface{}) *Generator {
 			g.LinkProvider = v
 		case ImageMapper:
 			g.ImageMapper = v
+		case FullImageMapper:
+			g.FullImageMapper = v
 		case UserColorMapper:
 			g.UserColorMapper = v
 		case func(tag, val string) string:
@@ -96,6 +107,10 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 	if g.ImageMapper != nil {
 		src = g.ImageMapper("img", src)
 	}
+	fullSrc := ""
+	if g.FullImageMapper != nil {
+		fullSrc = g.FullImageMapper("img", n.Src)
+	}
 	// We need to create a temporary node with the mapped src if we want to reuse base generator,
 	// or just reimplement image rendering here. Reimplementing is safer/cleaner than mutating AST.
 	if _, err := io.WriteString(w, "<img src=\""); err != nil {
@@ -103,6 +118,11 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 	}
 	if _, err := io.WriteString(w, htmlstd.EscapeString(src)); err != nil {
 		return err
+	}
+	if fullSrc != "" && fullSrc != src {
+		if _, err := io.WriteString(w, `" data-full-src="`+htmlstd.EscapeString(fullSrc)); err != nil {
+			return err
+		}
 	}
 	if _, err := fmt.Fprintf(w, `"%s />`, g.SourceAttrs(n.Start, n.End)); err != nil {
 		return err
@@ -126,6 +146,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 		Generator:       &html.Generator{Depth: g.Depth + 1, SourceAttrBuilders: g.SourceAttrBuilders},
 		LinkProvider:    g.LinkProvider,
 		ImageMapper:     g.ImageMapper,
+		FullImageMapper: g.FullImageMapper,
 		UserColorMapper: g.UserColorMapper,
 	}
 	childGen.Generator.Self = childGen

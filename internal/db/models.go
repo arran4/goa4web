@@ -331,6 +331,7 @@ type ImageCacheEntry struct {
 	Height           sql.NullInt32
 	Checksum         sql.NullString
 	ThumbnailID      sql.NullString
+	UploadedImageID  sql.NullInt32
 	ErrorMessage     sql.NullString
 	RetryCount       int32
 	LastAttemptAt    sql.NullTime

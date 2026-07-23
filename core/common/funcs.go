@@ -59,8 +59,10 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 	}
 
 	var mapper func(string, string) string
+	var fullImageMapper goa4webhtml.FullImageMapper
 	if cd != nil {
 		mapper = cd.ImageURLMapper
+		fullImageMapper = goa4webhtml.FullImageMapper(cd.MapFullImageURL)
 	}
 
 	// Color assignment state for quotes
@@ -251,6 +253,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 				var buf bytes.Buffer
 				gen := goa4webhtml.NewGenerator(
 					goa4webhtml.WithImageMapper(mapper),
+					goa4webhtml.WithFullImageMapper(fullImageMapper),
 					goa4webhtml.WithUserColorMapper(getColor),
 					goa4webhtml.WithLinkProvider(provider),
 					goa4webhtml.WithDataPositions(),

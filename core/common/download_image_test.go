@@ -96,8 +96,8 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 	if _, err := provider.Read(context.Background(), key); err != nil {
 		t.Fatalf("expected cache write at %s: %v", key, err)
 	}
-	if len(queries.UpsertImageCacheEntryCalls) != 1 {
-		t.Fatalf("expected one metadata upsert, got %d", len(queries.UpsertImageCacheEntryCalls))
+	if len(queries.UpsertImageCacheEntryCalls) != 2 {
+		t.Fatalf("expected original and thumbnail metadata upserts, got %d", len(queries.UpsertImageCacheEntryCalls))
 	}
 	got := queries.UpsertImageCacheEntryCalls[0]
 	if got.ID != id {
@@ -138,6 +138,13 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 	}
 	if !got.ContentExpiresAt.Valid || !got.ContentExpiresAt.Time.Equal(expires) {
 		t.Fatalf("content expiry = %#v, want %s", got.ContentExpiresAt, expires)
+	}
+	thumbnail := queries.UpsertImageCacheEntryCalls[1]
+	if !got.ThumbnailID.Valid || thumbnail.ID != got.ThumbnailID.String {
+		t.Fatalf("thumbnail entry id = %q, parent thumbnail id = %#v", thumbnail.ID, got.ThumbnailID)
+	}
+	if thumbnail.SourceKind != imageCacheSourceKindRemote || !thumbnail.SizeBytes.Valid {
+		t.Fatalf("thumbnail cache entry = %#v", thumbnail)
 	}
 }
 

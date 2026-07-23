@@ -35,6 +35,19 @@ func TestA4code2html_Process(t *testing.T) {
 	}
 }
 
+func TestA4code2htmlResizedImageIncludesFullSizeSource(t *testing.T) {
+	c := New(
+		func(tag, value string) string { return "https://example.test/thumb.png" },
+		FullImageURLMapper(func(tag, value string) string { return "https://example.test/full.png" }),
+	)
+	c.SetInput("[img image:example.png]")
+	got := string(testhelpers.Must(io.ReadAll(c.Process())))
+	want := `<img class="a4code-image" src="https://example.test/thumb.png" data-full-src="https://example.test/full.png" />`
+	if got != want {
+		t.Fatalf("rendered image = %q, want %q", got, want)
+	}
+}
+
 func TestA4code2htmlEscape(t *testing.T) {
 	c := New()
 	if got := c.Escape('&'); got != "&amp;" {

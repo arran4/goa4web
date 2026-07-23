@@ -152,7 +152,7 @@ const (
 	EnvImageThumbnailGenerator = "IMAGE_THUMBNAIL_GENERATOR"
 	// EnvImageThumbnailSize sets the size of the generated thumbnails.
 	EnvImageThumbnailSize = "IMAGE_THUMBNAIL_SIZE"
-	// EnvImageThumbnailSizes sets the allowed, comma-separated thumbnail sizes in default-first order.
+	// EnvImageThumbnailSizes sets allowed, comma-separated thumbnail bounds in height-by-width order.
 	EnvImageThumbnailSizes = "IMAGE_THUMBNAIL_SIZES"
 	// EnvImageMaxResizeBytes sets the maximum byte size of an image that triggers resizing in the cache server.
 	EnvImageMaxResizeBytes = "IMAGE_MAX_RESIZE_BYTES"

@@ -156,3 +156,22 @@ func TestGeneratorWithoutSourceAttrs(t *testing.T) {
 		t.Fatalf("mapped image markup should remain without source positions in %q", got)
 	}
 }
+
+func TestGeneratorResizedImageIncludesFullSizeSource(t *testing.T) {
+	root, err := a4code.ParseString(`[img image.jpg]`)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	gen := goa4webhtml.NewGenerator(
+		goa4webhtml.WithImageMapper(func(tag, value string) string { return "/thumb.jpg" }),
+		goa4webhtml.WithFullImageMapper(func(tag, value string) string { return "/full.jpg" }),
+	)
+	if err := ast.Generate(&buf, root, gen); err != nil {
+		t.Fatalf("Generate error: %v", err)
+	}
+	if got, want := buf.String(), `<img src="/thumb.jpg" data-full-src="/full.jpg" />`; got != want {
+		t.Fatalf("rendered image = %q, want %q", got, want)
+	}
+}

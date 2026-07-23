@@ -157,11 +157,11 @@ func (cd *CoreData) ThumbnailReferenceForImage(imageRef string) string {
 func (cd *CoreData) ThumbnailReferenceForCache(cacheRef string) string {
 	cacheRef = cleanSignedParam(cacheRef)
 	entry, err := cd.ImageCacheEntry(cd.ctx, cacheRef)
-	if err != nil || entry == nil || !entry.Width.Valid || !entry.Height.Valid {
+	if err != nil {
 		return ""
 	}
 	size := cd.Config.ThumbnailSizes()[0]
-	if int(entry.Width.Int32) <= size.Width && int(entry.Height.Int32) <= size.Height {
+	if entry != nil && entry.Width.Valid && entry.Height.Valid && int(entry.Width.Int32) <= size.Width && int(entry.Height.Int32) <= size.Height {
 		return ""
 	}
 	ext := filepath.Ext(cacheRef)

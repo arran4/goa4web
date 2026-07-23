@@ -246,6 +246,21 @@ func TestImageURLMapper(t *testing.T) {
 	}
 }
 
+func TestImageURLMapperSupportsEqualsSyntaxForCacheImages(t *testing.T) {
+	c := New(func(tag, value string) string {
+		if tag != "img" || value != "cache:58f3984f584548271144122c7d139e9a6a8a1ad3.png" {
+			t.Fatalf("mapper input = (%q, %q)", tag, value)
+		}
+		return "/images/cache/signed-thumbnail.png"
+	})
+	c.SetInput("[img=cache:58f3984f584548271144122c7d139e9a6a8a1ad3.png]")
+	got := string(testhelpers.Must(io.ReadAll(c.Process())))
+	want := `<img class="a4code-image" src="/images/cache/signed-thumbnail.png" />`
+	if got != want {
+		t.Fatalf("rendered image = %q, want %q", got, want)
+	}
+}
+
 func TestImageClass(t *testing.T) {
 	c := New()
 	c.SetInput("[img http://example.com/foo.jpg]")

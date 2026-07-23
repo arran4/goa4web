@@ -58,6 +58,28 @@ func TestImageRoutes(t *testing.T) {
 	t.Run("Sign Image URL End To End", signImageURLEndToEnd)
 }
 
+func TestThumbnailRequest(t *testing.T) {
+	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "100,200"}
+	imageID := "abcd1234.png"
+	cases := []struct {
+		id       string
+		wantID   string
+		wantSize int
+		wantOK   bool
+	}{
+		{id: "abcd1234_thumb.png", wantID: imageID, wantSize: 100, wantOK: true},
+		{id: "abcd1234_thumb_200.png", wantID: imageID, wantSize: 200, wantOK: true},
+		{id: "abcd1234_thumb_300.png", wantOK: false},
+		{id: "abcd1234_thumb_nope.png", wantOK: false},
+	}
+	for _, tc := range cases {
+		gotID, gotSize, gotOK := thumbnailRequest(tc.id, cfg)
+		if gotID != tc.wantID || gotSize != tc.wantSize || gotOK != tc.wantOK {
+			t.Errorf("thumbnailRequest(%q) = (%q, %d, %t), want (%q, %d, %t)", tc.id, gotID, gotSize, gotOK, tc.wantID, tc.wantSize, tc.wantOK)
+		}
+	}
+}
+
 func imageRouteInvalidID(t *testing.T) {
 	r := mux.NewRouter()
 	cfg := config.NewRuntimeConfig()
@@ -205,6 +227,7 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	cfg.ImageUploadDir = uploadDir
 	cfg.ImageCacheDir = cacheDir
 	cfg.BaseURL = "http://localhost"
+	cfg.ImageThumbnailSizes = "32,64"
 
 	req := httptest.NewRequest("GET", "/", nil)
 	key := "test-key"
@@ -276,5 +299,42 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	// Verify thumbnail was created
 	if _, err := cacheProv.Read(context.Background(), cacheKey); err != nil {
 		t.Errorf("Thumbnail was not created in cache: %v", err)
+	}
+	thumbData, err := cacheProv.Read(context.Background(), cacheKey)
+	if err != nil {
+		t.Fatalf("Read default thumbnail: %v", err)
+	}
+	thumb, _, err := image.Decode(bytes.NewReader(thumbData))
+	if err != nil {
+		t.Fatalf("Decode default thumbnail: %v", err)
+	}
+	if thumb.Bounds().Dx() != 32 || thumb.Bounds().Dy() != 32 {
+		t.Errorf("default thumbnail dimensions = %dx%d, want 32x32", thumb.Bounds().Dx(), thumb.Bounds().Dy())
+	}
+
+	onDemandID := id + "_thumb_64" + ext
+	signedURLStr = cd.SignCacheURL(onDemandID, 1*time.Hour)
+	u, err = url.Parse(signedURLStr)
+	if err != nil {
+		t.Fatalf("Parse on-demand thumbnail URL: %v", err)
+	}
+	req = httptest.NewRequest("GET", u.Path+"?"+u.RawQuery, nil)
+	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req.WithContext(ctx))
+	if rr.Code != http.StatusOK {
+		t.Errorf("on-demand thumbnail status = %d, want %d", rr.Code, http.StatusOK)
+	}
+	onDemandKey := path.Join(sub1, sub2, onDemandID)
+	onDemandData, err := cacheProv.Read(context.Background(), onDemandKey)
+	if err != nil {
+		t.Fatalf("Read on-demand thumbnail: %v", err)
+	}
+	onDemand, _, err := image.Decode(bytes.NewReader(onDemandData))
+	if err != nil {
+		t.Fatalf("Decode on-demand thumbnail: %v", err)
+	}
+	if onDemand.Bounds().Dx() != 64 || onDemand.Bounds().Dy() != 64 {
+		t.Errorf("on-demand thumbnail dimensions = %dx%d, want 64x64", onDemand.Bounds().Dx(), onDemand.Bounds().Dy())
 	}
 }

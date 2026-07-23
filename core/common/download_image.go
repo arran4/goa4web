@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/opengraph"
@@ -342,14 +343,12 @@ func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext strin
 		return nil
 	}
 	generator := "bild"
-	size := 200
+	size := config.DefaultImageThumbnailSize
 	if cd != nil && cd.Config != nil {
 		if cd.Config.ImageThumbnailGenerator != "" {
 			generator = cd.Config.ImageThumbnailGenerator
 		}
-		if cd.Config.ImageThumbnailSize > 0 {
-			size = cd.Config.ImageThumbnailSize
-		}
+		size = cd.Config.ThumbnailSizes()[0]
 	}
 	thumbBytes, err := intimages.GenerateThumbnail(src, ext, generator, size)
 	if err != nil {

@@ -189,6 +189,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
+	originalID, thumbnailSize, isThumbnail := thumbnailRequest(id, cfg)
 	ok, err := cd.PrepareImageCacheEntryForServe(r.Context(), id)
 	if err != nil || !ok {
 		entry, entryErr := cd.ImageCacheEntry(r.Context(), id)
@@ -255,23 +256,19 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			// Try to regenerate
-			if strings.Contains(id, "_thumb.") {
-				origID := strings.Replace(id, "_thumb.", ".", 1)
-				origKey := path.Join(sub1, sub2, origID)
+			if isThumbnail {
+				origKey := path.Join(originalID[:2], originalID[2:4], originalID)
 				if up := upload.ProviderFromConfig(cfg); up != nil {
 					origBytes, err := up.Read(r.Context(), origKey)
 					if err == nil {
 						img, _, err := image.Decode(bytes.NewReader(origBytes))
 						if err == nil {
-							ext := filepath.Ext(id)
+							ext := filepath.Ext(originalID)
 							generator := "bild"
-							size := 200
+							size := thumbnailSize
 							if cfg != nil {
 								if cfg.ImageThumbnailGenerator != "" {
 									generator = cfg.ImageThumbnailGenerator
-								}
-								if cfg.ImageThumbnailSize > 0 {
-									size = cfg.ImageThumbnailSize
 								}
 							}
 							thumbBytes, err := intimages.GenerateThumbnail(img, ext, generator, size)
@@ -294,6 +291,40 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	}
 	full := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
 	http.ServeFile(w, r, full)
+}
+
+// thumbnailRequest identifies a permitted thumbnail request and its source image.
+func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, int, bool) {
+	ext := filepath.Ext(id)
+	if ext == "" {
+		return "", 0, false
+	}
+	base := strings.TrimSuffix(id, ext)
+	sizes := cfg.ThumbnailSizes()
+	if strings.HasSuffix(base, "_thumb") {
+		originalID := strings.TrimSuffix(base, "_thumb") + ext
+		return originalID, sizes[0], intimages.ValidID(originalID)
+	}
+	index := strings.LastIndex(base, "_thumb_")
+	if index < 0 {
+		return "", 0, false
+	}
+	size, err := strconv.Atoi(base[index+len("_thumb_"):])
+	if err != nil || size <= 0 {
+		return "", 0, false
+	}
+	allowed := false
+	for _, configured := range sizes {
+		if size == configured {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		return "", 0, false
+	}
+	originalID := base[:index] + ext
+	return originalID, size, intimages.ValidID(originalID)
 }
 
 func serveMissingImage(w http.ResponseWriter, r *http.Request, cfg *config.RuntimeConfig) {

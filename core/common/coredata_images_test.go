@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/url"
 	"path"
 	"strings"
@@ -96,8 +97,16 @@ func TestCreateCommentValidatesGalleryImages(t *testing.T) {
 			return []sql.NullString{}, nil
 		}
 		cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig())
-		if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text); err == nil {
+		_, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, text)
+		if err == nil {
 			t.Fatal("expected error for missing gallery image")
+		}
+		var userError UserError
+		if !errors.As(err, &userError) {
+			t.Fatalf("expected user error, got %T: %v", err, err)
+		}
+		if userError.UserErrorMessage() != "One or more images are unavailable. Please upload them again." {
+			t.Fatalf("user error = %q", userError.UserErrorMessage())
 		}
 		if len(queries.CreateCommentInSectionForCommenterCalls) != 0 {
 			t.Fatalf("expected no comment creation, got %d calls", len(queries.CreateCommentInSectionForCommenterCalls))

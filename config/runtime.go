@@ -21,7 +21,35 @@ const (
 	DefaultImageCachePlaceholderMinWidth = 760
 	// DefaultImageCachePlaceholderMinHeight is the default cache placeholder diagnostic SVG height.
 	DefaultImageCachePlaceholderMinHeight = 260
+	// DefaultImageThumbnailSize is the fallback dimension for square thumbnails.
+	DefaultImageThumbnailSize = 200
 )
+
+// ThumbnailSizes returns the allowed square thumbnail dimensions in default-first order.
+func (c *RuntimeConfig) ThumbnailSizes() []int {
+	if c != nil {
+		sizes := make([]int, 0)
+		seen := make(map[int]struct{})
+		for _, value := range strings.Split(c.ImageThumbnailSizes, ",") {
+			size, err := strconv.Atoi(strings.TrimSpace(value))
+			if err != nil || size <= 0 {
+				continue
+			}
+			if _, ok := seen[size]; ok {
+				continue
+			}
+			seen[size] = struct{}{}
+			sizes = append(sizes, size)
+		}
+		if len(sizes) > 0 {
+			return sizes
+		}
+		if c.ImageThumbnailSize > 0 {
+			return []int{c.ImageThumbnailSize}
+		}
+	}
+	return []int{DefaultImageThumbnailSize}
+}
 
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
@@ -134,8 +162,10 @@ type RuntimeConfig struct {
 	ImageCachePlaceholderMinHeight int
 	ImageThumbnailGenerator        string
 	ImageThumbnailSize             int
-	ImageMaxResizeBytes            int
-	ImageSafeDimensions            string
+	// ImageThumbnailSizes lists the allowed square thumbnail dimensions in default-first order.
+	ImageThumbnailSizes string
+	ImageMaxResizeBytes int
+	ImageSafeDimensions string
 
 	DLQProvider string
 	DLQFile     string

@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	imagesign "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/upload"
@@ -140,14 +141,12 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	height := p.Image.Bounds().Dy()
 
 	generator := "bild"
-	size := 200
+	size := config.DefaultImageThumbnailSize
 	if cfg != nil {
 		if cfg.ImageThumbnailGenerator != "" {
 			generator = cfg.ImageThumbnailGenerator
 		}
-		if cfg.ImageThumbnailSize > 0 {
-			size = cfg.ImageThumbnailSize
-		}
+		size = cfg.ThumbnailSizes()[0]
 	}
 	thumbBytes, err := imagesign.GenerateThumbnail(p.Image, p.Ext, generator, size)
 	if err != nil {
@@ -166,7 +165,7 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 			}
 		}
 	}
-	url := path.Join("/uploads", sub1, sub2, fname)
+	url := path.Join("/", sub1, sub2, fname)
 	_, err = cd.queries.CreateUploadedImageForUploader(cd.ctx, db.CreateUploadedImageForUploaderParams{
 		UploaderID: p.UploaderID,
 		Path:       sql.NullString{String: url, Valid: true},

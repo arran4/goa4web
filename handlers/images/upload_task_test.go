@@ -108,7 +108,7 @@ func TestUploadImageTask_Action_SecurityFix(t *testing.T) {
 
 	require.NotEmpty(t, capturedPath, "CreateUploadedImageForUploader should be called")
 
-	// /uploads/sub1/sub2/ID.gif
+	// /sub1/sub2/ID.gif
 	parts := strings.Split(capturedPath, "/")
 	filename := parts[len(parts)-1]
 	// Remove extension
@@ -118,6 +118,7 @@ func TestUploadImageTask_Action_SecurityFix(t *testing.T) {
 
 	// Truncated SHA256 length is 40 (20 bytes hex encoded)
 	assert.Equal(t, 40, len(id), "Expected truncated SHA256 hash length (40)")
+	assert.Equal(t, "/"+id[:2]+"/"+id[2:4]+"/"+filename, capturedPath, "Expected canonical gallery path")
 
 	// Also verify UploaderID
 	assert.Equal(t, int32(123), capturedUploaderID)

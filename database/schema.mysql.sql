@@ -795,5 +795,5 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (86)
+INSERT INTO `schema_version` (`version`) VALUES (87)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

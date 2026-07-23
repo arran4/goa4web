@@ -74,7 +74,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 			ext := filepath.Ext(fname)
 			id := strings.TrimSuffix(fname, ext)
 			thumbnailSize := cd.Config.ThumbnailSizes()[0]
-			thumb := id + "_thumb_" + strconv.Itoa(thumbnailSize.Height) + "x" + strconv.Itoa(thumbnailSize.Width) + ext
+			thumb := id + "_thumb_" + strconv.Itoa(thumbnailSize.Width) + "x" + strconv.Itoa(thumbnailSize.Height) + ext
 			full := imgPath
 			thumbURL := thumb
 			if cd.ImageSignKey != "" {

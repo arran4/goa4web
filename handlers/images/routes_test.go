@@ -62,7 +62,7 @@ func TestImageRoutes(t *testing.T) {
 }
 
 func TestThumbnailRequest(t *testing.T) {
-	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "100x200,200x400"}
+	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "200x100,400x200"}
 	imageID := "abcd1234.png"
 	cases := []struct {
 		id       string
@@ -70,10 +70,10 @@ func TestThumbnailRequest(t *testing.T) {
 		wantSize config.ThumbnailSize
 		wantOK   bool
 	}{
-		{id: "abcd1234_thumb_100x200.png", wantID: imageID, wantSize: config.ThumbnailSize{Height: 100, Width: 200}, wantOK: true},
-		{id: "abcd1234_thumb.png", wantID: imageID, wantSize: config.ThumbnailSize{Height: 100, Width: 200}, wantOK: true},
-		{id: "abcd1234_thumb_200x400.png", wantID: imageID, wantSize: config.ThumbnailSize{Height: 200, Width: 400}, wantOK: true},
-		{id: "abcd1234_thumb_300x600.png", wantOK: false},
+		{id: "abcd1234_thumb_200x100.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 200, Height: 100}, wantOK: true},
+		{id: "abcd1234_thumb.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 200, Height: 100}, wantOK: true},
+		{id: "abcd1234_thumb_400x200.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 400, Height: 200}, wantOK: true},
+		{id: "abcd1234_thumb_600x300.png", wantOK: false},
 		{id: "abcd1234_thumb_nope.png", wantOK: false},
 	}
 	for _, tc := range cases {
@@ -231,7 +231,7 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	cfg.ImageUploadDir = uploadDir
 	cfg.ImageCacheDir = cacheDir
 	cfg.BaseURL = "http://localhost"
-	cfg.ImageThumbnailSizes = "32x64,64x128"
+	cfg.ImageThumbnailSizes = "64x32,128x64"
 
 	req := httptest.NewRequest("GET", "/", nil)
 	key := "test-key"
@@ -282,7 +282,7 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	}
 
 	// Ensure cache is EMPTY for this file
-	thumbID := id + "_thumb_32x64" + ext
+	thumbID := id + "_thumb_64x32" + ext
 	cacheKey := path.Join(sub1, sub2, thumbID)
 	// We can try to read from cache provider to ensure it's not there
 	cacheProv := upload.CacheProviderFromConfig(cfg)
@@ -337,7 +337,7 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 		t.Fatalf("default thumbnail cache entry = %#v", queries.UpsertImageCacheEntryCalls)
 	}
 
-	onDemandID := id + "_thumb_64x128" + ext
+	onDemandID := id + "_thumb_128x64" + ext
 	signedURLStr = cd.SignCacheURL(onDemandID, 1*time.Hour)
 	u, err = url.Parse(signedURLStr)
 	if err != nil {

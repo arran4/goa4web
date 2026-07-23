@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -30,12 +29,12 @@ func userAppearancePage(w http.ResponseWriter, r *http.Request) {
 		customCSS = pref.CustomCss.String
 	}
 	type Data struct {
-		CustomCSS           string
-		SafeDimensions      []string
-		SafeDimension       string
+		CustomCSS      string
+		SafeDimensions []string
+		SafeDimension  string
 	}
 
-	safeDims := strings.Split(cd.Config.ImageSafeDimensions, ",")
+	safeDims := cd.Config.SafeImageDimensions()
 	safeDim := safeDims[0] // default
 	if pref != nil && pref.ImageSafeDimension.Valid {
 		safeDim = pref.ImageSafeDimension.String
@@ -100,7 +99,7 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := queries.UpdateImageSafeDimensionForLister(r.Context(), db.UpdateImageSafeDimensionForListerParams{
-		ListerID:  uid,
+		ListerID:           uid,
 		ImageSafeDimension: sql.NullString{String: imageSafeDimension, Valid: imageSafeDimension != ""},
 	}); err != nil {
 		log.Printf("update image safe dimension: %v", err)
@@ -140,12 +139,12 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	// Render directly with the new value to ensure it is displayed even if pref was not cached
 	cd.PageTitle = "Appearance Settings"
 	data := struct {
-		CustomCSS           string
-		SafeDimensions      []string
-		SafeDimension       string
+		CustomCSS      string
+		SafeDimensions []string
+		SafeDimension  string
 	}{
 		CustomCSS:      customCSS,
-		SafeDimensions: strings.Split(cd.Config.ImageSafeDimensions, ","),
+		SafeDimensions: cd.Config.SafeImageDimensions(),
 		SafeDimension:  imageSafeDimension,
 	}
 	AppearancePage.Handle(w, r, data)

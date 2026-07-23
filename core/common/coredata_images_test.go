@@ -155,7 +155,7 @@ func TestMapImageURLUsesDefaultThumbnailForLargeUploadedImage(t *testing.T) {
 		Width:           sql.NullInt32{Int32: 640, Valid: true},
 		Height:          sql.NullInt32{Int32: 480, Valid: true},
 	}
-	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "128x256,256x512"}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "256x128,512x256"}
 	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
 
 	mapped := cd.MapImageURL("img", "image:"+imageID)
@@ -163,7 +163,7 @@ func TestMapImageURLUsesDefaultThumbnailForLargeUploadedImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse mapped URL: %v", err)
 	}
-	if parsed.Path != "/images/cache/abcd1234_thumb_128x256.png" {
+	if parsed.Path != "/images/cache/abcd1234_thumb_256x128.png" {
 		t.Fatalf("mapped path = %q", parsed.Path)
 	}
 	if len(queries.GetUploadedImageByPathCalls) != 1 || queries.GetUploadedImageByPathCalls[0].String != imagePath {
@@ -184,7 +184,7 @@ func TestMapImageURLUsesDefaultThumbnailForLargeCachedImage(t *testing.T) {
 			Height: sql.NullInt32{Int32: 1200, Valid: true},
 		}, nil
 	}
-	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "400x800"}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "800x400"}
 	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
 
 	mapped := cd.MapImageURL("img", "cache:"+imageID)
@@ -192,7 +192,7 @@ func TestMapImageURLUsesDefaultThumbnailForLargeCachedImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse mapped URL: %v", err)
 	}
-	if parsed.Path != "/images/cache/abcd1234_thumb_400x800.jpg" {
+	if parsed.Path != "/images/cache/abcd1234_thumb_800x400.jpg" {
 		t.Fatalf("mapped path = %q", parsed.Path)
 	}
 
@@ -210,7 +210,7 @@ func TestMapImageURLUsesThumbnailForCachedImageWithoutMetadata(t *testing.T) {
 	imageID := "abcd1234.png"
 	queries := testhelpers.NewQuerierStub()
 	queries.GetImageCacheEntryReturns = nil
-	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "400x800"}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "800x400"}
 	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
 
 	mapped := cd.MapImageURL("img", "cache:"+imageID)
@@ -218,7 +218,7 @@ func TestMapImageURLUsesThumbnailForCachedImageWithoutMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse mapped URL: %v", err)
 	}
-	if parsed.Path != "/images/cache/abcd1234_thumb_400x800.png" {
+	if parsed.Path != "/images/cache/abcd1234_thumb_800x400.png" {
 		t.Fatalf("mapped path = %q", parsed.Path)
 	}
 }
@@ -230,7 +230,7 @@ func TestRecordUploadedImageThumbnailLinksSourceImage(t *testing.T) {
 		Iduploadedimage: 42,
 		Path:            sql.NullString{String: "/ab/cd/abcd1234.png", Valid: true},
 	}
-	if err := cd.RecordUploadedImageThumbnail(context.Background(), "abcd1234_thumb_128x256.png", source, []byte("thumbnail"), 128, 256); err != nil {
+	if err := cd.RecordUploadedImageThumbnail(context.Background(), "abcd1234_thumb_256x128.png", source, []byte("thumbnail"), 128, 256); err != nil {
 		t.Fatalf("RecordUploadedImageThumbnail: %v", err)
 	}
 	if len(queries.UpsertImageCacheEntryCalls) != 1 {
@@ -240,7 +240,7 @@ func TestRecordUploadedImageThumbnailLinksSourceImage(t *testing.T) {
 	if !entry.UploadedImageID.Valid || entry.UploadedImageID.Int32 != source.Iduploadedimage {
 		t.Fatalf("uploaded image back reference = %#v", entry.UploadedImageID)
 	}
-	if entry.ID != "abcd1234_thumb_128x256.png" || entry.SourceKind != imageCacheSourceKindUploaded {
+	if entry.ID != "abcd1234_thumb_256x128.png" || entry.SourceKind != imageCacheSourceKindUploaded {
 		t.Fatalf("cache entry = %#v", entry)
 	}
 }
@@ -253,7 +253,7 @@ func TestStoreImageRecordsDefaultThumbnail(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.ImageUploadProvider = providerName
 	cfg.ImageCacheProvider = providerName
-	cfg.ImageThumbnailSizes = "64x128,128x256"
+	cfg.ImageThumbnailSizes = "128x64,256x128"
 	cd := NewCoreData(context.Background(), queries, cfg)
 	cd.UserID = 1
 
@@ -267,7 +267,7 @@ func TestStoreImageRecordsDefaultThumbnail(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("StoreImage: %v", err)
 	}
-	thumbnailID := "abcd1234_thumb_64x128.png"
+	thumbnailID := "abcd1234_thumb_128x64.png"
 	key := path.Join(imageID[:2], imageID[2:4], thumbnailID)
 	if _, err := provider.Read(context.Background(), key); err != nil {
 		t.Fatalf("read default thumbnail: %v", err)

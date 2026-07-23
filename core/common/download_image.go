@@ -352,7 +352,7 @@ func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext strin
 		return nil
 	}
 	generator := "bild"
-	size := config.ThumbnailSize{Height: config.DefaultImageThumbnailHeight, Width: config.DefaultImageThumbnailWidth}
+	size := config.ThumbnailSize{Width: config.DefaultImageThumbnailWidth, Height: config.DefaultImageThumbnailHeight}
 	if cd != nil && cd.Config != nil {
 		if cd.Config.ImageThumbnailGenerator != "" {
 			generator = cd.Config.ImageThumbnailGenerator

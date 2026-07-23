@@ -97,7 +97,7 @@ type StoreImageParams struct {
 }
 
 func thumbnailFilename(imageID, ext string, size config.ThumbnailSize) string {
-	return imageID + "_thumb_" + strconv.Itoa(size.Height) + "x" + strconv.Itoa(size.Width) + ext
+	return imageID + "_thumb_" + strconv.Itoa(size.Width) + "x" + strconv.Itoa(size.Height) + ext
 }
 
 // UploadedImageByImageID returns an uploaded image using its file identifier.
@@ -158,7 +158,7 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	height := p.Image.Bounds().Dy()
 
 	generator := "bild"
-	size := config.ThumbnailSize{Height: config.DefaultImageThumbnailHeight, Width: config.DefaultImageThumbnailWidth}
+	size := config.ThumbnailSize{Width: config.DefaultImageThumbnailWidth, Height: config.DefaultImageThumbnailHeight}
 	if cfg != nil {
 		if cfg.ImageThumbnailGenerator != "" {
 			generator = cfg.ImageThumbnailGenerator

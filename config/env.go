@@ -152,12 +152,10 @@ const (
 	EnvImageThumbnailGenerator = "IMAGE_THUMBNAIL_GENERATOR"
 	// EnvImageThumbnailSize sets the size of the generated thumbnails.
 	EnvImageThumbnailSize = "IMAGE_THUMBNAIL_SIZE"
-	// EnvImageThumbnailSizes sets allowed, comma-separated thumbnail bounds in height-by-width order.
+	// EnvImageThumbnailSizes sets allowed, comma-separated thumbnail bounds in width-by-height order.
 	EnvImageThumbnailSizes = "IMAGE_THUMBNAIL_SIZES"
 	// EnvImageMaxResizeBytes sets the maximum byte size of an image that triggers resizing in the cache server.
 	EnvImageMaxResizeBytes = "IMAGE_MAX_RESIZE_BYTES"
-	// EnvImageSafeDimensions sets the comma-separated list of max dimensions for safe image resizing.
-	EnvImageSafeDimensions = "IMAGE_SAFE_DIMENSIONS"
 	// EnvImageCacheProvider selects the cache storage backend.
 	EnvImageCacheProvider = "IMAGE_CACHE_PROVIDER"
 	// EnvImageCacheS3URL defines the S3 bucket and prefix used by the S3

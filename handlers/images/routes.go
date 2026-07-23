@@ -127,9 +127,10 @@ func serveImage(w http.ResponseWriter, r *http.Request) {
 
 	// Get preferred dimension
 	safeDim := ""
-	if cd.Config != nil && cd.Config.ImageSafeDimensions != "" {
-		dims := strings.Split(cd.Config.ImageSafeDimensions, ",")
-		safeDim = dims[0]
+	if cd.Config != nil {
+		if dims := cd.Config.SafeImageDimensions(); len(dims) > 0 {
+			safeDim = dims[0]
+		}
 	}
 	if pref, err := cd.Preference(); err == nil && pref != nil && pref.ImageSafeDimension.Valid {
 		safeDim = pref.ImageSafeDimension.String
@@ -223,9 +224,10 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	key := path.Join(sub1, sub2, id)
 	// Get preferred dimension
 	safeDim := ""
-	if cd.Config != nil && cd.Config.ImageSafeDimensions != "" {
-		dims := strings.Split(cd.Config.ImageSafeDimensions, ",")
-		safeDim = dims[0]
+	if cd.Config != nil {
+		if dims := cd.Config.SafeImageDimensions(); len(dims) > 0 {
+			safeDim = dims[0]
+		}
 	}
 	if pref, err := cd.Preference(); err == nil && pref != nil && pref.ImageSafeDimension.Valid {
 		safeDim = pref.ImageSafeDimension.String
@@ -376,12 +378,12 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, config.Thum
 	if len(dimensions) != 2 {
 		return "", config.ThumbnailSize{}, false
 	}
-	height, heightErr := strconv.Atoi(dimensions[0])
-	width, widthErr := strconv.Atoi(dimensions[1])
+	width, widthErr := strconv.Atoi(dimensions[0])
+	height, heightErr := strconv.Atoi(dimensions[1])
 	if heightErr != nil || widthErr != nil || height <= 0 || width <= 0 {
 		return "", config.ThumbnailSize{}, false
 	}
-	size := config.ThumbnailSize{Height: height, Width: width}
+	size := config.ThumbnailSize{Width: width, Height: height}
 	allowed := false
 	for _, configured := range sizes {
 		if size == configured {

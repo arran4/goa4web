@@ -142,17 +142,17 @@ func TestProviderFromConfig(t *testing.T) {
 			}
 			json.NewEncoder(w).Encode(session)
 		} else if r.URL.Path == "/jmap" {
-			var req map[string]interface{}
+			var req map[string]any
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "Bad Request", http.StatusBadRequest)
 				return
 			}
-			methodCalls, ok := req["methodCalls"].([]interface{})
+			methodCalls, ok := req["methodCalls"].([]any)
 			if !ok || len(methodCalls) == 0 {
 				http.Error(w, "Bad Request", http.StatusBadRequest)
 				return
 			}
-			methodCall, ok := methodCalls[0].([]interface{})
+			methodCall, ok := methodCalls[0].([]any)
 			if !ok || len(methodCall) < 2 {
 				http.Error(w, "Bad Request", http.StatusBadRequest)
 				return
@@ -164,13 +164,13 @@ func TestProviderFromConfig(t *testing.T) {
 			}
 
 			if methodName == "Identity/get" {
-				resp := map[string]interface{}{
-					"methodResponses": [][]interface{}{
+				resp := map[string]any{
+					"methodResponses": [][]any{
 						{
 							"Identity/get",
-							map[string]interface{}{
-								"list": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"list": []any{
+									map[string]any{
 										"id": "id1",
 									},
 								},

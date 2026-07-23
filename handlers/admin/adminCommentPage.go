@@ -39,14 +39,8 @@ func adminCommentPage(w http.ResponseWriter, r *http.Request) {
 	var contextRows []*db.GetCommentsByThreadIdForUserRow
 	for i, row := range threadRows {
 		if row.Idcomments == comment.Idcomments {
-			start := i - 3
-			if start < 0 {
-				start = 0
-			}
-			end := i + 4
-			if end > len(threadRows) {
-				end = len(threadRows)
-			}
+			start := max(i-3, 0)
+			end := min(i+4, len(threadRows))
 			contextRows = threadRows[start:end]
 			break
 		}

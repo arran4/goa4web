@@ -144,20 +144,6 @@ func setChildren(c ast.Container, children []ast.Node) {
 	}
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // normaliseSimpleBB is kept for backward compatibility if used elsewhere,
 // though it looks like it was helper for the old substring.
 func normaliseSimpleBB(in string) string {

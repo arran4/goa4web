@@ -44,10 +44,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 	pageSize := cd.PageSize()
-	end := offset + pageSize
-	if end > len(categoryRows) {
-		end = len(categoryRows)
-	}
+	end := min(offset+pageSize, len(categoryRows))
 	hasMore := len(categoryRows) > end
 	base := "/admin/writings/categories"
 	if hasMore {

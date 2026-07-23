@@ -23,7 +23,7 @@ func (g *DefaultGenerator) Name() string {
 	return "sierpinski"
 }
 
-func (g *DefaultGenerator) Generate(options ...interface{}) (image.Image, error) {
+func (g *DefaultGenerator) Generate(options ...any) (image.Image, error) {
 	var title, description string
 	for _, opt := range options {
 		switch v := opt.(type) {

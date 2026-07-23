@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int32, emailAddr, page, action string, item interface{}) error {
+func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int32, emailAddr, page, action string, item any) error {
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
@@ -30,7 +30,7 @@ func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int3
 }
 
 // renderAndQueueEmailFromTemplates renders the provided templates and queues the result.
-func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data interface{}, opts ...EmailOption) error {
+func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID *int32, emailAddr string, et *EmailTemplates, data any, opts ...EmailOption) error {
 	// userID == nil implies the email is direct
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
@@ -50,7 +50,7 @@ type EmailData struct {
 	UnsubscribeUrl string
 	SignOff        string
 	SignOffHTML    htemplate.HTML
-	Item           interface{}
+	Item           any
 	Recipient      *db.SystemGetUserByIDRow
 }
 
@@ -69,7 +69,7 @@ func WithRecipient(u *db.SystemGetUserByIDRow) EmailOption {
 
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
 // Options may adjust the email metadata prior to rendering.
-func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr string, et *EmailTemplates, item interface{}, opts ...EmailOption) ([]byte, error) {
+func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr string, et *EmailTemplates, item any, opts ...EmailOption) ([]byte, error) {
 	if emailAddr == "" {
 		return nil, fmt.Errorf("no email specified")
 	}

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -310,9 +311,6 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 				}
-				if data != nil {
-					err = nil
-				}
 				if data == nil {
 					if up := upload.ProviderFromConfig(cfg); up != nil {
 						origBytes, err := up.Read(r.Context(), origKey)
@@ -366,8 +364,8 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, config.Thum
 	}
 	base := strings.TrimSuffix(id, ext)
 	sizes := cfg.ThumbnailSizes()
-	if strings.HasSuffix(base, "_thumb") {
-		originalID := strings.TrimSuffix(base, "_thumb") + ext
+	if before, ok := strings.CutSuffix(base, "_thumb"); ok {
+		originalID := before + ext
 		return originalID, sizes[0], intimages.ValidID(originalID)
 	}
 	index := strings.LastIndex(base, "_thumb_")
@@ -384,13 +382,7 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, config.Thum
 		return "", config.ThumbnailSize{}, false
 	}
 	size := config.ThumbnailSize{Width: width, Height: height}
-	allowed := false
-	for _, configured := range sizes {
-		if size == configured {
-			allowed = true
-			break
-		}
-	}
+	allowed := slices.Contains(sizes, size)
 	if !allowed {
 		return "", config.ThumbnailSize{}, false
 	}
@@ -529,10 +521,7 @@ func wrapMissingImageLine(width int, prefix, value string) []string {
 	if value == "" {
 		return nil
 	}
-	maxChars := (width - 48) / 7
-	if maxChars < 32 {
-		maxChars = 32
-	}
+	maxChars := max((width-48)/7, 32)
 	if len(prefix)+len(value) <= maxChars {
 		return []string{prefix + value}
 	}
@@ -545,10 +534,7 @@ func wrapMissingImageLine(width int, prefix, value string) []string {
 		if len(out) > 0 {
 			linePrefix = nextPrefix
 		}
-		limit := maxChars - len(linePrefix)
-		if limit < 12 {
-			limit = 12
-		}
+		limit := max(maxChars-len(linePrefix), 12)
 		if len(remaining) <= limit {
 			out = append(out, linePrefix+remaining)
 			break

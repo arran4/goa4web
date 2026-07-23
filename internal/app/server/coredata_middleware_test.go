@@ -53,7 +53,7 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 		},
 	}))
 
-	session := &sessions.Session{ID: "sessid", Values: map[interface{}]interface{}{"UID": int32(1)}}
+	session := &sessions.Session{ID: "sessid", Values: map[any]any{"UID": int32(1)}}
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	req = req.WithContext(ctx)

@@ -119,7 +119,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	renderPublicSharedPreview(w, r, cd, share.WithTitle(ogTitle), share.WithBody(ogDescription), share.WithSection("Public Forum Topic"), share.WithGeneratorType("forum"))
 }
 
-func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, ops ...interface{}) {
+func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, ops ...any) {
 	// Determine auth style: check if mux vars for ts/nonce are present
 	vars := mux.Vars(r)
 	usePathAuth := vars["ts"] != "" || vars["nonce"] != ""

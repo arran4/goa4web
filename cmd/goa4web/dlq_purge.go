@@ -50,7 +50,7 @@ func (c *dlqPurgeCmd) Run() error {
 	}
 	purgeAt := purgeBefore.Format(time.RFC3339)
 	if c.jsonOut {
-		out := map[string]interface{}{
+		out := map[string]any{
 			"purged_before": purgeAt,
 		}
 		b, err := json.MarshalIndent(out, "", "  ")

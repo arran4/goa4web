@@ -103,7 +103,7 @@ func formatEnv(cfg *config.RuntimeConfig, configFile string, reg *dbdrivers.Regi
 		fmt.Fprintln(&b, line)
 		if opts.Extended {
 			if e := ext[k]; e != "" {
-				for _, line := range strings.Split(strings.TrimSuffix(e, "\n"), "\n") {
+				for line := range strings.SplitSeq(strings.TrimSuffix(e, "\n"), "\n") {
 					fmt.Fprintf(&b, "# %s\n", line)
 				}
 			}

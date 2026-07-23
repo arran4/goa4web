@@ -74,7 +74,7 @@ func (c *notificationsSendCmd) Run() error {
 		}
 	}
 	if c.jsonOut {
-		out := map[string]interface{}{
+		out := map[string]any{
 			"count":    len(ids),
 			"user_ids": ids,
 		}
@@ -91,7 +91,7 @@ func (c *notificationsSendCmd) Run() error {
 func (c *notificationsSendCmd) resolveRecipientIDs(ctx context.Context, queries *db.Queries) ([]int32, error) {
 	if c.users != "" {
 		var ids []int32
-		for _, name := range strings.Split(c.users, ",") {
+		for name := range strings.SplitSeq(c.users, ",") {
 			name = strings.TrimSpace(name)
 			if name == "" {
 				continue

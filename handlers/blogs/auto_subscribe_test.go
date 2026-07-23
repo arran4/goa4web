@@ -7,7 +7,7 @@ import (
 )
 
 func TestHappyPathReplyBlogTaskAutoSubscribe(t *testing.T) {
-	if _, ok := interface{}(replyBlogTask).(notif.AutoSubscribeProvider); !ok {
+	if _, ok := any(replyBlogTask).(notif.AutoSubscribeProvider); !ok {
 		t.Fatalf("ReplyBlogTask must auto subscribe as users want comment updates")
 	}
 }

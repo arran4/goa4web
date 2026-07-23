@@ -31,7 +31,7 @@ func (SendNotificationTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var ids []int32
 	if names != "" {
-		for _, name := range strings.Split(names, ",") {
+		for name := range strings.SplitSeq(names, ",") {
 			name = strings.TrimSpace(name)
 			if name == "" {
 				continue

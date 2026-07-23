@@ -15,14 +15,14 @@ type Section interface {
 type sectionString []string
 
 func (s sectionString) String() string {
-	var str string
+	var str strings.Builder
 	for i, p := range s {
 		if i > 0 {
-			str += " > "
+			str.WriteString(" > ")
 		}
-		str += p
+		str.WriteString(p)
 	}
-	return str
+	return str.String()
 }
 
 // AdminCCCategory creates a section from one or more categories.

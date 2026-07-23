@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -125,9 +126,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if event.ThreadURL != "" {
 			evt.Data["ThreadURL"] = event.ThreadURL
 		}
-		for key, value := range event.AdditionalData {
-			evt.Data[key] = value
-		}
+		maps.Copy(evt.Data, event.AdditionalData)
 		if event.IncludePostCount {
 			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{
 				CommentID: event.CommentID,

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -12,13 +13,7 @@ func TestGetAvailableTimezones(t *testing.T) {
 			t.Fatal("Expected some timezones, got none")
 		}
 
-		foundMelbourne := false
-		for _, tz := range tzs {
-			if tz == "Australia/Melbourne" {
-				foundMelbourne = true
-				break
-			}
-		}
+		foundMelbourne := slices.Contains(tzs, "Australia/Melbourne")
 
 		if !foundMelbourne {
 			t.Error("Australia/Melbourne not found in available timezones")

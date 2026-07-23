@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -539,10 +540,8 @@ func ensureSubscription(ctx context.Context, q db.Querier, userID int32, pattern
 	}
 	ids, err := q.ListSubscribersForPattern(ctx, db.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
 	if err == nil {
-		for _, id := range ids {
-			if id == userID {
-				return
-			}
+		if slices.Contains(ids, userID) {
+			return
 		}
 	}
 	if err := q.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {

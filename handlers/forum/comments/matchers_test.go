@@ -35,7 +35,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
 		req = mux.SetURLVars(req, map[string]string{"comment": "3"})
 
-		sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": userID}}
+		sess := &sessions.Session{Values: map[any]any{"UID": userID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
@@ -90,7 +90,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9", nil)
 		req = mux.SetURLVars(req, map[string]string{"comment": "9"})
 
-		sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
+		sess := &sessions.Session{Values: map[any]any{"UID": adminID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
@@ -151,7 +151,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
 		req = mux.SetURLVars(req, map[string]string{"comment": "13"})
 
-		sess := &sessions.Session{Values: map[interface{}]interface{}{"UID": adminID}}
+		sess := &sessions.Session{Values: map[any]any{"UID": adminID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
 		cd.AdminMode = true
 

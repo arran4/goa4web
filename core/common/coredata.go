@@ -9,12 +9,14 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"maps"
 	"net"
 	"net/http"
 	"net/mail"
 	"net/netip"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1255,10 +1257,8 @@ func (cd *CoreData) HasContentWriterRole() bool {
 
 // HasRole reports whether the current user explicitly has the named role.
 func (cd *CoreData) HasRole(role string) bool {
-	for _, r := range cd.UserRoles() {
-		if r == role {
-			return true
-		}
+	if slices.Contains(cd.UserRoles(), role) {
+		return true
 	}
 	if cd.HasAdminRole() {
 		if role == "user" {
@@ -3091,9 +3091,7 @@ func defaultNotificationTemplate(name string, cd *CoreData) string {
 		}
 	} else {
 		txtFuncs := ttemplate.FuncMap{}
-		for k, v := range funcs {
-			txtFuncs[k] = v
-		}
+		maps.Copy(txtFuncs, funcs)
 
 		tmpl := templates.GetCompiledEmailTextTemplates(txtFuncs, opts...)
 		if err := tmpl.ExecuteTemplate(&buf, name, sampleEmailData(cfg)); err == nil {
@@ -3365,8 +3363,8 @@ func imageRefToPath(ref string) (string, error) {
 	if strings.HasPrefix(ref, "uploading:") {
 		return "", fmt.Errorf("image upload pending")
 	}
-	if strings.HasPrefix(ref, "cache:") {
-		id := strings.TrimPrefix(ref, "cache:")
+	if after, ok := strings.CutPrefix(ref, "cache:"); ok {
+		id := after
 		id = cleanSignedParam(id)
 		if !imagesign.ValidID(id) {
 			return "", fmt.Errorf("invalid cache image id")

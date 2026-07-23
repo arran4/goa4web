@@ -54,8 +54,8 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 	ext := filepath.Ext(id)
 	base := strings.TrimSuffix(id, ext)
 
-	if strings.HasSuffix(base, "_thumb") {
-		parentID = strings.TrimSuffix(base, "_thumb") + ext
+	if before, ok := strings.CutSuffix(base, "_thumb"); ok {
+		parentID = before + ext
 		thumbID = id
 	} else {
 		parentID = id

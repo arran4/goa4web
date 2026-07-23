@@ -65,7 +65,6 @@ func TestUserRenameCmd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			root := &rootCmd{fs: flag.NewFlagSet("prog", flag.ContinueOnError)}
 
@@ -151,7 +150,7 @@ func swapLogOutput(buf *bytes.Buffer) func() {
 }
 
 func containsLine(content, want string) bool {
-	for _, line := range bytes.Split([]byte(content), []byte("\n")) {
+	for line := range bytes.SplitSeq([]byte(content), []byte("\n")) {
 		if string(bytes.TrimSpace(line)) == want {
 			return true
 		}

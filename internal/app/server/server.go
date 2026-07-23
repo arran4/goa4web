@@ -233,7 +233,7 @@ func (s *Server) getTrustedProxies() []netip.Prefix {
 
 	var parsed []netip.Prefix
 	if current != "" {
-		for _, p := range strings.Split(current, ",") {
+		for p := range strings.SplitSeq(current, ",") {
 			p = strings.TrimSpace(p)
 			if p == "" {
 				continue

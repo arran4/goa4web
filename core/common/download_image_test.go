@@ -69,8 +69,8 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 	cd := NewCoreData(context.Background(), queries, cfg)
 	var imageBytes bytes.Buffer
 	img := image.NewRGBA(image.Rect(0, 0, 3, 2))
-	for y := 0; y < 2; y++ {
-		for x := 0; x < 3; x++ {
+	for y := range 2 {
+		for x := range 3 {
 			img.Set(x, y, color.RGBA{R: 0x20, G: 0x40, B: 0x80, A: 0xff})
 		}
 	}
@@ -234,8 +234,8 @@ func TestQueueRemoteImageCacheCreatesPendingEntry(t *testing.T) {
 func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 	var imageBytes bytes.Buffer
 	img := image.NewRGBA(image.Rect(0, 0, 4, 3))
-	for y := 0; y < 3; y++ {
-		for x := 0; x < 4; x++ {
+	for y := range 3 {
+		for x := range 4 {
 			img.Set(x, y, color.RGBA{R: 0x10, G: 0x20, B: 0x30, A: 0xff})
 		}
 	}

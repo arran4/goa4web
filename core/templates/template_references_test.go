@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	ttext "text/template"
 	"text/template/parse"
@@ -101,11 +102,12 @@ func assertAllRefsSatisfiedGeneric[T any](
 		return missing[i].Ref < missing[j].Ref
 	})
 
-	msg := "unresolved template references:\n"
+	var msg strings.Builder
+	msg.WriteString("unresolved template references:\n")
 	for _, m := range missing {
-		msg += fmt.Sprintf("  %q references missing %q\n", m.From, m.Ref)
+		msg.WriteString(fmt.Sprintf("  %q references missing %q\n", m.From, m.Ref))
 	}
-	t.Fatal(msg)
+	t.Fatal(msg.String())
 }
 
 func getName[T any](tt T) string {
@@ -139,7 +141,7 @@ func collectTemplateRefs(n parse.Node) map[string]struct{} {
 			// Handle {{block "name" .}} ... {{end}} across Go versions without directly depending on parse.BlockNode.
 			// If it's a BlockNode-like value, read its Name field via reflection.
 			rv := reflect.ValueOf(node)
-			if rv.IsValid() && rv.Kind() == reflect.Ptr && !rv.IsNil() {
+			if rv.IsValid() && rv.Kind() == reflect.Pointer && !rv.IsNil() {
 				rt := rv.Elem().Type()
 				if rt.Name() == "BlockNode" && rt.PkgPath() == "text/template/parse" {
 					nameField := rv.Elem().FieldByName("Name")
@@ -198,7 +200,7 @@ func walkNode(n parse.Node, visit func(parse.Node)) {
 	default:
 		// Reflective recursion for BlockNode body (so refs inside the block default body are also checked).
 		rv := reflect.ValueOf(n)
-		if rv.IsValid() && rv.Kind() == reflect.Ptr && !rv.IsNil() {
+		if rv.IsValid() && rv.Kind() == reflect.Pointer && !rv.IsNil() {
 			ev := rv.Elem()
 			et := ev.Type()
 			if et.Name() == "BlockNode" && et.PkgPath() == "text/template/parse" {

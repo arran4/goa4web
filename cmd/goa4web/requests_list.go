@@ -138,10 +138,7 @@ func (c *requestsListCmd) Run() error {
 	if pageSize <= 0 {
 		cfg, cfgErr := c.rootCmd.RuntimeConfig()
 		if cfgErr == nil {
-			pageSize = cfg.PageSizeDefault
-			if pageSize < cfg.PageSizeMin {
-				pageSize = cfg.PageSizeMin
-			}
+			pageSize = max(cfg.PageSizeDefault, cfg.PageSizeMin)
 			if pageSize > cfg.PageSizeMax {
 				pageSize = cfg.PageSizeMax
 			}
@@ -159,14 +156,8 @@ func (c *requestsListCmd) Run() error {
 
 	// Apply pagination
 	total := len(rows)
-	start := c.offset
-	if start > total {
-		start = total
-	}
-	end := start + pageSize
-	if end > total {
-		end = total
-	}
+	start := min(c.offset, total)
+	end := min(start+pageSize, total)
 	hasMore := end < total
 	selected := rows[start:end]
 

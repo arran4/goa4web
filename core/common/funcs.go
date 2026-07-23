@@ -88,7 +88,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		if counts[pref] > 0 {
 			// Try to find an unused color
 			foundUnused := false
-			for i := 0; i < 6; i++ {
+			for i := range 6 {
 				idx := (pref + i) % 6
 				if counts[idx] == 0 {
 					best = idx
@@ -100,7 +100,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 			// If all used, find the one with minimum usage to ensure even spread
 			if !foundUnused {
 				minC := counts[pref]
-				for i := 0; i < 6; i++ {
+				for i := range 6 {
 					if counts[i] < minC {
 						minC = counts[i]
 						best = i
@@ -364,10 +364,7 @@ func FirstLine(s string) string {
 
 // Left returns the first i characters of s.
 func Left(i int, s string) string {
-	l := len(s)
-	if l > i {
-		l = i
-	}
+	l := min(len(s), i)
 	return s[:l]
 }
 

@@ -597,9 +597,9 @@ type QuerierStub struct {
 	SetNotificationPriorityForListerFn    func(context.Context, SetNotificationPriorityForListerParams) error
 
 	GetMaxNotificationPriorityCalls   []int32
-	GetMaxNotificationPriorityReturns interface{}
+	GetMaxNotificationPriorityReturns any
 	GetMaxNotificationPriorityErr     error
-	GetMaxNotificationPriorityFn      func(context.Context, int32) (interface{}, error)
+	GetMaxNotificationPriorityFn      func(context.Context, int32) (any, error)
 
 	InsertPreferenceForListerCalls []InsertPreferenceForListerParams
 	InsertPreferenceForListerErr   error
@@ -994,10 +994,10 @@ type QuerierStub struct {
 	AdminGetFAQDismissedQuestionsErr     error
 	AdminGetFAQDismissedQuestionsFn      func(context.Context) ([]*AdminGetFAQDismissedQuestionsRow, error)
 
-	AdminListTopicsWithUserGrantsNoRolesCalls   []interface{}
+	AdminListTopicsWithUserGrantsNoRolesCalls   []any
 	AdminListTopicsWithUserGrantsNoRolesReturns []*AdminListTopicsWithUserGrantsNoRolesRow
 	AdminListTopicsWithUserGrantsNoRolesErr     error
-	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
+	AdminListTopicsWithUserGrantsNoRolesFn      func(context.Context, any) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error)
 
 	AdminCreateGrantCalls   []AdminCreateGrantParams
 	AdminCreateGrantReturns int64
@@ -1690,7 +1690,7 @@ func (s *QuerierStub) SetNotificationPriorityForLister(ctx context.Context, arg 
 	return err
 }
 
-func (s *QuerierStub) GetMaxNotificationPriority(ctx context.Context, listerID int32) (interface{}, error) {
+func (s *QuerierStub) GetMaxNotificationPriority(ctx context.Context, listerID int32) (any, error) {
 	s.mu.Lock()
 	s.GetMaxNotificationPriorityCalls = append(s.GetMaxNotificationPriorityCalls, listerID)
 	fn := s.GetMaxNotificationPriorityFn
@@ -1777,7 +1777,7 @@ func (s *QuerierStub) SystemInsertUser(ctx context.Context, username sql.NullStr
 	return ret, err
 }
 
-func (s *QuerierStub) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin interface{}) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
+func (s *QuerierStub) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context, includeAdmin any) ([]*AdminListTopicsWithUserGrantsNoRolesRow, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.AdminListTopicsWithUserGrantsNoRolesCalls = append(s.AdminListTopicsWithUserGrantsNoRolesCalls, includeAdmin)

@@ -95,7 +95,7 @@ func (c *userListCmd) Run() error {
 	}
 
 	if c.jsonOut {
-		out := make([]map[string]interface{}, 0, len(rows))
+		out := make([]map[string]any, 0, len(rows))
 		for _, u := range rows {
 			es := emailsByUser[u.Idusers]
 			if es == nil {
@@ -106,7 +106,7 @@ func (c *userListCmd) Run() error {
 				status = "Inactive"
 			}
 
-			item := map[string]interface{}{
+			item := map[string]any{
 				"id":                u.Idusers,
 				"username":          u.Username.String,
 				"status":            status,
@@ -178,7 +178,7 @@ func (c *userListCmd) Run() error {
 	return nil
 }
 
-func toString(v interface{}) string {
+func toString(v any) string {
 	switch t := v.(type) {
 	case string:
 		return t

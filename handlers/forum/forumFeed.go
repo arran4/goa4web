@@ -40,10 +40,7 @@ func TopicFeed(r *http.Request, title string, topicID int, rows []*db.GetForumTh
 		conv.CodeType = a4code2html.CTTagStrip
 		conv.SetInput(text)
 		out, _ := io.ReadAll(conv.Process())
-		i := len(text)
-		if i > 255 {
-			i = 255
-		}
+		i := min(len(text), 255)
 		item := &feeds.Item{
 			Title:   text[:i],
 			Link:    &feeds.Link{Href: fmt.Sprintf("%s/topic/%d/thread/%d", basePath, topicID, row.Idforumthread)},

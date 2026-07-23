@@ -676,10 +676,10 @@ func parseCacheDuration(raw string) (time.Duration, error) {
 
 func httpContentExpiresAt(h http.Header, now time.Time) sql.NullTime {
 	if cc := strings.ToLower(h.Get("Cache-Control")); cc != "" {
-		for _, part := range strings.Split(cc, ",") {
+		for part := range strings.SplitSeq(cc, ",") {
 			part = strings.TrimSpace(part)
-			if strings.HasPrefix(part, "max-age=") {
-				secs, err := strconv.ParseInt(strings.TrimPrefix(part, "max-age="), 10, 64)
+			if after, ok := strings.CutPrefix(part, "max-age="); ok {
+				secs, err := strconv.ParseInt(after, 10, 64)
 				if err == nil && secs >= 0 {
 					return sql.NullTime{Time: now.Add(time.Duration(secs) * time.Second), Valid: true}
 				}

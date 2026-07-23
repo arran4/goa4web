@@ -28,7 +28,7 @@ func GetAdminEmails(ctx context.Context, q db.Querier, cfg *RuntimeConfig) []str
 	}
 	var emails []string
 	if env != "" {
-		for _, e := range strings.Split(env, ",") {
+		for e := range strings.SplitSeq(env, ",") {
 			if addr := strings.TrimSpace(e); addr != "" {
 				emails = append(emails, addr)
 			}

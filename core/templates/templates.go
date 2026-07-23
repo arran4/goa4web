@@ -547,17 +547,15 @@ func EmailTemplateExists(name string, opts ...Option) bool {
 	// Check .txtar
 	var base string
 	var inner string
-	if strings.HasSuffix(name, ".gohtml") {
-		base = strings.TrimSuffix(name, ".gohtml")
+	if before, ok := strings.CutSuffix(name, ".gohtml"); ok {
+		base = before
 		inner = "body.gohtml"
-	} else if strings.HasSuffix(name, ".gotxt") {
-		if strings.HasSuffix(name, "Subject.gotxt") {
-			base = strings.TrimSuffix(name, "Subject.gotxt")
-			inner = "subject.gotxt"
-		} else {
-			base = strings.TrimSuffix(name, ".gotxt")
-			inner = "body.gotxt"
-		}
+	} else if before, ok := strings.CutSuffix(name, "Subject.gotxt"); ok {
+		base = before
+		inner = "subject.gotxt"
+	} else if before, ok := strings.CutSuffix(name, ".gotxt"); ok {
+		base = before
+		inner = "body.gotxt"
 	}
 
 	if base != "" {

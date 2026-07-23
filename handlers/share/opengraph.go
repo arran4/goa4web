@@ -51,7 +51,7 @@ type AliasGenerator struct {
 }
 
 func (a *AliasGenerator) Name() string { return a.Alias }
-func (a *AliasGenerator) Generate(options ...interface{}) (image.Image, error) {
+func (a *AliasGenerator) Generate(options ...any) (image.Image, error) {
 	return a.RealGenerator.Generate(options...)
 }
 
@@ -63,7 +63,7 @@ func getGenerator(name string) (ImageGenerator, bool) {
 }
 
 // Generate generates an image using the generator specified in options (or default).
-func Generate(options ...interface{}) (image.Image, error) {
+func Generate(options ...any) (image.Image, error) {
 	genType := "default"
 	for _, opt := range options {
 		if v, ok := opt.(WithGeneratorType); ok {
@@ -277,7 +277,7 @@ func MakeImageURL(baseURL, title, description, key string, usePathAuth bool, opt
 }
 
 // MakeImageURLWithOptions allows creating an image URL with specific generator options.
-func MakeImageURLWithOptions(baseURL, key string, usePathAuth bool, options ...interface{}) (string, error) {
+func MakeImageURLWithOptions(baseURL, key string, usePathAuth bool, options ...any) (string, error) {
 	payload := imagePayload{
 		Type: "default",
 	}
@@ -428,7 +428,7 @@ func (h *OGImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Construct options from payload
-	var options []interface{}
+	var options []any
 	// Add generator type
 	if payload.Type != "" {
 		options = append(options, WithGeneratorType(payload.Type))

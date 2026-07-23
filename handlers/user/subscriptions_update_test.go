@@ -81,7 +81,7 @@ func TestUpdateSubscriptionsTask_MandatoryProtection(t *testing.T) {
 
 				// Mock Session
 				mockSession := &sessions.Session{
-					Values: map[interface{}]interface{}{"UID": uid},
+					Values: map[any]any{"UID": uid},
 				}
 
 				cd := common.NewCoreData(context.Background(), q, nil, common.WithSession(mockSession))

@@ -2,6 +2,7 @@ package testhelpers
 
 import (
 	"database/sql"
+	"maps"
 
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -70,9 +71,7 @@ func WithGrants(grants map[string]bool) StubOption {
 		if builder.cfg.Grants == nil {
 			builder.cfg.Grants = map[string]bool{}
 		}
-		for key, allowed := range grants {
-			builder.cfg.Grants[key] = allowed
-		}
+		maps.Copy(builder.cfg.Grants, grants)
 	}
 }
 

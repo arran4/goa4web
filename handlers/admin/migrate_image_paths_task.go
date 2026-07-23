@@ -35,8 +35,8 @@ func (MigrateImagePathsTask) Action(w http.ResponseWriter, r *http.Request) any 
 			continue
 		}
 		path := img.Path.String
-		if strings.HasPrefix(path, "uploads/") {
-			newPath := strings.TrimPrefix(path, "uploads/")
+		if after, ok := strings.CutPrefix(path, "uploads/"); ok {
+			newPath := after
 			if err := cd.Queries().AdminUpdateUploadedImagePath(r.Context(), db.AdminUpdateUploadedImagePathParams{
 				Path:            sql.NullString{String: newPath, Valid: true},
 				Iduploadedimage: img.Iduploadedimage,

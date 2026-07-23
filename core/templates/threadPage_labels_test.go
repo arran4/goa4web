@@ -20,7 +20,7 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
 			}
-			m := make(map[string]interface{}, len(values)/2)
+			m := make(map[string]any, len(values)/2)
 			for i := 0; i+1 < len(values); i += 2 {
 				k, ok := values[i].(string)
 				if !ok {

@@ -33,7 +33,7 @@ func TestUserEmailVerifyCodePage_Invalid(t *testing.T) {
 
 		store := sessions.NewCookieStore([]byte("test"))
 		sess := sessions.NewSession(store, "test")
-		sess.Values = map[interface{}]interface{}{"UID": int32(2)} // Different User ID
+		sess.Values = map[any]any{"UID": int32(2)} // Different User ID
 		core.Store = store
 		core.SessionName = "test"
 
@@ -70,7 +70,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 			marked = append(marked, arg)
 			return nil
 		}
-		queries.GetMaxNotificationPriorityFn = func(ctx context.Context, userID int32) (interface{}, error) {
+		queries.GetMaxNotificationPriorityFn = func(ctx context.Context, userID int32) (any, error) {
 			return int64(0), nil
 		}
 		queries.SetNotificationPriorityForListerFn = func(ctx context.Context, arg db.SetNotificationPriorityForListerParams) error {
@@ -84,7 +84,7 @@ func TestUserEmailVerifyCodePage_Success(t *testing.T) {
 
 		store := sessions.NewCookieStore([]byte("test"))
 		sess := sessions.NewSession(store, "test")
-		sess.Values = map[interface{}]interface{}{"UID": int32(1)}
+		sess.Values = map[any]any{"UID": int32(1)}
 		core.Store = store
 		core.SessionName = "test"
 

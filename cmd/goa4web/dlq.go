@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -89,12 +90,7 @@ func (c *dlqCmd) providers() ([]string, error) {
 }
 
 func dlqHasProvider(providers []string, target string) bool {
-	for _, provider := range providers {
-		if provider == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, target)
 }
 
 var _ usageData = (*dlqCmd)(nil)

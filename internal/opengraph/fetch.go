@@ -175,12 +175,12 @@ func Parse(r io.Reader) (*Info, error) {
 }
 
 func parseJSONLD(data string, info *Info) {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal([]byte(data), &v); err != nil {
 		return
 	}
 
-	process := func(obj map[string]interface{}) {
+	process := func(obj map[string]any) {
 		typeVal, _ := obj["@type"].(string)
 
 		getString := func(key string) string {
@@ -195,13 +195,13 @@ func parseJSONLD(data string, info *Info) {
 			if s, ok := val.(string); ok {
 				return s
 			}
-			if m, ok := val.(map[string]interface{}); ok {
+			if m, ok := val.(map[string]any); ok {
 				if name, ok := m["name"].(string); ok {
 					return name
 				}
 			}
-			if s, ok := val.([]interface{}); ok && len(s) > 0 {
-				if m, ok := s[0].(map[string]interface{}); ok {
+			if s, ok := val.([]any); ok && len(s) > 0 {
+				if m, ok := s[0].(map[string]any); ok {
 					if name, ok := m["name"].(string); ok {
 						return name
 					}
@@ -241,11 +241,11 @@ func parseJSONLD(data string, info *Info) {
 	}
 
 	switch val := v.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		process(val)
-	case []interface{}:
+	case []any:
 		for _, item := range val {
-			if m, ok := item.(map[string]interface{}); ok {
+			if m, ok := item.(map[string]any); ok {
 				process(m)
 			}
 		}

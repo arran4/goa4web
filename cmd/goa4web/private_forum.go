@@ -445,7 +445,7 @@ func (c *privateForumCleanEmptyThreadsCmd) deletePrivateForumThread(ctx context.
 	return participants, len(grants), int(thread.TotalComments)
 }
 
-func formatThreadTitle(title interface{}) string {
+func formatThreadTitle(title any) string {
 	switch value := title.(type) {
 	case string:
 		return value

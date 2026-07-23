@@ -68,7 +68,7 @@ func (c *announcementDeleteCmd) Run() error {
 		}
 	}
 	if c.jsonOut {
-		out := map[string]interface{}{
+		out := map[string]any{
 			"deleted_ids": ids,
 			"count":       len(ids),
 		}
@@ -92,8 +92,8 @@ func (c *announcementDeleteCmd) parseIDs() ([]int32, error) {
 	if c.ids == "" {
 		return ids, nil
 	}
-	parts := strings.Split(c.ids, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(c.ids, ",")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

@@ -98,17 +98,17 @@ func (a DiscussionForumPosting) MarshalJSONLD() ([]byte, error) {
 }
 
 // marshalWithContextAndType is an internal helper to inject @context and @type.
-func marshalWithContextAndType(v interface{}, ldType string) ([]byte, error) {
+func marshalWithContextAndType(v any, ldType string) ([]byte, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
 	if m == nil {
-		m = make(map[string]interface{})
+		m = make(map[string]any)
 	}
 	m["@context"] = LDContext
 	m["@type"] = ldType

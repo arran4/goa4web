@@ -55,7 +55,7 @@ func WithDataPositions() Option {
 	return func(g *Generator) { html.WithDataPositions()(g.Generator) }
 }
 
-func NewGenerator(opts ...interface{}) *Generator {
+func NewGenerator(opts ...any) *Generator {
 	g := &Generator{
 		Generator: html.NewGenerator(),
 	}

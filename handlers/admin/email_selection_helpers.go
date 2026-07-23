@@ -35,7 +35,7 @@ func buildEmailStatusMap(r *http.Request, pageIDs []int32) map[int32]string {
 		return nil
 	}
 	idSet := make(map[int32]struct{})
-	for _, part := range strings.Split(idsParam, ",") {
+	for part := range strings.SplitSeq(idsParam, ",") {
 		if part == "" {
 			continue
 		}

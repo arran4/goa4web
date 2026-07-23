@@ -195,10 +195,7 @@ func (c *dlqListCmd) listFile() (dlqListProviderOutput, error) {
 	if path == "" {
 		return dlqListProviderOutput{}, fmt.Errorf("dlq file path not configured")
 	}
-	fetchLimit := c.limit + c.offset
-	if fetchLimit < 0 {
-		fetchLimit = 0
-	}
+	fetchLimit := max(c.limit+c.offset, 0)
 	recs, err := filedlq.List(path, fetchLimit)
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("list file dlq: %w", err)
@@ -227,10 +224,7 @@ func (c *dlqListCmd) listDir() (dlqListProviderOutput, error) {
 	if path == "" {
 		return dlqListProviderOutput{}, fmt.Errorf("dlq dir path not configured")
 	}
-	fetchLimit := c.limit + c.offset
-	if fetchLimit < 0 {
-		fetchLimit = 0
-	}
+	fetchLimit := max(c.limit+c.offset, 0)
 	recs, err := dirdlq.List(path, fetchLimit)
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("list dir dlq: %w", err)

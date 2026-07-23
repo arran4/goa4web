@@ -352,13 +352,13 @@ func TestQuoteTxtar(t *testing.T) {
 
 	for _, f := range ar.Files {
 		name := strings.TrimSpace(f.Name)
-		if strings.HasSuffix(name, ".in") {
-			base := strings.TrimSuffix(name, ".in")
+		if before, ok := strings.CutSuffix(name, ".in"); ok {
+			base := before
 			tc := tests[base]
 			tc.input = string(f.Data)
 			tests[base] = tc
-		} else if strings.HasSuffix(name, ".out") {
-			base := strings.TrimSuffix(name, ".out")
+		} else if before, ok := strings.CutSuffix(name, ".out"); ok {
+			base := before
 			tc := tests[base]
 			tc.expected = string(f.Data)
 			tests[base] = tc

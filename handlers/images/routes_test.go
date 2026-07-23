@@ -254,8 +254,8 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 
 	// Create image
 	img := image.NewRGBA(image.Rect(0, 0, 300, 100))
-	for y := 0; y < 100; y++ {
-		for x := 0; x < 300; x++ {
+	for y := range 100 {
+		for x := range 300 {
 			img.Set(x, y, color.RGBA{255, 0, 0, 255})
 		}
 	}

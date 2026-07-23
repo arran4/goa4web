@@ -56,7 +56,7 @@ func TestBus_Shutdown(t *testing.T) {
 	}()
 
 	// Publish messages
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		bus.Publish(TaskEvent{UserID: int32(i)})
 	}
 
@@ -105,7 +105,7 @@ func TestBus_Backpressure(t *testing.T) {
 	ch := bus.Subscribe(TaskMessageType)
 
 	// Fill channel
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		bus.Publish(TaskEvent{UserID: int32(i + 1)})
 	}
 
@@ -283,7 +283,7 @@ func TestPublish_NonBlocking(t *testing.T) {
 	// and only 100 will be buffered, wait! The capacity is exactly 100.
 	// We can loop over the capacity of ch directly.
 	capCh := cap(ch)
-	for i := 0; i < capCh; i++ {
+	for range capCh {
 		err := bus.Publish(msg1)
 		require.NoError(t, err)
 	}
@@ -305,7 +305,7 @@ func TestPublish_NonBlocking(t *testing.T) {
 	}
 
 	// Verify we received the messages
-	for i := 0; i < capCh; i++ {
+	for i := range capCh {
 		select {
 		case env := <-ch:
 			assert.Equal(t, msg1, env.Msg)
@@ -402,7 +402,7 @@ func TestConcurrentAccess(t *testing.T) {
 	stop := make(chan struct{})
 
 	// Subscribers
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() {
 			ch := bus.Subscribe()
 			for {
@@ -419,10 +419,10 @@ func TestConcurrentAccess(t *testing.T) {
 	}
 
 	// Publishers
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				bus.Publish(TaskEvent{Task: mockTask("concurrent")})
 			}
 		}()

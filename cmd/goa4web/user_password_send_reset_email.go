@@ -64,7 +64,7 @@ func (c *userPasswordSendResetEmailCmd) Run() error {
 	}
 
 	to := mail.Address{Name: uName, Address: u.Email.String}
-	msg := []byte(fmt.Sprintf("Subject: Password Reset\r\n\r\n%s", body))
+	msg := fmt.Appendf(nil, "Subject: Password Reset\r\n\r\n%s", body)
 
 	if err := p.Send(ctx, to, msg); err != nil {
 		return fmt.Errorf("send email: %w", err)

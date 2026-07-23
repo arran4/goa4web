@@ -38,7 +38,7 @@ func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
 	if c != nil {
 		sizes := make([]ThumbnailSize, 0)
 		seen := make(map[ThumbnailSize]struct{})
-		for _, value := range strings.Split(c.ImageThumbnailSizes, ",") {
+		for value := range strings.SplitSeq(c.ImageThumbnailSizes, ",") {
 			parts := strings.Split(strings.TrimSpace(value), "x")
 			var width, height int
 			switch len(parts) {

@@ -417,11 +417,9 @@ func TestBusWorker(t *testing.T) {
 	n := New(WithQueries(q), WithEmailProvider(prov), WithConfig(cfg))
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		n.BusWorker(ctx, bus, nil)
-	}()
+	})
 
 	time.Sleep(10 * time.Millisecond)
 

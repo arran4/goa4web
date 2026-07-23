@@ -68,7 +68,7 @@ type WithTOC bool
 // the output CodeType, enable table of contents generation or provide a custom
 // ImageURLMapper. A *bufio.Reader, io.Reader or io.Writer may be supplied to
 // configure the input or output streams.
-func New(opts ...interface{}) *A4code2html {
+func New(opts ...any) *A4code2html {
 	c := &A4code2html{
 		CodeType:    CTHTML,
 		w:           new(bytes.Buffer),

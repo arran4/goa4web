@@ -3,6 +3,7 @@ package admin
 import (
 	"database/sql"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -62,10 +63,8 @@ func emailFiltersFromValues(values url.Values) EmailFilters {
 
 func normalizeEmailFilter(value string, allowed []string) string {
 	value = strings.TrimSpace(strings.ToLower(value))
-	for _, allowedValue := range allowed {
-		if value == allowedValue {
-			return value
-		}
+	if slices.Contains(allowed, value) {
+		return value
 	}
 	return ""
 }

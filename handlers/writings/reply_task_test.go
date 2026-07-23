@@ -25,7 +25,7 @@ import (
 func TestReplyTask(t *testing.T) {
 	t.Run("Happy Path - Auto Subscribe Interface", func(t *testing.T) {
 		var task ReplyTask
-		if _, ok := interface{}(task).(notif.AutoSubscribeProvider); !ok {
+		if _, ok := any(task).(notif.AutoSubscribeProvider); !ok {
 			t.Fatalf("AutoSubscribeProvider must auto subscribe as users will want updates")
 		}
 	})

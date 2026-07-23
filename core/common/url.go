@@ -50,8 +50,8 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) (string, error)
 		allowed[strings.ToLower(r.Host)] = struct{}{}
 	}
 	if cd != nil {
-		hosts := strings.Fields(cd.Config.BaseURL)
-		for _, h := range hosts {
+		hosts := strings.FieldsSeq(cd.Config.BaseURL)
+		for h := range hosts {
 			h = strings.TrimSpace(h)
 			if h == "" {
 				continue

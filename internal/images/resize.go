@@ -46,15 +46,15 @@ func GenerateSafeSize(srcImage image.Image, ext string, generatorName string, ma
 
 	if w <= maxWidth && h <= maxHeight {
 		// Image is already safe size, return original encoded
-        var buf bytes.Buffer
-        enc, err := EncoderByExtension(ext)
-        if err != nil {
-            return nil, fmt.Errorf("encoder ext %w", err)
-        }
-        if err := enc(&buf, srcImage); err != nil {
-            return nil, fmt.Errorf("thumb encode %w", err)
-        }
-        return buf.Bytes(), nil
+		var buf bytes.Buffer
+		enc, err := EncoderByExtension(ext)
+		if err != nil {
+			return nil, fmt.Errorf("encoder ext %w", err)
+		}
+		if err := enc(&buf, srcImage); err != nil {
+			return nil, fmt.Errorf("thumb encode %w", err)
+		}
+		return buf.Bytes(), nil
 	}
 
 	// Calculate new dimensions preserving aspect ratio
@@ -72,15 +72,15 @@ func GenerateSafeSize(srcImage image.Image, ext string, generatorName string, ma
 		thumb := image.NewRGBA(image.Rect(0, 0, newW, newH))
 		draw.CatmullRom.Scale(thumb, thumb.Bounds(), srcImage, bounds, draw.Over, nil)
 
-        var tbuf bytes.Buffer
-        enc, err := EncoderByExtension(ext)
-        if err != nil {
-            return nil, fmt.Errorf("encoder ext %w", err)
-        }
-        if err := enc(&tbuf, thumb); err != nil {
-            return nil, fmt.Errorf("thumb encode %w", err)
-        }
-        return tbuf.Bytes(), nil
+		var tbuf bytes.Buffer
+		enc, err := EncoderByExtension(ext)
+		if err != nil {
+			return nil, fmt.Errorf("encoder ext %w", err)
+		}
+		if err := enc(&tbuf, thumb); err != nil {
+			return nil, fmt.Errorf("thumb encode %w", err)
+		}
+		return tbuf.Bytes(), nil
 	}
 
 	// Default to bild

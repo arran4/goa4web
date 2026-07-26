@@ -1484,6 +1484,11 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 }
 
 const listUnreadPrivateThreadsForUser = `-- name: ListUnreadPrivateThreadsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
 SELECT th.idforumthread,
        th.forumtopic_idforumtopic as topic_id,
        t.title as topic_title,
@@ -1502,7 +1507,8 @@ WHERE t.handler = 'private'
       AND g.action = 'see'
       AND g.active = 1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ? OR ? IS NULL)
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
   AND (
       -- If thread has an unread label (and invert=false), it's unread
@@ -1516,17 +1522,8 @@ WHERE t.handler = 'private'
       )
       OR
       (
-          -- Otherwise, if it's not authored by user AND not marked as 'not new' AND not marked as 'not unread'
-          c.users_idusers != ?
-          AND NOT EXISTS (
-              SELECT 1 FROM content_private_labels cpl
-              WHERE cpl.item = 'thread'
-                AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = ?
-                AND cpl.label = 'new'
-                AND cpl.invert = true
-          )
-          AND NOT EXISTS (
+          -- Otherwise, if it's not marked as 'not unread'
+          NOT EXISTS (
               SELECT 1 FROM content_private_labels cpl
               WHERE cpl.item = 'thread'
                 AND cpl.item_id = th.idforumthread
@@ -1534,14 +1531,29 @@ WHERE t.handler = 'private'
                 AND cpl.label = 'unread'
                 AND cpl.invert = true
           )
+          AND (
+              -- And it's either not authored by user OR has a 'new' label explicitly
+              c.users_idusers != ?
+              OR EXISTS (
+                  SELECT 1 FROM content_private_labels cpl
+                  WHERE cpl.item = 'thread'
+                    AND cpl.item_id = th.idforumthread
+                    AND cpl.user_id = ?
+                    AND cpl.label = 'new'
+                    AND cpl.invert = false
+              )
+          )
       )
   )
 ORDER BY th.lastaddition DESC
+LIMIT ? OFFSET ?
 `
 
 type ListUnreadPrivateThreadsForUserParams struct {
-	UserIDNull sql.NullInt32
-	UserIDVal  int32
+	GranteeID   int32
+	GrantUserID sql.NullInt32
+	Limit       int32
+	Offset      int32
 }
 
 type ListUnreadPrivateThreadsForUserRow struct {
@@ -1555,12 +1567,14 @@ type ListUnreadPrivateThreadsForUserRow struct {
 
 func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
-		arg.UserIDNull,
-		arg.UserIDNull,
-		arg.UserIDVal,
-		arg.UserIDVal,
-		arg.UserIDVal,
-		arg.UserIDVal,
+		arg.GranteeID,
+		arg.GrantUserID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.Limit,
+		arg.Offset,
 	)
 	if err != nil {
 		return nil, err

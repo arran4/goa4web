@@ -1,10 +1,10 @@
 package privateforum
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -45,21 +45,49 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	page := 1
+	if p := r.URL.Query().Get("page"); p != "" {
+		if val, err := strconv.Atoi(p); err == nil && val > 0 {
+			page = val
+		}
+	}
+	limit := int32(50)
+	offset := int32(page-1) * limit
+
 	var currentError string
-	rows, err := cd.Queries().ListUnreadPrivateThreadsForUser(r.Context(), db.ListUnreadPrivateThreadsForUserParams{
-		UserIDNull: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		UserIDVal:  cd.UserID,
-	})
+	rows, err := cd.UnreadPrivateThreads(limit, offset)
 	if err != nil {
-		log.Printf("Error ListUnreadPrivateThreadsForUser: %v", err)
+		log.Printf("Error UnreadPrivateThreads: %v", err)
 		currentError = "Error loading unread threads."
 	}
 
+	// Make a slice to hold the decorated threads (e.g. for display title)
+	type DecorThread struct {
+		*db.ListUnreadPrivateThreadsForUserRow
+		DisplayTitle string
+	}
+
+	var threads []*DecorThread
+	for _, row := range rows {
+		displayTitle := row.TopicTitle.String
+		if row.TopicTitle.Valid {
+			displayTitle = cd.GetPrivateTopicDisplayTitle(row.TopicID, row.TopicTitle.String)
+		}
+		threads = append(threads, &DecorThread{
+			ListUnreadPrivateThreadsForUserRow: row,
+			DisplayTitle:                       displayTitle,
+		})
+	}
+
 	UnreadThreadsPageTmpl.Handle(w, r, struct {
-		Threads []*db.ListUnreadPrivateThreadsForUserRow
+		Threads      []*DecorThread
 		CurrentError string
+		Page         int
+		HasNextPage  bool
 	}{
-		Threads: rows,
+		Threads:      threads,
 		CurrentError: currentError,
+		Page:         page,
+		HasNextPage:  len(rows) == int(limit),
 	})
 }

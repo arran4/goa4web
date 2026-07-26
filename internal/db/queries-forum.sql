@@ -503,7 +503,16 @@ WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id);
 
 
 
+
+
+
+
 -- name: ListUnreadPrivateThreadsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(grantee_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
 SELECT th.idforumthread,
        th.forumtopic_idforumtopic as topic_id,
        t.title as topic_title,
@@ -522,7 +531,8 @@ WHERE t.handler = 'private'
       AND g.action = 'see'
       AND g.active = 1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = sqlc.arg(user_id_null) OR sqlc.arg(user_id_null) IS NULL)
+      AND (g.user_id = sqlc.arg(grant_user_id) OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
   AND (
       -- If thread has an unread label (and invert=false), it's unread
@@ -530,30 +540,34 @@ WHERE t.handler = 'private'
           SELECT 1 FROM content_private_labels cpl
           WHERE cpl.item = 'thread'
             AND cpl.item_id = th.idforumthread
-            AND cpl.user_id = sqlc.arg(user_id_val)
+            AND cpl.user_id = sqlc.arg(grantee_id)
             AND cpl.label = 'unread'
             AND cpl.invert = false
       )
       OR
       (
-          -- Otherwise, if it's not authored by user AND not marked as 'not new' AND not marked as 'not unread'
-          c.users_idusers != sqlc.arg(user_id_val)
-          AND NOT EXISTS (
+          -- Otherwise, if it's not marked as 'not unread'
+          NOT EXISTS (
               SELECT 1 FROM content_private_labels cpl
               WHERE cpl.item = 'thread'
                 AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = sqlc.arg(user_id_val)
-                AND cpl.label = 'new'
-                AND cpl.invert = true
-          )
-          AND NOT EXISTS (
-              SELECT 1 FROM content_private_labels cpl
-              WHERE cpl.item = 'thread'
-                AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = sqlc.arg(user_id_val)
+                AND cpl.user_id = sqlc.arg(grantee_id)
                 AND cpl.label = 'unread'
                 AND cpl.invert = true
           )
+          AND (
+              -- And it's either not authored by user OR has a 'new' label explicitly
+              c.users_idusers != sqlc.arg(grantee_id)
+              OR EXISTS (
+                  SELECT 1 FROM content_private_labels cpl
+                  WHERE cpl.item = 'thread'
+                    AND cpl.item_id = th.idforumthread
+                    AND cpl.user_id = sqlc.arg(grantee_id)
+                    AND cpl.label = 'new'
+                    AND cpl.invert = false
+              )
+          )
       )
   )
-ORDER BY th.lastaddition DESC;
+ORDER BY th.lastaddition DESC
+LIMIT ? OFFSET ?;

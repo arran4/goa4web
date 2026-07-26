@@ -1016,6 +1016,10 @@ type QuerierStub struct {
 	GetUserRoleByIDRow   *GetUserRoleByIDRow
 	GetUserRoleByIDErr   error
 	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
+	ListUnreadPrivateThreadsForUserCalls   []ListUnreadPrivateThreadsForUserParams
+	ListUnreadPrivateThreadsForUserReturns []*ListUnreadPrivateThreadsForUserRow
+	ListUnreadPrivateThreadsForUserErr     error
+	ListUnreadPrivateThreadsForUserFn      func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -3174,6 +3178,17 @@ func (s *QuerierStub) AdminListFailedEmailIDs(ctx context.Context, arg AdminList
 	ret := s.AdminListFailedEmailIDsReturns
 	err := s.AdminListFailedEmailIDsErr
 	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
+	s.ListUnreadPrivateThreadsForUserCalls = append(s.ListUnreadPrivateThreadsForUserCalls, arg)
+	fn := s.ListUnreadPrivateThreadsForUserFn
+	ret := s.ListUnreadPrivateThreadsForUserReturns
+	err := s.ListUnreadPrivateThreadsForUserErr
 	if fn != nil {
 		return fn(ctx, arg)
 	}

@@ -492,3 +492,68 @@ LEFT JOIN content_private_labels cpl
     AND cpl.item_id = th.idforumthread
     AND cpl.user_id = sqlc.arg(user_id)
 WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id);
+
+
+
+
+
+
+
+
+
+
+
+-- name: ListUnreadPrivateThreadsForUser :many
+SELECT th.idforumthread,
+       th.forumtopic_idforumtopic as topic_id,
+       t.title as topic_title,
+       th.lastaddition,
+       th.lastposter,
+       lu.username AS lastposterusername
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN users lu ON lu.idusers = th.lastposter
+WHERE t.handler = 'private'
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'privateforum'
+      AND g.item = 'topic'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = sqlc.arg(user_id_null) OR sqlc.arg(user_id_null) IS NULL)
+  )
+  AND (
+      -- If thread has an unread label (and invert=false), it's unread
+      EXISTS (
+          SELECT 1 FROM content_private_labels cpl
+          WHERE cpl.item = 'thread'
+            AND cpl.item_id = th.idforumthread
+            AND cpl.user_id = sqlc.arg(user_id_val)
+            AND cpl.label = 'unread'
+            AND cpl.invert = false
+      )
+      OR
+      (
+          -- Otherwise, if it's not authored by user AND not marked as 'not new' AND not marked as 'not unread'
+          c.users_idusers != sqlc.arg(user_id_val)
+          AND NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread'
+                AND cpl.item_id = th.idforumthread
+                AND cpl.user_id = sqlc.arg(user_id_val)
+                AND cpl.label = 'new'
+                AND cpl.invert = true
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread'
+                AND cpl.item_id = th.idforumthread
+                AND cpl.user_id = sqlc.arg(user_id_val)
+                AND cpl.label = 'unread'
+                AND cpl.invert = true
+          )
+      )
+  )
+ORDER BY th.lastaddition DESC;

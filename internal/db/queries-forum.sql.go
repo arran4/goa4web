@@ -1494,11 +1494,19 @@ SELECT th.idforumthread,
        t.title as topic_title,
        th.lastaddition,
        th.lastposter,
-       lu.username AS lastposterusername
+       th.comments,
+       lu.username AS lastposterusername,
+       lu.idusers AS lastposterid,
+       fcu.username AS firstpostusername,
+       fcu.idusers AS firstpostuserid,
+       fc.written AS firstpostwritten,
+       fc.text AS firstposttext
 FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 LEFT JOIN users lu ON lu.idusers = th.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -1562,7 +1570,13 @@ type ListUnreadPrivateThreadsForUserRow struct {
 	TopicTitle         sql.NullString
 	Lastaddition       sql.NullTime
 	Lastposter         int32
+	Comments           sql.NullInt32
 	Lastposterusername sql.NullString
+	Lastposterid       sql.NullInt32
+	Firstpostusername  sql.NullString
+	Firstpostuserid    sql.NullInt32
+	Firstpostwritten   sql.NullTime
+	Firstposttext      sql.NullString
 }
 
 func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
@@ -1589,7 +1603,13 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 			&i.TopicTitle,
 			&i.Lastaddition,
 			&i.Lastposter,
+			&i.Comments,
 			&i.Lastposterusername,
+			&i.Lastposterid,
+			&i.Firstpostusername,
+			&i.Firstpostuserid,
+			&i.Firstpostwritten,
+			&i.Firstposttext,
 		); err != nil {
 			return nil, err
 		}

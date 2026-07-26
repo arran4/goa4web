@@ -493,20 +493,6 @@ LEFT JOIN content_private_labels cpl
     AND cpl.user_id = sqlc.arg(user_id)
 WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -- name: ListUnreadPrivateThreadsForUser :many
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(grantee_id)
@@ -518,11 +504,19 @@ SELECT th.idforumthread,
        t.title as topic_title,
        th.lastaddition,
        th.lastposter,
-       lu.username AS lastposterusername
+       th.comments,
+       lu.username AS lastposterusername,
+       lu.idusers AS lastposterid,
+       fcu.username AS firstpostusername,
+       fcu.idusers AS firstpostuserid,
+       fc.written AS firstpostwritten,
+       fc.text AS firstposttext
 FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 LEFT JOIN users lu ON lu.idusers = th.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
   AND EXISTS (
     SELECT 1 FROM grants g

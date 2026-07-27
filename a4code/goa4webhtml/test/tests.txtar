@@ -6,6 +6,22 @@
 [a=http://example.com Link]
 -- provider_link.expect.txt --
 <custom-link href="http://example.com"><span data-start-pos="0" data-end-pos="4">Link</span></custom-link>
+-- provider_link_block_before_quote_whitespace.txt --
+[link url]␠
+[quote text]
+-- provider_link_block_before_quote_whitespace.expect.txt --
+<custom-link href="url" data-block="true"></custom-link><span data-start-pos="0" data-end-pos="2"> <br />
+</span><blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="2" data-end-pos="6"><div class="quote-body"><span data-start-pos="2" data-end-pos="6">text</span></div></blockquote>
+-- provider_link_block_after_quote_whitespace.txt --
+[quote text]␠
+[link url]
+-- provider_link_block_after_quote_whitespace.expect.txt --
+<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="4"><div class="quote-body"><span data-start-pos="0" data-end-pos="4">text</span></div></blockquote><span data-start-pos="4" data-end-pos="6"> <br />
+</span><custom-link href="url" data-block="true"></custom-link>
+-- provider_link_block_after_inline_quote.txt --
+text [quote text] [link url]
+-- provider_link_block_after_inline_quote.expect.txt --
+<span data-start-pos="0" data-end-pos="5">text </span><q class="a4code-inline a4code-quote" data-start-pos="5" data-end-pos="9"><span data-start-pos="5" data-end-pos="9">text</span></q><span data-start-pos="9" data-end-pos="10"> </span><custom-link href="url" data-block="false"></custom-link>
 -- provider_image.txt --
 [img=image.jpg]
 -- provider_image.expect.txt --

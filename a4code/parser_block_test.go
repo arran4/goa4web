@@ -192,6 +192,69 @@ func TestUpdateBlockStatus(t *testing.T) {
 	}
 }
 
+func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          string
+		wantLinkBlock  bool
+		wantQuoteBlock *bool
+	}{
+		{
+			name:          "link remains block before trailing whitespace and a newline",
+			input:         "[link url] \n",
+			wantLinkBlock: true,
+		},
+		{
+			name:          "link remains block before whitespace and a following quote",
+			input:         "[link url] \n[quote text]",
+			wantLinkBlock: true,
+		},
+		{
+			name:           "quote remains block before whitespace and a following link",
+			input:          "[quote text] \n[link url]",
+			wantLinkBlock:  true,
+			wantQuoteBlock: boolPtr(true),
+		},
+		{
+			name:           "inline quote and link remain inline",
+			input:          "text [quote text] [link url]",
+			wantLinkBlock:  false,
+			wantQuoteBlock: boolPtr(false),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := ParseString(tt.input)
+			if err != nil {
+				t.Fatalf("ParseString() error = %v", err)
+			}
+
+			link := findFirstLink(root)
+			if link == nil {
+				t.Fatal("expected link")
+			}
+			if link.IsBlock != tt.wantLinkBlock {
+				t.Errorf("link IsBlock = %t, want %t", link.IsBlock, tt.wantLinkBlock)
+			}
+
+			if tt.wantQuoteBlock != nil {
+				quote := findFirstQuote(root)
+				if quote == nil {
+					t.Fatal("expected quote")
+				}
+				if quote.IsBlock != *tt.wantQuoteBlock {
+					t.Errorf("quote IsBlock = %t, want %t", quote.IsBlock, *tt.wantQuoteBlock)
+				}
+			}
+		})
+	}
+}
+
+func boolPtr(value bool) *bool {
+	return &value
+}
+
 func findFirstLink(n ast.Node) *ast.Link {
 	var found *ast.Link
 	ast.Walk(n, func(node ast.Node) error {
@@ -200,6 +263,20 @@ func findFirstLink(n ast.Node) *ast.Link {
 		}
 		if l, ok := node.(*ast.Link); ok {
 			found = l
+		}
+		return nil
+	})
+	return found
+}
+
+func findFirstQuote(n ast.Node) *ast.Quote {
+	var found *ast.Quote
+	ast.Walk(n, func(node ast.Node) error {
+		if found != nil {
+			return nil
+		}
+		if quote, ok := node.(*ast.Quote); ok {
+			found = quote
 		}
 		return nil
 	})

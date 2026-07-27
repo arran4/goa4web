@@ -1012,10 +1012,10 @@ type QuerierStub struct {
 	DeleteSubscriptionByIDForSubscriberErr   error
 	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
 
-	GetUserRoleByIDCalls []int32
-	GetUserRoleByIDRow   *GetUserRoleByIDRow
-	GetUserRoleByIDErr   error
-	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
+	GetUserRoleByIDCalls                   []int32
+	GetUserRoleByIDRow                     *GetUserRoleByIDRow
+	GetUserRoleByIDErr                     error
+	GetUserRoleByIDFn                      func(context.Context, int32) (*GetUserRoleByIDRow, error)
 	ListUnreadPrivateThreadsForUserCalls   []ListUnreadPrivateThreadsForUserParams
 	ListUnreadPrivateThreadsForUserReturns []*ListUnreadPrivateThreadsForUserRow
 	ListUnreadPrivateThreadsForUserErr     error

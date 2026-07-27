@@ -83,12 +83,16 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		Threads      []*DecorThread
 		CurrentError string
 		Page         int
+		PrevPage     int
+		NextPage     int
 		HasNextPage  bool
 		cd           *common.CoreData
 	}{
 		Threads:      threads,
 		CurrentError: currentError,
 		Page:         page,
+		PrevPage:     page - 1,
+		NextPage:     page + 1,
 		HasNextPage:  len(rows) == int(limit),
 		cd:           cd,
 	})

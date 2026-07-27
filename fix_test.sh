@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'TEMPLATE_EOF' > core/templates/site/privateforum/unread.gohtml
 {{ define "privateforum/unread.gohtml" }}
     {{ template "head" $ }}
 <link rel="stylesheet" href="{{ assetHash "/forum/forum.css" }}">
@@ -51,3 +53,4 @@
     {{ end }}
     {{ template "tail" $ }}
 {{ end }}
+TEMPLATE_EOF

@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'TEMPLATE_EOF' > core/templates/site/privateforum/unread.gohtml
 {{ define "privateforum/unread.gohtml" }}
     {{ template "head" $ }}
 <link rel="stylesheet" href="{{ assetHash "/forum/forum.css" }}">
@@ -41,13 +43,14 @@
         </div>
         <div class="pagination">
             {{ if gt .Page 1 }}
-                <a href="{{ printf "/private/unread?page=%d" .PrevPage }}">Previous Page</a>
+                <a href="/private/unread?page={{ .PrevPage }}">Previous Page</a>
             {{ end }}
             {{ if and (gt .Page 1) .HasNextPage }} | {{ end }}
             {{ if .HasNextPage }}
-                <a href="{{ printf "/private/unread?page=%d" .NextPage }}">Next Page</a>
+                <a href="/private/unread?page={{ .NextPage }}">Next Page</a>
             {{ end }}
         </div>
     {{ end }}
     {{ template "tail" $ }}
 {{ end }}
+TEMPLATE_EOF

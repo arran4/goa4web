@@ -234,9 +234,9 @@ func (cd *CoreData) UnreadPrivateThreads(limit, offset int32) ([]*db.ListUnreadP
 		return nil, nil
 	}
 	return cd.queries.ListUnreadPrivateThreadsForUser(cd.ctx, db.ListUnreadPrivateThreadsForUserParams{
-		GranteeID:    cd.UserID,
-		GrantUserID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		Limit:        limit,
-		Offset:       offset,
+		GranteeID:   cd.UserID,
+		GrantUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		Limit:       limit,
+		Offset:      offset,
 	})
 }

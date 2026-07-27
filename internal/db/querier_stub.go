@@ -1012,18 +1012,18 @@ type QuerierStub struct {
 	DeleteSubscriptionByIDForSubscriberErr   error
 	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
 
-	GetUserRoleByIDCalls                   []int32
-	GetUserRoleByIDRow                     *GetUserRoleByIDRow
-	GetUserRoleByIDErr                     error
-	GetUserRoleByIDFn                      func(context.Context, int32) (*GetUserRoleByIDRow, error)
-	ListUnreadPrivateThreadsForUserCalls   []ListUnreadPrivateThreadsForUserParams
-	ListUnreadPrivateThreadsForUserReturns []*ListUnreadPrivateThreadsForUserRow
-	ListUnreadPrivateThreadsForUserErr     error
-	ListUnreadPrivateThreadsForUserFn      func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+	GetUserRoleByIDCalls []int32
+	GetUserRoleByIDRow   *GetUserRoleByIDRow
+	GetUserRoleByIDErr   error
+	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
 	CountUnreadPrivateThreadsForUserCalls   []CountUnreadPrivateThreadsForUserParams
 	CountUnreadPrivateThreadsForUserReturns int64
 	CountUnreadPrivateThreadsForUserErr     error
 	CountUnreadPrivateThreadsForUserFn      func(context.Context, CountUnreadPrivateThreadsForUserParams) (int64, error)
+	ListUnreadPrivateThreadsForUserCalls   []ListUnreadPrivateThreadsForUserParams
+	ListUnreadPrivateThreadsForUserReturns []*ListUnreadPrivateThreadsForUserRow
+	ListUnreadPrivateThreadsForUserErr     error
+	ListUnreadPrivateThreadsForUserFn      func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -3188,22 +3188,22 @@ func (s *QuerierStub) AdminListFailedEmailIDs(ctx context.Context, arg AdminList
 	return ret, err
 }
 
-func (s *QuerierStub) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
-	s.ListUnreadPrivateThreadsForUserCalls = append(s.ListUnreadPrivateThreadsForUserCalls, arg)
-	fn := s.ListUnreadPrivateThreadsForUserFn
-	ret := s.ListUnreadPrivateThreadsForUserReturns
-	err := s.ListUnreadPrivateThreadsForUserErr
+func (s *QuerierStub) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
+	s.CountUnreadPrivateThreadsForUserCalls = append(s.CountUnreadPrivateThreadsForUserCalls, arg)
+	fn := s.CountUnreadPrivateThreadsForUserFn
+	ret := s.CountUnreadPrivateThreadsForUserReturns
+	err := s.CountUnreadPrivateThreadsForUserErr
 	if fn != nil {
 		return fn(ctx, arg)
 	}
 	return ret, err
 }
 
-func (s *QuerierStub) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
-	s.CountUnreadPrivateThreadsForUserCalls = append(s.CountUnreadPrivateThreadsForUserCalls, arg)
-	fn := s.CountUnreadPrivateThreadsForUserFn
-	ret := s.CountUnreadPrivateThreadsForUserReturns
-	err := s.CountUnreadPrivateThreadsForUserErr
+func (s *QuerierStub) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
+	s.ListUnreadPrivateThreadsForUserCalls = append(s.ListUnreadPrivateThreadsForUserCalls, arg)
+	fn := s.ListUnreadPrivateThreadsForUserFn
+	ret := s.ListUnreadPrivateThreadsForUserReturns
+	err := s.ListUnreadPrivateThreadsForUserErr
 	if fn != nil {
 		return fn(ctx, arg)
 	}

@@ -229,7 +229,7 @@ func WithPrivateForumTopics(topics []*PrivateTopic) CoreOption {
 }
 
 // UnreadPrivateThreads fetches the unread private threads for the current user.
-func (cd *CoreData) UnreadPrivateThreads(limit, offset int32) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
+func (cd *CoreData) UnreadPrivateThreads(limit, offset int32, topicIDNull sql.NullInt32, topicIDVal int32) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
@@ -247,7 +247,7 @@ func (cd *CoreData) UnreadPrivateThreadsCount() (int64, error) {
 		return 0, nil
 	}
 	return cd.queries.CountUnreadPrivateThreadsForUser(cd.ctx, db.CountUnreadPrivateThreadsForUserParams{
-		GranteeID:    cd.UserID,
-		GrantUserID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		GranteeID:   cd.UserID,
+		GrantUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 }

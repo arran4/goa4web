@@ -1,6 +1,8 @@
 package privateforum
 
 import (
+	"database/sql"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"net/url"
@@ -51,11 +53,21 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 			page = val
 		}
 	}
+
+	topicIDNull := sql.NullInt32{}
+	topicIDVal := int32(0)
+	if t := mux.Vars(r)["topic"]; t != "" {
+		if val, err := strconv.Atoi(t); err == nil && val > 0 {
+			topicIDNull.Valid = true
+			topicIDNull.Int32 = int32(val)
+			topicIDVal = int32(val)
+		}
+	}
 	limit := int32(50)
 	offset := int32(page-1) * limit
 
 	var currentError string
-	rows, err := cd.UnreadPrivateThreads(limit, offset)
+	rows, err := cd.UnreadPrivateThreads(limit, offset, topicIDNull, topicIDVal)
 	if err != nil {
 		log.Printf("Error UnreadPrivateThreads: %v", err)
 		currentError = "Error loading unread threads."
@@ -86,7 +98,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		PrevPage     int
 		NextPage     int
 		HasNextPage  bool
-		cd           *common.CoreData
+		CD           *common.CoreData
 	}{
 		Threads:      threads,
 		CurrentError: currentError,
@@ -94,6 +106,6 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		PrevPage:     page - 1,
 		NextPage:     page + 1,
 		HasNextPage:  len(rows) == int(limit),
-		cd:           cd,
+		CD:           cd,
 	})
 }

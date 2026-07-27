@@ -516,6 +516,7 @@ FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE t.handler = 'private'
+  AND (? IS NULL OR th.forumtopic_idforumtopic = ?)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -565,12 +566,16 @@ WHERE t.handler = 'private'
 
 type CountUnreadPrivateThreadsForUserParams struct {
 	GranteeID   int32
+	TopicIDNull interface{}
+	TopicIDVal  int32
 	GrantUserID sql.NullInt32
 }
 
 func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countUnreadPrivateThreadsForUser,
 		arg.GranteeID,
+		arg.TopicIDNull,
+		arg.TopicIDVal,
 		arg.GrantUserID,
 		arg.GranteeID,
 		arg.GranteeID,
@@ -1585,6 +1590,7 @@ LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
+  AND (? IS NULL OR th.forumtopic_idforumtopic = ?)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -1636,6 +1642,8 @@ LIMIT ? OFFSET ?
 
 type ListUnreadPrivateThreadsForUserParams struct {
 	GranteeID   int32
+	TopicIDNull interface{}
+	TopicIDVal  int32
 	GrantUserID sql.NullInt32
 	Limit       int32
 	Offset      int32
@@ -1659,6 +1667,8 @@ type ListUnreadPrivateThreadsForUserRow struct {
 func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
 		arg.GranteeID,
+		arg.TopicIDNull,
+		arg.TopicIDVal,
 		arg.GrantUserID,
 		arg.GranteeID,
 		arg.GranteeID,

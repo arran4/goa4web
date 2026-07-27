@@ -2,11 +2,13 @@ package privateforum
 
 import (
 	"database/sql"
-	"github.com/gorilla/mux"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -22,13 +24,35 @@ const UnreadThreadsPageTmpl tasks.Template = "privateforum/unread.gohtml"
 func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	cd.PageTitle = "Unread Private Threads"
-	img, err := share.MakeImageURL(cd.AbsoluteURL(), "Unread Private Threads", "Unread Private discussion forums", cd.ShareSignKey, false)
+	topicIDNull := sql.NullInt32{}
+	topicIDVal := int32(0)
+	if t := mux.Vars(r)["topic"]; t != "" {
+		if val, err := strconv.Atoi(t); err == nil && val > 0 {
+			topicIDNull.Valid = true
+			topicIDNull.Int32 = int32(val)
+			topicIDVal = int32(val)
+		}
+	}
+
+	topicTitle := ""
+	if topicIDVal > 0 {
+		if top, err := cd.ForumTopicByID(topicIDVal); err == nil {
+			topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
+		}
+	}
+
+	if topicTitle != "" {
+		cd.PageTitle = fmt.Sprintf("Unread Private Threads in %s", topicTitle)
+	} else {
+		cd.PageTitle = "Unread Private Threads"
+	}
+
+	img, err := share.MakeImageURL(cd.AbsoluteURL(), cd.PageTitle, "Unread Private discussion forums", cd.ShareSignKey, false)
 	if err != nil {
 		log.Printf("Error making image URL: %v", err)
 	}
 	cd.OpenGraph = &common.OpenGraph{
-		Title:       "Unread Private Threads",
+		Title:       cd.PageTitle,
 		Description: "Unread Private discussion forums",
 		Image:       img,
 		ImageWidth:  cd.Config.OGImageWidth,
@@ -53,27 +77,10 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 			page = val
 		}
 	}
-
-	topicIDNull := sql.NullInt32{}
-	topicIDVal := int32(0)
-	if t := mux.Vars(r)["topic"]; t != "" {
-		if val, err := strconv.Atoi(t); err == nil && val > 0 {
-			topicIDNull.Valid = true
-			topicIDNull.Int32 = int32(val)
-			topicIDVal = int32(val)
-		}
-	}
 	limit := int32(50)
 	offset := int32(page-1) * limit
 
 	var currentError string
-	topicTitle := ""
-	if topicIDVal > 0 {
-		if top, err := cd.ForumTopicByID(topicIDVal); err == nil {
-			topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
-		}
-	}
-
 	rows, err := cd.UnreadPrivateThreads(limit, offset, topicIDNull, topicIDVal)
 	if err != nil {
 		log.Printf("Error UnreadPrivateThreads: %v", err)

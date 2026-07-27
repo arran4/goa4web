@@ -58,6 +58,22 @@ func (cd *CoreData) forumBreadcrumbs() ([]Breadcrumb, error) {
 	crumbs := []Breadcrumb{{Title: crumbTitle, Link: base}}
 	catID := cd.currentCategoryID
 	topicID := cd.currentTopicID
+	// Add support for Unread views scoping
+	if cd.PageTitle == "Unread Private Threads" {
+		crumbs = append(crumbs, Breadcrumb{Title: "Unread", Link: base + "/unread"})
+		return crumbs, nil
+	}
+	if strings.HasPrefix(cd.PageTitle, "Unread Private Threads in ") && topicID > 0 {
+		if tp, err := cd.ForumTopicByID(topicID); err == nil && tp != nil {
+			title := tp.Title.String
+			if strings.HasPrefix(title, PrivateTopicDefaultTitlePrefix) {
+				title = cd.GetPrivateTopicDisplayTitle(topicID, title)
+			}
+			crumbs = append(crumbs, Breadcrumb{Title: title, Link: fmt.Sprintf("%s/topic/%d", base, topicID)})
+		}
+		crumbs = append(crumbs, Breadcrumb{Title: "Unread", Link: fmt.Sprintf("%s/topic/%d/unread", base, topicID)})
+		return crumbs, nil
+	}
 	threadID := cd.currentThreadID
 
 	if threadID != 0 && topicID == 0 {

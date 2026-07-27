@@ -15,6 +15,7 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID := vars["topic"]
 	items := []common.IndexItem{}
+
 	if topicID == "" {
 		items = []common.IndexItem{{
 			Name: "Create New private topic",
@@ -34,6 +35,30 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			}
 		}
 	}
+
+	unreadCountStr := ""
+	tid := int32(0)
+	if topicID != "" {
+		if val, err := strconv.Atoi(topicID); err == nil {
+			tid = int32(val)
+		}
+	}
+	if count, err := cd.UnreadPrivateThreadsCount(tid); err == nil && count > 0 {
+		unreadCountStr = fmt.Sprintf(" (%d)", count)
+	}
+	link := "/private/unread"
+	if tid > 0 {
+		link = fmt.Sprintf("/private/topic/%d/unread", tid)
+	}
+	name := "All Unread"
+	if tid > 0 {
+		name = "Unread in Topic"
+	}
+	items = append(items, common.IndexItem{
+		Name: fmt.Sprintf("%s%s", name, unreadCountStr),
+		Link: link,
+	})
+
 	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r)...)
 	cd.CustomIndexItems = items
 }

@@ -295,6 +295,7 @@ type Querier interface {
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
+	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
@@ -511,6 +512,7 @@ type Querier interface {
 	ListThreadImagePaths(ctx context.Context, arg ListThreadImagePathsParams) ([]sql.NullString, error)
 	ListThreadSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListThreadSubscriptionsByUserRow, error)
 	ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
+	ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
 	ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
 	ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
 	ListUserEmailsForLister(ctx context.Context, arg ListUserEmailsForListerParams) ([]*UserEmail, error)

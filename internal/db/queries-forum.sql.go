@@ -505,6 +505,88 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 	return err
 }
 
+const countUnreadPrivateThreadsForUser = `-- name: CountUnreadPrivateThreadsForUser :one
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
+SELECT count(*)
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+JOIN comments c ON th.firstpost = c.idcomments
+WHERE t.handler = 'private'
+  AND (? IS NULL OR th.forumtopic_idforumtopic = ?)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'privateforum'
+      AND g.item = 'topic'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      -- If thread has an unread label (and invert=false), it's unread
+      EXISTS (
+          SELECT 1 FROM content_private_labels cpl
+          WHERE cpl.item = 'thread'
+            AND cpl.item_id = th.idforumthread
+            AND cpl.user_id = ?
+            AND cpl.label = 'unread'
+            AND cpl.invert = false
+      )
+      OR
+      (
+          -- Otherwise, if it's not marked as 'not unread'
+          NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread'
+                AND cpl.item_id = th.idforumthread
+                AND cpl.user_id = ?
+                AND cpl.label = 'unread'
+                AND cpl.invert = true
+          )
+          AND (
+              -- And it's either not authored by user OR has a 'new' label explicitly
+              c.users_idusers != ?
+              OR EXISTS (
+                  SELECT 1 FROM content_private_labels cpl
+                  WHERE cpl.item = 'thread'
+                    AND cpl.item_id = th.idforumthread
+                    AND cpl.user_id = ?
+                    AND cpl.label = 'new'
+                    AND cpl.invert = false
+              )
+          )
+      )
+  )
+`
+
+type CountUnreadPrivateThreadsForUserParams struct {
+	GranteeID   int32
+	TopicIDNull interface{}
+	TopicIDVal  int32
+	GrantUserID sql.NullInt32
+}
+
+func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUnreadPrivateThreadsForUser,
+		arg.GranteeID,
+		arg.TopicIDNull,
+		arg.TopicIDVal,
+		arg.GrantUserID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.GranteeID,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createForumTopicForPoster = `-- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
 SELECT ?, ?, ?, ?, ?
@@ -1469,6 +1551,152 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 			&i.Lastaddition,
 			&i.Handler,
 			&i.Lastposterusername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnreadPrivateThreadsForUser = `-- name: ListUnreadPrivateThreadsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
+SELECT th.idforumthread,
+       th.forumtopic_idforumtopic as topic_id,
+       t.title as topic_title,
+       th.lastaddition,
+       th.lastposter,
+       th.comments,
+       lu.username AS lastposterusername,
+       lu.idusers AS lastposterid,
+       fcu.username AS firstpostusername,
+       fcu.idusers AS firstpostuserid,
+       fc.written AS firstpostwritten,
+       fc.text AS firstposttext
+FROM forumthread th
+JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
+JOIN comments c ON th.firstpost = c.idcomments
+LEFT JOIN users lu ON lu.idusers = th.lastposter
+LEFT JOIN comments fc ON th.firstpost = fc.idcomments
+LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
+WHERE t.handler = 'private'
+  AND (? IS NULL OR th.forumtopic_idforumtopic = ?)
+  AND EXISTS (
+    SELECT 1 FROM grants g
+    WHERE g.section = 'privateforum'
+      AND g.item = 'topic'
+      AND g.action = 'see'
+      AND g.active = 1
+      AND g.item_id = t.idforumtopic
+      AND (g.user_id = ? OR g.user_id IS NULL)
+      AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      -- If thread has an unread label (and invert=false), it's unread
+      EXISTS (
+          SELECT 1 FROM content_private_labels cpl
+          WHERE cpl.item = 'thread'
+            AND cpl.item_id = th.idforumthread
+            AND cpl.user_id = ?
+            AND cpl.label = 'unread'
+            AND cpl.invert = false
+      )
+      OR
+      (
+          -- Otherwise, if it's not marked as 'not unread'
+          NOT EXISTS (
+              SELECT 1 FROM content_private_labels cpl
+              WHERE cpl.item = 'thread'
+                AND cpl.item_id = th.idforumthread
+                AND cpl.user_id = ?
+                AND cpl.label = 'unread'
+                AND cpl.invert = true
+          )
+          AND (
+              -- And it's either not authored by user OR has a 'new' label explicitly
+              c.users_idusers != ?
+              OR EXISTS (
+                  SELECT 1 FROM content_private_labels cpl
+                  WHERE cpl.item = 'thread'
+                    AND cpl.item_id = th.idforumthread
+                    AND cpl.user_id = ?
+                    AND cpl.label = 'new'
+                    AND cpl.invert = false
+              )
+          )
+      )
+  )
+ORDER BY th.lastaddition DESC
+LIMIT ? OFFSET ?
+`
+
+type ListUnreadPrivateThreadsForUserParams struct {
+	GranteeID   int32
+	TopicIDNull interface{}
+	TopicIDVal  int32
+	GrantUserID sql.NullInt32
+	Limit       int32
+	Offset      int32
+}
+
+type ListUnreadPrivateThreadsForUserRow struct {
+	Idforumthread      int32
+	TopicID            int32
+	TopicTitle         sql.NullString
+	Lastaddition       sql.NullTime
+	Lastposter         int32
+	Comments           sql.NullInt32
+	Lastposterusername sql.NullString
+	Lastposterid       sql.NullInt32
+	Firstpostusername  sql.NullString
+	Firstpostuserid    sql.NullInt32
+	Firstpostwritten   sql.NullTime
+	Firstposttext      sql.NullString
+}
+
+func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
+		arg.GranteeID,
+		arg.TopicIDNull,
+		arg.TopicIDVal,
+		arg.GrantUserID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.GranteeID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListUnreadPrivateThreadsForUserRow
+	for rows.Next() {
+		var i ListUnreadPrivateThreadsForUserRow
+		if err := rows.Scan(
+			&i.Idforumthread,
+			&i.TopicID,
+			&i.TopicTitle,
+			&i.Lastaddition,
+			&i.Lastposter,
+			&i.Comments,
+			&i.Lastposterusername,
+			&i.Lastposterid,
+			&i.Firstpostusername,
+			&i.Firstpostuserid,
+			&i.Firstpostwritten,
+			&i.Firstposttext,
 		); err != nil {
 			return nil, err
 		}

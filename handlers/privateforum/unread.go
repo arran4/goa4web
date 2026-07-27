@@ -23,6 +23,7 @@ const UnreadThreadsPageTmpl tasks.Template = "privateforum/unread.gohtml"
 // UnreadThreadsPage serves the page listing all unread private threads.
 func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
 
 	topicIDNull := sql.NullInt32{}
 	topicIDVal := int32(0)
@@ -35,6 +36,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topicTitle := ""
+	// Set the topic ID for breadcrumbs
 	if topicIDVal > 0 {
 		if top, err := cd.ForumTopicByID(topicIDVal); err == nil {
 			topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)

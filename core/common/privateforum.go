@@ -242,7 +242,7 @@ func (cd *CoreData) UnreadPrivateThreads(limit, offset int32, topicIDNull sql.Nu
 }
 
 // UnreadPrivateThreadsCount fetches the total count of unread private threads for the current user.
-func (cd *CoreData) UnreadPrivateThreadsCount() (int64, error) {
+func (cd *CoreData) UnreadPrivateThreadsCount(topicID int32) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
 	}

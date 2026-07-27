@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/a4code/ast"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseToHTML(t *testing.T) {
@@ -370,4 +371,472 @@ func TestQOMarkup(t *testing.T) {
 	if q.Name != "user" {
 		t.Errorf("expected Name %q, got %q", "user", q.Name)
 	}
+}
+
+func TestInvalidTags(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"[invalid]", `<span data-start-pos="0" data-end-pos="0">[invalid]</span>`},
+		{"[invalid text]", `<span data-start-pos="0" data-end-pos="4">[invalid<span data-start-pos="0" data-end-pos="4">text</span>]</span>`},
+		{"[invalid [b bold]]", `<span data-start-pos="0" data-end-pos="4">[invalid<strong data-start-pos="0" data-end-pos="4"><span data-start-pos="0" data-end-pos="4">bold</span></strong>]</span>`},
+		{"[foo=bar]", `<span data-start-pos="0" data-end-pos="3">[foo<span data-start-pos="0" data-end-pos="3">bar</span>]</span>`},
+	}
+
+	for _, tc := range tests {
+		node, err := ParseString(tc.input)
+		if err != nil {
+			t.Fatalf("ParseString(%q) error: %v", tc.input, err)
+		}
+		output := ToHTML(node)
+		if output != tc.expected {
+			t.Errorf("Input: %q\nExpected: %q\nGot:      %q", tc.input, tc.expected, output)
+		}
+	}
+}
+
+func TestUpdateBlockStatus(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		checkLink func(*testing.T, *ast.Root)
+	}{
+		{
+			name:  "Root: Standalone link",
+			input: "[link url]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected standalone link in root to be block")
+				}
+			},
+		},
+		{
+			name:  "Root: Link surrounded by newlines",
+			input: "\n[link url]\n",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected link surrounded by new lines to be block")
+				}
+			},
+		},
+		{
+			name:  "Root: Link after text no newline",
+			input: "foo[link url]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if l.IsBlock {
+					t.Error("Expected link after text to be inline")
+				}
+			},
+		},
+		{
+			name:  "Root: Link before text no newline",
+			input: "[link url]foo",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if l.IsBlock {
+					t.Error("Expected link before text to be inline")
+				}
+			},
+		},
+		{
+			name:  "Quote: Standalone link",
+			input: "[quote [link url]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected link in quote to be block")
+				}
+			},
+		},
+		{
+			name:  "Quote: Link with newlines",
+			input: "[quote \n[link url]\n]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected link in quote with new lines to be block")
+				}
+			},
+		},
+		{
+			name:  "Bold: Standalone link (Inline context)",
+			input: "[b [link url]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if l.IsBlock {
+					t.Error("Expected link in bold (inline context) to be inline")
+				}
+			},
+		},
+		{
+			name:  "QuoteOf: Standalone link",
+			input: "[quoteof user [link url]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected link in quoteof to be block")
+				}
+			},
+		},
+		{
+			name:  "Spoiler: Standalone link",
+			input: "[spoiler [link url]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected link in spoiler to be block")
+				}
+			},
+		},
+		{
+			name:  "Indent: Standalone link",
+			input: "[indent [link url]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if !l.IsBlock {
+					t.Error("Expected link in indent to be block")
+				}
+			},
+		},
+		{
+			name:  "Multiple Block Links",
+			input: "[quote [link 1]\n[link 2]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				var links []*ast.Link
+				ast.Walk(root, func(n ast.Node) error {
+					if l, ok := n.(*ast.Link); ok {
+						links = append(links, l)
+					}
+					return nil
+				})
+				if len(links) != 2 {
+					t.Fatalf("Expected 2 links, got %d", len(links))
+				}
+				if !links[0].IsBlock {
+					t.Error("Expected first link to be block")
+				}
+				if !links[1].IsBlock {
+					t.Error("Expected second link to be block")
+				}
+			},
+		},
+		{
+			name:  "Mixed Inline/Block Links",
+			input: "[quote foo [link 1]\n[link 2]]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				var links []*ast.Link
+				ast.Walk(root, func(n ast.Node) error {
+					if l, ok := n.(*ast.Link); ok {
+						links = append(links, l)
+					}
+					return nil
+				})
+				if len(links) != 2 {
+					t.Fatalf("Expected 2 links, got %d", len(links))
+				}
+				if links[0].IsBlock {
+					t.Error("Expected first link (after text) to be inline")
+				}
+				if !links[1].IsBlock {
+					t.Error("Expected second link (after new line) to be block")
+				}
+			},
+		},
+		{
+			name:  "Lisp Style: Link with Title",
+			input: "[link url Title]",
+			checkLink: func(t *testing.T, root *ast.Root) {
+				l := findFirstLink(root)
+				if l.Href != "url" {
+					t.Errorf("Expected Href='url', got %q", l.Href)
+				}
+				// Title should be a child text node
+				if len(l.Children) != 1 {
+					t.Errorf("Expected 1 child, got %d", len(l.Children))
+					return
+				}
+				if txt, ok := l.Children[0].(*ast.Text); ok {
+					if strings.TrimSpace(txt.Value) != "Title" {
+						t.Errorf("Expected child text 'Title', got %q", txt.Value)
+					}
+				} else {
+					t.Errorf("Expected child to be Text, got %T", l.Children[0])
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := ParseString(tt.input)
+			if err != nil {
+				t.Fatalf("ParseString() error = %v", err)
+			}
+			tt.checkLink(t, root)
+		})
+	}
+}
+
+func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          string
+		wantLinkBlock  bool
+		wantQuoteBlock *bool
+	}{
+		{
+			name:          "link remains block before trailing whitespace and a newline",
+			input:         "[link url] \n",
+			wantLinkBlock: true,
+		},
+		{
+			name:          "link remains block before whitespace and a following quote",
+			input:         "[link url] \n[quote text]",
+			wantLinkBlock: true,
+		},
+		{
+			name:           "quote remains block before whitespace and a following link",
+			input:          "[quote text] \n[link url]",
+			wantLinkBlock:  true,
+			wantQuoteBlock: boolPtr(true),
+		},
+		{
+			name:           "inline quote and link remain inline",
+			input:          "text [quote text] [link url]",
+			wantLinkBlock:  false,
+			wantQuoteBlock: boolPtr(false),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := ParseString(tt.input)
+			if err != nil {
+				t.Fatalf("ParseString() error = %v", err)
+			}
+
+			link := findFirstLink(root)
+			if link == nil {
+				t.Fatal("expected link")
+			}
+			if link.IsBlock != tt.wantLinkBlock {
+				t.Errorf("link IsBlock = %t, want %t", link.IsBlock, tt.wantLinkBlock)
+			}
+
+			if tt.wantQuoteBlock != nil {
+				quote := findFirstQuote(root)
+				if quote == nil {
+					t.Fatal("expected quote")
+				}
+				if quote.IsBlock != *tt.wantQuoteBlock {
+					t.Errorf("quote IsBlock = %t, want %t", quote.IsBlock, *tt.wantQuoteBlock)
+				}
+			}
+		})
+	}
+}
+
+func TestCodeBlockEscaping(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "Nested escaped bracket",
+			input:    `[code [quote test\]]`,
+			expected: `[quote test]`,
+		},
+		{
+			name:     "Escaped bracket prevents termination (with space)",
+			input:    `[code C:\]path ]`,
+			expected: `C:]path `,
+		},
+		{
+			name:     "Escaped bracket prevents termination (EOF case)",
+			input:    `[code C:\]path]`,
+			expected: `C:]path`, // Captures C:]path, last bracket terminates block
+		},
+		{
+			name:     "Standard block content (not balanced anymore)",
+			input:    `[code [b]bold[/b]]`,
+			expected: `[b`, // Balancing is disabled, stops at first ]
+		},
+		{
+			name:     "Standard block content (fully escaped)",
+			input:    `[code [b\]bold[/b\]]`,
+			expected: `[b]bold[/b]`, // Now requires escaping all closing brackets
+		},
+		{
+			name:     "Literal bracket at end",
+			input:    `[code smile :-\] ]`,
+			expected: `smile :-] `,
+		},
+		{
+			name:     "Multiple nested escaped brackets",
+			input:    `[code [ [ \] \] ]`,
+			expected: `[ [ ] ] `,
+		},
+		{
+			name:     "Escaped open bracket literal",
+			input:    `[code \[literal]`,
+			expected: `[literal`,
+		},
+		{
+			name:     "Escaped open bracket literal closed",
+			input:    `[code \[literal\]]`,
+			expected: `[literal]`,
+		},
+		{
+			name:     "New line handling",
+			input:    "[code \nline1\nline2\n]",
+			expected: "line1\nline2\n", // Leading newline consumed by parser
+		},
+		{
+			name:     "Comment case 1",
+			input:    "[code [b]",
+			expected: `[b`,
+		},
+		{
+			name:     "Comment case 2",
+			input:    "[code [ [ ] ]",
+			expected: `[ [ `, // Stops at first ]
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			root, err := ParseString(tc.input)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, root.Children)
+			codeNode, ok := root.Children[0].(*ast.Code)
+			assert.True(t, ok, "Expected ast.Code node")
+			assert.Equal(t, tc.expected, codeNode.Value)
+		})
+	}
+}
+
+func TestLinkIsImmediateClose(t *testing.T) {
+	t.Run("NoContent", func(t *testing.T) {
+		// a4code syntax [link url] (no content)
+		input := "[link http://example.com]"
+		root, err := ParseString(input)
+		assert.NoError(t, err)
+
+		link := findFirstLink(root)
+		assert.NotNil(t, link)
+		assert.Equal(t, "http://example.com", link.Href)
+		assert.True(t, link.IsImmediateClose(), "Expected IsImmediateClose() to be true for [link url]")
+		assert.Empty(t, link.Children)
+	})
+
+	t.Run("WithContent", func(t *testing.T) {
+		// a4code syntax [link url Content]
+		input := "[link http://example.com Content]"
+		root, err := ParseString(input)
+		assert.NoError(t, err)
+
+		link := findFirstLink(root)
+		assert.NotNil(t, link)
+		assert.Equal(t, "http://example.com", link.Href)
+		assert.False(t, link.IsImmediateClose(), "Expected IsImmediateClose() to be false for [link url Content]")
+		assert.NotEmpty(t, link.Children)
+	})
+
+	t.Run("WithNestedContent", func(t *testing.T) {
+		// a4code syntax [link url [b Bold]]
+		input := "[link http://example.com [b Bold]]"
+		root, err := ParseString(input)
+		assert.NoError(t, err)
+
+		link := findFirstLink(root)
+		assert.NotNil(t, link)
+		assert.Equal(t, "http://example.com", link.Href)
+		assert.False(t, link.IsImmediateClose(), "Expected IsImmediateClose() to be false for [link url [b Bold]]")
+		assert.NotEmpty(t, link.Children)
+	})
+}
+
+func TestToText_Code(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "Inline code",
+			input: "Start [code func main() {}] End",
+			want:  "Start func main() {} End",
+		},
+		{
+			name:  "Block code",
+			input: "[code\nfunc main() {}\n]",
+			want:  "func main() {}\n",
+		},
+		{
+			name:  "CodeIn",
+			input: "[codein \"go\" func main() {}]",
+			want:  "func main() {}",
+		},
+		{
+			name:  "Code with brackets",
+			input: "[code [b\\]bold[/b\\]]",
+			want:  "[b]bold[/b]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := ParseString(tt.input)
+			if err != nil {
+				t.Fatalf("ParseString error: %v", err)
+			}
+			got := ToText(root)
+			if got != tt.want {
+				t.Errorf("ToText() = %q, want %q", got, tt.want)
+			}
+
+			// Also check ToCleanText
+			clean := ToCleanText(root)
+			if clean != tt.want {
+				t.Errorf("ToCleanText() = %q, want %q", clean, tt.want)
+			}
+		})
+	}
+}
+
+func boolPtr(value bool) *bool {
+	return &value
+}
+
+func findFirstLink(n ast.Node) *ast.Link {
+	var found *ast.Link
+	ast.Walk(n, func(node ast.Node) error {
+		if found != nil {
+			return nil
+		}
+		if l, ok := node.(*ast.Link); ok {
+			found = l
+		}
+		return nil
+	})
+	return found
+}
+
+func findFirstQuote(n ast.Node) *ast.Quote {
+	var found *ast.Quote
+	ast.Walk(n, func(node ast.Node) error {
+		if found != nil {
+			return nil
+		}
+		if quote, ok := node.(*ast.Quote); ok {
+			found = quote
+		}
+		return nil
+	})
+	return found
 }

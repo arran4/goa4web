@@ -67,6 +67,13 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	offset := int32(page-1) * limit
 
 	var currentError string
+	topicTitle := ""
+	if topicIDVal > 0 {
+		if top, err := cd.ForumTopicByID(topicIDVal); err == nil {
+			topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
+		}
+	}
+
 	rows, err := cd.UnreadPrivateThreads(limit, offset, topicIDNull, topicIDVal)
 	if err != nil {
 		log.Printf("Error UnreadPrivateThreads: %v", err)
@@ -99,6 +106,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		NextPage     int
 		HasNextPage  bool
 		CD           *common.CoreData
+		TopicTitle   string
 	}{
 		Threads:      threads,
 		CurrentError: currentError,
@@ -107,5 +115,6 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		NextPage:     page + 1,
 		HasNextPage:  len(rows) == int(limit),
 		CD:           cd,
+		TopicTitle:   topicTitle,
 	})
 }

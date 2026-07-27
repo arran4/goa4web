@@ -50,8 +50,12 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	if tid > 0 {
 		link = fmt.Sprintf("/private/topic/%d/unread", tid)
 	}
+	name := "All Unread"
+	if tid > 0 {
+		name = "Unread in Topic"
+	}
 	items = append(items, common.IndexItem{
-		Name: fmt.Sprintf("All Unread%s", unreadCountStr),
+		Name: fmt.Sprintf("%s%s", name, unreadCountStr),
 		Link: link,
 	})
 

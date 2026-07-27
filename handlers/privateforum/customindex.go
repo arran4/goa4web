@@ -15,6 +15,15 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID := vars["topic"]
 	items := []common.IndexItem{}
+
+	unreadCountStr := ""
+	if count, err := cd.UnreadPrivateThreadsCount(); err == nil && count > 0 {
+		unreadCountStr = fmt.Sprintf(" (%d)", count)
+	}
+	items = append(items, common.IndexItem{
+		Name: fmt.Sprintf("All Unread%s", unreadCountStr),
+		Link: "/private/unread",
+	})
 	if topicID == "" {
 		items = []common.IndexItem{{
 			Name: "Create New private topic",

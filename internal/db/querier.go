@@ -295,6 +295,7 @@ type Querier interface {
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
+	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error

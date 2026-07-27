@@ -1020,6 +1020,10 @@ type QuerierStub struct {
 	ListUnreadPrivateThreadsForUserReturns []*ListUnreadPrivateThreadsForUserRow
 	ListUnreadPrivateThreadsForUserErr     error
 	ListUnreadPrivateThreadsForUserFn      func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+	CountUnreadPrivateThreadsForUserCalls   []CountUnreadPrivateThreadsForUserParams
+	CountUnreadPrivateThreadsForUserReturns int64
+	CountUnreadPrivateThreadsForUserErr     error
+	CountUnreadPrivateThreadsForUserFn      func(context.Context, CountUnreadPrivateThreadsForUserParams) (int64, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {
@@ -3189,6 +3193,17 @@ func (s *QuerierStub) ListUnreadPrivateThreadsForUser(ctx context.Context, arg L
 	fn := s.ListUnreadPrivateThreadsForUserFn
 	ret := s.ListUnreadPrivateThreadsForUserReturns
 	err := s.ListUnreadPrivateThreadsForUserErr
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
+	s.CountUnreadPrivateThreadsForUserCalls = append(s.CountUnreadPrivateThreadsForUserCalls, arg)
+	fn := s.CountUnreadPrivateThreadsForUserFn
+	ret := s.CountUnreadPrivateThreadsForUserReturns
+	err := s.CountUnreadPrivateThreadsForUserErr
 	if fn != nil {
 		return fn(ctx, arg)
 	}

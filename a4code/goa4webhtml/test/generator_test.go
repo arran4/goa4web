@@ -23,6 +23,12 @@ func (m *mockLinkProvider) RenderLink(url string, isBlock bool, isImmediateClose
 	return fmt.Sprintf(`<custom-link href="%s">`, url), "</custom-link>", false
 }
 
+type blockAwareMockLinkProvider struct{}
+
+func (m *blockAwareMockLinkProvider) RenderLink(url string, isBlock bool, isImmediateClose bool) (htmlOpen string, htmlClose string, consumeImmediate bool) {
+	return fmt.Sprintf(`<custom-link href="%s" data-block="%t">`, url, isBlock), "</custom-link>", false
+}
+
 func TestGenerator(t *testing.T) {
 	fs.WalkDir(testData, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -55,6 +61,8 @@ func TestGenerator(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				// Trim trailing newline from input to avoid implicit Text node generation
 				input := strings.TrimSuffix(inputRaw, "\n")
+				// The visible-space marker keeps whitespace-sensitive txtar inputs readable.
+				input = strings.ReplaceAll(input, "␠", " ")
 
 				expect, ok := expects[name]
 				if !ok {
@@ -71,7 +79,10 @@ func TestGenerator(t *testing.T) {
 				var buf bytes.Buffer
 				// Use mocked providers for specific tests via With... options
 				var opts []any
-				if strings.Contains(name, "provider_link") {
+				switch {
+				case strings.Contains(name, "provider_link_block"):
+					opts = append(opts, goa4webhtml.WithLinkProvider(&blockAwareMockLinkProvider{}))
+				case strings.Contains(name, "provider_link"):
 					opts = append(opts, goa4webhtml.WithLinkProvider(&mockLinkProvider{}))
 				}
 				if strings.Contains(name, "provider_image") {

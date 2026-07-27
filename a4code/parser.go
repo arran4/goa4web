@@ -72,6 +72,18 @@ func (s *scanner) Peek() (byte, error) {
 	return b[0], nil
 }
 
+func (s *scanner) PeekNextNonHorizontalWhitespace() (byte, error) {
+	for n := 1; ; n++ {
+		b, err := s.r.Peek(n)
+		if len(b) < n {
+			return 0, err
+		}
+		if b[n-1] != ' ' && b[n-1] != '\t' {
+			return b[n-1], nil
+		}
+	}
+}
+
 func isBlockContext(n ast.Node) bool {
 	if _, ok := n.(*ast.Root); ok {
 		return true
@@ -105,6 +117,11 @@ func isBlockTag(tag string) bool {
 	return false
 }
 
+func startsWithLineBreakAfterHorizontalWhitespace(value string) bool {
+	value = strings.TrimLeft(value, " \t")
+	return strings.HasPrefix(value, "\n") || strings.HasPrefix(value, "\r")
+}
+
 func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bool) {
 	if len(children) > 0 {
 		prev := children[len(children)-1]
@@ -115,7 +132,7 @@ func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bo
 			if isBlockContext(newChild) {
 				startsNewline = true
 			} else if txt, ok := newChild.(*ast.Text); ok {
-				if strings.HasPrefix(txt.Value, "\n") {
+				if startsWithLineBreakAfterHorizontalWhitespace(txt.Value) {
 					startsNewline = true
 				}
 			}
@@ -266,7 +283,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					switch t := nNode.(type) {
 					case *ast.Quote:
 						if t.IsBlock {
-							next, err := s.Peek()
+							next, err := s.PeekNextNonHorizontalWhitespace()
 							if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
 								// Kept as block
 							} else {

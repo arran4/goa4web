@@ -7,7 +7,7 @@
             {{ if ne $i.TemplateName "" }}
                 {{ include $i.TemplateName $i.TemplateData }}
             {{ else }}
-                <a href="{{ addmode $i.Link }}">{{ if $i.Icon }}{{ $i.Icon }} {{ end }}{{ $i.Name }}</a><br>
+                <a href="{{ addmode $i.Link }}" style="text-decoration: none;">{{ if $i.Icon }}{{ $i.Icon }}&nbsp;{{ end }}<span style="text-decoration: underline;">{{ $i.Name }}</span></a><br>
             {{ end }}
         {{- else }}
             {{- $advanced = true }}
@@ -21,7 +21,7 @@
                     {{ if ne $i.TemplateName "" }}
                         {{ include $i.TemplateName $i.TemplateData }}
                     {{ else }}
-                        <a href="{{ addmode $i.Link }}">{{ if $i.Icon }}{{ $i.Icon }} {{ end }}{{ $i.Name }}</a><br>
+                        <a href="{{ addmode $i.Link }}" style="text-decoration: none;">{{ if $i.Icon }}{{ $i.Icon }}&nbsp;{{ end }}<span style="text-decoration: underline;">{{ $i.Name }}</span></a><br>
                     {{ end }}
                 {{- end }}
             {{- end }}
@@ -29,7 +29,7 @@
     {{- end }}
     {{ if cd.HasAdminRole }}
         {{ if cd.AdminMode }}
-            <a href="{{ addmode "/admin" }}">⚙️ Admin Dashboard</a><br>
+            <a href="{{ addmode "/admin" }}" style="text-decoration: none;">⚙️&nbsp;<span style="text-decoration: underline;">Admin Dashboard</span></a><br>
         {{ end }}
     {{ end }}
 {{- end}}

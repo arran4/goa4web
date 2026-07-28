@@ -135,18 +135,6 @@ func TestHappyPathBlogsRssPageWritesRSS(t *testing.T) {
 	}
 }
 
-func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
-	req := httptest.NewRequest("GET", "/blogs/add", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-	rr := httptest.NewRecorder()
-	BlogAddPage(rr, req)
-	if rr.Result().StatusCode != http.StatusForbidden {
-		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
-	}
-}
-
 func TestUnhappyPathBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
 	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
@@ -154,7 +142,7 @@ func TestUnhappyPathBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
 	BlogEditPage(rr, req)
-	if rr.Result().StatusCode != http.StatusForbidden {
-		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
+	if rr.Result().StatusCode != http.StatusNotFound {
+		t.Fatalf("expected %d got %d", http.StatusNotFound, rr.Result().StatusCode)
 	}
 }

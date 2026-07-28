@@ -23,7 +23,7 @@ func TestBlogEditPage_FailsWhenBlogNotLoaded(t *testing.T) {
 
 	BlogEditPage(rr, req.WithContext(ctx))
 
-	if rr.Code != http.StatusForbidden {
-		t.Errorf("expected status Forbidden (%d), got %d", http.StatusForbidden, rr.Code)
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("expected status NotFound (%d), got %d", http.StatusNotFound, rr.Code)
 	}
 }

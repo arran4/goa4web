@@ -52,12 +52,6 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("No writing found"))
 		return
 	}
-	cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
-	if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
 	dateSuffix := ""
 	if writing.Published.Valid {
 		dateSuffix = fmt.Sprintf(" - %s", cd.FormatLocalTime(writing.Published.Time))

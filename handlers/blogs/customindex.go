@@ -33,14 +33,14 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 
 	if cd.IsAdmin() {
 		items = append(items, common.IndexItem{
-			Name: "Blogs Admin",
+			Name: "Blogs Admin", Icon: "⚙️",
 			Link: "/admin/blogs",
 		})
 	}
 	userCanPost := cd.HasGrant("blogs", "entry", "post", 0)
 	if userCanPost {
 		items = append(items, common.IndexItem{
-			Name: "Write blog",
+			Name: "Write blog", Icon: "✍️",
 			Link: "/blogs/add",
 		})
 	}

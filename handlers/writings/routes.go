@@ -19,7 +19,7 @@ var legacyRedirectsEnabled = true
 // RegisterRoutes attaches the public writings endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
 	opts := []navpkg.RouterOptions{
-		navpkg.NewIndexLinkWithViewPermission("Writings", "/writings", SectionWeight, "writing", "category"),
+		navpkg.NewIndexLinkWithViewPermission("Writings", "/writings", "✍", SectionWeight, "writing", "category"),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Writings"), "Writings", "/admin/writings", SectionWeight),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Writings"), "Categories", "/admin/writings/categories", SectionWeight+1),
 	}

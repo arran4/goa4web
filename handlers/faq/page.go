@@ -40,7 +40,7 @@ func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 	if data.HasGrant("faq", "question", "post", 0) {
 		data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-			Name: "Ask",
+			Name: "Ask", Icon: "❓",
 			Link: "/faq/ask",
 		})
 	}

@@ -15,7 +15,7 @@ import (
 // RegisterRoutes attaches the bookmarks endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
 	opts := []navpkg.RouterOptions{
-		navpkg.NewIndexLink("Bookmarks", "/bookmarks", SectionWeight),
+		navpkg.NewIndexLink("Bookmarks", "/bookmarks", "🔖", SectionWeight),
 	}
 	br := r.PathPrefix("/bookmarks").Subrouter()
 	br.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)

@@ -1,5 +1,5 @@
 {{- define "indexItems"}}
     {{ range $i := cd.IndexItems }}
-        <a href="{{ addmode $i.Link }}" {{ if eq $i.Link "/usr/notifications" }}id="notif-index"{{ end }}>{{ $i.Name }}</a><br>
+        <a href="{{ addmode $i.Link }}" {{ if eq $i.Link "/usr/notifications" }}id="notif-index"{{ end }} style="text-decoration: none;">{{ if $i.Icon }}{{ $i.Icon }}&nbsp;{{ end }}<span style="text-decoration: underline;">{{ $i.Name }}</span></a><br>
     {{ end }}
 {{- end}}

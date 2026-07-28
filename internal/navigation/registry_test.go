@@ -8,8 +8,8 @@ func TestIndexItemsOrdering(t *testing.T) {
 	defaultRegistry = NewRegistry()
 	t.Cleanup(func() { defaultRegistry = NewRegistry() })
 
-	RegisterIndexLink("b", "/b", 20)
-	RegisterIndexLink("a", "/a", 10)
+	RegisterIndexLink("b", "/b", "", 20)
+	RegisterIndexLink("a", "/a", "", 10)
 	RegisterAdminControlCenter("sec", "b", "/admin/b", 20)
 	RegisterAdminControlCenter("sec", "a", "/admin/a", 10)
 
@@ -49,8 +49,8 @@ func TestIndexItemsPermissionFilter(t *testing.T) {
 	defaultRegistry = NewRegistry()
 	t.Cleanup(func() { defaultRegistry = NewRegistry() })
 
-	RegisterIndexLinkWithViewPermission("protected", "/protected", 5, "news", "post")
-	RegisterIndexLink("public", "/public", 10)
+	RegisterIndexLinkWithViewPermission("protected", "/protected", "", 5, "news", "post")
+	RegisterIndexLink("public", "/public", "", 10)
 
 	items := IndexItemsWithPermission(func(section, item string) bool {
 		return section == "news" && item == "post"

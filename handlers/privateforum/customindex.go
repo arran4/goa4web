@@ -25,7 +25,7 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	} else {
 		if threadID != "" {
 			items = append(items, common.IndexItem{
-				Name: "Go to topic",
+				Name: "Go back",
 				Link: fmt.Sprintf("/private/topic/%s", topicID),
 			})
 		}

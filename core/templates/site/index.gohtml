@@ -7,7 +7,7 @@
             {{ if ne $i.TemplateName "" }}
                 {{ include $i.TemplateName $i.TemplateData }}
             {{ else }}
-                <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
+                <a href="{{ addmode $i.Link }}">{{ if $i.Icon }}{{ $i.Icon }} {{ end }}{{ $i.Name }}</a><br>
             {{ end }}
         {{- else }}
             {{- $advanced = true }}
@@ -21,7 +21,7 @@
                     {{ if ne $i.TemplateName "" }}
                         {{ include $i.TemplateName $i.TemplateData }}
                     {{ else }}
-                        <a href="{{ addmode $i.Link }}">{{ $i.Name }}</a><br>
+                        <a href="{{ addmode $i.Link }}">{{ if $i.Icon }}{{ $i.Icon }} {{ end }}{{ $i.Name }}</a><br>
                     {{ end }}
                 {{- end }}
             {{- end }}

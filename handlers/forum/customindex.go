@@ -60,10 +60,12 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				},
 			)
 		}
-		items = append(items, common.IndexItem{
-			Name: "Go to topic",
-			Link: fmt.Sprintf("%s/topic/%s", base, topicID),
-		})
+		if section != "privateforum" {
+			items = append(items, common.IndexItem{
+				Name: "Go to topic",
+				Link: fmt.Sprintf("%s/topic/%s", base, topicID),
+			})
+		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "reply", int32(tid)) {
 			items = append(items,
 				common.IndexItem{

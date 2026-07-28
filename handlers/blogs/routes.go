@@ -17,7 +17,7 @@ import (
 // RegisterRoutes attaches the public blog endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
 	opts := []navpkg.RouterOptions{
-		navpkg.NewIndexLinkWithViewPermission("Blogs", "/blogs", SectionWeight, "blogs", "entry"),
+		navpkg.NewIndexLinkWithViewPermission("Blogs", "/blogs", "📝", SectionWeight, "blogs", "entry"),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Blogs"), "Blogs", "/admin/blogs", SectionWeight),
 	}
 	br := r.PathPrefix("/blogs").Subrouter()

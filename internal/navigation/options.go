@@ -1,5 +1,7 @@
 package navigation
 
+import "html/template"
+
 // RouterOptions defines an option that can apply changes to the navigation registry.
 type RouterOptions interface {
 	Apply(*Registry)
@@ -9,34 +11,36 @@ type RouterOptions interface {
 type IndexLinkOption struct {
 	Name   string
 	URL    string
+	Icon   template.HTML
 	Weight int
 }
 
 func (o *IndexLinkOption) Apply(r *Registry) {
-	r.RegisterIndexLink(o.Name, o.URL, o.Weight)
+	r.RegisterIndexLink(o.Name, o.URL, o.Icon, o.Weight)
 }
 
 // NewIndexLink creates a new IndexLinkOption.
-func NewIndexLink(name, url string, weight int) RouterOptions {
-	return &IndexLinkOption{Name: name, URL: url, Weight: weight}
+func NewIndexLink(name, url string, icon template.HTML, weight int) RouterOptions {
+	return &IndexLinkOption{Name: name, URL: url, Icon: icon, Weight: weight}
 }
 
 // IndexLinkWithViewPermissionOption represents an index link registration with view permission.
 type IndexLinkWithViewPermissionOption struct {
 	Name        string
 	URL         string
+	Icon        template.HTML
 	Weight      int
 	ViewSection string
 	ViewItem    string
 }
 
 func (o *IndexLinkWithViewPermissionOption) Apply(r *Registry) {
-	r.RegisterIndexLinkWithViewPermission(o.Name, o.URL, o.Weight, o.ViewSection, o.ViewItem)
+	r.RegisterIndexLinkWithViewPermission(o.Name, o.URL, o.Icon, o.Weight, o.ViewSection, o.ViewItem)
 }
 
 // NewIndexLinkWithViewPermission creates a new IndexLinkWithViewPermissionOption.
-func NewIndexLinkWithViewPermission(name, url string, weight int, section, item string) RouterOptions {
-	return &IndexLinkWithViewPermissionOption{Name: name, URL: url, Weight: weight, ViewSection: section, ViewItem: item}
+func NewIndexLinkWithViewPermission(name, url string, icon template.HTML, weight int, section, item string) RouterOptions {
+	return &IndexLinkWithViewPermissionOption{Name: name, URL: url, Icon: icon, Weight: weight, ViewSection: section, ViewItem: item}
 }
 
 // AdminControlCenterLinkOption represents an admin control center link registration.

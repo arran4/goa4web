@@ -18,7 +18,7 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 
 	if topicID == "" {
 		items = []common.IndexItem{{
-			Name: "Create New private topic",
+			Name: "Create New private topic", Icon: "🔒",
 			Link: "/private/topic/new",
 		}}
 	} else {

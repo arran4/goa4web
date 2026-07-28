@@ -66,3 +66,35 @@ func RequireWritingAuthor(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// RequireWritingViewAccess ensures the user has permission to view the article
+// specified in the URL path. It sets the current thread and topic on success.
+func RequireWritingViewAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok {
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			return
+		}
+
+		cd.LoadSelectionsFromRequest(r)
+		writing, err := cd.Article()
+		if err != nil {
+			log.Printf("get writing for access check: %v", err)
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			return
+		}
+		if writing == nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			return
+		}
+
+		cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
+		if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

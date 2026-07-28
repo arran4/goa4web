@@ -17,7 +17,7 @@ import (
 // RegisterRoutes attaches the public forum endpoints to r.
 func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOptions {
 	opts := []navpkg.RouterOptions{
-		navpkg.NewIndexLinkWithViewPermission("Forum", "/forum", SectionWeight, "forum", "category"),
+		navpkg.NewIndexLinkWithViewPermission("Forum", "/forum", "💬", SectionWeight, "forum", "category"),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Forum", "/admin/forum", SectionWeight),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Flagged Posts", "/admin/forum/flagged", SectionWeight+1),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Forum"), "Moderator Logs", "/admin/forum/logs", SectionWeight+2),

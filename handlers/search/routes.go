@@ -12,7 +12,7 @@ import (
 // RegisterRoutes attaches the search endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
 	opts := []navpkg.RouterOptions{
-		navpkg.NewIndexLink("Search", "/search", SectionWeight),
+		navpkg.NewIndexLink("Search", "/search", `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`, SectionWeight),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Search"), "Search", "/admin/search", SectionWeight),
 	}
 	sr := r.PathPrefix("/search").Subrouter()

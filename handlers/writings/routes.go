@@ -19,7 +19,7 @@ var legacyRedirectsEnabled = true
 // RegisterRoutes attaches the public writings endpoints to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptions {
 	opts := []navpkg.RouterOptions{
-		navpkg.NewIndexLinkWithViewPermission("Writings", "/writings", SectionWeight, "writing", "category"),
+		navpkg.NewIndexLinkWithViewPermission("Writings", "/writings", "✍", SectionWeight, "writing", "category"),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Writings"), "Writings", "/admin/writings", SectionWeight),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Writings"), "Categories", "/admin/writings/categories", SectionWeight+1),
 	}
@@ -43,7 +43,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []navpkg.RouterOptio
 	wr.HandleFunc("/shared/article/{writing}/ts/{ts}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 	wr.HandleFunc("/shared/article/{writing}/nonce/{nonce}/sign/{sign}", SharedPreviewPage).Methods("GET", "HEAD")
 
-	wr.HandleFunc("/article/{writing}", ArticlePage).Methods("GET")
+	wr.Handle("/article/{writing}", RequireWritingViewAccess(http.HandlerFunc(ArticlePage))).Methods("GET")
 	wr.HandleFunc("/article/{writing}", handlers.TaskHandler(replyTask)).Methods("POST").MatcherFunc(replyTask.Matcher())
 	wr.Handle("/article/{writing}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(editReplyTask)))).Methods("POST").MatcherFunc(editReplyTask.Matcher())
 	wr.Handle("/article/{writing}/comment/{comment}", comments.RequireCommentAuthor(http.HandlerFunc(handlers.TaskHandler(cancelTask)))).Methods("POST").MatcherFunc(cancelTask.Matcher())

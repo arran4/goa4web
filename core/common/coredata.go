@@ -73,6 +73,7 @@ func (lc *LanguageCache) Invalidate() {
 
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
+	Icon         template.HTML
 	Name         string
 	Link         string
 	TemplateName string

@@ -18,27 +18,85 @@ func TestParseDimension(t *testing.T) {
 		wantH   int
 		wantErr bool
 	}{
-		{"Valid dimension", "1024x768", 1024, 768, false},
-		{"Invalid format (no x)", "1024-768", 0, 0, true},
-		{"Invalid format (multiple x)", "1024x768x2", 0, 0, true},
-		{"Invalid width", "abcx768", 0, 0, true},
-		{"Invalid height", "1024xdef", 0, 0, true},
+		{
+			name:    "valid normal size",
+			dimStr:  "1024x768",
+			wantW:   1024,
+			wantH:   768,
+			wantErr: false,
+		},
+		{
+			name:    "valid small size",
+			dimStr:  "1x1",
+			wantW:   1,
+			wantH:   1,
+			wantErr: false,
+		},
+		{
+			name:    "invalid with spaces",
+			dimStr:  " 1024 x 768 ",
+			wantErr: true,
+		},
+		{
+			name:    "invalid missing x",
+			dimStr:  "1024",
+			wantErr: true,
+		},
+		{
+			name:    "invalid empty string",
+			dimStr:  "",
+			wantErr: true,
+		},
+		{
+			name:    "invalid multiple x",
+			dimStr:  "1024x768x24",
+			wantErr: true,
+		},
+		{
+			name:    "invalid width not a number",
+			dimStr:  "abcx768",
+			wantErr: true,
+		},
+		{
+			name:    "invalid height not a number",
+			dimStr:  "1024xabc",
+			wantErr: true,
+		},
+		{
+			name:    "invalid missing height",
+			dimStr:  "1024x",
+			wantErr: true,
+		},
+		{
+			name:    "invalid missing width",
+			dimStr:  "x768",
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotW, gotH, err := ParseDimension(tt.dimStr)
+			w, h, err := ParseDimension(tt.dimStr)
+
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseDimension() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf(
+					"ParseDimension(%q) error = %v, wantErr %v",
+					tt.dimStr,
+					err,
+					tt.wantErr,
+				)
 				return
 			}
-			if !tt.wantErr {
-				if gotW != tt.wantW {
-					t.Errorf("ParseDimension() gotW = %v, want %v", gotW, tt.wantW)
-				}
-				if gotH != tt.wantH {
-					t.Errorf("ParseDimension() gotH = %v, want %v", gotH, tt.wantH)
-				}
+
+			if tt.wantErr {
+				return
+			}
+
+			if w != tt.wantW {
+				t.Errorf("ParseDimension(%q) width = %d, want %d", tt.dimStr, w, tt.wantW)
+			}
+			if h != tt.wantH {
+				t.Errorf("ParseDimension(%q) height = %d, want %d", tt.dimStr, h, tt.wantH)
 			}
 		})
 	}
@@ -47,125 +105,147 @@ func TestParseDimension(t *testing.T) {
 func TestGenerateSafeSize(t *testing.T) {
 	createImage := func(w, h int) image.Image {
 		img := image.NewRGBA(image.Rect(0, 0, w, h))
-		draw.Draw(img, img.Bounds(), &image.Uniform{color.White}, image.Point{}, draw.Src)
+		draw.Draw(
+			img,
+			img.Bounds(),
+			&image.Uniform{C: color.White},
+			image.Point{},
+			draw.Src,
+		)
 		return img
 	}
 
-	t.Run("Invalid max dimensions", func(t *testing.T) {
+	t.Run("invalid max dimensions", func(t *testing.T) {
 		src := createImage(100, 100)
+
 		_, err := GenerateSafeSize(src, ".jpg", "bild", 0, 100)
 		if err == nil {
-			t.Error("Expected error for maxWidth <= 0")
+			t.Error("expected error for maxWidth <= 0")
 		}
+
 		_, err = GenerateSafeSize(src, ".jpg", "bild", 100, -1)
 		if err == nil {
-			t.Error("Expected error for maxHeight <= 0")
+			t.Error("expected error for maxHeight <= 0")
 		}
 	})
 
-	t.Run("Empty source image", func(t *testing.T) {
+	t.Run("empty source image", func(t *testing.T) {
 		src := image.NewRGBA(image.Rect(0, 0, 0, 0))
+
 		_, err := GenerateSafeSize(src, ".jpg", "bild", 100, 100)
 		if err == nil {
-			t.Error("Expected error for empty source image")
+			t.Error("expected error for empty source image")
 		}
 	})
 
-	t.Run("Image already within safe size", func(t *testing.T) {
+	t.Run("image already within safe size", func(t *testing.T) {
 		src := createImage(80, 80)
+
 		data, err := GenerateSafeSize(src, ".png", "bild", 100, 100)
 		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
+			t.Fatalf("GenerateSafeSize() error = %v", err)
 		}
+
 		img, format, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
-			t.Fatalf("Failed to decode generated image: %v", err)
+			t.Fatalf("image.Decode() error = %v", err)
 		}
+
 		if format != "png" {
-			t.Errorf("Expected png format, got %s", format)
+			t.Errorf("format = %q, want %q", format, "png")
 		}
-		if img.Bounds().Dx() != 80 || img.Bounds().Dy() != 80 {
-			t.Errorf("Expected 80x80, got %dx%d", img.Bounds().Dx(), img.Bounds().Dy())
+		if gotW, gotH := img.Bounds().Dx(), img.Bounds().Dy(); gotW != 80 || gotH != 80 {
+			t.Errorf("dimensions = %dx%d, want 80x80", gotW, gotH)
 		}
 	})
 
-	t.Run("Resize needed (width limiting)", func(t *testing.T) {
+	t.Run("resize needed with width limiting", func(t *testing.T) {
 		src := createImage(200, 100)
+
 		data, err := GenerateSafeSize(src, ".png", "bild", 100, 100)
 		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
+			t.Fatalf("GenerateSafeSize() error = %v", err)
 		}
+
 		img, _, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
-			t.Fatalf("Failed to decode generated image: %v", err)
+			t.Fatalf("image.Decode() error = %v", err)
 		}
-		if img.Bounds().Dx() != 100 || img.Bounds().Dy() != 50 {
-			t.Errorf("Expected 100x50, got %dx%d", img.Bounds().Dx(), img.Bounds().Dy())
+
+		if gotW, gotH := img.Bounds().Dx(), img.Bounds().Dy(); gotW != 100 || gotH != 50 {
+			t.Errorf("dimensions = %dx%d, want 100x50", gotW, gotH)
 		}
 	})
 
-	t.Run("Resize needed (height limiting)", func(t *testing.T) {
+	t.Run("resize needed with height limiting", func(t *testing.T) {
 		src := createImage(100, 200)
+
 		data, err := GenerateSafeSize(src, ".png", "bild", 100, 100)
 		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
+			t.Fatalf("GenerateSafeSize() error = %v", err)
 		}
+
 		img, _, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
-			t.Fatalf("Failed to decode generated image: %v", err)
+			t.Fatalf("image.Decode() error = %v", err)
 		}
-		if img.Bounds().Dx() != 50 || img.Bounds().Dy() != 100 {
-			t.Errorf("Expected 50x100, got %dx%d", img.Bounds().Dx(), img.Bounds().Dy())
+
+		if gotW, gotH := img.Bounds().Dx(), img.Bounds().Dy(); gotW != 50 || gotH != 100 {
+			t.Errorf("dimensions = %dx%d, want 50x100", gotW, gotH)
 		}
 	})
 
-	t.Run("Resize to extreme (minimum 1x1)", func(t *testing.T) {
+	t.Run("resize to minimum one by one", func(t *testing.T) {
 		src := createImage(1000, 1000)
-		// Requesting 1x1 resize, but due to floating point and very small size it might be 1x1
-		// Actually let's just make max width and max height very small compared to the original, e.g. 1
-		// The math: ratio = Min(1/1000, 1/1000) = 0.001
-		// newW = 1000 * 0.001 = 1, newH = 1000 * 0.001 = 1
+
 		data, err := GenerateSafeSize(src, ".png", "bild", 1, 1)
 		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
+			t.Fatalf("GenerateSafeSize() error = %v", err)
 		}
+
 		img, _, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
-			t.Fatalf("Failed to decode generated image: %v", err)
+			t.Fatalf("image.Decode() error = %v", err)
 		}
-		if img.Bounds().Dx() != 1 || img.Bounds().Dy() != 1 {
-			t.Errorf("Expected 1x1, got %dx%d", img.Bounds().Dx(), img.Bounds().Dy())
+
+		if gotW, gotH := img.Bounds().Dx(), img.Bounds().Dy(); gotW != 1 || gotH != 1 {
+			t.Errorf("dimensions = %dx%d, want 1x1", gotW, gotH)
 		}
 	})
 
-	t.Run("Generator: draw", func(t *testing.T) {
+	t.Run("draw generator", func(t *testing.T) {
 		src := createImage(200, 200)
+
 		data, err := GenerateSafeSize(src, ".png", "draw", 100, 100)
 		if err != nil {
-			t.Fatalf("Unexpected error: %v", err)
+			t.Fatalf("GenerateSafeSize() error = %v", err)
 		}
+
 		img, _, err := image.Decode(bytes.NewReader(data))
 		if err != nil {
-			t.Fatalf("Failed to decode generated image: %v", err)
+			t.Fatalf("image.Decode() error = %v", err)
 		}
-		if img.Bounds().Dx() != 100 || img.Bounds().Dy() != 100 {
-			t.Errorf("Expected 100x100, got %dx%d", img.Bounds().Dx(), img.Bounds().Dy())
+
+		if gotW, gotH := img.Bounds().Dx(), img.Bounds().Dy(); gotW != 100 || gotH != 100 {
+			t.Errorf("dimensions = %dx%d, want 100x100", gotW, gotH)
 		}
 	})
 
-	t.Run("Invalid extension", func(t *testing.T) {
+	t.Run("invalid extension", func(t *testing.T) {
 		src := createImage(200, 200)
+
 		_, err := GenerateSafeSize(src, ".invalid", "bild", 100, 100)
 		if err == nil {
-			t.Error("Expected error for invalid extension")
+			t.Error("expected error for invalid extension")
 		}
 	})
 
-	t.Run("Invalid extension (no resize needed)", func(t *testing.T) {
+	t.Run("invalid extension without resize", func(t *testing.T) {
 		src := createImage(50, 50)
+
 		_, err := GenerateSafeSize(src, ".invalid", "bild", 100, 100)
 		if err == nil {
-			t.Error("Expected error for invalid extension")
+			t.Error("expected error for invalid extension")
 		}
 	})
 }

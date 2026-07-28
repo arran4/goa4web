@@ -31,8 +31,7 @@ func TestStartGroupDiscussionPage_RouterGrantFailure(t *testing.T) {
 
 	RegisterRoutes(r, cfg)
 
-	var injectedHandler http.Handler = r
-	injectedHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	injectedHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		r.ServeHTTP(w, req)

@@ -26,9 +26,9 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion
-	pr.HandleFunc("/topic/new", StartGroupDiscussionPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/new", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
-	pr.HandleFunc("", handlers.TaskHandler(privateTopicCreateTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
+	pr.Handle("/topic/new", EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(StartGroupDiscussionPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/new", EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(handlers.TaskHandler(privateTopicCreateTask)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
+	pr.Handle("", EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(handlers.TaskHandler(privateTopicCreateTask)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

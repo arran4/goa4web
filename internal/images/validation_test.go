@@ -50,3 +50,29 @@ func TestValidID(t *testing.T) {
 		}
 	}
 }
+
+func TestAllowedExtension(t *testing.T) {
+	tests := []struct {
+		ext  string
+		want bool
+	}{
+		{ext: ".jpg", want: true},
+		{ext: ".jpeg", want: true},
+		{ext: ".png", want: true},
+		{ext: ".gif", want: true},
+		{ext: ".JPG", want: true},
+		{ext: ".Png", want: true},
+		{ext: ".bmp", want: false},
+		{ext: "jpg", want: false},
+		{ext: "", want: false},
+		{ext: ".txt", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.ext, func(t *testing.T) {
+			if got := AllowedExtension(tt.ext); got != tt.want {
+				t.Errorf("AllowedExtension(%q) = %v, want %v", tt.ext, got, tt.want)
+			}
+		})
+	}
+}

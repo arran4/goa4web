@@ -3,6 +3,7 @@ package opengraph
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -148,6 +149,184 @@ func TestFetch(t *testing.T) {
 			}
 			if info.Author != tt.wantInfo.Author {
 				t.Errorf("Author = %v, want %v", info.Author, tt.wantInfo.Author)
+			}
+		})
+	}
+}
+
+func TestParse(t *testing.T) {
+	tests := []struct {
+		name     string
+		html     string
+		wantInfo Info
+		wantErr  bool
+	}{
+		{
+			name: "Complete og: tags",
+			html: `<html>
+				<meta property="og:title" content="og Title">
+				<meta property="og:description" content="og Desc">
+				<meta property="og:image" content="og Image">
+			</html>`,
+			wantInfo: Info{
+				Title:       "og Title",
+				Description: "og Desc",
+				Image:       "og Image",
+			},
+		},
+		{
+			name: "Meta name fallbacks",
+			html: `<html>
+				<meta name="title" content="name Title">
+				<meta name="description" content="name Desc">
+				<meta name="uploadDate" content="2025-01-01">
+				<meta name="author" content="name Author">
+			</html>`,
+			wantInfo: Info{
+				Title:       "name Title",
+				Description: "name Desc",
+				UploadDate:  "2025-01-01",
+				Author:      "name Author",
+			},
+		},
+		{
+			name: "Meta itemprop fallbacks",
+			html: `<html>
+				<meta itemprop="duration" content="PT1M">
+				<meta itemprop="uploadDate" content="2025-01-02">
+				<meta itemprop="author" content="itemprop Author">
+			</html>`,
+			wantInfo: Info{
+				Duration:   "PT1M",
+				UploadDate: "2025-01-02",
+				Author:     "itemprop Author",
+			},
+		},
+		{
+			name: "Title tag fallback",
+			html: `<html>
+				<head><title>Tag Title</title></head>
+			</html>`,
+			wantInfo: Info{
+				Title: "Tag Title",
+			},
+		},
+		{
+			name: "JSON-LD VideoObject",
+			html: `<html>
+				<script type="application/ld+json">
+				{
+					"@type": "VideoObject",
+					"name": "JSON Title",
+					"description": "JSON Desc",
+					"thumbnailUrl": "JSON Image",
+					"duration": "PT2M35S",
+					"uploadDate": "2026-01-09",
+					"author": "JSON Author"
+				}
+				</script>
+			</html>`,
+			wantInfo: Info{
+				Title:       "JSON Title",
+				Description: "JSON Desc",
+				Image:       "JSON Image",
+				Duration:    "PT2M35S",
+				UploadDate:  "2026-01-09",
+				Author:      "JSON Author",
+			},
+		},
+		{
+			name: "JSON-LD VideoObject in array",
+			html: `<html>
+				<script type="application/ld+json">
+				[
+					{
+						"@type": "VideoObject",
+						"name": "JSON Array Title"
+					}
+				]
+				</script>
+			</html>`,
+			wantInfo: Info{
+				Title: "JSON Array Title",
+			},
+		},
+		{
+			name: "JSON-LD author as object",
+			html: `<html>
+				<script type="application/ld+json">
+				{
+					"@type": "VideoObject",
+					"author": {
+						"name": "Object Author"
+					}
+				}
+				</script>
+			</html>`,
+			wantInfo: Info{
+				Author: "Object Author",
+			},
+		},
+		{
+			name: "JSON-LD author as array",
+			html: `<html>
+				<script type="application/ld+json">
+				{
+					"@type": "VideoObject",
+					"author": [
+						{
+							"name": "Array Author"
+						}
+					]
+				}
+				</script>
+			</html>`,
+			wantInfo: Info{
+				Author: "Array Author",
+			},
+		},
+		{
+			name: "Invalid JSON-LD ignored",
+			html: `<html>
+				<script type="application/ld+json">
+				{
+					invalid json
+				}
+				</script>
+				<meta property="og:title" content="og Title">
+			</html>`,
+			wantInfo: Info{
+				Title: "og Title",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info, err := Parse(strings.NewReader(tt.html))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err == nil {
+				if info.Title != tt.wantInfo.Title {
+					t.Errorf("Title = %v, want %v", info.Title, tt.wantInfo.Title)
+				}
+				if info.Description != tt.wantInfo.Description {
+					t.Errorf("Description = %v, want %v", info.Description, tt.wantInfo.Description)
+				}
+				if info.Image != tt.wantInfo.Image {
+					t.Errorf("Image = %v, want %v", info.Image, tt.wantInfo.Image)
+				}
+				if info.Duration != tt.wantInfo.Duration {
+					t.Errorf("Duration = %v, want %v", info.Duration, tt.wantInfo.Duration)
+				}
+				if info.UploadDate != tt.wantInfo.UploadDate {
+					t.Errorf("UploadDate = %v, want %v", info.UploadDate, tt.wantInfo.UploadDate)
+				}
+				if info.Author != tt.wantInfo.Author {
+					t.Errorf("Author = %v, want %v", info.Author, tt.wantInfo.Author)
+				}
 			}
 		})
 	}

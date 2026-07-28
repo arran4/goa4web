@@ -14,6 +14,7 @@ import (
 var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	vars := mux.Vars(r)
 	topicID := vars["topic"]
+	threadID := vars["thread"]
 	items := []common.IndexItem{}
 
 	if topicID == "" {
@@ -22,10 +23,12 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			Link: "/private/topic/new",
 		}}
 	} else {
-		items = append(items, common.IndexItem{
-			Name: "Go back to Private Forum",
-			Link: "/private",
-		})
+		if threadID != "" {
+			items = append(items, common.IndexItem{
+				Name: "Go to topic",
+				Link: fmt.Sprintf("/private/topic/%s", topicID),
+			})
+		}
 		if tid, err := strconv.Atoi(topicID); err == nil {
 			if cd.HasGrant("privateforum", "topic", "edit", int32(tid)) {
 				items = append(items, common.IndexItem{

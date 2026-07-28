@@ -424,6 +424,20 @@ CREATE TABLE `writing_search` (
 );
 
 
+CREATE TABLE IF NOT EXISTS `api_keys` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `users_idusers` int NOT NULL,
+  `api_key` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `scopes` text NOT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `last_used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `revoked_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `api_keys_key_idx` (`api_key`)
+);
+
 -- Track schema upgrades.
 CREATE TABLE IF NOT EXISTS `schema_version` (
   `version` int NOT NULL,
@@ -797,5 +811,5 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (88)
+INSERT INTO `schema_version` (`version`) VALUES (89)
 ON DUPLICATE KEY UPDATE version = VALUES(version);

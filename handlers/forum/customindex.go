@@ -51,7 +51,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		if hasThreadUnread(cd, threadID) {
 			items = append(items,
 				common.IndexItem{
-					Name: "Mark as read",
+					Name: "Mark as read", Icon: "✔️",
 					Link: markThreadReadLink(base, threadID, r.URL.RequestURI()),
 				},
 				common.IndexItem{
@@ -67,7 +67,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "reply", int32(tid)) {
 			items = append(items,
 				common.IndexItem{
-					Name: "Write Reply",
+					Name: "Write Reply", Icon: "✍️",
 					Link: fmt.Sprintf("%s/topic/%s/thread/%s#reply", base, topicID, threadID),
 				},
 			)
@@ -89,7 +89,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	if threadID == "" && topicID != "" {
 		if cd.IsAdmin() && cd.IsAdminMode() {
 			items = append(items, common.IndexItem{
-				Name: "Admin Edit Topic",
+				Name: "Admin Edit Topic", Icon: "⚙️",
 				Link: fmt.Sprintf("/admin/forum/topics/topic/%s/edit", topicID),
 			})
 		}
@@ -126,7 +126,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				} else {
 					items = append(items,
 						common.IndexItem{
-							Name: "Subscribe To Topic",
+							Name: "Subscribe To Topic", Icon: "🔔",
 							Link: fmt.Sprintf("%s/topic/%s/subscribe", base, topicID),
 						},
 					)

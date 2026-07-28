@@ -33,7 +33,7 @@ func NewsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 
 	if CanPostNews(cd) {
 		items = append(items, common.IndexItem{
-			Name: "Add News",
+			Name: "Add News", Icon: "➕",
 			Link: "/news/post",
 		})
 	}

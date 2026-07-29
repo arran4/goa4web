@@ -22,6 +22,7 @@ type Info struct {
 	Duration    string
 	UploadDate  string
 	Author      string
+	Keywords    string
 }
 
 // NewSafeClient returns an http.Client configured to block internal IP addresses.
@@ -122,25 +123,38 @@ func Parse(r io.Reader) (*Info, error) {
 					}
 				}
 				switch prop {
-				case "og:title":
+				case "og:title", "twitter:title":
 					if info.Title == "" {
 						info.Title = content
 					}
-				case "og:description":
+				case "og:description", "twitter:description":
 					if info.Description == "" {
 						info.Description = content
 					}
-				case "og:image":
+				case "og:image", "twitter:image":
 					if info.Image == "" {
 						info.Image = content
 					}
 				}
 
-				if info.Title == "" && name == "title" {
+				if name == "twitter:title" && info.Title == "" {
 					info.Title = content
 				}
-				if info.Description == "" && name == "description" {
+				if name == "twitter:description" && info.Description == "" {
 					info.Description = content
+				}
+				if name == "twitter:image" && info.Image == "" {
+					info.Image = content
+				}
+
+				if info.Title == "" && (name == "title" || itemprop == "title") {
+					info.Title = content
+				}
+				if info.Description == "" && (name == "description" || itemprop == "description") {
+					info.Description = content
+				}
+				if info.Image == "" && (name == "image" || itemprop == "image") {
+					info.Image = content
 				}
 
 				// Fallbacks for new fields
@@ -159,6 +173,31 @@ func Parse(r io.Reader) (*Info, error) {
 				}
 				if info.Author == "" && name == "author" {
 					info.Author = content
+				}
+
+				if name == "keywords" || itemprop == "keywords" || prop == "article:tag" {
+					parts := strings.Split(content, ",")
+					for _, p := range parts {
+						p = strings.TrimSpace(p)
+						if p == "" {
+							continue
+						}
+						if info.Keywords == "" {
+							info.Keywords = p
+						} else {
+							existing := strings.Split(info.Keywords, ", ")
+							found := false
+							for _, e := range existing {
+								if e == p {
+									found = true
+									break
+								}
+							}
+							if !found {
+								info.Keywords += ", " + p
+							}
+						}
+					}
 				}
 			} else if n.Data == "title" && info.Title == "" {
 				if n.FirstChild != nil {
@@ -210,32 +249,67 @@ func parseJSONLD(data string, info *Info) {
 			return ""
 		}
 
-		// Prioritize VideoObject, but could extract generic info too if empty
-		if typeVal == "VideoObject" || strings.EqualFold(typeVal, "VideoObject") {
+		// Broaden JSON-LD parsing to general types, as they can also hold generic info (WebPage, PodcastEpisode, Article, etc.)
+		if typeVal == "VideoObject" || strings.EqualFold(typeVal, "VideoObject") ||
+			typeVal == "WebPage" || strings.EqualFold(typeVal, "WebPage") ||
+			typeVal == "PodcastEpisode" || strings.EqualFold(typeVal, "PodcastEpisode") ||
+			typeVal == "Article" || strings.EqualFold(typeVal, "Article") ||
+			typeVal == "NewsArticle" || strings.EqualFold(typeVal, "NewsArticle") || typeVal != "" {
 			// We prioritize JSON-LD over meta tags, so overwrite or only set if empty?
 			// The request says "Prioritize JSON-LD". So we should overwrite if we found it here.
 			// However, parseJSONLD is called during traversal.
 
-			if t := getString("name"); t != "" {
+			if t := getString("name"); t != "" && (typeVal == "VideoObject" || info.Title == "") {
 				info.Title = t
 			}
-			if d := getString("description"); d != "" {
+			if t := getString("headline"); t != "" && info.Title == "" {
+				info.Title = t
+			}
+			if d := getString("description"); d != "" && (typeVal == "VideoObject" || info.Description == "") {
 				info.Description = d
 			}
-			if dur := getString("duration"); dur != "" {
+			if dur := getString("duration"); dur != "" && (typeVal == "VideoObject" || info.Duration == "") {
 				info.Duration = dur
 			}
-			if ud := getString("uploadDate"); ud != "" {
+			if ud := getString("uploadDate"); ud != "" && (typeVal == "VideoObject" || info.UploadDate == "") {
 				info.UploadDate = ud
 			}
-			if auth := getAuthor(); auth != "" {
+			if ud := getString("datePublished"); ud != "" && info.UploadDate == "" {
+				info.UploadDate = ud
+			}
+			if auth := getAuthor(); auth != "" && (typeVal == "VideoObject" || info.Author == "") {
 				info.Author = auth
 			}
 
-			if img := getString("thumbnailUrl"); img != "" {
+			if img := getString("thumbnailUrl"); img != "" && (typeVal == "VideoObject" || info.Image == "") {
 				info.Image = img
-			} else if img := getString("image"); img != "" {
+			} else if img := getString("image"); img != "" && (typeVal == "VideoObject" || info.Image == "") {
 				info.Image = img
+			}
+
+			if kw := getString("keywords"); kw != "" {
+				parts := strings.Split(kw, ",")
+				for _, p := range parts {
+					p = strings.TrimSpace(p)
+					if p == "" {
+						continue
+					}
+					if info.Keywords == "" {
+						info.Keywords = p
+					} else {
+						existing := strings.Split(info.Keywords, ", ")
+						found := false
+						for _, e := range existing {
+							if e == p {
+								found = true
+								break
+							}
+						}
+						if !found {
+							info.Keywords += ", " + p
+						}
+					}
+				}
 			}
 		}
 	}

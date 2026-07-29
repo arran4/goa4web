@@ -25,6 +25,12 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
+	CreateAPIKeyStub func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
+	GetAPIKeyByHashStub func(ctx context.Context, apiKey string) (*ApiKey, error)
+	ListAPIKeysByUserStub func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
+	UpdateAPIKeyLastUsedStub func(ctx context.Context, id int32) error
+	RevokeAPIKeyStub func(ctx context.Context, arg RevokeAPIKeyParams) error
+
 	Querier
 	mu sync.Mutex
 
@@ -3208,4 +3214,39 @@ func (s *QuerierStub) ListUnreadPrivateThreadsForUser(ctx context.Context, arg L
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (q *QuerierStub) CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int64, error) {
+	if q.CreateAPIKeyStub != nil {
+		return q.CreateAPIKeyStub(ctx, arg)
+	}
+	return 0, nil
+}
+
+func (q *QuerierStub) GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
+	if q.GetAPIKeyByHashStub != nil {
+		return q.GetAPIKeyByHashStub(ctx, apiKey)
+	}
+	return nil, nil
+}
+
+func (q *QuerierStub) ListAPIKeysByUser(ctx context.Context, usersIdusers int32) ([]*ApiKey, error) {
+	if q.ListAPIKeysByUserStub != nil {
+		return q.ListAPIKeysByUserStub(ctx, usersIdusers)
+	}
+	return nil, nil
+}
+
+func (q *QuerierStub) UpdateAPIKeyLastUsed(ctx context.Context, id int32) error {
+	if q.UpdateAPIKeyLastUsedStub != nil {
+		return q.UpdateAPIKeyLastUsedStub(ctx, id)
+	}
+	return nil
+}
+
+func (q *QuerierStub) RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams) error {
+	if q.RevokeAPIKeyStub != nil {
+		return q.RevokeAPIKeyStub(ctx, arg)
+	}
+	return nil
 }

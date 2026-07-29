@@ -1,0 +1,94 @@
+{{ define "user/apiKeysPage" }}
+{{ template "head" $ }}
+<div class="user-layout">
+    <div class="user-menu">
+        {{ template "userPanel" $ }}
+    </div>
+    <div class="user-content">
+        <h1>Manage API Keys</h1>
+
+        <p>API keys allow you to access the forum programmatically. Keep your keys secret.</p>
+
+        <p>Documentation for the API is available here: <a href="/usr/api-keys/swagger.yaml" download="swagger.yaml">Download swagger.yaml</a></p>
+
+        <h2>Create New Key</h2>
+        <form action="/usr/api-keys/create" method="POST" class="standard-form">
+            {{ csrfField }}
+            <input type="hidden" name="action" value="create-api-key">
+
+            <div class="form-group">
+                <label for="name">Key Name (e.g. "My Script")</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Scopes</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="scopes" value="private_forum:read" checked> Private Forum (Read)</label>
+                    <label><input type="checkbox" name="scopes" value="private_forum:write"> Private Forum (Write)</label>
+                    <label><input type="checkbox" name="scopes" value="images:read" checked> Images (Read)</label>
+                    <label><input type="checkbox" name="scopes" value="images:write"> Images (Upload)</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="ttl_days">Expiration (Days)</label>
+                <input type="number" id="ttl_days" name="ttl_days" value="30" min="1" max="365">
+                <small>Leave blank for no expiration.</small>
+            </div>
+
+            <button type="submit" class="button">Create API Key</button>
+        </form>
+
+        <h2>Your API Keys</h2>
+        {{ if .Keys }}
+            <table class="standard-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Created At</th>
+                        <th>Expires At</th>
+                        <th>Last Used</th>
+                        <th>Scopes</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Keys }}
+                    <tr>
+                        <td>{{ .Name }}</td>
+                        <td>{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
+                        <td>{{ if .ExpiresAt.Valid }}{{ .ExpiresAt.Time.Format "2006-01-02 15:04" }}{{ else }}Never{{ end }}</td>
+                        <td>{{ if .LastUsedAt.Valid }}{{ .LastUsedAt.Time.Format "2006-01-02 15:04" }}{{ else }}Never{{ end }}</td>
+                        <td>{{ .Scopes }}</td>
+                        <td>
+                            {{ if .RevokedAt.Valid }}
+                                <span style="color: red;">Revoked</span>
+                            {{ else if and .ExpiresAt.Valid (now.After .ExpiresAt.Time) }}
+                                <span style="color: orange;">Expired</span>
+                            {{ else }}
+                                <span style="color: green;">Active</span>
+                            {{ end }}
+                        </td>
+                        <td>
+                            {{ if not .RevokedAt.Valid }}
+                            <form action="/usr/api-keys/revoke" method="POST" style="display:inline;">
+                                {{ csrfField }}
+                                <input type="hidden" name="action" value="revoke-api-key">
+                                <input type="hidden" name="key_id" value="{{ .ID }}">
+                                <button type="submit" class="button button-danger" onclick="return confirm('Are you sure you want to revoke this key?');">Revoke</button>
+                            </form>
+                            {{ end }}
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        {{ else }}
+            <p>You have not generated any API keys yet.</p>
+        {{ end }}
+    </div>
+</div>
+{{ template "tail" $ }}
+{{ end }}

@@ -26,6 +26,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/middleware/apiauth"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 	"github.com/arran4/goa4web/internal/sign"
@@ -98,6 +99,18 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOption
 	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS(cfg)).Methods(http.MethodGet)
 	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).
 		Methods(http.MethodGet)
+
+	api := ir.PathPrefix("/api").Subrouter()
+	api.Use(apiauth.APIKeyAuthMiddleware)
+
+	apiRead := api.NewRoute().Subrouter()
+	apiRead.Use(apiauth.RequireScope("images:read"))
+	apiRead.HandleFunc("", APIListGallery).Methods(http.MethodGet)
+
+	apiWrite := api.NewRoute().Subrouter()
+	apiWrite.Use(apiauth.RequireScope("images:write"))
+	apiWrite.HandleFunc("/upload", APIUploadImage).Methods(http.MethodPost)
+
 	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).
 		Methods(http.MethodGet)
 	return nil

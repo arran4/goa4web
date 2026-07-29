@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	forumcomments "github.com/arran4/goa4web/handlers/forum/comments"
+	"github.com/arran4/goa4web/internal/middleware/apiauth"
 	navpkg "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
 )
@@ -33,6 +34,21 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/api/user-exists", UserExistsAPI).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
+
+	// API routes for private forum
+	api := pr.PathPrefix("/api").Subrouter()
+	api.Use(apiauth.APIKeyAuthMiddleware)
+
+	apiRead := api.NewRoute().Subrouter()
+	apiRead.Use(apiauth.RequireScope("private_forum:read"))
+	apiRead.HandleFunc("/topics", APIListTopics).Methods(http.MethodGet)
+	apiRead.HandleFunc("/topic/{topic}/threads", APIListThreads).Methods(http.MethodGet)
+	apiRead.HandleFunc("/topic/{topic}/thread/{thread}", APIShowComments).Methods(http.MethodGet)
+
+	apiWrite := api.NewRoute().Subrouter()
+	apiWrite.Use(apiauth.RequireScope("private_forum:write"))
+	apiWrite.HandleFunc("/topics", APICreateTopic).Methods(http.MethodPost)
+	apiWrite.HandleFunc("/topic/{topic}/thread/{thread}/reply", APIPostComment).Methods(http.MethodPost)
 
 	// Provide GET confirmation pages for subscribe/unsubscribe (mirrors public forum)
 	pr.HandleFunc("/topic/{topic}/subscribe", forumhandlers.SubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

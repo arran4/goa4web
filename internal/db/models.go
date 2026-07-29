@@ -36,6 +36,18 @@ type AdminUserComment struct {
 	CreatedAt    time.Time
 }
 
+type ApiKey struct {
+	ID           int32
+	UsersIdusers int32
+	ApiKey       string
+	Name         string
+	Scopes       string
+	ExpiresAt    sql.NullTime
+	LastUsedAt   sql.NullTime
+	CreatedAt    time.Time
+	RevokedAt    sql.NullTime
+}
+
 type AuditLog struct {
 	ID           int32
 	UsersIdusers int32

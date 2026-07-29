@@ -296,6 +296,7 @@ type Querier interface {
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
 	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
+	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
@@ -326,6 +327,7 @@ type Querier interface {
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
 	DeleteUserLanguagesForUser(ctx context.Context, userID int32) error
 	EnsureExternalLink(ctx context.Context, url string) (sql.Result, error)
+	GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int32) (*UserRole, error)
 	GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, arg GetAllAnsweredFAQWithFAQCategoriesForUserParams) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
@@ -467,6 +469,7 @@ type Querier interface {
 	LatestAdminUserComment(ctx context.Context, usersIdusers int32) (*AdminUserComment, error)
 	LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstParams) ([]int32, error)
 	LinkerSearchNext(ctx context.Context, arg LinkerSearchNextParams) ([]int32, error)
+	ListAPIKeysByUser(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
 	ListActiveBans(ctx context.Context) ([]*BannedIp, error)
 	ListAdminUserComments(ctx context.Context, usersIdusers int32) ([]*AdminUserComment, error)
 	ListBannedIps(ctx context.Context) ([]*BannedIp, error)
@@ -528,6 +531,7 @@ type Querier interface {
 	RemoveContentLabelStatus(ctx context.Context, arg RemoveContentLabelStatusParams) error
 	RemoveContentPrivateLabel(ctx context.Context, arg RemoveContentPrivateLabelParams) error
 	RemoveContentPublicLabel(ctx context.Context, arg RemoveContentPublicLabelParams) error
+	RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams) error
 	SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error)
 	SetNotificationPriorityForLister(ctx context.Context, arg SetNotificationPriorityForListerParams) error
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
@@ -644,6 +648,7 @@ type Querier interface {
 	SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error
 	SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error
 	TouchImageCacheEntry(ctx context.Context, arg TouchImageCacheEntryParams) error
+	UpdateAPIKeyLastUsed(ctx context.Context, id int32) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
 	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
 	// This query updates the "list" column in the "bookmarks" table for a specific lister.

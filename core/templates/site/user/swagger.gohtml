@@ -1,0 +1,289 @@
+{{- define "user/swagger.gohtml" -}}
+openapi: 3.0.0
+info:
+  title: Goa4Web API
+  description: API for Goa4Web Private Forum and Image Gallery
+  version: 1.0.0
+servers:
+  - url: {{ .BaseURL }}/api
+    description: {{ if eq .Version "dev" }}Development{{ else }}Production{{ end }} server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+security:
+  - bearerAuth: []
+
+paths:
+  /privateforum/topics:
+    get:
+      summary: List existing private topics
+      description: Returns a paginated list of private forum topics for the authenticated user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  topics:
+                    type: array
+                    items:
+                      type: object
+                  has_more:
+                    type: boolean
+                  page:
+                    type: integer
+    post:
+      summary: Create a new private topic
+      description: Creates a new private topic and invites users.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                  description: Topic subject
+                text:
+                  type: string
+                  description: Initial post text
+              required:
+                - subject
+                - text
+      responses:
+        '200':
+          description: Topic created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+
+  /privateforum/topic/{topic}/threads:
+    get:
+      summary: List threads in a private topic
+      description: Returns a paginated list of threads for a specific private topic.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: topic
+          required: true
+          schema:
+            type: integer
+          description: Topic ID
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threads:
+                    type: array
+                    items:
+                      type: object
+                  has_more:
+                    type: boolean
+                  page:
+                    type: integer
+
+  /privateforum/topic/{topic}/thread/{thread}:
+    get:
+      summary: Show comments in a private thread
+      description: Returns a paginated list of comments for a specific private thread.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: topic
+          required: true
+          schema:
+            type: integer
+          description: Topic ID
+        - in: path
+          name: thread
+          required: true
+          schema:
+            type: integer
+          description: Thread ID
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        username:
+                          type: string
+                        text:
+                          type: string
+                        html:
+                          type: string
+                        written:
+                          type: string
+                          format: date-time
+                  has_more:
+                    type: boolean
+                  page:
+                    type: integer
+
+  /privateforum/topic/{topic}/thread/{thread}/reply:
+    post:
+      summary: Post a comment in a private thread
+      description: Replies to an existing private thread.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: topic
+          required: true
+          schema:
+            type: integer
+          description: Topic ID
+        - in: path
+          name: thread
+          required: true
+          schema:
+            type: integer
+          description: Thread ID
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Comment text
+              required:
+                - text
+      responses:
+        '200':
+          description: Comment posted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+
+  /images:
+    get:
+      summary: List gallery images
+      description: Returns a paginated list of images uploaded by the user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  images:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        path:
+                          type: string
+                        url:
+                          type: string
+                  has_more:
+                    type: boolean
+                  page:
+                    type: integer
+
+  /images/upload:
+    post:
+      summary: Upload an image
+      description: Uploads an image to the user's gallery.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file to upload
+              required:
+                - image
+      responses:
+        '200':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  path:
+                    type: string
+                  url:
+                    type: string
+{{- end -}}

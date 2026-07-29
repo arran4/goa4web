@@ -7,4 +7,7 @@ type ContextKey string
 const (
 	// KeyCoreData provides access to CoreData.
 	KeyCoreData ContextKey = "coreData"
+
+	// KeyAPIScopes is the context key for the API Key scopes.
+	KeyAPIScopes ContextKey = "APIScopes"
 )

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -25,8 +26,10 @@ func DownloadSwagger(w http.ResponseWriter, r *http.Request) {
 	// Pass the BaseURL to the template to populate the server URL correctly
 	tasks.Template("user/swagger.gohtml").Handle(w, r, struct{
 		BaseURL string
+		Version string
 	}{
 		BaseURL: strings.TrimRight(cd.Config.BaseURL, "/"),
+		Version: goa4web.Version,
 	})
 }
 

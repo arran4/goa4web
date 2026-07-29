@@ -6,7 +6,7 @@ info:
   version: 1.0.0
 servers:
   - url: {{ .BaseURL }}/api
-    description: Production server
+    description: {{ if eq .Version "dev" }}Development{{ else }}Production{{ end }} server
 components:
   securitySchemes:
     bearerAuth:

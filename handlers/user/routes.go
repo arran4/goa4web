@@ -41,6 +41,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 
 	// API Keys
 	ur.HandleFunc("/api-keys", ListAPIKeysPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/api-keys/swagger.yaml", DownloadSwagger).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/api-keys/create", handlers.TaskHandler(createAPIKeyTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createAPIKeyTask.Matcher())
 	ur.HandleFunc("/api-keys/revoke", handlers.TaskHandler(revokeAPIKeyTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(revokeAPIKeyTask.Matcher())
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

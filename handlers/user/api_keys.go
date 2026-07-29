@@ -17,6 +17,19 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+func DownloadSwagger(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	w.Header().Set("Content-Type", "application/yaml")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"swagger.yaml\"")
+
+	// Pass the BaseURL to the template to populate the server URL correctly
+	tasks.Template("user/swagger.gohtml").Handle(w, r, struct{
+		BaseURL string
+	}{
+		BaseURL: strings.TrimRight(cd.Config.BaseURL, "/"),
+	})
+}
+
 func ListAPIKeysPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 

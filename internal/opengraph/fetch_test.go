@@ -14,6 +14,19 @@ func TestFetch(t *testing.T) {
 		wantInfo Info
 	}{
 		{
+			name: "Keywords meta",
+			html: `<html>
+				<head>
+					<meta name="keywords" content="podcast, science">
+					<meta property="article:tag" content="health">
+					<meta itemprop="keywords" content="health, autism">
+				</head>
+			</html>`,
+			wantInfo: Info{
+				Keywords: "podcast, science, health, autism",
+			},
+		},
+		{
 			name: "JSON-LD VideoObject",
 			html: `<html>
 				<script type="application/ld+json">
@@ -149,6 +162,9 @@ func TestFetch(t *testing.T) {
 			}
 			if info.Author != tt.wantInfo.Author {
 				t.Errorf("Author = %v, want %v", info.Author, tt.wantInfo.Author)
+			}
+			if info.Keywords != tt.wantInfo.Keywords {
+				t.Errorf("Keywords = %v, want %v", info.Keywords, tt.wantInfo.Keywords)
 			}
 		})
 	}
@@ -326,6 +342,9 @@ func TestParse(t *testing.T) {
 				}
 				if info.Author != tt.wantInfo.Author {
 					t.Errorf("Author = %v, want %v", info.Author, tt.wantInfo.Author)
+				}
+				if info.Keywords != tt.wantInfo.Keywords {
+					t.Errorf("Keywords = %v, want %v", info.Keywords, tt.wantInfo.Keywords)
 				}
 			}
 		})

@@ -1,13 +1,64 @@
 package common
 
+
 import (
 	"context"
 	"fmt"
 	"html"
 	"strings"
+	"strconv"
+	"regexp"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 )
+
+func formatDuration(duration string) string {
+	if duration == "" {
+		return ""
+	}
+
+	var totalSeconds int
+
+	if sec, err := strconv.Atoi(duration); err == nil {
+		totalSeconds = sec
+	} else if strings.HasPrefix(duration, "PT") {
+		re := regexp.MustCompile(`PT(?:([0-9]+)H)?(?:([0-9]+)M)?(?:([0-9]+)S)?`)
+		matches := re.FindStringSubmatch(duration)
+		if matches != nil {
+			if matches[1] != "" {
+				h, _ := strconv.Atoi(matches[1])
+				totalSeconds += h * 3600
+			}
+			if matches[2] != "" {
+				m, _ := strconv.Atoi(matches[2])
+				totalSeconds += m * 60
+			}
+			if matches[3] != "" {
+				s, _ := strconv.Atoi(matches[3])
+				totalSeconds += s
+			}
+		} else {
+            return duration
+        }
+	} else {
+		return duration
+	}
+
+	if totalSeconds == 0 {
+		return ""
+	}
+
+	h := totalSeconds / 3600
+	m := (totalSeconds % 3600) / 60
+	s := totalSeconds % 60
+
+	if h > 0 {
+		return fmt.Sprintf("%d:%02d:%02d", h, m, s)
+	}
+	return fmt.Sprintf("%d:%02d", m, s)
+}
+
+
 
 type Goa4WebLinkProvider struct {
 	cd  *CoreData
@@ -49,7 +100,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		targetURL = p.cd.SignLinkURL(rawURL)
 	}
 
-	var title, description, imageURL, faviconURL string
+	var title, description, imageURL, faviconURL, duration string
 	var hasData bool
 
 	if p.cd.Queries() != nil {
@@ -59,6 +110,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 			title = link.CardTitle.String
 			description = link.CardDescription.String
 			imageURL = link.CardImage.String
+			duration = link.CardDuration.String
 			if link.CardImageCache.Valid && link.CardImageCache.String != "" {
 				imageURL = p.cd.MapImageURL("img", link.CardImageCache.String)
 			}
@@ -133,7 +185,16 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 	if imageURL != "" {
 		safeImg, imgOk := a4code2html.SanitizeURL(imageURL)
 		if imgOk {
-			imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
+			if duration != "" {
+				formattedDuration := formatDuration(duration)
+				if formattedDuration != "" {
+					imageHTML = fmt.Sprintf(`<div class="external-link-image-container"><img src="%s" class="external-link-image" /><span class="external-link-duration">%s</span></div>`, safeImg, html.EscapeString(formattedDuration))
+				} else {
+					imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
+				}
+			} else {
+				imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
+			}
 		}
 	}
 

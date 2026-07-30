@@ -1,0 +1,56 @@
+--- cmd/goa4web/private_forum.go
++++ cmd/goa4web/private_forum.go
+@@ -399,44 +399,6 @@
+
+	return participants, len(grants), int(thread.TotalComments)
+ }
+-
+-func (c *privateForumCleanEmptyThreadsCmd) deletePrivateForumThread(ctx context.Context, queries *db.Queries, thread *db.AdminListAllPrivateForumThreadsRow, title string, reason string) ([]string, int, int) {
+-	log.Printf("  - Deleting thread ID: %d (%s): %s", thread.Idforumthread, title, reason)
+-
+-	if thread.TotalComments > 0 {
+-		log.Printf("  - Deleting %d comments for thread ID: %d", thread.TotalComments, thread.Idforumthread)
+-	}
+-	if !c.dryRun {
+-		if err := queries.AdminDeleteCommentsByThread(ctx, thread.Idforumthread); err != nil {
+-			log.Printf("  - error deleting comments for thread %d: %v", thread.Idforumthread, err)
+-		}
+-	}
+-
+-	grants, err := queries.AdminListGrantsByThreadID(ctx, sql.NullInt32{Int32: thread.Idforumthread, Valid: true})
+-	if err != nil {
+-		log.Printf("error getting grants for thread %d: %v", thread.Idforumthread, err)
+-		return nil, 0, int(thread.TotalComments)
+-	}
+-
+-	participantsMap := make(map[string]struct{})
+-	for _, grant := range grants {
+-		if grant.Username.Valid {
+-			participantsMap[grant.Username.String] = struct{}{}
+-		}
+-		log.Printf("  - Deleting thread grant ID: %d", grant.ID)
+-		if !c.dryRun {
+-			if err := queries.AdminDeleteGrant(ctx, grant.ID); err != nil {
+-				log.Printf("  - error deleting grant %d: %v", grant.ID, err)
+-			}
+-		}
+-	}
+-
+-	log.Printf("  - Deleting thread ID: %d", thread.Idforumthread)
+-	if !c.dryRun {
+-		if err := queries.AdminDeleteForumThread(ctx, thread.Idforumthread); err != nil {
+-			log.Printf("  - error deleting thread %d: %v", thread.Idforumthread, err)
+-		}
+-	}
+-
+-	var participants []string
+-	for p := range participantsMap {
+-		participants = append(participants, p)
+-	}
+-	sort.Strings(participants)
+-
+-	return participants, len(grants), int(thread.TotalComments)
+-}
+
+ func formatThreadTitle(title any) string {
+	switch value := title.(type) {

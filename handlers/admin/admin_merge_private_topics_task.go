@@ -19,10 +19,28 @@ var _ tasks.Task = (*MergePrivateTopicsTask)(nil)
 func (MergePrivateTopicsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	_, err := cd.MergePrivateTopicsWithSameParticipants(r.Context(), false)
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	dryRun := r.FormValue("preview") == "true"
+
+	mergedCount, err := cd.MergePrivateTopicsWithSameParticipants(r.Context(), dryRun)
 	if err != nil {
 		return fmt.Errorf("merging private topics: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
+	if dryRun {
+		data := struct{
+			Message string
+		}{
+			Message: fmt.Sprintf("Preview completed. Would merge %d topics.", mergedCount),
+		}
+		AdminMaintenancePreviewPageTmpl.Handle(w, r, data)
+		return nil
+	}
+
 	return handlers.RefreshDirectHandler{TargetURL: "/admin/maintenance"}
 }
+
+const AdminMaintenancePreviewPageTmpl tasks.Template = "admin/maintenancePreviewPage.gohtml"

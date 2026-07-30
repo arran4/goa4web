@@ -3,6 +3,15 @@
 <div style="margin-bottom: 20px;">
     <p>Execute one-off maintenance tasks and migrations.</p>
 </div>
+<form method="post" action="/admin/maintenance" class="inline-form" style="margin-bottom: 20px;">
+  <input type="hidden" name="task" value="{{ $.MergeTaskName }}">
+  <input type="hidden" name="preview" value="true">
+  <input type="submit" value="Preview Merge Private Forums With Same Participants">
+</form>
+<form method="post" action="/admin/maintenance" class="inline-form" style="margin-bottom: 20px;">
+  <input type="hidden" name="task" value="{{ $.MergeTaskName }}">
+  <input type="submit" value="Execute Merge Private Forums With Same Participants">
+</form>
 {{ if .Topics }}
 <ul>
   {{ range .Topics }}

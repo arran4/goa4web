@@ -508,3 +508,35 @@ func (q *Queries) AdminListPrivateForumTopics(ctx context.Context, arg AdminList
 	}
 	return items, nil
 }
+
+const adminMoveThreadsToTopic = `-- name: AdminMoveThreadsToTopic :exec
+UPDATE forumthread
+SET forumtopic_idforumtopic = ?
+WHERE forumtopic_idforumtopic = ?
+`
+
+type AdminMoveThreadsToTopicParams struct {
+	ForumtopicIdforumtopic   int32
+	ForumtopicIdforumtopic_2 int32
+}
+
+func (q *Queries) AdminMoveThreadsToTopic(ctx context.Context, arg AdminMoveThreadsToTopicParams) error {
+	_, err := q.db.ExecContext(ctx, adminMoveThreadsToTopic, arg.ForumtopicIdforumtopic, arg.ForumtopicIdforumtopic_2)
+	return err
+}
+
+const adminUpdateGrantItemIDBySectionAndTopicID = `-- name: AdminUpdateGrantItemIDBySectionAndTopicID :exec
+UPDATE grants
+SET item_id = ?
+WHERE section = 'privateforum' AND item = 'topic' AND item_id = ?
+`
+
+type AdminUpdateGrantItemIDBySectionAndTopicIDParams struct {
+	ItemID   sql.NullInt32
+	ItemID_2 sql.NullInt32
+}
+
+func (q *Queries) AdminUpdateGrantItemIDBySectionAndTopicID(ctx context.Context, arg AdminUpdateGrantItemIDBySectionAndTopicIDParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateGrantItemIDBySectionAndTopicID, arg.ItemID, arg.ItemID_2)
+	return err
+}

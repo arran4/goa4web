@@ -41,6 +41,12 @@ func (c *privateForumTopicCmd) Run() error {
 		return c.runDelete(args[1:])
 	case "edit":
 		return c.runEdit(args[1:])
+	case "merge":
+		cmd, err := parsePrivateForumTopicMergeCmd(c.privateForumCmd, args[1:])
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown topic command %q", args[0])
@@ -54,6 +60,7 @@ func (c *privateForumTopicCmd) Usage() {
 	fmt.Fprintln(c.fs.Output(), "  details Show details of a private forum topic")
 	fmt.Fprintln(c.fs.Output(), "  delete  Delete a private forum topic")
 	fmt.Fprintln(c.fs.Output(), "  edit    Edit a private forum topic")
+	fmt.Fprintln(c.fs.Output(), "  merge   Merge topics with identical participants")
 }
 
 func (c *privateForumTopicCmd) runList(args []string) error {

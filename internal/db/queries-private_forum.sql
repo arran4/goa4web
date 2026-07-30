@@ -142,3 +142,11 @@ FROM comments
 WHERE forumthread_id = ? AND idcomments > ?
 ORDER BY idcomments ASC
 LIMIT 1;
+-- name: AdminMoveThreadsToTopic :exec
+UPDATE forumthread
+SET forumtopic_idforumtopic = ?
+WHERE forumtopic_idforumtopic = ?;
+-- name: AdminUpdateGrantItemIDBySectionAndTopicID :exec
+UPDATE grants
+SET item_id = ?
+WHERE section = 'privateforum' AND item = 'topic' AND item_id = ?;

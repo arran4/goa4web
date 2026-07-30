@@ -1308,6 +1308,14 @@ kbd {
     color: #333;
 }
 
+.external-link-footer {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: auto;
+    padding-top: 0.5em;
+    word-break: break-all;
+}
+
 /* A4Code Controls */
 .a4code-controls {
     margin-bottom: 0.5em;

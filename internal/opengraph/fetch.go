@@ -106,6 +106,31 @@ func Parse(r io.Reader) (*Info, error) {
 				if isLD && n.FirstChild != nil {
 					parseJSONLD(n.FirstChild.Data, info)
 				}
+
+				var scriptBody strings.Builder
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					if c.Type == html.TextNode {
+						scriptBody.WriteString(c.Data)
+					}
+				}
+				if scriptStr := scriptBody.String(); scriptStr != "" {
+					if jsonText, ok := extractAssignedJSONObject(scriptStr, "ytInitialPlayerResponse"); ok {
+						var pr struct {
+							VideoDetails struct {
+								LengthSeconds string `json:"lengthSeconds"`
+								Title         string `json:"title"`
+							} `json:"videoDetails"`
+						}
+						if err := json.Unmarshal([]byte(jsonText), &pr); err == nil {
+							if pr.VideoDetails.LengthSeconds != "" && info.Duration == "" {
+								info.Duration = pr.VideoDetails.LengthSeconds
+							}
+							if pr.VideoDetails.Title != "" && info.Title == "" {
+								info.Title = pr.VideoDetails.Title
+							}
+						}
+					}
+				}
 			} else if n.Data == "meta" {
 				var prop, content, name, itemprop string
 				for _, a := range n.Attr {
@@ -324,4 +349,76 @@ func parseJSONLD(data string, info *Info) {
 			}
 		}
 	}
+}
+
+func extractAssignedJSONObject(script string, variableName string) (string, bool) {
+	pos := strings.Index(script, variableName)
+	if pos < 0 {
+		return "", false
+	}
+
+	eq := strings.IndexByte(script[pos:], '=')
+	if eq < 0 {
+		return "", false
+	}
+
+	startSearch := pos + eq + 1
+
+	start := strings.IndexByte(script[startSearch:], '{')
+	if start < 0 {
+		return "", false
+	}
+
+	start += startSearch
+
+	end, ok := findMatchingJSONBrace(script, start)
+	if !ok {
+		return "", false
+	}
+
+	return script[start : end+1], true
+}
+
+func findMatchingJSONBrace(s string, start int) (int, bool) {
+	if start < 0 || start >= len(s) || s[start] != '{' {
+		return 0, false
+	}
+
+	depth := 0
+	inString := false
+	escaped := false
+
+	for i := start; i < len(s); i++ {
+		ch := s[i]
+
+		if inString {
+			if escaped {
+				escaped = false
+				continue
+			}
+
+			switch ch {
+			case '\\':
+				escaped = true
+			case '"':
+				inString = false
+			}
+
+			continue
+		}
+
+		switch ch {
+		case '"':
+			inString = true
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return i, true
+			}
+		}
+	}
+
+	return 0, false
 }

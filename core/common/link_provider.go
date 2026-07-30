@@ -204,8 +204,8 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 	}
 
 	htmlStr := fmt.Sprintf(
-		`<div class="external-link-card"><a href="%s" target="_blank" rel="noopener noreferrer" class="external-link-card-inner" title="%s">%s<div class="external-link-content"><div class="external-link-title">%s</div><div class="external-link-description">%s</div></div></a></div>`,
-		targetURL, html.EscapeString(tooltip), imageHTML, html.EscapeString(displayTitle), html.EscapeString(description))
+		`<div class="external-link-card"><a href="%s" target="_blank" rel="noopener noreferrer" class="external-link-card-inner" title="%s">%s<div class="external-link-content"><div class="external-link-title">%s</div><div class="external-link-description">%s</div><div class="external-link-footer">%s</div></div></a></div>`,
+		targetURL, html.EscapeString(tooltip), imageHTML, html.EscapeString(displayTitle), html.EscapeString(description), html.EscapeString(rawURL))
 
 	return htmlStr, "", true
 }

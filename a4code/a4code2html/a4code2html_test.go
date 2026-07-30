@@ -323,13 +323,13 @@ func (p *legacyTestLinkProvider) RenderLink(url string, isBlock bool, isImmediat
 		if isImmediateClose {
 			// Complex Card: Title and Description from Metadata
 			return fmt.Sprintf(
-				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div></div></a></div>",
-				safe, imageHTML, meta.Title, meta.Description), "", true
+				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">%s</div><div class=\"external-link-description\">%s</div><div class=\"external-link-footer\">%s</div></div></a></div>",
+				safe, imageHTML, meta.Title, meta.Description, safe), "", true
 		} else {
 			// Simple Card: Title from user provided text (consumed later)
 			return fmt.Sprintf(
 				"<div class=\"external-link-card\"><a href=\"%s\" target=\"_blank\" class=\"external-link-card-inner\">%s<div class=\"external-link-content\"><div class=\"external-link-title\">",
-				safe, imageHTML), "</div></div></a></div>", false
+				safe, imageHTML), fmt.Sprintf("</div><div class=\"external-link-footer\">%s</div></div></a></div>", safe), false
 		}
 	}
 
@@ -393,7 +393,7 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Block link [link url] with metadata (Complex Card)",
 			input: "[link http://example.com/card]\n",
-			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>",
+			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div><div class=\"external-link-footer\">http://example.com/card</div></div></a></div>",
 		},
 		{
 			name:  "Block link [link url] without metadata -> Inline",
@@ -403,13 +403,13 @@ func TestExternalLinkCard(t *testing.T) {
 		{
 			name:  "Block link [link url Title] with metadata -> Simple Card",
 			input: "[link http://example.com/simple Simple!]\n",
-			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/simple\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\"> Simple!</div></div></a></div><br />\n",
+			want:  "<div class=\"external-link-card\"><a href=\"http://example.com/simple\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\"> Simple!</div><div class=\"external-link-footer\">http://example.com/simple</div></div></a></div><br />\n",
 		},
 		{
 			name:  "Consecutive Block Links",
 			input: "[link http://example.com/card]\n[link http://example.com/card]\n",
-			want: "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>" +
-				"<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div></div></a></div>",
+			want: "<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div><div class=\"external-link-footer\">http://example.com/card</div></div></a></div>" +
+				"<div class=\"external-link-card\"><a href=\"http://example.com/card\" target=\"_blank\" class=\"external-link-card-inner\"><img src=\"http://example.com/image.jpg\" class=\"external-link-image\" /><div class=\"external-link-content\"><div class=\"external-link-title\">Example Title</div><div class=\"external-link-description\">Example Description</div><div class=\"external-link-footer\">http://example.com/card</div></div></a></div>",
 		},
 	}
 

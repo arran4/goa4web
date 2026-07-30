@@ -25,18 +25,13 @@ func (MergePrivateTopicsTask) Action(w http.ResponseWriter, r *http.Request) any
 
 	dryRun := r.FormValue("preview") == "true"
 
-	mergedCount, err := cd.MergePrivateTopicsWithSameParticipants(r.Context(), dryRun)
+	groups, err := cd.MergePrivateTopicsWithSameParticipants(r.Context(), dryRun)
 	if err != nil {
 		return fmt.Errorf("merging private topics: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if dryRun {
-		data := struct{
-			Message string
-		}{
-			Message: fmt.Sprintf("Preview completed. Would merge %d topics.", mergedCount),
-		}
-		AdminMaintenancePreviewPageTmpl.Handle(w, r, data)
+		AdminMaintenancePreviewPageTmpl.Handle(w, r, struct{ Groups []common.MergeGroup }{Groups: groups})
 		return nil
 	}
 

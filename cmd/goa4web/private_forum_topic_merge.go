@@ -40,6 +40,16 @@ func (c *privateForumTopicMergeCmd) Run() error {
 	queries := db.New(conn)
 	cd := common.NewCoreData(ctx, queries, nil)
 
-	_, err = cd.MergePrivateTopicsWithSameParticipants(ctx, c.dryRun)
-	return err
+	groups, err := cd.MergePrivateTopicsWithSameParticipants(ctx, c.dryRun)
+	if err != nil {
+		return err
+	}
+
+	totalMerged := 0
+	for _, g := range groups {
+		totalMerged += len(g.MergedTopicIDs)
+	}
+	log.Printf("Merged %d topics.", totalMerged)
+
+	return nil
 }

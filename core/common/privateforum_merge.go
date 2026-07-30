@@ -11,18 +11,25 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+// MergeGroup represents a group of topics being merged
+type MergeGroup struct {
+	PrimaryTopicID int32
+	MergedTopicIDs []int32
+	Participants   []string
+}
+
 // MergePrivateTopicsWithSameParticipants finds private forum topics with identical participants
 // and merges their threads into a single primary topic. The remaining topics are deleted.
-// It returns the number of topics merged or an error.
-func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, dryRun bool) (int, error) {
-	topics, err := cd.Queries().AdminListAllPrivateTopics(ctx)
+// It returns a list of MergeGroup detailing the operations, and an error if one occurred.
+func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, dryRun bool) ([]MergeGroup, error) {
+	topics, err := cd.queries.AdminListAllPrivateTopics(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("getting private forum topics: %w", err)
+		return nil, fmt.Errorf("getting private forum topics: %w", err)
 	}
 
 	topicParticipants := make(map[int32][]string)
 	for _, topic := range topics {
-		participants, err := cd.Queries().AdminListPrivateTopicParticipantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
+		participants, err := cd.queries.AdminListPrivateTopicParticipantsByTopicID(ctx, sql.NullInt32{Int32: topic.Idforumtopic, Valid: true})
 		if err != nil {
 			log.Printf("error getting participants for topic %d: %v", topic.Idforumtopic, err)
 			continue
@@ -44,7 +51,8 @@ func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, 
 		participantsToTopics[key] = append(participantsToTopics[key], topicID)
 	}
 
-	mergedCount := 0
+	var mergeGroups []MergeGroup
+
 	for key, topicIDs := range participantsToTopics {
 		if len(topicIDs) <= 1 {
 			continue
@@ -58,13 +66,15 @@ func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, 
 		})
 
 		primaryTopicID := topicIDs[0]
+		mergedIDs := topicIDs[1:]
+
 		log.Printf("Merging topics into primary topic ID %d (Participants: %s)", primaryTopicID, key)
 
-		for _, topicID := range topicIDs[1:] {
+		for _, topicID := range mergedIDs {
 			log.Printf("  - Merging from topic ID: %d", topicID)
 			if !dryRun {
 				// Move threads
-				err := cd.Queries().AdminMoveThreadsToTopic(ctx, db.AdminMoveThreadsToTopicParams{
+				err := cd.queries.AdminMoveThreadsToTopic(ctx, db.AdminMoveThreadsToTopicParams{
 					ForumtopicIdforumtopic:   primaryTopicID,
 					ForumtopicIdforumtopic_2: topicID,
 				})
@@ -77,10 +87,10 @@ func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, 
 				// We don't need to move them. We can safely delete the topic and let cascade delete or explicit delete remove the grants.
 
 				// Delete old grants on the duplicated topic to avoid clutter.
-				grants, err := cd.Queries().AdminListGrantsByTopicID(ctx, sql.NullInt32{Int32: topicID, Valid: true})
+				grants, err := cd.queries.AdminListGrantsByTopicID(ctx, sql.NullInt32{Int32: topicID, Valid: true})
 				if err == nil {
 					for _, grant := range grants {
-						err = cd.Queries().AdminDeleteGrant(ctx, grant.ID)
+						err = cd.queries.AdminDeleteGrant(ctx, grant.ID)
 						if err != nil {
 							log.Printf("  - error deleting grant %d on topic %d: %v", grant.ID, topicID, err)
 						}
@@ -88,23 +98,27 @@ func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, 
 				}
 
 				// Delete old topic
-				err = cd.Queries().AdminDeleteForumTopic(ctx, topicID)
+				err = cd.queries.AdminDeleteForumTopic(ctx, topicID)
 				if err != nil {
 					log.Printf("  - error deleting merged topic %d: %v", topicID, err)
 				}
 			}
-			mergedCount++
 		}
 
 		if !dryRun {
 			// Rebuild stats for primary topic once per group
-			err = cd.Queries().SystemRebuildForumTopicMetaByID(ctx, primaryTopicID)
+			err = cd.queries.SystemRebuildForumTopicMetaByID(ctx, primaryTopicID)
 			if err != nil {
 				log.Printf("  - error rebuilding meta for topic %d: %v", primaryTopicID, err)
 			}
 		}
+
+		mergeGroups = append(mergeGroups, MergeGroup{
+			PrimaryTopicID: primaryTopicID,
+			MergedTopicIDs: mergedIDs,
+			Participants:   strings.Split(key, ","),
+		})
 	}
 
-	log.Printf("Merged %d topics.", mergedCount)
-	return mergedCount, nil
+	return mergeGroups, nil
 }

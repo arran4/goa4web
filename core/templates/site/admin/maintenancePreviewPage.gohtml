@@ -1,7 +1,23 @@
 {{ template "head" $ }}
 <h1>Maintenance Task Preview</h1>
 <div style="margin-bottom: 20px;">
-    <p>{{ .Message }}</p>
+    <p>Preview completed. The following topics would be merged:</p>
 </div>
+
+{{ if .Groups }}
+	<ul>
+	{{ range .Groups }}
+		<li>
+			<strong>Primary Topic ID:</strong> {{ .PrimaryTopicID }}<br>
+			<strong>Merging Topic IDs:</strong> {{ range $index, $id := .MergedTopicIDs }}{{ if $index }}, {{ end }}{{ $id }}{{ end }}<br>
+			<strong>Participants:</strong> {{ range $index, $p := .Participants }}{{ if $index }}, {{ end }}{{ $p }}{{ end }}
+		</li>
+	{{ end }}
+	</ul>
+{{ else }}
+	<p>No topics found to merge.</p>
+{{ end }}
+
+<br>
 <a href="/admin/maintenance">Back to Maintenance</a>
 {{ template "tail" $ }}

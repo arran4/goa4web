@@ -20,8 +20,9 @@ type maintenanceTopic struct {
 // tasks used to migrate old data.
 func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
-		Topics   []*maintenanceTopic
-		TaskName string
+		Topics        []*maintenanceTopic
+		TaskName      string
+		MergeTaskName string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Once Off & Maintenance"
@@ -39,7 +40,11 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 		}
 		topics = append(topics, &maintenanceTopic{ID: row.Idforumtopic, Title: title})
 	}
-	data := Data{Topics: topics, TaskName: string(TaskForumTopicConvertPrivate)}
+	data := Data{
+		Topics:        topics,
+		TaskName:      string(TaskForumTopicConvertPrivate),
+		MergeTaskName: string(TaskMergePrivateTopics),
+	}
 	AdminMaintenancePageTmpl.Handle(w, r, data)
 }
 

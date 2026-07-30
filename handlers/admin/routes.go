@@ -169,6 +169,7 @@ func (h *Handlers) RegisterRoutes(ar *mux.Router, cfg *config.RuntimeConfig) []n
 	ar.HandleFunc("/grant/delete", handlers.TaskHandler(roleGrantDeleteTask)).Methods("POST").MatcherFunc(roleGrantDeleteTask.Matcher())
 	ar.HandleFunc("/maintenance", AdminMaintenancePage).Methods("GET")
 	ar.HandleFunc("/maintenance", handlers.TaskHandler(convertTopicToPrivateTask)).Methods("POST").MatcherFunc(convertTopicToPrivateTask.Matcher())
+	ar.HandleFunc("/maintenance", handlers.TaskHandler(mergePrivateTopicsTask)).Methods("POST").MatcherFunc(mergePrivateTopicsTask.Matcher())
 	ar.HandleFunc("/grants/anyone", AdminAnyoneGrantsPage).Methods("GET")
 	ar.HandleFunc("/grants/available", AdminGrantsAvailablePage).Methods("GET")
 	ar.HandleFunc("/grants", AdminGrantsPage).Methods("GET")

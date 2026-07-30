@@ -864,6 +864,14 @@ type QuerierStub struct {
 	AdminListPrivateTopicParticipantsByTopicIDErr     error
 	AdminListPrivateTopicParticipantsByTopicIDFn      func(context.Context, sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
 
+	AdminMoveThreadsToTopicCalls   []AdminMoveThreadsToTopicParams
+	AdminMoveThreadsToTopicReturns error
+	AdminMoveThreadsToTopicFn      func(context.Context, AdminMoveThreadsToTopicParams) error
+
+	AdminUpdateGrantItemIDBySectionAndTopicIDCalls   []AdminUpdateGrantItemIDBySectionAndTopicIDParams
+	AdminUpdateGrantItemIDBySectionAndTopicIDReturns error
+	AdminUpdateGrantItemIDBySectionAndTopicIDFn      func(context.Context, AdminUpdateGrantItemIDBySectionAndTopicIDParams) error
+
 	AdminCreateForumCategoryCalls   []AdminCreateForumCategoryParams
 	AdminCreateForumCategoryReturns int64
 	AdminCreateForumCategoryErr     error
@@ -1468,6 +1476,26 @@ func (s *QuerierStub) AdminListPrivateTopicParticipantsByTopicID(ctx context.Con
 		return s.AdminListPrivateTopicParticipantsByTopicIDFn(ctx, itemID)
 	}
 	return s.AdminListPrivateTopicParticipantsByTopicIDReturns, s.AdminListPrivateTopicParticipantsByTopicIDErr
+}
+
+func (s *QuerierStub) AdminMoveThreadsToTopic(ctx context.Context, arg AdminMoveThreadsToTopicParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminMoveThreadsToTopicCalls = append(s.AdminMoveThreadsToTopicCalls, arg)
+	if s.AdminMoveThreadsToTopicFn != nil {
+		return s.AdminMoveThreadsToTopicFn(ctx, arg)
+	}
+	return s.AdminMoveThreadsToTopicReturns
+}
+
+func (s *QuerierStub) AdminUpdateGrantItemIDBySectionAndTopicID(ctx context.Context, arg AdminUpdateGrantItemIDBySectionAndTopicIDParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.AdminUpdateGrantItemIDBySectionAndTopicIDCalls = append(s.AdminUpdateGrantItemIDBySectionAndTopicIDCalls, arg)
+	if s.AdminUpdateGrantItemIDBySectionAndTopicIDFn != nil {
+		return s.AdminUpdateGrantItemIDBySectionAndTopicIDFn(ctx, arg)
+	}
+	return s.AdminUpdateGrantItemIDBySectionAndTopicIDReturns
 }
 
 func (s *QuerierStub) AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error) {

@@ -230,6 +230,7 @@ type Querier interface {
 	AdminMarkWritingRestored(ctx context.Context, idwriting int32) error
 	AdminMoveFAQChildren(ctx context.Context, arg AdminMoveFAQChildrenParams) error
 	AdminMoveFAQContent(ctx context.Context, arg AdminMoveFAQContentParams) error
+	AdminMoveThreadsToTopic(ctx context.Context, arg AdminMoveThreadsToTopicParams) error
 	// admin task
 	AdminPromoteAnnouncement(ctx context.Context, siteNewsID int32) error
 	AdminPurgeReadNotifications(ctx context.Context) error
@@ -270,6 +271,7 @@ type Querier interface {
 	AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateForumCategoryParams) error
 	AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForumTopicParams) error
 	AdminUpdateGrantActive(ctx context.Context, arg AdminUpdateGrantActiveParams) error
+	AdminUpdateGrantItemIDBySectionAndTopicID(ctx context.Context, arg AdminUpdateGrantItemIDBySectionAndTopicIDParams) error
 	AdminUpdateImageBoard(ctx context.Context, arg AdminUpdateImageBoardParams) error
 	AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImagePostParams) error
 	AdminUpdateLinkerCategorySortOrder(ctx context.Context, arg AdminUpdateLinkerCategorySortOrderParams) error

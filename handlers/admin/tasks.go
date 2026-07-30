@@ -138,6 +138,9 @@ const (
 	// TaskForumTopicConvertPrivate converts a forum topic to a private forum.
 	TaskForumTopicConvertPrivate tasks.TaskString = "Forum topic convert private"
 
+	// TaskMergePrivateTopics merges private forum topics with identical participants.
+	TaskMergePrivateTopics tasks.TaskString = "Merge private topics"
+
 	// TaskForumThreadDelete removes a forum thread.
 	TaskForumThreadDelete tasks.TaskString = "Forum thread delete"
 

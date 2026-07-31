@@ -107,6 +107,7 @@ func defaultFuncs() map[string]any {
 			return s
 		},
 		"lower": strings.ToLower,
+		"hasPrefix": strings.HasPrefix,
 	}
 }
 

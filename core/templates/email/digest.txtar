@@ -3,7 +3,7 @@
 <ul>
 {{ range .Item.Notifications }}
     <li>
-        {{ if .Link.Valid }}<a href="{{ $.Item.BaseURL }}{{ .Link.String }}">{{ end }}
+        {{ if .Link.Valid }}<a href="{{ if hasPrefix .Link.String "http" }}{{ .Link.String }}{{ else }}{{ $.Item.BaseURL }}{{ .Link.String }}{{ end }}">{{ end }}
         {{ .Message.String }}
         {{ if .Link.Valid }}</a>{{ end }}
         <span style="color: #888;">({{ .CreatedAt.Format "2006-01-02 15:04" }})</span>
@@ -20,7 +20,7 @@ Here is your {{ .Item.DigestTitle }} of unread notifications:
 
 {{ range .Item.Notifications }}
 * {{ .Message.String }} ({{ .CreatedAt.Format "2006-01-02 15:04" }})
-  {{ if .Link.Valid }}{{ $.Item.BaseURL }}{{ .Link.String }}{{ end }}
+  {{ if .Link.Valid }}{{ if hasPrefix .Link.String "http" }}{{ .Link.String }}{{ else }}{{ $.Item.BaseURL }}{{ .Link.String }}{{ end }}{{ end }}
 {{ end }}
 
 You have {{ len .Item.Notifications }} unread notifications.

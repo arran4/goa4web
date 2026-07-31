@@ -275,6 +275,7 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
+	funcs["hasPrefix"] = strings.HasPrefix
 	if _, ok := funcs["localTime"]; !ok {
 		funcs["localTime"] = func(t time.Time) time.Time { return t }
 	}
@@ -332,6 +333,7 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 	if funcs == nil {
 		funcs = ttemplate.FuncMap{}
 	}
+	funcs["hasPrefix"] = strings.HasPrefix
 	if _, ok := funcs["localTime"]; !ok {
 		funcs["localTime"] = func(t time.Time) time.Time { return t }
 	}

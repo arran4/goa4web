@@ -275,6 +275,12 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 	if funcs == nil {
 		funcs = htemplate.FuncMap{}
 	}
+	funcs["makeAbsoluteURL"] = func(base, link string) string {
+		if strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") {
+			return link
+		}
+		return strings.TrimRight(base, "/") + "/" + strings.TrimLeft(link, "/")
+	}
 	if _, ok := funcs["localTime"]; !ok {
 		funcs["localTime"] = func(t time.Time) time.Time { return t }
 	}
@@ -331,6 +337,12 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 	cfg := newCfg(opts...)
 	if funcs == nil {
 		funcs = ttemplate.FuncMap{}
+	}
+	funcs["makeAbsoluteURL"] = func(base, link string) string {
+		if strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") {
+			return link
+		}
+		return strings.TrimRight(base, "/") + "/" + strings.TrimLeft(link, "/")
 	}
 	if _, ok := funcs["localTime"]; !ok {
 		funcs["localTime"] = func(t time.Time) time.Time { return t }

@@ -2,8 +2,8 @@ package common
 
 import (
 	"database/sql"
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/arran4/goa4web/config"
 

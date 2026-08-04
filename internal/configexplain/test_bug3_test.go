@@ -1,8 +1,8 @@
 package configexplain
 
 import (
-	"testing"
 	"github.com/arran4/goa4web/config"
+	"testing"
 )
 
 func TestExplainBugStringNormalization(t *testing.T) {

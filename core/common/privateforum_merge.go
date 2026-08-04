@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"slices"
 	"sort"
 	"strings"
 
@@ -61,9 +62,7 @@ func (cd *CoreData) MergePrivateTopicsWithSameParticipants(ctx context.Context, 
 			continue // Skip topics with no participants (should be handled by clean-empty)
 		}
 
-		sort.Slice(topicIDs, func(i, j int) bool {
-			return topicIDs[i] < topicIDs[j]
-		})
+		slices.Sort(topicIDs)
 
 		primaryTopicID := topicIDs[0]
 		mergedIDs := topicIDs[1:]

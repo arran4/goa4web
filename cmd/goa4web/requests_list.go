@@ -138,10 +138,7 @@ func (c *requestsListCmd) Run() error {
 	if pageSize <= 0 {
 		cfg, cfgErr := c.rootCmd.RuntimeConfig()
 		if cfgErr == nil {
-			pageSize = max(cfg.PageSizeDefault, cfg.PageSizeMin)
-			if pageSize > cfg.PageSizeMax {
-				pageSize = cfg.PageSizeMax
-			}
+			pageSize = min(max(cfg.PageSizeDefault, cfg.PageSizeMin), cfg.PageSizeMax)
 		} else {
 			// Fallback if config fails
 			pageSize = 20

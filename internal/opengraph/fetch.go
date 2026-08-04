@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -201,8 +202,8 @@ func Parse(r io.Reader) (*Info, error) {
 				}
 
 				if name == "keywords" || itemprop == "keywords" || prop == "article:tag" {
-					parts := strings.Split(content, ",")
-					for _, p := range parts {
+					parts := strings.SplitSeq(content, ",")
+					for p := range parts {
 						p = strings.TrimSpace(p)
 						if p == "" {
 							continue
@@ -211,13 +212,7 @@ func Parse(r io.Reader) (*Info, error) {
 							info.Keywords = p
 						} else {
 							existing := strings.Split(info.Keywords, ", ")
-							found := false
-							for _, e := range existing {
-								if e == p {
-									found = true
-									break
-								}
-							}
+							found := slices.Contains(existing, p)
 							if !found {
 								info.Keywords += ", " + p
 							}
@@ -313,8 +308,8 @@ func parseJSONLD(data string, info *Info) {
 			}
 
 			if kw := getString("keywords"); kw != "" {
-				parts := strings.Split(kw, ",")
-				for _, p := range parts {
+				parts := strings.SplitSeq(kw, ",")
+				for p := range parts {
 					p = strings.TrimSpace(p)
 					if p == "" {
 						continue
@@ -323,13 +318,7 @@ func parseJSONLD(data string, info *Info) {
 						info.Keywords = p
 					} else {
 						existing := strings.Split(info.Keywords, ", ")
-						found := false
-						for _, e := range existing {
-							if e == p {
-								found = true
-								break
-							}
-						}
+						found := slices.Contains(existing, p)
 						if !found {
 							info.Keywords += ", " + p
 						}

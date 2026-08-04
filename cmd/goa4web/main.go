@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
-
 	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+
 	_ "time/tzdata"
 
 	"github.com/arran4/goa4web"
@@ -278,253 +278,84 @@ func parseRoot(args []string) (*rootCmd, error) {
 	return r, nil
 }
 
+type runner interface {
+	Run() error
+}
+
+var cmdParsers = map[string]func(*rootCmd, []string) (runner, error){
+	"help":          func(r *rootCmd, args []string) (runner, error) { return parseHelpCmd(r, args) },
+	"usage":         func(r *rootCmd, args []string) (runner, error) { return parseUsageCmd(r, args) },
+	"serve":         func(r *rootCmd, args []string) (runner, error) { return parseServeCmd(r, args) },
+	"user":          func(r *rootCmd, args []string) (runner, error) { return parseUserCmd(r, args) },
+	"email":         func(r *rootCmd, args []string) (runner, error) { return parseEmailCmd(r, args) },
+	"dlq":           func(r *rootCmd, args []string) (runner, error) { return parseDlqCmd(r, args) },
+	"requests":      func(r *rootCmd, args []string) (runner, error) { return parseRequestsCmd(r, args) },
+	"db":            func(r *rootCmd, args []string) (runner, error) { return parseDbCmd(r, args) },
+	"perm":          func(r *rootCmd, args []string) (runner, error) { return parsePermCmd(r, args) },
+	"role":          func(r *rootCmd, args []string) (runner, error) { return parseRoleCmd(r, args) },
+	"subscription":  func(r *rootCmd, args []string) (runner, error) { return parseSubscriptionCmd(r, args) },
+	"grant":         func(r *rootCmd, args []string) (runner, error) { return parseGrantCmd(r, args) },
+	"board":         func(r *rootCmd, args []string) (runner, error) { return parseBoardCmd(r, args) },
+	"blog":          func(r *rootCmd, args []string) (runner, error) { return parseBlogCmd(r, args) },
+	"blogs":         func(r *rootCmd, args []string) (runner, error) { return parseBlogCmd(r, args) },
+	"writing":       func(r *rootCmd, args []string) (runner, error) { return parseWritingCmd(r, args) },
+	"news":          func(r *rootCmd, args []string) (runner, error) { return parseNewsCmd(r, args) },
+	"announcement":  func(r *rootCmd, args []string) (runner, error) { return parseAnnouncementCmd(r, args) },
+	"jmap":          func(r *rootCmd, args []string) (runner, error) { return parseJmapCmd(r, args) },
+	"faq":           func(r *rootCmd, args []string) (runner, error) { return parseFaqCmd(r, args) },
+	"forum":         func(r *rootCmd, args []string) (runner, error) { return parseForumCmd(r, args) },
+	"private-forum": func(r *rootCmd, args []string) (runner, error) { return parsePrivateForumCmd(r, args) },
+	"ipban":         func(r *rootCmd, args []string) (runner, error) { return parseIpBanCmd(r, args) },
+	"images":        func(r *rootCmd, args []string) (runner, error) { return parseImagesCmd(r, args) },
+	"files":         func(r *rootCmd, args []string) (runner, error) { return parseFilesCmd(r, args) },
+	"imagebbs":      func(r *rootCmd, args []string) (runner, error) { return parseImagebbsCmd(r, args) },
+	"links":         func(r *rootCmd, args []string) (runner, error) { return parseLinksCmd(r, args) },
+	"share":         func(r *rootCmd, args []string) (runner, error) { return parseShareCmd(r, args) },
+	"comment":       func(r *rootCmd, args []string) (runner, error) { return parseCommentCmd(r, args) },
+	"comments":      func(r *rootCmd, args []string) (runner, error) { return parseCommentCmd(r, args) },
+	"audit":         func(r *rootCmd, args []string) (runner, error) { return parseAuditCmd(r, args) },
+	"notifications": func(r *rootCmd, args []string) (runner, error) { return parseNotificationsCmd(r, args) },
+	"repl":          func(r *rootCmd, args []string) (runner, error) { return parseReplCmd(r, args) },
+	"lang":          func(r *rootCmd, args []string) (runner, error) { return parseLangCmd(r, args) },
+	"maintenance":   func(r *rootCmd, args []string) (runner, error) { return parseMaintenanceCmd(r, args) },
+	"server":        func(r *rootCmd, args []string) (runner, error) { return parseServerCmd(r, args) },
+	"config":        func(r *rootCmd, args []string) (runner, error) { return parseConfigCmd(r, args) },
+	"page-size":     func(r *rootCmd, args []string) (runner, error) { return parsePageSizeCmd(r, args) },
+	"templates":     func(r *rootCmd, args []string) (runner, error) { return parseTemplatesCmd(r, args) },
+	"test":          func(r *rootCmd, args []string) (runner, error) { return parseTestCmd(r, args) },
+}
+
+
 func (r *rootCmd) Run() error {
 	args := r.fs.Args()
 	if len(args) == 0 {
 		r.fs.Usage()
 		return fmt.Errorf("no command provided")
 	}
-	switch args[0] {
-	case "help":
-		c, err := parseHelpCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: help: %w", err)
-		}
-		return c.Run()
-	case "usage":
-		if len(args) > 1 {
-			c, err := parseUsageCmd(r, args[1:])
-			if err != nil {
-				return fmt.Errorf("rootCmd.Run: usage: %w", err)
-			}
-			return c.Run()
-		}
+
+	cmdName := args[0]
+
+	// Special case for usage to handle optional arguments like 'usage <cmd>'
+	if cmdName == "usage" && len(args) == 1 {
 		c, err := parseHelpCmd(r, args[1:])
 		if err != nil {
 			return fmt.Errorf("rootCmd.Run: usage: %w", err)
 		}
 		return c.Run()
-	case "serve":
-		c, err := parseServeCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: serve: %w", err)
-		}
-		return c.Run()
-	case "user":
-		c, err := parseUserCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: user: %w", err)
-		}
-		return c.Run()
-	case "email":
-		c, err := parseEmailCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: email: %w", err)
-		}
-		return c.Run()
-	case "dlq":
-		c, err := parseDlqCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: dlq: %w", err)
-		}
-		return c.Run()
-	case "requests":
-		c, err := parseRequestsCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: requests: %w", err)
-		}
-		return c.Run()
-	case "db":
-		c, err := parseDbCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: db: %w", err)
-		}
-		return c.Run()
-	case "perm":
-		c, err := parsePermCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: perm: %w", err)
-		}
-		return c.Run()
-	case "role":
-		c, err := parseRoleCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: role: %w", err)
-		}
-		return c.Run()
-	case "subscription":
-		c, err := parseSubscriptionCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: subscription: %w", err)
-		}
-		return c.Run()
-	case "grant":
-		c, err := parseGrantCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: grant: %w", err)
-		}
-		return c.Run()
-	case "board":
-		c, err := parseBoardCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: board: %w", err)
-		}
-		return c.Run()
-	case "blog", "blogs":
-		c, err := parseBlogCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: blog: %w", err)
-		}
-		return c.Run()
-	case "writing":
-		c, err := parseWritingCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: writing: %w", err)
-		}
-		return c.Run()
-	case "news":
-		cmd, err := parseNewsCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: news: %w", err)
-		}
-		return cmd.Run()
-	case "announcement":
-		cmd, err := parseAnnouncementCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: announcement: %w", err)
-		}
-		return cmd.Run()
-	case "jmap":
-		cmd, err := parseJmapCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("jmap: %w", err)
-		}
-		return cmd.Run()
-	case "faq":
-		c, err := parseFaqCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: faq: %w", err)
-		}
-		return c.Run()
-	case "forum":
-		c, err := parseForumCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: forum: %w", err)
-		}
-		return c.Run()
-	case "private-forum":
-		c, err := parsePrivateForumCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: private-forum: %w", err)
-		}
-		return c.Run()
-	case "ipban":
-		c, err := parseIpBanCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: ipban: %w", err)
-		}
-		return c.Run()
-	case "images":
-		c, err := parseImagesCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: images: %w", err)
-		}
-		return c.Run()
-	case "files":
-		c, err := parseFilesCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: files: %w", err)
-		}
-		return c.Run()
-	case "imagebbs":
-		c, err := parseImagebbsCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: imagebbs: %w", err)
-		}
-		return c.Run()
-	case "links":
-		c, err := parseLinksCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: links: %w", err)
-		}
-		return c.Run()
-	case "share":
-		c, err := parseShareCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: share: %w", err)
-		}
-		return c.Run()
-	case "comment", "comments":
-		c, err := parseCommentCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: comment: %w", err)
-		}
-		return c.Run()
-	case "audit":
-		c, err := parseAuditCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: audit: %w", err)
-		}
-		return c.Run()
-	case "notifications":
-		c, err := parseNotificationsCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: notifications: %w", err)
-		}
-		return c.Run()
-	case "repl":
-		c, err := parseReplCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: repl: %w", err)
-		}
-		return c.Run()
-	case "lang":
-		c, err := parseLangCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: lang: %w", err)
-		}
-		return c.Run()
-	case "maintenance":
-		c, err := parseMaintenanceCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: maintenance: %w", err)
-		}
-		return c.Run()
-	case "server":
-		c, err := parseServerCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: server: %w", err)
-		}
-		return c.Run()
-	case "config":
-		c, err := parseConfigCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: config: %w", err)
-		}
-		return c.Run()
-	case "page-size":
-		c, err := parsePageSizeCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: page-size: %w", err)
-		}
-		return c.Run()
-	case "templates":
-		c, err := parseTemplatesCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: templates: %w", err)
-		}
-		return c.Run()
-	case "test":
-		c, err := parseTestCmd(r, args[1:])
-		if err != nil {
-			return fmt.Errorf("rootCmd.Run: test: %w", err)
-		}
-		return c.Run()
-
-	default:
-		r.fs.Usage()
-		return fmt.Errorf("rootCmd.Run: unknown command %q", args[0])
 	}
+
+	parser, ok := cmdParsers[cmdName]
+	if !ok {
+		r.fs.Usage()
+		return fmt.Errorf("rootCmd.Run: unknown command %q", cmdName)
+	}
+
+	c, err := parser(r, args[1:])
+	if err != nil {
+		return fmt.Errorf("rootCmd.Run: %s: %w", cmdName, err)
+	}
+
+	return c.Run()
 }
 
 // Usage prints command usage information with examples.

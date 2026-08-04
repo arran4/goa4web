@@ -317,3 +317,27 @@ func TestTimeAgo(t *testing.T) {
 		}
 	}
 }
+
+
+func TestTemplateDefaultItem(t *testing.T) {
+	tests := []struct {
+		name string
+		def  any
+		item any
+		want any
+	}{
+		{"sql.NullString valid", "default", sql.NullString{String: "val", Valid: true}, "val"},
+		{"sql.NullString empty", "default", sql.NullString{String: "", Valid: true}, "default"},
+		{"sql.NullString invalid", "default", sql.NullString{String: "val", Valid: false}, "default"},
+		{"string non-empty", "default", "val", "val"},
+		{"string empty", "default", "", "default"},
+		{"nil", "default", nil, "default"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := common.TemplateDefaultItem(tt.def, tt.item); got != tt.want {
+				t.Errorf("TemplateDefaultItem(%v, %v) = %v, want %v", tt.def, tt.item, got, tt.want)
+			}
+		})
+	}
+}

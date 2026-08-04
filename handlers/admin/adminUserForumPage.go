@@ -39,7 +39,7 @@ func adminUserForumPage(w http.ResponseWriter, r *http.Request) {
 		User:    &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Threads: rows,
 	}
-	AdminUserForumPageTmpl.Handle(w, r, data)
+	_ = AdminUserForumPageTmpl.Handle(w, r, data)
 }
 
 const AdminUserForumPageTmpl tasks.Template = "admin/userForumPage.gohtml"

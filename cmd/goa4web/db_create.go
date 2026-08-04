@@ -24,7 +24,7 @@ var _ usageData = (*dbCreateCmd)(nil)
 
 // Usage prints command usage.
 func (c *dbCreateCmd) Usage() {
-	executeUsage(c.rootCmd.fs.Output(), "db_create_usage.txt", c)
+	_ = executeUsage(c.rootCmd.fs.Output(), "db_create_usage.txt", c)
 }
 
 func parseDbCreateCmd(parent *dbCmd, args []string) (*dbCreateCmd, error) {

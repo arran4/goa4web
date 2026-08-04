@@ -181,7 +181,7 @@ func expandEnv(args []string) []string {
 }
 
 // Usage prints command usage information with examples.
-func (c *replCmd) Usage() { executeUsage(c.fs.Output(), "repl_usage.txt", c) }
+func (c *replCmd) Usage() { _ = executeUsage(c.fs.Output(), "repl_usage.txt", c) }
 
 func (c *replCmd) FlagGroups() []flagGroup {
 	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}

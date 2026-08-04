@@ -24,7 +24,7 @@ func AdminDBBackupPage(w http.ResponseWriter, r *http.Request) {
 		TaskName: string(TaskDBBackup),
 	}
 
-	AdminDBBackupPageTmpl.Handle(w, r, data)
+	_ = AdminDBBackupPageTmpl.Handle(w, r, data)
 }
 
 // AdminDBBackupPageTmpl renders the admin database backup page.

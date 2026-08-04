@@ -163,7 +163,7 @@ func TestQueries_AdminIsWritingDeactivated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"is_deactivated"}).AddRow(true)
@@ -188,7 +188,7 @@ func TestQueries_AdminListDeactivatedWritings(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwriting", "title", "writing", "abstract", "private"}).
@@ -214,7 +214,7 @@ func TestQueries_AdminIsImagepostDeactivated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"is_deactivated"}).AddRow(true)
@@ -239,7 +239,7 @@ func TestQueries_AdminListDeactivatedImageposts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idimagepost", "description", "thumbnail", "fullimage"}).
@@ -265,7 +265,7 @@ func TestQueries_AdminIsLinkDeactivated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"is_deactivated"}).AddRow(true)
@@ -290,7 +290,7 @@ func TestQueries_AdminListDeactivatedLinks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idlinker", "title", "url", "description"}).

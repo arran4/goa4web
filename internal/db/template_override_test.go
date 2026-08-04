@@ -12,7 +12,7 @@ func TestTemplateOverride(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	mock.ExpectExec("INSERT INTO template_overrides").WithArgs("t", "body").WillReturnResult(sqlmock.NewResult(1, 1))

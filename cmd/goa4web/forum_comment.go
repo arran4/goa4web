@@ -50,13 +50,13 @@ func (c *forumCommentCmd) Run() error {
 }
 
 func (c *forumCommentCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s forum comment <command> [flags]\n", os.Args[0])
-	fmt.Fprintln(c.fs.Output(), "\nCommands:")
-	fmt.Fprintln(c.fs.Output(), "  list        List forum comments")
-	fmt.Fprintln(c.fs.Output(), "  details     Show details of a comment")
-	fmt.Fprintln(c.fs.Output(), "  delete      Permanently delete a comment")
-	fmt.Fprintln(c.fs.Output(), "  deactivate  Deactivate (soft delete) a comment")
-	fmt.Fprintln(c.fs.Output(), "  activate    Activate (restore) a comment")
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s forum comment <command> [flags]\n", os.Args[0])
+	_, _ = fmt.Fprintln(c.fs.Output(), "\nCommands:")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  list        List forum comments")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  details     Show details of a comment")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  delete      Permanently delete a comment")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  deactivate  Deactivate (soft delete) a comment")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  activate    Activate (restore) a comment")
 }
 
 func (c *forumCommentCmd) runList(args []string) error {
@@ -83,7 +83,7 @@ func (c *forumCommentCmd) runList(args []string) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tThreadID\tUser\tDate\tText\tDeleted")
+	_, _ = fmt.Fprintln(w, "ID\tThreadID\tUser\tDate\tText\tDeleted")
 	for _, com := range comments {
 		// TopicHandler is sql.NullString, so check validity and use String value.
 		handler := ""
@@ -99,10 +99,10 @@ func (c *forumCommentCmd) runList(args []string) error {
 			if com.DeletedAt.Valid {
 				deleted = "YES"
 			}
-			fmt.Fprintf(w, "%d\t%d\t%s\t%v\t%s\t%s\n", com.Idcomments, com.Idforumthread.Int32, com.Posterusername.String, com.Written.Time, text, deleted)
+			_, _ = fmt.Fprintf(w, "%d\t%d\t%s\t%v\t%s\t%s\n", com.Idcomments, com.Idforumthread.Int32, com.Posterusername.String, com.Written.Time, text, deleted)
 		}
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 

@@ -108,7 +108,7 @@ func (c *serveCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *serveCmd) Usage() {
-	executeUsage(c.fs.Output(), "serve_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "serve_usage.txt", c)
 }
 
 func (c *serveCmd) FlagGroups() []flagGroup {

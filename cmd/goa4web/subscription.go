@@ -42,7 +42,7 @@ func (c *subscriptionCmd) Run() error {
 }
 
 func (c *subscriptionCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_usage.txt", c)
 }
 
 func (c *subscriptionCmd) FlagGroups() []flagGroup {

@@ -47,7 +47,7 @@ func (c *langUpdateCmd) Run() error {
 }
 
 func (c *langUpdateCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_update_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "lang_update_usage.txt", c)
 }
 
 func (c *langUpdateCmd) FlagGroups() []flagGroup {

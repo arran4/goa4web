@@ -60,7 +60,7 @@ func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 }
 
 func (c *dbMigrateCmd) Usage() {
-	executeUsage(c.fs.Output(), "db_migrate_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "db_migrate_usage.txt", c)
 }
 
 func (c *dbMigrateCmd) FlagGroups() []flagGroup {

@@ -44,7 +44,7 @@ func (c *shareCmd) Run() error {
 }
 
 func (c *shareCmd) Usage() {
-	executeUsage(c.fs.Output(), "share_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "share_usage.txt", c)
 }
 
 func (c *shareCmd) FlagGroups() []flagGroup {

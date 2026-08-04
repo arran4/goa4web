@@ -50,7 +50,7 @@ func (c *shareSignCmd) Run() error {
 }
 
 func (c *shareSignCmd) Usage() {
-	executeUsage(c.fs.Output(), "share_sign_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "share_sign_usage.txt", c)
 }
 
 func (c *shareSignCmd) FlagGroups() []flagGroup {

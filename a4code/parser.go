@@ -109,7 +109,6 @@ func isBlockContext(n ast.Node) bool {
 	return false
 }
 
-
 func startsWithLineBreakAfterHorizontalWhitespace(value string) bool {
 	value = strings.TrimLeft(value, " \t")
 	return strings.HasPrefix(value, "\n") || strings.HasPrefix(value, "\r")
@@ -591,11 +590,11 @@ func skipArgPrefix(s *scanner) {
 		}
 		if next == '\r' {
 			if next2, err := s.ReadByte(); err == nil && next2 != '\n' {
-				s.UnreadByte()
+				_ = s.UnreadByte()
 			}
 			return
 		}
-		s.UnreadByte()
+		_ = s.UnreadByte()
 		return
 	}
 

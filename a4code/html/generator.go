@@ -60,88 +60,88 @@ func (g *Generator) Root(w io.Writer, n *ast.Root) error {
 }
 
 func (g *Generator) Text(w io.Writer, t *ast.Text) error {
-	fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(t.Start, t.End))
+	_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(t.Start, t.End))
 	for i := 0; i < len(t.Value); i++ {
 		switch t.Value[i] {
 		case '&':
-			io.WriteString(w, "&amp;")
+			_, _ = io.WriteString(w, "&amp;")
 		case '<':
-			io.WriteString(w, "&lt;")
+			_, _ = io.WriteString(w, "&lt;")
 		case '>':
-			io.WriteString(w, "&gt;")
+			_, _ = io.WriteString(w, "&gt;")
 		case '\r':
 		case '\n':
-			io.WriteString(w, "<br />\n")
+			_, _ = io.WriteString(w, "<br />\n")
 		default:
 			writeByte(w, t.Value[i])
 		}
 	}
-	io.WriteString(w, "</span>")
+	_, _ = io.WriteString(w, "</span>")
 	return nil
 }
 
 func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
-	fmt.Fprintf(w, `<strong%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<strong%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</strong>")
+	_, _ = io.WriteString(w, "</strong>")
 	return nil
 }
 
 func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
-	fmt.Fprintf(w, `<i%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<i%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</i>")
+	_, _ = io.WriteString(w, "</i>")
 	return nil
 }
 
 func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
-	fmt.Fprintf(w, `<u%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<u%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</u>")
+	_, _ = io.WriteString(w, "</u>")
 	return nil
 }
 
 func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
-	fmt.Fprintf(w, `<sup%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<sup%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</sup>")
+	_, _ = io.WriteString(w, "</sup>")
 	return nil
 }
 
 func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
-	fmt.Fprintf(w, `<sub%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<sub%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</sub>")
+	_, _ = io.WriteString(w, "</sub>")
 	return nil
 }
 
 func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 	if safe, ok := SanitizeURL(n.Href); ok {
-		fmt.Fprintf(w, `<a href="`)
-		io.WriteString(w, safe)
-		fmt.Fprintf(w, `" target="_BLANK"%s>`, g.SourceAttrs(n.Start, n.End))
+		_, _ = fmt.Fprintf(w, `<a href="`)
+		_, _ = io.WriteString(w, safe)
+		_, _ = fmt.Fprintf(w, `" target="_BLANK"%s>`, g.SourceAttrs(n.Start, n.End))
 		if isEffectivelyEmpty(n.Children) {
-			io.WriteString(w, safe)
+			_, _ = io.WriteString(w, safe)
 		} else {
 			for _, c := range n.Children {
 				if err := ast.Generate(w, c, g.self()); err != nil {
@@ -149,55 +149,55 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 				}
 			}
 		}
-		io.WriteString(w, "</a>")
+		_, _ = io.WriteString(w, "</a>")
 	} else {
-		fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.Start, n.End))
-		io.WriteString(w, safe)
+		_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.Start, n.End))
+		_, _ = io.WriteString(w, safe)
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, g.self()); err != nil {
 				return err
 			}
 		}
-		io.WriteString(w, "</span>")
+		_, _ = io.WriteString(w, "</span>")
 	}
 	return nil
 }
 
 func (g *Generator) Image(w io.Writer, n *ast.Image) error {
-	io.WriteString(w, "<img src=\"")
-	io.WriteString(w, htmlEscape(n.Src))
-	fmt.Fprintf(w, `"%s />`, g.SourceAttrs(n.Start, n.End))
+	_, _ = io.WriteString(w, "<img src=\"")
+	_, _ = io.WriteString(w, htmlEscape(n.Src))
+	_, _ = fmt.Fprintf(w, `"%s />`, g.SourceAttrs(n.Start, n.End))
 	return nil
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	if n.IsBlock {
-		fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
-		fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
-		io.WriteString(w, htmlEscape(n.Value))
-		io.WriteString(w, "</span></pre>")
+		_, _ = fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
+		_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
+		_, _ = io.WriteString(w, htmlEscape(n.Value))
+		_, _ = io.WriteString(w, "</span></pre>")
 	} else {
-		fmt.Fprintf(w, `<code class="a4code-inline a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
-		io.WriteString(w, htmlEscape(n.Value))
-		io.WriteString(w, "</code>")
+		_, _ = fmt.Fprintf(w, `<code class="a4code-inline a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
+		_, _ = io.WriteString(w, htmlEscape(n.Value))
+		_, _ = io.WriteString(w, "</code>")
 	}
 	return nil
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
-	fmt.Fprintf(w, `<pre class="a4code-block a4code-code a4code-language-%s"%s>`, htmlEscape(n.Language), g.SourceAttrs(n.Start, n.End))
-	fmt.Fprintf(w, `<code class="language-%s">`, htmlEscape(n.Language))
-	fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
-	io.WriteString(w, htmlEscape(n.Value))
-	io.WriteString(w, "</span></code></pre>")
+	_, _ = fmt.Fprintf(w, `<pre class="a4code-block a4code-code a4code-language-%s"%s>`, htmlEscape(n.Language), g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<code class="language-%s">`, htmlEscape(n.Language))
+	_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
+	_, _ = io.WriteString(w, htmlEscape(n.Value))
+	_, _ = io.WriteString(w, "</span></code></pre>")
 	return nil
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	if n.IsBlock {
 		colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
-		fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
-		io.WriteString(w, "<div class=\"quote-body\">")
+		_, _ = fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
+		_, _ = io.WriteString(w, "<div class=\"quote-body\">")
 
 		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, SourceAttrBuilders: g.sourceAttrBuilders()}
 		for _, c := range n.Children {
@@ -205,28 +205,28 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 				return err
 			}
 		}
-		io.WriteString(w, "</div>")
-		io.WriteString(w, "</blockquote>")
+		_, _ = io.WriteString(w, "</div>")
+		_, _ = io.WriteString(w, "</blockquote>")
 	} else {
-		fmt.Fprintf(w, `<q class="a4code-inline a4code-quote"%s>`, g.SourceAttrs(n.Start, n.End))
+		_, _ = fmt.Fprintf(w, `<q class="a4code-inline a4code-quote"%s>`, g.SourceAttrs(n.Start, n.End))
 		childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, SourceAttrBuilders: g.sourceAttrBuilders()}
 		for _, c := range n.Children {
 			if err := ast.Generate(w, c, childGen); err != nil {
 				return err
 			}
 		}
-		io.WriteString(w, "</q>")
+		_, _ = io.WriteString(w, "</q>")
 	}
 	return nil
 }
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
-	io.WriteString(w, "<div class=\"quote-header\">Quote of ")
-	io.WriteString(w, htmlEscape(n.Name))
-	io.WriteString(w, ":</div>")
-	io.WriteString(w, "<div class=\"quote-body\">")
+	_, _ = fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
+	_, _ = io.WriteString(w, "<div class=\"quote-header\">Quote of ")
+	_, _ = io.WriteString(w, htmlEscape(n.Name))
+	_, _ = io.WriteString(w, ":</div>")
+	_, _ = io.WriteString(w, "<div class=\"quote-body\">")
 
 	childGen := &Generator{Depth: g.Depth + 1, Self: g.Self, SourceAttrBuilders: g.sourceAttrBuilders()}
 	for _, c := range n.Children {
@@ -234,49 +234,49 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 			return err
 		}
 	}
-	io.WriteString(w, "</div>")
-	io.WriteString(w, "</blockquote>")
+	_, _ = io.WriteString(w, "</div>")
+	_, _ = io.WriteString(w, "</blockquote>")
 	return nil
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
-	fmt.Fprintf(w, `<span class="spoiler"%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<span class="spoiler"%s>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</span>")
+	_, _ = io.WriteString(w, "</span>")
 	return nil
 }
 
 func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
-	fmt.Fprintf(w, `<div class="a4code-block a4code-indent"%s><div>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<div class="a4code-block a4code-indent"%s><div>`, g.SourceAttrs(n.Start, n.End))
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</div></div>")
+	_, _ = io.WriteString(w, "</div></div>")
 	return nil
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
-	fmt.Fprintf(w, `<hr%s />`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<hr%s />`, g.SourceAttrs(n.Start, n.End))
 	return nil
 }
 
 func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
-	fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.Start, n.End))
-	io.WriteString(w, "[")
-	io.WriteString(w, htmlEscape(n.Tag))
+	_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = io.WriteString(w, "[")
+	_, _ = io.WriteString(w, htmlEscape(n.Tag))
 	for _, ch := range n.Children {
 		if err := ast.Generate(w, ch, g.self()); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "]")
-	io.WriteString(w, "</span>")
+	_, _ = io.WriteString(w, "]")
+	_, _ = io.WriteString(w, "</span>")
 	return nil
 }
 

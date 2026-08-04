@@ -82,7 +82,7 @@ func (t *ApplySubscriptionTemplateTask) Action(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	qtx := db.New(tx)
 	role, err := qtx.GetRoleByName(r.Context(), roleName)

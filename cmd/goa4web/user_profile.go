@@ -33,7 +33,7 @@ func parseUserProfileCmd(parent *userCmd, args []string) (*userProfileCmd, error
 }
 
 func (c *userProfileCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_profile_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_profile_usage.txt", c)
 }
 
 func (c *userProfileCmd) FlagGroups() []flagGroup {

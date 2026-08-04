@@ -64,7 +64,7 @@ func (c *roleGrantsCmd) Run() error {
 	}
 }
 
-func (c *roleGrantsCmd) Usage() { executeUsage(c.fs.Output(), "role_grants_usage.txt", c) }
+func (c *roleGrantsCmd) Usage() { _ = executeUsage(c.fs.Output(), "role_grants_usage.txt", c) }
 
 func (c *roleGrantsCmd) FlagGroups() []flagGroup {
 	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
@@ -120,7 +120,9 @@ func (c *roleGrantsExportCmd) Run() error {
 	}
 }
 
-func (c *roleGrantsExportCmd) Usage() { executeUsage(c.fs.Output(), "role_grants_export_usage.txt", c) }
+func (c *roleGrantsExportCmd) Usage() {
+	_ = executeUsage(c.fs.Output(), "role_grants_export_usage.txt", c)
+}
 
 func (c *roleGrantsExportCmd) FlagGroups() []flagGroup {
 	return append(c.roleCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})

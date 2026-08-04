@@ -38,7 +38,7 @@ func parseRequestsViewCmd(parent *requestsCmd, args []string) (*requestsViewCmd,
 }
 
 func (c *requestsViewCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_view_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_view_usage.txt", c)
 }
 
 func (c *requestsViewCmd) FlagGroups() []flagGroup {

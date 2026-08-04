@@ -141,7 +141,7 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 		OwnerName:    ownerName,
 	}
 
-	AdminImageCacheDetailsPageTmpl.Handle(w, r, data)
+	_ = AdminImageCacheDetailsPageTmpl.Handle(w, r, data)
 }
 
 func getCachePath(dir, id string) (string, error) {

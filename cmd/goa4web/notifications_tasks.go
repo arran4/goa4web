@@ -15,7 +15,7 @@ type notificationsTasksCmd struct {
 
 // Usage prints command usage information with examples.
 func (c *notificationsTasksCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_tasks_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_tasks_usage.txt", c)
 }
 
 func (c *notificationsTasksCmd) FlagGroups() []flagGroup {

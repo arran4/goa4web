@@ -44,7 +44,7 @@ func (c *langListCmd) Run() error {
 }
 
 func (c *langListCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "lang_list_usage.txt", c)
 }
 
 func (c *langListCmd) FlagGroups() []flagGroup {

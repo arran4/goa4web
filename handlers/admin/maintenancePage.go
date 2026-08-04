@@ -45,7 +45,7 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 		TaskName:      string(TaskForumTopicConvertPrivate),
 		MergeTaskName: string(TaskMergePrivateTopics),
 	}
-	AdminMaintenancePageTmpl.Handle(w, r, data)
+	_ = AdminMaintenancePageTmpl.Handle(w, r, data)
 }
 
 const AdminMaintenancePageTmpl tasks.Template = "admin/maintenancePage.gohtml"

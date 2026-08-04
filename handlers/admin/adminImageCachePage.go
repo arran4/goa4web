@@ -64,7 +64,7 @@ func AdminImageCachePage(w http.ResponseWriter, r *http.Request) {
 		TaskDelete: string(TaskImageCacheDelete),
 	}
 
-	AdminImageCachePageTmpl.Handle(w, r, data)
+	_ = AdminImageCachePageTmpl.Handle(w, r, data)
 }
 
 func listImageCacheEntries(dir string) ([]ImageCacheEntry, int64, error) {

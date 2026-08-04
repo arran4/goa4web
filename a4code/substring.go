@@ -138,5 +138,3 @@ func setChildren(c ast.Container, children []ast.Node) {
 		t.Children = children
 	}
 }
-
-

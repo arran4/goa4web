@@ -110,14 +110,14 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if pref != nil {
 		pref.CustomCss = sql.NullString{String: customCSS, Valid: customCSS != ""}
 	}
-		// If it was loaded and returned nil, it is "loaded".
-		// So we can't easily force it to reload.
-		// However, for the user flow, if they didn't have preferences, they probably didn't have custom CSS.
-		// The re-render will show what they submitted if we pass it in `data`, OR if we rely on `cd`.
-		// `userAppearancePage` uses `cd.Preference`.
-		// To be safe, if `pref` is nil, we can rely on the fact that we just saved it.
-		// But to make `userAppearancePage` generic, maybe we should pass the value to it?
-		// `userAppearancePage` extracts it from `cd`.
+	// If it was loaded and returned nil, it is "loaded".
+	// So we can't easily force it to reload.
+	// However, for the user flow, if they didn't have preferences, they probably didn't have custom CSS.
+	// The re-render will show what they submitted if we pass it in `data`, OR if we rely on `cd`.
+	// `userAppearancePage` uses `cd.Preference`.
+	// To be safe, if `pref` is nil, we can rely on the fact that we just saved it.
+	// But to make `userAppearancePage` generic, maybe we should pass the value to it?
+	// `userAppearancePage` extracts it from `cd`.
 	cd.SetCurrentNotice("Appearance settings updated")
 
 	// Render directly with the new value to ensure it is displayed even if pref was not cached

@@ -49,7 +49,7 @@ func parseNotificationsListCmd(parent *notificationsCmd, args []string) (*notifi
 
 // Usage prints command usage information with examples.
 func (c *notificationsListCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_list_usage.txt", c)
 }
 
 func (c *notificationsListCmd) FlagGroups() []flagGroup {
@@ -144,7 +144,7 @@ func (c *notificationsListCmd) Run() error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tUserID\tUnread\tCategory\tCreated\tRead\tMessage\tLink")
+	_, _ = fmt.Fprintln(w, "ID\tUserID\tUnread\tCategory\tCreated\tRead\tMessage\tLink")
 	for _, n := range filtered {
 		item := newNotificationListItem(n)
 		readAt := "-"
@@ -159,7 +159,7 @@ func (c *notificationsListCmd) Run() error {
 		if item.Link != nil {
 			link = *item.Link
 		}
-		fmt.Fprintf(w, "%d\t%d\t%t\t%s\t%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%t\t%s\t%s\t%s\t%s\t%s\n",
 			item.ID,
 			item.UserID,
 			item.Unread,
@@ -170,7 +170,7 @@ func (c *notificationsListCmd) Run() error {
 			link,
 		)
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -264,7 +264,7 @@ func parseNotificationsMarkCmd(parent *notificationsCmd, args []string) (*notifi
 
 // Usage prints command usage information with examples.
 func (c *notificationsMarkCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_mark_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_mark_usage.txt", c)
 }
 
 func (c *notificationsMarkCmd) FlagGroups() []flagGroup {
@@ -325,6 +325,6 @@ func (c *notificationsMarkCmd) Run() error {
 		return nil
 	}
 
-	fmt.Fprintf(c.fs.Output(), "Marked %d notifications as %s.\n", len(ids), status)
+	_, _ = fmt.Fprintf(c.fs.Output(), "Marked %d notifications as %s.\n", len(ids), status)
 	return nil
 }

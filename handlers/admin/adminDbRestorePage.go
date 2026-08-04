@@ -21,7 +21,7 @@ func AdminDBRestorePage(w http.ResponseWriter, r *http.Request) {
 		TaskName: string(TaskDBRestore),
 	}
 
-	AdminDBRestorePageTmpl.Handle(w, r, data)
+	_ = AdminDBRestorePageTmpl.Handle(w, r, data)
 }
 
 // AdminDBRestorePageTmpl renders the admin database restore page.

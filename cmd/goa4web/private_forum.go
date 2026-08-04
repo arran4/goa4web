@@ -79,13 +79,13 @@ func (c *privateForumCmd) Run() error {
 
 // Usage prints command usage information.
 func (c *privateForumCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s private-forum <command> [flags]\n\n", c.rootCmd.fs.Name())
-	fmt.Fprintln(c.fs.Output(), "Commands:")
-	fmt.Fprintln(c.fs.Output(), "  clean-empty          Clean up empty private forum topics")
-	fmt.Fprintln(c.fs.Output(), "  clean-empty-threads  Clean up empty private forum threads")
-	fmt.Fprintln(c.fs.Output(), "  topic                Manage private forum topics")
-	fmt.Fprintln(c.fs.Output(), "  thread               Manage private forum threads")
-	fmt.Fprintln(c.fs.Output(), "  comment              Manage private forum comments")
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s private-forum <command> [flags]\n\n", c.rootCmd.fs.Name())
+	_, _ = fmt.Fprintln(c.fs.Output(), "Commands:")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  clean-empty          Clean up empty private forum topics")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  clean-empty-threads  Clean up empty private forum threads")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  topic                Manage private forum topics")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  thread               Manage private forum threads")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  comment              Manage private forum comments")
 }
 
 // privateForumCleanEmptyCmd implements "private-forum clean-empty".
@@ -468,8 +468,8 @@ func printSummary(items []deletedItem, grantsDeleted int, commentsDeleted int) {
 	fmt.Printf("Total comments deleted: %d\n\n", commentsDeleted)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tType\tTitle\tParticipants")
-	fmt.Fprintln(w, "--\t----\t-----\t------------")
+	_, _ = fmt.Fprintln(w, "ID\tType\tTitle\tParticipants")
+	_, _ = fmt.Fprintln(w, "--\t----\t-----\t------------")
 
 	for _, item := range items {
 		participants := strings.Join(item.Participants, ", ")
@@ -483,8 +483,8 @@ func printSummary(items []deletedItem, grantsDeleted int, commentsDeleted int) {
 		// Escape tabs/newlines in title just in case
 		title = strings.ReplaceAll(title, "\t", " ")
 		title = strings.ReplaceAll(title, "\n", " ")
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", item.ID, item.Type, title, participants)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", item.ID, item.Type, title, participants)
 	}
-	w.Flush()
-	fmt.Println()
+	_ = w.Flush()
+	_, _ = fmt.Println()
 }

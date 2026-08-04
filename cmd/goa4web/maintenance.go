@@ -53,7 +53,7 @@ func (c *maintenanceCmd) Run() error {
 }
 
 func (c *maintenanceCmd) Usage() {
-	executeUsage(c.fs.Output(), "maintenance_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "maintenance_usage.txt", c)
 }
 
 func (c *maintenanceCmd) FlagGroups() []flagGroup {
@@ -93,7 +93,7 @@ func (c *maintenanceForumTopicConvertPrivateCmd) Run() error {
 	for _, arg := range args {
 		topicID, err := strconv.Atoi(arg)
 		if err != nil {
-			fmt.Fprintf(c.fs.Output(), "Invalid topic id %q: %v\n", arg, err)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Invalid topic id %q: %v\n", arg, err)
 			failures++
 			continue
 		}
@@ -101,14 +101,14 @@ func (c *maintenanceForumTopicConvertPrivateCmd) Run() error {
 			Handler: maintenancePrivateForumHandler,
 			ID:      int32(topicID),
 		}); err != nil {
-			fmt.Fprintf(c.fs.Output(), "Failed to convert forum topic %d to private: %v\n", topicID, err)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Failed to convert forum topic %d to private: %v\n", topicID, err)
 			failures++
 			continue
 		}
-		fmt.Fprintf(c.fs.Output(), "Converted forum topic %d to private.\n", topicID)
+		_, _ = fmt.Fprintf(c.fs.Output(), "Converted forum topic %d to private.\n", topicID)
 	}
 	successes := len(args) - failures
-	fmt.Fprintf(c.fs.Output(), "Maintenance summary: %d converted, %d failed.\n", successes, failures)
+	_, _ = fmt.Fprintf(c.fs.Output(), "Maintenance summary: %d converted, %d failed.\n", successes, failures)
 	if failures > 0 {
 		return fmt.Errorf("maintenance completed with %d failures", failures)
 	}

@@ -45,7 +45,7 @@ func (c *userCommentCmd) Run() error {
 }
 
 func (c *userCommentCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_comment_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_comment_usage.txt", c)
 }
 
 func (c *userCommentCmd) FlagGroups() []flagGroup {

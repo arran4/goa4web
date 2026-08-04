@@ -90,7 +90,7 @@ func Sign(data string, key string, opts ...SignOption) string {
 	}
 
 	if !issuedAt.IsZero() {
-		io.WriteString(mac, ":its:"+strconv.FormatInt(issuedAt.Unix(), 10))
+		_, _ = io.WriteString(mac, ":its:"+strconv.FormatInt(issuedAt.Unix(), 10))
 	}
 
 	return hex.EncodeToString(mac.Sum(nil))

@@ -68,7 +68,7 @@ func (c *faqCategoryCmd) Run() error {
 }
 
 func (c *faqCategoryCmd) Usage() {
-	executeUsage(c.fs.Output(), "faq_category_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "faq_category_usage.txt", c)
 }
 
 func (c *faqCategoryCmd) FlagGroups() []flagGroup {
@@ -370,18 +370,18 @@ func (c *faqCategoryDeleteCmd) Run() error {
 		if c.migrateTo > 0 {
 			targetID = sql.NullInt32{Int32: int32(c.migrateTo), Valid: true}
 		}
-			// migrate to root? or literally ID 0?
-			// The flag description implies ID.
-			// If user passes -migrate-to 0, it means error if not empty.
-			// But if they want to migrate to root, they can't via flag 0?
-			// Let's assume -migrate-to targetID. If targetID is valid category.
-			// Wait, my flag default is 0.
-			// If they pass -migrate-to 5, migrateTo=5.
-			// If they pass -migrate-to -1 (root)?
-			// I'll assume standard IDs. Root is usually NULL parent, but content must have category?
-			// `faq` table `category_id` is nullable.
-			// So `migrate-to -1` could mean make content uncategorized (root)?
-			// I'll support `migrate-to` as ID.
+		// migrate to root? or literally ID 0?
+		// The flag description implies ID.
+		// If user passes -migrate-to 0, it means error if not empty.
+		// But if they want to migrate to root, they can't via flag 0?
+		// Let's assume -migrate-to targetID. If targetID is valid category.
+		// Wait, my flag default is 0.
+		// If they pass -migrate-to 5, migrateTo=5.
+		// If they pass -migrate-to -1 (root)?
+		// I'll assume standard IDs. Root is usually NULL parent, but content must have category?
+		// `faq` table `category_id` is nullable.
+		// So `migrate-to -1` could mean make content uncategorized (root)?
+		// I'll support `migrate-to` as ID.
 
 		// Move content
 		// AdminMoveFAQContent: UPDATE faq SET category_id = new WHERE category_id = old

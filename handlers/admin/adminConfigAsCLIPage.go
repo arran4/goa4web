@@ -91,7 +91,7 @@ func (h *Handlers) AdminConfigAsCLIPage(w http.ResponseWriter, r *http.Request) 
 		Extended: opts.Extended,
 	}
 
-	AdminConfigAsCLIPageTmpl.Handle(w, r, data)
+	_ = AdminConfigAsCLIPageTmpl.Handle(w, r, data)
 }
 
 func buildConfigAsArgs(r *http.Request) []string {

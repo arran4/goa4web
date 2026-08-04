@@ -82,7 +82,7 @@ func (c *roleRemoveCmd) Run() error {
 }
 
 func (c *roleRemoveCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_remove_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_remove_usage.txt", c)
 }
 
 func (c *roleRemoveCmd) FlagGroups() []flagGroup {

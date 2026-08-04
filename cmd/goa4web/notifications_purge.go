@@ -38,7 +38,7 @@ func parseNotificationsPurgeReadCmd(parent *notificationsCmd, args []string) (*n
 
 // Usage prints command usage information with examples.
 func (c *notificationsPurgeReadCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_purge_read_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_purge_read_usage.txt", c)
 }
 
 func (c *notificationsPurgeReadCmd) FlagGroups() []flagGroup {
@@ -120,7 +120,7 @@ func parseNotificationsPurgeSelectedCmd(parent *notificationsCmd, args []string)
 
 // Usage prints command usage information with examples.
 func (c *notificationsPurgeSelectedCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_purge_selected_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_purge_selected_usage.txt", c)
 }
 
 func (c *notificationsPurgeSelectedCmd) FlagGroups() []flagGroup {
@@ -197,7 +197,7 @@ func (c *notificationsPurgeSelectedCmd) renderNotificationsPurgeOutput(output no
 func renderNotificationsPurgeOutput(outWriter io.Writer, output notificationsPurgeOutput, jsonOut bool) {
 	if jsonOut {
 		b, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Fprintln(outWriter, string(b))
+		_, _ = fmt.Fprintln(outWriter, string(b))
 		return
 	}
 
@@ -205,17 +205,17 @@ func renderNotificationsPurgeOutput(outWriter io.Writer, output notificationsPur
 	if output.UserID != nil {
 		header = fmt.Sprintf("Purged %d notifications for user %d", output.Purged, *output.UserID)
 	}
-	fmt.Fprintln(outWriter, header+".")
+	_, _ = fmt.Fprintln(outWriter, header+".")
 	if len(output.Errors) == 0 {
 		return
 	}
-	fmt.Fprintf(outWriter, "Errors (%d):\n", len(output.Errors))
+	_, _ = fmt.Fprintf(outWriter, "Errors (%d):\n", len(output.Errors))
 	for _, entry := range output.Errors {
 		if entry.ID > 0 {
-			fmt.Fprintf(outWriter, "- ID %d: %s\n", entry.ID, entry.Message)
+			_, _ = fmt.Fprintf(outWriter, "- ID %d: %s\n", entry.ID, entry.Message)
 			continue
 		}
-		fmt.Fprintf(outWriter, "- %s\n", entry.Message)
+		_, _ = fmt.Fprintf(outWriter, "- %s\n", entry.Message)
 	}
 }
 

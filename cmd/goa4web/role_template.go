@@ -69,7 +69,7 @@ func (c *roleTemplateCmd) Run() error {
 }
 
 func (c *roleTemplateCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_template_usage.txt", c)
 }
 
 func (c *roleTemplateCmd) FlagGroups() []flagGroup {
@@ -97,20 +97,20 @@ func parseRoleTemplateListCmd(parent *roleTemplateCmd, args []string) (*roleTemp
 
 func (c *roleTemplateListCmd) Run() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Name\tDescription")
+	_, _ = fmt.Fprintln(w, "Name\tDescription")
 
 	names := roletemplates.SortedTemplateNames()
 
 	for _, name := range names {
 		sc := roletemplates.Templates[name]
-		fmt.Fprintf(w, "%s\t%s\n", sc.Name, sc.Description)
+		_, _ = fmt.Fprintf(w, "%s\t%s\n", sc.Name, sc.Description)
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
 func (c *roleTemplateListCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_template_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_template_list_usage.txt", c)
 }
 
 func (c *roleTemplateListCmd) FlagGroups() []flagGroup {
@@ -172,7 +172,7 @@ func (c *roleTemplateExplainCmd) Run() error {
 }
 
 func (c *roleTemplateExplainCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_template_explain_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_template_explain_usage.txt", c)
 }
 
 func (c *roleTemplateExplainCmd) FlagGroups() []flagGroup {
@@ -251,13 +251,13 @@ func (c *roleTemplateSetupCmd) Run() error {
 
 func printRolesState(ctx context.Context, q *db.Queries, roles []roletemplates.RoleDef) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Role\tLogin\tAdmin\tSection\tItem\tAction\tItemID")
+	_, _ = fmt.Fprintln(w, "Role\tLogin\tAdmin\tSection\tItem\tAction\tItemID")
 
 	for _, rDef := range roles {
 		role, err := q.GetRoleByName(ctx, rDef.Name)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				fmt.Fprintf(w, "%s\t-\t-\t(Not Found)\t\t\t\n", rDef.Name)
+				_, _ = fmt.Fprintf(w, "%s\t-\t-\t(Not Found)\t\t\t\n", rDef.Name)
 				continue
 			}
 			return err
@@ -271,7 +271,7 @@ func printRolesState(ctx context.Context, q *db.Queries, roles []roletemplates.R
 		roleInfo := fmt.Sprintf("%s\t%v\t%v", role.Name, role.CanLogin, role.IsAdmin)
 
 		if len(grants) == 0 {
-			fmt.Fprintf(w, "%s\t(No Grants)\t\t\t\n", roleInfo)
+			_, _ = fmt.Fprintf(w, "%s\t(No Grants)\t\t\t\n", roleInfo)
 		}
 
 		for _, g := range grants {
@@ -279,15 +279,15 @@ func printRolesState(ctx context.Context, q *db.Queries, roles []roletemplates.R
 			if !g.Item.Valid {
 				item = "*"
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", roleInfo, g.Section, item, g.Action, g.ItemID.Int32)
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\n", roleInfo, g.Section, item, g.Action, g.ItemID.Int32)
 		}
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
 func (c *roleTemplateSetupCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_template_setup_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_template_setup_usage.txt", c)
 }
 
 func (c *roleTemplateSetupCmd) FlagGroups() []flagGroup {
@@ -375,7 +375,7 @@ func (c *roleTemplateDiffCmd) Run() error {
 }
 
 func (c *roleTemplateDiffCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_template_diff_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_template_diff_usage.txt", c)
 }
 
 func (c *roleTemplateDiffCmd) FlagGroups() []flagGroup {

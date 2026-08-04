@@ -34,7 +34,7 @@ func (c *userPasswordGenerateResetCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 
 	queries := db.New(d)
 	return generatePasswordReset(ctx, queries, c.cfg, c.userID, c.username)
@@ -42,7 +42,7 @@ func (c *userPasswordGenerateResetCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userPasswordGenerateResetCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_password_generate_reset_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_password_generate_reset_usage.txt", c)
 }
 
 func (c *userPasswordGenerateResetCmd) FlagGroups() []flagGroup {

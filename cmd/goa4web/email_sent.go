@@ -62,7 +62,7 @@ func (c *emailSentCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailSentCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_sent_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_sent_usage.txt", c)
 }
 
 func (c *emailSentCmd) FlagGroups() []flagGroup {
@@ -313,7 +313,7 @@ func (c *emailSentListCmd) renderListOutput(items []sentEmailItem, total int) er
 		Items:  items,
 	}
 	b, _ := json.MarshalIndent(output, "", "  ")
-	fmt.Fprintln(c.fs.Output(), string(b))
+	_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 	return nil
 }
 
@@ -367,7 +367,7 @@ func (c *emailSentRetryCmd) Run() error {
 	}
 	out := sentRetryOutput{RetriedIDs: ids, Count: len(ids)}
 	b, _ := json.MarshalIndent(out, "", "  ")
-	fmt.Fprintln(c.fs.Output(), string(b))
+	_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 	return nil
 }
 

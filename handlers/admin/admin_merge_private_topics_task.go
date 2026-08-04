@@ -31,7 +31,7 @@ func (MergePrivateTopicsTask) Action(w http.ResponseWriter, r *http.Request) any
 	}
 
 	if dryRun {
-		AdminMaintenancePreviewPageTmpl.Handle(w, r, struct{ Groups []common.MergeGroup }{Groups: groups})
+		_ = AdminMaintenancePreviewPageTmpl.Handle(w, r, struct{ Groups []common.MergeGroup }{Groups: groups})
 		return nil
 	}
 

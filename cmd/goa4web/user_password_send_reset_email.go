@@ -35,7 +35,7 @@ func (c *userPasswordSendResetEmailCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 
 	queries := db.New(d)
 	cfg := c.cfg
@@ -76,7 +76,7 @@ func (c *userPasswordSendResetEmailCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userPasswordSendResetEmailCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage of %s:\n", c.fs.Name())
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage of %s:\n", c.fs.Name())
 	c.fs.PrintDefaults()
 }
 

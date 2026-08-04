@@ -68,7 +68,7 @@ func (c *grantCmd) Run() error {
 }
 
 func (c *grantCmd) Usage() {
-	executeUsage(c.fs.Output(), "grant_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "grant_usage.txt", c)
 }
 
 func (c *grantCmd) FlagGroups() []flagGroup {

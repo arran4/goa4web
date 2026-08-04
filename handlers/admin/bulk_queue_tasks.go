@@ -140,4 +140,3 @@ func (BulkDeleteQueueTask) AuditRecord(data map[string]any) string {
 	}
 	return "deleted queued emails"
 }
-

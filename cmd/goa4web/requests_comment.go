@@ -33,7 +33,7 @@ func parseRequestsCommentCmd(parent *requestsCmd, args []string) (*requestsComme
 }
 
 func (c *requestsCommentCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_comment_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_comment_usage.txt", c)
 }
 
 func (c *requestsCommentCmd) FlagGroups() []flagGroup {

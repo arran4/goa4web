@@ -48,7 +48,7 @@ func (c *userUnverifiedEmailsCmd) Run() error {
 }
 
 func (c *userUnverifiedEmailsCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_unverified_emails_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_unverified_emails_usage.txt", c)
 }
 
 func (c *userUnverifiedEmailsCmd) FlagGroups() []flagGroup {
@@ -73,7 +73,7 @@ func (c *userUnverifiedEmailsCmd) runList(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
 	var emails []*db.UserEmail
@@ -104,15 +104,15 @@ func (c *userUnverifiedEmailsCmd) runList(args []string) error {
 	}
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tUserID\tEmail\tExpires")
+	_, _ = fmt.Fprintln(w, "ID\tUserID\tEmail\tExpires")
 	for _, e := range emails {
 		expires := "N/A"
 		if e.VerificationExpiresAt.Valid {
 			expires = e.VerificationExpiresAt.Time.Format(time.RFC3339)
 		}
-		fmt.Fprintf(w, "%d\t%d\t%s\t%s\n", e.ID, e.UserID, e.Email, expires)
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%s\t%s\n", e.ID, e.UserID, e.Email, expires)
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -137,7 +137,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 	notifier := notif.New(notif.WithQueries(queries), notif.WithConfig(cfg))
 
@@ -193,7 +193,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 
 	if *dryRun {
 		for _, ue := range rows {
-			fmt.Fprintf(c.fs.Output(), "Would resend verification to: UserID=%d, Email=%s\n", ue.UserID, ue.Email)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Would resend verification to: UserID=%d, Email=%s\n", ue.UserID, ue.Email)
 		}
 		return nil
 	}
@@ -215,7 +215,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 			VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true},
 			ID:                    ue.ID,
 		}); err != nil {
-			fmt.Fprintf(c.fs.Output(), "Failed to update verification code for email %s (ID %d): %v\n", ue.Email, ue.ID, err)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Failed to update verification code for email %s (ID %d): %v\n", ue.Email, ue.ID, err)
 			continue
 		}
 
@@ -244,7 +244,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 		et := notif.NewEmailTemplates("verifyEmail")
 		msg, err := notifier.RenderEmailFromTemplates(c.Context(), ue.Email, et, data)
 		if err != nil {
-			fmt.Fprintf(c.fs.Output(), "Failed to render email for %s: %v\n", ue.Email, err)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Failed to render email for %s: %v\n", ue.Email, err)
 			continue
 		}
 
@@ -253,7 +253,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 			Body:        string(msg),
 			DirectEmail: false,
 		}); err != nil {
-			fmt.Fprintf(c.fs.Output(), "Failed to queue email for %s: %v\n", ue.Email, err)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Failed to queue email for %s: %v\n", ue.Email, err)
 			continue
 		}
 		count++
@@ -281,7 +281,7 @@ func (c *userUnverifiedEmailsCmd) runExpunge(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
 	cutoff := time.Now().Add(-*olderThan)
@@ -292,7 +292,7 @@ func (c *userUnverifiedEmailsCmd) runExpunge(args []string) error {
 			return fmt.Errorf("list unverified emails: %w", err)
 		}
 		for _, e := range es {
-			fmt.Fprintf(c.fs.Output(), "Would expunge: ID=%d, UserID=%d, Email=%s, Expires=%v\n", e.ID, e.UserID, e.Email, e.VerificationExpiresAt.Time)
+			_, _ = fmt.Fprintf(c.fs.Output(), "Would expunge: ID=%d, UserID=%d, Email=%s, Expires=%v\n", e.ID, e.UserID, e.Email, e.VerificationExpiresAt.Time)
 		}
 		return nil
 	}

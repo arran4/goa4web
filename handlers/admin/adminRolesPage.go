@@ -27,7 +27,7 @@ func AdminRolesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := Data{Roles: roles}
-	AdminRolesPageTmpl.Handle(w, r, data)
+	_ = AdminRolesPageTmpl.Handle(w, r, data)
 }
 
 const AdminRolesPageTmpl tasks.Template = "admin/rolesPage.gohtml"

@@ -25,7 +25,7 @@ func parseUserListRolesCmd(parent *userCmd, args []string) (*userListRolesCmd, e
 }
 
 func (c *userListRolesCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_list_roles_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_list_roles_usage.txt", c)
 }
 
 func (c *userListRolesCmd) FlagGroups() []flagGroup {

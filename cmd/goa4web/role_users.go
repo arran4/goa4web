@@ -50,7 +50,7 @@ func (c *roleUsersCmd) Run() error {
 }
 
 func (c *roleUsersCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_users_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_users_usage.txt", c)
 }
 
 func (c *roleUsersCmd) FlagGroups() []flagGroup {

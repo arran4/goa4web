@@ -52,7 +52,7 @@ func (c *subscriptionTemplateCmd) Run() error {
 }
 
 func (c *subscriptionTemplateCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_template_usage.txt", c)
 }
 
 func (c *subscriptionTemplateCmd) FlagGroups() []flagGroup {
@@ -172,7 +172,7 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 }
 
 func (c *subscriptionTemplateLoadCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_template_load_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_template_load_usage.txt", c)
 }
 
 func (c *subscriptionTemplateLoadCmd) FlagGroups() []flagGroup {
@@ -220,7 +220,7 @@ func (c *subscriptionTemplateListCmd) Run() error {
 }
 
 func (c *subscriptionTemplateListCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_template_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_template_list_usage.txt", c)
 }
 
 func (c *subscriptionTemplateListCmd) FlagGroups() []flagGroup {

@@ -57,7 +57,7 @@ func (c *langDeleteCmd) Run() error {
 }
 
 func (c *langDeleteCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_delete_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "lang_delete_usage.txt", c)
 }
 
 func (c *langDeleteCmd) FlagGroups() []flagGroup {

@@ -156,7 +156,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 
 	cd.CustomIndexItems = append(cd.CustomIndexItems, WritingsPageSpecificItems(cd, r)...)
 
-	ArticlePageTmpl.Handle(w, r, data)
+	_ = ArticlePageTmpl.Handle(w, r, data)
 }
 
 const ArticlePageTmpl tasks.Template = "writings/articlePage.gohtml"

@@ -72,5 +72,5 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		Type:        "website",
 	}
 
-	WritingsPageTmpl.Handle(w, r, data)
+	_ = WritingsPageTmpl.Handle(w, r, data)
 }

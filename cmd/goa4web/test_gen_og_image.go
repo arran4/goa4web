@@ -78,7 +78,7 @@ func (c *testGenOgImageCmd) Run() error {
 }
 
 func (c *testGenOgImageCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_gen_og_image_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_gen_og_image_usage.txt", c)
 }
 
 func (c *testGenOgImageCmd) FlagGroups() []flagGroup {

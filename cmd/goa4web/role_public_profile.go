@@ -52,7 +52,7 @@ func (c *rolePublicProfileCmd) Run() error {
 }
 
 func (c *rolePublicProfileCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_public_profile_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_public_profile_usage.txt", c)
 }
 
 func (c *rolePublicProfileCmd) FlagGroups() []flagGroup {
@@ -149,7 +149,7 @@ func (c *rolePublicProfileSetCmd) Run() error {
 }
 
 func (c *rolePublicProfileSetCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_public_profile_set_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_public_profile_set_usage.txt", c)
 }
 
 func (c *rolePublicProfileSetCmd) FlagGroups() []flagGroup {

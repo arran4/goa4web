@@ -93,7 +93,7 @@ func (c *linksCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *linksCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_usage.txt", c)
 }
 
 func (c *linksCmd) FlagGroups() []flagGroup {

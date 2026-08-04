@@ -34,7 +34,7 @@ func parseUserRejectCmd(parent *userCmd, args []string) (*userRejectCmd, error) 
 }
 
 func (c *userRejectCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_reject_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_reject_usage.txt", c)
 }
 
 func (c *userRejectCmd) FlagGroups() []flagGroup {

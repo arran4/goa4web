@@ -29,7 +29,7 @@ func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) 
 }
 
 func (c *permUpdateCmd) Usage() {
-	executeUsage(c.fs.Output(), "perm_update_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "perm_update_usage.txt", c)
 }
 
 func (c *permUpdateCmd) FlagGroups() []flagGroup {

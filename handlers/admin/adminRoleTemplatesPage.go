@@ -115,7 +115,7 @@ func AdminRoleTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		Templates: items,
 		Selected:  detail,
 	}
-	AdminRoleTemplatesPageTmpl.Handle(w, r, data)
+	_ = AdminRoleTemplatesPageTmpl.Handle(w, r, data)
 }
 
 func templateGrantsToDB(grants []roletemplates.GrantDef) []*db.Grant {

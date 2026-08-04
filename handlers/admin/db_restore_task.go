@@ -38,26 +38,26 @@ func (DBRestoreTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("backup file required %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	defer upload.Close()
+	defer func() { _ = upload.Close() }()
 	tmpFile, err := os.CreateTemp("", "goa4web-restore-*.sql")
 	if err != nil {
 		return fmt.Errorf("create temp restore file %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	tmpPath := tmpFile.Name()
 	if _, err := io.Copy(tmpFile, upload); err != nil {
-		tmpFile.Close()
-		os.Remove(tmpPath)
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("copy restore file %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := tmpFile.Close(); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("close temp restore file %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := dbops.RestoreDatabase(cd.DBRegistry(), cd.Config, tmpPath); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("restore database %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	os.Remove(tmpPath)
+	_ = os.Remove(tmpPath)
 	if evt := cd.Event(); evt != nil {
 		if evt.Data == nil {
 			evt.Data = map[string]any{}

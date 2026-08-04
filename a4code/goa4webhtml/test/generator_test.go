@@ -30,7 +30,7 @@ func (m *blockAwareMockLinkProvider) RenderLink(url string, isBlock bool, isImme
 }
 
 func TestGenerator(t *testing.T) {
-	fs.WalkDir(testData, ".", func(path string, d fs.DirEntry, err error) error {
+	if err := fs.WalkDir(testData, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -108,7 +108,9 @@ func TestGenerator(t *testing.T) {
 			})
 		}
 		return nil
-	})
+	}); err != nil {
+		t.Fatalf("WalkDir: %v", err)
+	}
 }
 
 func TestGeneratorWithDataPositions(t *testing.T) {

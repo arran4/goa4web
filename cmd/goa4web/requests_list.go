@@ -72,7 +72,7 @@ type requestsListOutput struct {
 }
 
 func (c *requestsListCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_list_usage.txt", c)
 }
 
 func (c *requestsListCmd) FlagGroups() []flagGroup {
@@ -205,14 +205,14 @@ func optionalTime(value sql.NullTime) *string {
 
 func (c *requestsListCmd) printTable(rows []*db.AdminRequestQueue) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tUserID\tTable\tField\tRowID\tValue\tContact\tStatus\tCreated\tActed")
+	_, _ = fmt.Fprintln(w, "ID\tUserID\tTable\tField\tRowID\tValue\tContact\tStatus\tCreated\tActed")
 	for _, row := range rows {
 		created := row.CreatedAt.Format(time.RFC3339)
 		acted := "-"
 		if row.ActedAt.Valid {
 			acted = row.ActedAt.Time.Format(time.RFC3339)
 		}
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"%d\t%d\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\n",
 			row.ID,
@@ -236,5 +236,3 @@ func reqNullStringValue(ns sql.NullString) string {
 	}
 	return ns.String
 }
-
-

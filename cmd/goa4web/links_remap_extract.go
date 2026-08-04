@@ -56,7 +56,7 @@ func (c *linksRemapExtractCmd) Run() error {
 }
 
 func (c *linksRemapExtractCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_remap_extract_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_remap_extract_usage.txt", c)
 }
 
 func (c *linksRemapExtractCmd) FlagGroups() []flagGroup {

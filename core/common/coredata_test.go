@@ -21,7 +21,7 @@ func TestCoreDataLatestNewsLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	now := time.Now()
@@ -58,7 +58,7 @@ func TestUpdateFAQQuestion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	cfg := config.NewRuntimeConfig()
 	queries := db.New(conn)
@@ -85,7 +85,7 @@ func TestWritingCategoriesLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	rows := sqlmock.NewRows([]string{"idwritingcategory", "writing_category_id", "title", "description"}).
@@ -115,7 +115,7 @@ func TestNewsAnnouncementCaching(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	now := time.Now()
@@ -143,7 +143,7 @@ func TestNewsAnnouncementError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 
@@ -168,7 +168,7 @@ func TestPublicWritingsLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	now := time.Now()
@@ -215,7 +215,7 @@ func TestCoreDataLatestWritingsLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	now := time.Now()
@@ -282,7 +282,7 @@ func TestWritersLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
@@ -317,7 +317,7 @@ func TestBlogListLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	now := time.Now()
@@ -352,7 +352,7 @@ func TestBlogListForSelectedAuthorLazy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	now := time.Now()
@@ -385,7 +385,7 @@ func TestSelectedQuestionFromCategory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -409,7 +409,7 @@ func TestSelectedQuestionFromCategoryWrongCategory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -432,7 +432,7 @@ func TestSelectedThreadCanReply(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -470,7 +470,7 @@ func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -508,7 +508,7 @@ func TestSelectedThreadCanReplyGrantFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -554,7 +554,7 @@ func TestSelectedThreadCanReplyGrantFallbackNoThread(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)

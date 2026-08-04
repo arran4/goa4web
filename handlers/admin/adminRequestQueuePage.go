@@ -14,7 +14,7 @@ import (
 func AdminRequestQueuePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Admin Requests"
-	AdminRequestQueuePageTmpl.Handle(w, r, struct{}{})
+	_ = AdminRequestQueuePageTmpl.Handle(w, r, struct{}{})
 }
 
 const AdminRequestQueuePageTmpl tasks.Template = "admin/requestQueuePage.gohtml"
@@ -22,7 +22,7 @@ const AdminRequestQueuePageTmpl tasks.Template = "admin/requestQueuePage.gohtml"
 func AdminRequestArchivePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Request Archive"
-	AdminRequestArchivePageTmpl.Handle(w, r, struct{}{})
+	_ = AdminRequestArchivePageTmpl.Handle(w, r, struct{}{})
 }
 
 const AdminRequestArchivePageTmpl tasks.Template = "admin/requestArchivePage.gohtml"
@@ -39,7 +39,7 @@ func adminRequestPage(w http.ResponseWriter, r *http.Request) {
 		cd.SetCurrentProfileUserID(req.UsersIdusers)
 	}
 	cd.PageTitle = fmt.Sprintf("Request %d", id)
-	AdminRequestPageTmpl.Handle(w, r, struct{}{})
+	_ = AdminRequestPageTmpl.Handle(w, r, struct{}{})
 }
 
 const AdminRequestPageTmpl tasks.Template = "admin/requestPage.gohtml"
@@ -70,7 +70,7 @@ func adminRequestAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "comment added")
 	}
-	AdminRequestPageTmpl.Handle(w, r, data)
+	_ = AdminRequestPageTmpl.Handle(w, r, data)
 }
 
 func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) {
@@ -126,7 +126,7 @@ func handleRequestAction(w http.ResponseWriter, r *http.Request, status string) 
 		}
 	}
 	data.Messages = append(data.Messages, auto)
-	RunTaskPageTmpl.Handle(w, r, data)
+	_ = RunTaskPageTmpl.Handle(w, r, data)
 }
 
 func requestAuditSummary(action string, data map[string]any) string {

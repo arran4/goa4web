@@ -113,7 +113,7 @@ func AdminLinksToolsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminLinksToolsPageTmpl.Handle(w, r, data)
+	_ = AdminLinksToolsPageTmpl.Handle(w, r, data)
 }
 
 // AdminLinksToolsPageTmpl renders the link signing tools page.

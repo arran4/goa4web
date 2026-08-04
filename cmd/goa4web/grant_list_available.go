@@ -104,10 +104,10 @@ func writeGrantDefinitionsAsTable(w io.Writer, defs []*permissions.GrantDefiniti
 		w = os.Stdout
 	}
 	tw := tabwriter.NewWriter(w, 0, 0, 1, ' ', 0)
-	fmt.Fprintln(tw, "Section\tItem\tAction\tDescription\tExample")
+	_, _ = fmt.Fprintln(tw, "Section\tItem\tAction\tDescription\tExample")
 	for _, def := range defs {
 		example := fmt.Sprintf("goa4web grant add -section %s -item %s -action %s <role or user details>", def.Section, def.Item, def.Action)
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", def.Section, def.Item, def.Action, def.Description, example)
+		_, _ = fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", def.Section, def.Item, def.Action, def.Description, example)
 	}
 	return tw.Flush()
 }
@@ -117,7 +117,7 @@ func writeGrantDefinitionsAsCLI(w io.Writer, defs []*permissions.GrantDefinition
 		w = os.Stdout
 	}
 	for _, def := range defs {
-		fmt.Fprintf(w, "goa4web grant add -section %s -item %s -action %s <-user-[id] / -role[-id]>\n", def.Section, def.Item, def.Action)
+		_, _ = fmt.Fprintf(w, "goa4web grant add -section %s -item %s -action %s <-user-[id] / -role[-id]>\n", def.Section, def.Item, def.Action)
 	}
 	return nil
 }

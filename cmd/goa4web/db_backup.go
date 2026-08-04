@@ -26,7 +26,7 @@ func parseDbBackupCmd(parent *dbCmd, args []string) (*dbBackupCmd, error) {
 }
 
 func (c *dbBackupCmd) Usage() {
-	executeUsage(c.fs.Output(), "db_backup_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "db_backup_usage.txt", c)
 }
 
 func (c *dbBackupCmd) FlagGroups() []flagGroup {

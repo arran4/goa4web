@@ -64,7 +64,7 @@ func (h *Handlers) AdminConfigExplainPage(w http.ResponseWriter, r *http.Request
 		Options:    filtered,
 	}
 
-	AdminConfigExplainPageTmpl.Handle(w, r, data)
+	_ = AdminConfigExplainPageTmpl.Handle(w, r, data)
 }
 
 // AdminConfigExplainPageTmpl renders the configuration explain admin page.

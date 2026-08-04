@@ -157,7 +157,7 @@ func (c *jmapCmd) printSessionInfo(info *jmapSessionInfo) error {
 
 // Usage prints command usage information with examples.
 func (c *jmapCmd) Usage() {
-	executeUsage(c.fs.Output(), "jmap_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "jmap_usage.txt", c)
 }
 
 func (c *jmapCmd) FlagGroups() []flagGroup {

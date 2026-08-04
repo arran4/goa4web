@@ -58,7 +58,7 @@ func (c *newsCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *newsCmd) Usage() {
-	executeUsage(c.fs.Output(), "news_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "news_usage.txt", c)
 }
 
 func (c *newsCmd) FlagGroups() []flagGroup {

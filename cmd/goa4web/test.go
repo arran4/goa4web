@@ -62,7 +62,7 @@ func (c *testCmd) Run() error {
 }
 
 func (c *testCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_usage.txt", c)
 }
 
 func (c *testCmd) FlagGroups() []flagGroup {
@@ -117,7 +117,7 @@ func (c *testMigrationsCmd) Run() error {
 }
 
 func (c *testMigrationsCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_migrations_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_migrations_usage.txt", c)
 }
 
 func (c *testMigrationsCmd) FlagGroups() []flagGroup {
@@ -176,7 +176,7 @@ func (c *testMigrationsApplyCmd) Run() error {
 }
 
 func (c *testMigrationsApplyCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_migrations_apply_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_migrations_apply_usage.txt", c)
 }
 
 func (c *testMigrationsApplyCmd) FlagGroups() []flagGroup {
@@ -260,7 +260,7 @@ func (c *testMigrationsCleanCmd) Run() error {
 }
 
 func (c *testMigrationsCleanCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_migrations_clean_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_migrations_clean_usage.txt", c)
 }
 
 func (c *testMigrationsCleanCmd) FlagGroups() []flagGroup {

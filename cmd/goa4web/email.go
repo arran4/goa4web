@@ -75,7 +75,7 @@ func (c *emailCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_usage.txt", c)
 }
 
 func (c *emailCmd) FlagGroups() []flagGroup {

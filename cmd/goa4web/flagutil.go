@@ -71,7 +71,7 @@ func flagInfos(fs *flag.FlagSet) []flagInfo {
 func printFlags(fs *flag.FlagSet) {
 	data := []flagGroup{flagGroupFromFlagSet(fs)}
 	if err := getTemplates().ExecuteTemplate(fs.Output(), "flag_groups_section", data); err != nil {
-		fmt.Fprintf(fs.Output(), "template execute: %v\n", err)
+		_, _ = fmt.Fprintf(fs.Output(), "template execute: %v\n", err)
 	}
 }
 

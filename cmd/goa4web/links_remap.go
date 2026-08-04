@@ -51,7 +51,7 @@ func (c *linksRemapCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *linksRemapCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_remap_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_remap_usage.txt", c)
 }
 
 func (c *linksRemapCmd) FlagGroups() []flagGroup {

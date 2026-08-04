@@ -23,7 +23,6 @@ func requireEmailTemplates(t *testing.T, prefix string) {
 	}
 }
 
-
 func TestTestMailTemplatesExist(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		requireEmailTemplates(t, "testEmail")

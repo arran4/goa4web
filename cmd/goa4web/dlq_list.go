@@ -90,45 +90,45 @@ func (c *dlqListCmd) Run() error {
 		if err != nil {
 			return fmt.Errorf("marshal json: %w", err)
 		}
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
 	for _, provider := range output.Providers {
-		fmt.Fprintf(w, "Provider:\t%s\n", provider.Provider)
+		_, _ = fmt.Fprintf(w, "Provider:\t%s\n", provider.Provider)
 		if provider.Source != "" {
-			fmt.Fprintf(w, "Source:\t%s\n", provider.Source)
+			_, _ = fmt.Fprintf(w, "Source:\t%s\n", provider.Source)
 		}
 		if provider.Total != nil {
-			fmt.Fprintf(w, "Total:\t%d\n", *provider.Total)
+			_, _ = fmt.Fprintf(w, "Total:\t%d\n", *provider.Total)
 		}
 		if provider.Latest != "" {
-			fmt.Fprintf(w, "Latest:\t%s\n", provider.Latest)
+			_, _ = fmt.Fprintf(w, "Latest:\t%s\n", provider.Latest)
 		}
 		switch provider.Provider {
 		case "db":
-			fmt.Fprintln(w, "ID\tCreated At\tMessage")
+			_, _ = fmt.Fprintln(w, "ID\tCreated At\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%d\t%s\t%s\n", entry.ID, entry.Time, entry.Message)
+				_, _ = fmt.Fprintf(w, "%d\t%s\t%s\n", entry.ID, entry.Time, entry.Message)
 			}
 		case "file":
-			fmt.Fprintln(w, "Time\tMessage")
+			_, _ = fmt.Fprintln(w, "Time\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%s\t%s\n", entry.Time, entry.Message)
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", entry.Time, entry.Message)
 			}
 		case "dir":
-			fmt.Fprintln(w, "Name\tMessage")
+			_, _ = fmt.Fprintln(w, "Name\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
 			}
 		default:
-			fmt.Fprintln(w, "Entry\tMessage")
+			_, _ = fmt.Fprintln(w, "Entry\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
 			}
 		}
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
 	}
 	return w.Flush()
 }
@@ -250,7 +250,7 @@ func (c *dlqListCmd) listDir() (dlqListProviderOutput, error) {
 
 // Usage prints command usage information with examples.
 func (c *dlqListCmd) Usage() {
-	executeUsage(c.fs.Output(), "dlq_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "dlq_list_usage.txt", c)
 }
 
 func (c *dlqListCmd) FlagGroups() []flagGroup {

@@ -60,7 +60,7 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
-	AdminNotificationsPageTmpl.Handle(w, r, data)
+	_ = AdminNotificationsPageTmpl.Handle(w, r, data)
 }
 
 const AdminNotificationsPageTmpl tasks.Template = "admin/notificationsPage.gohtml"

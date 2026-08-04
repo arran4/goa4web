@@ -99,7 +99,7 @@ func (c *roleCmd) Run() error {
 }
 
 func (c *roleCmd) Usage() {
-	executeUsage(os.Stdout, "role_usage.txt", c)
+	_ = executeUsage(os.Stdout, "role_usage.txt", c)
 }
 
 func (c *roleCmd) FlagGroups() []flagGroup {

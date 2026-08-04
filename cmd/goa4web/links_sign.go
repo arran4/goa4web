@@ -63,7 +63,7 @@ func (c *linksSignCmd) Run() error {
 }
 
 func (c *linksSignCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_sign_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_sign_usage.txt", c)
 }
 
 func (c *linksSignCmd) FlagGroups() []flagGroup {

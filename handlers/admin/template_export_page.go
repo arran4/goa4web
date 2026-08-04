@@ -21,7 +21,7 @@ func AdminTemplateExportPage(w http.ResponseWriter, r *http.Request) {
 		SelectedFormat: "zip",
 	}
 
-	AdminTemplateExportPageTmpl.Handle(w, r, data)
+	_ = AdminTemplateExportPageTmpl.Handle(w, r, data)
 }
 
 // AdminTemplateExportPageTmpl renders the template export page.

@@ -50,7 +50,7 @@ func (c *filesCmd) Run() error {
 }
 
 func (c *filesCmd) Usage() {
-	executeUsage(c.fs.Output(), "files_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "files_usage.txt", c)
 }
 
 func (c *filesCmd) FlagGroups() []flagGroup {

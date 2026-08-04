@@ -43,7 +43,7 @@ type UserEmailStatus struct {
 }
 
 func (c *userListCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_list_usage.txt", c)
 }
 
 func (c *userListCmd) FlagGroups() []flagGroup {
@@ -137,9 +137,9 @@ func (c *userListCmd) Run() error {
 		_, _ = fmt.Fprint(w, "\tAdmin")
 	}
 	if c.showCreated {
-		fmt.Fprint(w, "\tCreated")
+		_, _ = fmt.Fprint(w, "\tCreated")
 	}
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
 
 	for _, u := range rows {
 		es := emailsByUser[u.Idusers]
@@ -153,7 +153,7 @@ func (c *userListCmd) Run() error {
 
 		roles := rolesByUser[u.Idusers]
 
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s",
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s",
 			u.Idusers,
 			u.Username.String,
 			status,
@@ -163,18 +163,18 @@ func (c *userListCmd) Run() error {
 		)
 
 		if c.showAdmin {
-			fmt.Fprintf(w, "\t%t", u.Admin)
+			_, _ = fmt.Fprintf(w, "\t%t", u.Admin)
 		}
 		if c.showCreated {
 			if t, ok := u.CreatedAt.(sql.NullTime); ok && t.Valid {
-				fmt.Fprintf(w, "\t%s", t.Time.Format(time.RFC3339))
+				_, _ = fmt.Fprintf(w, "\t%s", t.Time.Format(time.RFC3339))
 			} else {
-				fmt.Fprintf(w, "\t-")
+				_, _ = fmt.Fprintf(w, "\t-")
 			}
 		}
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 

@@ -39,7 +39,7 @@ func parseUserMakeAdminCmd(parent *userCmd, args []string) (*userMakeAdminCmd, e
 }
 
 func (c *userMakeAdminCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_make_admin_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_make_admin_usage.txt", c)
 }
 
 func (c *userMakeAdminCmd) FlagGroups() []flagGroup {

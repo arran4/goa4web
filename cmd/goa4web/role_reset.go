@@ -68,7 +68,7 @@ func (c *roleResetCmd) Run() error {
 }
 
 func (c *roleResetCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_reset_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_reset_usage.txt", c)
 }
 
 func (c *roleResetCmd) FlagGroups() []flagGroup {

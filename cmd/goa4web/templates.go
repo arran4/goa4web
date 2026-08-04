@@ -44,7 +44,7 @@ func (c *templatesCmd) Run() error {
 }
 
 func (c *templatesCmd) Usage() {
-	executeUsage(c.fs.Output(), "templates_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "templates_usage.txt", c)
 }
 
 func (c *templatesCmd) FlagGroups() []flagGroup {

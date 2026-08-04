@@ -86,7 +86,7 @@ func (c *userPasswordApproveCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	qtx := queries.WithTx(tx)
 
@@ -111,7 +111,7 @@ func (c *userPasswordApproveCmd) Run() error {
 }
 
 func (c *userPasswordApproveCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_password_approve_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_password_approve_usage.txt", c)
 }
 
 func (c *userPasswordApproveCmd) FlagGroups() []flagGroup {

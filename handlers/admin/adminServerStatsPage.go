@@ -29,7 +29,7 @@ func (h *Handlers) AdminServerStatsPage(w http.ResponseWriter, r *http.Request) 
 	}
 	data := stats.BuildServerStatsData(cd.Config, h.ConfigFile, cd.TasksReg, cd.DBRegistry(), dlqReg, emailReg, routerModules)
 
-	AdminServerStatsPageTmpl.Handle(w, r, data)
+	_ = AdminServerStatsPageTmpl.Handle(w, r, data)
 }
 
 const AdminServerStatsPageTmpl tasks.Template = "admin/serverStatsPage.gohtml"

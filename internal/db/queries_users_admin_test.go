@@ -15,7 +15,7 @@ func TestQueries_AdminListAllUserIDs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idusers"}).AddRow(1).AddRow(2)
@@ -40,7 +40,7 @@ func TestQueries_AdminListAllUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idusers", "username"}).
@@ -66,7 +66,7 @@ func TestQueries_SystemListAllUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idusers", "username", "admin", "created_at", "deleted_at"}).
@@ -92,7 +92,7 @@ func TestQueries_AdminDeleteUserByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	mock.ExpectExec(regexp.QuoteMeta(adminDeleteUserByID)).
@@ -113,7 +113,7 @@ func TestQueries_AdminUpdateUsernameByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	mock.ExpectExec(regexp.QuoteMeta(adminUpdateUsernameByID)).

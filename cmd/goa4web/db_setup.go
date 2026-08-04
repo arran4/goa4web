@@ -24,7 +24,7 @@ var _ usageData = (*dbSetupCmd)(nil)
 
 // Usage prints command usage.
 func (c *dbSetupCmd) Usage() {
-	executeUsage(c.rootCmd.fs.Output(), "db_setup_usage.txt", c)
+	_ = executeUsage(c.rootCmd.fs.Output(), "db_setup_usage.txt", c)
 }
 
 func parseDbSetupCmd(parent *dbCmd, args []string) (*dbSetupCmd, error) {

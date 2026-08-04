@@ -57,10 +57,10 @@ func (c *dlqPurgeCmd) Run() error {
 		if err != nil {
 			return fmt.Errorf("marshal json: %w", err)
 		}
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
-	fmt.Fprintf(c.fs.Output(), "Purged dead letters before %s\n", purgeAt)
+	_, _ = fmt.Fprintf(c.fs.Output(), "Purged dead letters before %s\n", purgeAt)
 	return nil
 }
 
@@ -79,7 +79,7 @@ func (c *dlqPurgeCmd) parsePurgeBefore() (time.Time, error) {
 
 // Usage prints command usage information with examples.
 func (c *dlqPurgeCmd) Usage() {
-	executeUsage(c.fs.Output(), "dlq_purge_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "dlq_purge_usage.txt", c)
 }
 
 func (c *dlqPurgeCmd) FlagGroups() []flagGroup {

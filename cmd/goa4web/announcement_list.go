@@ -34,7 +34,7 @@ func parseAnnouncementListCmd(parent *announcementCmd, args []string) (*announce
 
 // Usage prints command usage information with examples.
 func (c *announcementListCmd) Usage() {
-	executeUsage(c.fs.Output(), "announcement_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "announcement_list_usage.txt", c)
 }
 
 func (c *announcementListCmd) FlagGroups() []flagGroup {

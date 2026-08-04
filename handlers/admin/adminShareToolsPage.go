@@ -53,7 +53,7 @@ func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		AdminShareToolsPageTmpl.Handle(w, r, data)
+		_ = AdminShareToolsPageTmpl.Handle(w, r, data)
 		return
 	}
 
@@ -116,7 +116,7 @@ func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminShareToolsPageTmpl.Handle(w, r, data)
+	_ = AdminShareToolsPageTmpl.Handle(w, r, data)
 }
 
 func shareToolsResourceList() ([]shareToolsResourceOption, map[string]shareToolsResource) {

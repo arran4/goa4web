@@ -344,5 +344,5 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		User: &db.User{Idusers: user.Idusers, Username: user.Username},
 		Back: fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
-	TemplateUserResetPasswordConfirmPage.Handle(w, r, data)
+	_ = TemplateUserResetPasswordConfirmPage.Handle(w, r, data)
 }

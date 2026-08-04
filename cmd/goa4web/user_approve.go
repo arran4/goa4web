@@ -70,7 +70,7 @@ func (c *userApproveCmd) Run() error {
 }
 
 func (c *userApproveCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_approve_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_approve_usage.txt", c)
 }
 
 func (c *userApproveCmd) FlagGroups() []flagGroup {

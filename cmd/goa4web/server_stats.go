@@ -107,40 +107,40 @@ type serverStatsOutput struct {
 
 func renderServerStatsTable(data stats.ServerStatsData, uptime string, startAt *time.Time, endAt *time.Time) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Metric\tValue")
-	fmt.Fprintf(w, "Uptime\t%s\n", uptime)
+	_, _ = fmt.Fprintln(w, "Metric\tValue")
+	_, _ = fmt.Fprintf(w, "Uptime\t%s\n", uptime)
 	if startAt != nil {
-		fmt.Fprintf(w, "Range Start\t%s\n", startAt.Format(time.RFC3339))
+		_, _ = fmt.Fprintf(w, "Range Start\t%s\n", startAt.Format(time.RFC3339))
 	}
 	if endAt != nil {
-		fmt.Fprintf(w, "Range End\t%s\n", endAt.Format(time.RFC3339))
+		_, _ = fmt.Fprintf(w, "Range End\t%s\n", endAt.Format(time.RFC3339))
 	}
-	fmt.Fprintf(w, "Goroutines\t%d\n", data.Stats.Goroutines)
-	fmt.Fprintf(w, "Alloc\t%d\n", data.Stats.Alloc)
-	fmt.Fprintf(w, "Total Alloc\t%d\n", data.Stats.TotalAlloc)
-	fmt.Fprintf(w, "System\t%d\n", data.Stats.Sys)
-	fmt.Fprintf(w, "Heap Alloc\t%d\n", data.Stats.HeapAlloc)
-	fmt.Fprintf(w, "Heap Sys\t%d\n", data.Stats.HeapSys)
-	fmt.Fprintf(w, "GC Count\t%d\n", data.Stats.NumGC)
-	fmt.Fprintf(w, "CPU Cores\t%d\n", data.Stats.NumCPU)
-	fmt.Fprintf(w, "Architecture\t%s\n", data.Stats.Arch)
-	fmt.Fprintf(w, "Disk Free\t%d\n", data.Stats.DiskFree)
-	fmt.Fprintf(w, "RAM Free\t%d\n", data.Stats.RAMFree)
-	fmt.Fprintf(w, "Tasks\t%s\n", strings.Join(data.Registries.Tasks, ", "))
-	fmt.Fprintf(w, "Database Drivers\t%s\n", strings.Join(data.Registries.DBDrivers, ", "))
-	fmt.Fprintf(w, "DLQ Providers\t%s\n", strings.Join(data.Registries.DLQProviders, ", "))
-	fmt.Fprintf(w, "Email Providers\t%s\n", strings.Join(data.Registries.EmailProviders, ", "))
-	fmt.Fprintf(w, "Upload Providers\t%s\n", strings.Join(data.Registries.UploadProviders, ", "))
-	fmt.Fprintf(w, "Router Modules\t%s\n", strings.Join(data.Registries.RouterModules, ", "))
-	w.Flush()
+	_, _ = fmt.Fprintf(w, "Goroutines\t%d\n", data.Stats.Goroutines)
+	_, _ = fmt.Fprintf(w, "Alloc\t%d\n", data.Stats.Alloc)
+	_, _ = fmt.Fprintf(w, "Total Alloc\t%d\n", data.Stats.TotalAlloc)
+	_, _ = fmt.Fprintf(w, "System\t%d\n", data.Stats.Sys)
+	_, _ = fmt.Fprintf(w, "Heap Alloc\t%d\n", data.Stats.HeapAlloc)
+	_, _ = fmt.Fprintf(w, "Heap Sys\t%d\n", data.Stats.HeapSys)
+	_, _ = fmt.Fprintf(w, "GC Count\t%d\n", data.Stats.NumGC)
+	_, _ = fmt.Fprintf(w, "CPU Cores\t%d\n", data.Stats.NumCPU)
+	_, _ = fmt.Fprintf(w, "Architecture\t%s\n", data.Stats.Arch)
+	_, _ = fmt.Fprintf(w, "Disk Free\t%d\n", data.Stats.DiskFree)
+	_, _ = fmt.Fprintf(w, "RAM Free\t%d\n", data.Stats.RAMFree)
+	_, _ = fmt.Fprintf(w, "Tasks\t%s\n", strings.Join(data.Registries.Tasks, ", "))
+	_, _ = fmt.Fprintf(w, "Database Drivers\t%s\n", strings.Join(data.Registries.DBDrivers, ", "))
+	_, _ = fmt.Fprintf(w, "DLQ Providers\t%s\n", strings.Join(data.Registries.DLQProviders, ", "))
+	_, _ = fmt.Fprintf(w, "Email Providers\t%s\n", strings.Join(data.Registries.EmailProviders, ", "))
+	_, _ = fmt.Fprintf(w, "Upload Providers\t%s\n", strings.Join(data.Registries.UploadProviders, ", "))
+	_, _ = fmt.Fprintf(w, "Router Modules\t%s\n", strings.Join(data.Registries.RouterModules, ", "))
+	_ = w.Flush()
 
 	if data.ConfigEnv != "" {
-		fmt.Fprintln(os.Stdout, "\nConfig (env):")
+		_, _ = fmt.Fprintln(os.Stdout, "\nConfig (env):")
 		_, _ = fmt.Fprint(os.Stdout, data.ConfigEnv)
 	}
 	if data.ConfigJSON != "" {
-		fmt.Fprintln(os.Stdout, "\nConfig (json):")
-		fmt.Fprintln(os.Stdout, data.ConfigJSON)
+		_, _ = fmt.Fprintln(os.Stdout, "\nConfig (json):")
+		_, _ = fmt.Fprintln(os.Stdout, data.ConfigJSON)
 	}
 	return nil
 }

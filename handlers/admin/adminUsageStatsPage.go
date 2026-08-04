@@ -27,7 +27,7 @@ func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
 
 	data := stats.BuildUsageStatsData(ctx, queries, cd.CustomQueries(), cd.Config.StatsStartYear)
 
-	AdminUsageStatsPageTmpl.Handle(w, r, data)
+	_ = AdminUsageStatsPageTmpl.Handle(w, r, data)
 }
 
 const AdminUsageStatsPageTmpl tasks.Template = "admin/usageStatsPage.gohtml"

@@ -79,7 +79,7 @@ func (c *linksRemapApplyCmd) Run() error {
 }
 
 func (c *linksRemapApplyCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_remap_apply_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_remap_apply_usage.txt", c)
 }
 
 func (c *linksRemapApplyCmd) FlagGroups() []flagGroup {

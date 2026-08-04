@@ -34,7 +34,7 @@ func ArticleAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	WritingsArticleAddPageTmpl.Handle(w, r, data)
+	_ = WritingsArticleAddPageTmpl.Handle(w, r, data)
 }
 
 const WritingsArticleAddPageTmpl tasks.Template = "writings/articleAddPage.gohtml"

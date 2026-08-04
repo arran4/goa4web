@@ -99,7 +99,7 @@ func (c *userSubscriptionsListCmd) Run() error {
 		if err != nil {
 			return fmt.Errorf("marshal json: %w", err)
 		}
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 
@@ -125,7 +125,7 @@ func (c *userSubscriptionsListCmd) Run() error {
 }
 
 func (c *userSubscriptionsListCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_subscriptions_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_subscriptions_list_usage.txt", c)
 }
 
 func (c *userSubscriptionsListCmd) FlagGroups() []flagGroup {

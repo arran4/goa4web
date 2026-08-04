@@ -60,7 +60,7 @@ func AdminExternalLinksPage(w http.ResponseWriter, r *http.Request) {
 		}
 		data.ResultSummary = fmt.Sprintf("%s external links: %d succeeded, %d failed.", actionLabel, successCount, failureCount)
 	}
-	AdminExternalLinksPageTmpl.Handle(w, r, data)
+	_ = AdminExternalLinksPageTmpl.Handle(w, r, data)
 }
 
 const AdminExternalLinksPageTmpl tasks.Template = "admin/externalLinksPage.gohtml"

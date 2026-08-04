@@ -105,7 +105,7 @@ func (c *configCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *configCmd) Usage() {
-	executeUsage(c.fs.Output(), "config_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "config_usage.txt", c)
 }
 
 func (c *configCmd) FlagGroups() []flagGroup {

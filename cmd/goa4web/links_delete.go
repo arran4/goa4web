@@ -44,7 +44,7 @@ func (c *linksDeleteCmd) Run() error {
 }
 
 func (c *linksDeleteCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_delete_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_delete_usage.txt", c)
 }
 
 func (c *linksDeleteCmd) FlagGroups() []flagGroup {

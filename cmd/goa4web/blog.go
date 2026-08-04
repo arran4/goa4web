@@ -86,7 +86,7 @@ func (c *blogCmd) Run() error {
 }
 
 func (c *blogCmd) Usage() {
-	executeUsage(c.fs.Output(), "blog_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "blog_usage.txt", c)
 }
 
 func (c *blogCmd) FlagGroups() []flagGroup {

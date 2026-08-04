@@ -88,5 +88,5 @@ func (c *emailSendCmd) Run() error {
 
 // Usage prints the command's usage information.
 func (c *emailSendCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_send_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_send_usage.txt", c)
 }

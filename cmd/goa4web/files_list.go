@@ -84,7 +84,7 @@ func (c *filesListCmd) Run() error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Path\tSize\tModified\tUsername\tBoard\tPosted\tType")
+	_, _ = fmt.Fprintln(w, "Path\tSize\tModified\tUsername\tBoard\tPosted\tType")
 	for _, entry := range output.Entries {
 		modTime := "-"
 		if entry.ModTime != nil && !entry.ModTime.IsZero() {
@@ -101,7 +101,7 @@ func (c *filesListCmd) Run() error {
 		} else {
 			size = fmt.Sprintf("%d", entry.Size)
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			entry.Path,
 			size,
 			modTime,
@@ -111,8 +111,8 @@ func (c *filesListCmd) Run() error {
 			entryType,
 		)
 	}
-	w.Flush()
-	fmt.Printf("\nSummary: entries=%d files=%d dirs=%d bytes=%d\n",
+	_ = w.Flush()
+	_, _ = fmt.Printf("\nSummary: entries=%d files=%d dirs=%d bytes=%d\n",
 		output.Summary.Entries,
 		output.Summary.Files,
 		output.Summary.Dirs,
@@ -122,7 +122,7 @@ func (c *filesListCmd) Run() error {
 }
 
 func (c *filesListCmd) Usage() {
-	executeUsage(c.fs.Output(), "files_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "files_list_usage.txt", c)
 }
 
 func (c *filesListCmd) FlagGroups() []flagGroup {

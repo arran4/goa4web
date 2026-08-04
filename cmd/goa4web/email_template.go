@@ -69,7 +69,7 @@ func (c *emailTemplateCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailTemplateCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_template_usage.txt", c)
 }
 
 func (c *emailTemplateCmd) FlagGroups() []flagGroup {
@@ -122,7 +122,7 @@ func (c *emailTemplateGetCmd) Run() error {
 }
 
 func (c *emailTemplateGetCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_template_usage.txt", c)
 }
 
 func (c *emailTemplateGetCmd) FlagGroups() []flagGroup {
@@ -225,7 +225,7 @@ func (c *emailTemplateSetCmd) readBody() (string, error) {
 }
 
 func (c *emailTemplateSetCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_template_usage.txt", c)
 }
 
 func (c *emailTemplateSetCmd) FlagGroups() []flagGroup {
@@ -310,7 +310,7 @@ func (c *emailTemplateTestCmd) Run() error {
 }
 
 func (c *emailTemplateTestCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_template_usage.txt", c)
 }
 
 func (c *emailTemplateTestCmd) FlagGroups() []flagGroup {

@@ -50,7 +50,7 @@ func (c *blogCommentsCmd) Run() error {
 }
 
 func (c *blogCommentsCmd) Usage() {
-	executeUsage(c.fs.Output(), "blog_comments_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "blog_comments_usage.txt", c)
 }
 
 func (c *blogCommentsCmd) FlagGroups() []flagGroup {

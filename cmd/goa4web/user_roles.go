@@ -68,7 +68,7 @@ func (c *userRolesCmd) runList() error {
 }
 
 func (c *userRolesCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_roles_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_roles_usage.txt", c)
 }
 
 func (c *userRolesCmd) FlagGroups() []flagGroup {
@@ -257,7 +257,7 @@ func diffRoleSets(current map[string]int32, desired map[string]struct{}) ([]stri
 }
 
 func (c *userRolesSyncCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_roles_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_roles_usage.txt", c)
 }
 
 func (c *userRolesSyncCmd) FlagGroups() []flagGroup {

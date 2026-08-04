@@ -31,7 +31,7 @@ func parseUserRemoveRoleCmd(parent *userCmd, args []string) (*userRemoveRoleCmd,
 }
 
 func (c *userRemoveRoleCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_remove_role_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_remove_role_usage.txt", c)
 }
 
 func (c *userRemoveRoleCmd) FlagGroups() []flagGroup {

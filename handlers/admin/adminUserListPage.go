@@ -17,7 +17,7 @@ func adminUserListPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
-	AdminUserListPageTmpl.Handle(w, r, struct{}{})
+	_ = AdminUserListPageTmpl.Handle(w, r, struct{}{})
 }
 
 const AdminUserListPageTmpl tasks.Template = "admin/userList.gohtml"

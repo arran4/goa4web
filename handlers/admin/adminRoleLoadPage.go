@@ -43,7 +43,7 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, roleSQLUploadMaxBytes)
 		if err := r.ParseMultipartForm(roleSQLUploadMaxBytes); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("invalid upload: %w", err).Error())
-			AdminRoleLoadPageTmpl.Handle(w, r, data)
+			_ = AdminRoleLoadPageTmpl.Handle(w, r, data)
 			return
 		}
 
@@ -54,7 +54,7 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 
 		file, _, err := r.FormFile("role_sql")
 		if err == nil {
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 			if buf, readErr := io.ReadAll(file); readErr != nil {
 				data.Errors = append(data.Errors, fmt.Errorf("read role file: %w", readErr).Error())
 			} else {
@@ -127,7 +127,7 @@ func (h *Handlers) AdminRoleLoadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminRoleLoadPageTmpl.Handle(w, r, data)
+	_ = AdminRoleLoadPageTmpl.Handle(w, r, data)
 }
 
 func diffGrantKeys(current []*db.Grant, desired []*db.Grant) ([]string, []string) {

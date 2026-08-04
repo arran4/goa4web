@@ -61,7 +61,7 @@ func WriterPage(w http.ResponseWriter, r *http.Request) {
 		data.Abstracts = append(data.Abstracts, row)
 	}
 
-	WritingsWriterPageTmpl.Handle(w, r, data)
+	_ = WritingsWriterPageTmpl.Handle(w, r, data)
 }
 
 const WritingsWriterPageTmpl tasks.Template = "writings/writerPage.gohtml"

@@ -60,7 +60,7 @@ func (c *emailFailedCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailFailedCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_failed_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_failed_usage.txt", c)
 }
 
 func (c *emailFailedCmd) FlagGroups() []flagGroup {
@@ -141,11 +141,11 @@ func (c *emailFailedListCmd) Run() error {
 		return err
 	}
 	out := c.fs.Output()
-	fmt.Fprintf(out, "Failed emails: %d\n", totalCount)
-	fmt.Fprintf(out, "Showing %d (offset %d, limit %d)\n\n", len(items), c.Offset, c.Limit)
-	fmt.Fprintln(out, "ID\tProvider\tEmail\tSubject\tCreated\tErrors")
+	_, _ = fmt.Fprintf(out, "Failed emails: %d\n", totalCount)
+	_, _ = fmt.Fprintf(out, "Showing %d (offset %d, limit %d)\n\n", len(items), c.Offset, c.Limit)
+	_, _ = fmt.Fprintln(out, "ID\tProvider\tEmail\tSubject\tCreated\tErrors")
 	for _, item := range items {
-		fmt.Fprintf(out, "%d\t%s\t%s\t%s\t%s\t%d\n",
+		_, _ = fmt.Fprintf(out, "%d\t%s\t%s\t%s\t%s\t%d\n",
 			item.row.ID,
 			item.provider,
 			item.email,

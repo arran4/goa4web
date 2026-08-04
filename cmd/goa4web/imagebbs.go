@@ -45,7 +45,7 @@ func (c *imagebbsCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *imagebbsCmd) Usage() {
-	executeUsage(c.fs.Output(), "imagebbs_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "imagebbs_usage.txt", c)
 }
 
 func (c *imagebbsCmd) FlagGroups() []flagGroup {

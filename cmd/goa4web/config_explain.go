@@ -33,7 +33,7 @@ func (c *configExplainCmd) Run() error {
 	fileVals := c.ConfigFileValues
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 8, 2, ' ', 0)
-	fmt.Fprintln(w, "Option\tFinal Value\tSource\tDetail")
+	_, _ = fmt.Fprintln(w, "Option\tFinal Value\tSource\tDetail")
 
 	infos := configexplain.Explain(configexplain.Inputs{
 		FlagSet:    c.rootCmd.fs,
@@ -42,14 +42,14 @@ func (c *configExplainCmd) Run() error {
 	})
 
 	for _, info := range infos {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", info.Name, info.FinalValue, info.SourceLabel, info.SourceDetail)
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", info.Name, info.FinalValue, info.SourceLabel, info.SourceDetail)
 	}
 
 	return w.Flush()
 }
 
 func (c *configExplainCmd) Usage() {
-	executeUsage(c.fs.Output(), "config_explain_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "config_explain_usage.txt", c)
 }
 
 func (c *configExplainCmd) FlagGroups() []flagGroup {

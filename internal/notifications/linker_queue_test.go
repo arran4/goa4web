@@ -20,7 +20,7 @@ func TestLinkerQueueNotifierMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	mock.ExpectQuery("SELECT body FROM template_overrides WHERE name = ?").
 		WithArgs(ntName).
 		WillReturnRows(sqlmock.NewRows([]string{"body"}).AddRow(""))

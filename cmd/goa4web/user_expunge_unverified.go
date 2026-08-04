@@ -41,7 +41,7 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
 	cutoff := time.Now().Add(-c.olderThan)
@@ -72,6 +72,6 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 }
 
 func (c *userExpungeUnverifiedCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s user expunge-unverified [flags]\n\nFlags:\n", os.Args[0])
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s user expunge-unverified [flags]\n\nFlags:\n", os.Args[0])
 	c.fs.PrintDefaults()
 }

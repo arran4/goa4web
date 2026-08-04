@@ -89,7 +89,7 @@ func (c *forumCmd) Run() error {
 
 // Usage prints command usage information.
 func (c *forumCmd) Usage() {
-	executeUsage(c.fs.Output(), "forum_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "forum_usage.txt", c)
 }
 
 func (c *forumCmd) FlagGroups() []flagGroup {

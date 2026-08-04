@@ -186,7 +186,9 @@ func TestWritingReply_Notifications(t *testing.T) {
 		rr := httptest.NewRecorder()
 		replyTask.Action(rr, req)
 
-		bus.Publish(*evt)
+		if err := bus.Publish(*evt); err != nil {
+			t.Fatalf("publish event: %v", err)
+		}
 
 		t.Run("Event Bus Verification", func(t *testing.T) {
 			if cdlq.lastError != "" {

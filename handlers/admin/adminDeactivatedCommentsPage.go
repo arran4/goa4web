@@ -23,7 +23,7 @@ func AdminDeactivatedCommentsPage(w http.ResponseWriter, r *http.Request) {
 		*common.CoreData
 		Comments []*db.AdminListDeactivatedCommentsRow
 	}{cd, rows}
-	AdminDeactivatedCommentsPageTmpl.Handle(w, r, data)
+	_ = AdminDeactivatedCommentsPageTmpl.Handle(w, r, data)
 }
 
 const AdminDeactivatedCommentsPageTmpl tasks.Template = "admin/deactivatedCommentsPage.gohtml"

@@ -15,7 +15,7 @@ func TestQueries_AdminUpdateRole(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	mock.ExpectExec(regexp.QuoteMeta(adminUpdateRole)).

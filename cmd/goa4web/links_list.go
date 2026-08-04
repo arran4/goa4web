@@ -42,7 +42,7 @@ func (c *linksListCmd) Run() error {
 }
 
 func (c *linksListCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_list_usage.txt", c)
 }
 
 func (c *linksListCmd) FlagGroups() []flagGroup {

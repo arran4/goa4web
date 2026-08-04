@@ -45,7 +45,7 @@ func (c *linksRefreshCmd) Run() error {
 }
 
 func (c *linksRefreshCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_refresh_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_refresh_usage.txt", c)
 }
 
 func (c *linksRefreshCmd) FlagGroups() []flagGroup {

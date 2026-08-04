@@ -40,7 +40,7 @@ func parseUserAddCmd(parent *userCmd, args []string) (*userAddCmd, error) {
 }
 
 func (c *userAddCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_add_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_add_usage.txt", c)
 }
 
 func (c *userAddCmd) FlagGroups() []flagGroup {

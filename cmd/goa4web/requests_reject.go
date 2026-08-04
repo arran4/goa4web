@@ -32,7 +32,7 @@ func parseRequestsRejectCmd(parent *requestsCmd, args []string) (*requestsReject
 }
 
 func (c *requestsRejectCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_reject_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_reject_usage.txt", c)
 }
 
 func (c *requestsRejectCmd) FlagGroups() []flagGroup {

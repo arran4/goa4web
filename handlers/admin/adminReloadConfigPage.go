@@ -48,5 +48,5 @@ func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request)
 
 	data.Messages = append(data.Messages, "Configuration reloaded")
 
-	RunTaskPageTmpl.Handle(w, r, data)
+	_ = RunTaskPageTmpl.Handle(w, r, data)
 }

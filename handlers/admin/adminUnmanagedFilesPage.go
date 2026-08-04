@@ -62,7 +62,7 @@ func AdminUnmanagedFilesPage(w http.ResponseWriter, r *http.Request) {
 		Entries: unmanaged,
 	}
 
-	AdminUnmanagedFilesPageTmpl.Handle(w, r, data)
+	_ = AdminUnmanagedFilesPageTmpl.Handle(w, r, data)
 }
 
 // AdminUnmanagedFilesPageTmpl renders the admin unmanaged files page.

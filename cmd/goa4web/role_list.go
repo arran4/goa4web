@@ -63,7 +63,7 @@ func (c *roleListCmd) Run() error {
 	}
 }
 
-func (c *roleListCmd) Usage() { executeUsage(c.fs.Output(), "role_list_usage.txt", c) }
+func (c *roleListCmd) Usage() { _ = executeUsage(c.fs.Output(), "role_list_usage.txt", c) }
 
 func (c *roleListCmd) FlagGroups() []flagGroup {
 	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}
@@ -94,12 +94,12 @@ func (c *roleListSQLCmd) Run() error {
 		return err
 	}
 	for _, r := range embeddedRoles {
-		fmt.Fprintln(c.fs.Output(), r)
+		_, _ = fmt.Fprintln(c.fs.Output(), r)
 	}
 	return nil
 }
 
-func (c *roleListSQLCmd) Usage() { executeUsage(c.fs.Output(), "role_list_sql_usage.txt", c) }
+func (c *roleListSQLCmd) Usage() { _ = executeUsage(c.fs.Output(), "role_list_sql_usage.txt", c) }
 
 func (c *roleListSQLCmd) FlagGroups() []flagGroup {
 	return append(c.roleCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})
@@ -128,12 +128,12 @@ func (c *roleListNamesCmd) Run() error {
 		return err
 	}
 	for _, name := range names {
-		fmt.Fprintln(c.fs.Output(), name)
+		_, _ = fmt.Fprintln(c.fs.Output(), name)
 	}
 	return nil
 }
 
-func (c *roleListNamesCmd) Usage() { executeUsage(c.fs.Output(), "role_list_names_usage.txt", c) }
+func (c *roleListNamesCmd) Usage() { _ = executeUsage(c.fs.Output(), "role_list_names_usage.txt", c) }
 
 func (c *roleListNamesCmd) FlagGroups() []flagGroup {
 	return append(c.roleCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})

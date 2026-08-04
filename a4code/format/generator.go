@@ -46,7 +46,7 @@ func (g *Generator) generateChildren(w io.Writer, children []ast.Node) error {
 }
 
 func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
-	io.WriteString(w, "[b")
+	_, _ = io.WriteString(w, "[b")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -54,7 +54,7 @@ func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
 }
 
 func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
-	io.WriteString(w, "[i")
+	_, _ = io.WriteString(w, "[i")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -62,7 +62,7 @@ func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
 }
 
 func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
-	io.WriteString(w, "[u")
+	_, _ = io.WriteString(w, "[u")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -70,7 +70,7 @@ func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
 }
 
 func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
-	io.WriteString(w, "[sup")
+	_, _ = io.WriteString(w, "[sup")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -78,7 +78,7 @@ func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
 }
 
 func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
-	io.WriteString(w, "[sub")
+	_, _ = io.WriteString(w, "[sub")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -86,7 +86,7 @@ func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
 }
 
 func (g *Generator) Link(w io.Writer, n *ast.Link) error {
-	io.WriteString(w, "[a=")
+	_, _ = io.WriteString(w, "[a=")
 	escapeArg(w, n.Href)
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
@@ -95,42 +95,42 @@ func (g *Generator) Link(w io.Writer, n *ast.Link) error {
 }
 
 func (g *Generator) Image(w io.Writer, n *ast.Image) error {
-	io.WriteString(w, "[img=")
+	_, _ = io.WriteString(w, "[img=")
 	escapeArg(w, n.Src)
 	writeByte(w, ']')
 	return nil
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	io.WriteString(w, "[code")
+	_, _ = io.WriteString(w, "[code")
 	if n.IsBlock {
-		io.WriteString(w, "\n")
+		_, _ = io.WriteString(w, "\n")
 	} else if len(n.Value) > 0 {
 		first := n.Value[0]
 		if first != ' ' && first != '\n' && first != '\r' {
-			io.WriteString(w, " ")
+			_, _ = io.WriteString(w, " ")
 		}
 	}
-	io.WriteString(w, n.Value)
-	io.WriteString(w, "]")
+	_, _ = io.WriteString(w, n.Value)
+	_, _ = io.WriteString(w, "]")
 	return nil
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
-	io.WriteString(w, "[codein ")
+	_, _ = io.WriteString(w, "[codein ")
 	escapeQuotedArg(w, n.Language)
 	if strings.Contains(n.Value, "\n") {
 		writeByte(w, '\n')
 	} else {
 		writeByte(w, ' ')
 	}
-	io.WriteString(w, n.Value)
+	_, _ = io.WriteString(w, n.Value)
 	writeByte(w, ']')
 	return nil
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
-	io.WriteString(w, "[quote")
+	_, _ = io.WriteString(w, "[quote")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -138,7 +138,7 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 }
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
-	io.WriteString(w, "[quoteof ")
+	_, _ = io.WriteString(w, "[quoteof ")
 	escapeQuotedArg(w, n.Name)
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
@@ -147,7 +147,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
-	io.WriteString(w, "[spoiler")
+	_, _ = io.WriteString(w, "[spoiler")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -155,7 +155,7 @@ func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
 }
 
 func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
-	io.WriteString(w, "[indent")
+	_, _ = io.WriteString(w, "[indent")
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}
@@ -163,13 +163,13 @@ func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
-	io.WriteString(w, "[hr]")
+	_, _ = io.WriteString(w, "[hr]")
 	return nil
 }
 
 func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
 	writeByte(w, '[')
-	io.WriteString(w, n.Tag)
+	_, _ = io.WriteString(w, n.Tag)
 	if len(n.Children) > 0 {
 		writeByte(w, ' ')
 	}

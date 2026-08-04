@@ -37,7 +37,9 @@ func TestArticleReplyActionPage(t *testing.T) {
 		w := httptest.NewRecorder()
 		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(1)
-		sess.Save(req, w)
+		if err := sess.Save(req, w); err != nil {
+			t.Fatalf("save session: %v", err)
+		}
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}

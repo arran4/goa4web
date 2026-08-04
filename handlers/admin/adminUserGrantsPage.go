@@ -39,7 +39,7 @@ func adminUserGrantsPage(w http.ResponseWriter, r *http.Request) {
 		GrantGroups: groups,
 	}
 
-	AdminUserGrantsPageTmpl.Handle(w, r, data)
+	_ = AdminUserGrantsPageTmpl.Handle(w, r, data)
 }
 
 const AdminUserGrantsPageTmpl tasks.Template = "admin/userGrantsPage.gohtml"

@@ -205,7 +205,7 @@ func fixDataFields(v any) any {
 }
 
 func (c *testVerificationTemplateCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_verification_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_verification_template_usage.txt", c)
 }
 
 func (c *testVerificationTemplateCmd) FlagGroups() []flagGroup {

@@ -59,7 +59,7 @@ func (c *linksVerifyCmd) Run() error {
 }
 
 func (c *linksVerifyCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_verify_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_verify_usage.txt", c)
 }
 
 func (c *linksVerifyCmd) FlagGroups() []flagGroup {

@@ -34,7 +34,7 @@ func parseUserAddRoleCmd(parent *userCmd, args []string) (*userAddRoleCmd, error
 }
 
 func (c *userAddRoleCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_add_role_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_add_role_usage.txt", c)
 }
 
 func (c *userAddRoleCmd) FlagGroups() []flagGroup {

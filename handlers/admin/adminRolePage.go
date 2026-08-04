@@ -78,7 +78,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		GrantGroups: groups,
 	}
 
-	AdminRolePageTmpl.Handle(w, r, data)
+	_ = AdminRolePageTmpl.Handle(w, r, data)
 }
 
 const AdminRolePageTmpl tasks.Template = "admin/adminRolePage.gohtml"

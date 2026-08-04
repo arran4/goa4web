@@ -147,8 +147,10 @@ func TestNotifyAdminsEnv(t *testing.T) {
 		cfg.EmailEnabled = true
 		cfg.EmailFrom = "from@example.com"
 
-		os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com")
-		defer os.Unsetenv(config.EnvAdminEmails)
+		if err := os.Setenv(config.EnvAdminEmails, "a@test.com,b@test.com"); err != nil {
+			t.Fatalf("set env: %v", err)
+		}
+		defer func() { _ = os.Unsetenv(config.EnvAdminEmails) }()
 		cfg = config.NewRuntimeConfig()
 		origEmails := cfg.AdminEmails
 		cfg.AdminEmails = "a@test.com,b@test.com"
@@ -182,7 +184,9 @@ func TestNotifyAdminsEnv(t *testing.T) {
 
 		rec := &recordAdminMail{}
 		n := notif.New(notif.WithSilence(true), notif.WithQueries(qs), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
-		n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
+		if err := n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{}); err != nil {
+			t.Fatalf("notify admins: %v", err)
+		}
 		if len(rec.to) != 0 {
 			t.Fatalf("expected 0 direct mails, got %d", len(rec.to))
 		}
@@ -204,14 +208,18 @@ func TestNotifyAdminsDisabled(t *testing.T) {
 		cfg.AdminNotify = false
 		cfg.EmailEnabled = true
 		cfg.AdminEmails = "a@test.com"
-		os.Setenv(config.EnvAdminNotify, "false")
+		if err := os.Setenv(config.EnvAdminNotify, "false"); err != nil {
+			t.Fatalf("set env: %v", err)
+		}
 		cfg.AdminEmails = "a@test.com"
-		defer os.Unsetenv(config.EnvAdminEmails)
-		defer os.Unsetenv(config.EnvAdminNotify)
+		defer func() { _ = os.Unsetenv(config.EnvAdminEmails) }()
+		defer func() { _ = os.Unsetenv(config.EnvAdminNotify) }()
 		cfg.AdminEmails = "a@test.com"
 		rec := &recordAdminMail{}
 		n := notif.New(notif.WithSilence(true), notif.WithEmailProvider(rec), notif.WithConfig(cfg))
-		n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{})
+		if err := n.NotifyAdmins(context.Background(), &notif.EmailTemplates{}, notif.EmailData{}); err != nil {
+			t.Fatalf("notify admins: %v", err)
+		}
 		if len(rec.to) != 0 {
 			t.Fatalf("expected 0 mails, got %d", len(rec.to))
 		}

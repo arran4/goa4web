@@ -232,7 +232,7 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = r.URL.Path + "?" + prevVals.Encode()
 	}
 
-	AdminEmailPageTmpl.Handle(w, r, data)
+	_ = AdminEmailPageTmpl.Handle(w, r, data)
 }
 
 const AdminEmailPageTmpl tasks.Template = "admin/emailPage.gohtml"

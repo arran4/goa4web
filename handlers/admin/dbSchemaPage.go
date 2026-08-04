@@ -19,7 +19,7 @@ func (h *Handlers) AdminDBSchemaPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Schema: string(database.SchemaMySQL),
 	}
-	AdminDBSchemaPageTmpl.Handle(w, r, data)
+	_ = AdminDBSchemaPageTmpl.Handle(w, r, data)
 }
 
 // AdminDBSchemaPageTmpl renders the database schema page.

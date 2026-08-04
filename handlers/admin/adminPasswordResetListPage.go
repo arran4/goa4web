@@ -123,7 +123,7 @@ func adminPasswordResetListPage(w http.ResponseWriter, r *http.Request) {
 
 	summaryMessage := passwordResetSummaryMessage(r.URL.Query())
 
-	AdminPasswordResetListPageTmpl.Handle(w, r, &AdminPasswordResetListPageData{
+	_ = AdminPasswordResetListPageTmpl.Handle(w, r, &AdminPasswordResetListPageData{
 		Rows:           rows,
 		Status:         status,
 		UserFilter:     userFilter,

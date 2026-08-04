@@ -162,7 +162,7 @@ func grantSignature(g *db.Grant) string {
 }
 
 func (c *roleInspectCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_inspect_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_inspect_usage.txt", c)
 }
 
 func (c *roleInspectCmd) FlagGroups() []flagGroup {

@@ -54,7 +54,7 @@ func (c *pageSizeCmd) Run() error {
 }
 
 func (c *pageSizeCmd) Usage() {
-	executeUsage(c.fs.Output(), "page_size_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "page_size_usage.txt", c)
 }
 
 func (c *pageSizeCmd) FlagGroups() []flagGroup {

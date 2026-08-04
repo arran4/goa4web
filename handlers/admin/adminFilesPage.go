@@ -78,7 +78,7 @@ func AdminFilesPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = r.URL.Path + "?" + prevVals.Encode()
 	}
 
-	AdminFilesPageTmpl.Handle(w, r, data)
+	_ = AdminFilesPageTmpl.Handle(w, r, data)
 }
 
 const AdminFilesPageTmpl tasks.Template = "admin/adminFilesPage.gohtml"

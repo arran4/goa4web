@@ -45,8 +45,13 @@ func TestLoadOrCreate(t *testing.T) {
 
 	t.Run("envSecret takes precedence over file", func(t *testing.T) {
 		memFs := core.UseMemFS(t)
-		t.Setenv("TEST_ENV_SECRET", "my_env_secret")
-		secret, err := LoadOrCreate(memFs, "", "", "TEST_ENV_SECRET", "", defaultPathFunc)
+		getenv := func(key string) string {
+			if key == "TEST_ENV_SECRET" {
+				return "my_env_secret"
+			}
+			return ""
+		}
+		secret, err := LoadOrCreate(memFs, "", "", "TEST_ENV_SECRET", "", defaultPathFunc, getenv)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -71,11 +76,16 @@ func TestLoadOrCreate(t *testing.T) {
 
 	t.Run("falls back to envSecretFile", func(t *testing.T) {
 		memFs := core.UseMemFS(t)
-		t.Setenv("TEST_ENV_SECRET_FILE", "my_env_path_secret.txt")
+		getenv := func(key string) string {
+			if key == "TEST_ENV_SECRET_FILE" {
+				return "my_env_path_secret.txt"
+			}
+			return ""
+		}
 		if err := memFs.WriteFile("my_env_path_secret.txt", []byte("my_env_path_secret"), 0600); err != nil {
 			t.Fatalf("failed to write mock file: %v", err)
 		}
-		secret, err := LoadOrCreate(memFs, "", "", "", "TEST_ENV_SECRET_FILE", defaultPathFunc)
+		secret, err := LoadOrCreate(memFs, "", "", "", "TEST_ENV_SECRET_FILE", defaultPathFunc, getenv)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

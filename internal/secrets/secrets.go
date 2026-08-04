@@ -14,15 +14,23 @@ import (
 
 // DefaultPath returns the default path for a secret file named name.
 // dockerEnv specifies the environment variable used to detect Docker builds.
-func DefaultPath(name, dockerEnv string) string {
+func DefaultPath(name, dockerEnv string, ops ...any) string {
+	getenv := os.Getenv
+	for _, o := range ops {
+		switch o := o.(type) {
+		case func(string) string:
+			getenv = o
+		}
+	}
+
 	devName := "." + name
 	if goa4web.Version == "dev" {
 		return devName
 	}
-	if os.Getenv(dockerEnv) != "" {
+	if getenv(dockerEnv) != "" {
 		return filepath.Join("/var/lib/goa4web", name)
 	}
-	if os.Getenv("HOME") == "" && os.Getenv("XDG_CONFIG_HOME") == "" {
+	if getenv("HOME") == "" && getenv("XDG_CONFIG_HOME") == "" {
 		return filepath.Join("/var/lib/goa4web", name)
 	}
 	if dir, err := os.UserConfigDir(); err == nil && dir != "" {
@@ -38,15 +46,23 @@ func DefaultPath(name, dockerEnv string) string {
 //     or defaultPath.
 //
 // If the file does not exist, a new random secret is generated and saved.
-func LoadOrCreate(fs core.FileSystem, cliSecret, path, envSecret, envSecretFile string, defaultPath func() string) (string, error) {
+func LoadOrCreate(fs core.FileSystem, cliSecret, path, envSecret, envSecretFile string, defaultPath func() string, ops ...any) (string, error) {
+	getenv := os.Getenv
+	for _, o := range ops {
+		switch o := o.(type) {
+		case func(string) string:
+			getenv = o
+		}
+	}
+
 	if cliSecret != "" {
 		return cliSecret, nil
 	}
-	if env := os.Getenv(envSecret); env != "" {
+	if env := getenv(envSecret); env != "" {
 		return env, nil
 	}
 	if path == "" {
-		path = os.Getenv(envSecretFile)
+		path = getenv(envSecretFile)
 		if path == "" {
 			path = defaultPath()
 		}

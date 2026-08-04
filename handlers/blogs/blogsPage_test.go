@@ -141,7 +141,7 @@ func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	BlogAddPage(rr, req)
+	RequireBlogAddGrant(http.HandlerFunc(BlogAddPage)).ServeHTTP(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}

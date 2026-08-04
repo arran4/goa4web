@@ -5,11 +5,24 @@ import (
 )
 
 func TestWithShareSignSecret(t *testing.T) {
-	opts := &serverOptions{}
-	opt := WithShareSignSecret("my-secret")
-	opt(opts)
+	tests := []struct {
+		name   string
+		secret string
+	}{
+		{"empty secret", ""},
+		{"simple secret", "my-secret"},
+		{"complex secret", "a very long and complex secret with special characters !@#$%^&*()"},
+	}
 
-	if opts.ShareSignSecret != "my-secret" {
-		t.Errorf("expected ShareSignSecret to be 'my-secret', got '%s'", opts.ShareSignSecret)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := &serverOptions{}
+			opt := WithShareSignSecret(tt.secret)
+			opt(opts)
+
+			if opts.ShareSignSecret != tt.secret {
+				t.Errorf("expected ShareSignSecret to be '%s', got '%s'", tt.secret, opts.ShareSignSecret)
+			}
+		})
 	}
 }

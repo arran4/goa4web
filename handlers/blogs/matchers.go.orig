@@ -131,7 +131,7 @@ func RequireBlogAddGrant(next http.Handler) http.Handler {
 			return
 		}
 
-		if !(cd.IsAdmin() || cd.HasGrant("blogs", "entry", "post", 0)) {
+		if !cd.HasGrant("blogs", "entry", "post", 0) {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		}

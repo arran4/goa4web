@@ -24,7 +24,7 @@ func DownloadSwagger(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=\"swagger.yaml\"")
 
 	// Pass the BaseURL to the template to populate the server URL correctly
-	tasks.Template("user/swagger.gohtml").Handle(w, r, struct{
+	tasks.Template("user/swagger.gohtml").Handle(w, r, struct {
 		BaseURL string
 		Version string
 	}{

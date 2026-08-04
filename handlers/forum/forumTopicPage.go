@@ -21,28 +21,29 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
-	type threadWithLabels struct {
-		*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
-		Labels   []templates.TopicLabel
-		IsUnread bool
-	}
+type ThreadWithLabels struct {
+	*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
+	Labels   []templates.TopicLabel
+	IsUnread bool
+}
 
-	type Data struct {
-		Admin                   bool
-		Back                    bool
-		Subscribed              bool
-		Topic                   *ForumtopicPlus
-		Threads                 []*threadWithLabels
-		Categories              []*ForumcategoryPlus
-		Category                *ForumcategoryPlus
-		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
-		BasePath                string
-		BackURL                 string
-		ShareURL                string
-		Labels                  []templates.TopicLabel
-		CanLabel                bool
-	}
+type TopicsPageData struct {
+	Admin                   bool
+	Back                    bool
+	Subscribed              bool
+	Topic                   *ForumtopicPlus
+	Threads                 []*ThreadWithLabels
+	Categories              []*ForumcategoryPlus
+	Category                *ForumcategoryPlus
+	CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *TopicsPageData
+	BasePath                string
+	BackURL                 string
+	ShareURL                string
+	Labels                  []templates.TopicLabel
+	CanLabel                bool
+}
+
+func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 
 	vars := mux.Vars(r)
 	topicId, _ := strconv.Atoi(vars["topic"])
@@ -55,14 +56,14 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		log.Printf("UserCanLabelTopic: %v", err)
 	}
 
-	data := &Data{
+	data := &TopicsPageData{
 		Admin:    cd.IsAdmin() && cd.IsAdminMode(),
 		BasePath: basePath,
 		BackURL:  r.URL.RequestURI(),
 		CanLabel: canLabel || (cd.IsAdmin() && cd.IsAdminMode()),
 	}
 
-	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {
+	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *TopicsPageData {
 		d := *data
 		d.Categories = []*ForumcategoryPlus{}
 		d.Category = rootCategory
@@ -121,28 +122,40 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		}
 	}
 
-	var titleParts []string
-	titleParts = append(titleParts, displayTitle)
+	cd.PageTitle = buildTopicPageTitle(topicRow, data, displayTitle)
 
-	if topicRow.Handler != "private" {
-		if data.Category != nil && data.Category.Title.Valid {
-			titleParts = append(titleParts, data.Category.Title.String)
-		}
-		titleParts = append(titleParts, "Forum")
-	} else {
-		titleParts = append(titleParts, "Private Forum")
-	}
-	cd.PageTitle = strings.Join(titleParts, " - ")
-
-	threadRows, err := cd.ForumThreads(int32(topicId))
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	threads, err := loadTopicThreadsWithLabels(cd, int32(topicId))
+	if err != nil {
 		log.Printf("Error: ForumThreads: %s", err)
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
 	}
-	threads := make([]*threadWithLabels, len(threadRows))
+	data.Threads = threads
+
+	data.Labels = loadTopicLabels(cd, topicRow.Idforumtopic)
+
+	if subscribedToTopic(cd, topicRow.Idforumtopic) {
+		data.Subscribed = true
+	}
+
+	ForumTopicsPageTmpl.Handle(w, r, data)
+}
+
+const ForumTopicsPageTmpl tasks.Template = "forum/topicsPage.gohtml"
+
+// TopicsPage serves the forum topic page at the default /forum prefix.
+func TopicsPage(w http.ResponseWriter, r *http.Request) {
+	TopicsPageWithBasePath(w, r, "/forum")
+}
+
+func loadTopicThreadsWithLabels(cd *common.CoreData, topicId int32) ([]*ThreadWithLabels, error) {
+	threadRows, err := cd.ForumThreads(topicId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	threads := make([]*ThreadWithLabels, len(threadRows))
 	for i, r := range threadRows {
-		t := &threadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
+		t := &ThreadWithLabels{GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: r}
 		var lbls []templates.TopicLabel
 		if pub, author, err := cd.ThreadPublicLabels(r.Idforumthread); err == nil {
 			for _, l := range pub {
@@ -168,10 +181,12 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		t.Labels = lbls
 		threads[i] = t
 	}
-	data.Threads = threads
+	return threads, nil
+}
 
+func loadTopicLabels(cd *common.CoreData, topicId int32) []templates.TopicLabel {
 	var labels []templates.TopicLabel
-	if pub, _, err := cd.TopicPublicLabels(topicRow.Idforumtopic); err == nil {
+	if pub, _, err := cd.TopicPublicLabels(topicId); err == nil {
 		for _, l := range pub {
 			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
 		}
@@ -179,18 +194,20 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		log.Printf("list public labels: %v", err)
 	}
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
-	data.Labels = labels
-
-	if subscribedToTopic(cd, topicRow.Idforumtopic) {
-		data.Subscribed = true
-	}
-
-	ForumTopicsPageTmpl.Handle(w, r, data)
+	return labels
 }
 
-const ForumTopicsPageTmpl tasks.Template = "forum/topicsPage.gohtml"
+func buildTopicPageTitle(topicRow *db.GetForumTopicByIdForUserRow, data *TopicsPageData, displayTitle string) string {
+	var titleParts []string
+	titleParts = append(titleParts, displayTitle)
 
-// TopicsPage serves the forum topic page at the default /forum prefix.
-func TopicsPage(w http.ResponseWriter, r *http.Request) {
-	TopicsPageWithBasePath(w, r, "/forum")
+	if topicRow.Handler != "private" {
+		if data.Category != nil && data.Category.Title.Valid {
+			titleParts = append(titleParts, data.Category.Title.String)
+		}
+		titleParts = append(titleParts, "Forum")
+	} else {
+		titleParts = append(titleParts, "Private Forum")
+	}
+	return strings.Join(titleParts, " - ")
 }

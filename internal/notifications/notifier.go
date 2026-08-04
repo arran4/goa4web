@@ -106,7 +106,7 @@ func defaultFuncs() map[string]any {
 			}
 			return s
 		},
-				"lower": strings.ToLower,
+		"lower": strings.ToLower,
 		"makeAbsoluteURL": func(base, link string) string {
 			if strings.HasPrefix(link, "http://") || strings.HasPrefix(link, "https://") {
 				return link

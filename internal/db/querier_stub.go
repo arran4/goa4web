@@ -25,11 +25,11 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
-	CreateAPIKeyStub func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
-	GetAPIKeyByHashStub func(ctx context.Context, apiKey string) (*ApiKey, error)
-	ListAPIKeysByUserStub func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
+	CreateAPIKeyStub         func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
+	GetAPIKeyByHashStub      func(ctx context.Context, apiKey string) (*ApiKey, error)
+	ListAPIKeysByUserStub    func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
 	UpdateAPIKeyLastUsedStub func(ctx context.Context, id int32) error
-	RevokeAPIKeyStub func(ctx context.Context, arg RevokeAPIKeyParams) error
+	RevokeAPIKeyStub         func(ctx context.Context, arg RevokeAPIKeyParams) error
 
 	Querier
 	mu sync.Mutex
@@ -1026,18 +1026,18 @@ type QuerierStub struct {
 	DeleteSubscriptionByIDForSubscriberErr   error
 	DeleteSubscriptionByIDForSubscriberFn    func(context.Context, DeleteSubscriptionByIDForSubscriberParams) error
 
-	GetUserRoleByIDCalls []int32
-	GetUserRoleByIDRow   *GetUserRoleByIDRow
-	GetUserRoleByIDErr   error
-	GetUserRoleByIDFn    func(context.Context, int32) (*GetUserRoleByIDRow, error)
+	GetUserRoleByIDCalls                    []int32
+	GetUserRoleByIDRow                      *GetUserRoleByIDRow
+	GetUserRoleByIDErr                      error
+	GetUserRoleByIDFn                       func(context.Context, int32) (*GetUserRoleByIDRow, error)
 	CountUnreadPrivateThreadsForUserCalls   []CountUnreadPrivateThreadsForUserParams
 	CountUnreadPrivateThreadsForUserReturns int64
 	CountUnreadPrivateThreadsForUserErr     error
 	CountUnreadPrivateThreadsForUserFn      func(context.Context, CountUnreadPrivateThreadsForUserParams) (int64, error)
-	ListUnreadPrivateThreadsForUserCalls   []ListUnreadPrivateThreadsForUserParams
-	ListUnreadPrivateThreadsForUserReturns []*ListUnreadPrivateThreadsForUserRow
-	ListUnreadPrivateThreadsForUserErr     error
-	ListUnreadPrivateThreadsForUserFn      func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+	ListUnreadPrivateThreadsForUserCalls    []ListUnreadPrivateThreadsForUserParams
+	ListUnreadPrivateThreadsForUserReturns  []*ListUnreadPrivateThreadsForUserRow
+	ListUnreadPrivateThreadsForUserErr      error
+	ListUnreadPrivateThreadsForUserFn       func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {

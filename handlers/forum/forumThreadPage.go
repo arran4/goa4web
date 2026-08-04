@@ -19,31 +19,119 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
-	type Data struct {
-		Category       *ForumcategoryPlus
-		Topic          *ForumtopicPlus
-		Thread         *db.GetThreadLastPosterAndPermsRow
-		Comments       []*db.GetCommentsByThreadIdForUserRow
-		IsReplyable    bool
-		Text           string
-		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
-		CanReply       bool
-		BasePath       string
-		Labels         []templates.TopicLabel
-		BackURL        string
+type threadPageData struct {
+	Category       *ForumcategoryPlus
+	Topic          *ForumtopicPlus
+	Thread         *db.GetThreadLastPosterAndPermsRow
+	Comments       []*db.GetCommentsByThreadIdForUserRow
+	IsReplyable    bool
+	Text           string
+	CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+	EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+	EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+	Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+	AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+	CanReply       bool
+	BasePath       string
+	Labels         []templates.TopicLabel
+	BackURL        string
+}
+
+func buildThreadPageTitle(cd *common.CoreData, topicRow *db.GetForumTopicByIdForUserRow, commentRows []*db.GetCommentsByThreadIdForUserRow, offset int, displayTitle string) string {
+	var titleParts []string
+	if len(commentRows) > 0 && offset == 0 {
+		if prefix := a4code.SnipTextWords(commentRows[0].Text.String, 5); prefix != "" {
+			titleParts = append(titleParts, prefix)
+		}
+	}
+	titleParts = append(titleParts, displayTitle)
+
+	if topicRow.Handler != "private" {
+		if cat, err := cd.ForumCategory(topicRow.ForumcategoryIdforumcategory); err == nil && cat != nil && cat.Title.Valid {
+			titleParts = append(titleParts, cat.Title.String)
+		}
+		titleParts = append(titleParts, "Forum")
+	} else {
+		titleParts = append(titleParts, "Private Forum")
+	}
+	return strings.Join(titleParts, " - ")
+}
+
+func buildThreadOpenGraph(cd *common.CoreData, r *http.Request, displayTitle string, commentRows []*db.GetCommentsByThreadIdForUserRow) {
+	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       displayTitle,
+		Description: "A discussion on our forum.",
+		Image:       imageURL,
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(r.URL.String()),
+		Type:        "article",
 	}
 
+	if len(commentRows) > 0 {
+		cd.OpenGraph.Description = a4code.SnipText(commentRows[0].Text.String, 128)
+	}
+}
+
+func setupThreadPageTemplateFuncs(data *threadPageData, cd *common.CoreData, topicRow *db.GetForumTopicByIdForUserRow, threadRow *db.GetThreadLastPosterAndPermsRow, commentId int32) {
+	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return cmt.IsOwner
+	}
+	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("%s/topic/%d/thread/%d?comment=%d#edit", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+	}
+	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if !data.CanEditComment(cmt) {
+			return ""
+		}
+		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
+	}
+	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+		return data.CanEditComment(cmt) && commentId != 0 && commentId == cmt.Idcomments
+	}
+	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
+		if cd.IsAdmin() && cd.IsAdminMode() {
+			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
+		}
+		return ""
+	}
+}
+
+func getThreadLabels(cd *common.CoreData, threadRow *db.GetThreadLastPosterAndPermsRow) []templates.TopicLabel {
+	var labels []templates.TopicLabel
+	if pub, author, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
+		for _, l := range pub {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+		}
+		for _, l := range author {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+		}
+	} else {
+		log.Printf("list public labels: %v", err)
+	}
+	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread, threadRow.Firstpostuserid.Int32); err == nil {
+		for _, l := range priv {
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+		}
+	} else {
+		log.Printf("list private labels: %v", err)
+	}
+	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
+	return labels
+}
+
+func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	cd.ForumBasePath = basePath
 	common.WithOffset(offset)(cd)
-	data := Data{
+	data := threadPageData{
 		IsReplyable: true,
 		BasePath:    basePath,
 		BackURL:     r.URL.Path,
@@ -74,42 +162,14 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		displayTitle = cd.GetPrivateTopicDisplayTitle(topicRow.Idforumtopic, displayTitle)
 	}
 
-	var titleParts []string
-	if len(commentRows) > 0 && offset == 0 {
-		if prefix := a4code.SnipTextWords(commentRows[0].Text.String, 5); prefix != "" {
-			titleParts = append(titleParts, prefix)
-		}
-	}
-	titleParts = append(titleParts, displayTitle)
+	cd.PageTitle = buildThreadPageTitle(cd, topicRow, commentRows, offset, displayTitle)
 
-	if topicRow.Handler != "private" {
-		if cat, err := cd.ForumCategory(topicRow.ForumcategoryIdforumcategory); err == nil && cat != nil && cat.Title.Valid {
-			titleParts = append(titleParts, cat.Title.String)
-		}
-		titleParts = append(titleParts, "Forum")
-	} else {
-		titleParts = append(titleParts, "Private Forum")
-	}
-	cd.PageTitle = strings.Join(titleParts, " - ")
+	buildThreadOpenGraph(cd, r, displayTitle, commentRows)
 
-	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
-	cd.OpenGraph = &common.OpenGraph{
-		Title:       displayTitle,
-		Description: "A discussion on our forum.",
-		Image:       imageURL,
-		ImageWidth:  cd.Config.OGImageWidth,
-		ImageHeight: cd.Config.OGImageHeight,
-		TwitterSite: cd.Config.TwitterSite,
-		URL:         cd.AbsoluteURL(r.URL.String()),
-		Type:        "article",
-	}
-
+	// In the original code, the comments were loaded again. It's likely a redundancy but we'll fetch them again if they failed or just use them if they didn't.
 	commentRows, err = cd.SelectedThreadComments()
 	if err != nil {
 		log.Printf("thread comments: %v", err)
-	}
-	if len(commentRows) > 0 {
-		cd.OpenGraph.Description = a4code.SnipText(commentRows[0].Text.String, 128)
 	}
 
 	// threadRow and topicRow are provided by the RequireThreadAndTopic
@@ -133,30 +193,8 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		}
 	}
 
-	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return cmt.IsOwner
-	}
-	data.EditURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if !data.CanEditComment(cmt) {
-			return ""
-		}
-		return fmt.Sprintf("%s/topic/%d/thread/%d?comment=%d#edit", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
-	}
-	data.EditSaveURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if !data.CanEditComment(cmt) {
-			return ""
-		}
-		return fmt.Sprintf("%s/topic/%d/thread/%d/comment/%d", data.BasePath, topicRow.Idforumtopic, threadRow.Idforumthread, cmt.Idcomments)
-	}
-	data.Editing = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-		return data.CanEditComment(cmt) && commentId != 0 && commentId == cmt.Idcomments
-	}
-	data.AdminURL = func(cmt *db.GetCommentsByThreadIdForUserRow) string {
-		if cd.IsAdmin() && cd.IsAdminMode() {
-			return fmt.Sprintf("/admin/comment/%d", cmt.Idcomments)
-		}
-		return ""
-	}
+	setupThreadPageTemplateFuncs(&data, cd, topicRow, threadRow, commentId)
+
 	if commentId != 0 {
 		data.IsReplyable = false
 	}
@@ -177,26 +215,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Labels:                       nil,
 	}
 
-	var labels []templates.TopicLabel
-	if pub, author, err := cd.ThreadPublicLabels(threadRow.Idforumthread); err == nil {
-		for _, l := range pub {
-			labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
-		}
-		for _, l := range author {
-			labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
-		}
-	} else {
-		log.Printf("list public labels: %v", err)
-	}
-	if priv, err := cd.ThreadPrivateLabels(threadRow.Idforumthread, threadRow.Firstpostuserid.Int32); err == nil {
-		for _, l := range priv {
-			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
-		}
-	} else {
-		log.Printf("list private labels: %v", err)
-	}
-	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
-	data.Labels = labels
+	data.Labels = getThreadLabels(cd, threadRow)
 
 	ForumThreadPageTmpl.Handle(w, r, data)
 }

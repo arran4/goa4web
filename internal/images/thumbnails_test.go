@@ -157,3 +157,107 @@ func TestGenerateThumbnailWithinBoundsPreservesAspectRatio(t *testing.T) {
 		t.Fatalf("thumbnail dimensions = %dx%d, want 266x800", height, width)
 	}
 }
+
+func TestDimensionsWithinBoundsEdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		srcWidth  int
+		srcHeight int
+		maxWidth  int
+		maxHeight int
+		wantW     int
+		wantH     int
+		wantErr   bool
+	}{
+		{
+			name:      "no scaling needed",
+			srcWidth:  100,
+			srcHeight: 100,
+			maxWidth:  200,
+			maxHeight: 200,
+			wantW:     100,
+			wantH:     100,
+			wantErr:   false,
+		},
+		{
+			name:      "exact match",
+			srcWidth:  200,
+			srcHeight: 200,
+			maxWidth:  200,
+			maxHeight: 200,
+			wantW:     200,
+			wantH:     200,
+			wantErr:   false,
+		},
+		{
+			name:      "constrained by width",
+			srcWidth:  400,
+			srcHeight: 200,
+			maxWidth:  200,
+			maxHeight: 200,
+			wantW:     200,
+			wantH:     100,
+			wantErr:   false,
+		},
+		{
+			name:      "constrained by height",
+			srcWidth:  200,
+			srcHeight: 400,
+			maxWidth:  200,
+			maxHeight: 200,
+			wantW:     100,
+			wantH:     200,
+			wantErr:   false,
+		},
+		{
+			name:      "extreme scaling down to minimum 1",
+			srcWidth:  1000,
+			srcHeight: 1,
+			maxWidth:  2,
+			maxHeight: 2,
+			wantW:     2,
+			wantH:     1,
+			wantErr:   false,
+		},
+		{
+			name:      "error max height 0",
+			srcWidth:  100,
+			srcHeight: 100,
+			maxWidth:  100,
+			maxHeight: 0,
+			wantW:     0,
+			wantH:     0,
+			wantErr:   true,
+		},
+		{
+			name:      "error invalid source width",
+			srcWidth:  0,
+			srcHeight: 100,
+			maxWidth:  200,
+			maxHeight: 200,
+			wantW:     0,
+			wantH:     0,
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			src := image.NewRGBA(image.Rect(0, 0, tt.srcWidth, tt.srcHeight))
+			gotH, gotW, err := DimensionsWithinBounds(src, tt.maxHeight, tt.maxWidth)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DimensionsWithinBounds() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if gotW != tt.wantW {
+				t.Errorf("DimensionsWithinBounds() gotW = %v, want %v", gotW, tt.wantW)
+			}
+
+			if gotH != tt.wantH {
+				t.Errorf("DimensionsWithinBounds() gotH = %v, want %v", gotH, tt.wantH)
+			}
+		})
+	}
+}

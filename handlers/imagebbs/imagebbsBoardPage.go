@@ -2,7 +2,7 @@ package imagebbs
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"image"
@@ -97,7 +97,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	defer file.Close()
 
 	var buf bytes.Buffer
-	h := sha1.New()
+	h := sha256.New()
 	size, err := io.Copy(io.MultiWriter(&buf, h), file)
 	if err != nil {
 		return fmt.Errorf("copy upload error %w", handlers.ErrRedirectOnSamePageHandler(err))

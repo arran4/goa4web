@@ -95,8 +95,27 @@ func buildGrantGroupsForUser(ctx context.Context, cd *common.CoreData, userID in
 	return buildGrantGroupsFromGrants(ctx, cd, grants)
 }
 
+type grantInfo struct {
+	*db.Grant
+	Link string
+	Info string
+}
+
+// buildGrantGroupsFromGrants organises grants for the grants editor.
 // buildGrantGroupsFromGrants organises grants for the grants editor.
 func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants []*db.Grant) ([]GrantGroup, error) {
+	ginfos, err := buildGrantInfos(ctx, cd, grants)
+	if err != nil {
+		return nil, err
+	}
+
+	groupMap := groupGrantInfos(ginfos)
+	groups := flattenAndSortGrantGroups(groupMap)
+
+	return groups, nil
+}
+
+func buildGrantInfos(ctx context.Context, cd *common.CoreData, grants []*db.Grant) ([]grantInfo, error) {
 	queries := cd.Queries()
 
 	forumCats, _ := queries.GetAllForumCategories(ctx, db.GetAllForumCategoriesParams{ViewerID: 0})
@@ -129,118 +148,14 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 		return strings.Join(parts, "/")
 	}
 
-	type GrantInfo struct {
-		*db.Grant
-		Link string
-		Info string
-	}
-	var ginfos []GrantInfo
+	var ginfos []grantInfo
 	for _, g := range grants {
 		if def, ok := GrantActionMap[g.Section+"|"+g.Item.String]; ok && def.RequireItemID && (!g.ItemID.Valid || g.ItemID.Int32 == 0) {
 			continue
 		}
-		gi := GrantInfo{Grant: g}
+		gi := grantInfo{Grant: g}
 		if g.Item.Valid && g.ItemID.Valid {
-			switch g.Section {
-			case "forum":
-				switch g.Item.String {
-				case "topic":
-					gi.Link = fmt.Sprintf("/admin/forum/topics/topic/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if t, err := queries.GetForumTopicById(ctx, g.ItemID.Int32); err == nil {
-						if t.Title.Valid {
-							info := t.Title.String
-							cat := buildCatPath(t.ForumcategoryIdforumcategory)
-							if cat != "" {
-								info = fmt.Sprintf("%s (%s)", info, cat)
-							}
-							gi.Info = info
-						}
-					}
-				case "category":
-					gi.Link = fmt.Sprintf("/admin/forum/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{Idforumcategory: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
-						path := buildCatPath(c.Idforumcategory)
-						gi.Info = path
-					}
-				case "thread":
-					if tid, err := queries.GetForumTopicIdByThreadId(ctx, g.ItemID.Int32); err == nil {
-						if t, err := queries.GetForumTopicById(ctx, tid); err == nil {
-							if t.Title.Valid {
-								cat := buildCatPath(t.ForumcategoryIdforumcategory)
-								info := fmt.Sprintf("%s thread", t.Title.String)
-								if cat != "" {
-									info = fmt.Sprintf("%s (%s)", info, cat)
-								}
-								gi.Info = info
-							}
-						}
-					}
-				}
-			case "linker":
-				switch g.Item.String {
-				case "category":
-					gi.Link = fmt.Sprintf("/admin/linker/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if c, err := queries.GetLinkerCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
-						gi.Info = c.Title.String
-					}
-				case "link":
-					gi.Link = fmt.Sprintf("/admin/linker/links/link/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if l, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx, g.ItemID.Int32); err == nil && l.Title.Valid {
-						gi.Info = l.Title.String
-					}
-				}
-			case "writing":
-				switch g.Item.String {
-				case "category":
-					gi.Link = fmt.Sprintf("/admin/writings/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
-					if c, err := queries.GetWritingCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
-						gi.Info = c.Title.String
-					}
-				case "article":
-					if w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: cd.UserID, Idwriting: g.ItemID.Int32, ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}}); err == nil {
-						if w.Title.Valid {
-							info := w.Title.String
-							if name, ok := langMap[w.LanguageID.Int32]; ok && name != "" {
-								info = fmt.Sprintf("[%s] %s", name, info)
-							}
-							gi.Info = info
-						}
-					}
-				}
-			case "faq":
-				switch g.Item.String {
-				case "category":
-					if cats, err := queries.AdminGetFAQCategories(ctx); err == nil {
-						for _, c := range cats {
-							if c.ID == g.ItemID.Int32 {
-								if c.Name.Valid {
-									gi.Info = c.Name.String
-								}
-								break
-							}
-						}
-					}
-				case "question", "question/answer":
-					if qrow, err := queries.AdminGetFAQByID(ctx, g.ItemID.Int32); err == nil && qrow.Question.Valid {
-						text := qrow.Question.String
-						if len(text) > 40 {
-							text = text[:40] + "..."
-						}
-						if qrow.LanguageID.Valid {
-							if name, ok := langMap[qrow.LanguageID.Int32]; ok && name != "" {
-								text = fmt.Sprintf("[%s] %s", name, text)
-							}
-						}
-						gi.Info = text
-					}
-				}
-			case "imagebbs":
-				if g.Item.String == "board" {
-					if b, err := queries.GetImageBoardById(ctx, g.ItemID.Int32); err == nil && b.Title.Valid {
-						gi.Info = b.Title.String
-					}
-				}
-			}
+			gi = enrichGrantInfo(ctx, cd, gi, buildCatPath, langMap)
 		} else if g.Section == "role" && g.Action != "" {
 			if roles, err := cd.AllRoles(); err == nil {
 				for _, ro := range roles {
@@ -254,6 +169,118 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 		ginfos = append(ginfos, gi)
 	}
 
+	return ginfos, nil
+}
+
+func enrichGrantInfo(ctx context.Context, cd *common.CoreData, gi grantInfo, buildCatPath func(int32) string, langMap map[int32]string) grantInfo {
+	queries := cd.Queries()
+	g := gi.Grant
+
+	switch g.Section {
+	case "forum":
+		switch g.Item.String {
+		case "topic":
+			gi.Link = fmt.Sprintf("/admin/forum/topics/topic/%d/grants#g%d", g.ItemID.Int32, g.ID)
+			if t, err := queries.GetForumTopicById(ctx, g.ItemID.Int32); err == nil {
+				if t.Title.Valid {
+					info := t.Title.String
+					cat := buildCatPath(t.ForumcategoryIdforumcategory)
+					if cat != "" {
+						info = fmt.Sprintf("%s (%s)", info, cat)
+					}
+					gi.Info = info
+				}
+			}
+		case "category":
+			gi.Link = fmt.Sprintf("/admin/forum/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
+			if c, err := queries.GetForumCategoryById(ctx, db.GetForumCategoryByIdParams{Idforumcategory: g.ItemID.Int32, ViewerID: 0}); err == nil && c.Title.Valid {
+				path := buildCatPath(c.Idforumcategory)
+				gi.Info = path
+			}
+		case "thread":
+			if tid, err := queries.GetForumTopicIdByThreadId(ctx, g.ItemID.Int32); err == nil {
+				if t, err := queries.GetForumTopicById(ctx, tid); err == nil {
+					if t.Title.Valid {
+						cat := buildCatPath(t.ForumcategoryIdforumcategory)
+						info := fmt.Sprintf("%s thread", t.Title.String)
+						if cat != "" {
+							info = fmt.Sprintf("%s (%s)", info, cat)
+						}
+						gi.Info = info
+					}
+				}
+			}
+		}
+	case "linker":
+		switch g.Item.String {
+		case "category":
+			gi.Link = fmt.Sprintf("/admin/linker/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
+			if c, err := queries.GetLinkerCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
+				gi.Info = c.Title.String
+			}
+		case "link":
+			gi.Link = fmt.Sprintf("/admin/linker/links/link/%d/grants#g%d", g.ItemID.Int32, g.ID)
+			if l, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx, g.ItemID.Int32); err == nil && l.Title.Valid {
+				gi.Info = l.Title.String
+			}
+		}
+	case "writing":
+		switch g.Item.String {
+		case "category":
+			gi.Link = fmt.Sprintf("/admin/writings/categories/category/%d/grants#g%d", g.ItemID.Int32, g.ID)
+			if c, err := queries.GetWritingCategoryById(ctx, g.ItemID.Int32); err == nil && c.Title.Valid {
+				gi.Info = c.Title.String
+			}
+		case "article":
+			if w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: cd.UserID, Idwriting: g.ItemID.Int32, ListerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}}); err == nil {
+				if w.Title.Valid {
+					info := w.Title.String
+					if name, ok := langMap[w.LanguageID.Int32]; ok && name != "" {
+						info = fmt.Sprintf("[%s] %s", name, info)
+					}
+					gi.Info = info
+				}
+			}
+		}
+	case "faq":
+		switch g.Item.String {
+		case "category":
+			if cats, err := queries.AdminGetFAQCategories(ctx); err == nil {
+				for _, c := range cats {
+					if c.ID == g.ItemID.Int32 {
+						if c.Name.Valid {
+							gi.Info = c.Name.String
+						}
+						break
+					}
+				}
+			}
+		case "question", "question/answer":
+			if qrow, err := queries.AdminGetFAQByID(ctx, g.ItemID.Int32); err == nil && qrow.Question.Valid {
+				text := qrow.Question.String
+				if len(text) > 40 {
+					text = text[:40] + "..."
+				}
+				if qrow.LanguageID.Valid {
+					if name, ok := langMap[qrow.LanguageID.Int32]; ok && name != "" {
+						text = fmt.Sprintf("[%s] %s", name, text)
+					}
+				}
+				gi.Info = text
+			}
+		}
+	case "imagebbs":
+		if g.Item.String == "board" {
+			if b, err := queries.GetImageBoardById(ctx, g.ItemID.Int32); err == nil && b.Title.Valid {
+				gi.Info = b.Title.String
+			}
+		}
+	}
+
+	return gi
+}
+
+func groupGrantInfos(ginfos []grantInfo) map[string]*GrantGroup {
 	groupMap := map[string]*GrantGroup{}
 	for _, gi := range ginfos {
 		key := fmt.Sprintf("%s|%s|%d", gi.Section, gi.Item.String, gi.ItemID.Int32)
@@ -299,6 +326,10 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 		}
 	}
 
+	return groupMap
+}
+
+func flattenAndSortGrantGroups(groupMap map[string]*GrantGroup) []GrantGroup {
 	groups := make([]GrantGroup, 0, len(groupMap))
 	for _, grp := range groupMap {
 		if def, ok := GrantActionMap[grp.Section+"|"+grp.Item]; ok {
@@ -330,5 +361,5 @@ func buildGrantGroupsFromGrants(ctx context.Context, cd *common.CoreData, grants
 		return groups[i].ItemID.Int32 < groups[j].ItemID.Int32
 	})
 
-	return groups, nil
+	return groups
 }

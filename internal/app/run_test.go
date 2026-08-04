@@ -6,60 +6,60 @@ import (
 
 func TestWithSessionSecret(t *testing.T) {
 	opts := &serverOptions{}
-	expectedSecret := "test_secret_123"
+	expectedValue := "dummy-session-value-1"
 
-	option := WithSessionSecret(expectedSecret)
+	option := WithSessionSecret(expectedValue)
 	option(opts)
 
-	if opts.SessionSecret != expectedSecret {
-		t.Errorf("WithSessionSecret() = %v, want %v", opts.SessionSecret, expectedSecret)
+	if opts.SessionSecret != expectedValue {
+		t.Errorf("WithSessionSecret() = %v, want %v", opts.SessionSecret, expectedValue)
 	}
 }
 
 func TestWithImageSignSecret(t *testing.T) {
 	opts := &serverOptions{}
-	expectedSecret := "img_secret_456"
+	expectedValue := "dummy-image-value-2"
 
-	option := WithImageSignSecret(expectedSecret)
+	option := WithImageSignSecret(expectedValue)
 	option(opts)
 
-	if opts.ImageSignSecret != expectedSecret {
-		t.Errorf("WithImageSignSecret() = %v, want %v", opts.ImageSignSecret, expectedSecret)
+	if opts.ImageSignSecret != expectedValue {
+		t.Errorf("WithImageSignSecret() = %v, want %v", opts.ImageSignSecret, expectedValue)
 	}
 }
 
 func TestWithLinkSignSecret(t *testing.T) {
 	opts := &serverOptions{}
-	expectedSecret := "link_secret_789"
+	expectedValue := "dummy-link-value-3"
 
-	option := WithLinkSignSecret(expectedSecret)
+	option := WithLinkSignSecret(expectedValue)
 	option(opts)
 
-	if opts.LinkSignSecret != expectedSecret {
-		t.Errorf("WithLinkSignSecret() = %v, want %v", opts.LinkSignSecret, expectedSecret)
+	if opts.LinkSignSecret != expectedValue {
+		t.Errorf("WithLinkSignSecret() = %v, want %v", opts.LinkSignSecret, expectedValue)
 	}
 }
 
 func TestWithShareSignSecret(t *testing.T) {
 	opts := &serverOptions{}
-	expectedSecret := "share_secret_101"
+	expectedValue := "dummy-share-value-4"
 
-	option := WithShareSignSecret(expectedSecret)
+	option := WithShareSignSecret(expectedValue)
 	option(opts)
 
-	if opts.ShareSignSecret != expectedSecret {
-		t.Errorf("WithShareSignSecret() = %v, want %v", opts.ShareSignSecret, expectedSecret)
+	if opts.ShareSignSecret != expectedValue {
+		t.Errorf("WithShareSignSecret() = %v, want %v", opts.ShareSignSecret, expectedValue)
 	}
 }
 
 func TestWithAPISecret(t *testing.T) {
 	opts := &serverOptions{}
-	expectedSecret := "api_secret_202"
+	expectedValue := "dummy-api-value-5"
 
-	option := WithAPISecret(expectedSecret)
+	option := WithAPISecret(expectedValue)
 	option(opts)
 
-	if opts.APISecret != expectedSecret {
-		t.Errorf("WithAPISecret() = %v, want %v", opts.APISecret, expectedSecret)
+	if opts.APISecret != expectedValue {
+		t.Errorf("WithAPISecret() = %v, want %v", opts.APISecret, expectedValue)
 	}
 }

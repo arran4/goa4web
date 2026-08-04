@@ -69,3 +69,34 @@ func TestSanitizeBackURL_Vulnerability(t *testing.T) {
 		})
 	}
 }
+
+func TestIsAllowedHost(t *testing.T) {
+	cd := &common.CoreData{
+		Config: &config.RuntimeConfig{
+			BaseURL: "http://example.com https://test.org /relative-base/",
+		},
+	}
+
+	tests := []struct {
+		name string
+		host string
+		want bool
+	}{
+		{"empty host", "", false},
+		{"match first base url", "example.com", true},
+		{"match second base url", "test.org", true},
+		{"match third base url", "/relative-base", true},
+		{"case insensitive match", "eXaMpLe.CoM", true},
+		{"no match", "malicious.com", false},
+		{"subdomain no match", "sub.example.com", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := cd.IsAllowedHost(tt.host)
+			if got != tt.want {
+				t.Errorf("IsAllowedHost(%q) = %v, want %v", tt.host, got, tt.want)
+			}
+		})
+	}
+}

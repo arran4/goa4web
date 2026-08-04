@@ -121,3 +121,20 @@ func RequireBlogEditGrant() mux.MatcherFunc {
 		return cd.HasGrant("blogs", "entry", "edit", int32(blogID))
 	}
 }
+
+// RequireBlogAddGrant ensures the requester can post a new blog entry.
+func RequireBlogAddGrant(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok || cd == nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+
+		if !(cd.IsAdmin() || cd.HasGrant("blogs", "entry", "post", 0)) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

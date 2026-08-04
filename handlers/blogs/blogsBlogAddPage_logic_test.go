@@ -17,7 +17,7 @@ func TestBlogAddPage_AccessDenied(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	BlogAddPage(w, req)
+	RequireBlogAddGrant(http.HandlerFunc(BlogAddPage)).ServeHTTP(w, req)
 
 	// Check response status
 	assert.Equal(t, http.StatusForbidden, w.Code)

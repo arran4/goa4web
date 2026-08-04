@@ -92,7 +92,7 @@ func Explain(inputs Inputs) []OptionInfo {
 		currentVal := valueOrDefault(inputs.Values, o.Env)
 		defaultVal := o.Default
 		flagSet := setFlags[o.Name]
-		if !flagSet && inputs.FlagSet == nil && shouldInferFlagSource(normalizeBool(defaultVal), normalizeBool(currentVal), normalizeBool(fileVal), normalizeBool(envVal)) {
+		if !flagSet && inputs.FlagSet == nil && shouldInferFlagSource(defaultVal, currentVal, fileVal, envVal) {
 			flagSet = true
 			flagVal = currentVal
 		}
@@ -138,7 +138,7 @@ func Explain(inputs Inputs) []OptionInfo {
 		currentVal := valueOrDefault(inputs.Values, o.Env)
 		defaultVal := strconv.FormatBool(o.Default)
 		flagSet := setFlags[o.Name]
-		if !flagSet && inputs.FlagSet == nil && shouldInferFlagSource(defaultVal, currentVal, fileVal, envVal) {
+		if !flagSet && inputs.FlagSet == nil && shouldInferFlagSource(normalizeBool(defaultVal), normalizeBool(currentVal), normalizeBool(fileVal), normalizeBool(envVal)) {
 			flagSet = true
 			flagVal = currentVal
 		}

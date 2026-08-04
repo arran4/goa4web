@@ -35,19 +35,25 @@ func (n *Notifier) ScheduleDigest(ctx context.Context, t time.Time) error {
 func (n *Notifier) ProcessDigestForTime(ctx context.Context, t time.Time) {
 	log.Printf("Processing digests for time: %v", t)
 
-	// Cutoff times: send if not sent since cutoff.
-	// For Daily: 23 hours ago (allow some buffer)
 	dailyCutoff := t.Add(-23 * time.Hour)
-	// For Weekly: 6 days 23 hours ago
 	weeklyCutoff := t.Add(-24 * 7 * time.Hour).Add(time.Hour)
-	// For Monthly: 27 days ago (rough approx, or just ensure distinct month)
 	monthlyCutoff := t.Add(-24 * 27 * time.Hour)
 
-	// 1. Daily Digests
+	tzs, err := n.Queries.GetDigestTimezones(ctx)
+	if err != nil {
+		log.Printf("GetDigestTimezones: %v", err)
+	}
+
+	n.processDailyDigests(ctx, t, dailyCutoff, tzs)
+	n.processWeeklyDigests(ctx, t, weeklyCutoff, tzs)
+	n.processMonthlyDigests(ctx, t, monthlyCutoff, tzs)
+}
+
+func (n *Notifier) processDailyDigests(ctx context.Context, t time.Time, cutoff time.Time, tzs []sql.NullString) {
 	// UTC
 	users, err := n.Queries.GetUsersForDailyDigestNoTimezone(ctx, db.GetUsersForDailyDigestNoTimezoneParams{
 		Hour:   sql.NullInt32{Int32: int32(t.Hour()), Valid: true},
-		Cutoff: sql.NullTime{Time: dailyCutoff, Valid: true},
+		Cutoff: sql.NullTime{Time: cutoff, Valid: true},
 	})
 	if err != nil {
 		log.Printf("GetUsersForDailyDigestNoTimezone: %v", err)
@@ -57,39 +63,36 @@ func (n *Notifier) ProcessDigestForTime(ctx context.Context, t time.Time) {
 	}
 
 	// Timezone
-	tzs, err := n.Queries.GetDigestTimezones(ctx)
-	if err == nil {
-		for _, tzNull := range tzs {
-			if !tzNull.Valid || tzNull.String == "" {
-				continue
-			}
-			loc, err := time.LoadLocation(tzNull.String)
-			if err != nil {
-				continue
-			}
-			localTime := t.In(loc)
-			users, err := n.Queries.GetUsersForDailyDigestByTimezone(ctx, db.GetUsersForDailyDigestByTimezoneParams{
-				Hour:     sql.NullInt32{Int32: int32(localTime.Hour()), Valid: true},
-				Timezone: tzNull,
-				Cutoff:   sql.NullTime{Time: dailyCutoff, Valid: true},
-			})
-			if err != nil {
-				log.Printf("GetUsersForDailyDigestByTimezone(%s): %v", tzNull.String, err)
-				continue
-			}
-			for _, u := range users {
-				n.safeSendDigest(ctx, u.UsersIdusers, u.Email, u.DailyDigestMarkRead, DigestDaily)
-			}
+	for _, tzNull := range tzs {
+		if !tzNull.Valid || tzNull.String == "" {
+			continue
+		}
+		loc, err := time.LoadLocation(tzNull.String)
+		if err != nil {
+			continue
+		}
+		localTime := t.In(loc)
+		users, err := n.Queries.GetUsersForDailyDigestByTimezone(ctx, db.GetUsersForDailyDigestByTimezoneParams{
+			Hour:     sql.NullInt32{Int32: int32(localTime.Hour()), Valid: true},
+			Timezone: tzNull,
+			Cutoff:   sql.NullTime{Time: cutoff, Valid: true},
+		})
+		if err != nil {
+			log.Printf("GetUsersForDailyDigestByTimezone(%s): %v", tzNull.String, err)
+			continue
+		}
+		for _, u := range users {
+			n.safeSendDigest(ctx, u.UsersIdusers, u.Email, u.DailyDigestMarkRead, DigestDaily)
 		}
 	}
+}
 
-	// 2. Weekly Digests
+func (n *Notifier) processWeeklyDigests(ctx context.Context, t time.Time, cutoff time.Time, tzs []sql.NullString) {
 	// UTC
-	// t.Weekday(): Sunday=0, Monday=1...
 	usersW, err := n.Queries.GetUsersForWeeklyDigestNoTimezone(ctx, db.GetUsersForWeeklyDigestNoTimezoneParams{
 		Day:    sql.NullInt32{Int32: int32(t.Weekday()), Valid: true},
 		Hour:   sql.NullInt32{Int32: int32(t.Hour()), Valid: true},
-		Cutoff: sql.NullTime{Time: weeklyCutoff, Valid: true},
+		Cutoff: sql.NullTime{Time: cutoff, Valid: true},
 	})
 	if err != nil {
 		log.Printf("GetUsersForWeeklyDigestNoTimezone: %v", err)
@@ -99,37 +102,32 @@ func (n *Notifier) ProcessDigestForTime(ctx context.Context, t time.Time) {
 	}
 
 	// Timezone
-	if err == nil { // Reuse tzs
-		for _, tzNull := range tzs {
-			if !tzNull.Valid || tzNull.String == "" {
-				continue
-			}
-			loc, err := time.LoadLocation(tzNull.String)
-			if err != nil {
-				continue
-			}
-			localTime := t.In(loc)
-			users, err := n.Queries.GetUsersForWeeklyDigestByTimezone(ctx, db.GetUsersForWeeklyDigestByTimezoneParams{
-				Day:      sql.NullInt32{Int32: int32(localTime.Weekday()), Valid: true},
-				Hour:     sql.NullInt32{Int32: int32(localTime.Hour()), Valid: true},
-				Timezone: tzNull,
-				Cutoff:   sql.NullTime{Time: weeklyCutoff, Valid: true},
-			})
-			if err != nil {
-				log.Printf("GetUsersForWeeklyDigestByTimezone(%s): %v", tzNull.String, err)
-				continue
-			}
-			for _, u := range users {
-				n.safeSendDigest(ctx, u.UsersIdusers, u.Email, u.DailyDigestMarkRead, DigestWeekly)
-			}
+	for _, tzNull := range tzs {
+		if !tzNull.Valid || tzNull.String == "" {
+			continue
+		}
+		loc, err := time.LoadLocation(tzNull.String)
+		if err != nil {
+			continue
+		}
+		localTime := t.In(loc)
+		users, err := n.Queries.GetUsersForWeeklyDigestByTimezone(ctx, db.GetUsersForWeeklyDigestByTimezoneParams{
+			Day:      sql.NullInt32{Int32: int32(localTime.Weekday()), Valid: true},
+			Hour:     sql.NullInt32{Int32: int32(localTime.Hour()), Valid: true},
+			Timezone: tzNull,
+			Cutoff:   sql.NullTime{Time: cutoff, Valid: true},
+		})
+		if err != nil {
+			log.Printf("GetUsersForWeeklyDigestByTimezone(%s): %v", tzNull.String, err)
+			continue
+		}
+		for _, u := range users {
+			n.safeSendDigest(ctx, u.UsersIdusers, u.Email, u.DailyDigestMarkRead, DigestWeekly)
 		}
 	}
+}
 
-	// 3. Monthly Digests
-	// Handle end-of-month catch-up (e.g. run 31st configs on 28th/30th if applicable)
-	// We check the current day 'd'. If 'd' is the last day of the month, we also check d+1..31.
-
-	// Helper to process a specific day config
+func (n *Notifier) processMonthlyDigests(ctx context.Context, t time.Time, cutoff time.Time, tzs []sql.NullString) {
 	processMonthlyDay := func(day int, hour int, tz sql.NullString) {
 		var users []*db.GetUsersForMonthlyDigestNoTimezoneRow
 		var err error
@@ -138,7 +136,7 @@ func (n *Notifier) ProcessDigestForTime(ctx context.Context, t time.Time) {
 			users, err = n.Queries.GetUsersForMonthlyDigestNoTimezone(ctx, db.GetUsersForMonthlyDigestNoTimezoneParams{
 				Day:    sql.NullInt32{Int32: int32(day), Valid: true},
 				Hour:   sql.NullInt32{Int32: int32(hour), Valid: true},
-				Cutoff: sql.NullTime{Time: monthlyCutoff, Valid: true},
+				Cutoff: sql.NullTime{Time: cutoff, Valid: true},
 			})
 			if err != nil {
 				log.Printf("GetUsersForMonthlyDigestNoTimezone(d=%d): %v", day, err)
@@ -151,7 +149,7 @@ func (n *Notifier) ProcessDigestForTime(ctx context.Context, t time.Time) {
 				Day:      sql.NullInt32{Int32: int32(day), Valid: true},
 				Hour:     sql.NullInt32{Int32: int32(hour), Valid: true},
 				Timezone: tz,
-				Cutoff:   sql.NullTime{Time: monthlyCutoff, Valid: true},
+				Cutoff:   sql.NullTime{Time: cutoff, Valid: true},
 			})
 			if err != nil {
 				log.Printf("GetUsersForMonthlyDigestByTimezone(%s, d=%d): %v", tz.String, day, err)
@@ -183,31 +181,28 @@ func (n *Notifier) ProcessDigestForTime(ctx context.Context, t time.Time) {
 	}
 
 	// Timezone
-	if err == nil {
-		for _, tzNull := range tzs {
-			if !tzNull.Valid || tzNull.String == "" {
-				continue
-			}
-			loc, err := time.LoadLocation(tzNull.String)
-			if err != nil {
-				continue
-			}
-			localTime := t.In(loc)
-			lDay := localTime.Day()
-			processMonthlyDay(lDay, localTime.Hour(), tzNull)
+	for _, tzNull := range tzs {
+		if !tzNull.Valid || tzNull.String == "" {
+			continue
+		}
+		loc, err := time.LoadLocation(tzNull.String)
+		if err != nil {
+			continue
+		}
+		localTime := t.In(loc)
+		lDay := localTime.Day()
+		processMonthlyDay(lDay, localTime.Hour(), tzNull)
 
-			// Check last day of month for this timezone
-			lYear, lMonth, _ := localTime.Date()
-			lLastDay := time.Date(lYear, lMonth+1, 0, 0, 0, 0, 0, loc).Day()
-			if lDay == lLastDay {
-				for d := lDay + 1; d <= 31; d++ {
-					processMonthlyDay(d, localTime.Hour(), tzNull)
-				}
+		// Check last day of month for this timezone
+		lYear, lMonth, _ := localTime.Date()
+		lLastDay := time.Date(lYear, lMonth+1, 0, 0, 0, 0, 0, loc).Day()
+		if lDay == lLastDay {
+			for d := lDay + 1; d <= 31; d++ {
+				processMonthlyDay(d, localTime.Hour(), tzNull)
 			}
 		}
 	}
 }
-
 func (n *Notifier) safeSendDigest(ctx context.Context, userID int32, email string, markRead bool, dtype DigestType) {
 	if err := n.SendDigestToUser(ctx, userID, email, markRead, false, dtype); err != nil {
 		log.Printf("Error sending digest type %d to user %d: %v", dtype, userID, err)

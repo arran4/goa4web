@@ -41,29 +41,29 @@ func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
-func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
-	type Data struct {
-		Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-		Thread         *db.GetThreadLastPosterAndPermsRow
-		Comments       []*db.GetCommentsByThreadIdForUserRow
-		ReplyText      string
-		IsReplyable    bool
-		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
-		Labels         []templates.TopicLabel
-		PublicLabels   []templates.TopicLabel
-		BackURL        string
-		ShareURL       string
-	}
+type newsPostPageData struct {
+	Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+	Thread         *db.GetThreadLastPosterAndPermsRow
+	Comments       []*db.GetCommentsByThreadIdForUserRow
+	ReplyText      string
+	IsReplyable    bool
+	CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+	EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+	EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+	Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+	AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+	Labels         []templates.TopicLabel
+	PublicLabels   []templates.TopicLabel
+	BackURL        string
+	ShareURL       string
+}
 
+func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "News"
 	cd.LoadSelectionsFromRequest(r)
 	queries := cd.Queries()
-	data := Data{
+	data := newsPostPageData{
 		IsReplyable: true,
 		BackURL:     r.URL.Path,
 	}
@@ -72,44 +72,18 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
-	posts, err := cd.LatestNewsList(0, 50)
+	post, err := getNewsPost(cd, pid)
 	if err != nil {
-		log.Printf("LatestNewsList: %v", err)
-		handlers.RenderErrorPage(w, r, err)
-		return
-	}
-	var post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-	for _, p := range posts {
-		if p.Idsitenews == int32(pid) {
-			post = p
-			break
+		if errors.Is(err, handlers.ErrForbidden) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		} else {
+			log.Printf("LatestNewsList: %v", err)
+			handlers.RenderErrorPage(w, r, err)
 		}
-	}
-	if post == nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
 
-	if post.Occurred.Valid {
-		cd.PageTitle = fmt.Sprintf("News - %s", cd.FormatLocalTime(post.Occurred.Time))
-	}
-
-	desc := a4code.SnipText(post.News.String, 128)
-	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, desc, cd.ShareSignKey, false)
-	if err != nil {
-		log.Printf("Error making image URL: %v", err)
-	}
-
-	cd.OpenGraph = &common.OpenGraph{
-		Title:       cd.PageTitle,
-		Description: desc,
-		Image:       imgURL,
-		ImageWidth:  cd.Config.OGImageWidth,
-		ImageHeight: cd.Config.OGImageHeight,
-		TwitterSite: cd.Config.TwitterSite,
-		URL:         cd.AbsoluteURL(r.URL.String()),
-		Type:        "article",
-	}
+	setupNewsOpenGraph(cd, post, r.URL.String())
 
 	replyType := r.URL.Query().Get("type")
 	quoteId, _ := strconv.Atoi(r.URL.Query().Get("quote"))
@@ -143,6 +117,58 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	data.Thread = threadRow
 	data.Post = post
 
+	setupCommentHelpers(&data, cd, pid, editCommentId)
+
+	if editCommentId != 0 {
+		data.IsReplyable = false
+	}
+
+	data.ReplyText = getReplyText(cd, quoteId, replyType)
+
+	data.Labels, data.PublicLabels = fetchNewsLabels(cd, post)
+
+	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
+
+	NewsPostPageTmpl.Handle(w, r, data)
+}
+
+func setupNewsOpenGraph(cd *common.CoreData, post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, reqURL string) {
+	if post.Occurred.Valid {
+		cd.PageTitle = fmt.Sprintf("News - %s", cd.FormatLocalTime(post.Occurred.Time))
+	}
+
+	desc := a4code.SnipText(post.News.String, 128)
+	imgURL, err := share.MakeImageURL(cd.AbsoluteURL(""), cd.PageTitle, desc, cd.ShareSignKey, false)
+	if err != nil {
+		log.Printf("Error making image URL: %v", err)
+	}
+
+	cd.OpenGraph = &common.OpenGraph{
+		Title:       cd.PageTitle,
+		Description: desc,
+		Image:       imgURL,
+		ImageWidth:  cd.Config.OGImageWidth,
+		ImageHeight: cd.Config.OGImageHeight,
+		TwitterSite: cd.Config.TwitterSite,
+		URL:         cd.AbsoluteURL(reqURL),
+		Type:        "article",
+	}
+}
+
+func getNewsPost(cd *common.CoreData, pid int) (*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	posts, err := cd.LatestNewsList(0, 50)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range posts {
+		if p.Idsitenews == int32(pid) {
+			return p, nil
+		}
+	}
+	return nil, handlers.ErrForbidden
+}
+
+func setupCommentHelpers(data *newsPostPageData, cd *common.CoreData, pid int, editCommentId int) {
 	data.CanEditComment = func(cmt *db.GetCommentsByThreadIdForUserRow) bool {
 		return cmt.IsOwner
 	}
@@ -167,35 +193,37 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		}
 		return ""
 	}
+}
 
-	if editCommentId != 0 {
-		data.IsReplyable = false
+func getReplyText(cd *common.CoreData, quoteId int, replyType string) string {
+	if quoteId == 0 {
+		return ""
 	}
-	if quoteId != 0 {
-		if c, err := cd.CommentByID(int32(quoteId)); err == nil && c != nil {
-			switch replyType {
-			case "full":
-				data.ReplyText = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
-			default:
-				data.ReplyText = a4code.QuoteText(c.Username.String, c.Text.String)
-			}
-		}
+	c, err := cd.CommentByID(int32(quoteId))
+	if err != nil || c == nil {
+		return ""
 	}
+	if replyType == "full" {
+		return a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithFullQuote())
+	}
+	return a4code.QuoteText(c.Username.String, c.Text.String)
+}
+
+func fetchNewsLabels(cd *common.CoreData, post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow) ([]templates.TopicLabel, []templates.TopicLabel) {
+	var labels []templates.TopicLabel
+	var publicLabels []templates.TopicLabel
 
 	if als, err := cd.NewsAuthorLabels(post.Idsitenews); err == nil {
 		for _, l := range als {
 			tl := templates.TopicLabel{Name: l, Type: "author"}
-			data.Labels = append(data.Labels, tl)
-			data.PublicLabels = append(data.PublicLabels, tl)
+			labels = append(labels, tl)
+			publicLabels = append(publicLabels, tl)
 		}
 	}
 	if pls, err := cd.NewsPrivateLabels(post.Idsitenews, post.UsersIdusers); err == nil {
 		for _, l := range pls {
-			data.Labels = append(data.Labels, templates.TopicLabel{Name: l, Type: "private"})
+			labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 		}
 	}
-
-	cd.CustomIndexItems = append(cd.CustomIndexItems, NewsPageSpecificItems(cd, r, post)...)
-
-	NewsPostPageTmpl.Handle(w, r, data)
+	return labels, publicLabels
 }

@@ -63,11 +63,11 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		hasEditGrant := cd.HasGrant("blogs", "entry", "edit", row.Idblogs)
 		hasEditAnyGrant := cd.HasGrant("blogs", "entry", "edit-any", 0)
 		if !(hasEditGrant || hasEditAnyGrant) {
-			http.NotFound(w, r)
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		}
 		if !hasEditAnyGrant && row.UsersIdusers != uid {
-			http.NotFound(w, r)
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)

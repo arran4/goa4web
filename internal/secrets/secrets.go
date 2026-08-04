@@ -12,20 +12,67 @@ import (
 	"github.com/arran4/goa4web/core"
 )
 
+// DefaultPathOption is an option for DefaultPath.
+type DefaultPathOption interface {
+	apply(*defaultPathOptions)
+}
+
+type defaultPathOptions struct {
+	version       string
+	getenv        func(string) string
+	userConfigDir func() (string, error)
+}
+
+type defaultPathOptionFunc func(*defaultPathOptions)
+
+func (f defaultPathOptionFunc) apply(opts *defaultPathOptions) {
+	f(opts)
+}
+
+// WithVersion sets the version string for DefaultPath.
+func WithVersion(v string) DefaultPathOption {
+	return defaultPathOptionFunc(func(opts *defaultPathOptions) {
+		opts.version = v
+	})
+}
+
+// WithGetenv sets the getenv function for DefaultPath.
+func WithGetenv(f func(string) string) DefaultPathOption {
+	return defaultPathOptionFunc(func(opts *defaultPathOptions) {
+		opts.getenv = f
+	})
+}
+
+// WithUserConfigDir sets the UserConfigDir function for DefaultPath.
+func WithUserConfigDir(f func() (string, error)) DefaultPathOption {
+	return defaultPathOptionFunc(func(opts *defaultPathOptions) {
+		opts.userConfigDir = f
+	})
+}
+
 // DefaultPath returns the default path for a secret file named name.
 // dockerEnv specifies the environment variable used to detect Docker builds.
-func DefaultPath(name, dockerEnv string) string {
+func DefaultPath(name, dockerEnv string, options ...DefaultPathOption) string {
+	opts := &defaultPathOptions{
+		version:       goa4web.Version,
+		getenv:        os.Getenv,
+		userConfigDir: os.UserConfigDir,
+	}
+	for _, opt := range options {
+		opt.apply(opts)
+	}
+
 	devName := "." + name
-	if goa4web.Version == "dev" {
+	if opts.version == "dev" {
 		return devName
 	}
-	if os.Getenv(dockerEnv) != "" {
+	if opts.getenv(dockerEnv) != "" {
 		return filepath.Join("/var/lib/goa4web", name)
 	}
-	if os.Getenv("HOME") == "" && os.Getenv("XDG_CONFIG_HOME") == "" {
+	if opts.getenv("HOME") == "" && opts.getenv("XDG_CONFIG_HOME") == "" {
 		return filepath.Join("/var/lib/goa4web", name)
 	}
-	if dir, err := os.UserConfigDir(); err == nil && dir != "" {
+	if dir, err := opts.userConfigDir(); err == nil && dir != "" {
 		return filepath.Join(dir, "goa4web", name)
 	}
 	return devName

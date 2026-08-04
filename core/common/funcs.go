@@ -41,6 +41,53 @@ func (cd *CoreData) Funcs(r *http.Request) template.FuncMap {
 // GetTemplateFuncs returns a map of template functions.
 // It accepts optional arguments: *CoreData, *http.Request, eventbus.TaskEvent.
 func GetTemplateFuncs(opts ...any) template.FuncMap {
+	cd, r, evt := extractTemplateFuncsOpts(opts)
+
+	var mapper func(string, string) string
+	var fullImageMapper goa4webhtml.FullImageMapper
+	if cd != nil {
+		mapper = cd.ImageURLMapper
+		fullImageMapper = goa4webhtml.FullImageMapper(cd.MapFullImageURL)
+	}
+
+	getColor := newUserColorMapper()
+	funcs := getBaseTemplateFuncs(mapper)
+
+	if r != nil {
+		addRequestFuncs(funcs, r, cd)
+	}
+
+	if cd != nil {
+		addCoreDataFuncs(funcs, cd, r, mapper, fullImageMapper, getColor)
+	} else {
+		// Provide basic defaults if CD is missing
+		funcs["a4code2html"] = func(s string) template.HTML {
+			root, err := a4code.ParseString(s)
+			if err != nil {
+				log.Printf("parse markup: %v", err)
+				return template.HTML("")
+			}
+			var buf bytes.Buffer
+			gen := goa4webhtml.NewGenerator(
+				goa4webhtml.WithUserColorMapper(getColor),
+				goa4webhtml.WithDataPositions(),
+			)
+			if err := ast.Generate(&buf, root, gen); err != nil {
+				log.Printf("generate markup: %v", err)
+				return template.HTML("")
+			}
+			return template.HTML(buf.String())
+		}
+	}
+
+	if evt != nil {
+		addTaskEventFuncs(funcs, evt)
+	}
+
+	return funcs
+}
+
+func extractTemplateFuncsOpts(opts []any) (*CoreData, *http.Request, *eventbus.TaskEvent) {
 	var cd *CoreData
 	var r *http.Request
 	var evt *eventbus.TaskEvent
@@ -57,19 +104,14 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 			evt = v
 		}
 	}
+	return cd, r, evt
+}
 
-	var mapper func(string, string) string
-	var fullImageMapper goa4webhtml.FullImageMapper
-	if cd != nil {
-		mapper = cd.ImageURLMapper
-		fullImageMapper = goa4webhtml.FullImageMapper(cd.MapFullImageURL)
-	}
-
-	// Color assignment state for quotes
+func newUserColorMapper() func(string) string {
 	assignedColors := make(map[string]int)
 	counts := make([]int, 6)
 
-	getColor := func(name string) string {
+	return func(name string) string {
 		if idx, ok := assignedColors[name]; ok {
 			return fmt.Sprintf("quote-color-%d", idx)
 		}
@@ -113,8 +155,10 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		counts[best]++
 		return fmt.Sprintf("quote-color-%d", best)
 	}
+}
 
-	funcs := map[string]any{
+func getBaseTemplateFuncs(mapper func(string, string) string) template.FuncMap {
+	return map[string]any{
 		"a4code2string": func(s string) string {
 			return A4Code2String(s, mapper)
 		},
@@ -132,157 +176,124 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"version":                   func() string { return goa4web.Version },
 		"versionReleaseURL":         versionReleaseURL,
 		"lower":                     strings.ToLower,
-		"default": func(def any, item any) any {
-			switch v := item.(type) {
-			case sql.NullString:
-				if v.Valid && v.String != "" {
-					return v.String
-				}
-			case string:
-				if v != "" {
-					return v
-				}
-			case *string:
-				if v != nil && *v != "" {
-					return *v
-				}
-			case sql.NullInt32:
-				if v.Valid {
-					return v.Int32
-				}
-			case sql.NullInt64:
-				if v.Valid {
-					return v.Int64
-				}
-			case sql.NullTime:
-				if v.Valid {
-					return v.Time
-				}
-			case sql.NullBool:
-				if v.Valid {
-					return v.Bool
-				}
-			case sql.NullFloat64:
-				if v.Valid {
-					return v.Float64
-				}
-			case nil:
-				// returns default
-			default:
-				// For unknown types, if they are not nil, return them
-				return item
+		"default":                   TemplateDefaultItem,
+	}
+}
+
+func TemplateDefaultItem(def any, item any) any {
+	switch v := item.(type) {
+	case sql.NullString:
+		if v.Valid && v.String != "" {
+			return v.String
+		}
+	case string:
+		if v != "" {
+			return v
+		}
+	case *string:
+		if v != nil && *v != "" {
+			return *v
+		}
+	case sql.NullInt32:
+		if v.Valid {
+			return v.Int32
+		}
+	case sql.NullInt64:
+		if v.Valid {
+			return v.Int64
+		}
+	case sql.NullTime:
+		if v.Valid {
+			return v.Time
+		}
+	case sql.NullBool:
+		if v.Valid {
+			return v.Bool
+		}
+	case sql.NullFloat64:
+		if v.Valid {
+			return v.Float64
+		}
+	case nil:
+		// returns default
+	default:
+		// For unknown types, if they are not nil, return them
+		return item
+	}
+	return def
+}
+
+func addRequestFuncs(funcs template.FuncMap, r *http.Request, cd *CoreData) {
+	makeAuthURL := func(base string) string {
+		path := r.URL.Path
+		q := url.Values{}
+		if strings.HasPrefix(path, "/login") || strings.HasPrefix(path, "/register") || strings.HasPrefix(path, "/usr/logout") {
+			cq := r.URL.Query()
+			if v := cq.Get("back"); v != "" {
+				q.Set("back", v)
 			}
-			return def
-		},
+			if v := cq.Get("method"); v != "" {
+				q.Set("method", v)
+			}
+			if v := cq.Get("data"); v != "" {
+				q.Set("data", v)
+			}
+		} else {
+			q.Set("back", r.RequestURI)
+			if r.Method == http.MethodPost {
+				_ = r.ParseForm()
+				q.Set("method", r.Method)
+				if cd != nil {
+					if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
+						q.Set("data", enc)
+					} else {
+						log.Printf("failed to encrypt form data: %v", err)
+					}
+				}
+			}
+		}
+
+		if len(q) == 0 {
+			return base
+		}
+		if strings.Contains(base, "?") {
+			return base + "&" + q.Encode()
+		}
+		return base + "?" + q.Encode()
+	}
+	funcs["loginURL"] = func() string { return makeAuthURL("/login") }
+	funcs["registerURL"] = func() string { return makeAuthURL("/register") }
+	funcs["csrfField"] = func() template.HTML { return csrfmiddleware.TemplateField(r) }
+	funcs["csrfToken"] = func() string { return csrfmiddleware.Token(r) }
+}
+
+func addCoreDataFuncs(funcs template.FuncMap, cd *CoreData, r *http.Request, mapper func(string, string) string, fullImageMapper goa4webhtml.FullImageMapper, getColor func(string) string) {
+	funcs["cd"] = func() *CoreData { return cd }
+	funcs["now"] = func() time.Time { return time.Now().In(cd.Location()) }
+	funcs["localTime"] = cd.LocalTime
+	funcs["formatLocalTime"] = func(t time.Time) string {
+		return cd.FormatLocalTime(t)
+	}
+	funcs["highlightSearch"] = func(s string) template.HTML {
+		return HighlightSearchTerms(s, cd.SearchWords())
+	}
+	funcs["timeAgo"] = func(t time.Time) string {
+		return TimeAgo(t, time.Now().In(cd.Location()))
+	}
+	funcs["since"] = Since
+	funcs["signCacheURL"] = func(ref string) string {
+		return cd.MapImageURL("img", ref)
 	}
 
 	if r != nil {
-		makeAuthURL := func(base string) string {
-			path := r.URL.Path
-			q := url.Values{}
-			if strings.HasPrefix(path, "/login") || strings.HasPrefix(path, "/register") || strings.HasPrefix(path, "/usr/logout") {
-				cq := r.URL.Query()
-				if v := cq.Get("back"); v != "" {
-					q.Set("back", v)
-				}
-				if v := cq.Get("method"); v != "" {
-					q.Set("method", v)
-				}
-				if v := cq.Get("data"); v != "" {
-					q.Set("data", v)
-				}
-			} else {
-				q.Set("back", r.RequestURI)
-				if r.Method == http.MethodPost {
-					_ = r.ParseForm()
-					q.Set("method", r.Method)
-					if cd != nil {
-						if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
-							q.Set("data", enc)
-						} else {
-							log.Printf("failed to encrypt form data: %v", err)
-						}
-					}
-				}
-			}
-
-			if len(q) == 0 {
-				return base
-			}
-			if strings.Contains(base, "?") {
-				return base + "&" + q.Encode()
-			}
-			return base + "?" + q.Encode()
+		funcs["include"] = func(name string, data any) (template.HTML, error) {
+			var buf bytes.Buffer
+			t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
+			err := t.ExecuteTemplate(&buf, name, data)
+			return template.HTML(buf.String()), err
 		}
-		funcs["loginURL"] = func() string { return makeAuthURL("/login") }
-		funcs["registerURL"] = func() string { return makeAuthURL("/register") }
-	}
-
-	if cd != nil {
-		funcs["cd"] = func() *CoreData { return cd }
-		funcs["now"] = func() time.Time { return time.Now().In(cd.Location()) }
-		funcs["localTime"] = cd.LocalTime
-		funcs["formatLocalTime"] = func(t time.Time) string {
-			return cd.FormatLocalTime(t)
-		}
-		funcs["highlightSearch"] = func(s string) template.HTML {
-			return HighlightSearchTerms(s, cd.SearchWords())
-		}
-		funcs["timeAgo"] = func(t time.Time) string {
-			return TimeAgo(t, time.Now().In(cd.Location()))
-		}
-		funcs["since"] = Since
-		funcs["signCacheURL"] = func(ref string) string {
-			return cd.MapImageURL("img", ref)
-		}
-
-		if r != nil {
-			funcs["include"] = func(name string, data any) (template.HTML, error) {
-				var buf bytes.Buffer
-				t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
-				err := t.ExecuteTemplate(&buf, name, data)
-				return template.HTML(buf.String()), err
-			}
-			funcs["a4code2html"] = func(s string) template.HTML {
-				provider := NewGoa4WebLinkProvider(cd, r.Context())
-				root, err := a4code.ParseString(s)
-				if err != nil {
-					log.Printf("parse markup: %v", err)
-					return template.HTML("")
-				}
-				var buf bytes.Buffer
-				gen := goa4webhtml.NewGenerator(
-					goa4webhtml.WithImageMapper(mapper),
-					goa4webhtml.WithFullImageMapper(fullImageMapper),
-					goa4webhtml.WithUserColorMapper(getColor),
-					goa4webhtml.WithLinkProvider(provider),
-					goa4webhtml.WithDataPositions(),
-				)
-				if err := ast.Generate(&buf, root, gen); err != nil {
-					log.Printf("generate markup: %v", err)
-					return template.HTML("")
-				}
-				return template.HTML(buf.String())
-			}
-			funcs["addmode"] = func(u string) string {
-				cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
-				if cd == nil || !cd.AdminMode {
-					return u
-				}
-				if parsed, err := url.Parse(u); err == nil {
-					if parsed.Path == "/admin" || strings.HasPrefix(parsed.Path, "/admin/") {
-						return u
-					}
-				}
-				if strings.Contains(u, "?") {
-					return u + "&mode=admin"
-				}
-				return u + "?mode=admin"
-			}
-		}
-	} else {
-		// Provide basic defaults if CD is missing
 		funcs["a4code2html"] = func(s string) template.HTML {
+			provider := NewGoa4WebLinkProvider(cd, r.Context())
 			root, err := a4code.ParseString(s)
 			if err != nil {
 				log.Printf("parse markup: %v", err)
@@ -290,7 +301,10 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 			}
 			var buf bytes.Buffer
 			gen := goa4webhtml.NewGenerator(
+				goa4webhtml.WithImageMapper(mapper),
+				goa4webhtml.WithFullImageMapper(fullImageMapper),
 				goa4webhtml.WithUserColorMapper(getColor),
+				goa4webhtml.WithLinkProvider(provider),
 				goa4webhtml.WithDataPositions(),
 			)
 			if err := ast.Generate(&buf, root, gen); err != nil {
@@ -299,23 +313,31 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 			}
 			return template.HTML(buf.String())
 		}
-	}
-
-	if r != nil {
-		funcs["csrfField"] = func() template.HTML { return csrfmiddleware.TemplateField(r) }
-		funcs["csrfToken"] = func() string { return csrfmiddleware.Token(r) }
-	}
-
-	if evt != nil {
-		funcs["Username"] = func() string {
-			if u, ok := evt.Data["Username"].(string); ok {
+		funcs["addmode"] = func(u string) string {
+			cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)
+			if cd == nil || !cd.AdminMode {
 				return u
 			}
-			return "Unknown"
+			if parsed, err := url.Parse(u); err == nil {
+				if parsed.Path == "/admin" || strings.HasPrefix(parsed.Path, "/admin/") {
+					return u
+				}
+			}
+			if strings.Contains(u, "?") {
+				return u + "&mode=admin"
+			}
+			return u + "?mode=admin"
 		}
 	}
+}
 
-	return funcs
+func addTaskEventFuncs(funcs template.FuncMap, evt *eventbus.TaskEvent) {
+	funcs["Username"] = func() string {
+		if u, ok := evt.Data["Username"].(string); ok {
+			return u
+		}
+		return "Unknown"
+	}
 }
 
 func versionReleaseURL(version string) string {

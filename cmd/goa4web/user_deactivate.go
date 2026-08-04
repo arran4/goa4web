@@ -90,19 +90,46 @@ func (c *userDeactivateCmd) Run() error {
 		tx.Rollback()
 		return fmt.Errorf("scrub user passwords: %w", err)
 	}
-	comments, err := qtx.AdminGetAllCommentsByUser(ctx, u.Idusers)
-	if err != nil {
+
+	if err := archiveAndScrubComments(ctx, qtx, u.Idusers); err != nil {
 		tx.Rollback()
+		return err
+	}
+	if err := archiveAndScrubWritings(ctx, qtx, u.Idusers); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := archiveAndScrubBlogs(ctx, qtx, u.Idusers); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := archiveAndScrubImages(ctx, qtx, u.Idusers); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := archiveAndScrubLinks(ctx, qtx, u.Idusers); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+	c.rootCmd.Infof("deactivated user %s", c.Username)
+	return nil
+}
+
+func archiveAndScrubComments(ctx context.Context, qtx db.Querier, userID int32) error {
+	comments, err := qtx.AdminGetAllCommentsByUser(ctx, userID)
+	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}
 	for _, cm := range comments {
 		deactivated, err := qtx.AdminIsCommentDeactivated(ctx, cm.Idcomments)
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("check comment deactivated: %w", err)
 		}
 		if deactivated {
-			tx.Rollback()
 			return fmt.Errorf("comment %d already deactivated", cm.Idcomments)
 		}
 		if err := qtx.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
@@ -114,28 +141,27 @@ func (c *userDeactivateCmd) Run() error {
 			Text:          cm.Text,
 			Timezone:      cm.Timezone,
 		}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("archive comment: %w", err)
 		}
 		scrub := scrubText(cm.Text.String)
 		if err := qtx.AdminScrubComment(ctx, db.AdminScrubCommentParams{Text: sql.NullString{String: scrub, Valid: true}, Idcomments: cm.Idcomments}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("scrub comment: %w", err)
 		}
 	}
-	writings, err := qtx.AdminGetAllWritingsByAuthor(ctx, u.Idusers)
+	return nil
+}
+
+func archiveAndScrubWritings(ctx context.Context, qtx db.Querier, userID int32) error {
+	writings, err := qtx.AdminGetAllWritingsByAuthor(ctx, userID)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("list writings: %w", err)
 	}
 	for _, w := range writings {
 		deactivated, err := qtx.AdminIsWritingDeactivated(ctx, w.Idwriting)
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("check writing deactivated: %w", err)
 		}
 		if deactivated {
-			tx.Rollback()
 			return fmt.Errorf("writing %d already deactivated", w.Idwriting)
 		}
 		if err := qtx.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
@@ -151,7 +177,6 @@ func (c *userDeactivateCmd) Run() error {
 			Abstract:          w.Abstract,
 			Private:           w.Private,
 		}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("archive writing: %w", err)
 		}
 		if err := qtx.AdminScrubWriting(ctx, db.AdminScrubWritingParams{
@@ -160,23 +185,23 @@ func (c *userDeactivateCmd) Run() error {
 			Abstract:  sql.NullString{String: scrubText(w.Abstract.String), Valid: w.Abstract.Valid},
 			Idwriting: w.Idwriting,
 		}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("scrub writing: %w", err)
 		}
 	}
-	blogs, err := qtx.AdminGetAllBlogEntriesByUser(ctx, u.Idusers)
+	return nil
+}
+
+func archiveAndScrubBlogs(ctx context.Context, qtx db.Querier, userID int32) error {
+	blogs, err := qtx.AdminGetAllBlogEntriesByUser(ctx, userID)
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("list blogs: %w", err)
 	}
 	for _, b := range blogs {
 		deactivated, err := qtx.AdminIsBlogDeactivated(ctx, b.Idblogs)
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("check blog deactivated: %w", err)
 		}
 		if deactivated {
-			tx.Rollback()
 			return fmt.Errorf("blog %d already deactivated", b.Idblogs)
 		}
 		var threadID int32
@@ -192,27 +217,26 @@ func (c *userDeactivateCmd) Run() error {
 			Written:       sql.NullTime{Time: b.Written, Valid: true},
 			Timezone:      b.Timezone,
 		}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("archive blog: %w", err)
 		}
 		if err := qtx.AdminScrubBlog(ctx, db.AdminScrubBlogParams{Blog: sql.NullString{String: scrubText(b.Blog.String), Valid: b.Blog.Valid}, Idblogs: b.Idblogs}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("scrub blog: %w", err)
 		}
 	}
-	imgs, err := qtx.GetImagePostsByUserDescending(ctx, db.GetImagePostsByUserDescendingParams{UsersIdusers: u.Idusers, Limit: math.MaxInt32, Offset: 0})
+	return nil
+}
+
+func archiveAndScrubImages(ctx context.Context, qtx db.Querier, userID int32) error {
+	imgs, err := qtx.GetImagePostsByUserDescending(ctx, db.GetImagePostsByUserDescendingParams{UsersIdusers: userID, Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("list images: %w", err)
 	}
 	for _, img := range imgs {
 		deactivated, err := qtx.AdminIsImagepostDeactivated(ctx, img.Idimagepost)
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("check imagepost deactivated: %w", err)
 		}
 		if deactivated {
-			tx.Rollback()
 			return fmt.Errorf("imagepost %d already deactivated", img.Idimagepost)
 		}
 		if err := qtx.AdminArchiveImagepost(ctx, db.AdminArchiveImagepostParams{
@@ -228,27 +252,26 @@ func (c *userDeactivateCmd) Run() error {
 			FileSize:               img.FileSize,
 			Approved:               sql.NullBool{Bool: img.Approved, Valid: true},
 		}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("archive imagepost: %w", err)
 		}
 		if err := qtx.AdminScrubImagepost(ctx, img.Idimagepost); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("scrub imagepost: %w", err)
 		}
 	}
-	links, err := qtx.GetLinkerItemsByUserDescending(ctx, db.GetLinkerItemsByUserDescendingParams{AuthorID: u.Idusers, Limit: math.MaxInt32, Offset: 0})
+	return nil
+}
+
+func archiveAndScrubLinks(ctx context.Context, qtx db.Querier, userID int32) error {
+	links, err := qtx.GetLinkerItemsByUserDescending(ctx, db.GetLinkerItemsByUserDescendingParams{AuthorID: userID, Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
 		return fmt.Errorf("list links: %w", err)
 	}
 	for _, l := range links {
 		deactivated, err := qtx.AdminIsLinkDeactivated(ctx, l.ID)
 		if err != nil {
-			tx.Rollback()
 			return fmt.Errorf("check link deactivated: %w", err)
 		}
 		if deactivated {
-			tx.Rollback()
 			return fmt.Errorf("link %d already deactivated", l.ID)
 		}
 		if err := qtx.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
@@ -263,17 +286,11 @@ func (c *userDeactivateCmd) Run() error {
 			Listed:      l.Listed,
 			Timezone:    l.Timezone,
 		}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("archive link: %w", err)
 		}
 		if err := qtx.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: scrubText(l.Title.String), Valid: l.Title.Valid}, ID: l.ID}); err != nil {
-			tx.Rollback()
 			return fmt.Errorf("scrub link: %w", err)
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit: %w", err)
-	}
-	c.rootCmd.Infof("deactivated user %s", c.Username)
 	return nil
 }

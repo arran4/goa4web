@@ -30,6 +30,199 @@ func (c *helpCmd) Run() error {
 	return c.showHelp(args)
 }
 
+var helpTopics = map[string]func(*rootCmd, []string) error{
+	"serve": func(r *rootCmd, args []string) error {
+		_, err := parseServeCmd(r, args)
+		return err
+	},
+	"user": func(r *rootCmd, args []string) error {
+		cmd, err := parseUserCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"email": func(r *rootCmd, args []string) error {
+		cmd, err := parseEmailCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"dlq": func(r *rootCmd, args []string) error {
+		cmd, err := parseDlqCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"requests": func(r *rootCmd, args []string) error {
+		cmd, err := parseRequestsCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"db": func(r *rootCmd, args []string) error {
+		cmd, err := parseDbCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"perm": func(r *rootCmd, args []string) error {
+		cmd, err := parsePermCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"board": func(r *rootCmd, args []string) error {
+		cmd, err := parseBoardCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"blog": func(r *rootCmd, args []string) error {
+		cmd, err := parseBlogCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"blogs": func(r *rootCmd, args []string) error {
+		cmd, err := parseBlogCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"writing": func(r *rootCmd, args []string) error {
+		cmd, err := parseWritingCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"news": func(r *rootCmd, args []string) error {
+		cmd, err := parseNewsCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"announcement": func(r *rootCmd, args []string) error {
+		cmd, err := parseAnnouncementCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"faq": func(r *rootCmd, args []string) error {
+		cmd, err := parseFaqCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"ipban": func(r *rootCmd, args []string) error {
+		cmd, err := parseIpBanCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"links": func(r *rootCmd, args []string) error {
+		cmd, err := parseLinksCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"files": func(r *rootCmd, args []string) error {
+		cmd, err := parseFilesCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"comment": func(r *rootCmd, args []string) error {
+		cmd, err := parseCommentCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"comments": func(r *rootCmd, args []string) error {
+		cmd, err := parseCommentCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"audit": func(r *rootCmd, args []string) error {
+		cmd, err := parseAuditCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"notifications": func(r *rootCmd, args []string) error {
+		cmd, err := parseNotificationsCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"repl": func(r *rootCmd, args []string) error {
+		_, err := parseReplCmd(r, args)
+		return err
+	},
+	"lang": func(r *rootCmd, args []string) error {
+		cmd, err := parseLangCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"maintenance": func(r *rootCmd, args []string) error {
+		cmd, err := parseMaintenanceCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"server": func(r *rootCmd, args []string) error {
+		cmd, err := parseServerCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"config": func(r *rootCmd, args []string) error {
+		cmd, err := parseConfigCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"page-size": func(r *rootCmd, args []string) error {
+		cmd, err := parsePageSizeCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+	"subscription": func(r *rootCmd, args []string) error {
+		cmd, err := parseSubscriptionCmd(r, args)
+		if err != nil {
+			return err
+		}
+		return cmd.Run()
+	},
+}
+
 func (c *helpCmd) showHelp(args []string) error {
 	if len(args) == 0 {
 		c.rootCmd.fs.Usage()
@@ -38,287 +231,15 @@ func (c *helpCmd) showHelp(args []string) error {
 	if err := usageIfHelp(c.fs, args); err != nil {
 		return err
 	}
-	switch args[0] {
-	case "serve":
-		_, err := parseServeCmd(c.rootCmd, append(args[1:], "-h"))
+	if runFn, ok := helpTopics[args[0]]; ok {
+		err := runFn(c.rootCmd, append(args[1:], "-h"))
 		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("serve: %w", err)
+			return fmt.Errorf("%s: %w", args[0], err)
 		}
 		return nil
-	case "user":
-		cmd, err := parseUserCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("user: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "email":
-		cmd, err := parseEmailCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("email: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "dlq":
-		cmd, err := parseDlqCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("dlq: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "requests":
-		cmd, err := parseRequestsCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("requests: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "db":
-		cmd, err := parseDbCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("db: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "perm":
-		cmd, err := parsePermCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("perm: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "board":
-		cmd, err := parseBoardCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("board: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "blog", "blogs":
-		cmd, err := parseBlogCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("blog: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "writing":
-		cmd, err := parseWritingCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("writing: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "news":
-		cmd, err := parseNewsCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("news: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "announcement":
-		cmd, err := parseAnnouncementCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("announcement: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "faq":
-		cmd, err := parseFaqCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("faq: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "ipban":
-		cmd, err := parseIpBanCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("ipban: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "links":
-		cmd, err := parseLinksCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("links: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "files":
-		cmd, err := parseFilesCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("files: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "comment", "comments":
-		cmd, err := parseCommentCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("comment: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "audit":
-		cmd, err := parseAuditCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("audit: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "notifications":
-		cmd, err := parseNotificationsCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("notifications: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "repl":
-		_, err := parseReplCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("repl: %w", err)
-		}
-		return nil
-	case "lang":
-		cmd, err := parseLangCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("lang: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "maintenance":
-		cmd, err := parseMaintenanceCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("maintenance: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "server":
-		cmd, err := parseServerCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("server: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "config":
-		cmd, err := parseConfigCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("config: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "page-size":
-		cmd, err := parsePageSizeCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("page-size: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	case "subscription":
-		cmd, err := parseSubscriptionCmd(c.rootCmd, append(args[1:], "-h"))
-		if err != nil && err != flag.ErrHelp {
-			return fmt.Errorf("subscription: %w", err)
-		}
-		if err == nil {
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
-	default:
-		c.fs.Usage()
-		return fmt.Errorf("unknown help topic %q", args[0])
 	}
+	c.fs.Usage()
+	return fmt.Errorf("unknown help topic %q", args[0])
 }
 
 func (c *helpCmd) Usage() {

@@ -185,7 +185,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		data.Subscribed = true
 	}
 
-	ForumTopicsPageTmpl.Handle(w, r, data)
+	_ = ForumTopicsPageTmpl.Handle(w, r, data)
 }
 
 const ForumTopicsPageTmpl tasks.Template = "forum/topicsPage.gohtml"

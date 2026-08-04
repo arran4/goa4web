@@ -47,7 +47,7 @@ func AdminRevisionHistoryPage(w http.ResponseWriter, r *http.Request) {
 		Revisions: revs,
 	}
 	cd.PageTitle = fmt.Sprintf("FAQ %d History", id)
-	AdminFaqRevisionPageTmpl.Handle(w, r, data)
+	_ = AdminFaqRevisionPageTmpl.Handle(w, r, data)
 }
 
 const AdminFaqRevisionPageTmpl tasks.Template = "faq/adminFaqRevisionPage.gohtml"

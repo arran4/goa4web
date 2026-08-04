@@ -50,7 +50,7 @@ func adminUserPermissionsPage(w http.ResponseWriter, r *http.Request) {
 	})
 	data.Rows = rows
 
-	AdminUserPermissionsPage.Handle(w, r, data)
+	_ = AdminUserPermissionsPage.Handle(w, r, data)
 }
 
 const AdminUserPermissionsPage tasks.Template = "admin/userPermissionsPage.gohtml"

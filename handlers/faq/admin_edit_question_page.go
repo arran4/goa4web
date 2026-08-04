@@ -84,7 +84,7 @@ func (t *AdminQuestionEditPageTask) Page(w http.ResponseWriter, r *http.Request)
 	} else {
 		cd.PageTitle = "New FAQ"
 	}
-	AdminQuestionEditPageTmpl.Handle(w, r, data)
+	_ = AdminQuestionEditPageTmpl.Handle(w, r, data)
 }
 
 const AdminQuestionEditPageTmpl tasks.Template = "faq/adminQuestionEditPage.gohtml"

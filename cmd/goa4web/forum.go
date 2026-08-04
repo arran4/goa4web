@@ -118,7 +118,7 @@ func parseForumCleanEmptyCmd(parent *forumCmd, args []string) (*forumCleanEmptyC
 }
 
 func (c *forumCleanEmptyCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -220,7 +220,7 @@ func parseForumCleanEmptyThreadsCmd(parent *forumCmd, args []string) (*forumClea
 }
 
 func (c *forumCleanEmptyThreadsCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -308,7 +308,7 @@ func parseForumCleanOrphansCmd(parent *forumCmd, args []string) (*forumCleanOrph
 }
 
 func (c *forumCleanOrphansCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

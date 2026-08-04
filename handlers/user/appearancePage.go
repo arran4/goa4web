@@ -45,7 +45,7 @@ func userAppearancePage(w http.ResponseWriter, r *http.Request) {
 		SafeDimensions: safeDims,
 		SafeDimension:  safeDim,
 	}
-	AppearancePage.Handle(w, r, data)
+	_ = AppearancePage.Handle(w, r, data)
 }
 
 const AppearancePage tasks.Template = "user/appearance.gohtml"
@@ -109,18 +109,7 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	// Update cached preference object in place so the re-rendered page sees the new value
 	if pref != nil {
 		pref.CustomCss = sql.NullString{String: customCSS, Valid: customCSS != ""}
-	} else {
-		// If it was nil (newly created), we might need to force reload or manually construct it if we want it to show up immediately
-		// But UserAppearancePage calls cd.Preference() which might try to load it if we didn't have it before.
-		// If we just inserted it, cd.Preference() (lazy) might still think it's not loaded or loaded as nil?
-		// lazy.Value loads once. If it loaded nil (ErrNoRows), it stays nil?
-		// CoreData.Preference() implementation:
-		/*
-			return cd.pref.Load(func() (*db.Preference, error) {
-				// ...
-				return cd.queries.GetPreferenceForLister(cd.ctx, cd.UserID)
-			})
-		*/
+	}
 		// If it was loaded and returned nil, it is "loaded".
 		// So we can't easily force it to reload.
 		// However, for the user flow, if they didn't have preferences, they probably didn't have custom CSS.
@@ -129,11 +118,6 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		// To be safe, if `pref` is nil, we can rely on the fact that we just saved it.
 		// But to make `userAppearancePage` generic, maybe we should pass the value to it?
 		// `userAppearancePage` extracts it from `cd`.
-		// I'll stick to updating `pref` if it exists. If it was nil, well, the user will see empty/default, or I can try to fix it.
-		// Actually, if `pref` is nil, `cd.pref` has `value=nil`.
-		// I can't assign to `pref`.
-	}
-
 	cd.SetCurrentNotice("Appearance settings updated")
 
 	// Render directly with the new value to ensure it is displayed even if pref was not cached
@@ -147,7 +131,7 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		SafeDimensions: cd.Config.SafeImageDimensions(),
 		SafeDimension:  imageSafeDimension,
 	}
-	AppearancePage.Handle(w, r, data)
+	_ = AppearancePage.Handle(w, r, data)
 	return nil
 }
 

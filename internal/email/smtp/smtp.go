@@ -194,7 +194,7 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	user := cfg.EmailSMTPUser
 	pass := cfg.EmailSMTPPass
 	if host == "" {
-		return nil, fmt.Errorf("Email disabled: %s not set", config.EnvSMTPHost)
+		return nil, fmt.Errorf("email disabled: %s not set", config.EnvSMTPHost)
 	}
 	addr := host
 	if port != "" {

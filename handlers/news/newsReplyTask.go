@@ -99,7 +99,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("post id parse fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if pid == 0 {
-		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("No bid")))
+		return fmt.Errorf("no bid %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("no bid")))
 	}
 
 	uid, _ := session.Values["UID"].(int32)

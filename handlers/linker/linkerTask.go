@@ -72,5 +72,5 @@ func (t *linkerTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
 	}
 
-	LinkerPageTmpl.Handle(w, r, data)
+	_ = LinkerPageTmpl.Handle(w, r, data)
 }

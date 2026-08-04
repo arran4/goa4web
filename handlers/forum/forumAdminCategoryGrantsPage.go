@@ -67,7 +67,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 			data.Grants = append(data.Grants, gi)
 		}
 	}
-	ForumAdminCategoryGrantsPageTmpl.Handle(w, r, data)
+	_ = ForumAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminCategoryGrantsPageTmpl tasks.Template = "forum/adminCategoryGrantsPage.gohtml"

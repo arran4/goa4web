@@ -36,7 +36,7 @@ func (c *blogCreateCmd) Run() error {
 	if c.UserID == 0 || c.LangID == 0 || c.Text == "" {
 		return fmt.Errorf("user, lang and text required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -69,7 +69,7 @@ func (AskTask) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AskPageTmpl.Handle(w, r, data)
+	_ = AskPageTmpl.Handle(w, r, data)
 }
 
 const AskPageTmpl tasks.Template = "faq/askPage.gohtml"

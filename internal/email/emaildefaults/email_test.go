@@ -96,7 +96,7 @@ func TestInsertPendingEmail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	q := db.New(conn)
 	mock.ExpectExec("INSERT INTO pending_emails").WithArgs(sql.NullInt32{Int32: 1, Valid: true}, "body", false).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -117,7 +117,7 @@ func TestProcessPendingEmailNilProviderRetriesForever(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email", "created_at"}).AddRow(1, 2, "b", 100, false, time.Now())
 	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email, created_at").WillReturnRows(rows)
@@ -148,7 +148,7 @@ func TestEmailQueueWorker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email", "created_at"}).AddRow(1, 2, "b", 0, false, time.Now())
 	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email, created_at").WillReturnRows(rows)
@@ -188,7 +188,7 @@ func TestProcessPendingEmailDLQ(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 	rows := sqlmock.NewRows([]string{"id", "to_user_id", "body", "error_count", "direct_email", "created_at"}).AddRow(1, 2, "b", 4, false, time.Now().Add(-100*24*time.Hour))
 	mock.ExpectQuery("SELECT id, to_user_id, body, error_count, direct_email, created_at").WillReturnRows(rows)

@@ -110,7 +110,7 @@ func TestAllEmailTemplatesComplete(t *testing.T) {
 	}
 
 	for p, tr := range m {
-		if !(tr.html && tr.text && tr.subj) {
+		if !tr.html || !tr.text || !tr.subj {
 			t.Errorf("template set %s incomplete: html=%v text=%v subj=%v", p, tr.html, tr.text, tr.subj)
 		}
 	}

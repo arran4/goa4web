@@ -74,7 +74,7 @@ func (c *userPasswordListCmd) Run() error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

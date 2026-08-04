@@ -204,7 +204,7 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 		return
 	}
 
-	SharedPreviewLoginPageTmpl.Handle(w, r, struct {
+	_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 		RedirectURL string
 	}{
 		RedirectURL: url.QueryEscape(redirectPath),

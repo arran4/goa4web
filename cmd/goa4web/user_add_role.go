@@ -54,7 +54,7 @@ func (c *userAddRoleCmd) Run() error {
 		return fmt.Errorf("cannot specify both --role and --role-id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -95,14 +95,14 @@ func (c *userAddRoleCmd) Run() error {
 		roleID = role.ID
 	}
 
-	c.rootCmd.Verbosef("adding role %s (ID: %d) to %s", roleName, roleID, c.Username)
+	c.Verbosef("adding role %s (ID: %d) to %s", roleName, roleID, c.Username)
 
 	// Check if user already has this role
 	if _, err := queries.AdminGetRoleByNameForUser(ctx, db.AdminGetRoleByNameForUserParams{
 		UsersIdusers: u.Idusers,
 		Name:         roleName,
 	}); err == nil {
-		c.rootCmd.Verbosef("%s already has role %s", c.Username, roleName)
+		c.Verbosef("%s already has role %s", c.Username, roleName)
 		return nil
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("check role: %w", err)
@@ -116,6 +116,6 @@ func (c *userAddRoleCmd) Run() error {
 		return fmt.Errorf("add role: %w", err)
 	}
 
-	c.rootCmd.Infof("added role %s (ID: %d) to %s", roleName, roleID, c.Username)
+	c.Infof("added role %s (ID: %d) to %s", roleName, roleID, c.Username)
 	return nil
 }

@@ -32,13 +32,13 @@ func parseRoleLoadCmd(parent *roleCmd, args []string) (*roleLoadCmd, error) {
 }
 
 func (c *roleLoadCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
-	return roles.LoadRole(c.rootCmd.ctx, c.role, c.file, sdb)
+	return roles.LoadRole(c.ctx, c.role, c.file, sdb)
 }
 
 func (c *roleLoadCmd) Usage() {

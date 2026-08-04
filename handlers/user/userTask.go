@@ -48,5 +48,5 @@ func (t *userTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	UserPageTmpl.Handle(w, r, struct{}{})
+	_ = UserPageTmpl.Handle(w, r, struct{}{})
 }

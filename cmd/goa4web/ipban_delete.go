@@ -31,7 +31,7 @@ func (c *ipBanDeleteCmd) Run() error {
 	if c.IP == "" {
 		return fmt.Errorf("ip required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

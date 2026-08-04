@@ -83,7 +83,7 @@ func (c *maintenanceForumTopicConvertPrivateCmd) Run() error {
 	if len(args) == 0 {
 		return fmt.Errorf("topic id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

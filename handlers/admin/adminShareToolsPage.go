@@ -188,11 +188,11 @@ func shareToolsResourceList() ([]shareToolsResourceOption, map[string]shareTools
 
 func parseShareToolsID(value string, label string) (int, error) {
 	if value == "" {
-		return 0, fmt.Errorf("%s is required.", label)
+		return 0, fmt.Errorf("%s is required", label)
 	}
 	parsed, err := strconv.Atoi(value)
 	if err != nil || parsed <= 0 {
-		return 0, fmt.Errorf("%s must be a positive number.", label)
+		return 0, fmt.Errorf("%s must be a positive number", label)
 	}
 	return parsed, nil
 }

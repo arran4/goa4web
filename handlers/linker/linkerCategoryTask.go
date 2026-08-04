@@ -63,5 +63,5 @@ func (t *linkerCategoryTask) Get(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cd.PageTitle = fmt.Sprintf("Category %d", data.CatId)
 	}
-	LinkerCategoryPageTmpl.Handle(w, r, data)
+	_ = LinkerCategoryPageTmpl.Handle(w, r, data)
 }

@@ -32,12 +32,12 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 		return fmt.Errorf("missing or invalid -older-than duration")
 	}
 
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}
 
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 		return fmt.Errorf("dry-run not implemented yet, missing query")
 	}
 
-	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
+	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.Context(), sql.NullTime{Time: cutoff, Valid: true})
 	if err != nil {
 		return fmt.Errorf("expunge unverified emails: %w", err)
 	}

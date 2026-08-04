@@ -507,7 +507,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quote [link 1]\n[link 2]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
-				ast.Walk(root, func(n ast.Node) error {
+				_ = ast.Walk(root, func(n ast.Node) error {
 					if l, ok := n.(*ast.Link); ok {
 						links = append(links, l)
 					}
@@ -529,7 +529,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quote foo [link 1]\n[link 2]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
-				ast.Walk(root, func(n ast.Node) error {
+				_ = ast.Walk(root, func(n ast.Node) error {
 					if l, ok := n.(*ast.Link); ok {
 						links = append(links, l)
 					}
@@ -815,7 +815,7 @@ func boolPtr(value bool) *bool {
 
 func findFirstLink(n ast.Node) *ast.Link {
 	var found *ast.Link
-	ast.Walk(n, func(node ast.Node) error {
+	_ = ast.Walk(n, func(node ast.Node) error {
 		if found != nil {
 			return nil
 		}
@@ -829,7 +829,7 @@ func findFirstLink(n ast.Node) *ast.Link {
 
 func findFirstQuote(n ast.Node) *ast.Quote {
 	var found *ast.Quote
-	ast.Walk(n, func(node ast.Node) error {
+	_ = ast.Walk(n, func(node ast.Node) error {
 		if found != nil {
 			return nil
 		}

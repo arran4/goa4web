@@ -40,9 +40,9 @@ func StartEventListener(ctx context.Context, q db.Querier, provider email.Provid
 	}
 }
 
-// adminBypassAddr extracts the recipient address from the email body and
+// AdminBypassAddr extracts the recipient address from the email body and
 // returns it when it matches one of the configured administrator emails.
-func adminBypassAddr(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, body string) (mail.Address, bool) {
+func AdminBypassAddr(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, body string) (mail.Address, bool) {
 	m, err := mail.ReadMessage(strings.NewReader(body))
 	if err != nil {
 		return mail.Address{}, false

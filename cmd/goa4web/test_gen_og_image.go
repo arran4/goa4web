@@ -67,13 +67,13 @@ func (c *testGenOgImageCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("create file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := png.Encode(f, img); err != nil {
 		return fmt.Errorf("encode png: %w", err)
 	}
 
-	c.rootCmd.Infof("Generated OG image for title %q (type: %s) at %s", c.Title, c.Type, c.OutputFile)
+	c.Infof("Generated OG image for title %q (type: %s) at %s", c.Title, c.Type, c.OutputFile)
 	return nil
 }
 

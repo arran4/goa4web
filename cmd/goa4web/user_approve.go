@@ -48,7 +48,7 @@ func (c *userApproveCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -61,11 +61,11 @@ func (c *userApproveCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	c.rootCmd.Verbosef("approving user %d", c.ID)
+	c.Verbosef("approving user %d", c.ID)
 	if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "user"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
-	c.rootCmd.Infof("approved user %d", c.ID)
+	c.Infof("approved user %d", c.ID)
 	return nil
 }
 

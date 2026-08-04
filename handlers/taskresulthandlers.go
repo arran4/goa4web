@@ -57,5 +57,5 @@ func TemplateWithDataHandler(tmpl Page, data any) any {
 //
 // Template helpers are provided via data.CoreData.Funcs(r).
 func (th *templateWithDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	TemplateHandler(w, r, th.tmpl, th.data)
+	_ = TemplateHandler(w, r, th.tmpl, th.data)
 }

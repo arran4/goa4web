@@ -32,34 +32,34 @@ func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
 }
 
 func (c *serveCmd) Run() error {
-	app.ConfigFile = c.rootCmd.ConfigFile
+	app.ConfigFile = c.ConfigFile
 	cfg := config.NewRuntimeConfig(
 		config.WithFlagSet(c.fs),
-		config.WithFileValues(c.rootCmd.ConfigFileValues),
+		config.WithFileValues(c.ConfigFileValues),
 		config.WithGetenv(os.Getenv),
 	)
 
-	c.rootCmd.Infof("Starting Goa4Web v%s (commit: %s; build date: %s)", version, commit, date)
+	c.Infof("Starting Goa4Web v%s (commit: %s; build date: %s)", version, commit, date)
 	listenMsg := fmt.Sprintf("Listening on: %s", cfg.HTTPListen)
 	if cfg.ExternalURL != "" {
 		if u, err := url.Parse(cfg.ExternalURL); err != nil || u.Scheme == "" {
-			c.rootCmd.Infof("WARNING: ExternalURL configuration is not a valid URL (scheme required). Got: %s", cfg.ExternalURL)
+			c.Infof("WARNING: ExternalURL configuration is not a valid URL (scheme required). Got: %s", cfg.ExternalURL)
 		}
 	} else if cfg.HTTPHostname != "" {
 		if u, err := url.Parse(cfg.HTTPHostname); err == nil && u.Scheme == "" {
-			c.rootCmd.Infof("WARNING: HTTPHostname configuration is a hostname, preferred a URI. Got: %s", cfg.HTTPHostname)
+			c.Infof("WARNING: HTTPHostname configuration is a hostname, preferred a URI. Got: %s", cfg.HTTPHostname)
 		}
 	} else if cfg.Host != "" {
 		if u, err := url.Parse(cfg.Host); err == nil && u.Scheme != "" {
-			c.rootCmd.Infof("WARNING: Host configuration is a URI, preferred a hostname. Got: %s", cfg.Host)
+			c.Infof("WARNING: Host configuration is a URI, preferred a hostname. Got: %s", cfg.Host)
 		}
 	}
 
 	listenMsg += fmt.Sprintf(" (Base URL: %s)", cfg.BaseURL)
-	c.rootCmd.Infof("%s", listenMsg)
+	c.Infof("%s", listenMsg)
 
 	if !cfg.NotificationsEnabled {
-		c.rootCmd.Infof("WARNING: Internal notifications are disabled (NOTIFICATIONS_ENABLED=false)")
+		c.Infof("WARNING: Internal notifications are disabled (NOTIFICATIONS_ENABLED=false)")
 	}
 
 	secret, err := config.LoadOrCreateSessionSecret(core.OSFS{}, cfg.SessionSecret, cfg.SessionSecretFile)
@@ -84,17 +84,17 @@ func (c *serveCmd) Run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	srv, err := app.NewServer(ctx, cfg, c.rootCmd.adminHandlers,
+	srv, err := app.NewServer(ctx, cfg, c.adminHandlers,
 		app.WithSessionSecret(secret),
 		app.WithImageSignSecret(signKey),
 		app.WithLinkSignSecret(linkKey),
 		app.WithShareSignSecret(shareKey),
-		app.WithDBRegistry(c.rootCmd.dbReg),
-		app.WithEmailRegistry(c.rootCmd.emailReg),
-		app.WithDLQRegistry(c.rootCmd.dlqReg),
-		app.WithTasksRegistry(c.rootCmd.tasksReg),
+		app.WithDBRegistry(c.dbReg),
+		app.WithEmailRegistry(c.emailReg),
+		app.WithDLQRegistry(c.dlqReg),
+		app.WithTasksRegistry(c.tasksReg),
 		app.WithAPISecret(apiKey),
-		app.WithRouterRegistry(c.rootCmd.routerReg),
+		app.WithRouterRegistry(c.routerReg),
 	)
 	if err != nil {
 		return err

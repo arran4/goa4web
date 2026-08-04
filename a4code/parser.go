@@ -109,13 +109,6 @@ func isBlockContext(n ast.Node) bool {
 	return false
 }
 
-func isBlockTag(tag string) bool {
-	switch strings.ToLower(tag) {
-	case "quote", "q", "quoteof", "qo", "spoiler", "sp", "indent":
-		return true
-	}
-	return false
-}
 
 func startsWithLineBreakAfterHorizontalWhitespace(value string) bool {
 	value = strings.TrimLeft(value, " \t")
@@ -230,6 +223,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 		if err != nil {
 			if err == io.EOF {
 				if !flush(0) {
+					return
 				}
 				for len(stack) > 0 {
 					n := stack[len(stack)-1]
@@ -247,6 +241,7 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 						p.AddChild(n)
 					}
 					if !yield(n, len(stack)+1) {
+						return
 					}
 				}
 				return
@@ -442,7 +437,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		}
 		if ch, err := s.ReadByte(); err == nil {
 			if ch != ']' {
-				s.UnreadByte()
+				_ = s.UnreadByte()
 			}
 		}
 		n := &ast.Image{Src: raw}
@@ -467,7 +462,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		skipArgPrefix(s)
 
 		if ch, err := s.Peek(); err == nil && ch == ']' {
-			s.ReadByte() // Consume ']' which starts the block in legacy syntax
+			_, _ = s.ReadByte() // Consume ']' which starts the block in legacy syntax
 		}
 
 		// ConsumeCodeBlock consumes content bytes until terminator
@@ -560,7 +555,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n := &ast.HR{}
 		if ch, err := s.ReadByte(); err == nil {
 			if ch != ']' {
-				s.UnreadByte()
+				_ = s.UnreadByte()
 			}
 		}
 		n.SetPos(startPos, visiblePos)
@@ -609,10 +604,10 @@ func skipArgPrefix(s *scanner) {
 	}
 	if ch == '\r' {
 		if next, err := s.ReadByte(); err == nil && next != '\n' {
-			s.UnreadByte()
+			_ = s.UnreadByte()
 		}
 		return
 	}
 
-	s.UnreadByte()
+	_ = s.UnreadByte()
 }

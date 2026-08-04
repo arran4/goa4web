@@ -113,5 +113,5 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageID.Int32),
 	}
-	NewsEditPageTmpl.Handle(w, r, data)
+	_ = NewsEditPageTmpl.Handle(w, r, data)
 }

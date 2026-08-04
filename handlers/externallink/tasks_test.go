@@ -55,7 +55,7 @@ func TestReloadExternalLinkTask(t *testing.T) {
 
 			u := "/?u=" + url.QueryEscape(link) + "&sig=" + sig
 			req := httptest.NewRequest(http.MethodPost, u, nil)
-			req.ParseForm()
+			_ = req.ParseForm()
 
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 			rec := httptest.NewRecorder()
@@ -104,7 +104,7 @@ func TestReloadExternalLinkTask(t *testing.T) {
 
 			u := "/?id=" + idStr + "&sig=" + sig
 			req := httptest.NewRequest(http.MethodPost, u, nil)
-			req.ParseForm()
+			_ = req.ParseForm()
 
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 			rec := httptest.NewRecorder()
@@ -125,7 +125,7 @@ func TestReloadExternalLinkTask(t *testing.T) {
 			link := "https://example.com"
 			u := "/?u=" + url.QueryEscape(link) + "&sig=invalid"
 			req := httptest.NewRequest(http.MethodPost, u, nil)
-			req.ParseForm()
+			_ = req.ParseForm()
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 			rec := httptest.NewRecorder()
 

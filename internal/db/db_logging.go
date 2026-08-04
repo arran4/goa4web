@@ -72,6 +72,7 @@ func (lc *loggingConn) Begin() (driver.Tx, error) {
 	if lc.verbosity >= 2 {
 		log.Printf("conn %s Begin", lc.id)
 	}
+	//nolint:staticcheck // implementing driver interface
 	tx, err := lc.Conn.Begin()
 	if err != nil && lc.verbosity > 0 {
 		log.Printf("conn %s Begin error: %v", lc.id, err)

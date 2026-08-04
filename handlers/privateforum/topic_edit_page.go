@@ -53,7 +53,7 @@ func TopicEditPage(w http.ResponseWriter, r *http.Request) {
 		data.BasePath = cd.ForumBasePath
 	}
 
-	TopicEditPageTmpl.Handle(w, r, data)
+	_ = TopicEditPageTmpl.Handle(w, r, data)
 }
 
 func TopicEditSubmit(w http.ResponseWriter, r *http.Request) {

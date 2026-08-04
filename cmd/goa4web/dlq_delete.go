@@ -48,12 +48,12 @@ func (c *dlqDeleteCmd) Run() error {
 	if len(ids) == 0 {
 		return fmt.Errorf("id required")
 	}
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	for _, id := range ids {
-		if err := queries.SystemDeleteDeadLetter(c.rootCmd.Context(), id); err != nil {
+		if err := queries.SystemDeleteDeadLetter(c.Context(), id); err != nil {
 			return fmt.Errorf("delete dead letter %d: %w", id, err)
 		}
 	}

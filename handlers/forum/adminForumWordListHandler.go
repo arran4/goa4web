@@ -36,7 +36,7 @@ func AdminForumWordListPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	AdminForumWordListPageTmpl.Handle(w, r, data)
+	_ = AdminForumWordListPageTmpl.Handle(w, r, data)
 }
 
 const AdminForumWordListPageTmpl tasks.Template = "admin/forumWordListPage.gohtml"

@@ -55,7 +55,7 @@ func (c *notificationsPurgeReadCmd) Run() error {
 		return fmt.Errorf("user must be a positive ID")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -148,7 +148,7 @@ func (c *notificationsPurgeSelectedCmd) Run() error {
 		ids = append(ids, id)
 	}
 
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

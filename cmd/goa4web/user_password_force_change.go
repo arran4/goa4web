@@ -33,9 +33,9 @@ func parseUserPasswordForceChangeCmd(parent *userCmd, args []string) (*userPassw
 }
 
 func (c *userPasswordForceChangeCmd) Run() error {
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 
-	d, err := c.rootCmd.DB()
+	d, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}

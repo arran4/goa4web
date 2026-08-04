@@ -83,7 +83,7 @@ func (c *commentListDeactivatedCmd) Run() error {
 		return fmt.Errorf("from date is after to date")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -156,8 +156,7 @@ func (c *commentListDeactivatedCmd) Run() error {
 			item.Text,
 		)
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func normalizeCommentContentTypeFilter(value string) (string, error) {

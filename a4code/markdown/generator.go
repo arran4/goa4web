@@ -29,6 +29,11 @@ func NewGenerator() *Generator {
 	return &Generator{}
 }
 
+func writeString(w io.Writer, s string) error {
+	_, err := io.WriteString(w, s)
+	return err
+}
+
 func (g *Generator) Root(w io.Writer, n *ast.Root) error {
 	sw := &SmartWriter{w: w, lastByte: '\n'}
 	for _, c := range n.Children {
@@ -40,154 +45,173 @@ func (g *Generator) Root(w io.Writer, n *ast.Root) error {
 }
 
 func (g *Generator) Text(w io.Writer, t *ast.Text) error {
-	io.WriteString(w, t.Value)
-	return nil
+	return writeString(w, t.Value)
 }
 
 func (g *Generator) Bold(w io.Writer, n *ast.Bold) error {
-	io.WriteString(w, "**")
+	if err := writeString(w, "**"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "**")
-	return nil
+	return writeString(w, "**")
 }
 
 func (g *Generator) Italic(w io.Writer, n *ast.Italic) error {
-	io.WriteString(w, "*")
+	if err := writeString(w, "*"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "*")
-	return nil
+	return writeString(w, "*")
 }
 
 func (g *Generator) Underline(w io.Writer, n *ast.Underline) error {
-	io.WriteString(w, "<u>")
+	if err := writeString(w, "<u>"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</u>")
-	return nil
+	return writeString(w, "</u>")
 }
 
 func (g *Generator) Sup(w io.Writer, n *ast.Sup) error {
-	io.WriteString(w, "<sup>")
+	if err := writeString(w, "<sup>"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</sup>")
-	return nil
+	return writeString(w, "</sup>")
 }
 
 func (g *Generator) Sub(w io.Writer, n *ast.Sub) error {
-	io.WriteString(w, "<sub>")
+	if err := writeString(w, "<sub>"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</sub>")
-	return nil
+	return writeString(w, "</sub>")
 }
 
 func (g *Generator) Link(w io.Writer, n *ast.Link) error {
-	io.WriteString(w, "[")
+	if err := writeString(w, "["); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	fmt.Fprintf(w, "](%s)", n.Href)
-	return nil
+	_, err := fmt.Fprintf(w, "](%s)", n.Href)
+	return err
 }
 
 func (g *Generator) Image(w io.Writer, n *ast.Image) error {
-	fmt.Fprintf(w, "![](%s)", n.Src)
-	return nil
+	_, err := fmt.Fprintf(w, "![](%s)", n.Src)
+	return err
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	io.WriteString(w, "\n```\n")
-	io.WriteString(w, n.Value)
-	io.WriteString(w, "\n```\n")
-	return nil
+	if err := writeString(w, "\n```\n"); err != nil {
+		return err
+	}
+	if err := writeString(w, n.Value); err != nil {
+		return err
+	}
+	return writeString(w, "\n```\n")
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
-	io.WriteString(w, "\n```")
-	io.WriteString(w, n.Language)
-	io.WriteString(w, "\n")
-	io.WriteString(w, n.Value)
-	io.WriteString(w, "\n```")
-	return nil
+	if err := writeString(w, "\n```"); err != nil {
+		return err
+	}
+	if err := writeString(w, n.Language); err != nil {
+		return err
+	}
+	if err := writeString(w, "\n"); err != nil {
+		return err
+	}
+	if err := writeString(w, n.Value); err != nil {
+		return err
+	}
+	return writeString(w, "\n```")
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
-	// Fallback to HTML for complex blocks
-	io.WriteString(w, "<blockquote>")
+	if err := writeString(w, "<blockquote>"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</blockquote>")
-	return nil
+	return writeString(w, "</blockquote>")
 }
 
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
-	fmt.Fprintf(w, "<blockquote><p>Quote of %s:</p>", n.Name)
+	if _, err := fmt.Fprintf(w, "<blockquote><p>Quote of %s:</p>", n.Name); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</blockquote>")
-	return nil
+	return writeString(w, "</blockquote>")
 }
 
 func (g *Generator) Spoiler(w io.Writer, n *ast.Spoiler) error {
-	io.WriteString(w, "<details><summary>Spoiler</summary>")
+	if err := writeString(w, "<details><summary>Spoiler</summary>"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</details>")
-	return nil
+	return writeString(w, "</details>")
 }
 
 func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
-	io.WriteString(w, "<blockquote>")
+	if err := writeString(w, "<blockquote>"); err != nil {
+		return err
+	}
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</blockquote>")
-	return nil
+	return writeString(w, "</blockquote>")
 }
 
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
 	if sw, ok := w.(*SmartWriter); ok {
 		if sw.lastByte != '\n' {
-			io.WriteString(w, "\n")
+			if err := writeString(w, "\n"); err != nil {
+				return err
+			}
 		}
 	}
-	io.WriteString(w, "---\n")
-	return nil
+	return writeString(w, "---\n")
 }
 
 func (g *Generator) Custom(w io.Writer, n *ast.Custom) error {
-	// Just output children for custom tags
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, g); err != nil {
 			return err

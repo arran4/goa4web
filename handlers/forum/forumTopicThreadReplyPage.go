@@ -97,9 +97,10 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 			base = evt.Path[:idx]
 		}
 		section := strings.TrimPrefix(base, "/")
-		if section == "private" {
+		switch section {
+		case "private":
 			section = "privateforum"
-		} else if section == "" {
+		case "":
 			section = "forum"
 		}
 		return []notif.GrantRequirement{{Section: section, Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil

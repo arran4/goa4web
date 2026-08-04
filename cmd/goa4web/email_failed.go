@@ -122,7 +122,7 @@ func (c *emailFailedListCmd) Run() error {
 	if provider != "" && provider != "direct" && provider != "user" && provider != "userless" {
 		return fmt.Errorf("unsupported provider %q", c.Provider)
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -296,13 +296,13 @@ func (c *emailFailedResendCmd) Run() error {
 	if len(c.ids) == 0 {
 		return fmt.Errorf("id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	provider, err := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
+	provider, err := c.emailReg.ProviderFromConfig(c.cfg)
 	if err != nil {
 		return fmt.Errorf("email provider: %w", err)
 	}
@@ -315,7 +315,7 @@ func (c *emailFailedResendCmd) Run() error {
 		emails = append(emails, email)
 	}
 	for _, email := range emails {
-		addr, err := emailqueue.ResolveQueuedEmailAddress(ctx, queries, c.rootCmd.cfg, &db.SystemListPendingEmailsRow{ID: email.ID, ToUserID: email.ToUserID, Body: email.Body, ErrorCount: email.ErrorCount, DirectEmail: email.DirectEmail})
+		addr, err := emailqueue.ResolveQueuedEmailAddress(ctx, queries, c.cfg, &db.SystemListPendingEmailsRow{ID: email.ID, ToUserID: email.ToUserID, Body: email.Body, ErrorCount: email.ErrorCount, DirectEmail: email.DirectEmail})
 		if err != nil {
 			return fmt.Errorf("resolve address: %w", err)
 		}

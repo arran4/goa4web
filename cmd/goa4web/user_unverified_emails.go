@@ -69,7 +69,7 @@ func (c *userUnverifiedEmailsCmd) runList(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
@@ -78,14 +78,14 @@ func (c *userUnverifiedEmailsCmd) runList(args []string) error {
 
 	var emails []*db.UserEmail
 	if *userID != 0 || *username != "" {
-		uid, err := resolveUserID(c.rootCmd.Context(), queries, *userID, *username)
+		uid, err := resolveUserID(c.Context(), queries, *userID, *username)
 		if err != nil {
 			return err
 		}
 		// We need ListUnverifiedEmailsByUserID?
 		// Currently we have AdminListUserEmails (all) and SystemListVerifiedEmailsByUserID.
 		// AdminListUserEmails returns all, we can filter in Go.
-		all, err := queries.AdminListUserEmails(c.rootCmd.Context(), uid)
+		all, err := queries.AdminListUserEmails(c.Context(), uid)
 		if err != nil {
 			return fmt.Errorf("list user emails: %w", err)
 		}
@@ -96,7 +96,7 @@ func (c *userUnverifiedEmailsCmd) runList(args []string) error {
 		}
 	} else {
 		// List all unverified emails
-		all, err := queries.SystemListAllUnverifiedEmails(c.rootCmd.Context())
+		all, err := queries.SystemListAllUnverifiedEmails(c.Context())
 		if err != nil {
 			return fmt.Errorf("list all unverified emails: %w", err)
 		}
@@ -133,7 +133,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 	var rows []EmailRow
 
 	if *allTime {
-		es, err := queries.SystemListAllUnverifiedEmails(c.rootCmd.Context())
+		es, err := queries.SystemListAllUnverifiedEmails(c.Context())
 		if err != nil {
 			return fmt.Errorf("list all unverified emails: %w", err)
 		}
@@ -172,7 +172,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 		}
 	} else {
 		cutoff := time.Now().Add(-*since)
-		es, err := queries.SystemListUnverifiedEmailsCreatedAfter(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
+		es, err := queries.SystemListUnverifiedEmailsCreatedAfter(c.Context(), sql.NullTime{Time: cutoff, Valid: true})
 		if err != nil {
 			return fmt.Errorf("list unverified emails: %w", err)
 		}
@@ -210,7 +210,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 		code := generateVerificationCode()
 		expire := time.Now().Add(time.Duration(expiryHours) * time.Hour)
 
-		if err := queries.SystemUpdateVerificationCode(c.rootCmd.Context(), db.SystemUpdateVerificationCodeParams{
+		if err := queries.SystemUpdateVerificationCode(c.Context(), db.SystemUpdateVerificationCodeParams{
 			LastVerificationCode:  sql.NullString{String: code, Valid: true},
 			VerificationExpiresAt: sql.NullTime{Time: expire, Valid: true},
 			ID:                    ue.ID,
@@ -225,7 +225,7 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 			page = cfg.BaseURL + path // Ensure HTTPHostname has no trailing slash or handle it
 		}
 
-		user, err := queries.SystemGetUserByID(c.rootCmd.Context(), ue.UserID)
+		user, err := queries.SystemGetUserByID(c.Context(), ue.UserID)
 		username := ""
 		if err == nil {
 			username = user.Username.String
@@ -242,13 +242,13 @@ func (c *userUnverifiedEmailsCmd) runResend(args []string) error {
 		}
 
 		et := notif.NewEmailTemplates("verifyEmail")
-		msg, err := notifier.RenderEmailFromTemplates(c.rootCmd.Context(), ue.Email, et, data)
+		msg, err := notifier.RenderEmailFromTemplates(c.Context(), ue.Email, et, data)
 		if err != nil {
 			fmt.Fprintf(c.fs.Output(), "Failed to render email for %s: %v\n", ue.Email, err)
 			continue
 		}
 
-		if err := queries.InsertPendingEmail(c.rootCmd.Context(), db.InsertPendingEmailParams{
+		if err := queries.InsertPendingEmail(c.Context(), db.InsertPendingEmailParams{
 			ToUserID:    sql.NullInt32{Int32: ue.UserID, Valid: true},
 			Body:        string(msg),
 			DirectEmail: false,
@@ -277,7 +277,7 @@ func (c *userUnverifiedEmailsCmd) runExpunge(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (c *userUnverifiedEmailsCmd) runExpunge(args []string) error {
 	cutoff := time.Now().Add(-*olderThan)
 
 	if *dryRun {
-		es, err := queries.SystemListUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
+		es, err := queries.SystemListUnverifiedEmailsExpiresBefore(c.Context(), sql.NullTime{Time: cutoff, Valid: true})
 		if err != nil {
 			return fmt.Errorf("list unverified emails: %w", err)
 		}
@@ -297,7 +297,7 @@ func (c *userUnverifiedEmailsCmd) runExpunge(args []string) error {
 		return nil
 	}
 
-	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
+	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.Context(), sql.NullTime{Time: cutoff, Valid: true})
 	if err != nil {
 		return fmt.Errorf("expunge unverified emails: %w", err)
 	}
@@ -312,5 +312,5 @@ func (c *userUnverifiedEmailsCmd) runExpunge(args []string) error {
 }
 
 func (c *userUnverifiedEmailsCmd) loadConfig() (*config.RuntimeConfig, error) {
-	return c.rootCmd.RuntimeConfig()
+	return c.RuntimeConfig()
 }

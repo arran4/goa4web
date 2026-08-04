@@ -59,7 +59,7 @@ func SearchResultNewsActionPage(w http.ResponseWriter, r *http.Request) {
 		data.EmptyWords = noResults
 	}
 
-	SearchResultNewsActionPageTmpl.Handle(w, r, data)
+	_ = SearchResultNewsActionPageTmpl.Handle(w, r, data)
 }
 
 const SearchResultNewsActionPageTmpl tasks.Template = "search/resultNewsActionPage.gohtml"

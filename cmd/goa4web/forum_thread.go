@@ -60,7 +60,7 @@ func (c *forumThreadCmd) runList(args []string) error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (c *forumThreadCmd) runDetails(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (c *forumThreadCmd) runDelete(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}

@@ -32,11 +32,11 @@ func (c *configSetCmd) Run() error {
 	if c.Key == "" {
 		return fmt.Errorf("key required")
 	}
-	path := c.rootCmd.ConfigFile
-	c.rootCmd.Verbosef("updating %s in %s", c.Key, path)
+	path := c.ConfigFile
+	c.Verbosef("updating %s in %s", c.Key, path)
 	if err := config.UpdateConfigKey(core.OSFS{}, path, c.Key, c.Value); err != nil {
 		return fmt.Errorf("update config: %w", err)
 	}
-	c.rootCmd.Infof("updated %s", c.Key)
+	c.Infof("updated %s", c.Key)
 	return nil
 }

@@ -67,7 +67,7 @@ func (c *dlqCmd) FlagGroups() []flagGroup {
 }
 
 func (c *dlqCmd) providers() ([]string, error) {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	if cfg == nil {
 		return nil, fmt.Errorf("runtime config not initialized")
 	}

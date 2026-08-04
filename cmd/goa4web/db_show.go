@@ -49,11 +49,11 @@ func (c *dbShowCmd) Run() error {
 		_, err := fmt.Fprintln(os.Stdout, string(database.SchemaMySQL))
 		return err
 	case "schema-version":
-		db, err := openDB(c.rootCmd.cfg, c.rootCmd.dbReg)
+		db, err := openDB(c.cfg, c.dbReg)
 		if err != nil {
 			return fmt.Errorf("open db: %w", err)
 		}
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		version, err := dbstart.SchemaVersion(context.Background(), db)
 		if err != nil {
 			return fmt.Errorf("read schema version: %w", err)

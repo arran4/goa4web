@@ -43,7 +43,7 @@ func QuoteApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"text": text})
+	_ = json.NewEncoder(w).Encode(map[string]string{"text": text})
 }
 
 type quoteSelectionRequest struct {
@@ -126,5 +126,5 @@ func QuoteSelectionApi(w http.ResponseWriter, r *http.Request) {
 	flush()
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"text": out.String()})
+	_ = json.NewEncoder(w).Encode(map[string]string{"text": out.String()})
 }

@@ -65,7 +65,7 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 			data.Grants = append(data.Grants, gi)
 		}
 	}
-	LinkerAdminCategoryGrantsPageTmpl.Handle(w, r, data)
+	_ = LinkerAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
 
 const LinkerAdminCategoryGrantsPageTmpl tasks.Template = "linker/adminCategoryGrantsPage.gohtml"

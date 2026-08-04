@@ -13,7 +13,7 @@ func TestUserMonthlyUsageCounts_LinkerJoin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	q := New(db)
 

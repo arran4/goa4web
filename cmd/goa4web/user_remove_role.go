@@ -44,13 +44,13 @@ func (c *userRemoveRoleCmd) Run() error {
 	if c.Username == "" || c.Role == "" {
 		return fmt.Errorf("username and role required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	c.rootCmd.Verbosef("removing role %s from %s", c.Role, c.Username)
+	c.Verbosef("removing role %s from %s", c.Role, c.Username)
 	u, err := queries.SystemGetUserByUsername(ctx, sql.NullString{String: c.Username, Valid: true})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
@@ -64,7 +64,7 @@ func (c *userRemoveRoleCmd) Run() error {
 			if err := queries.AdminDeleteUserRole(ctx, p.IduserRoles); err != nil {
 				return fmt.Errorf("remove role: %w", err)
 			}
-			c.rootCmd.Infof("removed role %s from %s", c.Role, c.Username)
+			c.Infof("removed role %s from %s", c.Role, c.Username)
 			return nil
 		}
 	}

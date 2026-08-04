@@ -27,7 +27,7 @@ func parsePrivateForumTopicMergeCmd(parent *privateForumCmd, args []string) (*pr
 }
 
 func (c *privateForumTopicMergeCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

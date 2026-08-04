@@ -48,5 +48,5 @@ func (t *blogsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	BlogsPageTmpl.Handle(w, r, struct{}{})
+	_ = BlogsPageTmpl.Handle(w, r, struct{}{})
 }

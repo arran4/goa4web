@@ -36,20 +36,20 @@ func parseRoleRemoveCmd(parent *roleCmd, args []string) (*roleRemoveCmd, error) 
 }
 
 func (c *roleRemoveCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	// Start transaction
 	tx, err := sdb.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	q := db.New(tx)
 

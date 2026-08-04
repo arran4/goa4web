@@ -45,7 +45,7 @@ func (c *userActivateCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -58,7 +58,7 @@ func (c *userActivateCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	c.rootCmd.Verbosef("restoring user %d", c.ID)
+	c.Verbosef("restoring user %d", c.ID)
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -168,6 +168,6 @@ func (c *userActivateCmd) Run() error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
-	c.rootCmd.Infof("restored user %d", c.ID)
+	c.Infof("restored user %d", c.ID)
 	return nil
 }

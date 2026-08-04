@@ -23,7 +23,7 @@ func FetchPageTitle(ctx context.Context, targetURL string) string {
 	if err != nil {
 		return ""
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	tokenizer := html.NewTokenizer(resp.Body)
 	for {
 		tt := tokenizer.Next()

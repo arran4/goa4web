@@ -36,7 +36,7 @@ func parseShareSignCmd(parent *shareCmd, args []string) (*shareSignCmd, error) {
 }
 
 func (c *shareSignCmd) Run() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	key, err := config.LoadOrCreateShareSignSecret(core.OSFS{}, cfg.ShareSignSecret, cfg.ShareSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("share sign secret: %w", err)

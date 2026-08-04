@@ -63,11 +63,11 @@ func (c *userSubscriptionsListCmd) Run() error {
 		return fmt.Errorf("unsupported format %q", c.format)
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	queries := db.New(conn)
 	uid, err := resolveUserID(ctx, queries, c.userID, c.username)
 	if err != nil {

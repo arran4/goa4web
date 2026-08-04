@@ -50,7 +50,7 @@ func (c *userDeactivateCmd) Run() error {
 	if c.Username == "" {
 		return fmt.Errorf("username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -67,7 +67,7 @@ func (c *userDeactivateCmd) Run() error {
 	if deactivated {
 		return fmt.Errorf("user already deactivated")
 	}
-	c.rootCmd.Verbosef("deactivating user %s", c.Username)
+	c.Verbosef("deactivating user %s", c.Username)
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -274,6 +274,6 @@ func (c *userDeactivateCmd) Run() error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
-	c.rootCmd.Infof("deactivated user %s", c.Username)
+	c.Infof("deactivated user %s", c.Username)
 	return nil
 }

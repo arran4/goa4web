@@ -84,9 +84,6 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Printf("fetchOpenGraph error: %v", err)
 		}
-	} else if isInternal {
-		// Log or handle internal link specifically if needed
-		// For now, we just don't fetch metadata
 	}
 
 	link := cd.SelectedExternalLink()

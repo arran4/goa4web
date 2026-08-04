@@ -154,7 +154,7 @@ func TestHappyPathCreateThreadNotificationLink(t *testing.T) {
 	task.Action(rr, req)
 
 	// Trigger synchronous processing of the event
-	bus.Publish(*evt)
+	_ = bus.Publish(*evt)
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)

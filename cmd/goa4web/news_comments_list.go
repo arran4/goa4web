@@ -28,7 +28,6 @@ func parseNewsCommentsListCmd(parent *newsCommentsCmd, args []string) (*newsComm
 	if c.ID == 0 && len(rest) > 0 {
 		if id, err := strconv.Atoi(rest[0]); err == nil {
 			c.ID = id
-			rest = rest[1:]
 		}
 	}
 	return c, nil
@@ -38,7 +37,7 @@ func (c *newsCommentsListCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

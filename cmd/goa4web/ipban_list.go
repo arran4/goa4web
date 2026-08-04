@@ -25,7 +25,7 @@ func parseIpBanListCmd(parent *ipBanCmd, args []string) (*ipBanListCmd, error) {
 }
 
 func (c *ipBanListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

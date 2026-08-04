@@ -53,7 +53,7 @@ func (c *userListCmd) FlagGroups() []flagGroup {
 var _ usageData = (*userListCmd)(nil)
 
 func (c *userListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -132,9 +132,9 @@ func (c *userListCmd) Run() error {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	// Header
-	fmt.Fprint(w, "ID\tUsername\tStatus\tRoles\tVerified Emails\tUnverified Emails")
+	_, _ = fmt.Fprint(w, "ID\tUsername\tStatus\tRoles\tVerified Emails\tUnverified Emails")
 	if c.showAdmin {
-		fmt.Fprint(w, "\tAdmin")
+		_, _ = fmt.Fprint(w, "\tAdmin")
 	}
 	if c.showCreated {
 		fmt.Fprint(w, "\tCreated")

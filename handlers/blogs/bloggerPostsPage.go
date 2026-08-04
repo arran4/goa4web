@@ -45,7 +45,7 @@ func BloggerPostsPage(w http.ResponseWriter, r *http.Request) {
 		Type:        "profile",
 	}
 
-	BloggerPostsPageTmpl.Handle(w, r, struct{}{})
+	_ = BloggerPostsPageTmpl.Handle(w, r, struct{}{})
 }
 
 const BloggerPostsPageTmpl tasks.Template = "blogs/bloggerPostsPage.gohtml"

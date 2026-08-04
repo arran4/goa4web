@@ -44,7 +44,7 @@ func (c *replCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	var mu sync.Mutex
 	jobs := map[int]*replJob{}
@@ -68,7 +68,7 @@ func (c *replCmd) Run() error {
 		if strings.HasPrefix(line, "set ") {
 			parts := strings.SplitN(strings.TrimSpace(line[4:]), "=", 2)
 			if len(parts) == 2 {
-				os.Setenv(parts[0], parts[1])
+				_ = os.Setenv(parts[0], parts[1])
 			} else {
 				fmt.Println("usage: set KEY=VALUE")
 			}

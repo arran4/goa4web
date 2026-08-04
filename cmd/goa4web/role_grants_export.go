@@ -102,11 +102,11 @@ func parseRoleGrantsExportCmd(parent *roleGrantsCmd, args []string) (*roleGrants
 }
 
 func (c *roleGrantsExportCmd) Run() error {
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("queries: %w", err)
 	}
-	export, err := buildRoleGrantsExport(c.rootCmd.Context(), queries, c.role, c.rootCmd.cfg)
+	export, err := buildRoleGrantsExport(c.Context(), queries, c.role, c.cfg)
 	if err != nil {
 		return err
 	}

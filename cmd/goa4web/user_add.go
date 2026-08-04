@@ -57,7 +57,7 @@ func (c *userAddCmd) Run() error {
 			return fmt.Errorf("prompt password: %w", err)
 		}
 	}
-	return createUser(c.userCmd.rootCmd, c.Username, c.Email, pw, c.Admin)
+	return createUser(c.rootCmd, c.Username, c.Email, pw, c.Admin)
 }
 
 func createUser(root *rootCmd, username, email, password string, admin bool) error {

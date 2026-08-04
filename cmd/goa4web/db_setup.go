@@ -36,12 +36,12 @@ func parseDbSetupCmd(parent *dbCmd, args []string) (*dbSetupCmd, error) {
 }
 
 func (c *dbSetupCmd) Run() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	conn := cfg.DBConn
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	connector, err := c.rootCmd.dbReg.Connector(cfg.DBDriver, conn)
+	connector, err := c.dbReg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return err
 	}

@@ -86,6 +86,12 @@ func (c *roleCmd) Run() error {
 			return fmt.Errorf("public-profile: %w", err)
 		}
 		return cmd.Run()
+	case "template":
+		cmd, err := parseRoleTemplateCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("template: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown role command %q", args[0])

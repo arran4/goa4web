@@ -53,7 +53,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Type:        "website",
 	}
 
-	BlogsPageTmpl.Handle(w, r, struct{}{})
+	_ = BlogsPageTmpl.Handle(w, r, struct{}{})
 }
 
 func RssPage(w http.ResponseWriter, r *http.Request) {

@@ -70,7 +70,7 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 
 	rec := &dummyProvider{}
 	n := New(WithQueries(q), WithEmailProvider(rec), WithConfig(cfg))
-	n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})
+	_ = n.NotifyAdmins(context.Background(), &EmailTemplates{}, EmailData{})
 	if rec.to != "" {
 		t.Fatalf("expected no direct mail got %s", rec.to)
 	}

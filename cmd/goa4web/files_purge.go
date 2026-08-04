@@ -60,12 +60,12 @@ type filesPurgeOutput struct {
 }
 
 func (c *filesPurgeCmd) Run() error {
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 
-	listing, err := adminhandlers.BuildImageFilesListing(c.rootCmd.Context(), queries, c.rootCmd.cfg.ImageUploadDir, c.path, "", nil, 0)
+	listing, err := adminhandlers.BuildImageFilesListing(c.Context(), queries, c.cfg.ImageUploadDir, c.path, "", nil, 0)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (c *filesPurgeCmd) Run() error {
 		},
 	}
 
-	base := c.rootCmd.cfg.ImageUploadDir
+	base := c.cfg.ImageUploadDir
 	for _, entry := range filtered {
 		result := filesPurgeEntry{
 			Path: entry.Path,

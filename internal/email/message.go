@@ -50,12 +50,12 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]
 		if err != nil {
 			return nil, err
 		}
-		part.Write([]byte(textBody))
+		_, _ = part.Write([]byte(textBody))
 		part, err = w.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/html; charset=utf-8"}})
 		if err != nil {
 			return nil, err
 		}
-		part.Write([]byte(htmlBody))
+		_, _ = part.Write([]byte(htmlBody))
 		if err := w.Close(); err != nil {
 			return nil, err
 		}

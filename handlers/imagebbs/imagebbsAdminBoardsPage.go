@@ -71,7 +71,7 @@ func AdminBoardsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.AllBoards = allBoards
 
-	ImageBBSAdminBoardsPageTmpl.Handle(w, r, data)
+	_ = ImageBBSAdminBoardsPageTmpl.Handle(w, r, data)
 }
 
 const ImageBBSAdminBoardsPageTmpl tasks.Template = "imagebbs/adminBoardsPage.gohtml"

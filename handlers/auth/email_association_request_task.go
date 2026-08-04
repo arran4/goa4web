@@ -51,7 +51,7 @@ func (EmailAssociationRequestTask) Action(w http.ResponseWriter, r *http.Request
 		evt.Data["UserURL"] = cd.AbsoluteURL(fmt.Sprintf("/admin/user/%d", row.Idusers))
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ForgotPasswordRequestSentPageTmpl.Handle(w, r, struct{}{})
+		_ = ForgotPasswordRequestSentPageTmpl.Handle(w, r, struct{}{})
 	})
 }
 

@@ -37,7 +37,7 @@ func parseLinksVerifyCmd(parent *linksCmd, args []string) (*linksVerifyCmd, erro
 }
 
 func (c *linksVerifyCmd) Run() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	key, err := config.LoadOrCreateLinkSignSecret(core.OSFS{}, cfg.LinkSignSecret, cfg.LinkSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)

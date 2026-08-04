@@ -80,7 +80,7 @@ func Fetch(urlStr string, client *http.Client) (*Info, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	return Parse(io.LimitReader(resp.Body, 5*1024*1024))
 }

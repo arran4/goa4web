@@ -49,7 +49,7 @@ func (c *requestsCommentCmd) Run() error {
 	if c.comment == "" {
 		return fmt.Errorf("comment required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

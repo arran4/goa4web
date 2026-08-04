@@ -39,11 +39,11 @@ func (c *dbBackupCmd) Run() error {
 	if c.File == "" {
 		return fmt.Errorf("file required")
 	}
-	cfg := c.rootCmd.cfg
-	c.rootCmd.Verbosef("creating backup using %s", cfg.DBDriver)
-	if err := dbops.BackupDatabase(c.rootCmd.dbReg, cfg, c.File); err != nil {
+	cfg := c.cfg
+	c.Verbosef("creating backup using %s", cfg.DBDriver)
+	if err := dbops.BackupDatabase(c.dbReg, cfg, c.File); err != nil {
 		return err
 	}
-	c.rootCmd.Infof("database backup written to %s", c.File)
+	c.Infof("database backup written to %s", c.File)
 	return nil
 }

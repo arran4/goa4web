@@ -31,7 +31,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	FaqPageTmpl.Handle(w, r, cd)
+	_ = FaqPageTmpl.Handle(w, r, cd)
 }
 
 const FaqPageTmpl tasks.Template = "faq/page.gohtml"

@@ -75,7 +75,7 @@ func (c *notificationsListCmd) Run() error {
 		return fmt.Errorf("offset cannot be negative")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -295,7 +295,7 @@ func (c *notificationsMarkCmd) Run() error {
 		ids = append(ids, int32(id))
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

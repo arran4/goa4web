@@ -95,26 +95,26 @@ func (c *userEmailCmd) runList(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
-	uid, err := resolveUserID(c.rootCmd.Context(), queries, *userID, *username)
+	uid, err := resolveUserID(c.Context(), queries, *userID, *username)
 	if err != nil {
 		return err
 	}
 
 	var emails []*db.UserEmail
 	if *includeUnverified {
-		emails, err = queries.AdminListUserEmails(c.rootCmd.Context(), uid)
+		emails, err = queries.AdminListUserEmails(c.Context(), uid)
 		if err != nil {
 			return fmt.Errorf("list user emails: %w", err)
 		}
 	} else {
-		emails, err = queries.SystemListVerifiedEmailsByUserID(c.rootCmd.Context(), uid)
+		emails, err = queries.SystemListVerifiedEmailsByUserID(c.Context(), uid)
 		if err != nil {
 			return fmt.Errorf("list verified emails: %w", err)
 		}
@@ -164,19 +164,19 @@ func (c *userEmailCmd) runAudit(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
-	uid, err := resolveUserID(c.rootCmd.Context(), queries, *userID, *username)
+	uid, err := resolveUserID(c.Context(), queries, *userID, *username)
 	if err != nil {
 		return err
 	}
 
-	emails, err := queries.AdminListUserEmails(c.rootCmd.Context(), uid)
+	emails, err := queries.AdminListUserEmails(c.Context(), uid)
 	if err != nil {
 		return fmt.Errorf("list user emails: %w", err)
 	}
@@ -190,7 +190,7 @@ func (c *userEmailCmd) runAudit(args []string) error {
 
 	expiryHours := cfg.EmailVerificationExpiryHours
 	filtered := make([]*db.UserEmail, 0, len(emails))
-	applyVerificationFilter := !(*filterVerified && *filterUnverified)
+	applyVerificationFilter := !*filterVerified || !*filterUnverified
 	for _, email := range emails {
 		isVerified := email.VerifiedAt.Valid
 		if applyVerificationFilter {
@@ -303,14 +303,14 @@ func (c *userEmailCmd) runAdd(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
-	uid, err := resolveUserID(c.rootCmd.Context(), queries, *userID, *username)
+	uid, err := resolveUserID(c.Context(), queries, *userID, *username)
 	if err != nil {
 		return err
 	}
@@ -325,7 +325,7 @@ func (c *userEmailCmd) runAdd(args []string) error {
 		return fmt.Errorf("invalid -verified value %q", *verified)
 	}
 
-	if err := queries.AdminAddUserEmail(c.rootCmd.Context(), db.AdminAddUserEmailParams{
+	if err := queries.AdminAddUserEmail(c.Context(), db.AdminAddUserEmailParams{
 		UserID:               uid,
 		Email:                *email,
 		VerifiedAt:           verifiedAt,
@@ -355,14 +355,14 @@ func (c *userEmailCmd) runDelete(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
 	defer d.Close()
 	queries := db.New(d)
 
-	if err := queries.AdminDeleteUserEmail(c.rootCmd.Context(), int32(*id)); err != nil {
+	if err := queries.AdminDeleteUserEmail(c.Context(), int32(*id)); err != nil {
 		return fmt.Errorf("delete email: %w", err)
 	}
 	c.Infof("Email deleted successfully")
@@ -390,14 +390,14 @@ func (c *userEmailCmd) runUpdate(args []string) error {
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
 	defer d.Close()
 	queries := db.New(d)
 
-	current, err := queries.AdminGetUserEmailByID(c.rootCmd.Context(), int32(*id))
+	current, err := queries.AdminGetUserEmailByID(c.Context(), int32(*id))
 	if err != nil {
 		return fmt.Errorf("get email: %w", err)
 	}
@@ -422,7 +422,7 @@ func (c *userEmailCmd) runUpdate(args []string) error {
 		}
 	}
 
-	if err := queries.AdminUpdateUserEmailDetails(c.rootCmd.Context(), db.AdminUpdateUserEmailDetailsParams{
+	if err := queries.AdminUpdateUserEmailDetails(c.Context(), db.AdminUpdateUserEmailDetailsParams{
 		ID:                   int32(*id),
 		Email:                newEmail,
 		VerifiedAt:           newVerified,
@@ -483,19 +483,19 @@ func (c *userEmailCmd) updateEmailVerification(id int32, verifiedAt sql.NullTime
 	if err != nil {
 		return err
 	}
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
 	defer d.Close()
 	queries := db.New(d)
 
-	current, err := queries.AdminGetUserEmailByID(c.rootCmd.Context(), id)
+	current, err := queries.AdminGetUserEmailByID(c.Context(), id)
 	if err != nil {
 		return fmt.Errorf("get email: %w", err)
 	}
 
-	if err := queries.AdminUpdateUserEmailDetails(c.rootCmd.Context(), db.AdminUpdateUserEmailDetailsParams{
+	if err := queries.AdminUpdateUserEmailDetails(c.Context(), db.AdminUpdateUserEmailDetailsParams{
 		ID:                   id,
 		Email:                current.Email,
 		VerifiedAt:           verifiedAt,
@@ -508,5 +508,5 @@ func (c *userEmailCmd) updateEmailVerification(id int32, verifiedAt sql.NullTime
 }
 
 func (c *userEmailCmd) loadConfig() (*config.RuntimeConfig, error) {
-	return c.rootCmd.RuntimeConfig()
+	return c.RuntimeConfig()
 }

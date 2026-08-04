@@ -30,7 +30,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	cat, err := cd.ForumCategory(int32(cid))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 		return
 	}
 	cats, err := cd.ForumCategories()
@@ -47,7 +47,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		Category:   cat,
 		Categories: cats,
 	}
-	ForumAdminCategoryEditPageTmpl.Handle(w, r, data)
+	_ = ForumAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminCategoryEditPageTmpl tasks.Template = "forum/forumAdminCategoryEditPage.gohtml"
@@ -90,7 +90,7 @@ func AdminCategoryEditSubmit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
+			handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 			return
 		}
 		handlers.RedirectSeeOtherWithError(w, r, "", err)

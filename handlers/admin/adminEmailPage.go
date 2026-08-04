@@ -34,7 +34,11 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 		mode = "sent"
 	}
 
-	cd.PageTitle = fmt.Sprintf("Email %s", strings.Title(mode))
+	titleMode := mode
+	if len(mode) > 0 {
+		titleMode = strings.ToUpper(mode[:1]) + mode[1:]
+	}
+	cd.PageTitle = fmt.Sprintf("Email %s", titleMode)
 
 	pageSize := cd.PageSize()
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))

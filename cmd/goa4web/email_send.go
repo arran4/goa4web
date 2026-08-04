@@ -45,7 +45,7 @@ func (c *emailSendCmd) Run() error {
 		return fmt.Errorf("invalid recipient email address: %w", err)
 	}
 
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}

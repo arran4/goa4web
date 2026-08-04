@@ -35,7 +35,7 @@ func (c *userListRolesCmd) FlagGroups() []flagGroup {
 var _ usageData = (*userListRolesCmd)(nil)
 
 func (c *userListRolesCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -32,7 +32,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("AdminTopicPage: Topic %d not found", tid)
 			w.WriteHeader(http.StatusNotFound)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Topic not found"))
+			handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found"))
 			return
 		}
 		log.Printf("AdminTopicPage: Error fetching topic %d: %v", tid, err)
@@ -63,7 +63,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		participants, err = cd.Queries().AdminListPrivateTopicParticipantsByTopicID(r.Context(), sql.NullInt32{Int32: int32(tid), Valid: true})
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error fetching participants"))
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 			return
 		}
 	}
@@ -86,7 +86,7 @@ func AdminTopicPage(w http.ResponseWriter, r *http.Request) {
 		Participants:    participants,
 		Labels:          labels,
 	}
-	ForumAdminTopicPageTmpl.Handle(w, r, data)
+	_ = ForumAdminTopicPageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminTopicPageTmpl tasks.Template = "forum/adminTopicPage.gohtml"
@@ -105,7 +105,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("AdminTopicEditFormPage: Topic %d not found", tid)
 			w.WriteHeader(http.StatusNotFound)
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Topic not found"))
+			handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found"))
 			return
 		}
 		log.Printf("AdminTopicEditFormPage: Error fetching topic %d: %v", tid, err)
@@ -136,7 +136,7 @@ func AdminTopicEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Categories: categories,
 		Roles:      roles,
 	}
-	ForumAdminTopicEditPageTmpl.Handle(w, r, data)
+	_ = ForumAdminTopicEditPageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminTopicEditPageTmpl tasks.Template = "forum/adminTopicEditPage.gohtml"

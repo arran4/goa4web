@@ -78,7 +78,7 @@ func (p Provider) Check(ctx context.Context) error {
 	if err := fs.WriteFile(test, []byte("ok"), 0o644); err != nil {
 		return fmt.Errorf("not writable")
 	}
-	fs.Remove(test)
+	_ = fs.Remove(test)
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (p Provider) Cleanup(ctx context.Context, limit int64) error {
 	var files []fileInfo
 	var total int64
 	fs := p.fs()
-	fs.WalkDir(p.Dir, func(path string, d os.DirEntry, err error) error {
+	_ = fs.WalkDir(p.Dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return nil
 		}

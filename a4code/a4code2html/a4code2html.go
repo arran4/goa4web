@@ -289,9 +289,9 @@ func (a *A4code2html) handleLink(r *bufio.Reader, w io.Writer, wasAtLineStart bo
 			}
 			if consumeImmediate {
 				// Consume ] and potentially \n
-				r.ReadByte() // ]
+				_, _ = r.ReadByte() // ]
 				if isBlock {
-					r.ReadByte() // \n
+					_, _ = r.ReadByte() // \n
 					a.atLineStart = true
 				}
 			} else {
@@ -348,7 +348,7 @@ func (a *A4code2html) handleCode(r *bufio.Reader, w io.Writer, wasAtLineStart bo
 	default:
 		var buf bytes.Buffer
 		if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
-			r.ReadByte() // consume ]
+			_, _ = r.ReadByte() // consume ]
 		} else {
 			if err := a.consumeCodeBlock(r, &buf); err != nil {
 				return err
@@ -661,7 +661,7 @@ func (c *A4code2html) readCommandBreak(r *bufio.Reader) (string, error) {
 			return buf.String(), err
 		}
 	} else {
-		r.UnreadByte()
+		_ = r.UnreadByte()
 	}
 	return buf.String(), nil
 }

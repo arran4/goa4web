@@ -37,13 +37,13 @@ func (c *linksRemapApplyCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	r := csv.NewReader(f)
 	records, err := r.ReadAll()
 	if err != nil {
 		return fmt.Errorf("read csv: %w", err)
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

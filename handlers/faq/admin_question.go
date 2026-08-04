@@ -86,7 +86,7 @@ func AdminQuestionPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = fmt.Sprintf("FAQ: %s", faq.Question.String)
 	data := Data{Faq: faq, Category: category, Author: author, Language: languageName}
-	AdminQuestionPageTmpl.Handle(w, r, data)
+	_ = AdminQuestionPageTmpl.Handle(w, r, data)
 }
 
 func (p *AdminQuestions) Load(ctx context.Context, d db.Querier, r *http.Request) error {

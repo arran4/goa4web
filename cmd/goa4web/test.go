@@ -138,8 +138,8 @@ type testMigrationsApplyCmd struct {
 func parseTestMigrationsApplyCmd(parent *testMigrationsCmd, args []string) (*testMigrationsApplyCmd, error) {
 	c := &testMigrationsApplyCmd{testMigrationsCmd: parent}
 	c.fs = newFlagSet("apply")
-	c.fs.StringVar(&c.DBType, "database-type", parent.rootCmd.cfg.DBDriver, "database driver")
-	c.fs.StringVar(&c.ConnString, "connection-string", parent.rootCmd.cfg.DBConn, "database connection string")
+	c.fs.StringVar(&c.DBType, "database-type", parent.cfg.DBDriver, "database driver")
+	c.fs.StringVar(&c.ConnString, "connection-string", parent.cfg.DBConn, "database connection string")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (c *testMigrationsApplyCmd) Run() error {
 		c.fs.Usage()
 		return fmt.Errorf("missing 'all' subcommand")
 	}
-	connector, err := c.rootCmd.dbReg.Connector(c.DBType, c.ConnString)
+	connector, err := c.dbReg.Connector(c.DBType, c.ConnString)
 	if err != nil {
 		return err
 	}
@@ -167,11 +167,11 @@ func (c *testMigrationsApplyCmd) Run() error {
 	if err := sdb.Ping(); err != nil {
 		return err
 	}
-	c.rootCmd.Verbosef("applying migrations using %s", c.DBType)
+	c.Verbosef("applying migrations using %s", c.DBType)
 	if err := dbstart.Apply(context.Background(), sdb, os.DirFS("migrations"), true, c.DBType); err != nil {
 		return err
 	}
-	c.rootCmd.Infof("migrations applied successfully")
+	c.Infof("migrations applied successfully")
 	return nil
 }
 
@@ -197,8 +197,8 @@ type testMigrationsCleanCmd struct {
 func parseTestMigrationsCleanCmd(parent *testMigrationsCmd, args []string) (*testMigrationsCleanCmd, error) {
 	c := &testMigrationsCleanCmd{testMigrationsCmd: parent}
 	c.fs = newFlagSet("clean")
-	c.fs.StringVar(&c.DBType, "database-type", parent.rootCmd.cfg.DBDriver, "database driver")
-	c.fs.StringVar(&c.ConnString, "connection-string", parent.rootCmd.cfg.DBConn, "database connection string")
+	c.fs.StringVar(&c.DBType, "database-type", parent.cfg.DBDriver, "database driver")
+	c.fs.StringVar(&c.ConnString, "connection-string", parent.cfg.DBConn, "database connection string")
 	c.fs.Usage = c.Usage
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func parseTestMigrationsCleanCmd(parent *testMigrationsCmd, args []string) (*tes
 }
 
 func (c *testMigrationsCleanCmd) Run() error {
-	connector, err := c.rootCmd.dbReg.Connector(c.DBType, c.ConnString)
+	connector, err := c.dbReg.Connector(c.DBType, c.ConnString)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func (c *testMigrationsCleanCmd) Run() error {
 			return err
 		}
 	}
-	c.rootCmd.Infof("database cleaned")
+	c.Infof("database cleaned")
 	return nil
 }
 

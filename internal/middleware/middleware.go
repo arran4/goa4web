@@ -28,7 +28,7 @@ func RequestLoggerMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		if cd != nil && cd.Config != nil && cd.Config.LogFlags&config.LogFlagDebug != 0 {
-			if !(r.URL.Path == "/ws/notifications" && uid == 0) {
+			if r.URL.Path != "/ws/notifications" || uid != 0 {
 				if sessID != "" {
 					log.Printf("%s %s uid=%d session=%s", r.Method, r.URL.Path, uid, sessID)
 				} else {

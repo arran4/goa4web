@@ -31,7 +31,7 @@ func parseUserPasswordClearExpiredCmd(parent *userPasswordCmd, args []string) (*
 }
 
 func (c *userPasswordClearExpiredCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -43,7 +43,7 @@ func (c *userPasswordClearExpiredCmd) Run() error {
 		return fmt.Errorf("clear expired: %w", err)
 	}
 	if rows, err := res.RowsAffected(); err == nil {
-		c.rootCmd.Infof("deleted %d expired password reset requests", rows)
+		c.Infof("deleted %d expired password reset requests", rows)
 	}
 	return nil
 }

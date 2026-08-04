@@ -47,7 +47,7 @@ func (h *ShareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Generated signed URL (Handler): %s", signedURL)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = json.NewEncoder(w).Encode(map[string]string{
 		"signed_url": signedURL,
 	})
 }

@@ -41,11 +41,11 @@ func (c *dlqPurgeCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
-	if err := queries.SystemPurgeDeadLettersBefore(c.rootCmd.Context(), purgeBefore); err != nil {
+	if err := queries.SystemPurgeDeadLettersBefore(c.Context(), purgeBefore); err != nil {
 		return fmt.Errorf("purge dead letters: %w", err)
 	}
 	purgeAt := purgeBefore.Format(time.RFC3339)

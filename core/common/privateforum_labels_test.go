@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -35,7 +36,7 @@ func TestCoreData_PrivateForumTopics_LabelsBug(t *testing.T) {
 
 	// Setup ListContentPublicLabels to return a "Misapplied" label for item="thread" and itemID=1
 	// This ensures we are not calling it or using it.
-	q.AddContentPublicLabel(nil, db.AddContentPublicLabelParams{
+	_ = q.AddContentPublicLabel(context.TODO(), db.AddContentPublicLabelParams{
 		Item:   "thread",
 		ItemID: 1,
 		Label:  "Misapplied",

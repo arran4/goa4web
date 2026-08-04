@@ -429,7 +429,7 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, config.Thum
 	return originalID, size, intimages.ValidID(originalID)
 }
 
-func serveMissingImage(w http.ResponseWriter, r *http.Request, cfg *config.RuntimeConfig) {
+func ServeMissingImage(w http.ResponseWriter, r *http.Request, cfg *config.RuntimeConfig) {
 	var opts []templates.Option
 	if cfg != nil && cfg.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cfg.TemplatesDir))

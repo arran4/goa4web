@@ -42,7 +42,7 @@ func (c *permUpdateCmd) Run() error {
 	if c.ID == 0 || c.Role == "" {
 		return fmt.Errorf("id and role required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

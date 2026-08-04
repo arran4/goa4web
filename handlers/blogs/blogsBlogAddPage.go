@@ -130,7 +130,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	BlogsBlogAddPageTmpl.Handle(w, r, data)
+	_ = BlogsBlogAddPageTmpl.Handle(w, r, data)
 }
 
 const BlogsBlogAddPageTmpl tasks.Template = "blogs/blogAddPage.gohtml"

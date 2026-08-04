@@ -49,7 +49,7 @@ func ArticlePage(w http.ResponseWriter, r *http.Request) {
 	}
 	if writing == nil {
 		log.Printf("get writing: no writing found")
-		handlers.RenderErrorPage(w, r, fmt.Errorf("No writing found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("no writing found"))
 		return
 	}
 

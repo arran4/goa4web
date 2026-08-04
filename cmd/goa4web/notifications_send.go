@@ -53,7 +53,7 @@ func (c *notificationsSendCmd) FlagGroups() []flagGroup {
 var _ usageData = (*notificationsSendCmd)(nil)
 
 func (c *notificationsSendCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

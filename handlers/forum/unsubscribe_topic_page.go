@@ -33,5 +33,5 @@ func UnsubscribeTopicPage(w http.ResponseWriter, r *http.Request) {
 		Method:  http.MethodPost,
 		Values:  url.Values{},
 	}
-	RedirectBackPageTmpl.Handle(w, r, data)
+	_ = RedirectBackPageTmpl.Handle(w, r, data)
 }

@@ -44,7 +44,7 @@ func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		rdh := handlers.RefreshDirectHandler{TargetURL: targetURL}
 		cd.AutoRefresh = rdh.Content()
-		TaskDoneAutoRefreshPageTmpl.Handle(w, r, rdh)
+		_ = TaskDoneAutoRefreshPageTmpl.Handle(w, r, rdh)
 		return
 	}
 
@@ -88,7 +88,7 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 		Method:  r.FormValue("method"),
 		Data:    r.FormValue("data"),
 	}
-	LoginPageTmpl.Handle(w, r, data)
+	_ = LoginPageTmpl.Handle(w, r, data)
 }
 
 const LoginPageTmpl tasks.Template = "loginPage.gohtml"

@@ -29,7 +29,7 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		Categories []*db.Forumcategory
 	}{Categories: cats}
 	cd.PageTitle = "Create Forum Category"
-	ForumAdminCategoryCreatePageTmpl.Handle(w, r, data)
+	_ = ForumAdminCategoryCreatePageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminCategoryCreatePageTmpl tasks.Template = "forum/forumAdminCategoryCreatePage.gohtml"

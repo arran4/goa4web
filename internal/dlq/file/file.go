@@ -38,7 +38,7 @@ func (osAppender) Append(name string, data []byte) error {
 	if err != nil {
 		return err
 	}
-	defer fh.Close()
+	defer func() { _ = fh.Close() }()
 	_, err = fh.Write(data)
 	return err
 }
@@ -108,7 +108,7 @@ func List(path string, limit int) ([]Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer fh.Close()
+	defer func() { _ = fh.Close() }()
 	var recs []Record
 
 	scanner := bufio.NewScanner(fh)

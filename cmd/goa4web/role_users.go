@@ -29,7 +29,7 @@ func parseRoleUsersCmd(parent *roleCmd, args []string) (*roleUsersCmd, error) {
 }
 
 func (c *roleUsersCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

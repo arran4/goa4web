@@ -47,7 +47,7 @@ func (c *userRejectCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -60,7 +60,7 @@ func (c *userRejectCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	c.rootCmd.Verbosef("rejecting user %d", c.ID)
+	c.Verbosef("rejecting user %d", c.ID)
 	if err := queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{UsersIdusers: int32(c.ID), Name: "rejected"}); err != nil {
 		return fmt.Errorf("add role: %w", err)
 	}
@@ -69,6 +69,6 @@ func (c *userRejectCmd) Run() error {
 			log.Printf("insert admin user comment: %v", err)
 		}
 	}
-	c.rootCmd.Infof("rejected user %d", c.ID)
+	c.Infof("rejected user %d", c.ID)
 	return nil
 }

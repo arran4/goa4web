@@ -206,14 +206,7 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 			continue
 		}
 
-		// Subscription check
-		if uid != nil {
-			// Check if subscribed. Note: notifyAdmins logic implies "if et != nil" try to send email.
-			// If we enforce subscriptions, we check emailSubs for email, internalSubs for internal.
-			// But for legacy compatibility with env var admins (uid == nil), we might default to send?
-			// If uid == nil, we can't check DB. So we assume yes?
-			// The original code iterated adminEmails which includes env vars.
-		}
+		// Subscription check - for legacy compatibility with env var admins (uid == nil), we default to send.
 
 		shouldSendEmail := true
 		shouldSendInternal := true

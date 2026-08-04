@@ -61,20 +61,6 @@ func parseRequestsListCmd(parent *requestsCmd, args []string) (*requestsListCmd,
 	return c, nil
 }
 
-// requestListItem is a JSON representation of a request queue entry.
-type requestListItem struct {
-	ID             int32   `json:"id"`
-	UserID         int32   `json:"user_id"`
-	ChangeTable    string  `json:"change_table"`
-	ChangeField    string  `json:"change_field"`
-	ChangeRowID    int32   `json:"change_row_id"`
-	ChangeValue    *string `json:"change_value"`
-	ContactOptions *string `json:"contact_options"`
-	Status         string  `json:"status"`
-	CreatedAt      string  `json:"created_at"`
-	ActedAt        *string `json:"acted_at"`
-}
-
 type requestsListOutput struct {
 	Status    string        `json:"status"`
 	Offset    int           `json:"offset"`
@@ -96,7 +82,7 @@ func (c *requestsListCmd) FlagGroups() []flagGroup {
 var _ usageData = (*requestsListCmd)(nil)
 
 func (c *requestsListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -136,7 +122,7 @@ func (c *requestsListCmd) Run() error {
 	// Determine page size
 	pageSize := c.pageSize
 	if pageSize <= 0 {
-		cfg, cfgErr := c.rootCmd.RuntimeConfig()
+		cfg, cfgErr := c.RuntimeConfig()
 		if cfgErr == nil {
 			pageSize = min(max(cfg.PageSizeDefault, cfg.PageSizeMin), cfg.PageSizeMax)
 		} else {
@@ -251,10 +237,4 @@ func reqNullStringValue(ns sql.NullString) string {
 	return ns.String
 }
 
-func reqNullStringPtr(ns sql.NullString) *string {
-	if !ns.Valid {
-		return nil
-	}
-	value := ns.String
-	return &value
-}
+

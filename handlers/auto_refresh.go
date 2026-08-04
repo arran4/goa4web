@@ -13,5 +13,5 @@ func TaskDoneAutoRefreshPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Done"
 	cd.AutoRefresh = "1"
-	TaskDoneAutoRefreshPageTmpl.Handle(w, r, data)
+	_ = TaskDoneAutoRefreshPageTmpl.Handle(w, r, data)
 }

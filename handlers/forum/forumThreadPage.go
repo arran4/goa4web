@@ -198,7 +198,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
 
-	ForumThreadPageTmpl.Handle(w, r, data)
+	_ = ForumThreadPageTmpl.Handle(w, r, data)
 }
 
 const ForumThreadPageTmpl tasks.Template = "forum/threadPage.gohtml"

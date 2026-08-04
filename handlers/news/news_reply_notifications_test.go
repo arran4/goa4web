@@ -205,7 +205,7 @@ func TestNewsReply(t *testing.T) {
 		rr := httptest.NewRecorder()
 		replyTask.Action(rr, req)
 
-		bus.Publish(*evt)
+		_ = bus.Publish(*evt)
 
 		if cdlq.lastError != "" {
 			t.Errorf("sync process error: %s", cdlq.lastError)
@@ -245,9 +245,10 @@ func TestNewsReply(t *testing.T) {
 				t.Fatalf("parse email %d: %v", i, err)
 			}
 			to := mockProvider.recipients[i].Address
-			if to == "subscriber@example.com" {
+			switch to {
+			case "subscriber@example.com":
 				subscriberEmail = msg
-			} else if to == "admin@example.com" {
+			case "admin@example.com":
 				adminEmail = msg
 			}
 		}

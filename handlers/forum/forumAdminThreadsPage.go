@@ -20,7 +20,7 @@ func AdminThreadsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum Admin Threads"
 
-	ForumAdminThreadsPageTmpl.Handle(w, r, struct{}{})
+	_ = ForumAdminThreadsPageTmpl.Handle(w, r, struct{}{})
 }
 
 const ForumAdminThreadsPageTmpl tasks.Template = "forum/adminThreadsPage.gohtml"
@@ -61,7 +61,7 @@ func AdminThreadDeleteConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm delete",
 		Back:         "/admin/forum/thread/" + strconv.Itoa(threadID),
 	}
-	ConfirmPageTmpl.Handle(w, r, data)
+	_ = ConfirmPageTmpl.Handle(w, r, data)
 }
 
 const ConfirmPageTmpl tasks.Template = "confirmPage.gohtml"
@@ -97,7 +97,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		Thread: threadRow,
 	}
 
-	ForumAdminThreadPageTmpl.Handle(w, r, data)
+	_ = ForumAdminThreadPageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminThreadPageTmpl tasks.Template = "forum/adminThreadPage.gohtml"

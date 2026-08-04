@@ -20,7 +20,7 @@ func StartGroupDiscussionPage(w http.ResponseWriter, r *http.Request) {
 		CreateTask tasks.TaskString
 		FormData   *forumhandlers.CreateTopicPageForm
 	}{CreateTask: TaskPrivateTopicCreate, FormData: &forumhandlers.CreateTopicPageForm{}}
-	PrivateForumStartDiscussionPageTmpl.Handle(w, r, data)
+	_ = PrivateForumStartDiscussionPageTmpl.Handle(w, r, data)
 }
 
 const PrivateForumStartDiscussionPageTmpl tasks.Template = "privateforum/start_discussion.gohtml"

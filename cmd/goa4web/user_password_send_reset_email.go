@@ -29,16 +29,16 @@ func parseUserPasswordSendResetEmailCmd(parent *userCmd, args []string) (*userPa
 }
 
 func (c *userPasswordSendResetEmailCmd) Run() error {
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 
-	d, err := c.rootCmd.DB()
+	d, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}
 	defer d.Close()
 
 	queries := db.New(d)
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 
 	signedURL, uName, uid, err := getResetURL(ctx, queries, cfg, c.userID, c.username)
 	if err != nil {
@@ -55,7 +55,7 @@ func (c *userPasswordSendResetEmailCmd) Run() error {
 
 	body := fmt.Sprintf("Hi %s,\n\nYou requested a password reset. Click the link below to set a new password:\n\n%s\n\nThis link is valid for 24 hours.", uName, signedURL)
 
-	p, err := c.rootCmd.emailReg.ProviderFromConfig(cfg)
+	p, err := c.emailReg.ProviderFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("get email provider: %w", err)
 	}

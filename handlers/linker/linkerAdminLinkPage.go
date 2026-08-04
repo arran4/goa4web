@@ -39,7 +39,7 @@ func adminLinkPage(w http.ResponseWriter, r *http.Request) {
 		SelectedLanguageId: int(link.LanguageID.Int32),
 	}
 
-	LinkerAdminLinkPageTmpl.Handle(w, r, data)
+	_ = LinkerAdminLinkPageTmpl.Handle(w, r, data)
 }
 
 const LinkerAdminLinkPageTmpl tasks.Template = "linker/adminLinkPage.gohtml"

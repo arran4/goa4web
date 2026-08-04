@@ -61,7 +61,7 @@ func (c *serverStatsCmd) Run() error {
 		return fmt.Errorf("start time is after end time")
 	}
 
-	data := stats.BuildServerStatsData(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.tasksReg, c.rootCmd.dbReg, c.rootCmd.dlqReg, c.rootCmd.emailReg, c.rootCmd.routerReg.Names())
+	data := stats.BuildServerStatsData(c.cfg, c.ConfigFile, c.tasksReg, c.dbReg, c.dlqReg, c.emailReg, c.routerReg.Names())
 	uptime := data.Uptime.String()
 	if stats.StartTime.IsZero() {
 		uptime = "unknown"
@@ -136,7 +136,7 @@ func renderServerStatsTable(data stats.ServerStatsData, uptime string, startAt *
 
 	if data.ConfigEnv != "" {
 		fmt.Fprintln(os.Stdout, "\nConfig (env):")
-		fmt.Fprint(os.Stdout, data.ConfigEnv)
+		_, _ = fmt.Fprint(os.Stdout, data.ConfigEnv)
 	}
 	if data.ConfigJSON != "" {
 		fmt.Fprintln(os.Stdout, "\nConfig (json):")

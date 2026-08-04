@@ -109,7 +109,7 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
+	_ = ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
 }
 
 const ImageBBSBoardThreadPageTmpl tasks.Template = "imagebbs/boardThreadPage.gohtml"
@@ -150,7 +150,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	var pthid int32 = post.ForumthreadID
+	var pthid = post.ForumthreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: ImageBBSTopicName,
 		Valid:  true,

@@ -3,7 +3,6 @@ package dbstart
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"github.com/arran4/goa4web/migrations"
 	"io/fs"
@@ -25,7 +24,7 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 	if err != nil {
 		return err
 	}
-	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
+	var connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	sdb := sql.OpenDB(connector)
 	defer func(sdb *sql.DB) {
 		err := sdb.Close()

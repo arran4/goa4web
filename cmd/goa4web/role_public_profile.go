@@ -114,14 +114,14 @@ func parseRolePublicProfileSetCmd(parent *rolePublicProfileCmd, args []string) (
 }
 
 func (c *rolePublicProfileSetCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	role, err := q.GetRoleByName(ctx, c.role)
 	if err != nil {

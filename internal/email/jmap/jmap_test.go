@@ -73,7 +73,8 @@ func TestGetJMAPDiscoveryEndpoint(t *testing.T) {
 func TestResolveJMAPSettings(t *testing.T) {
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/jmap" {
+		switch r.URL.Path {
+		case "/.well-known/jmap":
 			session := &SessionResponse{
 				APIURL: fmt.Sprintf("%s/jmap", server.URL),
 				PrimaryAccounts: map[string]string{
@@ -83,8 +84,8 @@ func TestResolveJMAPSettings(t *testing.T) {
 					mailCapabilityURN: "id1",
 				},
 			}
-			json.NewEncoder(w).Encode(session)
-		} else if r.URL.Path == "/jmap" {
+			_ = json.NewEncoder(w).Encode(session)
+		case "/jmap":
 			// Mock Identity/get if needed, but session provides it here so it shouldn't be called for identity
 			http.Error(w, "Not Expecting API Call", http.StatusBadRequest)
 		}
@@ -133,15 +134,16 @@ func TestResolveJMAPSettings(t *testing.T) {
 func TestProviderFromConfig(t *testing.T) {
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/.well-known/jmap" {
+		switch r.URL.Path {
+		case "/.well-known/jmap":
 			session := &SessionResponse{
 				APIURL: fmt.Sprintf("%s/jmap", server.URL),
 				PrimaryAccounts: map[string]string{
 					mailCapabilityURN: "acc1",
 				},
 			}
-			json.NewEncoder(w).Encode(session)
-		} else if r.URL.Path == "/jmap" {
+			_ = json.NewEncoder(w).Encode(session)
+		case "/jmap":
 			var req map[string]any
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -178,7 +180,7 @@ func TestProviderFromConfig(t *testing.T) {
 						},
 					},
 				}
-				json.NewEncoder(w).Encode(resp)
+				_ = json.NewEncoder(w).Encode(resp)
 			}
 		}
 	}))

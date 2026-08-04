@@ -210,18 +210,18 @@ func (c *roleTemplateSetupCmd) Run() error {
 		return fmt.Errorf("template %q not found", c.name)
 	}
 
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 	tx, err := sdb.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	q := db.New(tx)
 
@@ -324,14 +324,14 @@ func (c *roleTemplateDiffCmd) Run() error {
 		return fmt.Errorf("template %q not found", c.name)
 	}
 
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	fmt.Printf("Diff for template %q:\n", sc.Name)
 

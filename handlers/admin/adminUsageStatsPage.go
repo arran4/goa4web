@@ -9,7 +9,6 @@ import (
 	"github.com/arran4/goa4web/internal/stats"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -19,11 +18,6 @@ const (
 )
 
 func AdminUsageStatsPage(w http.ResponseWriter, r *http.Request) {
-	type UserMonthlyUsageDisplay struct {
-		*db.UserMonthlyUsageRow
-		RowSpan int
-	}
-
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Usage Stats"
 	queries := cd.Queries()

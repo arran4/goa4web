@@ -103,9 +103,9 @@ func assertAllRefsSatisfiedGeneric[T any](
 	})
 
 	var msg strings.Builder
-	msg.WriteString("unresolved template references:\n")
+	fmt.Fprintf(&msg, "unresolved template references:\n")
 	for _, m := range missing {
-		msg.WriteString(fmt.Sprintf("  %q references missing %q\n", m.From, m.Ref))
+		fmt.Fprintf(&msg, "  %q references missing %q\n", m.From, m.Ref)
 	}
 	t.Fatal(msg.String())
 }

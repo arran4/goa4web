@@ -115,7 +115,7 @@ type deletedItem struct {
 }
 
 func (c *privateForumCleanEmptyCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -262,7 +262,7 @@ func parsePrivateForumCleanEmptyThreadsCmd(parent *privateForumCmd, args []strin
 }
 
 func (c *privateForumCleanEmptyThreadsCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

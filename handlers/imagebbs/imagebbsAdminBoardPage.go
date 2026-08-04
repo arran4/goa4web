@@ -129,7 +129,7 @@ func AdminBoardPage(w http.ResponseWriter, r *http.Request) {
 
 	data := Data{Board: board, Boards: boards}
 
-	ImageBBSAdminBoardPageTmpl.Handle(w, r, data)
+	_ = ImageBBSAdminBoardPageTmpl.Handle(w, r, data)
 }
 
 const ImageBBSAdminBoardPageTmpl tasks.Template = "imagebbs/adminBoardPage.gohtml"

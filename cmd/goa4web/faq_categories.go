@@ -105,7 +105,7 @@ func (c *faqCategoryCreateCmd) Run() error {
 	}
 	name := strings.Join(args, " ")
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func parseFaqCategoryListCmd(parent *faqCategoryCmd, args []string) (*faqCategor
 }
 
 func (c *faqCategoryListCmd) Run() error {
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func (c *faqCategoryUpdateCmd) Run() error {
 	}
 	id := int32(idVal)
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -333,7 +333,7 @@ func (c *faqCategoryDeleteCmd) Run() error {
 	}
 	id := int32(idVal)
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -362,14 +362,14 @@ func (c *faqCategoryDeleteCmd) Run() error {
 
 	if qCount.Questioncount > 0 || hasChildren {
 		if c.migrateTo == 0 {
-			return fmt.Errorf("category is not empty (has %d questions or subcategories). use -migrate-to <id> to move content.", qCount.Questioncount)
+			return fmt.Errorf("category is not empty (has %d questions or subcategories), use -migrate-to <id> to move content", qCount.Questioncount)
 		}
 		// Migrate
 		fmt.Printf("Migrating content to Category %d...\n", c.migrateTo)
 		targetID := sql.NullInt32{}
 		if c.migrateTo > 0 {
 			targetID = sql.NullInt32{Int32: int32(c.migrateTo), Valid: true}
-		} else {
+		}
 			// migrate to root? or literally ID 0?
 			// The flag description implies ID.
 			// If user passes -migrate-to 0, it means error if not empty.
@@ -382,7 +382,6 @@ func (c *faqCategoryDeleteCmd) Run() error {
 			// `faq` table `category_id` is nullable.
 			// So `migrate-to -1` could mean make content uncategorized (root)?
 			// I'll support `migrate-to` as ID.
-		}
 
 		// Move content
 		// AdminMoveFAQContent: UPDATE faq SET category_id = new WHERE category_id = old

@@ -47,5 +47,5 @@ func (c *userAddAdminCmd) Run() error {
 			return fmt.Errorf("prompt password: %w", err)
 		}
 	}
-	return createUser(c.userCmd.rootCmd, c.Username, c.Email, pw, true)
+	return createUser(c.rootCmd, c.Username, c.Email, pw, true)
 }

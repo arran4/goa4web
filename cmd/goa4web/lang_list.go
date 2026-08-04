@@ -26,7 +26,7 @@ func parseLangListCmd(parent *langCmd, args []string) (*langListCmd, error) {
 }
 
 func (c *langListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

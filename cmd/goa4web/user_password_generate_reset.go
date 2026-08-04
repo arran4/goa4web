@@ -28,16 +28,16 @@ func parseUserPasswordGenerateResetCmd(parent *userCmd, args []string) (*userPas
 }
 
 func (c *userPasswordGenerateResetCmd) Run() error {
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 
-	d, err := c.rootCmd.DB()
+	d, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}
 	defer d.Close()
 
 	queries := db.New(d)
-	return generatePasswordReset(ctx, queries, c.rootCmd.cfg, c.userID, c.username)
+	return generatePasswordReset(ctx, queries, c.cfg, c.userID, c.username)
 }
 
 // Usage prints command usage information with examples.

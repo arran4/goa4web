@@ -59,5 +59,5 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		Type:        "website",
 	}
 
-	NewsPageTmpl.Handle(w, r, struct{}{})
+	_ = NewsPageTmpl.Handle(w, r, struct{}{})
 }

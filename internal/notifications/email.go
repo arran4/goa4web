@@ -15,7 +15,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 )
 
-func (n *Notifier) createEmailTemplateAndQueue(ctx context.Context, userID *int32, emailAddr, page, action string, item any) error {
+func (n *Notifier) CreateEmailTemplateAndQueue(ctx context.Context, userID *int32, emailAddr, page, action string, item any) error {
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}

@@ -30,7 +30,7 @@ func parseEmailTestCmd(parent *emailCmd, args []string) (*emailTestCmd, error) {
 }
 
 func (c *emailTestCmd) Run() error {
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}

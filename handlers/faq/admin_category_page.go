@@ -67,7 +67,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		ItemID:  sql.NullInt32{Int32: int32(id), Valid: true},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -80,7 +80,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "FAQ Category: " + cat.Name.String
 
 	data := Data{Category: cat, Latest: latest, Templates: templates, Grants: grants, Roles: roles}
-	FaqAdminCategoryPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
 const FaqAdminCategoryPageTmpl tasks.Template = "faq/faqAdminCategoryPage.gohtml"
@@ -121,7 +121,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "Edit FAQ Category"
 	data := Data{Category: cat, Categories: cats}
-	FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
 const FaqAdminCategoryEditPageTmpl tasks.Template = "faq/faqAdminCategoryEditPage.gohtml"
@@ -162,7 +162,7 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "FAQ Category Questions"
 	data := Data{Category: cat, Questions: questions}
-	FaqAdminCategoryQuestionsPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoryQuestionsPageTmpl.Handle(w, r, data)
 }
 
 const FaqAdminCategoryQuestionsPageTmpl tasks.Template = "faq/faqAdminCategoryQuestionsPage.gohtml"
@@ -171,7 +171,7 @@ const FaqAdminCategoryQuestionsPageTmpl tasks.Template = "faq/faqAdminCategoryQu
 func AdminNewCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "New FAQ Category"
-	FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
+	_ = FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
 }
 
 const FaqAdminNewCategoryPageTmpl tasks.Template = "faq/faqAdminNewCategoryPage.gohtml"

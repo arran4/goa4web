@@ -43,7 +43,7 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 		Method: r.FormValue("method"),
 		Data:   r.FormValue("data"),
 	}
-	RegisterPageTmpl.Handle(w, r, data)
+	_ = RegisterPageTmpl.Handle(w, r, data)
 }
 
 const RegisterPageTmpl tasks.Template = "registerPage.gohtml"

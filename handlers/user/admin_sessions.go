@@ -10,7 +10,7 @@ import (
 )
 
 func adminSessionsPage(w http.ResponseWriter, r *http.Request) {
-	AdminSessionsPage.Handle(w, r, struct{}{})
+	_ = AdminSessionsPage.Handle(w, r, struct{}{})
 }
 
 const AdminSessionsPage tasks.Template = "admin/sessionsPage.gohtml"
@@ -33,5 +33,5 @@ func adminSessionsDeletePage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, err.Error())
 		}
 	}
-	AdminRunTaskPage.Handle(w, r, data)
+	_ = AdminRunTaskPage.Handle(w, r, data)
 }

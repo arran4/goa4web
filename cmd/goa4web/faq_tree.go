@@ -26,7 +26,7 @@ func parseFaqTreeCmd(parent *faqCmd, args []string) (*faqTreeCmd, error) {
 }
 
 func (c *faqTreeCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

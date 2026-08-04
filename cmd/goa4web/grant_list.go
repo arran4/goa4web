@@ -42,7 +42,7 @@ func parseGrantListCmd(parent *grantCmd, args []string) (*grantListCmd, error) {
 }
 
 func (c *grantListCmd) Run() error {
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}

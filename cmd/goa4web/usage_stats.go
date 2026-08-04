@@ -225,17 +225,17 @@ func (c *usageStatsCmd) Run() error {
 		return fmt.Errorf("since is after until")
 	}
 
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return fmt.Errorf("runtime config: %w", err)
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	queries := db.New(conn)
 	data := usageStatsData{}
-	ctx, cancel := context.WithTimeout(c.rootCmd.Context(), usageStatsTimeout)
+	ctx, cancel := context.WithTimeout(c.Context(), usageStatsTimeout)
 	defer cancel()
 
 	addErr := func(name string, err error) {

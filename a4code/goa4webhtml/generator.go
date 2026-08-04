@@ -59,7 +59,7 @@ func NewGenerator(opts ...any) *Generator {
 	g := &Generator{
 		Generator: html.NewGenerator(),
 	}
-	g.Generator.Self = g // Set Self reference for recursion to use overrides
+	g.Self = g // Set Self reference for recursion to use overrides
 	for _, opt := range opts {
 		switch v := opt.(type) {
 		case Option:
@@ -149,7 +149,7 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 		FullImageMapper: g.FullImageMapper,
 		UserColorMapper: g.UserColorMapper,
 	}
-	childGen.Generator.Self = childGen
+	childGen.Self = childGen
 
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {

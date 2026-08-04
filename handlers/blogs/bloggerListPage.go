@@ -97,7 +97,7 @@ func BloggerListPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	BloggerListPageTmpl.Handle(w, r, data)
+	_ = BloggerListPageTmpl.Handle(w, r, data)
 }
 
 const BloggerListPageTmpl tasks.Template = "blogs/bloggerListPage.gohtml"

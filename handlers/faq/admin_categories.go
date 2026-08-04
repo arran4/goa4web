@@ -35,7 +35,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	FaqAdminCategoriesPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoriesPageTmpl.Handle(w, r, data)
 }
 
 const FaqAdminCategoriesPageTmpl tasks.Template = "faq/faqAdminCategoriesPage.gohtml"

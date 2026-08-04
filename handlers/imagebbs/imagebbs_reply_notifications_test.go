@@ -190,7 +190,7 @@ func TestHappyPathImageBbsReply(t *testing.T) {
 	})
 
 	t.Run("Event Bus Verification", func(t *testing.T) {
-		bus.Publish(*evt)
+		_ = bus.Publish(*evt)
 
 		if cdlq.lastError != "" {
 			t.Errorf("sync process error: %s", cdlq.lastError)

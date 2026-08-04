@@ -108,11 +108,11 @@ func (c *imagebbsModerationApproveCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	actionErr := q.AdminApproveImagePost(ctx, int32(c.ID))
 	result := imagebbsModerationResult{ID: int32(c.ID), Action: "approve", Status: "approved", Err: actionErr}
 	if actionErr != nil {
@@ -173,11 +173,11 @@ func (c *imagebbsModerationRejectCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	actionErr := q.AdminDeleteImagePost(ctx, int32(c.ID))
 	result := imagebbsModerationResult{ID: int32(c.ID), Action: "reject", Status: "rejected", Err: actionErr}
 	if actionErr != nil {
@@ -232,11 +232,11 @@ func (c *imagebbsModerationBulkApproveCmd) Run() error {
 	if len(ids) == 0 {
 		return fmt.Errorf("at least one id required")
 	}
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	results := make([]imagebbsModerationResult, 0, len(ids))
 	failed := 0
 	for _, id := range ids {

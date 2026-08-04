@@ -27,15 +27,15 @@ func parseConfigReloadCmd(parent *configCmd, args []string) (*configReloadCmd, e
 }
 
 func (c *configReloadCmd) Run() error {
-	cfgMap, err := config.LoadAppConfigFile(core.OSFS{}, c.rootCmd.ConfigFile)
+	cfgMap, err := config.LoadAppConfigFile(core.OSFS{}, c.ConfigFile)
 	if err != nil && !errors.Is(err, config.ErrConfigFileNotFound) {
 		return fmt.Errorf("load config file: %w", err)
 	}
-	c.rootCmd.Verbosef("reloading configuration")
-	c.rootCmd.adminHandlers.Srv.Config = config.NewRuntimeConfig(
+	c.Verbosef("reloading configuration")
+	c.adminHandlers.Srv.Config = config.NewRuntimeConfig(
 		config.WithFileValues(cfgMap),
 		config.WithGetenv(os.Getenv),
 	)
-	c.rootCmd.Infof("configuration reloaded")
+	c.Infof("configuration reloaded")
 	return nil
 }

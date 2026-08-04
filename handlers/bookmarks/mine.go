@@ -27,7 +27,7 @@ func MinePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	MinePageTmpl.Handle(w, r, struct {
+	_ = MinePageTmpl.Handle(w, r, struct {
 		Columns []*Column
 	}{cols})
 }

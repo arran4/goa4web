@@ -23,5 +23,5 @@ func NewsCreatePageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	NewsCreatePageTmpl.Handle(w, r, nil)
+	_ = NewsCreatePageTmpl.Handle(w, r, nil)
 }

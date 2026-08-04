@@ -25,7 +25,7 @@ func parseLinksListCmd(parent *linksCmd, args []string) (*linksListCmd, error) {
 }
 
 func (c *linksListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

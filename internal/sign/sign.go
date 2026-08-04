@@ -73,20 +73,20 @@ func Sign(data string, key string, opts ...SignOption) string {
 	mac := hmac.New(sha256.New, []byte(key))
 
 	if hostname != "" {
-		io.WriteString(mac, hostname)
-		io.WriteString(mac, ":")
+		_, _ = io.WriteString(mac, hostname)
+		_, _ = io.WriteString(mac, ":")
 	}
 
-	io.WriteString(mac, data)
+	_, _ = io.WriteString(mac, data)
 
 	if nonce != "" {
-		io.WriteString(mac, ":"+nonce)
+		_, _ = io.WriteString(mac, ":"+nonce)
 	} else if !expiry.IsZero() {
-		io.WriteString(mac, ":"+strconv.FormatInt(expiry.Unix(), 10))
+		_, _ = io.WriteString(mac, ":"+strconv.FormatInt(expiry.Unix(), 10))
 	}
 
 	if !absExpiry.IsZero() {
-		io.WriteString(mac, ":ets:"+strconv.FormatInt(absExpiry.Unix(), 10))
+		_, _ = io.WriteString(mac, ":ets:"+strconv.FormatInt(absExpiry.Unix(), 10))
 	}
 
 	if !issuedAt.IsZero() {

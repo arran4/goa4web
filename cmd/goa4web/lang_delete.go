@@ -37,7 +37,7 @@ func (c *langDeleteCmd) Run() error {
 	if !c.Confirm {
 		return fmt.Errorf("confirm deletion with -confirm")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -49,10 +49,10 @@ func (c *langDeleteCmd) Run() error {
 		return fmt.Errorf("delete language: %w", err)
 	}
 	if name == "" {
-		c.rootCmd.Infof("deleted language %d", id)
+		c.Infof("deleted language %d", id)
 		return nil
 	}
-	c.rootCmd.Infof("deleted language %s (%d)", name, id)
+	c.Infof("deleted language %s (%d)", name, id)
 	return nil
 }
 

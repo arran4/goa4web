@@ -115,7 +115,7 @@ func TestUserSubscriptionsPage_AdminOptionsVisibility(t *testing.T) {
 
 				// Ensure Groups (regular) does NOT have admin ops
 				for _, g := range dataStruct.Groups {
-					if g.Definition.IsAdminOnly {
+					if g.IsAdminOnly {
 						t.Errorf("Found admin subscription %s in regular Groups", g.Name)
 					}
 				}

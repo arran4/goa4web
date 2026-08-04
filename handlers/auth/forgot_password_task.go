@@ -155,7 +155,7 @@ func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
-	ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
+	_ = ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
 }
 
 // RequiredTemplates declares templates used by ForgotPasswordTask.

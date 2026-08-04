@@ -34,7 +34,7 @@ func (c *userCommentsListCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

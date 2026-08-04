@@ -13,7 +13,7 @@ func TestCommentEditURLsPrivateForum(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -38,7 +38,7 @@ func TestCommentEditURLsAdminMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)
@@ -63,7 +63,7 @@ func TestCommentEditSaveURLPrivateForumFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	queries := db.New(conn)
 	cd := common.NewTestCoreData(t, queries)

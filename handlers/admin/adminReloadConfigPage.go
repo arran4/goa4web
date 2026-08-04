@@ -17,12 +17,12 @@ import (
 )
 
 func (h *Handlers) AdminReloadConfigPage(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Reload Config"
+	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd == nil || !cd.HasAdminRole() {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}
+	cd.PageTitle = "Reload Config"
 
 	data := struct {
 		Errors   []string

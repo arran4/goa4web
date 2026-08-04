@@ -33,7 +33,7 @@ func (c *langUpdateCmd) Run() error {
 	if c.ID == 0 || c.Name == "" {
 		return fmt.Errorf("id and name required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

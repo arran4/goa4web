@@ -134,7 +134,7 @@ func adminSearchWordListPage(w http.ResponseWriter, r *http.Request) {
 		ParamName:   "page",
 	}
 
-	AdminSearchWordListPageTmpl.Handle(w, r, data)
+	_ = AdminSearchWordListPageTmpl.Handle(w, r, data)
 }
 
 const AdminSearchWordListPageTmpl tasks.Template = "admin/searchWordListPage.gohtml"

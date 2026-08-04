@@ -82,7 +82,7 @@ func userLangPage(w http.ResponseWriter, r *http.Request) {
 		DefaultIsMultilingual: defaultIsMulti,
 	}
 
-	UserLangPage.Handle(w, r, data)
+	_ = UserLangPage.Handle(w, r, data)
 }
 
 const UserLangPage tasks.Template = "user/langPage.gohtml"

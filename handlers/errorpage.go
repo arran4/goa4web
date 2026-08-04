@@ -79,7 +79,7 @@ func RenderErrorPage(w http.ResponseWriter, r *http.Request, err error) {
 
 	if err := cd.ExecuteSiteTemplate(w, r, string(templateName), data); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Internal Server Error")
+		_, _ = fmt.Fprint(w, "Internal Server Error")
 	}
 	if contentType != "" {
 		w.Header().Set("Content-Type", contentType)

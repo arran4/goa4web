@@ -47,7 +47,7 @@ func (c *userRolesCmd) Run() error {
 }
 
 func (c *userRolesCmd) runList() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -107,7 +107,7 @@ func (c *userRolesSyncCmd) Run() error {
 		return fmt.Errorf("template %q not found", c.template)
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -207,7 +207,7 @@ func (c *userRolesSyncCmd) Run() error {
 			}); err != nil {
 				return fmt.Errorf("add role %s for %s: %w", role, username, err)
 			}
-			c.rootCmd.Infof("added role %s (ID: %d) to %s", role, roleID, username)
+			c.Infof("added role %s (ID: %d) to %s", role, roleID, username)
 		}
 
 		for _, role := range removeRoles {
@@ -218,7 +218,7 @@ func (c *userRolesSyncCmd) Run() error {
 			if err := queries.AdminDeleteUserRole(ctx, roleID); err != nil {
 				return fmt.Errorf("remove role %s for %s: %w", role, username, err)
 			}
-			c.rootCmd.Infof("removed role %s from %s", role, username)
+			c.Infof("removed role %s from %s", role, username)
 		}
 	}
 

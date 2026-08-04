@@ -146,7 +146,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Thread = threadRow
 
-	LinkerCommentsPageTmpl.Handle(w, r, data)
+	_ = LinkerCommentsPageTmpl.Handle(w, r, data)
 }
 
 const LinkerCommentsPageTmpl tasks.Template = "linker/commentsPage.gohtml"
@@ -202,13 +202,12 @@ func (replyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if !(cd.HasGrant("linker", "link", "view", link.ID) ||
-		cd.HasGrant("linker", "link", "reply", link.ID)) {
+	if !cd.HasGrant("linker", "link", "view", link.ID) && !cd.HasGrant("linker", "link", "reply", link.ID) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return nil
 	}
 
-	var pthid int32 = link.ThreadID
+	var pthid = link.ThreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkerTopicName,
 		Valid:  true,

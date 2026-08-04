@@ -30,7 +30,7 @@ func (c *configExplainCmd) Run() error {
 		return fmt.Errorf("unknown explain command %q", args[0])
 	}
 
-	fileVals := c.rootCmd.ConfigFileValues
+	fileVals := c.ConfigFileValues
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 8, 2, ' ', 0)
 	fmt.Fprintln(w, "Option\tFinal Value\tSource\tDetail")
@@ -45,8 +45,7 @@ func (c *configExplainCmd) Run() error {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", info.Name, info.FinalValue, info.SourceLabel, info.SourceDetail)
 	}
 
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func (c *configExplainCmd) Usage() {

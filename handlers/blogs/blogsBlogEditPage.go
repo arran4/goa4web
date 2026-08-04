@@ -102,7 +102,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Edit Blog"
 	blog := cd.CurrentBlogLoaded()
-	if blog == nil || !(cd.HasGrant("blogs", "entry", "edit-any", 0) || cd.HasGrant("blogs", "entry", "edit", blog.Idblogs)) {
+	if blog == nil || (!cd.HasGrant("blogs", "entry", "edit-any", 0) && !cd.HasGrant("blogs", "entry", "edit", blog.Idblogs)) {
 		// TODO: Fix: Add enforced Access in router rather than task
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
@@ -132,7 +132,7 @@ func BlogEditPage(w http.ResponseWriter, r *http.Request) {
 		data.AuthorLabels = als
 	}
 
-	BlogsBlogEditPageTmpl.Handle(w, r, data)
+	_ = BlogsBlogEditPageTmpl.Handle(w, r, data)
 }
 
 const BlogsBlogEditPageTmpl tasks.Template = "blogs/blogEditPage.gohtml"

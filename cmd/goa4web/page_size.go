@@ -76,7 +76,7 @@ func parsePageSizeShowCmd(parent *pageSizeCmd, args []string) (*pageSizeShowCmd,
 }
 
 func (c *pageSizeShowCmd) Run() error {
-	return writePageSizeJSON(c.rootCmd.cfg)
+	return writePageSizeJSON(c.cfg)
 }
 
 type pageSizeSetCmd struct {
@@ -106,7 +106,7 @@ func (c *pageSizeSetCmd) Run() error {
 	if c.min < 0 || c.max < 0 || c.def < 0 {
 		return fmt.Errorf("page size values must be positive")
 	}
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	newMin := cfg.PageSizeMin
 	newMax := cfg.PageSizeMax
 	newDef := cfg.PageSizeDefault
@@ -129,17 +129,17 @@ func (c *pageSizeSetCmd) Run() error {
 	config.UpdatePaginationConfig(cfg, c.min, c.max, c.def)
 
 	if c.min != 0 {
-		if err := config.UpdateConfigKey(core.OSFS{}, c.rootCmd.ConfigFile, config.EnvPageSizeMin, strconv.Itoa(cfg.PageSizeMin)); err != nil {
+		if err := config.UpdateConfigKey(core.OSFS{}, c.ConfigFile, config.EnvPageSizeMin, strconv.Itoa(cfg.PageSizeMin)); err != nil {
 			return fmt.Errorf("update config min: %w", err)
 		}
 	}
 	if c.max != 0 {
-		if err := config.UpdateConfigKey(core.OSFS{}, c.rootCmd.ConfigFile, config.EnvPageSizeMax, strconv.Itoa(cfg.PageSizeMax)); err != nil {
+		if err := config.UpdateConfigKey(core.OSFS{}, c.ConfigFile, config.EnvPageSizeMax, strconv.Itoa(cfg.PageSizeMax)); err != nil {
 			return fmt.Errorf("update config max: %w", err)
 		}
 	}
 	if c.def != 0 {
-		if err := config.UpdateConfigKey(core.OSFS{}, c.rootCmd.ConfigFile, config.EnvPageSizeDefault, strconv.Itoa(cfg.PageSizeDefault)); err != nil {
+		if err := config.UpdateConfigKey(core.OSFS{}, c.ConfigFile, config.EnvPageSizeDefault, strconv.Itoa(cfg.PageSizeDefault)); err != nil {
 			return fmt.Errorf("update config default: %w", err)
 		}
 	}

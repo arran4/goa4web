@@ -50,7 +50,7 @@ func adminPendingUsersPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Rows: pending,
 	}
-	AdminPendingUsersPage.Handle(w, r, data)
+	_ = AdminPendingUsersPage.Handle(w, r, data)
 }
 
 const AdminPendingUsersPage tasks.Template = "admin/pendingUsersPage.gohtml"
@@ -60,7 +60,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	queries := cd.Queries()
 	uid := r.PostFormValue("uid")
 	var id int32
-	fmt.Sscanf(uid, "%d", &id)
+	_, _ = fmt.Sscanf(uid, "%d", &id)
 	data := struct {
 		Errors   []string
 		Messages []string
@@ -78,7 +78,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	AdminRunTaskPage.Handle(w, r, data)
+	_ = AdminRunTaskPage.Handle(w, r, data)
 }
 
 func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +87,7 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 	uid := r.PostFormValue("uid")
 	reason := r.PostFormValue("reason")
 	var id int32
-	fmt.Sscanf(uid, "%d", &id)
+	_, _ = fmt.Sscanf(uid, "%d", &id)
 	data := struct {
 		Errors   []string
 		Messages []string
@@ -112,5 +112,5 @@ func adminPendingUsersReject(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	AdminRunTaskPage.Handle(w, r, data)
+	_ = AdminRunTaskPage.Handle(w, r, data)
 }

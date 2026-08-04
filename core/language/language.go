@@ -14,7 +14,7 @@ import (
 // letters, digits, dashes or underscores.
 func validateLanguageName(name string) error {
 	for _, r := range name {
-		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_') {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' {
 			return fmt.Errorf("invalid language name")
 		}
 	}

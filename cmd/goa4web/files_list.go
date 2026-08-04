@@ -60,12 +60,12 @@ type filesListOutput struct {
 }
 
 func (c *filesListCmd) Run() error {
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 
-	listing, err := adminhandlers.BuildImageFilesListing(c.rootCmd.Context(), queries, c.rootCmd.cfg.ImageUploadDir, c.path, "", nil, 0)
+	listing, err := adminhandlers.BuildImageFilesListing(c.Context(), queries, c.cfg.ImageUploadDir, c.path, "", nil, 0)
 	if err != nil {
 		return err
 	}

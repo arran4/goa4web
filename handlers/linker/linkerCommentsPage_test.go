@@ -62,7 +62,7 @@ func TestCommentsPage(t *testing.T) {
 		w := httptest.NewRecorder()
 		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(2)
-		sess.Save(req, w)
+		_ = sess.Save(req, w)
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
@@ -94,7 +94,7 @@ func newCommentsPageRequest(t *testing.T, queries db.Querier, roles []string, us
 	w := httptest.NewRecorder()
 	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = userID
-	sess.Save(req, w)
+	_ = sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}

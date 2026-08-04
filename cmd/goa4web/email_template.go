@@ -98,7 +98,7 @@ func parseEmailTemplateGetCmd(parent *emailTemplateCmd, args []string) (*emailTe
 }
 
 func (c *emailTemplateGetCmd) Run() error {
-	cd, err := c.templateCoreData(c.rootCmd.Querier)
+	cd, err := c.templateCoreData(c.Querier)
 	if err != nil {
 		return err
 	}
@@ -261,11 +261,11 @@ func (c *emailTemplateTestCmd) Run() error {
 	if c.userID == 0 {
 		return fmt.Errorf("user-id flag is required")
 	}
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}
-	provider, err := c.rootCmd.emailReg.ProviderFromConfig(cfg)
+	provider, err := c.emailReg.ProviderFromConfig(cfg)
 	if err != nil || provider == nil {
 		if err != nil {
 			return fmt.Errorf("email provider: %w", err)
@@ -279,7 +279,7 @@ func (c *emailTemplateTestCmd) Run() error {
 	defer func() { _ = cleanup() }()
 	cd, err := c.templateCoreData(func() (db.Querier, error) { return q, nil },
 		common.WithEmailProvider(provider),
-		common.WithEmailRegistry(c.rootCmd.emailReg),
+		common.WithEmailRegistry(c.emailReg),
 	)
 	if err != nil {
 		return err
@@ -320,7 +320,7 @@ func (c *emailTemplateTestCmd) FlagGroups() []flagGroup {
 var _ usageData = (*emailTemplateTestCmd)(nil)
 
 func (c *emailTemplateCmd) templateCoreData(queries func() (db.Querier, error), opts ...common.CoreOption) (*common.CoreData, error) {
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -328,24 +328,24 @@ func (c *emailTemplateCmd) templateCoreData(queries func() (db.Querier, error), 
 	if err != nil {
 		return nil, err
 	}
-	modules := c.rootCmd.routerReg.Names()
+	modules := c.routerReg.Names()
 	coreOpts := append([]common.CoreOption{
-		common.WithTasksRegistry(c.rootCmd.tasksReg),
+		common.WithTasksRegistry(c.tasksReg),
 		common.WithRouterModules(modules),
 	}, opts...)
-	return common.NewCoreData(c.rootCmd.Context(), q, cfg, coreOpts...), nil
+	return common.NewCoreData(c.Context(), q, cfg, coreOpts...), nil
 }
 
 func (c *emailTemplateCmd) templateQuerier(dryRun bool) (db.Querier, func() error, error) {
 	if !dryRun {
-		q, err := c.rootCmd.Querier()
+		q, err := c.Querier()
 		return q, func() error { return nil }, err
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return nil, func() error { return nil }, err
 	}
-	tx, err := conn.BeginTx(c.rootCmd.Context(), nil)
+	tx, err := conn.BeginTx(c.Context(), nil)
 	if err != nil {
 		return nil, func() error { return nil }, err
 	}

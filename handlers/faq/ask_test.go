@@ -40,7 +40,7 @@ func TestAskActionPage(t *testing.T) {
 			sess := testhelpers.Must(store.Get(req, core.SessionName))
 			sess.Values["UID"] = int32(1)
 			w := httptest.NewRecorder()
-			sess.Save(req, w)
+			_ = sess.Save(req, w)
 			for _, c := range w.Result().Cookies() {
 				req.AddCookie(c)
 			}
@@ -76,7 +76,7 @@ func TestAskActionPage(t *testing.T) {
 		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
-		sess.Save(req, w)
+		_ = sess.Save(req, w)
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}

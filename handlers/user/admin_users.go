@@ -120,7 +120,7 @@ func adminUsersPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/admin/users?" + prevVals.Encode()
 	}
 
-	AdminUsersPage.Handle(w, r, data)
+	_ = AdminUsersPage.Handle(w, r, data)
 }
 
 const AdminUsersPage tasks.Template = "admin/usersPage.gohtml"
@@ -147,7 +147,7 @@ func adminUserDisableConfirmPage(w http.ResponseWriter, r *http.Request) {
 		ConfirmLabel: "Confirm disable",
 		Back:         back,
 	}
-	AdminConfirmPage.Handle(w, r, data)
+	_ = AdminConfirmPage.Handle(w, r, data)
 }
 
 const AdminConfirmPage tasks.Template = "confirmPage.gohtml"
@@ -172,7 +172,7 @@ func adminUserDisablePage(w http.ResponseWriter, r *http.Request) {
 	} else if err := cd.Queries().AdminDeleteUserByID(r.Context(), id.Idusers); err != nil {
 		data.Errors = append(data.Errors, fmt.Errorf("delete user: %w", err).Error())
 	}
-	AdminRunTaskPage.Handle(w, r, data)
+	_ = AdminRunTaskPage.Handle(w, r, data)
 }
 
 func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
@@ -189,7 +189,7 @@ func adminUserEditFormPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		User: urow,
 	}
-	AdminUserEditPage.Handle(w, r, data)
+	_ = AdminUserEditPage.Handle(w, r, data)
 }
 
 const AdminUserEditPage tasks.Template = "admin/userEditPage.gohtml"
@@ -230,7 +230,7 @@ func adminUserEditSavePage(w http.ResponseWriter, r *http.Request) {
 			data.Errors = append(data.Errors, fmt.Errorf("update user email: %w", err).Error())
 		}
 	}
-	AdminRunTaskPage.Handle(w, r, data)
+	_ = AdminRunTaskPage.Handle(w, r, data)
 }
 
 const AdminRunTaskPage tasks.Template = "admin/runTaskPage.gohtml"
@@ -266,7 +266,9 @@ func adminUserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Password = newPass
 	}
-	AdminUserResetPasswordPage.Handle(w, r, data)
+	_ = AdminUserResetPasswordPage.Handle(w, r, data)
 }
+
+var AdminUserResetPasswordPageHandler = adminUserResetPasswordPage
 
 const AdminUserResetPasswordPage tasks.Template = "admin/userResetPasswordPage.gohtml"

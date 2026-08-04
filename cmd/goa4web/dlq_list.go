@@ -147,7 +147,7 @@ func (c *dlqListCmd) listProvider(provider string) (dlqListProviderOutput, error
 }
 
 func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("database: %w", err)
 	}
@@ -155,7 +155,7 @@ func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
 	if fetchLimit > math.MaxInt32 {
 		return dlqListProviderOutput{}, fmt.Errorf("limit exceeds maximum")
 	}
-	rows, err := queries.SystemListDeadLetters(c.rootCmd.Context(), int32(fetchLimit))
+	rows, err := queries.SystemListDeadLetters(c.Context(), int32(fetchLimit))
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("list dead letters: %w", err)
 	}
@@ -172,12 +172,12 @@ func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
 			Message: row.Message,
 		})
 	}
-	count, err := queries.SystemCountDeadLetters(c.rootCmd.Context())
+	count, err := queries.SystemCountDeadLetters(c.Context())
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("count dead letters: %w", err)
 	}
 	latestStr := ""
-	if latest, err := queries.SystemLatestDeadLetter(c.rootCmd.Context()); err == nil {
+	if latest, err := queries.SystemLatestDeadLetter(c.Context()); err == nil {
 		if latestTime, ok := latest.(time.Time); ok {
 			latestStr = latestTime.Format(time.RFC3339)
 		}
@@ -191,7 +191,7 @@ func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
 }
 
 func (c *dlqListCmd) listFile() (dlqListProviderOutput, error) {
-	path := c.rootCmd.cfg.DLQFile
+	path := c.cfg.DLQFile
 	if path == "" {
 		return dlqListProviderOutput{}, fmt.Errorf("dlq file path not configured")
 	}
@@ -220,7 +220,7 @@ func (c *dlqListCmd) listFile() (dlqListProviderOutput, error) {
 }
 
 func (c *dlqListCmd) listDir() (dlqListProviderOutput, error) {
-	path := c.rootCmd.cfg.DLQFile
+	path := c.cfg.DLQFile
 	if path == "" {
 		return dlqListProviderOutput{}, fmt.Errorf("dlq dir path not configured")
 	}

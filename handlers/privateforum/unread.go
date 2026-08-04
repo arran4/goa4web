@@ -65,7 +65,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		SharedPreviewLoginPageTmpl.Handle(w, r, struct {
+		_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 			RedirectURL string
 		}{
 			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
@@ -107,7 +107,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	UnreadThreadsPageTmpl.Handle(w, r, struct {
+	_ = UnreadThreadsPageTmpl.Handle(w, r, struct {
 		Threads      []*DecorThread
 		CurrentError string
 		Page         int

@@ -29,7 +29,7 @@ func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 		Enabled:  user.PublicProfileEnabledAt.Valid,
 		Username: user.Username.String,
 	}
-	UserPublicProfileSettingsPage.Handle(w, r, data)
+	_ = UserPublicProfileSettingsPage.Handle(w, r, data)
 }
 
 const UserPublicProfileSettingsPage tasks.Template = "user/publicProfileSettings.gohtml"

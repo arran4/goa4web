@@ -36,14 +36,14 @@ func parseRoleResetCmd(parent *roleCmd, args []string) (*roleResetCmd, error) {
 }
 
 func (c *roleResetCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	role, err := q.GetRoleByName(ctx, c.role)
 	if err != nil {

@@ -35,7 +35,7 @@ func parseServerShutdownCmd(parent *serverCmd, args []string) (*serverShutdownCm
 func (c *serverShutdownCmd) Run() error {
 	mode := c.Mode
 	if mode == "" {
-		if c.rootCmd.adminHandlers.Srv == nil {
+		if c.adminHandlers.Srv == nil {
 			mode = "rest"
 		} else {
 			mode = "local"
@@ -45,7 +45,7 @@ func (c *serverShutdownCmd) Run() error {
 	case "local":
 		ctx, cancel := context.WithTimeout(context.Background(), c.Timeout)
 		defer cancel()
-		if err := c.rootCmd.adminHandlers.Srv.Shutdown(ctx); err != nil {
+		if err := c.adminHandlers.Srv.Shutdown(ctx); err != nil {
 			return fmt.Errorf("shutdown server: %w", err)
 		}
 		return nil
@@ -57,7 +57,7 @@ func (c *serverShutdownCmd) Run() error {
 }
 
 func (c *serverShutdownCmd) restShutdown() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	key, err := config.LoadOrCreateAdminAPISecret(core.OSFS{}, cfg.AdminAPISecret, cfg.AdminAPISecretFile)
 	if err != nil {
 		return fmt.Errorf("admin api secret: %w", err)
@@ -76,7 +76,7 @@ func (c *serverShutdownCmd) restShutdown() error {
 	if err != nil {
 		return fmt.Errorf("shutdown request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("shutdown status %s", resp.Status)
 	}

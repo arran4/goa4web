@@ -68,7 +68,7 @@ func enforceLinkerCommentsAccessAllowed(t *testing.T) {
 	// Simulate router
 	handler := EnforceLinkerCommentsAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	}))
 
 	handler.ServeHTTP(w, req)
@@ -113,7 +113,7 @@ func newCommentsPageRequestWithCoreData(t *testing.T, queries db.Querier, roles 
 	w := httptest.NewRecorder()
 	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = userID
-	sess.Save(req, w)
+	_ = sess.Save(req, w)
 
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles(roles))
@@ -141,7 +141,7 @@ func enforceLinkViewAccessAllowed(t *testing.T) {
 	// Simulate router
 	handler := EnforceLinkViewAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	}))
 
 	handler.ServeHTTP(w, req)

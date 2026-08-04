@@ -88,5 +88,5 @@ func (t *blogsCommentTask) Get(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	BlogsCommentPageTmpl.Handle(w, r, data)
+	_ = BlogsCommentPageTmpl.Handle(w, r, data)
 }

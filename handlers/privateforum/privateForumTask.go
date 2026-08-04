@@ -53,7 +53,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		SharedPreviewLoginPageTmpl.Handle(w, r, struct {
+		_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 			RedirectURL string
 		}{
 			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
@@ -61,5 +61,5 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Show topics only on the main private page (no creation form)
-	TopicsOnlyTmpl.Handle(w, r, nil)
+	_ = TopicsOnlyTmpl.Handle(w, r, nil)
 }

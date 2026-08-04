@@ -92,7 +92,7 @@ func AdminForumPage(w http.ResponseWriter, r *http.Request) {
 	data.Stats.Topics = stats.Topics
 	data.Stats.Threads = stats.Threads
 
-	ForumAdminPageTmpl.Handle(w, r, data)
+	_ = ForumAdminPageTmpl.Handle(w, r, data)
 }
 
 const ForumAdminPageTmpl tasks.Template = "forum/adminPage.gohtml"
@@ -119,7 +119,7 @@ func AdminForumRemakeForumThreadPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Thread metadata rebuild complete.")
 	}
-	RunTaskPageTmpl.Handle(w, r, data)
+	_ = RunTaskPageTmpl.Handle(w, r, data)
 }
 
 func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +143,7 @@ func AdminForumRemakeForumTopicPage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Messages = append(data.Messages, "Topic metadata rebuild complete.")
 	}
-	RunTaskPageTmpl.Handle(w, r, data)
+	_ = RunTaskPageTmpl.Handle(w, r, data)
 }
 
 const RunTaskPageTmpl tasks.Template = "admin/runTaskPage.gohtml"

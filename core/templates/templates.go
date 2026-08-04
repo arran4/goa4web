@@ -305,14 +305,15 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 		}
 
 		ext := filepath.Ext(path)
-		if ext == ".gohtml" {
+		switch ext {
+		case ".gohtml":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
 			}
 			_, err = root.New(path).Parse(string(b))
 			return err
-		} else if ext == ".txtar" {
+		case ".txtar":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
@@ -368,14 +369,15 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 		}
 
 		ext := filepath.Ext(path)
-		if ext == ".gotxt" {
+		switch ext {
+		case ".gotxt":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
 			}
 			_, err = root.New(path).Parse(string(b))
 			return err
-		} else if ext == ".txtar" {
+		case ".txtar":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err

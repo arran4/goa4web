@@ -30,7 +30,7 @@ func parseCommentCleanBadCmd(parent *commentCmd, args []string) (*commentCleanBa
 }
 
 func (c *commentCleanBadCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -88,6 +88,6 @@ func (c *commentCleanBadCmd) printSummary(items []*db.Comment) {
 		}
 		fmt.Fprintf(w, "%d\t%v\t%d\t%s\n", item.Idcomments, item.ForumthreadID, item.UsersIdusers, written)
 	}
-	w.Flush()
+	_ = w.Flush()
 	fmt.Println()
 }

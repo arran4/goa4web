@@ -29,7 +29,7 @@ func parseBoardListCmd(parent *boardCmd, args []string) (*boardListCmd, error) {
 }
 
 func (c *boardListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

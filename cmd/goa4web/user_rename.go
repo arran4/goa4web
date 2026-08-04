@@ -72,7 +72,7 @@ func (c *userRenameCmd) Run() error {
 		}
 		return fmt.Errorf("rename user: %w", err)
 	}
-	c.rootCmd.Infof("renamed %s to %s", c.OldUsername, c.NewUsername)
+	c.Infof("renamed %s to %s", c.OldUsername, c.NewUsername)
 	return nil
 }
 
@@ -80,7 +80,7 @@ func (c *userRenameCmd) userQueries() (userRenameQueries, error) {
 	if c.queries != nil {
 		return c.queries, nil
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return nil, fmt.Errorf("database: %w", err)
 	}

@@ -46,7 +46,7 @@ func adminSearchPage(w http.ResponseWriter, r *http.Request) {
 	data.Stats.Writings = stats.Writings
 	data.Stats.Images = stats.Images
 
-	AdminSearchPageTmpl.Handle(w, r, data)
+	_ = AdminSearchPageTmpl.Handle(w, r, data)
 }
 
 const AdminSearchPageTmpl tasks.Template = "admin/searchPage.gohtml"

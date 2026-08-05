@@ -4,11 +4,13 @@ package s3
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	awsS3 "github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -57,7 +59,7 @@ func TestProviderCheckSuccess(t *testing.T) {
 	if p == nil {
 		t.Fatal("nil provider")
 	}
-	if err := p.Check(nil); err != nil {
+	if err := p.Check(context.Background()); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	}
 	if !mock.headCalled || !mock.putCalled || !mock.delCalled {
@@ -68,7 +70,7 @@ func TestProviderCheckSuccess(t *testing.T) {
 func TestProviderCheckWriteError(t *testing.T) {
 	mock := &mockClient{putErr: fmt.Errorf("fail")}
 	p := providerFromConfigWithFactory(&config.RuntimeConfig{ImageUploadS3URL: "s3://bucket/path"}, mockFactory{mock})
-	if err := p.Check(nil); err == nil {
+	if err := p.Check(context.Background()); err == nil {
 		t.Fatal("expected error")
 	}
 }
@@ -79,7 +81,7 @@ func TestProviderRead(t *testing.T) {
 	if p == nil {
 		t.Fatal("nil provider")
 	}
-	data, err := p.Read(nil, "name")
+	data, err := p.Read(context.Background(), "name")
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}

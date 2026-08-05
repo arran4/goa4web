@@ -11,8 +11,11 @@ import (
 	"path"
 	"strings"
 
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	"github.com/aws/aws-sdk-go/aws"
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	"github.com/aws/aws-sdk-go/aws/session"
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	awsS3 "github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/arran4/goa4web/config"
@@ -122,6 +125,6 @@ func (p Provider) Read(ctx context.Context, name string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get object: %w", err)
 	}
-	defer out.Body.Close()
+	defer func() { _ = out.Body.Close() }()
 	return io.ReadAll(out.Body)
 }

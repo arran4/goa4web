@@ -85,7 +85,7 @@ func parseRawEmail(raw []byte) (string, string, string) {
 
 func providerFromConfig(key string, from string) (email.Provider, error) {
 	if key == "" {
-		return nil, fmt.Errorf("Email disabled: SENDGRID_KEY not set")
+		return nil, fmt.Errorf("email disabled: SENDGRID_KEY not set")
 	}
 	return Provider{APIKey: key, From: from}, nil
 }

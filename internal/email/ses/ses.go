@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"net/mail"
 
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	"github.com/aws/aws-sdk-go/aws"
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	"github.com/aws/aws-sdk-go/aws/session"
+	//nolint:staticcheck // SA1019: AWS SDK v1 is deprecated
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/aws/aws-sdk-go/service/ses/sesiface"
 
@@ -51,10 +54,10 @@ func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
 	}
 	sess, err := session.NewSession(awsCfg)
 	if err != nil {
-		return nil, fmt.Errorf("Email disabled: cannot initialise AWS session: %v", err)
+		return nil, fmt.Errorf("email disabled: cannot initialise AWS session: %w", err)
 	}
 	if _, err := sess.Config.Credentials.Get(); err != nil {
-		return nil, fmt.Errorf("Email disabled: no AWS credentials: %v", err)
+		return nil, fmt.Errorf("email disabled: no AWS credentials: %w", err)
 	}
 	return Provider{Client: ses.New(sess), From: cfg.EmailFrom}, nil
 }

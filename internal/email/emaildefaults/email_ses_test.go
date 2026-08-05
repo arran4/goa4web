@@ -20,7 +20,7 @@ func TestGetEmailProviderSESNoCreds_SES(t *testing.T) {
 	reg := newSesRegistry()
 	p, err := reg.ProviderFromConfig(&config.RuntimeConfig{EmailProvider: "ses", EmailAWSRegion: "us-east-1"})
 	if err != nil {
-		// Error is expected if credentials are missing
+		t.Logf("got error (expected if credentials missing): %v", err)
 	}
 	if p != nil {
 		t.Errorf("expected nil provider, got %#v", p)

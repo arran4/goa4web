@@ -25,13 +25,18 @@ The templates are organized into clear conceptual layers to make finding, mainta
 
 1.  Identify whether it's a full page (put in `pages/` or `domains/{feature}/`) or a reusable fragment (put in `partials/` or `domains/{feature}/`).
 2.  Reference the template by its defined name (`{{ template "definedName" }}`) or by its relative path if not explicitly defined (`{{ template "domains/news/postPage.gohtml" }}`).
-3.  Ensure the template renders properly by checking the UI or running regression tests.
+3.  Ensure the template renders properly by checking the UI and running the template discovery tests.
 
-## Regression Testing
+## Template Discovery Testing
 
-To prevent unexpected changes when modifying core layouts or components, we have a test suite located in `core/templates/templates_regression_test.go`. It renders select core pages against stored "golden" files to catch visual or structural HTML regressions.
+Template coverage is provided by `templates_compile_test.go` and
+`template_references_test.go`. These tests recursively compile every embedded
+site template, confirm that the compiled set contains every discovered
+template, and report unresolved template references. They do not perform visual
+or golden-file comparisons; use the template verification server for visual
+inspection when changing rendered output.
 
-**Running the comparison tests:**
+**Running the discovery tests:**
 ```bash
-go test -v ./core/templates/... -run TestTemplateRegression
+go test -v ./core/templates -run 'TestCompileGoHTML|TestCompiledSiteTemplatesContainEveryEmbeddedTemplate|TestAllTemplateReferencesAreSatisfied'
 ```

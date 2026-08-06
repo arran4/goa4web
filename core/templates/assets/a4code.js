@@ -232,17 +232,6 @@
              }
          }
          text = newLines.join('\n');
-         // This is the hard part "more complex".
-         // We can stick to regex-based replacement if we process nesting carefully,
-         // or write a scanner.
-
-         // Let's iterate and maintain a stack of open formatting.
-         // But Markdown isn't strictly stack-based (e.g. `*bold **bold-italic* bold**`).
-
-         // For the purpose of "2 way convertability" with A4Code (which is stack based),
-         // we might assume the Markdown is also well-formed or fix it.
-
-         // Let's try a simple token stream approach.
 
          const root = { type: 'root', children: [] };
          let current = root;

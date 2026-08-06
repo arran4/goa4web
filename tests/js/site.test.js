@@ -200,3 +200,44 @@ const res11 = calculateSourceOffset(span9, 2);
 assert(res11 === 2, `Boundary after annotated image. Got ${res11}, want 2`);
 
 console.log("All JS tests passed.");
+
+console.log("Running A4Code Converter Tests...");
+
+const a4codeJsPath_test = path.join(__dirname, '../../core/templates/assets/a4code.js');
+let a4codeJsContent_test = fs.readFileSync(a4codeJsPath_test, 'utf8');
+
+a4codeJsContent_test = a4codeJsContent_test.replace('(function(global) {', '');
+a4codeJsContent_test = a4codeJsContent_test.replace('})(this);', '');
+
+eval(a4codeJsContent_test);
+
+function assertEqual(actual, expected, msg) {
+    if (actual !== expected) {
+        console.error(`FAIL: ${msg}`);
+        console.error(`Expected:`);
+        console.error(JSON.stringify(expected));
+        console.error(`Actual:`);
+        console.error(JSON.stringify(actual));
+        process.exit(1);
+    }
+}
+
+let md1 = "**bold text**";
+let a4_1 = A4Code.markdownToA4Code(md1);
+assertEqual(a4_1, "[b bold text]", "Bold markdown to a4code");
+
+let a4_2 = "[b bold text]";
+let md2 = A4Code.a4codeToMarkdown(a4_2);
+assertEqual(md2, "**bold text**", "Bold a4code to markdown");
+
+let md3 = "Some text\n| col1 | col2 |\n|---|---|\n| val1 | val2 |\nMore text";
+let a4_3 = A4Code.markdownToA4Code(md3);
+let expected_a4_3 = "Some text\n[code]\n| col1 | col2 |\n|---|---|\n| val1 | val2 |\n[/code]\nMore text";
+assertEqual(a4_3, expected_a4_3, "Markdown table wrapped in code block");
+
+let a4_4 = "Some text\n[code]\n| col1 | col2 |\n|---|---|\n| val1 | val2 |\n[/code]\nMore text";
+let md4 = A4Code.a4codeToMarkdown(a4_4);
+let expected_md4 = "Some text\n\n| col1 | col2 |\n|---|---|\n| val1 | val2 |\n\nMore text";
+assertEqual(md4, expected_md4, "A4Code table unwrapped in markdown");
+
+console.log("All Converter Tests Passed!");

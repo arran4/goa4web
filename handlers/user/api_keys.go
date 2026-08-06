@@ -42,7 +42,7 @@ func ListAPIKeysPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = tasks.Template("user/apiKeysPage.gohtml").Handle(w, r, struct {
+	_ = tasks.Template("user/apiKeysPage").Handle(w, r, struct {
 		Keys []*db.ApiKey
 	}{
 		Keys: keys,

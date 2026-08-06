@@ -28,6 +28,6 @@
     </div>
     <script src="{{ assetHash "/forum/topic_labels.js" }}"></script>
 
-    {{ template "_share.gohtml" (dict "module" "forum" "link" (printf "%s/topic/%d/thread/%d" $base .Topic.Idforumtopic .Thread.Idforumthread)) }}
+    {{ template "partials/common/_share.gohtml" (dict "module" "forum" "link" (printf "%s/topic/%d/thread/%d" $base .Topic.Idforumtopic .Thread.Idforumthread)) }}
 
 {{ template "tail" $ }}

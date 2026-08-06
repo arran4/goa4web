@@ -25,4 +25,4 @@ func AdminDBRestorePage(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminDBRestorePageTmpl renders the admin database restore page.
-const AdminDBRestorePageTmpl tasks.Template = "admin/dbRestorePage.gohtml"
+const AdminDBRestorePageTmpl tasks.Template = "domains/admin/dbRestorePage.gohtml"

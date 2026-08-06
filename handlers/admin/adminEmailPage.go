@@ -235,4 +235,4 @@ func AdminEmailPage(w http.ResponseWriter, r *http.Request) {
 	_ = AdminEmailPageTmpl.Handle(w, r, data)
 }
 
-const AdminEmailPageTmpl tasks.Template = "admin/emailPage.gohtml"
+const AdminEmailPageTmpl tasks.Template = "domains/admin/emailPage.gohtml"

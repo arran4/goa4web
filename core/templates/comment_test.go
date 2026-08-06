@@ -33,7 +33,7 @@ func TestCommentTimestampSelfLink(t *testing.T) {
 		"since":       func(time.Time, time.Time) string { return "" },
 		"timeAgo":     func(time.Time) string { return "" },
 	}
-	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/comment.gohtml", "site/languageCombobox.gohtml"))
+	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/partials/common/comment.gohtml", "site/partials/forms/languageCombobox.gohtml"))
 	var buf bytes.Buffer
 	cmt := &db.GetCommentsByThreadIdForUserRow{
 		Idcomments:     1,
@@ -92,7 +92,7 @@ func TestCommentUsernameBold(t *testing.T) {
 				"since":       func(time.Time, time.Time) string { return "" },
 				"timeAgo":     func(time.Time) string { return "" },
 			}
-			tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/comment.gohtml", "site/languageCombobox.gohtml"))
+			tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/partials/common/comment.gohtml", "site/partials/forms/languageCombobox.gohtml"))
 			var buf bytes.Buffer
 			cmt := &db.GetCommentsByThreadIdForUserRow{
 				Idcomments:     1,

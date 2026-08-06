@@ -42,4 +42,4 @@ func adminLinkViewPage(w http.ResponseWriter, r *http.Request) {
 	_ = LinkerAdminLinkViewPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminLinkViewPageTmpl tasks.Template = "linker/adminLinkViewPage.gohtml"
+const LinkerAdminLinkViewPageTmpl tasks.Template = "domains/linker/adminLinkViewPage.gohtml"

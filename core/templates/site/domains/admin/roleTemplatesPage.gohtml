@@ -159,7 +159,7 @@
                     {{ .Role.Description }}
                     (Login: {{ if .Role.CanLogin }}yes{{ else }}no{{ end }}, Admin: {{ if .Role.IsAdmin }}yes{{ else }}no{{ end }})
                 </summary>
-                {{ template "admin/roleGrantsPreview.gohtml" . }}
+                {{ template "domains/admin/roleGrantsPreview.gohtml" . }}
             </details>
         {{- end }}
     </section>

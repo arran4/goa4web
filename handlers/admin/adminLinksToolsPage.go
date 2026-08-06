@@ -117,4 +117,4 @@ func AdminLinksToolsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminLinksToolsPageTmpl renders the link signing tools page.
-const AdminLinksToolsPageTmpl tasks.Template = "admin/linksToolsPage.gohtml"
+const AdminLinksToolsPageTmpl tasks.Template = "domains/admin/linksToolsPage.gohtml"

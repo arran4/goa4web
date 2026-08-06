@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-//go:embed site/tableTopics.gohtml
+//go:embed site/domains/forum/tableTopics.gohtml
 var tableTopicsTemplate string
 
 func TestTableTopicsShowsLabels(t *testing.T) {

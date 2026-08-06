@@ -28,8 +28,8 @@ func init() {
 }
 
 const (
-	TaskErrorAcknowledgementPageTmpl Page = "taskErrorAcknowledgementPage.gohtml"
-	NotFoundPageTmpl                 Page = "notFoundPage.gohtml"
-	AccessDeniedLoginPageTmpl        Page = "accessDeniedLoginPage.gohtml"
-	TaskDoneAutoRefreshPageTmpl      Page = "taskDoneAutoRefreshPage.gohtml"
+	TaskErrorAcknowledgementPageTmpl Page = "pages/misc/taskErrorAcknowledgementPage.gohtml"
+	NotFoundPageTmpl                 Page = "pages/misc/notFoundPage.gohtml"
+	AccessDeniedLoginPageTmpl        Page = "pages/auth/accessDeniedLoginPage.gohtml"
+	TaskDoneAutoRefreshPageTmpl      Page = "pages/misc/taskDoneAutoRefreshPage.gohtml"
 )

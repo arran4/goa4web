@@ -17,7 +17,7 @@ type linkerTask struct {
 var _ tasks.Task = (*linkerTask)(nil)
 
 const (
-	LinkerPageTmpl tasks.Template = "linker/page.gohtml"
+	LinkerPageTmpl tasks.Template = "domains/linker/page.gohtml"
 )
 
 func NewLinkerTask() tasks.Task {

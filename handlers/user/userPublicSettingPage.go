@@ -32,7 +32,7 @@ func userPublicProfileSettingPage(w http.ResponseWriter, r *http.Request) {
 	_ = UserPublicProfileSettingsPage.Handle(w, r, data)
 }
 
-const UserPublicProfileSettingsPage tasks.Template = "user/publicProfileSettings.gohtml"
+const UserPublicProfileSettingsPage tasks.Template = "domains/user/publicProfileSettings.gohtml"
 
 type PublicProfileSaveTask struct{ tasks.TaskString }
 

@@ -17,8 +17,8 @@ type privateForumTask struct {
 var _ tasks.Task = (*privateForumTask)(nil)
 
 const (
-	CreateTopicTmpl tasks.Template = "forum/create_topic.gohtml"
-	TopicsOnlyTmpl  tasks.Template = "privateforum/topics_only.gohtml"
+	CreateTopicTmpl tasks.Template = "domains/forum/create_topic.gohtml"
+	TopicsOnlyTmpl  tasks.Template = "domains/privateforum/topics_only.gohtml"
 )
 
 func NewPrivateForumTask() tasks.Task {

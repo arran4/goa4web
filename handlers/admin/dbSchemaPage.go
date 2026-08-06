@@ -23,4 +23,4 @@ func (h *Handlers) AdminDBSchemaPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminDBSchemaPageTmpl renders the database schema page.
-const AdminDBSchemaPageTmpl tasks.Template = "admin/dbSchemaPage.gohtml"
+const AdminDBSchemaPageTmpl tasks.Template = "domains/admin/dbSchemaPage.gohtml"

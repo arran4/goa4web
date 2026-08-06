@@ -15,7 +15,7 @@ type blogsTask struct {
 var _ tasks.Task = (*blogsTask)(nil)
 
 const (
-	BlogsPageTmpl tasks.Template = "blogs/page.gohtml"
+	BlogsPageTmpl tasks.Template = "domains/blogs/page.gohtml"
 )
 
 func NewBlogsTask() tasks.Task {

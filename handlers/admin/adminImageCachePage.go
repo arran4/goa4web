@@ -134,4 +134,4 @@ func listImageCacheEntries(dir string) ([]ImageCacheEntry, int64, error) {
 }
 
 // AdminImageCachePageTmpl renders the admin image cache page.
-const AdminImageCachePageTmpl tasks.Template = "admin/imageCachePage.gohtml"
+const AdminImageCachePageTmpl tasks.Template = "domains/admin/imageCachePage.gohtml"

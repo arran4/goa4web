@@ -18,7 +18,7 @@ func TestTemplateFieldAccess(t *testing.T) {
 		Data any
 	}{
 		{
-			Name: "faq/faqAdminCategoryEditPage.gohtml",
+			Name: "domains/faq/faqAdminCategoryEditPage.gohtml",
 			Data: struct {
 				Category   *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 				Categories []*db.FaqCategory
@@ -32,7 +32,7 @@ func TestTemplateFieldAccess(t *testing.T) {
 			},
 		},
 		{
-			Name: "faq/faqAdminCategoryPage.gohtml",
+			Name: "domains/faq/faqAdminCategoryPage.gohtml",
 			Data: struct {
 				Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 				Latest    []*db.Faq
@@ -57,7 +57,7 @@ func TestTemplateFieldAccess(t *testing.T) {
 			},
 		},
 		{
-			Name: "faq/faqAdminCategoryQuestionsPage.gohtml",
+			Name: "domains/faq/faqAdminCategoryQuestionsPage.gohtml",
 			Data: struct {
 				Category  *db.AdminGetFAQCategoryWithQuestionCountByIDRow
 				Questions []*db.Faq

@@ -26,4 +26,4 @@ func AdminDeactivatedCommentsPage(w http.ResponseWriter, r *http.Request) {
 	_ = AdminDeactivatedCommentsPageTmpl.Handle(w, r, data)
 }
 
-const AdminDeactivatedCommentsPageTmpl tasks.Template = "admin/deactivatedCommentsPage.gohtml"
+const AdminDeactivatedCommentsPageTmpl tasks.Template = "domains/admin/deactivatedCommentsPage.gohtml"

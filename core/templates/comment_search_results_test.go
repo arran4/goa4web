@@ -47,7 +47,7 @@ func TestCommentSearchResultsHighlightsAndEscapes(t *testing.T) {
 			return common.HighlightSearchTerms(s, []string{"match"})
 		},
 	}
-	tmpl := template.Must(template.New("root").Funcs(funcs).ParseFiles("site/commentSearchReslts.gohtml"))
+	tmpl := template.Must(template.New("root").Funcs(funcs).ParseFiles("site/partials/common/commentSearchReslts.gohtml"))
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "commentSearchResults", nil); err != nil {

@@ -33,7 +33,7 @@ func TestHappyPathAdminTemplatesPageRender(t *testing.T) {
 
 	// 3. Execute
 	var buf bytes.Buffer
-	err := tmpl.ExecuteTemplate(&buf, "faq/adminTemplatesPage.gohtml", data)
+	err := tmpl.ExecuteTemplate(&buf, "domains/faq/adminTemplatesPage.gohtml", data)
 
 	// 4. Verification
 	if err != nil {

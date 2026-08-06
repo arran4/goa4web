@@ -23,7 +23,6 @@ func TestCompileGoHTML(t *testing.T) {
 	funcs := cd.Funcs(r)
 	funcs["localTime"] = func(t time.Time) time.Time { return t }
 	funcs["assetHash"] = func(s string) string { return s }
-
 	root := template.New("").Funcs(funcs)
 	err := fs.WalkDir(testTemplates, "site", func(name string, d fs.DirEntry, err error) error {
 		if err != nil {

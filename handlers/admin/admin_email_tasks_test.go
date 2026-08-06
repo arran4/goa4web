@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
@@ -17,12 +16,13 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-func setupEmailTaskTest(t *testing.T, userID int, task tasks.Task, form url.Values, queries *db.QuerierStub) *httptest.ResponseRecorder {
+func setupEmailTaskTest(t *testing.T, userID int, task tasks.Task, form url.Values, queries *db.QuerierStub) any {
 	req := httptest.NewRequest("POST", fmt.Sprintf("/admin/user/%d", userID), strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"user": strconv.Itoa(userID)})
@@ -32,8 +32,7 @@ func setupEmailTaskTest(t *testing.T, userID int, task tasks.Task, form url.Valu
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
-	task.Action(rr, req)
-	return rr
+	return task.Action(rr, req)
 }
 
 func TestAdminAddEmailTask(t *testing.T) {
@@ -54,8 +53,10 @@ func TestAdminAddEmailTask(t *testing.T) {
 			t.Errorf("expected email to be added, got %s", qs.InsertUserEmailCalls[0].Email)
 		}
 
-		if rr.Code != http.StatusSeeOther {
-			_ = rr.Code
+		if rdh, ok := rr.(handlers.RefreshDirectHandler); !ok {
+			t.Errorf("expected RefreshDirectHandler, got %T", rr)
+		} else if expected := fmt.Sprintf("/admin/user/%d", userID); rdh.TargetURL != expected {
+			t.Errorf("expected target URL %q, got %q", expected, rdh.TargetURL)
 		}
 	})
 }
@@ -71,12 +72,18 @@ func TestAdminDeleteEmailTask(t *testing.T) {
 		form.Set("task", string(TaskDeleteEmail))
 		form.Set("email_id", strconv.Itoa(emailID))
 
-		setupEmailTaskTest(t, userID, adminDeleteEmailTask, form, qs)
+		rr := setupEmailTaskTest(t, userID, adminDeleteEmailTask, form, qs)
 
 		if len(qs.AdminDeleteUserEmailCalls) != 1 {
 			t.Errorf("expected email to be deleted")
 		} else if qs.AdminDeleteUserEmailCalls[0] != int32(emailID) {
 			t.Errorf("expected email %d to be deleted, got %d", emailID, qs.AdminDeleteUserEmailCalls[0])
+		}
+
+		if rdh, ok := rr.(handlers.RefreshDirectHandler); !ok {
+			t.Errorf("expected RefreshDirectHandler, got %T", rr)
+		} else if expected := fmt.Sprintf("/admin/user/%d", userID); rdh.TargetURL != expected {
+			t.Errorf("expected target URL %q, got %q", expected, rdh.TargetURL)
 		}
 	})
 }
@@ -92,12 +99,18 @@ func TestAdminVerifyEmailTask(t *testing.T) {
 		form.Set("task", string(TaskVerifyEmail))
 		form.Set("email_id", strconv.Itoa(emailID))
 
-		setupEmailTaskTest(t, userID, adminVerifyEmailTask, form, qs)
+		rr := setupEmailTaskTest(t, userID, adminVerifyEmailTask, form, qs)
 
 		if len(qs.AdminUpdateUserEmailDetailsCalls) != 1 {
 			t.Errorf("expected email to be verified")
 		} else if !qs.AdminUpdateUserEmailDetailsCalls[0].VerifiedAt.Valid {
 			t.Errorf("expected verified_at to be set")
+		}
+
+		if rdh, ok := rr.(handlers.RefreshDirectHandler); !ok {
+			t.Errorf("expected RefreshDirectHandler, got %T", rr)
+		} else if expected := fmt.Sprintf("/admin/user/%d", userID); rdh.TargetURL != expected {
+			t.Errorf("expected target URL %q, got %q", expected, rdh.TargetURL)
 		}
 	})
 }
@@ -118,12 +131,18 @@ func TestAdminUnverifyEmailTask(t *testing.T) {
 		form.Set("task", string(TaskUnverifyEmail))
 		form.Set("email_id", strconv.Itoa(emailID))
 
-		setupEmailTaskTest(t, userID, adminUnverifyEmailTask, form, qs)
+		rr := setupEmailTaskTest(t, userID, adminUnverifyEmailTask, form, qs)
 
 		if len(qs.AdminUpdateUserEmailDetailsCalls) != 1 {
 			t.Errorf("expected email to be unverified")
 		} else if qs.AdminUpdateUserEmailDetailsCalls[0].VerifiedAt.Valid {
 			t.Errorf("expected verified_at to be unset")
+		}
+
+		if rdh, ok := rr.(handlers.RefreshDirectHandler); !ok {
+			t.Errorf("expected RefreshDirectHandler, got %T", rr)
+		} else if expected := fmt.Sprintf("/admin/user/%d", userID); rdh.TargetURL != expected {
+			t.Errorf("expected target URL %q, got %q", expected, rdh.TargetURL)
 		}
 	})
 }
@@ -140,12 +159,18 @@ func TestAdminResendVerificationEmailTask(t *testing.T) {
 		form.Set("task", string(TaskResendVerification))
 		form.Set("email_id", strconv.Itoa(emailID))
 
-		setupEmailTaskTest(t, userID, adminResendVerificationEmailTask, form, qs)
+		rr := setupEmailTaskTest(t, userID, adminResendVerificationEmailTask, form, qs)
 
 		if len(qs.SystemUpdateVerificationCodeCalls) != 1 {
 			t.Errorf("expected verification code to be updated")
 		} else if !qs.SystemUpdateVerificationCodeCalls[0].LastVerificationCode.Valid {
 			t.Errorf("expected verification code to be set")
+		}
+
+		if rdh, ok := rr.(handlers.RefreshDirectHandler); !ok {
+			t.Errorf("expected RefreshDirectHandler, got %T", rr)
+		} else if expected := fmt.Sprintf("/admin/user/%d", userID); rdh.TargetURL != expected {
+			t.Errorf("expected target URL %q, got %q", expected, rdh.TargetURL)
 		}
 	})
 }

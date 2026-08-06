@@ -12,14 +12,14 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-//go:embed site/admin/roleGrantsEditor.gohtml
+//go:embed site/domains/admin/roleGrantsEditor.gohtml
 var roleGrantsEditorTemplate embed.FS
 
 func TestRoleGrantsEditor_ItemIDLink(t *testing.T) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"csrfField": func() template.HTML { return "" },
 		"assetHash": func(s string) string { return s },
-	}).ParseFS(roleGrantsEditorTemplate, "site/admin/roleGrantsEditor.gohtml"))
+	}).ParseFS(roleGrantsEditorTemplate, "site/domains/admin/roleGrantsEditor.gohtml"))
 
 	data := struct {
 		Role        *db.Role

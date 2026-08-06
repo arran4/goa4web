@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-//go:embed site/forum/threadPage.gohtml
+//go:embed site/domains/forum/threadPage.gohtml
 var threadPageTemplate string
 
 func TestThreadPageLabelFormIncludesCSRF(t *testing.T) {

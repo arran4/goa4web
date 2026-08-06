@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-//go:embed site/writings/articlePage.gohtml
+//go:embed site/domains/writings/articlePage.gohtml
 var articlePageTemplate string
 
 func TestArticlePageLabelFormIncludesCSRF(t *testing.T) {

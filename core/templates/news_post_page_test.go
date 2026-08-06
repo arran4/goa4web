@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-//go:embed site/news/postPage.gohtml
+//go:embed site/domains/news/postPage.gohtml
 var newsPostPageTemplate string
 
 func TestNewsPostPageLabelFormIncludesCSRF(t *testing.T) {

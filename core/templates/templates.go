@@ -240,10 +240,7 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 		}
 
 		// IMPORTANT: use path (the relative filename) as the template name.
-		name := path
-		if strings.HasPrefix(name, "site/") {
-			name = name[len("site/"):]
-		}
+		name := strings.TrimPrefix(path, "site/")
 		_, err = root.New(name).Parse(string(b))
 		return err
 	})
@@ -536,10 +533,7 @@ func ListSiteTemplateNames(opts ...Option) []string {
 		if filepath.Ext(path) != ".gohtml" {
 			return nil
 		}
-		name := path
-		if strings.HasPrefix(name, "site/") {
-			name = name[len("site/"):]
-		}
+		name := strings.TrimPrefix(path, "site/")
 		names = append(names, name)
 		return nil
 	})

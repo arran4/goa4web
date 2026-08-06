@@ -602,13 +602,13 @@ func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
 			name:           "quote remains block before whitespace and a following link",
 			input:          "[quote text] \n[link url]",
 			wantLinkBlock:  true,
-			wantQuoteBlock: boolPtr(true),
+			wantQuoteBlock: new(true),
 		},
 		{
 			name:           "inline quote and link remain inline",
 			input:          "text [quote text] [link url]",
 			wantLinkBlock:  false,
-			wantQuoteBlock: boolPtr(false),
+			wantQuoteBlock: new(false),
 		},
 	}
 
@@ -807,10 +807,6 @@ func TestToText_Code(t *testing.T) {
 			}
 		})
 	}
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }
 
 func findFirstLink(n ast.Node) *ast.Link {

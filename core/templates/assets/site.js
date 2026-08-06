@@ -515,7 +515,7 @@ function quoteInNewThread(commentId, topicId, event) {
 
             if (start !== -1 && end !== -1) {
                 // Construct URL for selected text
-                url = basePath + '/topic/' + topicId + '/thread/new?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
+                url = basePath + '/topic/' + topicId + '/thread?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
             }
         }
     }

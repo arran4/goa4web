@@ -1,0 +1,3 @@
+# The only finding is a synthetic secret used by a removed test in this commit.
+[allowlist]
+commits = ["f2eb141da906300cbbbb792bd9a0f3dad444c3e5"]

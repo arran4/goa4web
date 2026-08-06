@@ -1,1 +1,1 @@
-{{.Item.Username}} replied to {{.Item.TopicTitle}}: {{ truncateWords 20 .Item.Body }}
+{{.Item.Username}} replied to {{.Item.TopicTitle}}: {{ truncateWords 20 (toString .Item.Body) }}

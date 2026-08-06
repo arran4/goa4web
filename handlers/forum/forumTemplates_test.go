@@ -14,6 +14,7 @@ func checkEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 	t.Helper()
 	funcs := map[string]any{
 		"truncateWords": func(i int, s string) string { return s },
+		"toString": func(item any) string { return "" },
 	}
 	htmlTmpls := templates.GetCompiledEmailHtmlTemplates(funcs, templates.WithSilence(true))
 	textTmpls := templates.GetCompiledEmailTextTemplates(funcs, templates.WithSilence(true))

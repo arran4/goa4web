@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	htemplate "html/template"
 	"io"
 	"log"
@@ -105,6 +106,16 @@ func defaultFuncs() map[string]any {
 				return strings.Join(words[:i], " ") + "..."
 			}
 			return s
+		},
+		"toString": func(item any) string {
+			switch v := item.(type) {
+			case string:
+				return v
+			case fmt.Stringer:
+				return v.String()
+			default:
+				return fmt.Sprint(item)
+			}
 		},
 		"lower": strings.ToLower,
 		"makeAbsoluteURL": func(base, link string) string {

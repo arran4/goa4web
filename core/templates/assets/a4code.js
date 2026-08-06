@@ -46,6 +46,20 @@
                 const cmd = text.substring(cmdStart, j);
 
                 if (cmd.length > 0) {
+                     if (cmd.startsWith('/')) {
+                         let closeTagName = cmd.substring(1).toLowerCase();
+                         let idx = stack.findLastIndex(n => n.type === 'element' && n.tagName === closeTagName);
+                         if (idx > 0) {
+                             stack.length = idx;
+                             current = stack[stack.length - 1];
+                         }
+                         let k = j;
+                         while (k < len && text[k] === ' ') k++;
+                         if (k < len && text[k] === ']') k++;
+                         i = k;
+                         continue;
+                     }
+
                      // Start of a tag
                      const node = { type: 'element', tagName: cmd.toLowerCase(), args: [], children: [] };
 
@@ -105,6 +119,7 @@
 
                      // consume whitespace after tag/args before content
                      while (k < len && text[k] === ' ') k++;
+                     if (k < len && text[k] === ']') k++;
 
                      // For normal tags, we push to stack
                      stack.push(node);
@@ -318,8 +333,7 @@
                      i = end + 3;
                  }
                  current.children.push({ type: 'element', tagName: 'code', children: [{type:'text', value: content}]});
-             } else if (char === '#' && (i === 0 || text[i-1] === '
-')) {
+             } else if (char === '#' && (i === 0 || text[i-1] === '\n')) {
                  // Header
                  let j = i;
                  let level = 0;
@@ -330,23 +344,18 @@
                  if (text[j] === ' ') {
                      j++;
                  }
-                 let end = text.indexOf('
-', j);
+                 let end = text.indexOf('\n', j);
                  if (end === -1) end = text.length;
                  let content = text.substring(j, end);
                  // A4Code uses [h1] to [h6]
                  level = Math.min(level, 6);
                  current.children.push({ type: 'element', tagName: 'h' + level, children: [{type:'text', value: content}]});
                  i = end;
-                 if (i < text.length && text[i] === '
-') i++; // Skip the newline as it's part of the block usually, but let's keep it simple
-             } else if (char === '>' && (i === 0 || text[i-1] === '
-') && text[i+1] === ' ') {
+                 if (i < text.length && text[i] === '\n') i++; // Skip the newline as it's part of the block usually, but let's keep it simple
+             } else if (char === '>' && (i === 0 || text[i-1] === '\n') && text[i+1] === ' ') {
                  // Quote
                  // Wait, quote can span multiple lines. For simplicity, just read until empty line
-                 let end = text.indexOf('
-
-', i);
+                 let end = text.indexOf('\n\n', i);
                  if (end === -1) end = text.length;
                  let content = text.substring(i, end);
                  // Remove > from each line

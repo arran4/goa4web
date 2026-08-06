@@ -47,7 +47,20 @@
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+
+                    [<a href="#" class="view-source-link" data-target="source-modal-{{ $cmt.Idcomments }}">VIEW SOURCE</a>]
                 </footer>
+                <div id="source-modal-{{ $cmt.Idcomments }}" class="shortcuts-overlay hidden source-modal-overlay">
+                    <div class="shortcuts-modal" style="width: 800px;">
+                        <div class="shortcuts-header">
+                            <h2 style="margin: 0; font-size: 1.2em;">Source</h2>
+                            <button class="close-button close-source-modal" data-target="source-modal-{{ $cmt.Idcomments }}">&times;</button>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <textarea readonly style="width: 100%; height: 300px; font-family: monospace; padding: 0.5rem; resize: vertical;">{{ $cmt.Text.String }}</textarea>
+                        </div>
+                    </div>
+                </div>
                 {{ end }}
             {{ end }}
         </section>

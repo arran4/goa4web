@@ -124,6 +124,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"firstline":                 FirstLine,
 		"left":                      Left,
 		"truncateWords":             TruncateWords,
+		"toString":                  ToString,
 		"int32":                     ToInt32,
 		"add":                       Add,
 		"seq":                       Seq,
@@ -375,6 +376,18 @@ func TruncateWords(i int, s string) string {
 		return strings.Join(words[:i], " ") + "..."
 	}
 	return s
+}
+
+// ToString converts various types to string.
+func ToString(i any) string {
+	switch v := i.(type) {
+	case string:
+		return v
+	case fmt.Stringer:
+		return v.String()
+	default:
+		return fmt.Sprint(i)
+	}
 }
 
 // ToInt32 converts various types to int32.

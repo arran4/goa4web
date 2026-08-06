@@ -3,6 +3,7 @@ package notifications_test
 import (
 	"strings"
 	"testing"
+	"fmt"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 
@@ -22,6 +23,16 @@ func TestReplyTemplatesExist(t *testing.T) {
 				return strings.Join(words[:i], " ") + "..."
 			}
 			return s
+		},
+		"toString": func(item any) string {
+			switch v := item.(type) {
+			case string:
+				return v
+			case fmt.Stringer:
+				return v.String()
+			default:
+				return fmt.Sprint(item)
+			}
 		},
 		"lower": strings.ToLower,
 	}

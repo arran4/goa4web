@@ -3,7 +3,7 @@
 
 <p>{{.Item.Username}} posted a reply in {{.Item.TopicTitle}}:</p>
 
-<p>{{ truncateWords 50 .Item.Body }}</p>
+<p>{{ truncateWords 50 (toString .Item.Body) }}</p>
 
 <p><a href="{{.Item.CommentURL}}">View comment</a></p>
 <p><a href="{{.UnsubscribeUrl}}">Manage notifications</a></p>
@@ -12,7 +12,7 @@ Hi {{.Recipient.Username.String}},
 
 {{.Item.Username}} posted a reply in {{.Item.TopicTitle}}:
 
-{{ truncateWords 50 .Item.Body }}
+{{ truncateWords 50 (toString .Item.Body) }}
 
 View comment:
 {{.Item.CommentURL}}

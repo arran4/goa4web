@@ -191,6 +191,24 @@
                 case 'q':
                     // Blockquote
                     return inner.split('\n').map(l => `> ${l}`).join('\n');
+                case 'h1':
+                    return `# ${inner}
+`;
+                case 'h2':
+                    return `## ${inner}
+`;
+                case 'h3':
+                    return `### ${inner}
+`;
+                case 'h4':
+                    return `#### ${inner}
+`;
+                case 'h5':
+                    return `##### ${inner}
+`;
+                case 'h6':
+                    return `###### ${inner}
+`;
                 default:
                     return inner;
             }
@@ -300,6 +318,41 @@
                      i = end + 3;
                  }
                  current.children.push({ type: 'element', tagName: 'code', children: [{type:'text', value: content}]});
+             } else if (char === '#' && (i === 0 || text[i-1] === '
+')) {
+                 // Header
+                 let j = i;
+                 let level = 0;
+                 while (j < text.length && text[j] === '#') {
+                     level++;
+                     j++;
+                 }
+                 if (text[j] === ' ') {
+                     j++;
+                 }
+                 let end = text.indexOf('
+', j);
+                 if (end === -1) end = text.length;
+                 let content = text.substring(j, end);
+                 // A4Code uses [h1] to [h6]
+                 level = Math.min(level, 6);
+                 current.children.push({ type: 'element', tagName: 'h' + level, children: [{type:'text', value: content}]});
+                 i = end;
+                 if (i < text.length && text[i] === '
+') i++; // Skip the newline as it's part of the block usually, but let's keep it simple
+             } else if (char === '>' && (i === 0 || text[i-1] === '
+') && text[i+1] === ' ') {
+                 // Quote
+                 // Wait, quote can span multiple lines. For simplicity, just read until empty line
+                 let end = text.indexOf('
+
+', i);
+                 if (end === -1) end = text.length;
+                 let content = text.substring(i, end);
+                 // Remove > from each line
+                 content = content.replace(/^> /gm, '');
+                 current.children.push({ type: 'element', tagName: 'quote', children: [{type:'text', value: content}]});
+                 i = end;
              } else if (char === '[') {
                  // Link or Image (if ! before)
                  // Wait, logic for image is at '!'
@@ -383,6 +436,10 @@
                     return `[img ${node.args[0]}]`;
                 case 'code':
                     return `[code]${inner}[/code]`;
+                case 'quote':
+                    return `[quote]${inner}[/quote]`;
+                case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+                    return `[${node.tagName}]${inner}[/${node.tagName}]`;
                 default:
                     return inner;
             }

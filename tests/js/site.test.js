@@ -241,3 +241,19 @@ let expected_md4 = "Some text\n\n| col1 | col2 |\n|---|---|\n| val1 | val2 |\n\n
 assertEqual(md4, expected_md4, "A4Code table unwrapped in markdown");
 
 console.log("All Converter Tests Passed!");
+
+let md5 = "# Header 1";
+let a4_5 = A4Code.markdownToA4Code(md5);
+assertEqual(a4_5, "[h1]Header 1[/h1]", "H1 to a4code");
+
+let a4_6 = "[h2]Header 2[/h2]";
+let md6 = A4Code.a4codeToMarkdown(a4_6);
+assertEqual(md6, "## Header 2\n", "H2 to md");
+
+let md7 = "> Quote line 1\n> Quote line 2";
+let a4_7 = A4Code.markdownToA4Code(md7);
+assertEqual(a4_7, "[quote]Quote line 1\nQuote line 2[/quote]", "Quote to a4code");
+
+let a4_8 = "[quote]Quote line 1\nQuote line 2[/quote]";
+let md8 = A4Code.a4codeToMarkdown(a4_8);
+assertEqual(md8, "> Quote line 1\n> Quote line 2", "Quote to md");

@@ -10,6 +10,35 @@ import (
 	"testing"
 )
 
+func TestSanitizeURL(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want string
+		ok   bool
+	}{
+		{"http", "http://example.com", "http://example.com", true},
+		{"https", "https://example.com", "https://example.com", true},
+		{"ftp", "ftp://example.com", "ftp://example.com", false},
+		{"javascript", "javascript:alert(1)", "javascript:alert(1)", false},
+		{"empty", "", "", false},
+		{"invalid", ":::", ":::", false},
+		{"data image valid gif", "data:image/gif;base64,R0lGODlhAQABAIAAAP8AAf///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", "data:image/gif;base64,R0lGODlhAQABAIAAAP8AAf///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", true},
+		{"data image invalid base64", "data:image/jpeg;base64,abcd==", "data:image/jpeg;base64,abcd==", false},
+		{"data image non-image base64", "data:image/jpeg;base64,SGVsbG8gV29ybGQ=", "data:image/jpeg;base64,SGVsbG8gV29ybGQ=", false},
+		{"data image no base64", "data:image/jpeg,Hello", "data:image/jpeg,Hello", false},
+		{"data non-image", "data:text/plain;base64,SGVsbG8gV29ybGQ=", "data:text/plain;base64,SGVsbG8gV29ybGQ=", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := SanitizeURL(tt.raw)
+			if got != tt.want || ok != tt.ok {
+				t.Errorf("SanitizeURL(%q) = (%q, %t), want (%q, %t)", tt.raw, got, ok, tt.want, tt.ok)
+			}
+		})
+	}
+}
+
 func TestA4code2html_Process(t *testing.T) {
 	tests := []struct {
 		name  string

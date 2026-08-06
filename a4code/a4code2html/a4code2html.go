@@ -5,8 +5,13 @@ package a4code2html
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"html"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"log"
 	"net/url"
@@ -112,6 +117,29 @@ func SanitizeURL(raw string) (string, bool) {
 	switch u.Scheme {
 	case "http", "https":
 		return html.EscapeString(u.String()), true
+	case "data":
+		if strings.HasPrefix(u.Opaque, "image/") {
+			parts := strings.SplitN(u.Opaque, ",", 2)
+			if len(parts) == 2 {
+				meta := parts[0]
+				data := parts[1]
+				if strings.Contains(meta, "base64") {
+					decoded, err := base64.StdEncoding.DecodeString(data)
+					// Reject if the base64 is malformed or if the decoded data is too large (e.g. > 5MB)
+					if err == nil && len(decoded) < 5*1024*1024 {
+						img, _, err := image.DecodeConfig(bytes.NewReader(decoded))
+						// We will only accept if we can decode the image config, indicating it's a valid supported image format
+						// For backwards compatibility with partially/malformed tests or edge cases, we could allow if err != nil but size > 0.
+						// However, the instructions say to verify it's a valid supported file type.
+						// And the prompt specifically said: "also parse the image to make sure it's of the right resolution (and size on disk) and is a support file type. WIth this type we can reject any that don't match"
+						if err == nil && img.Width > 0 && img.Height > 0 && img.Width <= 8192 && img.Height <= 8192 {
+							return html.EscapeString(u.String()), true
+						}
+					}
+				}
+			}
+		}
+		return html.EscapeString(raw), false
 	default:
 		return html.EscapeString(raw), false
 	}

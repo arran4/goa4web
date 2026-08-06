@@ -47,7 +47,16 @@
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
+
+                    [<a href="#" onclick="document.getElementById('source-modal-{{ $cmt.Idcomments }}').showModal(); return false;">VIEW SOURCE</a>]
                 </footer>
+                <dialog id="source-modal-{{ $cmt.Idcomments }}" class="source-modal">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0;">Source</h3>
+                        <button class="close-button" onclick="document.getElementById('source-modal-{{ $cmt.Idcomments }}').close()">&times;</button>
+                    </div>
+                    <textarea readonly rows="15" cols="80" style="width: 100%; max-width: 100%; resize: vertical;">{{ $cmt.Text.String }}</textarea>
+                </dialog>
                 {{ end }}
             {{ end }}
         </section>

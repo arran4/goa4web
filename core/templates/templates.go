@@ -21,7 +21,7 @@ import (
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
 //
-//go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.txtar assets/*
+//go:embed all:site notifications/*.gotxt email/*.txtar assets/*
 var embeddedFS embed.FS
 
 var (

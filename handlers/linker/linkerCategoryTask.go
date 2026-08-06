@@ -17,7 +17,7 @@ type linkerCategoryTask struct {
 var _ tasks.Task = (*linkerCategoryTask)(nil)
 
 const (
-	LinkerCategoryPageTmpl tasks.Template = "linker/categoryPage.gohtml"
+	LinkerCategoryPageTmpl tasks.Template = "domains/linker/categoryPage.gohtml"
 )
 
 func NewLinkerCategoryTask() tasks.Task {

@@ -23,4 +23,4 @@ func StartGroupDiscussionPage(w http.ResponseWriter, r *http.Request) {
 	_ = PrivateForumStartDiscussionPageTmpl.Handle(w, r, data)
 }
 
-const PrivateForumStartDiscussionPageTmpl tasks.Template = "privateforum/start_discussion.gohtml"
+const PrivateForumStartDiscussionPageTmpl tasks.Template = "domains/privateforum/start_discussion.gohtml"

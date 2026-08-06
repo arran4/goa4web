@@ -27,7 +27,7 @@ func TestHappyPathEmptyFAQMessage(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "faq/page.gohtml", cd); err != nil {
+	if err := tmpl.ExecuteTemplate(&buf, "domains/faq/page.gohtml", cd); err != nil {
 		t.Fatalf("render faq/page.gohtml: %v", err)
 	}
 

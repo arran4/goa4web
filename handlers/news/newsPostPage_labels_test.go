@@ -61,9 +61,9 @@ func TestNewsPostPageLabelBars(t *testing.T) {
 
 		base := filepath.Join("..", "..", "core", "templates", "site")
 		tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-			filepath.Join(base, "news", "postPage.gohtml"),
-			filepath.Join(base, "news", "post.gohtml"),
-			filepath.Join(base, "_share.gohtml"),
+			filepath.Join(base, "domains", "news", "postPage.gohtml"),
+			filepath.Join(base, "domains", "news", "post.gohtml"),
+			filepath.Join(base, "partials/common/_share.gohtml"),
 		))
 		tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}
 {{ define "tail" }}{{ end }}
@@ -139,9 +139,9 @@ func TestNewsPostPagePrivateLabelsOnce(t *testing.T) {
 
 		base := filepath.Join("..", "..", "core", "templates", "site")
 		tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles(
-			filepath.Join(base, "news", "postPage.gohtml"),
-			filepath.Join(base, "news", "post.gohtml"),
-			filepath.Join(base, "_share.gohtml"),
+			filepath.Join(base, "domains", "news", "postPage.gohtml"),
+			filepath.Join(base, "domains", "news", "post.gohtml"),
+			filepath.Join(base, "partials/common/_share.gohtml"),
 		))
 		tmpl = template.Must(tmpl.Parse(`{{ define "head" }}{{ end }}{{ define "tail" }}{{ end }}{{ define "threadComments" }}{{ end }}{{ define "comment" }}{{ end }}{{ define "topicLabels" }}{{ end }}{{ define "languageCombobox" }}{{ end }}`))
 

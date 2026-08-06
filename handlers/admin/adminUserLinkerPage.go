@@ -46,4 +46,4 @@ func adminUserLinkerPage(w http.ResponseWriter, r *http.Request) {
 	_ = AdminUserLinkerPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserLinkerPageTmpl tasks.Template = "admin/userLinkerPage.gohtml"
+const AdminUserLinkerPageTmpl tasks.Template = "domains/admin/userLinkerPage.gohtml"

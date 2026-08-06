@@ -31,7 +31,7 @@ type AdminTemplatesPageData struct {
 }
 
 // AdminTemplatesPageTmpl renders the admin FAQ templates page.
-const AdminTemplatesPageTmpl tasks.Template = "faq/adminTemplatesPage.gohtml"
+const AdminTemplatesPageTmpl tasks.Template = "domains/faq/adminTemplatesPage.gohtml"
 
 // AdminTemplatesPage renders the templates administration view.
 func AdminTemplatesPage(w http.ResponseWriter, r *http.Request) {

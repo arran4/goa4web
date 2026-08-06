@@ -18,7 +18,7 @@ import (
 )
 
 // UnreadThreadsPageTmpl is the template for unread private threads.
-const UnreadThreadsPageTmpl tasks.Template = "privateforum/unread.gohtml"
+const UnreadThreadsPageTmpl tasks.Template = "domains/privateforum/unread.gohtml"
 
 // UnreadThreadsPage serves the page listing all unread private threads.
 func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {

@@ -48,4 +48,4 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 	_ = AdminMaintenancePageTmpl.Handle(w, r, data)
 }
 
-const AdminMaintenancePageTmpl tasks.Template = "admin/maintenancePage.gohtml"
+const AdminMaintenancePageTmpl tasks.Template = "domains/admin/maintenancePage.gohtml"

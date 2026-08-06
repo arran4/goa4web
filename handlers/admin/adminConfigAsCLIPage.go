@@ -112,4 +112,4 @@ func commandWithExtended(command string, extended bool) string {
 }
 
 // AdminConfigAsCLIPageTmpl renders the admin config export page.
-const AdminConfigAsCLIPageTmpl tasks.Template = "admin/configAsCLIPage.gohtml"
+const AdminConfigAsCLIPageTmpl tasks.Template = "domains/admin/configAsCLIPage.gohtml"

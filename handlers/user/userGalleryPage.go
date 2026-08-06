@@ -117,4 +117,4 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	_ = UserGalleryPage.Handle(w, r, data)
 }
 
-const UserGalleryPage tasks.Template = "user/gallery.gohtml"
+const UserGalleryPage tasks.Template = "domains/user/gallery.gohtml"

@@ -38,4 +38,4 @@ func (MergePrivateTopicsTask) Action(w http.ResponseWriter, r *http.Request) any
 	return handlers.RefreshDirectHandler{TargetURL: "/admin/maintenance"}
 }
 
-const AdminMaintenancePreviewPageTmpl tasks.Template = "admin/maintenancePreviewPage.gohtml"
+const AdminMaintenancePreviewPageTmpl tasks.Template = "domains/admin/maintenancePreviewPage.gohtml"

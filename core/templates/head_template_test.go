@@ -16,7 +16,7 @@ func TestHeadTemplateRendersSiteTitle(t *testing.T) {
 	funcs := cd.Funcs(r)
 	funcs["assetHash"] = func(s string) string { return s }
 	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
-		"site/*.gohtml", "site/*/*.gohtml"))
+		"site/*/*.gohtml", "site/*/*/*.gohtml"))
 	var b strings.Builder
 	if err := tmpl.ExecuteTemplate(&b, "head", nil); err != nil {
 		t.Fatalf("execute head: %v", err)
@@ -37,7 +37,7 @@ func TestHeadTemplateIncludesModuleScripts(t *testing.T) {
 	funcs := cd.Funcs(r)
 	funcs["assetHash"] = func(s string) string { return s }
 	tmpl := template.Must(template.New("").Funcs(funcs).ParseFS(testTemplates,
-		"site/*.gohtml", "site/*/*.gohtml"))
+		"site/*/*.gohtml", "site/*/*/*.gohtml"))
 	var b strings.Builder
 	if err := tmpl.ExecuteTemplate(&b, "head", nil); err != nil {
 		t.Fatalf("execute head: %v", err)

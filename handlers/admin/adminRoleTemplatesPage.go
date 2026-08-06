@@ -134,4 +134,4 @@ func templateGrantsToDB(grants []roletemplates.GrantDef) []*db.Grant {
 }
 
 // AdminRoleTemplatesPageTmpl renders the role templates admin page.
-const AdminRoleTemplatesPageTmpl tasks.Template = "admin/roleTemplatesPage.gohtml"
+const AdminRoleTemplatesPageTmpl tasks.Template = "domains/admin/roleTemplatesPage.gohtml"

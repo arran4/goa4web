@@ -154,7 +154,7 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		log.Printf("websocket upgrade: %v", err)
 		return
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	ch := h.Bus.Subscribe(eventbus.TaskMessageType)
 	for {

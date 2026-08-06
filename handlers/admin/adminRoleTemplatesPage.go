@@ -115,7 +115,7 @@ func AdminRoleTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		Templates: items,
 		Selected:  detail,
 	}
-	AdminRoleTemplatesPageTmpl.Handle(w, r, data)
+	_ = AdminRoleTemplatesPageTmpl.Handle(w, r, data)
 }
 
 func templateGrantsToDB(grants []roletemplates.GrantDef) []*db.Grant {
@@ -134,4 +134,4 @@ func templateGrantsToDB(grants []roletemplates.GrantDef) []*db.Grant {
 }
 
 // AdminRoleTemplatesPageTmpl renders the role templates admin page.
-const AdminRoleTemplatesPageTmpl tasks.Template = "admin/roleTemplatesPage.gohtml"
+const AdminRoleTemplatesPageTmpl tasks.Template = "domains/admin/roleTemplatesPage.gohtml"

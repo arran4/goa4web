@@ -30,7 +30,7 @@ func parseUserAddAdminCmd(parent *userCmd, args []string) (*userAddAdminCmd, err
 }
 
 func (c *userAddAdminCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_add_admin_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_add_admin_usage.txt", c)
 }
 
 func (c *userAddAdminCmd) FlagGroups() []flagGroup {
@@ -47,5 +47,5 @@ func (c *userAddAdminCmd) Run() error {
 			return fmt.Errorf("prompt password: %w", err)
 		}
 	}
-	return createUser(c.userCmd.rootCmd, c.Username, c.Email, pw, true)
+	return createUser(c.rootCmd, c.Username, c.Email, pw, true)
 }

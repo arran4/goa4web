@@ -45,11 +45,11 @@ func (c *forumThreadCmd) Run() error {
 }
 
 func (c *forumThreadCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s forum thread <command> [flags]\n", os.Args[0])
-	fmt.Fprintln(c.fs.Output(), "\nCommands:")
-	fmt.Fprintln(c.fs.Output(), "  list    List forum threads")
-	fmt.Fprintln(c.fs.Output(), "  details Show details of a forum thread")
-	fmt.Fprintln(c.fs.Output(), "  delete  Delete a forum thread")
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s forum thread <command> [flags]\n", os.Args[0])
+	_, _ = fmt.Fprintln(c.fs.Output(), "\nCommands:")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  list    List forum threads")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  details Show details of a forum thread")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  delete  Delete a forum thread")
 }
 
 func (c *forumThreadCmd) runList(args []string) error {
@@ -60,7 +60,7 @@ func (c *forumThreadCmd) runList(args []string) error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -76,13 +76,13 @@ func (c *forumThreadCmd) runList(args []string) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tTopicID\tTopic\tTitle\tPosts\tLast Post")
+	_, _ = fmt.Fprintln(w, "ID\tTopicID\tTopic\tTitle\tPosts\tLast Post")
 	for _, t := range threads {
 		if isPublicForumHandler(t.TopicHandler) {
-			fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%d\t%v\n", t.Idforumthread, t.Idforumtopic, t.TopicTitle.String, t.Title, t.PostCount.Int32, t.LastPostAt.Time)
+			_, _ = fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%d\t%v\n", t.Idforumthread, t.Idforumtopic, t.TopicTitle.String, t.Title, t.PostCount.Int32, t.LastPostAt.Time)
 		}
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (c *forumThreadCmd) runDetails(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (c *forumThreadCmd) runDelete(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}

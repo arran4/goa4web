@@ -15,7 +15,7 @@ type notificationsTasksCmd struct {
 
 // Usage prints command usage information with examples.
 func (c *notificationsTasksCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_tasks_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_tasks_usage.txt", c)
 }
 
 func (c *notificationsTasksCmd) FlagGroups() []flagGroup {
@@ -39,7 +39,7 @@ func (c *notificationsTasksCmd) Run() error {
 	tw := table.NewWriter()
 	tw.SetOutputMirror(c.fs.Output())
 	tw.AppendHeader(table.Row{"Section", "Task", "Self Email", "Self Internal", "Direct Email", "Target Email", "Target Internal", "Subscribed Email", "Subscribed Internal", "Admin Email", "Admin Internal"})
-	for _, info := range taskTemplateInfos(c.notificationsCmd.rootCmd.tasksReg) {
+	for _, info := range taskTemplateInfos(c.tasksReg) {
 		tw.AppendRow(table.Row{
 			info.Section,
 			info.Task,

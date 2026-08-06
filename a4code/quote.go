@@ -309,10 +309,6 @@ func isQuoteBlock(s string) bool {
 	return IsQuoteBlock(s)
 }
 
-func isQuoteOf(s string) bool {
-	return IsQuoteBlock(s)
-}
-
 // QuoteReduce flattens nested quotes in a parsed tree and returns the resulting a4code string.
 // It implements rules to prevent deep quote nesting while preserving the innermost speaker attribute.
 // If empty quote nodes remain after processing, they are eliminated.

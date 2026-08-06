@@ -38,7 +38,7 @@ func parseRequestsViewCmd(parent *requestsCmd, args []string) (*requestsViewCmd,
 }
 
 func (c *requestsViewCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_view_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_view_usage.txt", c)
 }
 
 func (c *requestsViewCmd) FlagGroups() []flagGroup {
@@ -51,7 +51,7 @@ func (c *requestsViewCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

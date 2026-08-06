@@ -74,7 +74,7 @@ func (c *userPasswordListCmd) Run() error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -208,13 +208,13 @@ func (c *userPasswordListCmd) renderOutput(pageRows []*db.AdminListPasswordReset
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tUser ID\tUsername\tStatus\tCreated At\tVerified At")
+	_, _ = fmt.Fprintln(w, "ID\tUser ID\tUsername\tStatus\tCreated At\tVerified At")
 	for _, row := range pageRows {
 		verifiedAt := "-"
 		if row.VerifiedAt.Valid {
 			verifiedAt = row.VerifiedAt.Time.Format(time.RFC3339)
 		}
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"%d\t%d\t%s\t%s\t%s\t%s\n",
 			row.ID,
@@ -243,7 +243,7 @@ func toNullString(value sql.NullString) string {
 }
 
 func (c *userPasswordListCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_password_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_password_list_usage.txt", c)
 }
 
 func (c *userPasswordListCmd) FlagGroups() []flagGroup {

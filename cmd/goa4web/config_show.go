@@ -23,7 +23,7 @@ func parseConfigShowCmd(parent *configCmd, args []string) (*configShowCmd, error
 }
 
 func (c *configShowCmd) Run() error {
-	b, err := json.MarshalIndent(c.rootCmd.cfg, "", "  ")
+	b, err := json.MarshalIndent(c.cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal config: %w", err)
 	}

@@ -51,7 +51,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("image required %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	data, err := io.ReadAll(file)
 	if err != nil {

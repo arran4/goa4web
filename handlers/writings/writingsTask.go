@@ -17,7 +17,7 @@ type writingsTask struct {
 var _ tasks.Task = (*writingsTask)(nil)
 
 const (
-	WritingsPageTmpl tasks.Template = "writings/page.gohtml"
+	WritingsPageTmpl tasks.Template = "domains/writings/page.gohtml"
 )
 
 func NewWritingsTask() tasks.Task {
@@ -72,5 +72,5 @@ func (t *writingsTask) Get(w http.ResponseWriter, r *http.Request) {
 		Type:        "website",
 	}
 
-	WritingsPageTmpl.Handle(w, r, data)
+	_ = WritingsPageTmpl.Handle(w, r, data)
 }

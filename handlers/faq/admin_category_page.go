@@ -67,7 +67,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		ItemID:  sql.NullInt32{Int32: int32(id), Valid: true},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Internal Server Error"))
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
 
@@ -80,10 +80,10 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd.PageTitle = "FAQ Category: " + cat.Name.String
 
 	data := Data{Category: cat, Latest: latest, Templates: templates, Grants: grants, Roles: roles}
-	FaqAdminCategoryPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoryPageTmpl tasks.Template = "faq/faqAdminCategoryPage.gohtml"
+const FaqAdminCategoryPageTmpl tasks.Template = "domains/faq/faqAdminCategoryPage.gohtml"
 
 // AdminCategoryEditPage shows a form to rename or delete a FAQ category.
 func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
@@ -121,10 +121,10 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "Edit FAQ Category"
 	data := Data{Category: cat, Categories: cats}
-	FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoryEditPageTmpl tasks.Template = "faq/faqAdminCategoryEditPage.gohtml"
+const FaqAdminCategoryEditPageTmpl tasks.Template = "domains/faq/faqAdminCategoryEditPage.gohtml"
 
 // AdminCategoryQuestionsPage lists questions for a FAQ category.
 func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
@@ -162,16 +162,16 @@ func AdminCategoryQuestionsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "FAQ Category Questions"
 	data := Data{Category: cat, Questions: questions}
-	FaqAdminCategoryQuestionsPageTmpl.Handle(w, r, data)
+	_ = FaqAdminCategoryQuestionsPageTmpl.Handle(w, r, data)
 }
 
-const FaqAdminCategoryQuestionsPageTmpl tasks.Template = "faq/faqAdminCategoryQuestionsPage.gohtml"
+const FaqAdminCategoryQuestionsPageTmpl tasks.Template = "domains/faq/faqAdminCategoryQuestionsPage.gohtml"
 
 // AdminNewCategoryPage displays a form to create a new FAQ category.
 func AdminNewCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "New FAQ Category"
-	FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
+	_ = FaqAdminNewCategoryPageTmpl.Handle(w, r, struct{}{})
 }
 
-const FaqAdminNewCategoryPageTmpl tasks.Template = "faq/faqAdminNewCategoryPage.gohtml"
+const FaqAdminNewCategoryPageTmpl tasks.Template = "domains/faq/faqAdminNewCategoryPage.gohtml"

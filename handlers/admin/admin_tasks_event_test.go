@@ -111,7 +111,9 @@ func TestHappyPathAddIPBanTaskEventData(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	addIPBanTask.Action(rr, req)
-	bus.Publish(*evt)
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish event: %v", err)
+	}
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)
@@ -166,7 +168,9 @@ func TestHappyPathDeleteIPBanTaskEventData(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	deleteIPBanTask.Action(rr, req)
-	bus.Publish(*evt)
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish event: %v", err)
+	}
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)
@@ -220,7 +224,9 @@ func TestHappyPathAddAnnouncementTaskEventData(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	addAnnouncementTask.Action(rr, req)
-	bus.Publish(*evt)
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish event: %v", err)
+	}
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)
@@ -276,7 +282,9 @@ func TestHappyPathDeleteAnnouncementTaskEventData(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	deleteAnnouncementTask.Action(rr, req)
-	bus.Publish(*evt)
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish event: %v", err)
+	}
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)
@@ -350,7 +358,9 @@ func TestHappyPathUserPasswordResetTaskEventData(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	userForcePasswordChangeTask.Action(rr, req)
-	bus.Publish(*evt)
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish event: %v", err)
+	}
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)
@@ -402,7 +412,9 @@ func TestHappyPathServerShutdownTaskEventData(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	(&ServerShutdownTask{}).Action(rr, req)
-	bus.Publish(*evt)
+	if err := bus.Publish(*evt); err != nil {
+		t.Fatalf("publish event: %v", err)
+	}
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)

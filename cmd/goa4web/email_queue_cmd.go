@@ -57,7 +57,7 @@ func (c *emailQueueCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *emailQueueCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_queue_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_queue_usage.txt", c)
 }
 
 func (c *emailQueueCmd) FlagGroups() []flagGroup {

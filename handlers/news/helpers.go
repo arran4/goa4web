@@ -4,8 +4,8 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
-// canEditNewsPost reports whether cd can modify the specified news post.
-func canEditNewsPost(cd *common.CoreData, postID int32) bool {
+// CanEditNewsPost reports whether cd can modify the specified news post.
+func CanEditNewsPost(cd *common.CoreData, postID int32) bool {
 	if cd == nil {
 		return false
 	}

@@ -33,7 +33,7 @@ func TestTemplateLinks(t *testing.T) {
 
 	// Collect route regexps
 	var routeRegexps []*regexp.Regexp
-	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	_ = r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		str, err := route.GetPathRegexp()
 		if err != nil {
 			return nil
@@ -65,9 +65,6 @@ func TestTemplateLinks(t *testing.T) {
 		scanDirs = append(scanDirs, "testdata")
 	} else if _, err := os.Stat("cmd/goa4web/testdata"); err == nil {
 		scanDirs = append(scanDirs, "cmd/goa4web/testdata")
-	} else {
-		// Create testdata if missing? No, we created it.
-		// Assuming we are running in the right dir.
 	}
 
 	if len(scanDirs) == 0 {

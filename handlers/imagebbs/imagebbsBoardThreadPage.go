@@ -109,10 +109,10 @@ func BoardThreadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
+	_ = ImageBBSBoardThreadPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSBoardThreadPageTmpl tasks.Template = "imagebbs/boardThreadPage.gohtml"
+const ImageBBSBoardThreadPageTmpl tasks.Template = "domains/imagebbs/boardThreadPage.gohtml"
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -143,14 +143,14 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			_ = cd.ExecuteSiteTemplate(w, r, "admin/noAccessPage.gohtml", struct{}{})
+			_ = cd.ExecuteSiteTemplate(w, r, "domains/admin/noAccessPage.gohtml", struct{}{})
 			return nil
 		default:
 			return fmt.Errorf("get image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
-	var pthid int32 = post.ForumthreadID
+	var pthid = post.ForumthreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: ImageBBSTopicName,
 		Valid:  true,

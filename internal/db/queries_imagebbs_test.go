@@ -15,7 +15,7 @@ func TestQueries_ListBoardsByParentIDForLister(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idimageboard", "imageboard_idimageboard", "title", "description", "approval_required", "deleted_at"}).AddRow(1, nil, nil, nil, 0, nil)
@@ -45,7 +45,7 @@ func TestQueries_ListImagePostsByBoardForLister_GlobalGrant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idimagepost", "forumthread_id", "users_idusers", "imageboard_idimageboard", "posted", "timezone", "description", "thumbnail", "fullimage", "file_size", "approved", "deleted_at", "last_index", "username", "comments"}).

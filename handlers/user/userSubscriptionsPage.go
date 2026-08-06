@@ -34,11 +34,11 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 	var adminGroups []*subscriptions.SubscriptionGroup
 
 	for _, g := range groups {
-		if g.Definition.IsAdminOnly && !cd.IsAdmin() {
+		if g.IsAdminOnly && !cd.IsAdmin() {
 			continue
 		}
 		// Also ensure default instance for param-less definitions
-		if len(g.Instances) == 0 && !strings.Contains(g.Definition.Pattern, "{") {
+		if len(g.Instances) == 0 && !strings.Contains(g.Pattern, "{") {
 			// Create empty instance
 			g.Instances = append(g.Instances, &subscriptions.SubscriptionInstance{
 				Original:   "", // Will use definition pattern
@@ -47,7 +47,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 
-		if g.Definition.IsAdminOnly {
+		if g.IsAdminOnly {
 			adminGroups = append(adminGroups, g)
 		} else {
 			regularGroups = append(regularGroups, g)
@@ -61,7 +61,8 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 					if p.Resolved != "" {
 						continue
 					}
-					if p.Key == "topicid" {
+					switch p.Key {
+					case "topicid":
 						if id, err := strconv.Atoi(p.Value); err == nil {
 							topic, err := cd.Queries().GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
 								ViewerID:      cd.UserID,
@@ -94,7 +95,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 								inst.Parameters[i].Resolved = title
 							}
 						}
-					} else if p.Key == "threadid" {
+					case "threadid":
 						if id, err := strconv.Atoi(p.Value); err == nil {
 							// Ensure the user has permission to view the thread
 							_, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
@@ -132,7 +133,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 		AdminGroups: adminGroups,
 		IsAdminMode: isAdminMode,
 	}
-	UserSubscriptionsPage.Handle(w, r, data)
+	_ = UserSubscriptionsPage.Handle(w, r, data)
 }
 
-const UserSubscriptionsPage tasks.Template = "user/subscriptions.gohtml"
+const UserSubscriptionsPage tasks.Template = "domains/user/subscriptions.gohtml"

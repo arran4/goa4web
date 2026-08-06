@@ -171,10 +171,10 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		Timezone:       timezone,
 		CurrentTime:    currentTime,
 	}
-	UserNotificationsPage.Handle(w, r, data)
+	_ = UserNotificationsPage.Handle(w, r, data)
 }
 
-const UserNotificationsPage tasks.Template = "user/notifications.gohtml"
+const UserNotificationsPage tasks.Template = "domains/user/notifications.gohtml"
 
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -387,12 +387,12 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		ThreadTitle:  threadTitle,
 		SectionTitle: sectionTitle,
 	}
-	UserNotificationOpenPage.Handle(w, r, data)
+	_ = UserNotificationOpenPage.Handle(w, r, data)
 }
 
-const UserNotificationOpenPage tasks.Template = "user/notificationOpen.gohtml"
+const UserNotificationOpenPage tasks.Template = "domains/user/notificationOpen.gohtml"
 
-func userNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
+func UserNotificationEmailActionPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)

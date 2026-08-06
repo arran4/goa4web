@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 	"flag"
 	"fmt"
@@ -27,7 +26,7 @@ func openDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, error)
 	if err != nil {
 		return nil, err
 	}
-	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
+	var connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	sdb := sql.OpenDB(connector)
 	if err := sdb.Ping(); err != nil {
 		return nil, closeAndWrap(sdb, fmt.Errorf("ping database: %w", err))
@@ -61,7 +60,7 @@ func parseDbMigrateCmd(parent *dbCmd, args []string) (*dbMigrateCmd, error) {
 }
 
 func (c *dbMigrateCmd) Usage() {
-	executeUsage(c.fs.Output(), "db_migrate_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "db_migrate_usage.txt", c)
 }
 
 func (c *dbMigrateCmd) FlagGroups() []flagGroup {
@@ -71,29 +70,29 @@ func (c *dbMigrateCmd) FlagGroups() []flagGroup {
 var _ usageData = (*dbMigrateCmd)(nil)
 
 func (c *dbMigrateCmd) Run() error {
-	c.rootCmd.Verbosef("connecting to database using %s", c.rootCmd.cfg.DBConn)
-	db, err := openDB(c.rootCmd.cfg, c.rootCmd.dbReg)
+	c.Verbosef("connecting to database using %s", c.cfg.DBConn)
+	db, err := openDB(c.cfg, c.dbReg)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	ctx := context.Background()
 	var fsys fs.FS
 	if c.Dir == "migrations" {
 		fsys = migrations.FS
-		c.rootCmd.Verbosef("applying embedded migrations")
+		c.Verbosef("applying embedded migrations")
 	} else {
 		fsys = os.DirFS(c.Dir)
-		c.rootCmd.Verbosef("applying migrations from %s", c.Dir)
+		c.Verbosef("applying migrations from %s", c.Dir)
 	}
-	if err := dbstart.Apply(ctx, db, fsys, c.rootCmd.Verbosity >= 0, c.rootCmd.cfg.DBDriver); err != nil {
+	if err := dbstart.Apply(ctx, db, fsys, c.Verbosity >= 0, c.cfg.DBDriver); err != nil {
 		return err
 	}
 	version, err := dbstart.SchemaVersion(ctx, db)
 	if err != nil {
 		return fmt.Errorf("read schema version: %w", err)
 	}
-	c.rootCmd.Infof("current schema version: %d", version)
-	c.rootCmd.Infof("database migrated successfully")
+	c.Infof("current schema version: %d", version)
+	c.Infof("database migrated successfully")
 	return nil
 }

@@ -49,7 +49,7 @@ func (RoleTemplateApplyTask) Action(w http.ResponseWriter, r *http.Request) any 
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	qtx := queries.WithTx(tx)
 	if err := roletemplates.ApplyRoles(r.Context(), qtx, tx, tmpl.Roles, time.Now(), nil); err != nil {

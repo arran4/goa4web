@@ -36,7 +36,7 @@ func AdminCategoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Categories = categoryRows
 
-	LinkerAdminCategoriesPageTmpl.Handle(w, r, data)
+	_ = LinkerAdminCategoriesPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoriesPageTmpl tasks.Template = "linker/linkerAdminCategoriesPage.gohtml"
+const LinkerAdminCategoriesPageTmpl tasks.Template = "domains/linker/linkerAdminCategoriesPage.gohtml"

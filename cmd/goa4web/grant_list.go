@@ -42,7 +42,7 @@ func parseGrantListCmd(parent *grantCmd, args []string) (*grantListCmd, error) {
 }
 
 func (c *grantListCmd) Run() error {
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
@@ -105,7 +105,7 @@ func (c *grantListCmd) Run() error {
 
 func printGrantsTable(out io.Writer, rows []*db.ListGrantsExtendedRow) error {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive")
+	_, _ = fmt.Fprintln(w, "ID\tSection\tItem\tAction\tRule Type\tTarget\tScope\tActive")
 	for _, g := range rows {
 		target := "Everyone"
 		if g.RoleName.Valid {
@@ -140,7 +140,7 @@ func printGrantsTable(out io.Writer, rows []*db.ListGrantsExtendedRow) error {
 			active = "No"
 		}
 
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", g.ID, g.Section, item, g.Action, ruleType, target, scope, active)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", g.ID, g.Section, item, g.Action, ruleType, target, scope, active)
 	}
 	return w.Flush()
 }

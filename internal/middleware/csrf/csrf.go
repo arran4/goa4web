@@ -39,6 +39,7 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 	if u, err := url.Parse(hostname); err == nil && u.Host != "" {
 		origins = append(origins, u.Host)
 	}
+	//nolint:staticcheck // gorilla/csrf deprecation
 	protect := csrf.Protect(key[:], csrf.Secure(version != "dev"), csrf.TrustedOrigins(origins))
 	return func(next http.Handler) http.Handler {
 		validatedNext := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

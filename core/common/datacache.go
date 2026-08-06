@@ -30,7 +30,6 @@ type DataCache struct {
 	blogListOffset                int
 	blogListRows                  lazy.Value[[]*db.ListBlogEntriesForListerRow]
 	blogListByAuthorRows          lazy.Value[[]*db.ListBlogEntriesByAuthorForListerRow]
-	blogListUID                   int32
 	bookmarks                     lazy.Value[*db.GetBookmarksForUserRow]
 	externalLinks                 map[int32]*lazy.Value[*db.ExternalLink]
 	faqCategories                 lazy.Value[[]*db.FaqCategory]
@@ -55,7 +54,6 @@ type DataCache struct {
 	linkerItems                   map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]
 	newsAnnouncements             map[int32]*lazy.Value[*db.SiteAnnouncement]
 	newsPosts                     map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
-	notifCount                    lazy.Value[int32]
 	notifications                 map[string]*lazy.Value[[]*db.Notification]
 	perms                         lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	pref                          lazy.Value[*db.Preference]

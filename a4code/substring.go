@@ -1,8 +1,6 @@
 package a4code
 
 import (
-	"strings"
-
 	"github.com/arran4/goa4web/a4code/ast"
 )
 
@@ -72,9 +70,6 @@ func filterNodes(nodes []ast.Node, start, end int, pos *int) []ast.Node {
 				// But simpler is to reuse 't' and set its children.
 				setChildren(t, newChildren)
 				kept = append(kept, t)
-			} else {
-				// Debug why empty?
-				// fmt.Printf("Container %T empty after filter\n", t)
 			}
 
 		case *ast.Image:
@@ -142,34 +137,4 @@ func setChildren(c ast.Container, children []ast.Node) {
 	case *ast.Custom:
 		t.Children = children
 	}
-}
-
-// normaliseSimpleBB is kept for backward compatibility if used elsewhere,
-// though it looks like it was helper for the old substring.
-func normaliseSimpleBB(in string) string {
-	if len(in) == 0 {
-		return in
-	}
-	var out strings.Builder
-	for i := 0; i < len(in); {
-		if in[i] == '\\' && i+1 < len(in) {
-			out.WriteByte(in[i])
-			out.WriteByte(in[i+1])
-			i += 2
-			continue
-		}
-		if strings.HasPrefix(in[i:], "[b]") {
-			out.WriteString("[b")
-			i += 3
-			continue
-		}
-		if strings.HasPrefix(in[i:], "[/b]") {
-			out.WriteByte(']')
-			i += 4
-			continue
-		}
-		out.WriteByte(in[i])
-		i++
-	}
-	return out.String()
 }

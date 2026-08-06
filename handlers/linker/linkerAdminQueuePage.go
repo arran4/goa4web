@@ -102,10 +102,10 @@ func AdminQueuePage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = baseURL + "?" + qv.Encode()
 	}
 
-	LinkerAdminQueuePageTmpl.Handle(w, r, data)
+	_ = LinkerAdminQueuePageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminQueuePageTmpl tasks.Template = "linker/adminQueuePage.gohtml"
+const LinkerAdminQueuePageTmpl tasks.Template = "domains/linker/adminQueuePage.gohtml"
 
 func AdminQueueUpdateActionPage(w http.ResponseWriter, r *http.Request) {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()

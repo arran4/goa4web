@@ -28,7 +28,7 @@ func parseWritingListDeactivatedCmd(parent *writingCmd, args []string) (*writing
 }
 
 func (c *writingListDeactivatedCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

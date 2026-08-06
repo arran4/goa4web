@@ -37,7 +37,7 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 			Back:     "/admin/page-size",
 			Messages: []string{"Pagination settings updated in memory. Update the configuration file to persist."},
 		}
-		RunTaskPageTmpl.Handle(w, r, data)
+		_ = RunTaskPageTmpl.Handle(w, r, data)
 		return
 	}
 
@@ -50,9 +50,9 @@ func AdminPageSizePage(w http.ResponseWriter, r *http.Request) {
 		Max:     cd.Config.PageSizeMax,
 		Default: cd.Config.PageSizeDefault,
 	}
-	AdminPageSizePageTmpl.Handle(w, r, data)
+	_ = AdminPageSizePageTmpl.Handle(w, r, data)
 }
 
-const AdminPageSizePageTmpl tasks.Template = "admin/pageSizePage.gohtml"
+const AdminPageSizePageTmpl tasks.Template = "domains/admin/pageSizePage.gohtml"
 
-const RunTaskPageTmpl tasks.Template = "admin/runTaskPage.gohtml"
+const RunTaskPageTmpl tasks.Template = "domains/admin/runTaskPage.gohtml"

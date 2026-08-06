@@ -56,7 +56,7 @@ func AdminLinkDiscoveryPage(w http.ResponseWriter, r *http.Request) {
 		wcsv.Flush()
 		data.CSV = buf.String()
 	}
-	AdminLinkDiscoveryPageTmpl.Handle(w, r, data)
+	_ = AdminLinkDiscoveryPageTmpl.Handle(w, r, data)
 }
 
-const AdminLinkDiscoveryPageTmpl tasks.Template = "admin/linkDiscoveryPage.gohtml"
+const AdminLinkDiscoveryPageTmpl tasks.Template = "domains/admin/linkDiscoveryPage.gohtml"

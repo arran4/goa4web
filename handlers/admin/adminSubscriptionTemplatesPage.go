@@ -77,7 +77,7 @@ func readSubscriptionTemplateFile(file multipart.File) (string, error) {
 	if file == nil {
 		return "", fmt.Errorf("missing upload")
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	limited := io.LimitReader(file, maxSubscriptionTemplateUploadBytes+1)
 	data, err := io.ReadAll(limited)
@@ -171,8 +171,8 @@ func AdminSubscriptionTemplatesPage(w http.ResponseWriter, r *http.Request) {
 		Upload:    upload,
 	}
 
-	AdminSubscriptionTemplatesPageTmpl.Handle(w, r, data)
+	_ = AdminSubscriptionTemplatesPageTmpl.Handle(w, r, data)
 }
 
 // AdminSubscriptionTemplatesPageTmpl renders the admin subscription templates page.
-const AdminSubscriptionTemplatesPageTmpl tasks.Template = "admin/subscriptionTemplatesPage.gohtml"
+const AdminSubscriptionTemplatesPageTmpl tasks.Template = "domains/admin/subscriptionTemplatesPage.gohtml"

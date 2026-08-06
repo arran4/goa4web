@@ -19,14 +19,63 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetElement) {
                 targetElement.classList.toggle('hidden');
             }
-        } else if (e.target && e.target.classList.contains('convert-markdown-to-a4code')) {
+        } else if (e.target && e.target.closest('.convert-markdown-to-a4code')) {
+            e.preventDefault();
+            const btn = e.target.closest('.convert-markdown-to-a4code');
+            const targetId = btn.getAttribute('data-target');
+            const modal = document.getElementById('md-convert-modal-' + targetId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                const textarea = document.getElementById(targetId);
+                const modalTextarea = document.getElementById('md-convert-textarea-' + targetId);
+                if (textarea && modalTextarea) {
+                    modalTextarea.value = textarea.value;
+                }
+                modal.setAttribute('data-mode', 'md-to-a4');
+                modal.querySelector('.md-to-a4-tab').classList.add('active');
+                modal.querySelector('.a4-to-md-tab').classList.remove('active');
+            }
+        } else if (e.target && e.target.classList.contains('close-md-modal')) {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
-            convertMarkdownToA4Code(targetId);
-        } else if (e.target && e.target.classList.contains('convert-a4code-to-markdown')) {
+            const modal = document.getElementById('md-convert-modal-' + targetId);
+            if (modal) modal.classList.add('hidden');
+        } else if (e.target && e.target.classList.contains('md-to-a4-tab')) {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
-            convertA4CodeToMarkdown(targetId);
+            const modal = document.getElementById('md-convert-modal-' + targetId);
+            if (modal) {
+                modal.setAttribute('data-mode', 'md-to-a4');
+                e.target.classList.add('active');
+                modal.querySelector('.a4-to-md-tab').classList.remove('active');
+            }
+        } else if (e.target && e.target.classList.contains('a4-to-md-tab')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const modal = document.getElementById('md-convert-modal-' + targetId);
+            if (modal) {
+                modal.setAttribute('data-mode', 'a4-to-md');
+                e.target.classList.add('active');
+                modal.querySelector('.md-to-a4-tab').classList.remove('active');
+            }
+        } else if (e.target && e.target.classList.contains('insert-converted-btn')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const modal = document.getElementById('md-convert-modal-' + targetId);
+            const modalTextarea = document.getElementById('md-convert-textarea-' + targetId);
+            const mainTextarea = document.getElementById(targetId);
+
+            if (modal && modalTextarea && mainTextarea && window.A4Code) {
+                const mode = modal.getAttribute('data-mode');
+                if (mode === 'md-to-a4') {
+                    mainTextarea.value = window.A4Code.markdownToA4Code(modalTextarea.value);
+                } else {
+                    mainTextarea.value = window.A4Code.a4codeToMarkdown(modalTextarea.value);
+                }
+                modal.classList.add('hidden');
+            } else if (!window.A4Code) {
+                alert("A4Code library not loaded");
+            }
         } else if (e.target && e.target.classList.contains('preview-a4code')) {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');
@@ -466,7 +515,7 @@ function quoteInNewThread(commentId, topicId, event) {
 
             if (start !== -1 && end !== -1) {
                 // Construct URL for selected text
-                url = basePath + '/topic/' + topicId + '/thread/new?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
+                url = basePath + '/topic/' + topicId + '/thread?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
             }
         }
     }

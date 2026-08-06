@@ -28,7 +28,7 @@ func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsC
 }
 
 func (c *configAsCmd) asEnvFile() error {
-	out, err := configformat.FormatAsEnvFile(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.dbReg, configformat.AsOptions{Extended: c.extended})
+	out, err := configformat.FormatAsEnvFile(c.cfg, c.ConfigFile, c.dbReg, configformat.AsOptions{Extended: c.extended})
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (c *configAsCmd) asEnvFile() error {
 }
 
 func (c *configAsCmd) asEnv() error {
-	out, err := configformat.FormatAsEnv(c.rootCmd.cfg, c.rootCmd.ConfigFile, c.rootCmd.dbReg, configformat.AsOptions{Extended: c.extended})
+	out, err := configformat.FormatAsEnv(c.cfg, c.ConfigFile, c.dbReg, configformat.AsOptions{Extended: c.extended})
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (c *configAsCmd) asEnv() error {
 }
 
 func (c *configAsCmd) asJSON() error {
-	out, err := configformat.FormatAsJSON(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	out, err := configformat.FormatAsJSON(c.cfg, c.ConfigFile)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (c *configAsCmd) asJSON() error {
 }
 
 func (c *configAsCmd) asCLI() error {
-	out, err := configformat.FormatAsCLI(c.rootCmd.cfg, c.rootCmd.ConfigFile)
+	out, err := configformat.FormatAsCLI(c.cfg, c.ConfigFile)
 	if err != nil {
 		return err
 	}

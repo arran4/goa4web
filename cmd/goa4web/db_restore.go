@@ -26,7 +26,7 @@ func parseDbRestoreCmd(parent *dbCmd, args []string) (*dbRestoreCmd, error) {
 }
 
 func (c *dbRestoreCmd) Usage() {
-	executeUsage(c.fs.Output(), "db_restore_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "db_restore_usage.txt", c)
 }
 
 func (c *dbRestoreCmd) FlagGroups() []flagGroup {
@@ -39,11 +39,11 @@ func (c *dbRestoreCmd) Run() error {
 	if c.File == "" {
 		return fmt.Errorf("file required")
 	}
-	cfg := c.rootCmd.cfg
-	c.rootCmd.Verbosef("restoring from %s", c.File)
-	if err := dbops.RestoreDatabase(c.rootCmd.dbReg, cfg, c.File); err != nil {
+	cfg := c.cfg
+	c.Verbosef("restoring from %s", c.File)
+	if err := dbops.RestoreDatabase(c.dbReg, cfg, c.File); err != nil {
 		return err
 	}
-	c.rootCmd.Infof("database restored from %s", c.File)
+	c.Infof("database restored from %s", c.File)
 	return nil
 }

@@ -37,7 +37,7 @@ func TestHappyPathRegisterRoutesRegistersGrantAdd(t *testing.T) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	h.RegisterRoutes(ar, &config.RuntimeConfig{})
 	var found bool
-	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	if err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		path, err := route.GetPathTemplate()
 		if err != nil {
 			return nil
@@ -51,7 +51,9 @@ func TestHappyPathRegisterRoutesRegistersGrantAdd(t *testing.T) {
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		t.Fatalf("walk routes: %v", err)
+	}
 	if !found {
 		t.Fatalf("grant add route not registered")
 	}
@@ -63,7 +65,7 @@ func TestHappyPathRegisterRoutesRegistersGrantCreate(t *testing.T) {
 	ar := r.PathPrefix("/admin").Subrouter()
 	h.RegisterRoutes(ar, &config.RuntimeConfig{})
 	var found bool
-	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	if err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		path, err := route.GetPathTemplate()
 		if err != nil {
 			return nil
@@ -77,7 +79,9 @@ func TestHappyPathRegisterRoutesRegistersGrantCreate(t *testing.T) {
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		t.Fatalf("walk routes: %v", err)
+	}
 	if !found {
 		t.Fatalf("grant create route not registered")
 	}

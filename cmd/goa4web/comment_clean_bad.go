@@ -30,7 +30,7 @@ func parseCommentCleanBadCmd(parent *commentCmd, args []string) (*commentCleanBa
 }
 
 func (c *commentCleanBadCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -74,20 +74,20 @@ func (c *commentCleanBadCmd) printSummary(items []*db.Comment) {
 		return
 	}
 
-	fmt.Printf("\nSummary:\n")
-	fmt.Printf("Total items affected: %d\n\n", len(items))
+	_, _ = fmt.Printf("\nSummary:\n")
+	_, _ = fmt.Printf("Total items affected: %d\n\n", len(items))
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tThreadID\tUserID\tWritten")
-	fmt.Fprintln(w, "--\t--------\t------\t-------")
+	_, _ = fmt.Fprintln(w, "ID\tThreadID\tUserID\tWritten")
+	_, _ = fmt.Fprintln(w, "--\t--------\t------\t-------")
 
 	for _, item := range items {
 		written := "NULL"
 		if item.Written.Valid {
 			written = item.Written.Time.Format("2006-01-02 15:04:05")
 		}
-		fmt.Fprintf(w, "%d\t%v\t%d\t%s\n", item.Idcomments, item.ForumthreadID, item.UsersIdusers, written)
+		_, _ = fmt.Fprintf(w, "%d\t%v\t%d\t%s\n", item.Idcomments, item.ForumthreadID, item.UsersIdusers, written)
 	}
-	w.Flush()
-	fmt.Println()
+	_ = w.Flush()
+	_, _ = fmt.Println()
 }

@@ -28,14 +28,14 @@ func AdminBlogCommentsPage(w http.ResponseWriter, r *http.Request) {
 	blog, err := cd.BlogPost()
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("blog not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Blog %d Comments Admin", blog.Idblogs)
 	if _, err := cd.BlogCommentThread(); err != nil && err != sql.ErrNoRows {
-		// ignore but log? There is no log imported; but we can ignore.
+		_ = err
 	}
-	BlogsAdminBlogCommentsPageTmpl.Handle(w, r, struct{}{})
+	_ = BlogsAdminBlogCommentsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BlogsAdminBlogCommentsPageTmpl tasks.Template = "blogs/blogsAdminBlogCommentsPage.gohtml"
+const BlogsAdminBlogCommentsPageTmpl tasks.Template = "domains/blogs/blogsAdminBlogCommentsPage.gohtml"

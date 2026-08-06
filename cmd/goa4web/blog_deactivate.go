@@ -31,7 +31,7 @@ func (c *blogDeactivateCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -32,7 +32,7 @@ func parseRequestsRejectCmd(parent *requestsCmd, args []string) (*requestsReject
 }
 
 func (c *requestsRejectCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_reject_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_reject_usage.txt", c)
 }
 
 func (c *requestsRejectCmd) FlagGroups() []flagGroup {
@@ -45,7 +45,7 @@ func (c *requestsRejectCmd) Run() error {
 	if c.request == 0 {
 		return fmt.Errorf("request id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

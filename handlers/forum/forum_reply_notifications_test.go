@@ -213,7 +213,7 @@ func TestHappyPathForumReply(t *testing.T) {
 		task.Action(rr, req)
 
 		// Trigger synchronous processing
-		bus.Publish(*evt)
+		_ = bus.Publish(*evt)
 
 		if cdlq.lastError != "" {
 			t.Errorf("sync process error: %s", cdlq.lastError)
@@ -283,9 +283,10 @@ func TestHappyPathForumReply(t *testing.T) {
 					t.Fatalf("parse email %d: %v", i, err)
 				}
 				to := mockProvider.Recipients[i].Address
-				if to == "subscriber@example.com" {
+				switch to {
+				case "subscriber@example.com":
 					subscriberEmail = msg
-				} else if to == "admin@example.com" {
+				case "admin@example.com":
 					adminEmail = msg
 				}
 			}

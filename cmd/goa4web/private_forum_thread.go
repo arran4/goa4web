@@ -45,11 +45,11 @@ func (c *privateForumThreadCmd) Run() error {
 }
 
 func (c *privateForumThreadCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s private-forum thread <command> [flags]\n", os.Args[0])
-	fmt.Fprintln(c.fs.Output(), "\nCommands:")
-	fmt.Fprintln(c.fs.Output(), "  list    List private forum threads")
-	fmt.Fprintln(c.fs.Output(), "  details Show details of a private forum thread")
-	fmt.Fprintln(c.fs.Output(), "  delete  Delete a private forum thread")
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s private-forum thread <command> [flags]\n", os.Args[0])
+	_, _ = fmt.Fprintln(c.fs.Output(), "\nCommands:")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  list    List private forum threads")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  details Show details of a private forum thread")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  delete  Delete a private forum thread")
 }
 
 func (c *privateForumThreadCmd) runList(args []string) error {
@@ -60,7 +60,7 @@ func (c *privateForumThreadCmd) runList(args []string) error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -76,11 +76,11 @@ func (c *privateForumThreadCmd) runList(args []string) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tTopicID\tTopic\tTitle\tPosts\tLast Post")
+	_, _ = fmt.Fprintln(w, "ID\tTopicID\tTopic\tTitle\tPosts\tLast Post")
 	for _, t := range threads {
-		fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%d\t%v\n", t.Idforumthread, t.Idforumtopic, t.TopicTitle.String, t.Title, t.PostCount.Int32, t.LastPostAt.Time)
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%d\t%v\n", t.Idforumthread, t.Idforumtopic, t.TopicTitle.String, t.Title, t.PostCount.Int32, t.LastPostAt.Time)
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (c *privateForumThreadCmd) runDetails(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (c *privateForumThreadCmd) runDelete(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}

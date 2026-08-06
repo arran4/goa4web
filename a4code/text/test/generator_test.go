@@ -17,7 +17,7 @@ import (
 var testData embed.FS
 
 func TestGenerator(t *testing.T) {
-	fs.WalkDir(testData, ".", func(path string, d fs.DirEntry, err error) error {
+	_ = fs.WalkDir(testData, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

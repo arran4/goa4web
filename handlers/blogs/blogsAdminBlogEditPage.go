@@ -27,10 +27,10 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 	row, err := cd.EditableBlogPost(int32(blogID))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("blog not found"))
 		return
 	}
-	cd.BlogEntryByID(int32(blogID), lazy.Set[int32, *db.GetBlogEntryForListerByIDRow](row))
+	_, _ = cd.BlogEntryByID(int32(blogID), lazy.Set[int32, *db.GetBlogEntryForListerByIDRow](row))
 	cd.SetCurrentBlog(int32(blogID))
 	cd.PageTitle = "Admin Edit Blog"
 	if _, err := cd.Languages(); err != nil {
@@ -48,7 +48,7 @@ func AdminBlogEditPage(w http.ResponseWriter, r *http.Request) {
 		PostURL:      fmt.Sprintf("/blogs/blog/%d/edit", blogID),
 		AuthorLabels: labels,
 	}
-	BlogsAdminBlogEditPageTmpl.Handle(w, r, data)
+	_ = BlogsAdminBlogEditPageTmpl.Handle(w, r, data)
 }
 
-const BlogsAdminBlogEditPageTmpl tasks.Template = "blogs/blogsAdminBlogEditPage.gohtml"
+const BlogsAdminBlogEditPageTmpl tasks.Template = "domains/blogs/blogsAdminBlogEditPage.gohtml"

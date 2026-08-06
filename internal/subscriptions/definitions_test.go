@@ -122,7 +122,7 @@ func TestGetUserSubscriptions_LegacyUpgrade(t *testing.T) {
 	for _, g := range groups {
 		if g.Name == "Write Reply (Legacy)" {
 			found = true
-			if !g.Definition.HideIfNone {
+			if !g.HideIfNone {
 				t.Errorf("Expected Write Reply (Legacy) to be hidden if none")
 			}
 			if len(g.Instances) != 1 {

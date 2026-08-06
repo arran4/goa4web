@@ -174,7 +174,7 @@ func TestLinkerApprove(t *testing.T) {
 			t.Fatalf("approve action error: %v", err)
 		}
 
-		bus.Publish(*evt)
+		_ = bus.Publish(*evt)
 
 		if cdlq.lastError != "" {
 			t.Errorf("sync process error: %s", cdlq.lastError)
@@ -217,9 +217,10 @@ func TestLinkerApprove(t *testing.T) {
 					t.Fatalf("parse email %d: %v", i, err)
 				}
 				to := mockProvider.recipients[i].Address
-				if to == "subscriber@example.com" {
+				switch to {
+				case "subscriber@example.com":
 					subscriberEmail = msg
-				} else if to == "admin@example.com" {
+				case "admin@example.com":
 					adminEmail = msg
 				}
 			}

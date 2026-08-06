@@ -30,7 +30,7 @@ func parseEmailTestCmd(parent *emailCmd, args []string) (*emailTestCmd, error) {
 }
 
 func (c *emailTestCmd) Run() error {
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (c *emailTestCmd) Run() error {
 
 // Usage prints the command's usage information.
 func (c *emailTestCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_test_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_test_usage.txt", c)
 }
 
 func (c *emailTestCmd) FlagGroups() []flagGroup {

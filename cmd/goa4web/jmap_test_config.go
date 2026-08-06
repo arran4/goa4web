@@ -30,7 +30,7 @@ func (c *jmapTestConfigCmd) Run() error {
 
 // Usage prints command usage information.
 func (c *jmapTestConfigCmd) Usage() {
-	executeUsage(c.fs.Output(), "jmap_test_config_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "jmap_test_config_usage.txt", c)
 }
 
 func (c *jmapTestConfigCmd) FlagGroups() []flagGroup {

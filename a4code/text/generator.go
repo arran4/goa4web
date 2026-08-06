@@ -106,7 +106,7 @@ func (g *Generator) Root(w io.Writer, n *ast.Root) error {
 }
 
 func (g *Generator) Text(w io.Writer, t *ast.Text) error {
-	io.WriteString(w, t.Value)
+	_, _ = io.WriteString(w, t.Value)
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 	if lt, ok := w.(lineTracker); ok {
 		if !lt.isStartOfLine() {
-			io.WriteString(w, "\n")
+			_, _ = io.WriteString(w, "\n")
 		}
 	}
 	if len(g.QuotePrefix) > 0 {
@@ -173,11 +173,11 @@ func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
 func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	if lt, ok := w.(lineTracker); ok {
 		if !lt.isStartOfLine() {
-			io.WriteString(w, "\n")
+			_, _ = io.WriteString(w, "\n")
 		}
 	}
 	if g.QuoteHeaderFunc != nil {
-		io.WriteString(w, g.QuoteHeaderFunc(n.Name))
+		_, _ = io.WriteString(w, g.QuoteHeaderFunc(n.Name))
 	}
 	if len(g.QuotePrefix) > 0 {
 		pw := &PrefixWriter{w: w, prefix: []byte(g.QuotePrefix), startLine: true}
@@ -197,11 +197,11 @@ func (g *Generator) Indent(w io.Writer, n *ast.Indent) error {
 func (g *Generator) HR(w io.Writer, n *ast.HR) error {
 	if lt, ok := w.(lineTracker); ok {
 		if !lt.isStartOfLine() {
-			io.WriteString(w, "\n")
+			_, _ = io.WriteString(w, "\n")
 		}
 	}
 	if len(g.HRString) > 0 {
-		io.WriteString(w, g.HRString)
+		_, _ = io.WriteString(w, g.HRString)
 	}
 	return nil
 }

@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"net/mail"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/aws/aws-sdk-go/service/ses/sesiface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
+	"github.com/aws/aws-sdk-go-v2/service/ses/types"
 
-	"github.com/arran4/goa4web/config"
+	a4config "github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/email"
 )
 
 // Provider wraps the AWS SES client.
 type Provider struct {
-	Client sesiface.SESAPI
+	Client *ses.Client
 	From   string
 }
 
@@ -27,16 +27,16 @@ const Built = true
 
 func (s Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error {
 	input := &ses.SendRawEmailInput{
-		Destinations: []*string{aws.String(to.Address)},
+		Destinations: []string{to.Address},
 		Source:       aws.String(s.From),
-		RawMessage:   &ses.RawMessage{Data: rawEmailMessage},
+		RawMessage:   &types.RawMessage{Data: rawEmailMessage},
 	}
-	_, err := s.Client.SendRawEmailWithContext(ctx, input)
+	_, err := s.Client.SendRawEmail(ctx, input)
 	return err
 }
 
 func (s Provider) TestConfig(ctx context.Context) error {
-	_, err := s.Client.GetSendQuotaWithContext(ctx, &ses.GetSendQuotaInput{})
+	_, err := s.Client.GetSendQuota(ctx, &ses.GetSendQuotaInput{})
 	if err != nil {
 		return fmt.Errorf("failed to get send quota: %w", err)
 	}
@@ -44,19 +44,23 @@ func (s Provider) TestConfig(ctx context.Context) error {
 	return nil
 }
 
-func providerFromConfig(cfg *config.RuntimeConfig) (email.Provider, error) {
-	awsCfg := aws.NewConfig()
+func providerFromConfig(cfg *a4config.RuntimeConfig) (email.Provider, error) {
+	opts := []func(*config.LoadOptions) error{}
 	if region := cfg.EmailAWSRegion; region != "" {
-		awsCfg = awsCfg.WithRegion(region)
+		opts = append(opts, config.WithRegion(region))
 	}
-	sess, err := session.NewSession(awsCfg)
+	awsCfg, err := config.LoadDefaultConfig(context.Background(), opts...)
 	if err != nil {
-		return nil, fmt.Errorf("Email disabled: cannot initialise AWS session: %v", err)
+		return nil, fmt.Errorf("email disabled: cannot load AWS config: %w", err)
 	}
-	if _, err := sess.Config.Credentials.Get(); err != nil {
-		return nil, fmt.Errorf("Email disabled: no AWS credentials: %v", err)
+
+	// Try retrieving credentials to see if they're available
+	_, err = awsCfg.Credentials.Retrieve(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("email disabled: no AWS credentials: %w", err)
 	}
-	return Provider{Client: ses.New(sess), From: cfg.EmailFrom}, nil
+
+	return Provider{Client: ses.NewFromConfig(awsCfg), From: cfg.EmailFrom}, nil
 }
 
 // Register registers the SES provider factory.

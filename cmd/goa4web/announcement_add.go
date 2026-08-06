@@ -35,7 +35,7 @@ func parseAnnouncementAddCmd(parent *announcementCmd, args []string) (*announcem
 
 // Usage prints command usage information with examples.
 func (c *announcementAddCmd) Usage() {
-	executeUsage(c.fs.Output(), "announcement_add_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "announcement_add_usage.txt", c)
 }
 
 func (c *announcementAddCmd) FlagGroups() []flagGroup {
@@ -48,7 +48,7 @@ func (c *announcementAddCmd) Run() error {
 	if c.newsID == 0 {
 		return fmt.Errorf("news-id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -63,11 +63,11 @@ func (c *announcementAddCmd) Run() error {
 			"status":  "added",
 		}
 		b, _ := json.MarshalIndent(out, "", "  ")
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "NewsID\tStatus")
-	fmt.Fprintf(w, "%d\tadded\n", c.newsID)
+	_, _ = fmt.Fprintln(w, "NewsID\tStatus")
+	_, _ = fmt.Fprintf(w, "%d\tadded\n", c.newsID)
 	return w.Flush()
 }

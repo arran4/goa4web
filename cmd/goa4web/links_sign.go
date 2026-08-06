@@ -37,7 +37,7 @@ func parseLinksSignCmd(parent *linksCmd, args []string) (*linksSignCmd, error) {
 }
 
 func (c *linksSignCmd) Run() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	key, err := config.LoadOrCreateLinkSignSecret(core.OSFS{}, cfg.LinkSignSecret, cfg.LinkSignSecretFile)
 	if err != nil {
 		return fmt.Errorf("link sign secret: %w", err)
@@ -63,7 +63,7 @@ func (c *linksSignCmd) Run() error {
 }
 
 func (c *linksSignCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_sign_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_sign_usage.txt", c)
 }
 
 func (c *linksSignCmd) FlagGroups() []flagGroup {

@@ -146,7 +146,7 @@ func adminUsersExportPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=user_%d.zip", uid))
 	zw := zip.NewWriter(w)
-	defer zw.Close()
+	defer func() { _ = zw.Close() }()
 
 	if f, err := zw.Create("user.json"); err == nil {
 		if err := json.NewEncoder(f).Encode(data); err != nil {

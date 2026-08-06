@@ -34,10 +34,10 @@ var (
 var _ tasks.TemplatesRequired = (*ForgotPasswordTask)(nil)
 
 const (
-	ForgotPasswordPageTmpl           tasks.Template = "forgotPasswordPage.gohtml"
-	ForgotPasswordNoEmailPageTmpl    tasks.Template = "forgotPasswordNoEmailPage.gohtml"
-	ForgotPasswordEmailSentPageTmpl  tasks.Template = "forgotPasswordEmailSentPage.gohtml"
-	PasswordResetRequestSentPageTmpl tasks.Template = "passwordResetRequestSentPage.gohtml"
+	ForgotPasswordPageTmpl           tasks.Template = "pages/auth/forgotPasswordPage.gohtml"
+	ForgotPasswordNoEmailPageTmpl    tasks.Template = "pages/auth/forgotPasswordNoEmailPage.gohtml"
+	ForgotPasswordEmailSentPageTmpl  tasks.Template = "pages/auth/forgotPasswordEmailSentPage.gohtml"
+	PasswordResetRequestSentPageTmpl tasks.Template = "pages/auth/passwordResetRequestSentPage.gohtml"
 )
 
 var forgotPasswordTask = &ForgotPasswordTask{TaskString: TaskUserResetPassword}
@@ -155,7 +155,7 @@ func (ForgotPasswordTask) SelfEmailBroadcast() bool { return true }
 func (ForgotPasswordTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Password Reset"
-	ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
+	_ = ForgotPasswordPageTmpl.Handle(w, r, struct{}{})
 }
 
 // RequiredTemplates declares templates used by ForgotPasswordTask.

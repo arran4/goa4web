@@ -32,7 +32,7 @@ func (c *linksRefreshCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -45,7 +45,7 @@ func (c *linksRefreshCmd) Run() error {
 }
 
 func (c *linksRefreshCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_refresh_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_refresh_usage.txt", c)
 }
 
 func (c *linksRefreshCmd) FlagGroups() []flagGroup {

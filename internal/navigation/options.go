@@ -11,7 +11,7 @@ type RouterOptions interface {
 type IndexLinkOption struct {
 	Name   string
 	URL    string
-	Icon        template.HTML
+	Icon   template.HTML
 	Weight int
 }
 

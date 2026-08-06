@@ -40,7 +40,7 @@ func (c *roleListAllCmd) Run() error {
 			return fmt.Errorf("fetching roles from db: %w", err)
 		}
 	} else {
-		fmt.Fprintf(c.fs.Output(), "Warning: Database connection failed: %v. Showing embedded roles only.\n\n", err)
+		_, _ = fmt.Fprintf(c.fs.Output(), "Warning: Database connection failed: %v. Showing embedded roles only.\n\n", err)
 	}
 
 	// 2. Get Embedded Roles
@@ -115,8 +115,8 @@ func (c *roleListAllCmd) Run() error {
 
 	// 5. Print Table
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Role Name\tSeed File\tDB ID\tStatus\tUsers (DB)")
-	fmt.Fprintln(w, "---------\t---------\t-----\t------\t----------")
+	_, _ = fmt.Fprintln(w, "Role Name\tSeed File\tDB ID\tStatus\tUsers (DB)")
+	_, _ = fmt.Fprintln(w, "---------\t---------\t-----\t------\t----------")
 
 	for _, name := range roleNames {
 		info := rolesMap[name]
@@ -150,13 +150,13 @@ func (c *roleListAllCmd) Run() error {
 			users = "N/A"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name, seedFile, dbIDStr, status, users)
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name, seedFile, dbIDStr, status, users)
 	}
 
 	return w.Flush()
 }
 
-func (c *roleListAllCmd) Usage() { executeUsage(c.fs.Output(), "role_list_all_usage.txt", c) }
+func (c *roleListAllCmd) Usage() { _ = executeUsage(c.fs.Output(), "role_list_all_usage.txt", c) }
 
 func (c *roleListAllCmd) FlagGroups() []flagGroup {
 	return append(c.roleListCmd.FlagGroups(), flagGroup{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)})

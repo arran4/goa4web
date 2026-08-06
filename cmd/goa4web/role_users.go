@@ -29,7 +29,7 @@ func parseRoleUsersCmd(parent *roleCmd, args []string) (*roleUsersCmd, error) {
 }
 
 func (c *roleUsersCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -50,7 +50,7 @@ func (c *roleUsersCmd) Run() error {
 }
 
 func (c *roleUsersCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_users_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_users_usage.txt", c)
 }
 
 func (c *roleUsersCmd) FlagGroups() []flagGroup {

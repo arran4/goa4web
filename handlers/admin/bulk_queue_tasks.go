@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -140,8 +139,4 @@ func (BulkDeleteQueueTask) AuditRecord(data map[string]any) string {
 		return fmt.Sprintf("deleted %d queued emails", count)
 	}
 	return "deleted queued emails"
-}
-
-func sqlNullInt32(value int) sql.NullInt32 {
-	return sql.NullInt32{Int32: int32(value), Valid: value != 0}
 }

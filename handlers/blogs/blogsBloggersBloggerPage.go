@@ -39,7 +39,7 @@ func BloggersBloggerPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Rows = rows
 
-	BlogsBloggersBloggerPageTmpl.Handle(w, r, data)
+	_ = BlogsBloggersBloggerPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBloggersBloggerPageTmpl tasks.Template = "blogs/bloggersBloggerPage.gohtml"
+const BlogsBloggersBloggerPageTmpl tasks.Template = "domains/blogs/bloggersBloggerPage.gohtml"

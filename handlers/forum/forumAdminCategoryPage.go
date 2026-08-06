@@ -25,7 +25,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	cat, err := cd.ForumCategory(int32(cid))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 		return
 	}
 	topics, err := cd.ForumTopics(int32(cid))
@@ -42,7 +42,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 		Category: cat,
 		Topics:   topics,
 	}
-	ForumAdminCategoryPageTmpl.Handle(w, r, data)
+	_ = ForumAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryPageTmpl tasks.Template = "forum/forumAdminCategoryPage.gohtml"
+const ForumAdminCategoryPageTmpl tasks.Template = "domains/forum/forumAdminCategoryPage.gohtml"

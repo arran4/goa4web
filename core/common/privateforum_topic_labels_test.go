@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 	"time"
@@ -32,8 +33,10 @@ func TestCoreData_PrivateForumTopics_ShowsTopicLabels(t *testing.T) {
 	// No derived thread labels (empty)
 	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{}
 
+	ctx := context.TODO()
+
 	// Public Label
-	if err := q.AddContentPublicLabel(nil, db.AddContentPublicLabelParams{
+	if err := q.AddContentPublicLabel(ctx, db.AddContentPublicLabelParams{
 		Item:   "topic",
 		ItemID: 1,
 		Label:  "PublicTag",
@@ -42,7 +45,7 @@ func TestCoreData_PrivateForumTopics_ShowsTopicLabels(t *testing.T) {
 	}
 
 	// Private Label
-	if err := q.AddContentPrivateLabel(nil, db.AddContentPrivateLabelParams{
+	if err := q.AddContentPrivateLabel(ctx, db.AddContentPrivateLabelParams{
 		Item:   "topic",
 		ItemID: 1,
 		UserID: 1,

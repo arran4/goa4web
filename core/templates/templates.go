@@ -21,7 +21,7 @@ import (
 
 // embeddedFS contains site templates, notification templates, email templates and static assets.
 //
-//go:embed site/*.gohtml site/*/*.gohtml notifications/*.gotxt email/*.txtar assets/*
+//go:embed all:site notifications/*.gotxt email/*.txtar assets/*
 var embeddedFS embed.FS
 
 var (
@@ -240,7 +240,8 @@ func GetCompiledSiteTemplates(funcs htemplate.FuncMap, opts ...Option) *htemplat
 		}
 
 		// IMPORTANT: use path (the relative filename) as the template name.
-		_, err = root.New(path).Parse(string(b))
+		name := strings.TrimPrefix(path, "site/")
+		_, err = root.New(name).Parse(string(b))
 		return err
 	})
 	if err != nil {
@@ -305,14 +306,15 @@ func GetCompiledEmailHtmlTemplates(funcs htemplate.FuncMap, opts ...Option) *hte
 		}
 
 		ext := filepath.Ext(path)
-		if ext == ".gohtml" {
+		switch ext {
+		case ".gohtml":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
 			}
 			_, err = root.New(path).Parse(string(b))
 			return err
-		} else if ext == ".txtar" {
+		case ".txtar":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
@@ -368,14 +370,15 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 		}
 
 		ext := filepath.Ext(path)
-		if ext == ".gotxt" {
+		switch ext {
+		case ".gotxt":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
 			}
 			_, err = root.New(path).Parse(string(b))
 			return err
-		} else if ext == ".txtar" {
+		case ".txtar":
 			b, err := fs.ReadFile(fsys, path)
 			if err != nil {
 				return err
@@ -515,7 +518,7 @@ func GetA4CodeJSData(opts ...Option) []byte { return readFile("assets/a4code.js"
 func GetRobotsTXTData(opts ...Option) []byte { return readFile("assets/robots.txt", opts...) }
 
 // ListSiteTemplateNames returns the relative paths of all site templates
-// (under the site/ directory), e.g. "news/postPage.gohtml".
+// (under the site/ directory), e.g. "domains/news/postPage.gohtml".
 func ListSiteTemplateNames(opts ...Option) []string {
 	cfg := newCfg(opts...)
 	var names []string
@@ -530,7 +533,8 @@ func ListSiteTemplateNames(opts ...Option) []string {
 		if filepath.Ext(path) != ".gohtml" {
 			return nil
 		}
-		names = append(names, path)
+		name := strings.TrimPrefix(path, "site/")
+		names = append(names, name)
 		return nil
 	})
 	return names

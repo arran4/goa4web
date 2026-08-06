@@ -46,9 +46,10 @@ func TestUserNotificationOpenPage_SetsTitle(t *testing.T) {
 
 				qs.GetNotificationForListerFn = func(ctx context.Context, arg db.GetNotificationForListerParams) (*db.Notification, error) {
 					link := ""
-					if arg.ID == 124 {
+					switch arg.ID {
+					case 124:
 						link = "/topic/1/thread/1"
-					} else if arg.ID == 125 {
+					case 125:
 						link = "/private/topic/2/thread/2"
 					}
 					return &db.Notification{

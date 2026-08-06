@@ -64,7 +64,7 @@ func (c *usageCmd) Run() error {
 }
 
 func (c *usageCmd) Usage() {
-	executeUsage(c.fs.Output(), "usage_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "usage_usage.txt", c)
 }
 
 func (c *usageCmd) FlagGroups() []flagGroup {
@@ -225,17 +225,17 @@ func (c *usageStatsCmd) Run() error {
 		return fmt.Errorf("since is after until")
 	}
 
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return fmt.Errorf("runtime config: %w", err)
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	queries := db.New(conn)
 	data := usageStatsData{}
-	ctx, cancel := context.WithTimeout(c.rootCmd.Context(), usageStatsTimeout)
+	ctx, cancel := context.WithTimeout(c.Context(), usageStatsTimeout)
 	defer cancel()
 
 	addErr := func(name string, err error) {
@@ -311,7 +311,7 @@ func (c *usageStatsCmd) Run() error {
 }
 
 func (c *usageStatsCmd) Usage() {
-	executeUsage(c.fs.Output(), "usage_stats_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "usage_stats_usage.txt", c)
 }
 
 func (c *usageStatsCmd) FlagGroups() []flagGroup {
@@ -521,64 +521,64 @@ func (c *usageStatsCmd) printJSON(report usageStatsReport) error {
 
 func (c *usageStatsCmd) printTable(report usageStatsReport) error {
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
-	fmt.Fprintf(w, "Usage stats (start year %d)\n", report.StartYear)
+	_, _ = fmt.Fprintf(w, "Usage stats (start year %d)\n", report.StartYear)
 	if report.Window.Since != "" || report.Window.Until != "" {
-		fmt.Fprintf(w, "Window\tSince\tUntil\n")
-		fmt.Fprintf(w, "\t%s\t%s\n", report.Window.Since, report.Window.Until)
+		_, _ = fmt.Fprintf(w, "Window\tSince\tUntil\n")
+		_, _ = fmt.Fprintf(w, "\t%s\t%s\n", report.Window.Since, report.Window.Until)
 	}
 
 	writeSectionHeader(w, "Forum Topics")
-	fmt.Fprintln(w, "ID\tTitle\tHandler\tThreads\tComments")
+	_, _ = fmt.Fprintln(w, "ID\tTitle\tHandler\tThreads\tComments")
 	for _, row := range report.ForumTopics {
-		fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%d\n", row.ID, row.Title, row.Handler, row.Threads, row.Comments)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%d\n", row.ID, row.Title, row.Handler, row.Threads, row.Comments)
 	}
 
 	writeSectionHeader(w, "Forum Handlers")
-	fmt.Fprintln(w, "Handler\tThreads\tComments")
+	_, _ = fmt.Fprintln(w, "Handler\tThreads\tComments")
 	for _, row := range report.ForumHandlers {
-		fmt.Fprintf(w, "%s\t%d\t%d\n", row.Handler, row.Threads, row.Comments)
+		_, _ = fmt.Fprintf(w, "%s\t%d\t%d\n", row.Handler, row.Threads, row.Comments)
 	}
 
 	writeSectionHeader(w, "Forum Categories")
-	fmt.Fprintln(w, "ID\tTitle\tThreads\tComments")
+	_, _ = fmt.Fprintln(w, "ID\tTitle\tThreads\tComments")
 	for _, row := range report.ForumCategories {
-		fmt.Fprintf(w, "%d\t%s\t%d\t%d\n", row.ID, row.Title, row.Threads, row.Comments)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%d\t%d\n", row.ID, row.Title, row.Threads, row.Comments)
 	}
 
 	writeSectionHeader(w, "Writing Categories")
-	fmt.Fprintln(w, "ID\tTitle\tCount")
+	_, _ = fmt.Fprintln(w, "ID\tTitle\tCount")
 	for _, row := range report.WritingCategories {
-		fmt.Fprintf(w, "%d\t%s\t%d\n", row.ID, row.Title, row.Count)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%d\n", row.ID, row.Title, row.Count)
 	}
 
 	writeSectionHeader(w, "Linker Categories")
-	fmt.Fprintln(w, "ID\tTitle\tCount")
+	_, _ = fmt.Fprintln(w, "ID\tTitle\tCount")
 	for _, row := range report.LinkerCategories {
-		fmt.Fprintf(w, "%d\t%s\t%d\n", row.ID, row.Title, row.Count)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%d\n", row.ID, row.Title, row.Count)
 	}
 
 	writeSectionHeader(w, "Imageboards")
-	fmt.Fprintln(w, "ID\tTitle\tCount")
+	_, _ = fmt.Fprintln(w, "ID\tTitle\tCount")
 	for _, row := range report.Imageboards {
-		fmt.Fprintf(w, "%d\t%s\t%d\n", row.ID, row.Title, row.Count)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%d\n", row.ID, row.Title, row.Count)
 	}
 
 	writeSectionHeader(w, "User Posts")
-	fmt.Fprintln(w, "ID\tUsername\tBlogs\tNews\tComments\tImages\tLinks\tWritings")
+	_, _ = fmt.Fprintln(w, "ID\tUsername\tBlogs\tNews\tComments\tImages\tLinks\tWritings")
 	for _, row := range report.Users {
-		fmt.Fprintf(w, "%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n", row.ID, row.Username, row.Blogs, row.News, row.Comments, row.Images, row.Links, row.Writings)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\n", row.ID, row.Username, row.Blogs, row.News, row.Comments, row.Images, row.Links, row.Writings)
 	}
 
 	writeSectionHeader(w, "Monthly Usage")
-	fmt.Fprintln(w, "Year\tMonth\tBlogs\tNews\tComments\tImages\tLinks\tWritings")
+	_, _ = fmt.Fprintln(w, "Year\tMonth\tBlogs\tNews\tComments\tImages\tLinks\tWritings")
 	for _, row := range report.Monthly {
-		fmt.Fprintf(w, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", row.Year, row.Month, row.Blogs, row.News, row.Comments, row.Images, row.Links, row.Writings)
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", row.Year, row.Month, row.Blogs, row.News, row.Comments, row.Images, row.Links, row.Writings)
 	}
 
 	writeSectionHeader(w, "User Monthly Usage")
-	fmt.Fprintln(w, "UserID\tUsername\tYear\tMonth\tBlogs\tNews\tComments\tImages\tLinks\tWritings")
+	_, _ = fmt.Fprintln(w, "UserID\tUsername\tYear\tMonth\tBlogs\tNews\tComments\tImages\tLinks\tWritings")
 	for _, row := range report.UserMonthly {
-		fmt.Fprintf(w, "%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
 			row.UserID,
 			row.Username,
 			row.Year,
@@ -594,9 +594,9 @@ func (c *usageStatsCmd) printTable(report usageStatsReport) error {
 
 	if len(report.Errors) > 0 {
 		writeSectionHeader(w, "Errors")
-		fmt.Fprintln(w, "Message")
+		_, _ = fmt.Fprintln(w, "Message")
 		for _, msg := range report.Errors {
-			fmt.Fprintf(w, "%s\n", msg)
+			_, _ = fmt.Fprintf(w, "%s\n", msg)
 		}
 	}
 
@@ -607,6 +607,6 @@ func (c *usageStatsCmd) printTable(report usageStatsReport) error {
 }
 
 func writeSectionHeader(w *tabwriter.Writer, title string) {
-	fmt.Fprintln(w, "")
-	fmt.Fprintf(w, "%s\n", title)
+	_, _ = fmt.Fprintln(w, "")
+	_, _ = fmt.Fprintf(w, "%s\n", title)
 }

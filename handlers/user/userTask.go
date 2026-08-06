@@ -18,7 +18,7 @@ type userTask struct {
 var _ tasks.Task = (*userTask)(nil)
 
 const (
-	UserPageTmpl tasks.Template = "user/page.gohtml"
+	UserPageTmpl tasks.Template = "domains/user/page.gohtml"
 )
 
 func NewUserTask() tasks.Task {
@@ -48,5 +48,5 @@ func (t *userTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	UserPageTmpl.Handle(w, r, struct{}{})
+	_ = UserPageTmpl.Handle(w, r, struct{}{})
 }

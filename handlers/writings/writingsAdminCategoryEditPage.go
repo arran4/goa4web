@@ -26,7 +26,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	cat, err := queries.GetWritingCategoryById(r.Context(), int32(cid))
 	if err != nil {
 		if err == sql.ErrNoRows {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Category not found"))
+			handlers.RenderErrorPage(w, r, fmt.Errorf("category not found"))
 		} else {
 			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		}
@@ -45,7 +45,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 		Category:   cat,
 		Categories: all,
 	}
-	WritingsAdminCategoryEditPageTmpl.Handle(w, r, data)
+	_ = WritingsAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const WritingsAdminCategoryEditPageTmpl tasks.Template = "writings/writingsAdminCategoryEditPage.gohtml"
+const WritingsAdminCategoryEditPageTmpl tasks.Template = "domains/writings/writingsAdminCategoryEditPage.gohtml"

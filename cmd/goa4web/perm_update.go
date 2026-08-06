@@ -29,7 +29,7 @@ func parsePermUpdateCmd(parent *permCmd, args []string) (*permUpdateCmd, error) 
 }
 
 func (c *permUpdateCmd) Usage() {
-	executeUsage(c.fs.Output(), "perm_update_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "perm_update_usage.txt", c)
 }
 
 func (c *permUpdateCmd) FlagGroups() []flagGroup {
@@ -42,7 +42,7 @@ func (c *permUpdateCmd) Run() error {
 	if c.ID == 0 || c.Role == "" {
 		return fmt.Errorf("id and role required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -59,7 +59,7 @@ func NewGenerator(opts ...any) *Generator {
 	g := &Generator{
 		Generator: html.NewGenerator(),
 	}
-	g.Generator.Self = g // Set Self reference for recursion to use overrides
+	g.Self = g // Set Self reference for recursion to use overrides
 	for _, opt := range opts {
 		switch v := opt.(type) {
 		case Option:
@@ -135,11 +135,11 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 	if g.UserColorMapper != nil {
 		colorClass = g.UserColorMapper(n.Name) + " " + colorClass
 	}
-	fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
-	io.WriteString(w, "<div class=\"quote-header\">Quote of ")
-	io.WriteString(w, htmlstd.EscapeString(n.Name))
-	io.WriteString(w, ":</div>")
-	io.WriteString(w, "<div class=\"quote-body\">")
+	_, _ = fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quoteof %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
+	_, _ = io.WriteString(w, "<div class=\"quote-header\">Quote of ")
+	_, _ = io.WriteString(w, htmlstd.EscapeString(n.Name))
+	_, _ = io.WriteString(w, ":</div>")
+	_, _ = io.WriteString(w, "<div class=\"quote-body\">")
 
 	// We need to create a child generator that maintains the structure and increments depth
 	childGen := &Generator{
@@ -149,14 +149,14 @@ func (g *Generator) QuoteOf(w io.Writer, n *ast.QuoteOf) error {
 		FullImageMapper: g.FullImageMapper,
 		UserColorMapper: g.UserColorMapper,
 	}
-	childGen.Generator.Self = childGen
+	childGen.Self = childGen
 
 	for _, c := range n.Children {
 		if err := ast.Generate(w, c, childGen); err != nil {
 			return err
 		}
 	}
-	io.WriteString(w, "</div>")
-	io.WriteString(w, "</blockquote>")
+	_, _ = io.WriteString(w, "</div>")
+	_, _ = io.WriteString(w, "</blockquote>")
 	return nil
 }

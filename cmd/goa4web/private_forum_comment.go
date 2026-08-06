@@ -50,13 +50,13 @@ func (c *privateForumCommentCmd) Run() error {
 }
 
 func (c *privateForumCommentCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s private-forum comment <command> [flags]\n", os.Args[0])
-	fmt.Fprintln(c.fs.Output(), "\nCommands:")
-	fmt.Fprintln(c.fs.Output(), "  list        List private forum comments")
-	fmt.Fprintln(c.fs.Output(), "  details     Show details of a comment")
-	fmt.Fprintln(c.fs.Output(), "  delete      Permanently delete a comment")
-	fmt.Fprintln(c.fs.Output(), "  deactivate  Deactivate (soft delete) a comment")
-	fmt.Fprintln(c.fs.Output(), "  activate    Activate (restore) a comment")
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s private-forum comment <command> [flags]\n", os.Args[0])
+	_, _ = fmt.Fprintln(c.fs.Output(), "\nCommands:")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  list        List private forum comments")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  details     Show details of a comment")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  delete      Permanently delete a comment")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  deactivate  Deactivate (soft delete) a comment")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  activate    Activate (restore) a comment")
 }
 
 func (c *privateForumCommentCmd) runList(args []string) error {
@@ -67,7 +67,7 @@ func (c *privateForumCommentCmd) runList(args []string) error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (c *privateForumCommentCmd) runList(args []string) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tThreadID\tUser\tDate\tText\tDeleted")
+	_, _ = fmt.Fprintln(w, "ID\tThreadID\tUser\tDate\tText\tDeleted")
 	for _, com := range comments {
 		text := com.Text.String
 		if len(text) > 50 {
@@ -93,9 +93,9 @@ func (c *privateForumCommentCmd) runList(args []string) error {
 		if com.DeletedAt.Valid {
 			deleted = "YES"
 		}
-		fmt.Fprintf(w, "%d\t%d\t%s\t%v\t%s\t%s\n", com.Idcomments, com.Idforumthread.Int32, com.Posterusername.String, com.Written.Time, text, deleted)
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%s\t%v\t%s\t%s\n", com.Idcomments, com.Idforumthread.Int32, com.Posterusername.String, com.Written.Time, text, deleted)
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (c *privateForumCommentCmd) runDetails(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func (c *privateForumCommentCmd) runDelete(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (c *privateForumCommentCmd) runDeactivate(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (c *privateForumCommentCmd) runActivate(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}

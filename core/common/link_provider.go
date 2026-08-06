@@ -1,13 +1,12 @@
 package common
 
-
 import (
 	"context"
 	"fmt"
 	"html"
-	"strings"
-	"strconv"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 )
@@ -38,8 +37,8 @@ func formatDuration(duration string) string {
 				totalSeconds += s
 			}
 		} else {
-            return duration
-        }
+			return duration
+		}
 	} else {
 		return duration
 	}
@@ -57,8 +56,6 @@ func formatDuration(duration string) string {
 	}
 	return fmt.Sprintf("%d:%02d", m, s)
 }
-
-
 
 type Goa4WebLinkProvider struct {
 	cd  *CoreData

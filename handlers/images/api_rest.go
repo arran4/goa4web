@@ -70,7 +70,7 @@ func APIListGallery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"images":   apiImages,
 		"has_more": hasMore,
 		"page":     page,
@@ -92,7 +92,7 @@ func APIUploadImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Image file is required", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
@@ -126,7 +126,7 @@ func APIUploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":  "success",
 		"message": "Image uploaded successfully",
 		"path":    fname,

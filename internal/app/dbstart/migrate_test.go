@@ -14,7 +14,7 @@ func TestApply(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	mfs := fstest.MapFS{
 		"0002.mysql.sql": {Data: []byte("CREATE TABLE t (id int);")},
@@ -45,7 +45,7 @@ func TestApplyWithDescription(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	mfs := fstest.MapFS{
 		"0002_description.mysql.sql": {Data: []byte("CREATE TABLE t (id int);")},

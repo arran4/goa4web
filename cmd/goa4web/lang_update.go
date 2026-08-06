@@ -33,7 +33,7 @@ func (c *langUpdateCmd) Run() error {
 	if c.ID == 0 || c.Name == "" {
 		return fmt.Errorf("id and name required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -47,7 +47,7 @@ func (c *langUpdateCmd) Run() error {
 }
 
 func (c *langUpdateCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_update_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "lang_update_usage.txt", c)
 }
 
 func (c *langUpdateCmd) FlagGroups() []flagGroup {

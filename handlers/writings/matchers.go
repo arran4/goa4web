@@ -90,7 +90,7 @@ func RequireWritingViewAccess(next http.Handler) http.Handler {
 		}
 
 		cd.SetCurrentThreadAndTopic(writing.ForumthreadID, 0)
-		if !(cd.HasGrant("writing", "article", "view", writing.Idwriting) || cd.SelectedThreadCanReply()) {
+		if !cd.HasGrant("writing", "article", "view", writing.Idwriting) && !cd.SelectedThreadCanReply() {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		}

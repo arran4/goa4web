@@ -33,7 +33,7 @@ func SubscribeTopicPage(w http.ResponseWriter, r *http.Request) {
 		Method:  http.MethodPost,
 		Values:  url.Values{},
 	}
-	RedirectBackPageTmpl.Handle(w, r, data)
+	_ = RedirectBackPageTmpl.Handle(w, r, data)
 }
 
-const RedirectBackPageTmpl tasks.Template = "redirectBackPage.gohtml"
+const RedirectBackPageTmpl tasks.Template = "pages/misc/redirectBackPage.gohtml"

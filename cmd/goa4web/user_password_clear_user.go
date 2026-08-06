@@ -34,7 +34,7 @@ func (c *userPasswordClearUserCmd) Run() error {
 	if c.Username == "" {
 		return fmt.Errorf("username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -49,7 +49,7 @@ func (c *userPasswordClearUserCmd) Run() error {
 		return fmt.Errorf("delete resets: %w", err)
 	}
 	if rows, err := res.RowsAffected(); err == nil {
-		c.rootCmd.Infof("deleted %d password reset requests", rows)
+		c.Infof("deleted %d password reset requests", rows)
 	}
 	return nil
 }

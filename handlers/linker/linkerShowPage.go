@@ -63,10 +63,10 @@ func ShowPage(w http.ResponseWriter, r *http.Request) {
 		cd.PageTitle = fmt.Sprintf("Link %d", link.ID)
 	}
 
-	LinkerShowPageTmpl.Handle(w, r, data)
+	_ = LinkerShowPageTmpl.Handle(w, r, data)
 }
 
-const LinkerShowPageTmpl tasks.Template = "linker/showPage.gohtml"
+const LinkerShowPageTmpl tasks.Template = "domains/linker/showPage.gohtml"
 
 func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -112,7 +112,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pthid int32 = link.ThreadID
+	var pthid = link.ThreadID
 	pt, err := queries.SystemGetForumTopicByTitle(r.Context(), sql.NullString{
 		String: LinkerTopicName,
 		Valid:  true,
@@ -209,7 +209,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, endUrl, http.StatusSeeOther)
 }
 
-func redirectReplyError(w http.ResponseWriter, r *http.Request, msg, text string, languageID int) {
+func RedirectReplyError(w http.ResponseWriter, r *http.Request, msg, text string, languageID int) {
 	vals := url.Values{}
 	for key, values := range r.URL.Query() {
 		copied := make([]string, len(values))

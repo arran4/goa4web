@@ -36,7 +36,7 @@ func (c *templatesExtractCmd) Run() error {
 }
 
 func (c *templatesExtractCmd) Usage() {
-	executeUsage(c.fs.Output(), "templates_extract_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "templates_extract_usage.txt", c)
 }
 
 func (c *templatesExtractCmd) FlagGroups() []flagGroup {

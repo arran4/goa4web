@@ -15,7 +15,7 @@ type blogsTask struct {
 var _ tasks.Task = (*blogsTask)(nil)
 
 const (
-	BlogsPageTmpl tasks.Template = "blogs/page.gohtml"
+	BlogsPageTmpl tasks.Template = "domains/blogs/page.gohtml"
 )
 
 func NewBlogsTask() tasks.Task {
@@ -48,5 +48,5 @@ func (t *blogsTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = "/blogs?" + qv.Encode()
 	}
 
-	BlogsPageTmpl.Handle(w, r, struct{}{})
+	_ = BlogsPageTmpl.Handle(w, r, struct{}{})
 }

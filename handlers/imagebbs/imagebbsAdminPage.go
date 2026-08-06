@@ -25,7 +25,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = "Image Board Admin"
 	data := Data{Stats: stats}
-	ImageBBSAdminPageTmpl.Handle(w, r, data)
+	_ = ImageBBSAdminPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPageTmpl tasks.Template = "imagebbs/adminPage.gohtml"
+const ImageBBSAdminPageTmpl tasks.Template = "domains/imagebbs/adminPage.gohtml"

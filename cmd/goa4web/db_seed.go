@@ -24,7 +24,7 @@ var _ usageData = (*dbSeedCmd)(nil)
 
 // Usage prints command usage.
 func (c *dbSeedCmd) Usage() {
-	executeUsage(c.rootCmd.fs.Output(), "db_seed_usage.txt", c)
+	_ = executeUsage(c.rootCmd.fs.Output(), "db_seed_usage.txt", c)
 }
 
 func parseDbSeedCmd(parent *dbCmd, args []string) (*dbSeedCmd, error) {
@@ -36,12 +36,12 @@ func parseDbSeedCmd(parent *dbCmd, args []string) (*dbSeedCmd, error) {
 }
 
 func (c *dbSeedCmd) Run() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	conn := cfg.DBConn
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	connector, err := c.rootCmd.dbReg.Connector(cfg.DBDriver, conn)
+	connector, err := c.dbReg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return err
 	}

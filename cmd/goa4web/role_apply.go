@@ -33,18 +33,18 @@ func parseRoleApplyCmd(parent *roleCmd, args []string) (*roleApplyCmd, error) {
 }
 
 func (c *roleApplyCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	return roles.ApplyRoleGrants(c.rootCmd.ctx, sdb, q, c.srcRole, c.destRole)
+	return roles.ApplyRoleGrants(c.ctx, sdb, q, c.srcRole, c.destRole)
 }
 
 func (c *roleApplyCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_apply_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_apply_usage.txt", c)
 }
 
 func (c *roleApplyCmd) FlagGroups() []flagGroup {

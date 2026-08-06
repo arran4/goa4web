@@ -14,7 +14,7 @@ func TestPrivateForumBreadcrumbUsesDisplayTitle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	topicRows := sqlmock.NewRows([]string{"idforumtopic", "lastposter", "forumcategory_idforumcategory", "language_id", "title", "description", "threads", "comments", "lastaddition", "handler", "deleted_at", "LastPosterUsername"}).
 		AddRow(1, 0, 0, nil, sql.NullString{String: "Private chat with Hidden", Valid: true}, sql.NullString{}, sql.NullInt32{}, sql.NullInt32{}, sql.NullTime{}, "private", sql.NullTime{}, sql.NullString{})

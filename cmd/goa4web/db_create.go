@@ -24,7 +24,7 @@ var _ usageData = (*dbCreateCmd)(nil)
 
 // Usage prints command usage.
 func (c *dbCreateCmd) Usage() {
-	executeUsage(c.rootCmd.fs.Output(), "db_create_usage.txt", c)
+	_ = executeUsage(c.rootCmd.fs.Output(), "db_create_usage.txt", c)
 }
 
 func parseDbCreateCmd(parent *dbCmd, args []string) (*dbCreateCmd, error) {
@@ -36,12 +36,12 @@ func parseDbCreateCmd(parent *dbCmd, args []string) (*dbCreateCmd, error) {
 }
 
 func (c *dbCreateCmd) Run() error {
-	cfg := c.rootCmd.cfg
+	cfg := c.cfg
 	conn := cfg.DBConn
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	connector, err := c.rootCmd.dbReg.Connector(cfg.DBDriver, conn)
+	connector, err := c.dbReg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return err
 	}

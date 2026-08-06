@@ -23,7 +23,7 @@ type UserResetPasswordTask struct{ tasks.TaskString }
 
 var userResetPasswordTask = &UserResetPasswordTask{TaskString: "Password Reset"}
 
-const TemplateUserResetPasswordPage tasks.Template = "userResetPasswordPage.gohtml"
+const TemplateUserResetPasswordPage tasks.Template = "pages/user/userResetPasswordPage.gohtml"
 
 var _ tasks.Task = (*UserResetPasswordTask)(nil)
 var _ tasks.TemplatesRequired = (*UserResetPasswordTask)(nil)
@@ -104,7 +104,7 @@ func (UserResetPasswordTask) Action(w http.ResponseWriter, r *http.Request) any 
 
 	// Invalidate token
 	if err := queries.SystemMarkPasswordResetVerified(r.Context(), reset.ID); err != nil {
-		// Log error but proceed
+		_ = err
 	}
 
 	return handlers.RefreshDirectHandler{TargetURL: "/login?notice=Password+updated.+Please+login."}
@@ -169,7 +169,7 @@ func UserResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 	// But it is safer to be explicit if action is set.
 	// We'll rely on empty action submitting query params.
 
-	TemplateUserResetPasswordPage.Handle(w, r, struct {
+	_ = TemplateUserResetPasswordPage.Handle(w, r, struct {
 		Sig  string
 		Ts   string
 		Code string

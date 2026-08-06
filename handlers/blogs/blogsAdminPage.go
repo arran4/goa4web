@@ -95,7 +95,7 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 		return data.Rows[i].Idusers < data.Rows[j].Idusers
 	})
 
-	BlogsAdminPageTmpl.Handle(w, r, data)
+	_ = BlogsAdminPageTmpl.Handle(w, r, data)
 }
 
-const BlogsAdminPageTmpl tasks.Template = "blogs/adminPage.gohtml"
+const BlogsAdminPageTmpl tasks.Template = "domains/blogs/adminPage.gohtml"

@@ -51,7 +51,7 @@ func (q *Queries) AdminListUsersFiltered(ctx context.Context, arg AdminListUsers
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var items []*UserFilteredRow
 	for rows.Next() {
 		var u UserFilteredRow
@@ -101,7 +101,7 @@ func (q *Queries) AdminSearchUsersFiltered(ctx context.Context, arg AdminSearchU
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var items []*UserFilteredRow
 	for rows.Next() {
 		var u UserFilteredRow
@@ -145,7 +145,7 @@ func (q *Queries) monthlyCounts(ctx context.Context, table, column string, start
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	m := make(map[[2]int32]int64)
 	for rows.Next() {
 		var year, month int32
@@ -168,7 +168,7 @@ func (q *Queries) userMonthlyCounts(ctx context.Context, table, column, userIdCo
 	if err != nil {
 		return nil, nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	data := make(map[string]map[[2]int32]int64)
 	ids := make(map[string]int32)
 	for rows.Next() {

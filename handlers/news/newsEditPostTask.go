@@ -28,7 +28,7 @@ var _ tasks.TemplatesRequired = (*EditTask)(nil)
 var _ notif.AdminEmailTemplateProvider = (*EditTask)(nil)
 var _ tasks.EmailTemplatesRequired = (*EditTask)(nil)
 
-const NewsEditPageTmpl tasks.Template = "news/newsEditPage.gohtml"
+const NewsEditPageTmpl tasks.Template = "domains/news/newsEditPage.gohtml"
 
 func (EditTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
 	return EmailTemplateAdminNotificationNewsEdit.EmailTemplates(), true
@@ -113,5 +113,5 @@ func newsEditFormPage(w http.ResponseWriter, r *http.Request) {
 		Post:               post,
 		SelectedLanguageId: int(post.LanguageID.Int32),
 	}
-	NewsEditPageTmpl.Handle(w, r, data)
+	_ = NewsEditPageTmpl.Handle(w, r, data)
 }

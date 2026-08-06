@@ -28,11 +28,11 @@ func PerformChecks(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB,
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadTarget(cfg); ue != nil {
-		dbPool.Close()
+		_ = dbPool.Close()
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckMediaFiles(cfg, dbPool); ue != nil {
-		dbPool.Close()
+		_ = dbPool.Close()
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	return dbPool, nil

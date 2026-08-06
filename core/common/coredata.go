@@ -3132,7 +3132,7 @@ func (cd *CoreData) sanitizeCodeImagesAndQueue(text string) (string, []queuedRem
 		return text, nil
 	}
 	var queued []queuedRemoteImageCacheFetch
-	root.Transform(func(n ast.Node) (ast.Node, error) {
+	_, _ = root.Transform(func(n ast.Node) (ast.Node, error) {
 		if t, ok := n.(*ast.Image); ok {
 			t.Src = cleanSignedParam(t.Src)
 			if parsed, err := url.Parse(t.Src); err == nil && parsed.IsAbs() {

@@ -74,7 +74,7 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 						sb.WriteString("# " + ln + "\n")
 					}
 				}
-				sb.WriteString(fmt.Sprintf("%s=%s\n", k, envMap[k]))
+				fmt.Fprintf(&sb, "%s=%s\n", k, envMap[k])
 			}
 			data.ConfigEnv = sb.String()
 			if b, err := json.MarshalIndent(envMap, "", "  "); err == nil {

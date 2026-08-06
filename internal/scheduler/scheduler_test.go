@@ -14,7 +14,7 @@ func TestScheduler_ProcessTasks_Backfill(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 
 	s := New(q)
@@ -75,7 +75,7 @@ func TestScheduler_ProcessTasks_Periodic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 
 	s := New(q)

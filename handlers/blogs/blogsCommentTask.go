@@ -22,7 +22,7 @@ type blogsCommentTask struct {
 var _ tasks.Task = (*blogsCommentTask)(nil)
 
 const (
-	BlogsCommentPageTmpl tasks.Template = "blogs/commentPage.gohtml"
+	BlogsCommentPageTmpl tasks.Template = "domains/blogs/commentPage.gohtml"
 )
 
 func NewBlogsCommentTask() tasks.Task {
@@ -88,5 +88,5 @@ func (t *blogsCommentTask) Get(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	BlogsCommentPageTmpl.Handle(w, r, data)
+	_ = BlogsCommentPageTmpl.Handle(w, r, data)
 }

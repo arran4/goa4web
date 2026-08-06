@@ -32,7 +32,7 @@ func parseBlogListCmd(parent *blogCmd, args []string) (*blogListCmd, error) {
 }
 
 func (c *blogListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

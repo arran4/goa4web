@@ -43,7 +43,7 @@ func parseNotificationsSendCmd(parent *notificationsCmd, args []string) (*notifi
 
 // Usage prints command usage information with examples.
 func (c *notificationsSendCmd) Usage() {
-	executeUsage(c.fs.Output(), "notifications_send_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "notifications_send_usage.txt", c)
 }
 
 func (c *notificationsSendCmd) FlagGroups() []flagGroup {
@@ -53,7 +53,7 @@ func (c *notificationsSendCmd) FlagGroups() []flagGroup {
 var _ usageData = (*notificationsSendCmd)(nil)
 
 func (c *notificationsSendCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -79,12 +79,12 @@ func (c *notificationsSendCmd) Run() error {
 			"user_ids": ids,
 		}
 		b, _ := json.MarshalIndent(out, "", "  ")
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Recipients\tStatus")
-	fmt.Fprintf(w, "%d\tqueued\n", len(ids))
+	_, _ = fmt.Fprintln(w, "Recipients\tStatus")
+	_, _ = fmt.Fprintf(w, "%d\tqueued\n", len(ids))
 	return w.Flush()
 }
 

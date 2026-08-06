@@ -34,7 +34,7 @@ func parseAnnouncementListCmd(parent *announcementCmd, args []string) (*announce
 
 // Usage prints command usage information with examples.
 func (c *announcementListCmd) Usage() {
-	executeUsage(c.fs.Output(), "announcement_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "announcement_list_usage.txt", c)
 }
 
 func (c *announcementListCmd) FlagGroups() []flagGroup {
@@ -44,7 +44,7 @@ func (c *announcementListCmd) FlagGroups() []flagGroup {
 var _ usageData = (*announcementListCmd)(nil)
 
 func (c *announcementListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -73,14 +73,14 @@ func (c *announcementListCmd) Run() error {
 			out = append(out, item)
 		}
 		b, _ := json.MarshalIndent(out, "", "  ")
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tNewsID\tActive\tCreatedAt\tTitle")
+	_, _ = fmt.Fprintln(w, "ID\tNewsID\tActive\tCreatedAt\tTitle")
 	for _, row := range rows {
-		fmt.Fprintf(w, "%d\t%d\t%t\t%s\t%s\n", row.ID, row.SiteNewsID, row.Active, row.CreatedAt.Format(time.RFC3339), row.News.String)
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%t\t%s\t%s\n", row.ID, row.SiteNewsID, row.Active, row.CreatedAt.Format(time.RFC3339), row.News.String)
 	}
 	return w.Flush()
 }

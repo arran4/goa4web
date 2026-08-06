@@ -32,16 +32,16 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 		return fmt.Errorf("missing or invalid -older-than duration")
 	}
 
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}
 
-	d, err := c.rootCmd.InitDB(cfg)
+	d, err := c.InitDB(cfg)
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	queries := db.New(d)
 
 	cutoff := time.Now().Add(-c.olderThan)
@@ -56,7 +56,7 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 		return fmt.Errorf("dry-run not implemented yet, missing query")
 	}
 
-	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.rootCmd.Context(), sql.NullTime{Time: cutoff, Valid: true})
+	res, err := queries.SystemDeleteUnverifiedEmailsExpiresBefore(c.Context(), sql.NullTime{Time: cutoff, Valid: true})
 	if err != nil {
 		return fmt.Errorf("expunge unverified emails: %w", err)
 	}
@@ -72,6 +72,6 @@ func (c *userExpungeUnverifiedCmd) Run() error {
 }
 
 func (c *userExpungeUnverifiedCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s user expunge-unverified [flags]\n\nFlags:\n", os.Args[0])
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s user expunge-unverified [flags]\n\nFlags:\n", os.Args[0])
 	c.fs.PrintDefaults()
 }

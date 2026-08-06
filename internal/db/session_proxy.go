@@ -15,10 +15,10 @@ func NewSessionProxy(q Querier) *SessionProxy {
 
 // InsertSession stores or updates a session record.
 func (sp *SessionProxy) InsertSession(ctx context.Context, sessionID string, userID int32) error {
-	return sp.Querier.SystemInsertSession(ctx, SystemInsertSessionParams{SessionID: sessionID, UsersIdusers: userID})
+	return sp.SystemInsertSession(ctx, SystemInsertSessionParams{SessionID: sessionID, UsersIdusers: userID})
 }
 
 // DeleteSessionByID removes a session record by ID.
 func (sp *SessionProxy) DeleteSessionByID(ctx context.Context, sessionID string) error {
-	return sp.Querier.SystemDeleteSessionByID(ctx, sessionID)
+	return sp.SystemDeleteSessionByID(ctx, sessionID)
 }

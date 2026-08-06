@@ -59,10 +59,10 @@ func userEmailPage(w http.ResponseWriter, r *http.Request) {
 		data.UserPreferences.AutoSubscribeReplies = true
 	}
 
-	UserEmailPage.Handle(w, r, data)
+	_ = UserEmailPage.Handle(w, r, data)
 }
 
-const UserEmailPage tasks.Template = "user/emailPage.gohtml"
+const UserEmailPage tasks.Template = "domains/user/emailPage.gohtml"
 
 func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -98,7 +98,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		if ue.VerifiedAt.Valid {
-			UserEmailVerifiedPage.Handle(w, r, struct{}{})
+			_ = UserEmailVerifiedPage.Handle(w, r, struct{}{})
 			return
 		}
 		if err := queries.SystemMarkUserEmailVerified(r.Context(), db.SystemMarkUserEmailVerifiedParams{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}, ID: ue.ID}); err != nil {
@@ -115,7 +115,7 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ue.VerifiedAt.Valid {
-		UserEmailVerifiedPage.Handle(w, r, struct{}{})
+		_ = UserEmailVerifiedPage.Handle(w, r, struct{}{})
 		return
 	}
 
@@ -126,8 +126,8 @@ func userEmailVerifyCodePage(w http.ResponseWriter, r *http.Request) {
 		Code:  code,
 		Email: ue.Email,
 	}
-	UserEmailVerifyConfirmPage.Handle(w, r, data)
+	_ = UserEmailVerifyConfirmPage.Handle(w, r, data)
 }
 
-const UserEmailVerifyConfirmPage tasks.Template = "user/emailVerifyConfirmPage.gohtml"
-const UserEmailVerifiedPage tasks.Template = "user/emailVerifiedPage.gohtml"
+const UserEmailVerifyConfirmPage tasks.Template = "domains/user/emailVerifyConfirmPage.gohtml"
+const UserEmailVerifiedPage tasks.Template = "domains/user/emailVerifiedPage.gohtml"

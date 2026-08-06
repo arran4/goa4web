@@ -15,7 +15,7 @@ func TestThreadReadMarker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 1

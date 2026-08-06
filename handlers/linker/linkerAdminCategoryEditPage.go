@@ -30,7 +30,7 @@ func AdminCategoryEditPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Category *db.LinkerCategory
 	}{Category: cat}
-	LinkerAdminCategoryEditPageTmpl.Handle(w, r, data)
+	_ = LinkerAdminCategoryEditPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoryEditPageTmpl tasks.Template = "linker/linkerAdminCategoryEditPage.gohtml"
+const LinkerAdminCategoryEditPageTmpl tasks.Template = "domains/linker/linkerAdminCategoryEditPage.gohtml"

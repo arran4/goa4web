@@ -46,6 +46,20 @@
                 const cmd = text.substring(cmdStart, j);
 
                 if (cmd.length > 0) {
+                     if (cmd.startsWith('/')) {
+                         let closeTagName = cmd.substring(1).toLowerCase();
+                         let idx = stack.findLastIndex(n => n.type === 'element' && n.tagName === closeTagName);
+                         if (idx > 0) {
+                             stack.length = idx;
+                             current = stack[stack.length - 1];
+                         }
+                         let k = j;
+                         while (k < len && text[k] === ' ') k++;
+                         if (k < len && text[k] === ']') k++;
+                         i = k;
+                         continue;
+                     }
+
                      // Start of a tag
                      const node = { type: 'element', tagName: cmd.toLowerCase(), args: [], children: [] };
 
@@ -105,6 +119,7 @@
 
                      // consume whitespace after tag/args before content
                      while (k < len && text[k] === ' ') k++;
+                     if (k < len && text[k] === ']') k++;
 
                      // For normal tags, we push to stack
                      stack.push(node);
@@ -183,11 +198,32 @@
                     // Just use url as alt.
                     return `![image](${node.args[0] || ''})`;
                 case 'code':
+                    if (inner.indexOf('|') !== -1 && inner.indexOf('---') !== -1) {
+                        return inner;
+                    }
                     return "```\n" + inner + "\n```";
                 case 'quote':
                 case 'q':
                     // Blockquote
                     return inner.split('\n').map(l => `> ${l}`).join('\n');
+                case 'h1':
+                    return `# ${inner}
+`;
+                case 'h2':
+                    return `## ${inner}
+`;
+                case 'h3':
+                    return `### ${inner}
+`;
+                case 'h4':
+                    return `#### ${inner}
+`;
+                case 'h5':
+                    return `##### ${inner}
+`;
+                case 'h6':
+                    return `###### ${inner}
+`;
                 default:
                     return inner;
             }
@@ -200,17 +236,35 @@
     // We will support a subset: **bold**, *italic*, [text](url), ![alt](url), `code`, > quote
 
     function parseMarkdownToAST(text) {
-         // This is the hard part "more complex".
-         // We can stick to regex-based replacement if we process nesting carefully,
-         // or write a scanner.
+         // Pre-process to wrap tables in code blocks
+         let lines = text.split('\n');
+         let inTable = false;
+         let newLines = [];
+         let tableBuffer = [];
 
-         // Let's iterate and maintain a stack of open formatting.
-         // But Markdown isn't strictly stack-based (e.g. `*bold **bold-italic* bold**`).
-
-         // For the purpose of "2 way convertability" with A4Code (which is stack based),
-         // we might assume the Markdown is also well-formed or fix it.
-
-         // Let's try a simple token stream approach.
+         for (let line of lines) {
+             if (line.trim().startsWith('|') && line.includes('|')) {
+                 tableBuffer.push(line);
+             } else {
+                 if (tableBuffer.length > 0) {
+                     if (tableBuffer.some(l => l.includes('---'))) {
+                         newLines.push('```\n' + tableBuffer.join('\n') + '\n```');
+                     } else {
+                         newLines.push(...tableBuffer);
+                     }
+                     tableBuffer = [];
+                 }
+                 newLines.push(line);
+             }
+         }
+         if (tableBuffer.length > 0) {
+             if (tableBuffer.some(l => l.includes('---'))) {
+                 newLines.push('```\n' + tableBuffer.join('\n') + '\n```');
+             } else {
+                 newLines.push(...tableBuffer);
+             }
+         }
+         text = newLines.join('\n');
 
          const root = { type: 'root', children: [] };
          let current = root;
@@ -279,6 +333,35 @@
                      i = end + 3;
                  }
                  current.children.push({ type: 'element', tagName: 'code', children: [{type:'text', value: content}]});
+             } else if (char === '#' && (i === 0 || text[i-1] === '\n')) {
+                 // Header
+                 let j = i;
+                 let level = 0;
+                 while (j < text.length && text[j] === '#') {
+                     level++;
+                     j++;
+                 }
+                 if (text[j] === ' ') {
+                     j++;
+                 }
+                 let end = text.indexOf('\n', j);
+                 if (end === -1) end = text.length;
+                 let content = text.substring(j, end);
+                 // A4Code uses [h1] to [h6]
+                 level = Math.min(level, 6);
+                 current.children.push({ type: 'element', tagName: 'h' + level, children: [{type:'text', value: content}]});
+                 i = end;
+                 if (i < text.length && text[i] === '\n') i++; // Skip the newline as it's part of the block usually, but let's keep it simple
+             } else if (char === '>' && (i === 0 || text[i-1] === '\n') && text[i+1] === ' ') {
+                 // Quote
+                 // Wait, quote can span multiple lines. For simplicity, just read until empty line
+                 let end = text.indexOf('\n\n', i);
+                 if (end === -1) end = text.length;
+                 let content = text.substring(i, end);
+                 // Remove > from each line
+                 content = content.replace(/^> /gm, '');
+                 current.children.push({ type: 'element', tagName: 'quote', children: [{type:'text', value: content}]});
+                 i = end;
              } else if (char === '[') {
                  // Link or Image (if ! before)
                  // Wait, logic for image is at '!'
@@ -362,6 +445,10 @@
                     return `[img ${node.args[0]}]`;
                 case 'code':
                     return `[code]${inner}[/code]`;
+                case 'quote':
+                    return `[quote]${inner}[/quote]`;
+                case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+                    return `[${node.tagName}]${inner}[/${node.tagName}]`;
                 default:
                     return inner;
             }

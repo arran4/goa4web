@@ -67,7 +67,7 @@ func (c *configTestCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *configTestCmd) Usage() {
-	executeUsage(c.fs.Output(), "config_test_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "config_test_usage.txt", c)
 }
 
 func (c *configTestCmd) FlagGroups() []flagGroup {
@@ -92,7 +92,7 @@ func parseConfigTestEmailCmd(parent *configTestCmd, args []string) (*configTestE
 }
 
 func (c *configTestEmailCmd) Run() error {
-	provider, err := c.rootCmd.emailReg.ProviderFromConfig(c.rootCmd.cfg)
+	provider, err := c.emailReg.ProviderFromConfig(c.cfg)
 	if err != nil || provider == nil {
 		if err != nil {
 			return fmt.Errorf("email provider error: %w", err)
@@ -100,11 +100,11 @@ func (c *configTestEmailCmd) Run() error {
 		return fmt.Errorf("email provider not configured")
 	}
 	var q db.Querier
-	if conn, err := c.rootCmd.DB(); err == nil {
+	if conn, err := c.DB(); err == nil {
 		q = db.New(conn)
 	}
 	ctx := context.Background()
-	emails := config.GetAdminEmails(ctx, q, c.rootCmd.cfg)
+	emails := config.GetAdminEmails(ctx, q, c.cfg)
 	if len(emails) == 0 {
 		return fmt.Errorf("no administrator emails configured")
 	}
@@ -122,10 +122,10 @@ func (c *configTestEmailCmd) Run() error {
 			return fmt.Errorf("exec html template: %w", err)
 		}
 		var fromAddr mail.Address
-		if f, err := mail.ParseAddress(c.rootCmd.cfg.EmailFrom); err == nil {
+		if f, err := mail.ParseAddress(c.cfg.EmailFrom); err == nil {
 			fromAddr = *f
 		} else {
-			fromAddr = mail.Address{Address: c.rootCmd.cfg.EmailFrom}
+			fromAddr = mail.Address{Address: c.cfg.EmailFrom}
 		}
 		msg, err := email.BuildMessage(fromAddr, toAddr, "Goa4Web Test Email", textBody, buf.String())
 		if err != nil {
@@ -154,7 +154,7 @@ func parseConfigTestDBCmd(parent *configTestCmd, args []string) (*configTestDBCm
 }
 
 func (c *configTestDBCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -181,10 +181,10 @@ func parseConfigTestDLQCmd(parent *configTestCmd, args []string) (*configTestDLQ
 
 func (c *configTestDLQCmd) Run() error {
 	var q db.Querier
-	if conn, err := c.rootCmd.DB(); err == nil {
+	if conn, err := c.DB(); err == nil {
 		q = db.New(conn)
 	}
-	provider := c.rootCmd.dlqReg.ProviderFromConfig(c.rootCmd.cfg, q)
+	provider := c.dlqReg.ProviderFromConfig(c.cfg, q)
 	if provider == nil {
 		return fmt.Errorf("dlq provider not configured")
 	}

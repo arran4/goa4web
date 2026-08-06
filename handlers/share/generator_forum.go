@@ -142,7 +142,7 @@ func (g *ForumGenerator) Generate(options ...any) (image.Image, error) {
 		sw := wordwrap.NewSimpleWrapper([]*wordwrap.Content{wordwrap.NewContent(body, wordwrap.WithFontColor(color.White))}, bodyFace)
 		lines, _, err := sw.TextToRect(bodyRect)
 		if err == nil {
-			sw.RenderLines(img, lines, bodyRect.Min)
+			_ = sw.RenderLines(img, lines, bodyRect.Min)
 		}
 	}
 

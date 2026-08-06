@@ -35,7 +35,7 @@ type UserGenerateResetLinkTask struct{ tasks.TaskString }
 var userGenerateResetLinkTask = &UserGenerateResetLinkTask{TaskString: TaskUserGenerateResetLink}
 
 const (
-	TemplateUserResetPasswordConfirmPage tasks.Template          = "admin/userResetPasswordConfirmPage.gohtml"
+	TemplateUserResetPasswordConfirmPage tasks.Template          = "domains/admin/userResetPasswordConfirmPage.gohtml"
 	EmailTemplateUserMagicReset          notif.EmailTemplateName = "userMagicResetEmail"
 )
 
@@ -344,5 +344,5 @@ func adminUserResetPasswordConfirmPage(w http.ResponseWriter, r *http.Request) {
 		User: &db.User{Idusers: user.Idusers, Username: user.Username},
 		Back: fmt.Sprintf("/admin/user/%d", user.Idusers),
 	}
-	TemplateUserResetPasswordConfirmPage.Handle(w, r, data)
+	_ = TemplateUserResetPasswordConfirmPage.Handle(w, r, data)
 }

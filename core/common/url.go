@@ -19,6 +19,27 @@ var (
 	ErrDisallowedBackHost      = errors.New("disallowed back host")
 )
 
+// IsAllowedHost checks if a given hostname is considered allowed by comparing
+// against the BaseURL configuration.
+func (cd *CoreData) IsAllowedHost(host string) bool {
+	if cd == nil || host == "" {
+		return false
+	}
+	host = strings.ToLower(host)
+	for h := range strings.FieldsSeq(cd.Config.BaseURL) {
+		h = strings.TrimSpace(h)
+		if pu, err := url.Parse(h); err == nil && pu.Host != "" {
+			h = pu.Host
+		} else {
+			h = strings.TrimSuffix(h, "/")
+		}
+		if strings.ToLower(h) == host {
+			return true
+		}
+	}
+	return false
+}
+
 // SanitizeBackURL validates raw and returns a safe back URL.
 // Absolute URLs are allowed only when the host matches an allowed hostname
 // or when accompanied by a valid signature via back_ts and back_sig.
@@ -45,27 +66,8 @@ func (cd *CoreData) SanitizeBackURL(r *http.Request, raw string) (string, error)
 		return "", fmt.Errorf("%w: %s", ErrInvalidBackScheme, u.Scheme)
 	}
 
-	allowed := map[string]struct{}{}
-	if r != nil && r.Host != "" {
-		allowed[strings.ToLower(r.Host)] = struct{}{}
-	}
-	if cd != nil {
-		hosts := strings.FieldsSeq(cd.Config.BaseURL)
-		for h := range hosts {
-			h = strings.TrimSpace(h)
-			if h == "" {
-				continue
-			}
-			if pu, err := url.Parse(h); err == nil && pu.Host != "" {
-				h = pu.Host
-			} else {
-				h = strings.TrimSuffix(h, "/")
-			}
-			allowed[strings.ToLower(h)] = struct{}{}
-		}
-	}
-
-	if _, ok := allowed[strings.ToLower(u.Host)]; ok {
+	host := strings.ToLower(u.Host)
+	if (r != nil && r.Host != "" && strings.ToLower(r.Host) == host) || cd.IsAllowedHost(host) {
 		result := u.Path
 		if u.RawQuery != "" {
 			result += "?" + u.RawQuery

@@ -17,7 +17,7 @@ type linkerTask struct {
 var _ tasks.Task = (*linkerTask)(nil)
 
 const (
-	LinkerPageTmpl tasks.Template = "linker/page.gohtml"
+	LinkerPageTmpl tasks.Template = "domains/linker/page.gohtml"
 )
 
 func NewLinkerTask() tasks.Task {
@@ -72,5 +72,5 @@ func (t *linkerTask) Get(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = fmt.Sprintf("%s?offset=%d", base, offset-ps)
 	}
 
-	LinkerPageTmpl.Handle(w, r, data)
+	_ = LinkerPageTmpl.Handle(w, r, data)
 }

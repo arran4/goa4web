@@ -55,7 +55,7 @@ func TestListLegacy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(f.Name())
+	defer func() { _ = os.Remove(f.Name()) }()
 
 	ts := time.Now().Truncate(time.Second)
 	tsStr := ts.Format(time.RFC3339)
@@ -65,7 +65,7 @@ func TestListLegacy(t *testing.T) {
 	if _, err := f.Write([]byte(content)); err != nil {
 		t.Fatal(err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	recs, err := List(f.Name(), 10)
 	if err != nil {

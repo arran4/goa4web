@@ -60,12 +60,12 @@ type filesPurgeOutput struct {
 }
 
 func (c *filesPurgeCmd) Run() error {
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 
-	listing, err := adminhandlers.BuildImageFilesListing(c.rootCmd.Context(), queries, c.rootCmd.cfg.ImageUploadDir, c.path, "", nil, 0)
+	listing, err := adminhandlers.BuildImageFilesListing(c.Context(), queries, c.cfg.ImageUploadDir, c.path, "", nil, 0)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (c *filesPurgeCmd) Run() error {
 		},
 	}
 
-	base := c.rootCmd.cfg.ImageUploadDir
+	base := c.cfg.ImageUploadDir
 	for _, entry := range filtered {
 		result := filesPurgeEntry{
 			Path: entry.Path,
@@ -108,21 +108,21 @@ func (c *filesPurgeCmd) Run() error {
 
 	if c.jsonOut {
 		b, _ := json.MarshalIndent(purgeOutput, "", "  ")
-		fmt.Println(string(b))
+		_, _ = fmt.Println(string(b))
 		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "Path\tSize\tStatus\tError")
+	_, _ = fmt.Fprintln(w, "Path\tSize\tStatus\tError")
 	for _, entry := range purgeOutput.Entries {
 		errMsg := "-"
 		if entry.Error != "" {
 			errMsg = entry.Error
 		}
-		fmt.Fprintf(w, "%s\t%d\t%s\t%s\n", entry.Path, entry.Size, entry.Status, errMsg)
+		_, _ = fmt.Fprintf(w, "%s\t%d\t%s\t%s\n", entry.Path, entry.Size, entry.Status, errMsg)
 	}
-	w.Flush()
-	fmt.Printf("\nSummary: candidates=%d deleted=%d errors=%d bytes=%d dry-run=%t\n",
+	_ = w.Flush()
+	_, _ = fmt.Printf("\nSummary: candidates=%d deleted=%d errors=%d bytes=%d dry-run=%t\n",
 		purgeOutput.Summary.Candidates,
 		purgeOutput.Summary.Deleted,
 		purgeOutput.Summary.Errors,
@@ -133,7 +133,7 @@ func (c *filesPurgeCmd) Run() error {
 }
 
 func (c *filesPurgeCmd) Usage() {
-	executeUsage(c.fs.Output(), "files_purge_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "files_purge_usage.txt", c)
 }
 
 func (c *filesPurgeCmd) FlagGroups() []flagGroup {

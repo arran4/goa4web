@@ -13,7 +13,7 @@ func BenchmarkListImageCacheEntries(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	// Create 1000 files
 	for i := range 1000 {

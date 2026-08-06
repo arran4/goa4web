@@ -11,7 +11,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-//go:embed site/admin/grantPage.gohtml site/admin/grantsPage.gohtml
+//go:embed site/domains/admin/grantPage.gohtml site/domains/admin/grantsPage.gohtml
 var grantTemplates embed.FS
 
 type grantWithNames struct {
@@ -38,7 +38,7 @@ type grantGroup struct {
 func TestGrantPageLinks(t *testing.T) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"csrfField": func() template.HTML { return "" },
-	}).ParseFS(grantTemplates, "site/admin/grantPage.gohtml"))
+	}).ParseFS(grantTemplates, "site/domains/admin/grantPage.gohtml"))
 	template.Must(tmpl.New("head").Parse(""))
 	template.Must(tmpl.New("tail").Parse(""))
 
@@ -89,7 +89,7 @@ type mockFilter struct {
 func TestGrantsPageLinks(t *testing.T) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"csrfField": func() template.HTML { return "" },
-	}).ParseFS(grantTemplates, "site/admin/grantsPage.gohtml"))
+	}).ParseFS(grantTemplates, "site/domains/admin/grantsPage.gohtml"))
 	template.Must(tmpl.New("head").Parse(""))
 	template.Must(tmpl.New("tail").Parse(""))
 
@@ -140,7 +140,7 @@ func TestGrantsPageLinks(t *testing.T) {
 func TestGrantsPageLinksAnyone(t *testing.T) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"csrfField": func() template.HTML { return "" },
-	}).ParseFS(grantTemplates, "site/admin/grantsPage.gohtml"))
+	}).ParseFS(grantTemplates, "site/domains/admin/grantsPage.gohtml"))
 	template.Must(tmpl.New("head").Parse(""))
 	template.Must(tmpl.New("tail").Parse(""))
 

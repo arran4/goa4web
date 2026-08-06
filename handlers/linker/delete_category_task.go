@@ -24,7 +24,7 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 	rows, _ := cd.LinkerCategoryCounts()
 	for _, c := range rows {
 		if int(c.ID) == cid && c.Linkcount > 0 {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Category in use"))
+			handlers.RenderErrorPage(w, r, fmt.Errorf("category in use"))
 			return nil
 		}
 	}
@@ -33,7 +33,7 @@ func (deleteCategoryTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("count links fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if count > 0 {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Category in use"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("category in use"))
 		return nil
 	}
 	if err := queries.AdminDeleteLinkerCategory(r.Context(), int32(cid)); err != nil {

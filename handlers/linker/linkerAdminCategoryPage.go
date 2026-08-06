@@ -24,7 +24,7 @@ func AdminCategoryPage(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		CategoryID int32
 	}{CategoryID: int32(cid)}
-	LinkerAdminCategoryPageTmpl.Handle(w, r, data)
+	_ = LinkerAdminCategoryPageTmpl.Handle(w, r, data)
 }
 
-const LinkerAdminCategoryPageTmpl tasks.Template = "linker/linkerAdminCategoryPage.gohtml"
+const LinkerAdminCategoryPageTmpl tasks.Template = "domains/linker/linkerAdminCategoryPage.gohtml"

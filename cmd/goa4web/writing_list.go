@@ -34,7 +34,7 @@ func parseWritingListCmd(parent *writingCmd, args []string) (*writingListCmd, er
 }
 
 func (c *writingListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -68,7 +68,7 @@ func (c *writingListCmd) Run() error {
 		}
 		return nil
 	}
-	cd := common.NewCoreData(ctx, queries, c.rootCmd.cfg)
+	cd := common.NewCoreData(ctx, queries, c.cfg)
 	rows, err := cd.LatestWritings(common.WithWritingsOffset(int32(c.Offset)), common.WithWritingsLimit(int32(c.Limit)))
 	if err != nil {
 		return fmt.Errorf("list writings: %w", err)

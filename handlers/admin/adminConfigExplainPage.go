@@ -64,8 +64,8 @@ func (h *Handlers) AdminConfigExplainPage(w http.ResponseWriter, r *http.Request
 		Options:    filtered,
 	}
 
-	AdminConfigExplainPageTmpl.Handle(w, r, data)
+	_ = AdminConfigExplainPageTmpl.Handle(w, r, data)
 }
 
 // AdminConfigExplainPageTmpl renders the configuration explain admin page.
-const AdminConfigExplainPageTmpl tasks.Template = "admin/configExplainPage.gohtml"
+const AdminConfigExplainPageTmpl tasks.Template = "domains/admin/configExplainPage.gohtml"

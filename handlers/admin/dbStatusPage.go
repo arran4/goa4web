@@ -40,8 +40,8 @@ func (h *Handlers) AdminDBStatusPage(w http.ResponseWriter, r *http.Request) {
 		SeedAllowed:     cd.HasAdminRole() && h.DBPool != nil,
 		SeedTask:        string(TaskDBSeed),
 	}
-	AdminDBStatusPageTmpl.Handle(w, r, data)
+	_ = AdminDBStatusPageTmpl.Handle(w, r, data)
 }
 
 // AdminDBStatusPageTmpl renders the database status page.
-const AdminDBStatusPageTmpl tasks.Template = "admin/dbStatusPage.gohtml"
+const AdminDBStatusPageTmpl tasks.Template = "domains/admin/dbStatusPage.gohtml"

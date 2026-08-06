@@ -90,45 +90,45 @@ func (c *dlqListCmd) Run() error {
 		if err != nil {
 			return fmt.Errorf("marshal json: %w", err)
 		}
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
 	for _, provider := range output.Providers {
-		fmt.Fprintf(w, "Provider:\t%s\n", provider.Provider)
+		_, _ = fmt.Fprintf(w, "Provider:\t%s\n", provider.Provider)
 		if provider.Source != "" {
-			fmt.Fprintf(w, "Source:\t%s\n", provider.Source)
+			_, _ = fmt.Fprintf(w, "Source:\t%s\n", provider.Source)
 		}
 		if provider.Total != nil {
-			fmt.Fprintf(w, "Total:\t%d\n", *provider.Total)
+			_, _ = fmt.Fprintf(w, "Total:\t%d\n", *provider.Total)
 		}
 		if provider.Latest != "" {
-			fmt.Fprintf(w, "Latest:\t%s\n", provider.Latest)
+			_, _ = fmt.Fprintf(w, "Latest:\t%s\n", provider.Latest)
 		}
 		switch provider.Provider {
 		case "db":
-			fmt.Fprintln(w, "ID\tCreated At\tMessage")
+			_, _ = fmt.Fprintln(w, "ID\tCreated At\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%d\t%s\t%s\n", entry.ID, entry.Time, entry.Message)
+				_, _ = fmt.Fprintf(w, "%d\t%s\t%s\n", entry.ID, entry.Time, entry.Message)
 			}
 		case "file":
-			fmt.Fprintln(w, "Time\tMessage")
+			_, _ = fmt.Fprintln(w, "Time\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%s\t%s\n", entry.Time, entry.Message)
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", entry.Time, entry.Message)
 			}
 		case "dir":
-			fmt.Fprintln(w, "Name\tMessage")
+			_, _ = fmt.Fprintln(w, "Name\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
 			}
 		default:
-			fmt.Fprintln(w, "Entry\tMessage")
+			_, _ = fmt.Fprintln(w, "Entry\tMessage")
 			for _, entry := range provider.Entries {
-				fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
+				_, _ = fmt.Fprintf(w, "%s\t%s\n", entry.Name, entry.Message)
 			}
 		}
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
 	}
 	return w.Flush()
 }
@@ -147,7 +147,7 @@ func (c *dlqListCmd) listProvider(provider string) (dlqListProviderOutput, error
 }
 
 func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("database: %w", err)
 	}
@@ -155,7 +155,7 @@ func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
 	if fetchLimit > math.MaxInt32 {
 		return dlqListProviderOutput{}, fmt.Errorf("limit exceeds maximum")
 	}
-	rows, err := queries.SystemListDeadLetters(c.rootCmd.Context(), int32(fetchLimit))
+	rows, err := queries.SystemListDeadLetters(c.Context(), int32(fetchLimit))
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("list dead letters: %w", err)
 	}
@@ -172,12 +172,12 @@ func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
 			Message: row.Message,
 		})
 	}
-	count, err := queries.SystemCountDeadLetters(c.rootCmd.Context())
+	count, err := queries.SystemCountDeadLetters(c.Context())
 	if err != nil {
 		return dlqListProviderOutput{}, fmt.Errorf("count dead letters: %w", err)
 	}
 	latestStr := ""
-	if latest, err := queries.SystemLatestDeadLetter(c.rootCmd.Context()); err == nil {
+	if latest, err := queries.SystemLatestDeadLetter(c.Context()); err == nil {
 		if latestTime, ok := latest.(time.Time); ok {
 			latestStr = latestTime.Format(time.RFC3339)
 		}
@@ -191,7 +191,7 @@ func (c *dlqListCmd) listDB() (dlqListProviderOutput, error) {
 }
 
 func (c *dlqListCmd) listFile() (dlqListProviderOutput, error) {
-	path := c.rootCmd.cfg.DLQFile
+	path := c.cfg.DLQFile
 	if path == "" {
 		return dlqListProviderOutput{}, fmt.Errorf("dlq file path not configured")
 	}
@@ -220,7 +220,7 @@ func (c *dlqListCmd) listFile() (dlqListProviderOutput, error) {
 }
 
 func (c *dlqListCmd) listDir() (dlqListProviderOutput, error) {
-	path := c.rootCmd.cfg.DLQFile
+	path := c.cfg.DLQFile
 	if path == "" {
 		return dlqListProviderOutput{}, fmt.Errorf("dlq dir path not configured")
 	}
@@ -250,7 +250,7 @@ func (c *dlqListCmd) listDir() (dlqListProviderOutput, error) {
 
 // Usage prints command usage information with examples.
 func (c *dlqListCmd) Usage() {
-	executeUsage(c.fs.Output(), "dlq_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "dlq_list_usage.txt", c)
 }
 
 func (c *dlqListCmd) FlagGroups() []flagGroup {

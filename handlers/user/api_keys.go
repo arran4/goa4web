@@ -24,7 +24,7 @@ func DownloadSwagger(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=\"swagger.yaml\"")
 
 	// Pass the BaseURL to the template to populate the server URL correctly
-	tasks.Template("user/swagger.gohtml").Handle(w, r, struct{
+	_ = tasks.Template("user/swagger.gohtml").Handle(w, r, struct {
 		BaseURL string
 		Version string
 	}{
@@ -42,7 +42,7 @@ func ListAPIKeysPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks.Template("user/apiKeysPage.gohtml").Handle(w, r, struct {
+	_ = tasks.Template("user/apiKeysPage").Handle(w, r, struct {
 		Keys []*db.ApiKey
 	}{
 		Keys: keys,
@@ -61,7 +61,7 @@ func (CreateAPIKeyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("name is required")
 	}
 
-	r.ParseForm()
+	_ = r.ParseForm()
 	scopes := r.Form["scopes"]
 	if len(scopes) == 0 {
 		return fmt.Errorf("at least one scope is required")
@@ -96,7 +96,7 @@ func (CreateAPIKeyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	ttlStr := r.FormValue("ttl_days")
 	if ttlStr != "" {
 		var days int
-		fmt.Sscanf(ttlStr, "%d", &days)
+		_, _ = fmt.Sscanf(ttlStr, "%d", &days)
 		if days > 0 {
 			expiresAt.Time = time.Now().AddDate(0, 0, days)
 			expiresAt.Valid = true

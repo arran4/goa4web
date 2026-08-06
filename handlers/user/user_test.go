@@ -253,7 +253,9 @@ func TestUserLangSave(t *testing.T) {
 		sess, _ := store.Get(req, sessionName)
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
-		sess.Save(req, w)
+		if err := sess.Save(req, w); err != nil {
+			t.Fatalf("save session: %v", err)
+		}
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
@@ -316,7 +318,9 @@ func TestUserLangSave(t *testing.T) {
 		sess, _ := store.Get(req, sessionName)
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
-		sess.Save(req, w)
+		if err := sess.Save(req, w); err != nil {
+			t.Fatalf("save session: %v", err)
+		}
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
@@ -375,7 +379,9 @@ func TestUserLangSave(t *testing.T) {
 		sess, _ := store.Get(req, sessionName)
 		sess.Values["UID"] = int32(1)
 		w := httptest.NewRecorder()
-		sess.Save(req, w)
+		if err := sess.Save(req, w); err != nil {
+			t.Fatalf("save session: %v", err)
+		}
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}

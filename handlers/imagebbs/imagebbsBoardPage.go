@@ -2,7 +2,8 @@ package imagebbs
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"context"
+	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"image"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 
@@ -26,7 +28,6 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/workers/searchworker"
-	"golang.org/x/image/draw"
 )
 
 // UploadImageTask handles uploading an image to a board.
@@ -94,10 +95,10 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("image required %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var buf bytes.Buffer
-	h := sha1.New()
+	h := sha256.New()
 	size, err := io.Copy(io.MultiWriter(&buf, h), file)
 	if err != nil {
 		return fmt.Errorf("copy upload error %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -110,7 +111,7 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	sub1, sub2 := shaHex[:2], shaHex[2:4]
 	data := buf.Bytes()
-	img, _, err := image.Decode(bytes.NewReader(data))
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
 		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -118,31 +119,6 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if p := upload.ProviderFromConfig(cd.Config); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		src := img.Bounds()
-		var crop image.Rectangle
-		if src.Dx() > src.Dy() {
-			side := src.Dy()
-			x0 := src.Min.X + (src.Dx()-side)/2
-			crop = image.Rect(x0, src.Min.Y, x0+side, src.Min.Y+side)
-		} else {
-			side := src.Dx()
-			y0 := src.Min.Y + (src.Dy()-side)/2
-			crop = image.Rect(src.Min.X, y0, src.Min.X+side, y0+side)
-		}
-		thumb := image.NewRGBA(image.Rect(0, 0, 200, 200))
-		draw.CatmullRom.Scale(thumb, thumb.Bounds(), img, crop, draw.Over, nil)
-		var buf bytes.Buffer
-		enc, err := imagesign.EncoderByExtension(ext)
-		if err != nil {
-			return fmt.Errorf("encoder fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if err := enc(&buf, thumb); err != nil {
-			return fmt.Errorf("encode thumb fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		thumbName := shaHex + "_thumb" + ext
-		if err := p.Write(r.Context(), path.Join(sub1, sub2, thumbName), buf.Bytes()); err != nil {
-			return fmt.Errorf("thumb write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 
@@ -154,8 +130,8 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if _, err := queries.CreateUploadedImageForUploader(r.Context(), db.CreateUploadedImageForUploaderParams{
 		UploaderID: uid,
 		Path:       sql.NullString{String: relFull, Valid: true},
-		Width:      sql.NullInt32{Int32: int32(img.Bounds().Dx()), Valid: true},
-		Height:     sql.NullInt32{Int32: int32(img.Bounds().Dy()), Valid: true},
+		Width:      sql.NullInt32{Int32: int32(cfg.Width), Valid: true},
+		Height:     sql.NullInt32{Int32: int32(cfg.Height), Valid: true},
 		FileSize:   int32(size),
 	}); err != nil {
 		return fmt.Errorf("record uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -188,6 +164,24 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
 			evt.Data["ImagePostID"] = int32(pid)
 			evt.Data["BoardID"] = int32(bid)
+
+			evt.Task = &ProcessImageTask{
+				TaskString: TaskUploadImage,
+				Config:     cd.Config,
+				ShaHex:     shaHex,
+				Ext:        ext,
+			}
+		} else {
+			// Schedule background thumbnail generation outside of event manager if no event manager exists.
+			go func(ctx context.Context, config *config.RuntimeConfig, shaHex string, ext string) {
+				t := &ProcessImageTask{
+					TaskString: TaskUploadImage,
+					Config:     config,
+					ShaHex:     shaHex,
+					Ext:        ext,
+				}
+				_, _ = t.BackgroundTask(ctx, queries)
+			}(context.WithoutCancel(r.Context()), cd.Config, shaHex, ext)
 		}
 	}
 

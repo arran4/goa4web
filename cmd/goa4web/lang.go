@@ -62,7 +62,7 @@ func (c *langCmd) Run() error {
 }
 
 func (c *langCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "lang_usage.txt", c)
 }
 
 func (c *langCmd) FlagGroups() []flagGroup {

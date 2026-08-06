@@ -13,7 +13,7 @@ import (
 func AdminForumFlaggedPostsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Forum - Flagged Posts"
-	AdminForumFlaggedPostsPageTmpl.Handle(w, r, struct{}{})
+	_ = AdminForumFlaggedPostsPageTmpl.Handle(w, r, struct{}{})
 }
 
-const AdminForumFlaggedPostsPageTmpl tasks.Template = "admin/forumFlaggedPostsPage.gohtml"
+const AdminForumFlaggedPostsPageTmpl tasks.Template = "domains/admin/forumFlaggedPostsPage.gohtml"

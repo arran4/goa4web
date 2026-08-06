@@ -33,22 +33,22 @@ func (c *langAddCmd) Run() error {
 	if c.Code == "" || c.Name == "" {
 		return fmt.Errorf("code and name required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
 	queries := db.New(conn)
-	c.rootCmd.Verbosef("adding language %s (%s)", c.Name, c.Code)
+	c.Verbosef("adding language %s (%s)", c.Name, c.Code)
 	if _, err := queries.AdminInsertLanguage(ctx, sql.NullString{String: c.Name, Valid: true}); err != nil {
 		return fmt.Errorf("insert language: %w", err)
 	}
-	c.rootCmd.Infof("added language %s (%s)", c.Name, c.Code)
+	c.Infof("added language %s (%s)", c.Name, c.Code)
 	return nil
 }
 
 func (c *langAddCmd) Usage() {
-	executeUsage(c.fs.Output(), "lang_add_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "lang_add_usage.txt", c)
 }
 
 func (c *langAddCmd) FlagGroups() []flagGroup {

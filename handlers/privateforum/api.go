@@ -28,7 +28,7 @@ func UserExistsAPI(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(UserExistsResponse{Exists: false})
+			_ = json.NewEncoder(w).Encode(UserExistsResponse{Exists: false})
 			return
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -36,7 +36,7 @@ func UserExistsAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(UserExistsResponse{Exists: exists})
+	_ = json.NewEncoder(w).Encode(UserExistsResponse{Exists: exists})
 }
 
 func userExists(ctx context.Context, queries db.Querier, username string) (bool, error) {

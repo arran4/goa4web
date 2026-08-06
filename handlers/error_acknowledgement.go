@@ -30,5 +30,5 @@ func TaskErrorAcknowledgementPage(w http.ResponseWriter, r *http.Request) {
 		_ = r.ParseForm()
 		data.Form = r.PostForm
 	}
-	TaskErrorAcknowledgementPageTmpl.Handle(w, r, data)
+	_ = TaskErrorAcknowledgementPageTmpl.Handle(w, r, data)
 }

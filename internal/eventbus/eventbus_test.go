@@ -57,7 +57,7 @@ func TestBus_Shutdown(t *testing.T) {
 
 	// Publish messages
 	for i := range 5 {
-		bus.Publish(TaskEvent{UserID: int32(i)})
+		_ = bus.Publish(TaskEvent{UserID: int32(i)})
 	}
 
 	// Shutdown
@@ -83,7 +83,7 @@ func TestBus_Ack(t *testing.T) {
 	bus := NewBus()
 	ch := bus.Subscribe(TaskMessageType)
 
-	bus.Publish(TaskEvent{})
+	_ = bus.Publish(TaskEvent{})
 
 	select {
 	case env := <-ch:
@@ -106,12 +106,12 @@ func TestBus_Backpressure(t *testing.T) {
 
 	// Fill channel
 	for i := range 100 {
-		bus.Publish(TaskEvent{UserID: int32(i + 1)})
+		_ = bus.Publish(TaskEvent{UserID: int32(i + 1)})
 	}
 
 	// Try to publish more (should be dropped but WG handled)
-	bus.Publish(TaskEvent{UserID: 101})
-	bus.Publish(TaskEvent{UserID: 102})
+	_ = bus.Publish(TaskEvent{UserID: 101})
+	_ = bus.Publish(TaskEvent{UserID: 102})
 
 	// Shutdown should succeed even if we only ack the messages we received
 	go func() {
@@ -135,7 +135,7 @@ func TestBus_ShutdownContext(t *testing.T) {
 	bus := NewBus()
 	ch := bus.Subscribe(TaskMessageType)
 
-	bus.Publish(TaskEvent{})
+	_ = bus.Publish(TaskEvent{})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
@@ -362,7 +362,7 @@ func TestShutdown_Timeout(t *testing.T) {
 	_ = bus.Subscribe() // Subscribe but never read
 
 	msg := TaskEvent{Task: mockTask("timeout-test")}
-	bus.Publish(msg) // Fills the buffer
+	_ = bus.Publish(msg) // Fills the buffer
 
 	// Shutdown with very short timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
@@ -423,7 +423,7 @@ func TestConcurrentAccess(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for range iterations {
-				bus.Publish(TaskEvent{Task: mockTask("concurrent")})
+				_ = bus.Publish(TaskEvent{Task: mockTask("concurrent")})
 			}
 		}()
 	}

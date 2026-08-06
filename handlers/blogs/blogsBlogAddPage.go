@@ -112,11 +112,6 @@ func (AddBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Add Blog"
-	if !(cd.IsAdmin() || cd.HasGrant("blogs", "entry", "post", 0)) {
-		// TODO: Fix: Add enforced Access in router rather than task
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
 	type Data struct {
 		Languages          []*db.Language
 		SelectedLanguageId int
@@ -135,7 +130,7 @@ func BlogAddPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Languages = languageRows
 
-	BlogsBlogAddPageTmpl.Handle(w, r, data)
+	_ = BlogsBlogAddPageTmpl.Handle(w, r, data)
 }
 
-const BlogsBlogAddPageTmpl tasks.Template = "blogs/blogAddPage.gohtml"
+const BlogsBlogAddPageTmpl tasks.Template = "domains/blogs/blogAddPage.gohtml"

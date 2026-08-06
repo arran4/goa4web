@@ -39,7 +39,7 @@ func parseAnnouncementDeleteCmd(parent *announcementCmd, args []string) (*announ
 
 // Usage prints command usage information with examples.
 func (c *announcementDeleteCmd) Usage() {
-	executeUsage(c.fs.Output(), "announcement_delete_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "announcement_delete_usage.txt", c)
 }
 
 func (c *announcementDeleteCmd) FlagGroups() []flagGroup {
@@ -56,7 +56,7 @@ func (c *announcementDeleteCmd) Run() error {
 	if len(ids) == 0 {
 		return fmt.Errorf("id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -73,13 +73,13 @@ func (c *announcementDeleteCmd) Run() error {
 			"count":       len(ids),
 		}
 		b, _ := json.MarshalIndent(out, "", "  ")
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tStatus")
+	_, _ = fmt.Fprintln(w, "ID\tStatus")
 	for _, id := range ids {
-		fmt.Fprintf(w, "%d\tdeleted\n", id)
+		_, _ = fmt.Fprintf(w, "%d\tdeleted\n", id)
 	}
 	return w.Flush()
 }

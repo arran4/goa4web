@@ -26,10 +26,10 @@ func EditPage(w http.ResponseWriter, r *http.Request) {
 	session := cd.GetSession()
 	_ = session
 	cd.PageTitle = "Edit Bookmarks"
-	BookmarkEditPageTmpl.Handle(w, r, struct{}{})
+	_ = BookmarkEditPageTmpl.Handle(w, r, struct{}{})
 }
 
-const BookmarkEditPageTmpl tasks.Template = "bookmarks/editPage.gohtml"
+const BookmarkEditPageTmpl tasks.Template = "domains/bookmarks/editPage.gohtml"
 
 func (SaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("text")

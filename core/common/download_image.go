@@ -268,7 +268,7 @@ func (cd *CoreData) downloadExternalImageAtDepth(imgURL string, depth int) (*dow
 	if err != nil {
 		return nil, fmt.Errorf("http get: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	log.Printf("image cache fetch http response: url=%q status=%q content_type=%q", imgURL, resp.Status, resp.Header.Get("Content-Type"))
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("http status: %s", resp.Status)

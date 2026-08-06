@@ -31,10 +31,10 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	FaqPageTmpl.Handle(w, r, cd)
+	_ = FaqPageTmpl.Handle(w, r, cd)
 }
 
-const FaqPageTmpl tasks.Template = "faq/page.gohtml"
+const FaqPageTmpl tasks.Template = "domains/faq/page.gohtml"
 
 func CustomFAQIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}

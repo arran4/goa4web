@@ -18,7 +18,7 @@ type newsTask struct {
 var _ tasks.Task = (*newsTask)(nil)
 
 const (
-	NewsPageTmpl tasks.Template = "news/page.gohtml"
+	NewsPageTmpl tasks.Template = "domains/news/page.gohtml"
 )
 
 func NewNewsTask() tasks.Task {
@@ -59,5 +59,5 @@ func (t *newsTask) Get(w http.ResponseWriter, r *http.Request) {
 		Type:        "website",
 	}
 
-	NewsPageTmpl.Handle(w, r, struct{}{})
+	_ = NewsPageTmpl.Handle(w, r, struct{}{})
 }

@@ -67,7 +67,7 @@ func (Driver) Backup(dsn, file string) error {
 	if err != nil {
 		return fmt.Errorf("create file: %w", err)
 	}
-	defer outFile.Close()
+	defer func() { _ = outFile.Close() }()
 	cmd.Stdout = outFile
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("backup: %w", err)
@@ -84,7 +84,7 @@ func (Driver) Restore(dsn, file string) error {
 	if err != nil {
 		return fmt.Errorf("open file: %w", err)
 	}
-	defer inFile.Close()
+	defer func() { _ = inFile.Close() }()
 	mcfg, err := sqlmysql.ParseDSN(dsn)
 	if err != nil {
 		return fmt.Errorf("parse DSN: %w", err)

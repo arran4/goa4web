@@ -39,7 +39,7 @@ func adminUserBlogsPage(w http.ResponseWriter, r *http.Request) {
 		User:  &db.User{Idusers: cpu.Idusers, Username: user.Username},
 		Blogs: rows,
 	}
-	AdminUserBlogsPageTmpl.Handle(w, r, data)
+	_ = AdminUserBlogsPageTmpl.Handle(w, r, data)
 }
 
-const AdminUserBlogsPageTmpl tasks.Template = "admin/userBlogsPage.gohtml"
+const AdminUserBlogsPageTmpl tasks.Template = "domains/admin/userBlogsPage.gohtml"

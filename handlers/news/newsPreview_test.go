@@ -46,14 +46,14 @@ func TestPreviewRoute(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
 		}
 
 		bodyBuf := new(bytes.Buffer)
-		bodyBuf.ReadFrom(resp.Body)
+		_, _ = bodyBuf.ReadFrom(resp.Body)
 		body := bodyBuf.String()
 
 		if !strings.Contains(body, `<strong data-start-pos="0" data-end-pos="4">`) ||

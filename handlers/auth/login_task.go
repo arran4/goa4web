@@ -34,8 +34,8 @@ var _ tasks.Task = (*LoginTask)(nil)
 var _ tasks.TemplatesRequired = (*LoginTask)(nil)
 
 const (
-	templateLoginPage          = "loginPage.gohtml"
-	templatePasswordVerifyPage = "passwordVerifyPage.gohtml"
+	templateLoginPage          = "pages/auth/loginPage.gohtml"
+	templatePasswordVerifyPage = "pages/auth/passwordVerifyPage.gohtml"
 )
 
 // Page serves the username/password login form.

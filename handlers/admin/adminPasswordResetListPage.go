@@ -18,7 +18,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-const AdminPasswordResetListPageTmpl tasks.Template = "admin/passwordResetList.gohtml"
+const AdminPasswordResetListPageTmpl tasks.Template = "domains/admin/passwordResetList.gohtml"
 
 type AdminPasswordResetListPageData struct {
 	Rows           []*db.AdminListPasswordResetsRow
@@ -123,7 +123,7 @@ func adminPasswordResetListPage(w http.ResponseWriter, r *http.Request) {
 
 	summaryMessage := passwordResetSummaryMessage(r.URL.Query())
 
-	AdminPasswordResetListPageTmpl.Handle(w, r, &AdminPasswordResetListPageData{
+	_ = AdminPasswordResetListPageTmpl.Handle(w, r, &AdminPasswordResetListPageData{
 		Rows:           rows,
 		Status:         status,
 		UserFilter:     userFilter,

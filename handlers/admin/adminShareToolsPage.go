@@ -53,7 +53,7 @@ func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method != http.MethodPost {
-		AdminShareToolsPageTmpl.Handle(w, r, data)
+		_ = AdminShareToolsPageTmpl.Handle(w, r, data)
 		return
 	}
 
@@ -116,7 +116,7 @@ func AdminShareToolsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminShareToolsPageTmpl.Handle(w, r, data)
+	_ = AdminShareToolsPageTmpl.Handle(w, r, data)
 }
 
 func shareToolsResourceList() ([]shareToolsResourceOption, map[string]shareToolsResource) {
@@ -188,14 +188,14 @@ func shareToolsResourceList() ([]shareToolsResourceOption, map[string]shareTools
 
 func parseShareToolsID(value string, label string) (int, error) {
 	if value == "" {
-		return 0, fmt.Errorf("%s is required.", label)
+		return 0, fmt.Errorf("%s is required", label)
 	}
 	parsed, err := strconv.Atoi(value)
 	if err != nil || parsed <= 0 {
-		return 0, fmt.Errorf("%s must be a positive number.", label)
+		return 0, fmt.Errorf("%s must be a positive number", label)
 	}
 	return parsed, nil
 }
 
 // AdminShareToolsPageTmpl is the template for the admin share tools page.
-const AdminShareToolsPageTmpl tasks.Template = "admin/shareToolsPage.gohtml"
+const AdminShareToolsPageTmpl tasks.Template = "domains/admin/shareToolsPage.gohtml"

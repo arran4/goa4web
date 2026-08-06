@@ -46,7 +46,7 @@ func AdminIPBanPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.Bans = rows
-	AdminIPBanPageTmpl.Handle(w, r, data)
+	_ = AdminIPBanPageTmpl.Handle(w, r, data)
 }
 
 // AdminIPBanExport streams the current banned IP list as CSV.

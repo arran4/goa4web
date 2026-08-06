@@ -81,7 +81,7 @@ func (c *dbCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *dbCmd) Usage() {
-	executeUsage(c.fs.Output(), "db_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "db_usage.txt", c)
 }
 
 func (c *dbCmd) FlagGroups() []flagGroup {

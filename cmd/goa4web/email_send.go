@@ -45,7 +45,7 @@ func (c *emailSendCmd) Run() error {
 		return fmt.Errorf("invalid recipient email address: %w", err)
 	}
 
-	cfg, err := c.rootCmd.RuntimeConfig()
+	cfg, err := c.RuntimeConfig()
 	if err != nil {
 		return err
 	}
@@ -88,5 +88,5 @@ func (c *emailSendCmd) Run() error {
 
 // Usage prints the command's usage information.
 func (c *emailSendCmd) Usage() {
-	executeUsage(c.fs.Output(), "email_send_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "email_send_usage.txt", c)
 }

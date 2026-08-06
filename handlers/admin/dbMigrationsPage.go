@@ -54,8 +54,8 @@ func (h *Handlers) AdminDBMigrationsPage(w http.ResponseWriter, r *http.Request)
 		SelectedFile: selectedFile,
 		Content:      content,
 	}
-	AdminDBMigrationsPageTmpl.Handle(w, r, data)
+	_ = AdminDBMigrationsPageTmpl.Handle(w, r, data)
 }
 
 // AdminDBMigrationsPageTmpl renders the database migrations page.
-const AdminDBMigrationsPageTmpl tasks.Template = "admin/dbMigrationsPage.gohtml"
+const AdminDBMigrationsPageTmpl tasks.Template = "domains/admin/dbMigrationsPage.gohtml"

@@ -26,7 +26,7 @@ func parseWritingTreeCmd(parent *writingCmd, args []string) (*writingTreeCmd, er
 }
 
 func (c *writingTreeCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -29,10 +29,10 @@ func AdminCategoryCreatePage(w http.ResponseWriter, r *http.Request) {
 		Categories []*db.Forumcategory
 	}{Categories: cats}
 	cd.PageTitle = "Create Forum Category"
-	ForumAdminCategoryCreatePageTmpl.Handle(w, r, data)
+	_ = ForumAdminCategoryCreatePageTmpl.Handle(w, r, data)
 }
 
-const ForumAdminCategoryCreatePageTmpl tasks.Template = "forum/forumAdminCategoryCreatePage.gohtml"
+const ForumAdminCategoryCreatePageTmpl tasks.Template = "domains/forum/forumAdminCategoryCreatePage.gohtml"
 
 // AdminCategoryCreateSubmit handles creation of a new forum category.
 func AdminCategoryCreateSubmit(w http.ResponseWriter, r *http.Request) {

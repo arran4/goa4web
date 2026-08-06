@@ -28,7 +28,7 @@ func parseLinksRemapExtractCmd(parent *linksRemapCmd, args []string) (*linksRema
 }
 
 func (c *linksRemapExtractCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -56,7 +56,7 @@ func (c *linksRemapExtractCmd) Run() error {
 }
 
 func (c *linksRemapExtractCmd) Usage() {
-	executeUsage(c.fs.Output(), "links_remap_extract_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "links_remap_extract_usage.txt", c)
 }
 
 func (c *linksRemapExtractCmd) FlagGroups() []flagGroup {

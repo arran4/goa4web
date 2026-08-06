@@ -48,7 +48,7 @@ func (r *Registry) ProviderFromConfig(cfg *config.RuntimeConfig) (Provider, erro
 		return f(cfg)
 	}
 	if mode != "" {
-		return nil, fmt.Errorf("Email disabled: unknown provider %q", mode)
+		return nil, fmt.Errorf("email disabled: unknown provider %q", mode)
 	}
 	return nil, nil
 }

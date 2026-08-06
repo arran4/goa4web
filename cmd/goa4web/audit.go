@@ -40,13 +40,13 @@ func (c *auditCmd) Run() error {
 		return fmt.Errorf("audit logs: %w", err)
 	}
 	for _, r := range rows {
-		fmt.Printf("%d\t%s\t%s\t%s\n", r.ID, r.Username.String, r.Action, r.CreatedAt.Format(time.RFC3339))
+		_, _ = fmt.Printf("%d\t%s\t%s\t%s\n", r.ID, r.Username.String, r.Action, r.CreatedAt.Format(time.RFC3339))
 	}
 	return nil
 }
 
 func (c *auditCmd) Usage() {
-	executeUsage(c.fs.Output(), "audit_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "audit_usage.txt", c)
 }
 
 func (c *auditCmd) FlagGroups() []flagGroup {

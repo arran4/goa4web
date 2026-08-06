@@ -63,7 +63,7 @@ func (c *imagebbsModerationCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *imagebbsModerationCmd) Usage() {
-	executeUsage(c.fs.Output(), "imagebbs_moderation_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "imagebbs_moderation_usage.txt", c)
 }
 
 func (c *imagebbsModerationCmd) FlagGroups() []flagGroup {
@@ -108,11 +108,11 @@ func (c *imagebbsModerationApproveCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	actionErr := q.AdminApproveImagePost(ctx, int32(c.ID))
 	result := imagebbsModerationResult{ID: int32(c.ID), Action: "approve", Status: "approved", Err: actionErr}
 	if actionErr != nil {
@@ -128,7 +128,7 @@ func (c *imagebbsModerationApproveCmd) Run() error {
 }
 
 func (c *imagebbsModerationApproveCmd) Usage() {
-	executeUsage(c.fs.Output(), "imagebbs_moderation_approve_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "imagebbs_moderation_approve_usage.txt", c)
 }
 
 func (c *imagebbsModerationApproveCmd) FlagGroups() []flagGroup {
@@ -173,11 +173,11 @@ func (c *imagebbsModerationRejectCmd) Run() error {
 	if c.ID == 0 {
 		return fmt.Errorf("id required")
 	}
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	actionErr := q.AdminDeleteImagePost(ctx, int32(c.ID))
 	result := imagebbsModerationResult{ID: int32(c.ID), Action: "reject", Status: "rejected", Err: actionErr}
 	if actionErr != nil {
@@ -193,7 +193,7 @@ func (c *imagebbsModerationRejectCmd) Run() error {
 }
 
 func (c *imagebbsModerationRejectCmd) Usage() {
-	executeUsage(c.fs.Output(), "imagebbs_moderation_reject_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "imagebbs_moderation_reject_usage.txt", c)
 }
 
 func (c *imagebbsModerationRejectCmd) FlagGroups() []flagGroup {
@@ -232,11 +232,11 @@ func (c *imagebbsModerationBulkApproveCmd) Run() error {
 	if len(ids) == 0 {
 		return fmt.Errorf("at least one id required")
 	}
-	q, err := c.rootCmd.Querier()
+	q, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("querier: %w", err)
 	}
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 	results := make([]imagebbsModerationResult, 0, len(ids))
 	failed := 0
 	for _, id := range ids {
@@ -258,7 +258,7 @@ func (c *imagebbsModerationBulkApproveCmd) Run() error {
 }
 
 func (c *imagebbsModerationBulkApproveCmd) Usage() {
-	executeUsage(c.fs.Output(), "imagebbs_moderation_bulk_approve_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "imagebbs_moderation_bulk_approve_usage.txt", c)
 }
 
 func (c *imagebbsModerationBulkApproveCmd) FlagGroups() []flagGroup {
@@ -348,13 +348,13 @@ func parseImagePostIDs(r io.Reader) ([]int32, error) {
 
 func printImagebbsModerationResults(out io.Writer, results []imagebbsModerationResult) error {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tAction\tStatus\tError")
+	_, _ = fmt.Fprintln(w, "ID\tAction\tStatus\tError")
 	for _, result := range results {
 		errText := "-"
 		if result.Err != nil {
 			errText = result.Err.Error()
 		}
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", result.ID, result.Action, result.Status, errText)
+		_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", result.ID, result.Action, result.Status, errText)
 	}
 	return w.Flush()
 }

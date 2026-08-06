@@ -17,8 +17,8 @@ type privateForumTask struct {
 var _ tasks.Task = (*privateForumTask)(nil)
 
 const (
-	CreateTopicTmpl tasks.Template = "forum/create_topic.gohtml"
-	TopicsOnlyTmpl  tasks.Template = "privateforum/topics_only.gohtml"
+	CreateTopicTmpl tasks.Template = "domains/forum/create_topic.gohtml"
+	TopicsOnlyTmpl  tasks.Template = "domains/privateforum/topics_only.gohtml"
 )
 
 func NewPrivateForumTask() tasks.Task {
@@ -53,7 +53,7 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		SharedPreviewLoginPageTmpl.Handle(w, r, struct {
+		_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 			RedirectURL string
 		}{
 			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
@@ -61,5 +61,5 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Show topics only on the main private page (no creation form)
-	TopicsOnlyTmpl.Handle(w, r, nil)
+	_ = TopicsOnlyTmpl.Handle(w, r, nil)
 }

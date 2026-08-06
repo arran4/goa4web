@@ -15,7 +15,7 @@ func TestQueries_ListWritersForLister(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
@@ -41,7 +41,7 @@ func TestQueries_ListWritersSearchForLister(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"username", "count"}).AddRow("bob", 2)
@@ -71,7 +71,7 @@ func TestQueries_GetWritingForListerByID_GlobalGrant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := New(conn)
 
 	rows := sqlmock.NewRows([]string{"idwriting", "users_idusers", "forumthread_id", "language_id", "writing_category_id", "title", "published", "timezone", "writing", "abstract", "private", "deleted_at", "last_index", "WriterId", "WriterUsername"}).

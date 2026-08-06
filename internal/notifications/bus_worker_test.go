@@ -114,7 +114,6 @@ func TestExpandPatternSeparators(t *testing.T) {
 
 type querierStub struct {
 	db.QuerierStub
-	mu sync.Mutex
 
 	SystemGetUserByIDFunc    func(context.Context, int32) (*db.SystemGetUserByIDRow, error)
 	GetPreferenceForListerFn func(context.Context, int32) (*db.Preference, error)
@@ -423,7 +422,7 @@ func TestBusWorker(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess})
+	_ = bus.Publish(eventbus.TaskEvent{Path: "/", Task: TaskTest, UserID: 1, Data: map[string]any{"Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess})
 	time.Sleep(200 * time.Millisecond)
 	cancel()
 	wg.Wait()

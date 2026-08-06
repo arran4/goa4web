@@ -48,12 +48,12 @@ func (c *dlqDeleteCmd) Run() error {
 	if len(ids) == 0 {
 		return fmt.Errorf("id required")
 	}
-	queries, err := c.rootCmd.Querier()
+	queries, err := c.Querier()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
 	for _, id := range ids {
-		if err := queries.SystemDeleteDeadLetter(c.rootCmd.Context(), id); err != nil {
+		if err := queries.SystemDeleteDeadLetter(c.Context(), id); err != nil {
 			return fmt.Errorf("delete dead letter %d: %w", id, err)
 		}
 	}
@@ -66,13 +66,13 @@ func (c *dlqDeleteCmd) Run() error {
 		if err != nil {
 			return fmt.Errorf("marshal json: %w", err)
 		}
-		fmt.Fprintln(c.fs.Output(), string(b))
+		_, _ = fmt.Fprintln(c.fs.Output(), string(b))
 		return nil
 	}
 	w := tabwriter.NewWriter(c.fs.Output(), 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tStatus")
+	_, _ = fmt.Fprintln(w, "ID\tStatus")
 	for _, id := range ids {
-		fmt.Fprintf(w, "%d\tdeleted\n", id)
+		_, _ = fmt.Fprintf(w, "%d\tdeleted\n", id)
 	}
 	return w.Flush()
 }
@@ -102,7 +102,7 @@ func (c *dlqDeleteCmd) parseIDs() ([]int32, error) {
 
 // Usage prints command usage information with examples.
 func (c *dlqDeleteCmd) Usage() {
-	executeUsage(c.fs.Output(), "dlq_delete_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "dlq_delete_usage.txt", c)
 }
 
 func (c *dlqDeleteCmd) FlagGroups() []flagGroup {

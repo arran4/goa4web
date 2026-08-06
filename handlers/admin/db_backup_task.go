@@ -44,7 +44,7 @@ func (DBBackupTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("close temp backup file %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := dbops.BackupDatabase(cd.DBRegistry(), cd.Config, tmpPath); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("backup database %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if evt := cd.Event(); evt != nil {
@@ -54,13 +54,13 @@ func (DBBackupTask) Action(w http.ResponseWriter, r *http.Request) any {
 		evt.Data["Filename"] = filename
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer os.Remove(tmpPath)
+		defer func() { _ = os.Remove(tmpPath) }()
 		file, err := os.Open(tmpPath)
 		if err != nil {
 			handlers.RenderErrorPage(w, r, fmt.Errorf("open backup file: %w", err))
 			return
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 		modTime := time.Now()
 		if info, err := file.Stat(); err == nil {
 			modTime = info.ModTime()

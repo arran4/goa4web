@@ -90,10 +90,10 @@ func AdminPostEditPage(w http.ResponseWriter, r *http.Request) {
 		Post   *db.AdminGetImagePostRow
 		Boards []*db.Imageboard
 	}{Post: post, Boards: boards}
-	ImageBBSAdminPostEditPageTmpl.Handle(w, r, data)
+	_ = ImageBBSAdminPostEditPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPostEditPageTmpl tasks.Template = "imagebbs/adminPostEditPage.gohtml"
+const ImageBBSAdminPostEditPageTmpl tasks.Template = "domains/imagebbs/adminPostEditPage.gohtml"
 
 // AdminPostDashboardPage shows an overview for a single image post with links.
 func AdminPostDashboardPage(w http.ResponseWriter, r *http.Request) {
@@ -117,10 +117,10 @@ func AdminPostDashboardPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd.PageTitle = fmt.Sprintf("Image Post %d", pid)
 	data := struct{ Post *db.AdminGetImagePostRow }{Post: post}
-	ImageBBSAdminPostDashboardPageTmpl.Handle(w, r, data)
+	_ = ImageBBSAdminPostDashboardPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPostDashboardPageTmpl tasks.Template = "imagebbs/adminPostDashboardPage.gohtml"
+const ImageBBSAdminPostDashboardPageTmpl tasks.Template = "domains/imagebbs/adminPostDashboardPage.gohtml"
 
 // AdminPostCommentsPage lists comments for an image post's thread.
 func AdminPostCommentsPage(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +156,7 @@ func AdminPostCommentsPage(w http.ResponseWriter, r *http.Request) {
 		Post     *db.AdminGetImagePostRow
 		Comments []*db.GetCommentsByThreadIdForUserRow
 	}{Post: post, Comments: comments}
-	ImageBBSAdminPostCommentsPageTmpl.Handle(w, r, data)
+	_ = ImageBBSAdminPostCommentsPageTmpl.Handle(w, r, data)
 }
 
-const ImageBBSAdminPostCommentsPageTmpl tasks.Template = "imagebbs/adminPostCommentsPage.gohtml"
+const ImageBBSAdminPostCommentsPageTmpl tasks.Template = "domains/imagebbs/adminPostCommentsPage.gohtml"

@@ -44,7 +44,7 @@ func (c *replCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	var mu sync.Mutex
 	jobs := map[int]*replJob{}
@@ -68,7 +68,7 @@ func (c *replCmd) Run() error {
 		if strings.HasPrefix(line, "set ") {
 			parts := strings.SplitN(strings.TrimSpace(line[4:]), "=", 2)
 			if len(parts) == 2 {
-				os.Setenv(parts[0], parts[1])
+				_ = os.Setenv(parts[0], parts[1])
 			} else {
 				fmt.Println("usage: set KEY=VALUE")
 			}
@@ -181,7 +181,7 @@ func expandEnv(args []string) []string {
 }
 
 // Usage prints command usage information with examples.
-func (c *replCmd) Usage() { executeUsage(c.fs.Output(), "repl_usage.txt", c) }
+func (c *replCmd) Usage() { _ = executeUsage(c.fs.Output(), "repl_usage.txt", c) }
 
 func (c *replCmd) FlagGroups() []flagGroup {
 	return []flagGroup{{Title: c.fs.Name() + " flags", Flags: flagInfos(c.fs)}}

@@ -28,7 +28,7 @@ func parseEmailQueueListCmd(parent *emailQueueCmd, args []string) (*emailQueueLi
 }
 
 func (c *emailQueueListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -50,7 +50,7 @@ func (c *userPasswordApproveCmd) Run() error {
 	if c.ID == 0 && c.Username == "" && c.Code == "" {
 		return fmt.Errorf("id, username, or code required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -80,13 +80,13 @@ func (c *userPasswordApproveCmd) Run() error {
 		pendingPassword = p
 	}
 
-	c.rootCmd.Verbosef("approving password for user %d", c.ID)
+	c.Verbosef("approving password for user %d", c.ID)
 
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	qtx := queries.WithTx(tx)
 
@@ -106,12 +106,12 @@ func (c *userPasswordApproveCmd) Run() error {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
 
-	c.rootCmd.Infof("approved password for user %d", c.ID)
+	c.Infof("approved password for user %d", c.ID)
 	return nil
 }
 
 func (c *userPasswordApproveCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_password_approve_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_password_approve_usage.txt", c)
 }
 
 func (c *userPasswordApproveCmd) FlagGroups() []flagGroup {

@@ -24,17 +24,17 @@ func adminLanguageRedirect(w http.ResponseWriter, r *http.Request) {
 func adminLanguagesPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Languages"
-	AdminLanguagesPage.Handle(w, r, struct{}{})
+	_ = AdminLanguagesPage.Handle(w, r, struct{}{})
 }
 
-const AdminLanguagesPage tasks.Template = "admin/languagesPage.gohtml"
+const AdminLanguagesPage tasks.Template = "domains/admin/languagesPage.gohtml"
 
 // adminLanguagePage displays statistics for a specific language.
 func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	id, err := strconv.Atoi(mux.Vars(r)["language"])
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("bad request"))
 		return
 	}
 	var lang *db.Language
@@ -47,7 +47,7 @@ func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if lang == nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Not Found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		return
 	}
 	counts, err := cd.Queries().AdminLanguageUsageCounts(r.Context(), db.AdminLanguageUsageCountsParams{LangID: sql.NullInt32{Int32: int32(id), Valid: true}})
@@ -63,17 +63,17 @@ func adminLanguagePage(w http.ResponseWriter, r *http.Request) {
 		Language: lang,
 		Counts:   counts,
 	}
-	AdminLanguagePage.Handle(w, r, data)
+	_ = AdminLanguagePage.Handle(w, r, data)
 }
 
-const AdminLanguagePage tasks.Template = "admin/languagePage.gohtml"
+const AdminLanguagePage tasks.Template = "domains/admin/languagePage.gohtml"
 
 // adminLanguageEditPage shows forms to rename or delete a language.
 func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	id, err := strconv.Atoi(mux.Vars(r)["language"])
 	if err != nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Bad Request"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("bad request"))
 		return
 	}
 	var lang *db.Language
@@ -86,21 +86,21 @@ func adminLanguageEditPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if lang == nil {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Not Found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("not found"))
 		return
 	}
 	cd.PageTitle = "Edit Language"
 	data := struct{ Language *db.Language }{Language: lang}
-	AdminLanguageEditPage.Handle(w, r, data)
+	_ = AdminLanguageEditPage.Handle(w, r, data)
 }
 
-const AdminLanguageEditPage tasks.Template = "admin/languageEditPage.gohtml"
+const AdminLanguageEditPage tasks.Template = "domains/admin/languageEditPage.gohtml"
 
 // adminLanguageNewPage shows the form to create a new language.
 func adminLanguageNewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "New Language"
-	AdminLanguageNewPage.Handle(w, r, struct{}{})
+	_ = AdminLanguageNewPage.Handle(w, r, struct{}{})
 }
 
-const AdminLanguageNewPage tasks.Template = "admin/languageNewPage.gohtml"
+const AdminLanguageNewPage tasks.Template = "domains/admin/languageNewPage.gohtml"

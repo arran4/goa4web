@@ -83,7 +83,7 @@ func (c *commentListDeactivatedCmd) Run() error {
 		return fmt.Errorf("from date is after to date")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -145,9 +145,9 @@ func (c *commentListDeactivatedCmd) Run() error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tThreadID\tType\tWritten\tDeactivated\tText")
+	_, _ = fmt.Fprintln(w, "ID\tThreadID\tType\tWritten\tDeactivated\tText")
 	for _, item := range items {
-		fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%d\t%d\t%s\t%s\t%s\t%s\n",
 			item.ID,
 			item.ThreadID,
 			item.ContentType,
@@ -156,8 +156,7 @@ func (c *commentListDeactivatedCmd) Run() error {
 			item.Text,
 		)
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func normalizeCommentContentTypeFilter(value string) (string, error) {

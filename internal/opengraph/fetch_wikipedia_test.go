@@ -27,7 +27,7 @@ func TestFetchUserAgent(t *testing.T) {
 	var userAgent string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userAgent = r.Header.Get("User-Agent")
-		w.Write([]byte(`<!DOCTYPE html><html><head><title>Test</title></head></html>`))
+		_, _ = w.Write([]byte(`<!DOCTYPE html><html><head><title>Test</title></head></html>`))
 	}))
 	defer server.Close()
 

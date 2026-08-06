@@ -37,7 +37,7 @@ func AdminBlogPage(w http.ResponseWriter, r *http.Request) {
 	blog, err := cd.BlogPost()
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("Blog not found"))
+		handlers.RenderErrorPage(w, r, fmt.Errorf("blog not found"))
 		return
 	}
 	cd.PageTitle = fmt.Sprintf("Blog %d Admin", blog.Idblogs)
@@ -71,7 +71,7 @@ func AdminBlogPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	BlogsAdminBlogPageTmpl.Handle(w, r, data)
+	_ = BlogsAdminBlogPageTmpl.Handle(w, r, data)
 }
 
-const BlogsAdminBlogPageTmpl tasks.Template = "blogs/blogsAdminBlogPage.gohtml"
+const BlogsAdminBlogPageTmpl tasks.Template = "domains/blogs/blogsAdminBlogPage.gohtml"

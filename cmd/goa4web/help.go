@@ -322,7 +322,7 @@ func (c *helpCmd) showHelp(args []string) error {
 }
 
 func (c *helpCmd) Usage() {
-	executeUsage(c.fs.Output(), "help_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "help_usage.txt", c)
 }
 
 func (c *helpCmd) FlagGroups() []flagGroup {

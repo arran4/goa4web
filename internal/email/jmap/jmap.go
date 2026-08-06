@@ -56,7 +56,7 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("upload failed: %s", resp.Status)
 	}
@@ -120,7 +120,7 @@ func (j *Provider) Send(ctx context.Context, to mail.Address, rawEmailMessage []
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("jmap send failed: %s", resp.Status)
 	}
@@ -341,7 +341,7 @@ func DiscoverSession(ctx context.Context, client *http.Client, endpoint, usernam
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		return nil, fmt.Errorf("jmap session discovery failed: %s: %s", resp.Status, string(b))
@@ -442,7 +442,7 @@ func DiscoverIdentityID(ctx context.Context, client *http.Client, apiURL, userna
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		return "", fmt.Errorf("jmap identity discovery failed: %s", resp.Status)
 	}
@@ -545,7 +545,7 @@ func (j *Provider) GetMessages(ctx context.Context, ids []string) ([]EmailHeader
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var jmapResp struct {
 		MethodResponses [][]any `json:"methodResponses"`
@@ -665,7 +665,7 @@ func (j *Provider) extractIDsFromResponse(ctx context.Context, payload any, meth
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	var jmapResp struct {
 		MethodResponses [][]any `json:"methodResponses"`
 	}
@@ -710,7 +710,7 @@ func (j *Provider) doCall(ctx context.Context, payload any) (*http.Response, err
 		return nil, err
 	}
 	if resp.StatusCode >= 300 {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		return nil, fmt.Errorf("jmap call failed: %s", resp.Status)
 	}
 	return resp, nil

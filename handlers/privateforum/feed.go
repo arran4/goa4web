@@ -35,7 +35,7 @@ func TopicFeedHandler(w http.ResponseWriter, r *http.Request, feedType string) {
 	if _, ok := vars["username"]; ok {
 		user, err := handlers.VerifyFeedRequest(r, basePath)
 		if err != nil {
-			handlers.RenderErrorPage(w, r, fmt.Errorf("Forbidden: %w", err))
+			handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden: %w", err))
 			return
 		}
 		if user != nil {

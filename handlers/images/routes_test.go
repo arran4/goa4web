@@ -214,7 +214,7 @@ func TestHappyPathThumbnailRegeneration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	uploadDir := filepath.Join(tmpDir, "uploads")
 	cacheDir := filepath.Join(tmpDir, "cache")

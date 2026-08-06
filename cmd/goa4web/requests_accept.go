@@ -32,7 +32,7 @@ func parseRequestsAcceptCmd(parent *requestsCmd, args []string) (*requestsAccept
 }
 
 func (c *requestsAcceptCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_accept_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_accept_usage.txt", c)
 }
 
 func (c *requestsAcceptCmd) FlagGroups() []flagGroup {
@@ -45,7 +45,7 @@ func (c *requestsAcceptCmd) Run() error {
 	if c.request == 0 {
 		return fmt.Errorf("request id required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

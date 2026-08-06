@@ -32,7 +32,7 @@ func parseBoardCreateCmd(parent *boardCmd, args []string) (*boardCreateCmd, erro
 }
 
 func (c *boardCreateCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

@@ -91,7 +91,7 @@ func (h *Handlers) AdminConfigAsCLIPage(w http.ResponseWriter, r *http.Request) 
 		Extended: opts.Extended,
 	}
 
-	AdminConfigAsCLIPageTmpl.Handle(w, r, data)
+	_ = AdminConfigAsCLIPageTmpl.Handle(w, r, data)
 }
 
 func buildConfigAsArgs(r *http.Request) []string {
@@ -112,4 +112,4 @@ func commandWithExtended(command string, extended bool) string {
 }
 
 // AdminConfigAsCLIPageTmpl renders the admin config export page.
-const AdminConfigAsCLIPageTmpl tasks.Template = "admin/configAsCLIPage.gohtml"
+const AdminConfigAsCLIPageTmpl tasks.Template = "domains/admin/configAsCLIPage.gohtml"

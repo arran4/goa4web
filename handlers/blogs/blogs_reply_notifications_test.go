@@ -184,7 +184,7 @@ func TestHappyPathBlogReply(t *testing.T) {
 	rr := httptest.NewRecorder()
 	replyBlogTask.Action(rr, req)
 
-	bus.Publish(*evt)
+	_ = bus.Publish(*evt)
 
 	if cdlq.lastError != "" {
 		t.Errorf("sync process error: %s", cdlq.lastError)

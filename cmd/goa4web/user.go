@@ -151,6 +151,12 @@ func (c *userCmd) Run() error {
 			return fmt.Errorf("subscriptions: %w", err)
 		}
 		return cmd.Run()
+	case "expunge-unverified":
+		cmd, err := parseUserExpungeUnverifiedCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("expunge-unverified: %w", err)
+		}
+		return cmd.Run()
 	default:
 		c.fs.Usage()
 		return fmt.Errorf("unknown user command %q", args[0])
@@ -159,7 +165,7 @@ func (c *userCmd) Run() error {
 
 // Usage prints command usage information with examples.
 func (c *userCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_usage.txt", c)
 }
 
 func (c *userCmd) FlagGroups() []flagGroup {

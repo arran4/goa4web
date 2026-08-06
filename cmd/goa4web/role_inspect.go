@@ -33,14 +33,14 @@ func parseRoleInspectCmd(parent *roleCmd, args []string) (*roleInspectCmd, error
 }
 
 func (c *roleInspectCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	r, err := q.GetRoleByName(ctx, c.role)
 	if err != nil {
@@ -162,7 +162,7 @@ func grantSignature(g *db.Grant) string {
 }
 
 func (c *roleInspectCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_inspect_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_inspect_usage.txt", c)
 }
 
 func (c *roleInspectCmd) FlagGroups() []flagGroup {

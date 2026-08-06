@@ -18,7 +18,7 @@ func userSubscriptionAddPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		Definitions: subscriptions.Definitions,
 	}
-	UserSubscriptionAddPage.Handle(w, r, data)
+	_ = UserSubscriptionAddPage.Handle(w, r, data)
 }
 
-const UserSubscriptionAddPage tasks.Template = "user/subscription_add.gohtml"
+const UserSubscriptionAddPage tasks.Template = "domains/user/subscription_add.gohtml"

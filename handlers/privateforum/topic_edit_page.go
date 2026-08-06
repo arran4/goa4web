@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const TopicEditPageTmpl tasks.Template = "forum/topicEditPage.gohtml"
+const TopicEditPageTmpl tasks.Template = "domains/forum/topicEditPage.gohtml"
 
 func TopicEditPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -53,7 +53,7 @@ func TopicEditPage(w http.ResponseWriter, r *http.Request) {
 		data.BasePath = cd.ForumBasePath
 	}
 
-	TopicEditPageTmpl.Handle(w, r, data)
+	_ = TopicEditPageTmpl.Handle(w, r, data)
 }
 
 func TopicEditSubmit(w http.ResponseWriter, r *http.Request) {

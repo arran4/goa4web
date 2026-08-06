@@ -45,8 +45,8 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 
 	// Helper to append setting
 	appendSetting := func(name, env, val, usage string) {
-		configBuilder.WriteString(fmt.Sprintf("# %s: %s\n", name, usage))
-		configBuilder.WriteString(fmt.Sprintf("%s=%s\n\n", env, val))
+		fmt.Fprintf(&configBuilder, "# %s: %s\n", name, usage)
+		fmt.Fprintf(&configBuilder, "%s=%s\n\n", env, val)
 	}
 
 	type OptionInfo struct {
@@ -129,7 +129,7 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 			for _, opt := range config.IntOptions {
 				if val, ok := parsed[opt.Env]; ok {
 					if _, err := fmt.Sscanf(val, "%d", opt.Target(tempConfig)); err != nil {
-						// Ignore error or log it?
+						_ = err
 					}
 				}
 			}
@@ -158,7 +158,7 @@ func (h *Handlers) AdminEmailTestPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	AdminEmailTestPageTmpl.Handle(w, r, data)
+	_ = AdminEmailTestPageTmpl.Handle(w, r, data)
 }
 
-const AdminEmailTestPageTmpl tasks.Template = "admin/emailTestPage.gohtml"
+const AdminEmailTestPageTmpl tasks.Template = "domains/admin/emailTestPage.gohtml"

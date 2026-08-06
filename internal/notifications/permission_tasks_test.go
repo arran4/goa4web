@@ -77,7 +77,9 @@ func TestProcessEventPermissionTasks(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		bus.Publish(eventbus.TaskEvent{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess})
+		if err := bus.Publish(eventbus.TaskEvent{Path: "/admin", Task: c.task, UserID: 1, Data: map[string]any{"targetUserID": int32(2), "Username": "bob"}, Outcome: eventbus.TaskOutcomeSuccess}); err != nil {
+			t.Fatalf("publish event: %v", err)
+		}
 		time.Sleep(10 * time.Millisecond)
 	}
 	time.Sleep(200 * time.Millisecond)

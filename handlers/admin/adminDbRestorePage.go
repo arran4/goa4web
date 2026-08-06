@@ -21,8 +21,8 @@ func AdminDBRestorePage(w http.ResponseWriter, r *http.Request) {
 		TaskName: string(TaskDBRestore),
 	}
 
-	AdminDBRestorePageTmpl.Handle(w, r, data)
+	_ = AdminDBRestorePageTmpl.Handle(w, r, data)
 }
 
 // AdminDBRestorePageTmpl renders the admin database restore page.
-const AdminDBRestorePageTmpl tasks.Template = "admin/dbRestorePage.gohtml"
+const AdminDBRestorePageTmpl tasks.Template = "domains/admin/dbRestorePage.gohtml"

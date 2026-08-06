@@ -33,7 +33,7 @@ func parseRequestsCommentCmd(parent *requestsCmd, args []string) (*requestsComme
 }
 
 func (c *requestsCommentCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_comment_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_comment_usage.txt", c)
 }
 
 func (c *requestsCommentCmd) FlagGroups() []flagGroup {
@@ -49,7 +49,7 @@ func (c *requestsCommentCmd) Run() error {
 	if c.comment == "" {
 		return fmt.Errorf("comment required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}

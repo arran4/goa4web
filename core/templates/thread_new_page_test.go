@@ -70,7 +70,7 @@ func TestThreadNewPageJS(t *testing.T) {
 		}
 	}
 
-	if _, err := tmpl.ParseFiles("site/forum/threadNewPage.gohtml"); err != nil {
+	if _, err := tmpl.ParseFiles("site/domains/forum/threadNewPage.gohtml"); err != nil {
 		t.Fatalf("parse templates: %v", err)
 	}
 

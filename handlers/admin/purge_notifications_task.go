@@ -13,7 +13,7 @@ import (
 // PurgeNotificationsTask removes old read notifications.
 type PurgeNotificationsTask struct{ tasks.TaskString }
 
-var purgeNotificationsTask = &PurgeNotificationsTask{TaskString: TaskPurge}
+var PurgeNotificationsTaskInstance = &PurgeNotificationsTask{TaskString: TaskPurge}
 
 // ensures PurgeNotificationsTask implements the tasks.Task interface
 var _ tasks.Task = (*PurgeNotificationsTask)(nil)

@@ -17,7 +17,7 @@ type linkerCategoryTask struct {
 var _ tasks.Task = (*linkerCategoryTask)(nil)
 
 const (
-	LinkerCategoryPageTmpl tasks.Template = "linker/categoryPage.gohtml"
+	LinkerCategoryPageTmpl tasks.Template = "domains/linker/categoryPage.gohtml"
 )
 
 func NewLinkerCategoryTask() tasks.Task {
@@ -63,5 +63,5 @@ func (t *linkerCategoryTask) Get(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cd.PageTitle = fmt.Sprintf("Category %d", data.CatId)
 	}
-	LinkerCategoryPageTmpl.Handle(w, r, data)
+	_ = LinkerCategoryPageTmpl.Handle(w, r, data)
 }

@@ -18,7 +18,7 @@ func TestBuildTopicGrantGroupsIncludesAllRoles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	q := db.New(conn)
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
 

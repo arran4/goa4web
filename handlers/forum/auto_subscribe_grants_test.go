@@ -16,7 +16,7 @@ func TestHappyPathCreateThreadTaskAutoSubscribeGrants(t *testing.T) {
 				CommentID: 777,
 			},
 		},
-		Path: "/forum/topic/44/thread/new",
+		Path: "/forum/topic/44/thread",
 	}
 	reqs, err := createThreadTask.AutoSubscribeGrants(evt)
 	if err != nil {

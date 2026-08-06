@@ -53,7 +53,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 			return
 		}
 		if cd != nil {
-			cd.BlogEntryByID(int32(blogID), lazy.Set[int32, *db.GetBlogEntryForListerByIDRow](row))
+			_, _ = cd.BlogEntryByID(int32(blogID), lazy.Set[int32, *db.GetBlogEntryForListerByIDRow](row))
 			cd.SetCurrentBlog(int32(blogID))
 		}
 		if cd == nil {
@@ -62,7 +62,7 @@ func RequireBlogAuthor(next http.Handler) http.Handler {
 		}
 		hasEditGrant := cd.HasGrant("blogs", "entry", "edit", row.Idblogs)
 		hasEditAnyGrant := cd.HasGrant("blogs", "entry", "edit-any", 0)
-		if !(hasEditGrant || hasEditAnyGrant) {
+		if !hasEditGrant && !hasEditAnyGrant {
 			http.NotFound(w, r)
 			return
 		}
@@ -93,9 +93,7 @@ func RequireBlogCommentsGrant(next http.Handler) http.Handler {
 			return
 		}
 
-		if !(cd.HasGrant("blogs", "entry", "view", int32(blogID)) ||
-			cd.HasGrant("blogs", "entry", "reply", int32(blogID)) ||
-			cd.SelectedThreadCanReply()) {
+		if !cd.HasGrant("blogs", "entry", "view", int32(blogID)) && !cd.HasGrant("blogs", "entry", "reply", int32(blogID)) && !cd.SelectedThreadCanReply() {
 			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 			return
 		}
@@ -120,4 +118,21 @@ func RequireBlogEditGrant() mux.MatcherFunc {
 		}
 		return cd.HasGrant("blogs", "entry", "edit", int32(blogID))
 	}
+}
+
+// RequireBlogAddGrant ensures the requester can post a new blog entry.
+func RequireBlogAddGrant(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if !ok || cd == nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+
+		if !cd.IsAdmin() && !cd.HasGrant("blogs", "entry", "post", 0) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

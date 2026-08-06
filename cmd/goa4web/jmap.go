@@ -93,7 +93,7 @@ func (c *jmapCmd) discoverJmapSession() (*jmapSessionInfo, error) {
 			if err == nil {
 				break
 			}
-			c.rootCmd.Infof("Discovery attempt %d failed: %v. Retrying in 2s...\n", i+1, err)
+			c.Infof("Discovery attempt %d failed: %v. Retrying in 2s...\n", i+1, err)
 			time.Sleep(2 * time.Second)
 		}
 		if err != nil {
@@ -121,10 +121,10 @@ func (c *jmapCmd) discoverJmapSession() (*jmapSessionInfo, error) {
 	}
 
 	if id == "" && acc != "" && apiURL != "" {
-		c.rootCmd.Infof("Attempting to discover identity via API: %s\n", apiURL)
+		c.Infof("Attempting to discover identity via API: %s\n", apiURL)
 		fetchedId, err := jmap.DiscoverIdentityID(context.Background(), httpClient, apiURL, cfg.EmailJMAPUser, cfg.EmailJMAPPass, acc)
 		if err != nil {
-			c.rootCmd.Infof("Failed to discover Identity ID via API: %v\n", err)
+			c.Infof("Failed to discover Identity ID via API: %v\n", err)
 		} else if fetchedId != "" {
 			id = fetchedId
 		}
@@ -157,7 +157,7 @@ func (c *jmapCmd) printSessionInfo(info *jmapSessionInfo) error {
 
 // Usage prints command usage information with examples.
 func (c *jmapCmd) Usage() {
-	executeUsage(c.fs.Output(), "jmap_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "jmap_usage.txt", c)
 }
 
 func (c *jmapCmd) FlagGroups() []flagGroup {

@@ -38,7 +38,7 @@ func BenchmarkShutdown(b *testing.B) {
 		})
 
 		// Publish a message to fill buffer (size 1)
-		bus.Publish(TaskEvent{Task: nil})
+		_ = bus.Publish(TaskEvent{Task: nil})
 
 		// Shutdown
 		// Current: checks len=1. Sleeps 10ms. Checks len=0. Returns. Time ~10ms.

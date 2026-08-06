@@ -66,7 +66,7 @@ func UserPage(w http.ResponseWriter, r *http.Request) {
 		data.Links = append(data.Links, row)
 	}
 
-	LinkerUserPageTmpl.Handle(w, r, data)
+	_ = LinkerUserPageTmpl.Handle(w, r, data)
 }
 
-const LinkerUserPageTmpl tasks.Template = "linker/linkerPage.gohtml"
+const LinkerUserPageTmpl tasks.Template = "domains/linker/linkerPage.gohtml"

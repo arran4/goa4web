@@ -43,7 +43,7 @@ func TestHappyPathBlogsBloggerPostsPage(t *testing.T) {
 	sess := testhelpers.Must(store.Get(req, sessionName))
 	sess.Values["UID"] = int32(1)
 	w := httptest.NewRecorder()
-	sess.Save(req, w)
+	_ = sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
@@ -141,7 +141,7 @@ func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	BlogAddPage(rr, req)
+	RequireBlogAddGrant(http.HandlerFunc(BlogAddPage)).ServeHTTP(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}

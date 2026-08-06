@@ -61,20 +61,6 @@ func parseRequestsListCmd(parent *requestsCmd, args []string) (*requestsListCmd,
 	return c, nil
 }
 
-// requestListItem is a JSON representation of a request queue entry.
-type requestListItem struct {
-	ID             int32   `json:"id"`
-	UserID         int32   `json:"user_id"`
-	ChangeTable    string  `json:"change_table"`
-	ChangeField    string  `json:"change_field"`
-	ChangeRowID    int32   `json:"change_row_id"`
-	ChangeValue    *string `json:"change_value"`
-	ContactOptions *string `json:"contact_options"`
-	Status         string  `json:"status"`
-	CreatedAt      string  `json:"created_at"`
-	ActedAt        *string `json:"acted_at"`
-}
-
 type requestsListOutput struct {
 	Status    string        `json:"status"`
 	Offset    int           `json:"offset"`
@@ -86,7 +72,7 @@ type requestsListOutput struct {
 }
 
 func (c *requestsListCmd) Usage() {
-	executeUsage(c.fs.Output(), "requests_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "requests_list_usage.txt", c)
 }
 
 func (c *requestsListCmd) FlagGroups() []flagGroup {
@@ -96,7 +82,7 @@ func (c *requestsListCmd) FlagGroups() []flagGroup {
 var _ usageData = (*requestsListCmd)(nil)
 
 func (c *requestsListCmd) Run() error {
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -136,12 +122,9 @@ func (c *requestsListCmd) Run() error {
 	// Determine page size
 	pageSize := c.pageSize
 	if pageSize <= 0 {
-		cfg, cfgErr := c.rootCmd.RuntimeConfig()
+		cfg, cfgErr := c.RuntimeConfig()
 		if cfgErr == nil {
-			pageSize = max(cfg.PageSizeDefault, cfg.PageSizeMin)
-			if pageSize > cfg.PageSizeMax {
-				pageSize = cfg.PageSizeMax
-			}
+			pageSize = min(max(cfg.PageSizeDefault, cfg.PageSizeMin), cfg.PageSizeMax)
 		} else {
 			// Fallback if config fails
 			pageSize = 20
@@ -222,14 +205,14 @@ func optionalTime(value sql.NullTime) *string {
 
 func (c *requestsListCmd) printTable(rows []*db.AdminRequestQueue) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tUserID\tTable\tField\tRowID\tValue\tContact\tStatus\tCreated\tActed")
+	_, _ = fmt.Fprintln(w, "ID\tUserID\tTable\tField\tRowID\tValue\tContact\tStatus\tCreated\tActed")
 	for _, row := range rows {
 		created := row.CreatedAt.Format(time.RFC3339)
 		acted := "-"
 		if row.ActedAt.Valid {
 			acted = row.ActedAt.Time.Format(time.RFC3339)
 		}
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"%d\t%d\t%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\n",
 			row.ID,
@@ -252,12 +235,4 @@ func reqNullStringValue(ns sql.NullString) string {
 		return ""
 	}
 	return ns.String
-}
-
-func reqNullStringPtr(ns sql.NullString) *string {
-	if !ns.Valid {
-		return nil
-	}
-	value := ns.String
-	return &value
 }

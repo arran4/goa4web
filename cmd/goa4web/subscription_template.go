@@ -52,7 +52,7 @@ func (c *subscriptionTemplateCmd) Run() error {
 }
 
 func (c *subscriptionTemplateCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_template_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_template_usage.txt", c)
 }
 
 func (c *subscriptionTemplateCmd) FlagGroups() []flagGroup {
@@ -88,14 +88,14 @@ func parseSubscriptionTemplateLoadCmd(parent *subscriptionTemplateCmd, args []st
 }
 
 func (c *subscriptionTemplateLoadCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	// Get Role ID
 	role, err := q.GetRoleByName(ctx, c.role)
@@ -141,7 +141,7 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	qtx := db.New(tx)
 
 	// Clean existing for this role/archetype
@@ -172,7 +172,7 @@ func (c *subscriptionTemplateLoadCmd) Run() error {
 }
 
 func (c *subscriptionTemplateLoadCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_template_load_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_template_load_usage.txt", c)
 }
 
 func (c *subscriptionTemplateLoadCmd) FlagGroups() []flagGroup {
@@ -199,14 +199,14 @@ func parseSubscriptionTemplateListCmd(parent *subscriptionTemplateCmd, args []st
 }
 
 func (c *subscriptionTemplateListCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	archetypes, err := q.ListSubscriptionArchetypes(ctx)
 	if err != nil {
@@ -220,7 +220,7 @@ func (c *subscriptionTemplateListCmd) Run() error {
 }
 
 func (c *subscriptionTemplateListCmd) Usage() {
-	executeUsage(c.fs.Output(), "subscription_template_list_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "subscription_template_list_usage.txt", c)
 }
 
 func (c *subscriptionTemplateListCmd) FlagGroups() []flagGroup {

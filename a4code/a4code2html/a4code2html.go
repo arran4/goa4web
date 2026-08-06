@@ -211,6 +211,253 @@ func (a *A4code2html) peekBlockLink(r *bufio.Reader) (bool, bool) {
 	return false, false
 }
 
+func (a *A4code2html) handleSimpleTag(w io.Writer, openTag, closeTag string) error {
+	switch a.CodeType {
+	case CTTableOfContents, CTTagStrip, CTWordsOnly:
+	default:
+		if _, err := io.WriteString(w, openTag); err != nil {
+			return err
+		}
+		a.stack = append(a.stack, closeTag)
+	}
+	return nil
+}
+
+func (a *A4code2html) handleImage(r *bufio.Reader, w io.Writer) error {
+	raw, err := a4code.GetNext(r, false)
+	if err != nil && err != io.EOF {
+		return err
+	}
+	fullRaw := raw
+	if a.Provider != nil {
+		raw = a.Provider.MapImageURL("img", raw)
+	} else if a.ImageURLMapper != nil {
+		raw = a.ImageURLMapper("img", raw)
+	}
+	switch a.CodeType {
+	case CTTableOfContents, CTTagStrip, CTWordsOnly:
+	default:
+		fullSrc := ""
+		if a.FullImageURLMapper != nil {
+			fullSrc = a.FullImageURLMapper("img", fullRaw)
+		}
+		attrs := ""
+		if fullSrc != "" && fullSrc != raw {
+			attrs = ` data-full-src="` + html.EscapeString(fullSrc) + `"`
+		}
+		if _, err := io.WriteString(w, "<img class=\"a4code-image\" src=\""+html.EscapeString(raw)+"\""+attrs+" />"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *A4code2html) handleLink(r *bufio.Reader, w io.Writer, wasAtLineStart bool) error {
+	switch a.CodeType {
+	case CTTableOfContents:
+	case CTTagStrip, CTWordsOnly:
+		raw, err := a4code.GetNext(r, false)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
+			if _, err := io.WriteString(w, raw); err != nil {
+				return err
+			}
+		}
+	default:
+		raw, err := a4code.GetNext(r, false)
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		if a.Provider != nil {
+			isBlock := false
+			isImmediateClose := false
+			if wasAtLineStart {
+				isBlock, isImmediateClose = a.peekBlockLink(r)
+			}
+			if !isBlock {
+				p, err := r.Peek(1)
+				if err == nil && len(p) > 0 && p[0] == ']' {
+					isImmediateClose = true
+				}
+			}
+			htmlOpen, htmlClose, consumeImmediate := a.Provider.RenderLink(raw, isBlock, isImmediateClose)
+			if _, err := io.WriteString(w, htmlOpen); err != nil {
+				return err
+			}
+			if consumeImmediate {
+				// Consume ] and potentially \n
+				_, _ = r.ReadByte() // ]
+				if isBlock {
+					_, _ = r.ReadByte() // \n
+					a.atLineStart = true
+				}
+			} else {
+				a.stack = append(a.stack, htmlClose)
+			}
+			return nil
+		}
+
+		original := raw
+		if a.ImageURLMapper != nil {
+			raw = a.ImageURLMapper("a", raw)
+		}
+		safe, ok := SanitizeURL(raw)
+		if ok {
+			// Inline Link
+			if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
+				return err
+			}
+
+			isImmediateClose := false
+			p, err := r.Peek(1)
+			if err == nil && len(p) > 0 && p[0] == ']' {
+				isImmediateClose = true
+			} else {
+				p, err := r.Peek(2)
+				if err == nil && len(p) >= 2 && p[0] == ' ' && p[1] == ']' {
+					if _, err := r.ReadByte(); err == nil {
+						isImmediateClose = true
+					}
+				}
+			}
+
+			if isImmediateClose {
+				// Case [link url]
+				// Default legacy behavior without metadata provider: just print original
+				if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
+					return err
+				}
+			}
+			a.stack = append(a.stack, "</a>")
+		} else {
+			if _, err := io.WriteString(w, safe); err != nil {
+				return err
+			}
+			a.stack = append(a.stack, "")
+		}
+	}
+	return nil
+}
+
+func (a *A4code2html) handleCode(r *bufio.Reader, w io.Writer, wasAtLineStart bool) error {
+	switch a.CodeType {
+	case CTTableOfContents, CTTagStrip, CTWordsOnly:
+	default:
+		var buf bytes.Buffer
+		if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
+			_, _ = r.ReadByte() // consume ]
+		} else {
+			if err := a.consumeCodeBlock(r, &buf); err != nil {
+				return err
+			}
+		}
+
+		isBlock := false
+		if wasAtLineStart {
+			// Check if followed by newline
+			p, err := r.Peek(1)
+			if err == io.EOF || (err == nil && len(p) > 0 && (p[0] == '\n' || p[0] == '\r')) {
+				isBlock = true
+			}
+		}
+
+		if isBlock {
+			if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">"); err != nil {
+				return err
+			}
+			if _, err := w.Write(buf.Bytes()); err != nil {
+				return err
+			}
+			if _, err := io.WriteString(w, "</pre></div>"); err != nil {
+				return err
+			}
+		} else {
+			if _, err := io.WriteString(w, "<code class=\"a4code-inline a4code-code\">"); err != nil {
+				return err
+			}
+			if _, err := w.Write(buf.Bytes()); err != nil {
+				return err
+			}
+			if _, err := io.WriteString(w, "</code>"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (a *A4code2html) handleCodeIn(r *bufio.Reader, w io.Writer) error {
+	switch a.CodeType {
+	case CTTableOfContents, CTTagStrip, CTWordsOnly:
+	default:
+		language, err := a4code.GetNextArg(r)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if _, err := a.readWhiteSpace(r); err != nil && err != io.EOF {
+			return err
+		}
+		if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
+			return err
+		}
+		if err := a.consumeCodeBlock(r, w); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (a *A4code2html) handleQuoteOf(r *bufio.Reader, w io.Writer) error {
+	switch a.CodeType {
+	case CTTableOfContents, CTTagStrip, CTWordsOnly:
+	default:
+		name, err := a4code.GetNextArg(r)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		colorClass := ""
+		if a.UserColorMapper != nil {
+			colorClass = " " + a.UserColorMapper(name)
+		}
+		colorClass += fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
+		if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof%s\"><div class=\"quote-header\">Quote of %s:</div><div class=\"quote-body\">", colorClass, name)); err != nil {
+			return err
+		}
+		a.quoteDepth++
+		a.stack = append(a.stack, "</div></blockquote>")
+	}
+	return nil
+}
+
+func (a *A4code2html) handleQuote(w io.Writer, wasAtLineStart bool) error {
+	switch a.CodeType {
+	case CTTableOfContents, CTTagStrip, CTWordsOnly:
+	default:
+		if wasAtLineStart {
+			// Block quote
+			colorClass := fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
+			if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote"+colorClass+"\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
+				return err
+			}
+			a.quoteDepth++
+			a.stack = append(a.stack, "</div></blockquote>")
+		} else {
+			// Inline quote
+			if _, err := io.WriteString(w, "<q class=\"a4code-inline a4code-quote\">"); err != nil {
+				return err
+			}
+			a.stack = append(a.stack, "</q>")
+		}
+	}
+	return nil
+}
+
 func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 	wasAtLineStart := a.atLineStart
 	a.atLineStart = false
@@ -225,294 +472,33 @@ func (a *A4code2html) acommReader(r *bufio.Reader, w io.Writer) error {
 	}
 	switch strings.ToLower(cmd) {
 	case "*", "b", "bold":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<strong>"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</strong>")
-		}
+		return a.handleSimpleTag(w, "<strong>", "</strong>")
 	case "/", "i", "italic":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<i>"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</i>")
-		}
+		return a.handleSimpleTag(w, "<i>", "</i>")
 	case "_", "u", "underline":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<u>"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</u>")
-		}
+		return a.handleSimpleTag(w, "<u>", "</u>")
 	case "^", "p", "power", "sup":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<sup>"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</sup>")
-		}
+		return a.handleSimpleTag(w, "<sup>", "</sup>")
 	case ".", "s", "sub":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<sub>"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</sub>")
-		}
+		return a.handleSimpleTag(w, "<sub>", "</sub>")
 	case "img", "image":
-		raw, err := a4code.GetNext(r, false)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		fullRaw := raw
-		if a.Provider != nil {
-			raw = a.Provider.MapImageURL("img", raw)
-		} else if a.ImageURLMapper != nil {
-			raw = a.ImageURLMapper("img", raw)
-		}
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			fullSrc := ""
-			if a.FullImageURLMapper != nil {
-				fullSrc = a.FullImageURLMapper("img", fullRaw)
-			}
-			attrs := ""
-			if fullSrc != "" && fullSrc != raw {
-				attrs = ` data-full-src="` + html.EscapeString(fullSrc) + `"`
-			}
-			if _, err := io.WriteString(w, "<img class=\"a4code-image\" src=\""+html.EscapeString(raw)+"\""+attrs+" />"); err != nil {
-				return err
-			}
-		}
+		return a.handleImage(r, w)
 	case "a", "link", "url":
-		switch a.CodeType {
-		case CTTableOfContents:
-		case CTTagStrip, CTWordsOnly:
-			raw, err := a4code.GetNext(r, false)
-			if err != nil && err != io.EOF {
-				return err
-			}
-			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
-				if _, err := io.WriteString(w, raw); err != nil {
-					return err
-				}
-			}
-		default:
-			raw, err := a4code.GetNext(r, false)
-			if err != nil && err != io.EOF {
-				return err
-			}
-
-			if a.Provider != nil {
-				isBlock := false
-				isImmediateClose := false
-				if wasAtLineStart {
-					isBlock, isImmediateClose = a.peekBlockLink(r)
-				}
-				if !isBlock {
-					p, err := r.Peek(1)
-					if err == nil && len(p) > 0 && p[0] == ']' {
-						isImmediateClose = true
-					}
-				}
-				htmlOpen, htmlClose, consumeImmediate := a.Provider.RenderLink(raw, isBlock, isImmediateClose)
-				if _, err := io.WriteString(w, htmlOpen); err != nil {
-					return err
-				}
-				if consumeImmediate {
-					// Consume ] and potentially \n
-					r.ReadByte() // ]
-					if isBlock {
-						r.ReadByte() // \n
-						a.atLineStart = true
-					}
-				} else {
-					a.stack = append(a.stack, htmlClose)
-				}
-				return nil
-			}
-
-			original := raw
-			if a.ImageURLMapper != nil {
-				raw = a.ImageURLMapper("a", raw)
-			}
-			safe, ok := SanitizeURL(raw)
-			if ok {
-				// Inline Link
-				if _, err := io.WriteString(w, "<a href=\""+safe+"\" target=\"_blank\">"); err != nil {
-					return err
-				}
-
-				isImmediateClose := false
-				p, err := r.Peek(1)
-				if err == nil && len(p) > 0 && p[0] == ']' {
-					isImmediateClose = true
-				} else {
-					p, err := r.Peek(2)
-					if err == nil && len(p) >= 2 && p[0] == ' ' && p[1] == ']' {
-						if _, err := r.ReadByte(); err == nil {
-							isImmediateClose = true
-						}
-					}
-				}
-
-				if isImmediateClose {
-					// Case [link url]
-					// Default legacy behavior without metadata provider: just print original
-					if _, err := io.WriteString(w, html.EscapeString(original)); err != nil {
-						return err
-					}
-				}
-				a.stack = append(a.stack, "</a>")
-			} else {
-				if _, err := io.WriteString(w, safe); err != nil {
-					return err
-				}
-				a.stack = append(a.stack, "")
-			}
-		}
+		return a.handleLink(r, w, wasAtLineStart)
 	case "code":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			var buf bytes.Buffer
-			if p, err := r.Peek(1); err == nil && len(p) > 0 && p[0] == ']' {
-				r.ReadByte() // consume ]
-			} else {
-				if err := a.consumeCodeBlock(r, &buf); err != nil {
-					return err
-				}
-			}
-
-			isBlock := false
-			if wasAtLineStart {
-				// Check if followed by newline
-				p, err := r.Peek(1)
-				if err == io.EOF || (err == nil && len(p) > 0 && (p[0] == '\n' || p[0] == '\r')) {
-					isBlock = true
-				}
-			}
-
-			if isBlock {
-				if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-code-wrapper\"><div class=\"code-header\">Code</div><pre class=\"a4code-code-body\">"); err != nil {
-					return err
-				}
-				if _, err := w.Write(buf.Bytes()); err != nil {
-					return err
-				}
-				if _, err := io.WriteString(w, "</pre></div>"); err != nil {
-					return err
-				}
-			} else {
-				if _, err := io.WriteString(w, "<code class=\"a4code-inline a4code-code\">"); err != nil {
-					return err
-				}
-				if _, err := w.Write(buf.Bytes()); err != nil {
-					return err
-				}
-				if _, err := io.WriteString(w, "</code>"); err != nil {
-					return err
-				}
-			}
-		}
+		return a.handleCode(r, w, wasAtLineStart)
 	case "codein":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			language, err := a4code.GetNextArg(r)
-			if err != nil && err != io.EOF {
-				return err
-			}
-			if _, err := a.readWhiteSpace(r); err != nil && err != io.EOF {
-				return err
-			}
-			if _, err := io.WriteString(w, fmt.Sprintf("<div class=\"a4code-block a4code-code-wrapper a4code-language-%s\"><div class=\"code-header\">Code (%s)</div><pre class=\"a4code-code-body\"><code class=\"language-%s\">", html.EscapeString(language), html.EscapeString(language), html.EscapeString(language))); err != nil {
-				return err
-			}
-			if err := a.consumeCodeBlock(r, w); err != nil {
-				return err
-			}
-			if _, err := io.WriteString(w, "</code></pre></div>"); err != nil {
-				return err
-			}
-		}
+		return a.handleCodeIn(r, w)
 	case "quoteof", "qo":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			name, err := a4code.GetNextArg(r)
-			if err != nil && err != io.EOF {
-				return err
-			}
-			colorClass := ""
-			if a.UserColorMapper != nil {
-				colorClass = " " + a.UserColorMapper(name)
-			}
-			colorClass += fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
-			if _, err := io.WriteString(w, fmt.Sprintf("<blockquote class=\"a4code-block a4code-quoteof%s\"><div class=\"quote-header\">Quote of %s:</div><div class=\"quote-body\">", colorClass, name)); err != nil {
-				return err
-			}
-			a.quoteDepth++
-			a.stack = append(a.stack, "</div></blockquote>")
-		}
+		return a.handleQuoteOf(r, w)
 	case "quote", "q":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if wasAtLineStart {
-				// Block quote
-				colorClass := fmt.Sprintf(" quote-color-%d", a.quoteDepth%6)
-				if _, err := io.WriteString(w, "<blockquote class=\"a4code-block a4code-quote"+colorClass+"\"><div class=\"quote-header\">Quote:</div><div class=\"quote-body\">"); err != nil {
-					return err
-				}
-				a.quoteDepth++
-				a.stack = append(a.stack, "</div></blockquote>")
-			} else {
-				// Inline quote
-				if _, err := io.WriteString(w, "<q class=\"a4code-inline a4code-quote\">"); err != nil {
-					return err
-				}
-				a.stack = append(a.stack, "</q>")
-			}
-		}
+		return a.handleQuote(w, wasAtLineStart)
 	case "spoiler", "sp":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<span class=\"spoiler\">"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</span>")
-		}
+		return a.handleSimpleTag(w, "<span class=\"spoiler\">", "</span>")
 	case "indent":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<div class=\"a4code-block a4code-indent\"><div>"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "</div></div>")
-		}
+		return a.handleSimpleTag(w, "<div class=\"a4code-block a4code-indent\"><div>", "</div></div>")
 	case "hr":
-		switch a.CodeType {
-		case CTTableOfContents, CTTagStrip, CTWordsOnly:
-		default:
-			if _, err := io.WriteString(w, "<hr />"); err != nil {
-				return err
-			}
-			a.stack = append(a.stack, "")
-		}
+		return a.handleSimpleTag(w, "<hr />", "")
 	default:
 		a.stack = append(a.stack, "")
 	}
@@ -675,7 +661,7 @@ func (c *A4code2html) readCommandBreak(r *bufio.Reader) (string, error) {
 			return buf.String(), err
 		}
 	} else {
-		r.UnreadByte()
+		_ = r.UnreadByte()
 	}
 	return buf.String(), nil
 }

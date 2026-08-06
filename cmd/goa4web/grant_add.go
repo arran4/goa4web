@@ -52,7 +52,7 @@ func (c *grantAddCmd) Run() error {
 		return fmt.Errorf("cannot specify both -role-id and -role")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -66,7 +66,7 @@ func (c *grantAddCmd) Run() error {
 			return fmt.Errorf("get user by username %q: %w", c.UserName, err)
 		}
 		userID = int(user.Idusers)
-		c.rootCmd.Infof("Found user %s with ID %d", user.Username.String, userID)
+		c.Infof("Found user %s with ID %d", user.Username.String, userID)
 	}
 
 	roleID := c.RoleID
@@ -76,7 +76,7 @@ func (c *grantAddCmd) Run() error {
 			return fmt.Errorf("get role by name %q: %w", c.Role, err)
 		}
 		roleID = int(role.ID)
-		c.rootCmd.Infof("Found role %s with ID %d", role.Name, roleID)
+		c.Infof("Found role %s with ID %d", role.Name, roleID)
 	}
 
 	if userID == 0 && roleID == 0 {
@@ -108,7 +108,7 @@ func (c *grantAddCmd) Run() error {
 		roleLog = fmt.Sprintf("role %s (%d)", c.Role, roleID)
 	}
 
-	c.rootCmd.Infof("Adding grant for %s%s to %s/%s/%d action %s", userLog, roleLog, c.Section, c.Item, c.ItemID, c.Action)
+	c.Infof("Adding grant for %s%s to %s/%s/%d action %s", userLog, roleLog, c.Section, c.Item, c.ItemID, c.Action)
 
 	_, err = q.AdminCreateGrant(ctx, db.AdminCreateGrantParams{
 		UserID:   sql.NullInt32{Int32: int32(userID), Valid: userID != 0},
@@ -125,6 +125,6 @@ func (c *grantAddCmd) Run() error {
 		return fmt.Errorf("create grant: %w", err)
 	}
 
-	c.rootCmd.Infof("Grant added successfully.")
+	c.Infof("Grant added successfully.")
 	return nil
 }

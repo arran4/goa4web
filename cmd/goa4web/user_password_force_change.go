@@ -33,13 +33,13 @@ func parseUserPasswordForceChangeCmd(parent *userCmd, args []string) (*userPassw
 }
 
 func (c *userPasswordForceChangeCmd) Run() error {
-	ctx := c.rootCmd.Context()
+	ctx := c.Context()
 
-	d, err := c.rootCmd.DB()
+	d, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("get db: %w", err)
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 
 	queries := db.New(d)
 	return forceChangePassword(ctx, queries, c.userID, c.username)
@@ -89,7 +89,7 @@ func forceChangePassword(ctx context.Context, queries *db.Queries, userID int, u
 
 // Usage prints command usage information with examples.
 func (c *userPasswordForceChangeCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_password_force_change_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_password_force_change_usage.txt", c)
 }
 
 func (c *userPasswordForceChangeCmd) FlagGroups() []flagGroup {

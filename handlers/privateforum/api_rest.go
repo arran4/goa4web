@@ -45,7 +45,7 @@ func APIListTopics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"topics":   topics,
 		"has_more": hasMore,
 		"page":     page,
@@ -86,7 +86,7 @@ func APICreateTopic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":  "success",
 		"message": "Topic created",
 	})
@@ -125,7 +125,7 @@ func APIListThreads(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"threads":  rows,
 		"has_more": hasMore,
 		"page":     page,
@@ -204,7 +204,7 @@ func APIShowComments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"comments": apiComments,
 		"has_more": hasMore,
 		"page":     page,
@@ -241,7 +241,7 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	_ = json.NewEncoder(w).Encode(map[string]any{
 		"status":  "success",
 		"message": "Comment posted",
 	})

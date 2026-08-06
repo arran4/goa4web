@@ -104,7 +104,7 @@ func (c *faqCmd) Run() error {
 }
 
 func (c *faqCmd) Usage() {
-	executeUsage(c.fs.Output(), "faq_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "faq_usage.txt", c)
 }
 
 func (c *faqCmd) FlagGroups() []flagGroup {

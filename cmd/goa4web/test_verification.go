@@ -44,7 +44,7 @@ func (c *testVerificationCmd) Run() error {
 }
 
 func (c *testVerificationCmd) Usage() {
-	executeUsage(c.fs.Output(), "test_verification_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "test_verification_usage.txt", c)
 }
 
 func (c *testVerificationCmd) FlagGroups() []flagGroup {

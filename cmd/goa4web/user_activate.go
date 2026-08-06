@@ -32,7 +32,7 @@ func parseUserActivateCmd(parent *userCmd, args []string) (*userActivateCmd, err
 }
 
 func (c *userActivateCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_activate_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_activate_usage.txt", c)
 }
 
 func (c *userActivateCmd) FlagGroups() []flagGroup {
@@ -45,7 +45,7 @@ func (c *userActivateCmd) Run() error {
 	if c.ID == 0 && c.Username == "" {
 		return fmt.Errorf("id or username required")
 	}
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
 	}
@@ -58,47 +58,47 @@ func (c *userActivateCmd) Run() error {
 		}
 		c.ID = int(u.Idusers)
 	}
-	c.rootCmd.Verbosef("restoring user %d", c.ID)
+	c.Verbosef("restoring user %d", c.ID)
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 	qtx := queries.WithTx(tx)
 	if err := qtx.AdminRestoreUser(ctx, int32(c.ID)); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("restore user: %w", err)
 	}
 	if err := qtx.AdminRestoreUserEmail(ctx, int32(c.ID)); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("restore user email: %w", err)
 	}
 	if err := qtx.AdminRestoreUserPassword(ctx, int32(c.ID)); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("restore user password: %w", err)
 	}
 	if err := qtx.AdminMarkUserRestored(ctx, int32(c.ID)); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("mark user restored: %w", err)
 	}
 	rows, err := qtx.AdminListPendingDeactivatedComments(ctx, db.AdminListPendingDeactivatedCommentsParams{UsersIdusers: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("select comments: %w", err)
 	}
 	for _, row := range rows {
 		if err := qtx.AdminRestoreComment(ctx, db.AdminRestoreCommentParams{Text: row.Text, Idcomments: row.Idcomments}); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("restore comment: %w", err)
 		}
 		if err := qtx.AdminMarkCommentRestored(ctx, row.Idcomments); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("mark comment restored: %w", err)
 		}
 	}
 
 	rowsW, err := qtx.AdminListPendingDeactivatedWritings(ctx, db.AdminListPendingDeactivatedWritingsParams{UsersIdusers: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("select writings: %w", err)
 	}
 	for _, w := range rowsW {
@@ -109,65 +109,65 @@ func (c *userActivateCmd) Run() error {
 			Private:   w.Private,
 			Idwriting: w.Idwriting,
 		}); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("restore writing: %w", err)
 		}
 		if err := qtx.AdminMarkWritingRestored(ctx, w.Idwriting); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("mark writing restored: %w", err)
 		}
 	}
 
 	rowsB, err := qtx.AdminListPendingDeactivatedBlogs(ctx, db.AdminListPendingDeactivatedBlogsParams{UsersIdusers: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("select blogs: %w", err)
 	}
 	for _, b := range rowsB {
 		if err := qtx.AdminRestoreBlog(ctx, db.AdminRestoreBlogParams{Blog: b.Blog, Idblogs: b.Idblogs}); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("restore blog: %w", err)
 		}
 		if err := qtx.AdminMarkBlogRestored(ctx, b.Idblogs); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("mark blog restored: %w", err)
 		}
 	}
 
 	rowsI, err := qtx.AdminListPendingDeactivatedImageposts(ctx, db.AdminListPendingDeactivatedImagepostsParams{UsersIdusers: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("select imageposts: %w", err)
 	}
 	for _, img := range rowsI {
 		if err := qtx.AdminRestoreImagepost(ctx, db.AdminRestoreImagepostParams{Description: img.Description, Thumbnail: img.Thumbnail, Fullimage: img.Fullimage, Idimagepost: img.Idimagepost}); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("restore imagepost: %w", err)
 		}
 		if err := qtx.AdminMarkImagepostRestored(ctx, img.Idimagepost); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("mark imagepost restored: %w", err)
 		}
 	}
 
 	rowsL, err := qtx.AdminListPendingDeactivatedLinks(ctx, db.AdminListPendingDeactivatedLinksParams{AuthorID: int32(c.ID), Limit: math.MaxInt32, Offset: 0})
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return fmt.Errorf("select links: %w", err)
 	}
 	for _, l := range rowsL {
 		if err := qtx.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: l.Title, Url: l.Url, Description: l.Description, ID: l.ID}); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("restore link: %w", err)
 		}
 		if err := qtx.AdminMarkLinkRestored(ctx, l.ID); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return fmt.Errorf("mark link restored: %w", err)
 		}
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
-	c.rootCmd.Infof("restored user %d", c.ID)
+	c.Infof("restored user %d", c.ID)
 	return nil
 }

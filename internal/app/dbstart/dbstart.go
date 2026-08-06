@@ -3,7 +3,6 @@ package dbstart
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"log"
 	"os"
@@ -50,14 +49,14 @@ func InitDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *commo
 	if err != nil {
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to create connector"}
 	}
-	var connector driver.Connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
+	var connector = db.NewLoggingConnector(c, cfg.DBLogVerbosity)
 	dbPool := sql.OpenDB(connector)
 	if err := dbPool.Ping(); err != nil {
-		dbPool.Close()
+		_ = dbPool.Close()
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
 	if err := EnsureSchema(context.Background(), dbPool); err != nil {
-		dbPool.Close()
+		_ = dbPool.Close()
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
 	if cfg.DBLogVerbosity > 0 {
@@ -76,7 +75,7 @@ func PerformStartupChecks(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	if ue := CheckUploadDir(cfg); ue != nil {
-		dbPool.Close()
+		_ = dbPool.Close()
 		return nil, fmt.Errorf("%s: %w", ue.ErrorMessage, ue.Err)
 	}
 	return dbPool, nil
@@ -107,7 +106,7 @@ func CheckUploadDir(cfg *config.RuntimeConfig) *common.UserError {
 	if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
 		return &common.UserError{Err: err, ErrorMessage: "image upload directory not writable"}
 	}
-	os.Remove(test)
+	_ = os.Remove(test)
 
 	if cfg.ImageCacheDir != "" {
 		info, err := os.Stat(cfg.ImageCacheDir)
@@ -124,7 +123,7 @@ func CheckUploadDir(cfg *config.RuntimeConfig) *common.UserError {
 		if err := os.WriteFile(test, []byte("ok"), 0644); err != nil {
 			return &common.UserError{Err: err, ErrorMessage: "image cache directory not writable"}
 		}
-		os.Remove(test)
+		_ = os.Remove(test)
 	}
 	return nil
 }

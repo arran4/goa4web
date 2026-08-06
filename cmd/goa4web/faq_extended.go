@@ -48,7 +48,7 @@ func (c *faqAddFromTemplateCmd) Run() error {
 		return err
 	}
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (c *faqDumpCmd) Run() error {
 		return fmt.Errorf("invalid ID: %w", err)
 	}
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (c *faqUpdateCmd) Run() error {
 		return err
 	}
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func (c *faqReorderCmd) Run() error {
 		return fmt.Errorf("invalid priority: %w", err)
 	}
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -276,7 +276,7 @@ func parseFaqListCmd(parent *faqCmd, args []string) (*faqListCmd, error) {
 }
 
 func (c *faqListCmd) Run() error {
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -323,7 +323,7 @@ func (c *faqDeleteCmd) Run() error {
 		return fmt.Errorf("invalid ID: %w", err)
 	}
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func (c *faqCreateCmd) Run() error {
 		return err
 	}
 
-	conn, err := c.rootCmd.getDB()
+	conn, err := c.getDB()
 	if err != nil {
 		return err
 	}

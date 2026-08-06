@@ -507,7 +507,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quote [link 1]\n[link 2]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
-				ast.Walk(root, func(n ast.Node) error {
+				_ = ast.Walk(root, func(n ast.Node) error {
 					if l, ok := n.(*ast.Link); ok {
 						links = append(links, l)
 					}
@@ -529,7 +529,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quote foo [link 1]\n[link 2]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				var links []*ast.Link
-				ast.Walk(root, func(n ast.Node) error {
+				_ = ast.Walk(root, func(n ast.Node) error {
 					if l, ok := n.(*ast.Link); ok {
 						links = append(links, l)
 					}
@@ -602,13 +602,13 @@ func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
 			name:           "quote remains block before whitespace and a following link",
 			input:          "[quote text] \n[link url]",
 			wantLinkBlock:  true,
-			wantQuoteBlock: boolPtr(true),
+			wantQuoteBlock: new(true),
 		},
 		{
 			name:           "inline quote and link remain inline",
 			input:          "text [quote text] [link url]",
 			wantLinkBlock:  false,
-			wantQuoteBlock: boolPtr(false),
+			wantQuoteBlock: new(false),
 		},
 	}
 
@@ -809,13 +809,9 @@ func TestToText_Code(t *testing.T) {
 	}
 }
 
-func boolPtr(value bool) *bool {
-	return &value
-}
-
 func findFirstLink(n ast.Node) *ast.Link {
 	var found *ast.Link
-	ast.Walk(n, func(node ast.Node) error {
+	_ = ast.Walk(n, func(node ast.Node) error {
 		if found != nil {
 			return nil
 		}
@@ -829,7 +825,7 @@ func findFirstLink(n ast.Node) *ast.Link {
 
 func findFirstQuote(n ast.Node) *ast.Quote {
 	var found *ast.Quote
-	ast.Walk(n, func(node ast.Node) error {
+	_ = ast.Walk(n, func(node ast.Node) error {
 		if found != nil {
 			return nil
 		}

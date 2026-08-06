@@ -103,7 +103,7 @@ func ManageTopicLabelsPage(w http.ResponseWriter, r *http.Request) {
 		DisplayTitle: displayTitle,
 	}
 
-	ManageTopicLabelsPageTmpl.Handle(w, r, data)
+	_ = ManageTopicLabelsPageTmpl.Handle(w, r, data)
 }
 
-const ManageTopicLabelsPageTmpl tasks.Template = "forum/manageTopicLabels.gohtml"
+const ManageTopicLabelsPageTmpl tasks.Template = "domains/forum/manageTopicLabels.gohtml"

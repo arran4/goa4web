@@ -52,7 +52,7 @@ func (c *rolePublicProfileCmd) Run() error {
 }
 
 func (c *rolePublicProfileCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_public_profile_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_public_profile_usage.txt", c)
 }
 
 func (c *rolePublicProfileCmd) FlagGroups() []flagGroup {
@@ -114,14 +114,14 @@ func parseRolePublicProfileSetCmd(parent *rolePublicProfileCmd, args []string) (
 }
 
 func (c *rolePublicProfileSetCmd) Run() error {
-	sdb, err := c.rootCmd.getDB()
+	sdb, err := c.getDB()
 	if err != nil {
 		return err
 	}
 	defer closeDB(sdb)
 
 	q := db.New(sdb)
-	ctx := c.rootCmd.ctx
+	ctx := c.ctx
 
 	role, err := q.GetRoleByName(ctx, c.role)
 	if err != nil {
@@ -149,7 +149,7 @@ func (c *rolePublicProfileSetCmd) Run() error {
 }
 
 func (c *rolePublicProfileSetCmd) Usage() {
-	executeUsage(c.fs.Output(), "role_public_profile_set_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "role_public_profile_set_usage.txt", c)
 }
 
 func (c *rolePublicProfileSetCmd) FlagGroups() []flagGroup {

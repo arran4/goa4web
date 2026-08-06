@@ -39,7 +39,7 @@ type option struct {
 func (c *configOptionsCmd) Run() error {
 	def := defaultMap()
 	usage := config.UsageMap()
-	ext := config.ExtendedUsageMap(c.rootCmd.dbReg)
+	ext := config.ExtendedUsageMap(c.dbReg)
 	names := config.NameMap()
 	keys := make([]string, 0, len(def))
 	for k := range def {
@@ -60,6 +60,7 @@ func (c *configOptionsCmd) Run() error {
 			Extended: e,
 		})
 	}
+	_ = opts
 	return executeUsage(bytes.NewBuffer(nil), "config_options.txt", c)
 }
 

@@ -84,9 +84,6 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Printf("fetchOpenGraph error: %v", err)
 		}
-	} else if isInternal {
-		// Log or handle internal link specifically if needed
-		// For now, we just don't fetch metadata
 	}
 
 	link := cd.SelectedExternalLink()
@@ -110,7 +107,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		Message: r.URL.Query().Get("msg"),
 		BackURL: r.Referer(),
 	}
-	if err := cd.ExecuteSiteTemplate(w, r, "externalLinkPage.gohtml", data); err != nil {
+	if err := cd.ExecuteSiteTemplate(w, r, "pages/misc/externalLinkPage.gohtml", data); err != nil {
 		log.Printf("Template Error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)

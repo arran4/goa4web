@@ -62,7 +62,7 @@ func TestCommentsPage(t *testing.T) {
 		w := httptest.NewRecorder()
 		sess := testhelpers.Must(store.Get(req, core.SessionName))
 		sess.Values["UID"] = int32(2)
-		sess.Save(req, w)
+		_ = sess.Save(req, w)
 		for _, c := range w.Result().Cookies() {
 			req.AddCookie(c)
 		}
@@ -94,7 +94,7 @@ func newCommentsPageRequest(t *testing.T, queries db.Querier, roles []string, us
 	w := httptest.NewRecorder()
 	sess := testhelpers.Must(store.Get(req, core.SessionName))
 	sess.Values["UID"] = userID
-	sess.Save(req, w)
+	_ = sess.Save(req, w)
 	for _, c := range w.Result().Cookies() {
 		req.AddCookie(c)
 	}
@@ -113,10 +113,10 @@ func writeTempCommentsTemplate(t *testing.T, content string) string {
 	if err := os.Mkdir(siteDir, 0o755); err != nil {
 		t.Fatalf("create site dir: %v", err)
 	}
-	if err := os.Mkdir(filepath.Join(siteDir, "linker"), 0o755); err != nil {
-		t.Fatalf("create site/linker dir: %v", err)
+	if err := os.MkdirAll(filepath.Join(siteDir, "domains", "linker"), 0o755); err != nil {
+		t.Fatalf("create site/domains/linker dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(siteDir, "linker", "commentsPage.gohtml"), []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(siteDir, "domains", "linker", "commentsPage.gohtml"), []byte(content), 0o644); err != nil {
 		t.Fatalf("write template: %v", err)
 	}
 	return dir

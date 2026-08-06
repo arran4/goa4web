@@ -48,12 +48,12 @@ func (c *forumTopicCmd) Run() error {
 }
 
 func (c *forumTopicCmd) Usage() {
-	fmt.Fprintf(c.fs.Output(), "Usage: %s forum topic <command> [flags]\n", os.Args[0])
-	fmt.Fprintln(c.fs.Output(), "\nCommands:")
-	fmt.Fprintln(c.fs.Output(), "  list    List forum topics")
-	fmt.Fprintln(c.fs.Output(), "  details Show details of a forum topic")
-	fmt.Fprintln(c.fs.Output(), "  delete  Delete a forum topic")
-	fmt.Fprintln(c.fs.Output(), "  edit    Edit a forum topic")
+	_, _ = fmt.Fprintf(c.fs.Output(), "Usage: %s forum topic <command> [flags]\n", os.Args[0])
+	_, _ = fmt.Fprintln(c.fs.Output(), "\nCommands:")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  list    List forum topics")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  details Show details of a forum topic")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  delete  Delete a forum topic")
+	_, _ = fmt.Fprintln(c.fs.Output(), "  edit    Edit a forum topic")
 }
 
 func (c *forumTopicCmd) runList(args []string) error {
@@ -64,7 +64,7 @@ func (c *forumTopicCmd) runList(args []string) error {
 		return err
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -80,13 +80,13 @@ func (c *forumTopicCmd) runList(args []string) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tTitle\tHandler\tThreads\tComments")
+	_, _ = fmt.Fprintln(w, "ID\tTitle\tHandler\tThreads\tComments")
 	for _, t := range topics {
 		if isPublicForumHandler(t.Handler) {
-			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%d\n", t.Idforumtopic, t.Title.String, t.Handler, t.Threads.Int32, t.Comments.Int32)
+			_, _ = fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%d\n", t.Idforumtopic, t.Title.String, t.Handler, t.Threads.Int32, t.Comments.Int32)
 		}
 	}
-	w.Flush()
+	_ = w.Flush()
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (c *forumTopicCmd) runDetails(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *forumTopicCmd) runDelete(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (c *forumTopicCmd) runEdit(args []string) error {
 		return fmt.Errorf("missing -id")
 	}
 
-	conn, err := c.rootCmd.DB()
+	conn, err := c.DB()
 	if err != nil {
 		return err
 	}

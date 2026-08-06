@@ -45,7 +45,7 @@ func (c *userSubscriptionsCmd) Run() error {
 }
 
 func (c *userSubscriptionsCmd) Usage() {
-	executeUsage(c.fs.Output(), "user_subscriptions_usage.txt", c)
+	_ = executeUsage(c.fs.Output(), "user_subscriptions_usage.txt", c)
 }
 
 func (c *userSubscriptionsCmd) FlagGroups() []flagGroup {

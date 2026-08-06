@@ -183,6 +183,9 @@
                     // Just use url as alt.
                     return `![image](${node.args[0] || ''})`;
                 case 'code':
+                    if (inner.indexOf('|') !== -1 && inner.indexOf('---') !== -1) {
+                        return inner;
+                    }
                     return "```\n" + inner + "\n```";
                 case 'quote':
                 case 'q':
@@ -200,6 +203,35 @@
     // We will support a subset: **bold**, *italic*, [text](url), ![alt](url), `code`, > quote
 
     function parseMarkdownToAST(text) {
+         // Pre-process to wrap tables in code blocks
+         let lines = text.split('\n');
+         let inTable = false;
+         let newLines = [];
+         let tableBuffer = [];
+
+         for (let line of lines) {
+             if (line.trim().startsWith('|') && line.includes('|')) {
+                 tableBuffer.push(line);
+             } else {
+                 if (tableBuffer.length > 0) {
+                     if (tableBuffer.some(l => l.includes('---'))) {
+                         newLines.push('```\n' + tableBuffer.join('\n') + '\n```');
+                     } else {
+                         newLines.push(...tableBuffer);
+                     }
+                     tableBuffer = [];
+                 }
+                 newLines.push(line);
+             }
+         }
+         if (tableBuffer.length > 0) {
+             if (tableBuffer.some(l => l.includes('---'))) {
+                 newLines.push('```\n' + tableBuffer.join('\n') + '\n```');
+             } else {
+                 newLines.push(...tableBuffer);
+             }
+         }
+         text = newLines.join('\n');
          // This is the hard part "more complex".
          // We can stick to regex-based replacement if we process nesting carefully,
          // or write a scanner.

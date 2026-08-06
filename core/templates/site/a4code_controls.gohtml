@@ -33,5 +33,27 @@
     <button type="button" class="a4code-btn" data-tag="code" data-target="{{ .TargetID }}" title="Code" aria-label="Code">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
     </button>
+    <button type="button" class="a4code-btn convert-markdown-to-a4code" data-target="{{ .TargetID }}" title="Convert MD" aria-label="Convert Markdown">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M2 12l4-4M2 12l4 4M22 12l-4-4M22 12l-4 4" /></svg>
+    </button>
+</div>
+
+<div id="md-convert-modal-{{ .TargetID }}" class="shortcuts-overlay hidden md-convert-modal" data-target="{{ .TargetID }}">
+    <div class="shortcuts-modal" style="width: 800px;">
+        <div class="shortcuts-header">
+            <h2>Convert Markdown / A4Code</h2>
+            <button class="close-button close-md-modal" data-target="{{ .TargetID }}">&times;</button>
+        </div>
+        <div class="shortcuts-tabs">
+            <button class="tab-btn active md-to-a4-tab" data-target="{{ .TargetID }}">Markdown to A4Code</button>
+            <button class="tab-btn a4-to-md-tab" data-target="{{ .TargetID }}">A4Code to Markdown</button>
+        </div>
+        <div style="padding: 1rem;">
+            <textarea id="md-convert-textarea-{{ .TargetID }}" style="width: 100%; height: 300px; font-family: monospace; padding: 0.5rem;"></textarea>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button type="button" class="btn btn-primary insert-converted-btn" data-target="{{ .TargetID }}">Insert</button>
+            </div>
+        </div>
+    </div>
 </div>
 {{ end }}

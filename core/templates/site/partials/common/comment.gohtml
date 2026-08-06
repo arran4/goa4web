@@ -48,15 +48,19 @@
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
 
-                    [<a href="#" onclick="document.getElementById('source-modal-{{ $cmt.Idcomments }}').showModal(); return false;">VIEW SOURCE</a>]
+                    [<a href="#" class="view-source-link" data-target="source-modal-{{ $cmt.Idcomments }}">VIEW SOURCE</a>]
                 </footer>
-                <dialog id="source-modal-{{ $cmt.Idcomments }}" class="source-modal">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h3 style="margin: 0;">Source</h3>
-                        <button class="close-button" onclick="document.getElementById('source-modal-{{ $cmt.Idcomments }}').close()">&times;</button>
+                <div id="source-modal-{{ $cmt.Idcomments }}" class="shortcuts-overlay hidden source-modal-overlay">
+                    <div class="shortcuts-modal" style="width: 800px;">
+                        <div class="shortcuts-header">
+                            <h2 style="margin: 0; font-size: 1.2em;">Source</h2>
+                            <button class="close-button close-source-modal" data-target="source-modal-{{ $cmt.Idcomments }}">&times;</button>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <textarea readonly style="width: 100%; height: 300px; font-family: monospace; padding: 0.5rem; resize: vertical;">{{ $cmt.Text.String }}</textarea>
+                        </div>
                     </div>
-                    <textarea readonly rows="15" cols="80" style="width: 100%; max-width: 100%; resize: vertical;">{{ $cmt.Text.String }}</textarea>
-                </dialog>
+                </div>
                 {{ end }}
             {{ end }}
         </section>

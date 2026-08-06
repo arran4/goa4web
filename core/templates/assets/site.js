@@ -35,6 +35,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.querySelector('.md-to-a4-tab').classList.add('active');
                 modal.querySelector('.a4-to-md-tab').classList.remove('active');
             }
+        } else if (e.target && e.target.classList.contains('view-source-link')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const modal = document.getElementById(targetId);
+            if (modal) modal.classList.remove('hidden');
+        } else if (e.target && e.target.classList.contains('close-source-modal')) {
+            e.preventDefault();
+            const targetId = e.target.getAttribute('data-target');
+            const modal = document.getElementById(targetId);
+            if (modal) modal.classList.add('hidden');
         } else if (e.target && e.target.classList.contains('close-md-modal')) {
             e.preventDefault();
             const targetId = e.target.getAttribute('data-target');

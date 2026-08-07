@@ -8,6 +8,15 @@ import (
 	"github.com/arran4/goa4web/handlers"
 )
 
+// DisablePrivateForumCaching prevents browsers and shared caches from storing private forum responses.
+func DisablePrivateForumCaching(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlers.DisableCaching(w)
+		w.Header().Set("Cloudflare-CDN-Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // EnforcePrivateForumTopicSeeAccess middleware checks for see grant on private forum topic 0.
 func EnforcePrivateForumTopicSeeAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

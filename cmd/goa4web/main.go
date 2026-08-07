@@ -11,6 +11,7 @@ import (
 	"os"
 	_ "time/tzdata"
 
+	"github.com/arran4/goa4web"
 	adminhandlers "github.com/arran4/goa4web/handlers/admin"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
 	bloghandlers "github.com/arran4/goa4web/handlers/blogs"

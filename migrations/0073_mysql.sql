@@ -1,0 +1,2 @@
+-- +goose Up
+-- This migration is intentionally empty as the changes were merged into 0072_role_subscription_archetypes.sql

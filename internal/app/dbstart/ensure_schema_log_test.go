@@ -20,10 +20,8 @@ func TestEnsureSchemaLogsVersion(t *testing.T) {
 	defer func() { _ = conn.Close() }()
 
 	// Mock expectations for SchemaVersion
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL)")).
-		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT version FROM schema_version")).
-		WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT version_id, is_applied from goose_db_version ORDER BY id DESC")).
+		WillReturnRows(sqlmock.NewRows([]string{"version_id", "is_applied"}).AddRow(handlers.ExpectedSchemaVersion, true))
 
 	// Capture log output
 	var buf bytes.Buffer

@@ -1,0 +1,2 @@
+-- +goose Up
+-- Record upgrade to schema version 79

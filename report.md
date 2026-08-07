@@ -3,7 +3,7 @@
 ## Is this an actual improvement?
 Yes, integrating `github.com/pressly/goose` brings several immediate and long-term improvements over the previous custom-built migration engine:
 1. **Delegation of Complexity:** Goose natively manages parsing, sorting, and executing migrations within transactions. The custom solution required custom parsers, custom loop logic, and custom file naming checks. We were able to delete `internal/app/dbstart/filename.go` and `internal/app/dbstart/migrate_test.go` and significantly simplify `migrate.go` and `automigrate.go`.
-2. **Standardization:** Developers are typically already familiar with Goose annotations (e.g., `-- +goose Up` and `-- +goose Down`). This lowers the learning curve for new contributors compared to learning a bespoke system.
+2. **Standardization:** Developers are typically already familiar with Goose annotations (e.g., `-- +goose Up` and optionally `-- +goose Down` if rollbacks are desired). This lowers the learning curve for new contributors compared to learning a bespoke system. Note that we do not use `-- +goose Down` since rollbacks are not required for this project structure.
 3. **Automated State Tracking:** We no longer have to manually append `UPDATE schema_version SET version = X;` at the end of every single migration script. Goose handles tracking automatically via the `goose_db_version` table.
 
 ## What causes difficulty?
@@ -16,9 +16,9 @@ Goose significantly enhances and simplifies multi-database capabilities:
 - **Out of the box drivers:** Goose has built-in dialects for Postgres, MySQL, SQLite3, MSSQL, and more.
 - **Dialect Management:** The custom system required parsing out `driver` from filenames manually in `parseMigrationFilename`. Goose can naturally manage diverse SQL files.
 - **Bringing back SQLite:** To bring back SQLite support, you would simply:
-  1. Add SQLite migration files (e.g., `NNNN_sqlite3.sql`).
-  2. In `internal/app/dbstart/migrate.go`, `goose.SetDialect("sqlite3")` will automatically pick up those files, apply them properly in SQLite transactions, and track their state in `goose_db_version`. Goose will seamlessly ignore the `_mysql.sql` files if it's not configured to use them (though typically, Goose runs *all* valid `.sql` files in the folder unless you separate directories by dialect or use Go-based migrations).
-  - *Note on multi-dialect folders in Goose:* Goose generally attempts to run all `.sql` files in a given target directory sequentially. If you plan to support both MySQL and SQLite simultaneously, the best practice with Goose is to put MySQL migrations in `migrations/mysql/` and SQLite migrations in `migrations/sqlite3/`. The `f` (FS) passed to `goose.SetBaseFS(f)` would then just point to the dialect-specific sub-directory based on the current configuration.
+  1. Organize migrations into separate dialect directories: e.g. `migrations/mysql/` and `migrations/sqlite3/`.
+  2. In `internal/app/dbstart/migrate.go`, configure Goose to point to the correct sub-directory `fs.Sub(f, "sqlite3")` and use `goose.SetDialect("sqlite3")`.
+  - *Note on multi-dialect folders in Goose:* Goose collects migrations sequentially across all files in the base directory. Dialects sharing the same version numbers (e.g. `0001_mysql.sql` and `0001_sqlite3.sql`) will cause "duplicate version collisions" and panic. Therefore, the standard practice for multiple dialects in Goose is dialect-separated folders passed cleanly into `goose.SetBaseFS(f)`.
 
 ## Summary
 The migration to Goose simplifies code maintenance, standardizes the development flow, and builds a robust foundation for multi-database expansion. The initial pain of adapting legacy data schemas and file naming conventions is vastly outweighed by removing brittle, custom-built SQL parsing logic.

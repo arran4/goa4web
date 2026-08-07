@@ -9,7 +9,9 @@ import (
 
 // SchemaVersion returns the current schema version from the database.
 func SchemaVersion(ctx context.Context, db *sql.DB) (int, error) {
-	goose.SetDialect("mysql")
+	if err := goose.SetDialect("mysql"); err != nil {
+		return 0, err
+	}
 	version, err := goose.GetDBVersion(db)
 	return int(version), err
 }

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core"
 )
 

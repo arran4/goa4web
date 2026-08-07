@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/arran4/goa4web"
 )
 
 func DefaultDataDir() string {

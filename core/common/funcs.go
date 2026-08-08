@@ -131,6 +131,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		"dict":                      Dict,
 		"toJSON":                    ToJSON,
 		"version":                   func() string { return goa4web.Version },
+		"buildDate":                 func() string { return goa4web.BuildDate },
 		"versionReleaseURL":         versionReleaseURL,
 		"lower":                     strings.ToLower,
 		"default": func(def any, item any) any {

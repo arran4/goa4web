@@ -1,0 +1,4 @@
+-- +goose Up
+-- Record upgrade to schema version 78
+-- Null migration to replace reverted changes
+-- This migration only updates the schema version, effectively skipping the grants.

@@ -73,6 +73,7 @@ func registerTasks(reg *tasks.Registry, ah *adminhandlers.Handlers) {
 
 func main() {
 	goa4web.Version = version
+	goa4web.BuildDate = date
 	root, err := parseRoot(os.Args)
 	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {

@@ -31,7 +31,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	uid, _ := session.Values["UID"].(int32)
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	if !cd.HasGrant("images", "upload", "post", 0) {
+	if !cd.HasGrant("images", "gallery", "view", 0) {
 		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
 		return
 	}

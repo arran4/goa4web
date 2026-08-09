@@ -29,12 +29,30 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
-	if !cd.HasGrant("images", "gallery", "view", 0) {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+	if uid == 0 {
+		handlers.RenderErrorPage(w, r, common.UserError{
+			ErrorMessage: "you lack permissions",
+			Err:          handlers.ErrForbidden,
+		})
 		return
 	}
+
+	cd.PageTitle = "Gallery"
+
+	data := struct {
+		Images       []galleryImage
+		PageSize     int
+		ErrorMessage string
+	}{}
+
+	if !cd.HasGrant("images", "gallery", "view", 0) {
+		data.ErrorMessage = "you lack permissions"
+		_ = UserGalleryPage.Handle(w, r, data)
+		return
+	}
+
+	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 
 	pageStr := r.URL.Query().Get("p")
 	page, _ := strconv.Atoi(pageStr)
@@ -42,11 +60,11 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 
-	cd.PageTitle = "Gallery"
 	size := cd.Config.PageSizeDefault
 	if pref, _ := cd.Preference(); pref != nil {
 		size = int(pref.PageSize)
 	}
+	data.PageSize = size
 
 	offset := (page - 1) * size
 
@@ -59,7 +77,10 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("list images: %v", err)
-		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+		handlers.RenderErrorPage(w, r, common.UserError{
+			ErrorMessage: "error fetching gallery images",
+			Err:          common.ErrInternalServerError,
+		})
 		return
 	}
 
@@ -111,13 +132,7 @@ func userGalleryPage(w http.ResponseWriter, r *http.Request) {
 		cd.PrevLink = base + "?p=" + strconv.Itoa(page-1)
 	}
 
-	data := struct {
-		Images   []galleryImage
-		PageSize int
-	}{
-		Images:   imgs,
-		PageSize: size,
-	}
+	data.Images = imgs
 
 	_ = UserGalleryPage.Handle(w, r, data)
 }

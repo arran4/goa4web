@@ -1,6 +1,8 @@
 {{ template "head" $ }}
 <h2>Your Uploaded Images</h2>
-{{- if .Images }}
+{{- if .ErrorMessage }}
+<p class="text-error">{{ .ErrorMessage }}</p>
+{{- else if .Images }}
 <div class="gallery">
     {{- range .Images }}
     <div class="notification" class="inline-block-margin">

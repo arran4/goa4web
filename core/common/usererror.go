@@ -18,3 +18,7 @@ func (e UserError) Error() string {
 func (e UserError) UserErrorMessage() string {
 	return e.ErrorMessage
 }
+
+func (e UserError) Unwrap() error {
+	return e.Err
+}

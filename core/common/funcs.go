@@ -325,6 +325,9 @@ func versionReleaseURL(version string) string {
 	if version == "" || strings.ToLower(version) == "dev" {
 		return ""
 	}
+	if version[0] >= '0' && version[0] <= '9' {
+		version = "v" + version
+	}
 	return "https://github.com/arran4/goa4web/releases/tag/" + url.PathEscape(version)
 }
 

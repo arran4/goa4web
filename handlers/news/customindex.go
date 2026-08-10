@@ -42,8 +42,7 @@ func NewsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	newsId := vars["news"]
 	if newsId != "" {
 		items = append(items, common.IndexItem{
-			Name: "Return to list",
-			Link: fmt.Sprintf("/?offset=%d", 0),
+			Name: "Return to list", Icon: "🔙", Link: fmt.Sprintf("/?offset=%d", 0),
 		})
 	}
 	return items
@@ -55,15 +54,13 @@ func NewsPageSpecificItems(cd *common.CoreData, r *http.Request, post *db.GetNew
 		// Edit
 		if cd.ShowEditNews(post.Idsitenews, post.UsersIdusers) {
 			items = append(items, common.IndexItem{
-				Name: "Edit News",
-				Link: fmt.Sprintf("/news/news/%d/edit", post.Idsitenews),
+				Name: "Edit News", Icon: "✏️", Link: fmt.Sprintf("/news/news/%d/edit", post.Idsitenews),
 			})
 		}
 		// Admin
 		if cd.IsAdmin() && cd.IsAdminMode() {
 			items = append(items, common.IndexItem{
-				Name: "News Admin",
-				Link: fmt.Sprintf("/admin/news/article/%d", post.Idsitenews),
+				Name: "News Admin", Icon: "⚙️", Link: fmt.Sprintf("/admin/news/article/%d", post.Idsitenews),
 			})
 
 			// Announcement
@@ -81,12 +78,10 @@ func NewsPageSpecificItems(cd *common.CoreData, r *http.Request, post *db.GetNew
 		if hasNewsUnread(cd, post.Idsitenews, post.UsersIdusers) {
 			redirect := r.URL.RequestURI()
 			items = append(items, common.IndexItem{
-				Name: "Mark as read",
-				Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape(redirect)),
+				Name: "Mark as read", Icon: "✔️", Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape(redirect)),
 			})
 			items = append(items, common.IndexItem{
-				Name: "Mark as read and go back",
-				Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape("/news")),
+				Name: "Mark as read and go back", Icon: "🔙", Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", post.Idsitenews, url.QueryEscape("/news")),
 			})
 		}
 	}
@@ -126,8 +121,7 @@ func NewsCustomIndexItems(cd *common.CoreData, r *http.Request, post *db.GetNews
 				if hasNewsUnread(cd, int32(nid), authorID) {
 					redirect := r.URL.RequestURI()
 					items = append(items, common.IndexItem{
-						Name: "Mark as read",
-						Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", nid, url.QueryEscape(redirect)),
+						Name: "Mark as read", Icon: "✔️", Link: fmt.Sprintf("/news/news/%d/labels?task=Mark+Thread+Read&redirect=%s", nid, url.QueryEscape(redirect)),
 					})
 				}
 			}

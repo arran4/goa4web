@@ -3,6 +3,13 @@
         Date and time is now: {{now}}<br>
         <em>Arran 2004-2005, 2023-2025; All works on this page copyrighted to their respective authors.</em><br>
         {{ $version := version }}{{ $releaseURL := versionReleaseURL $version }}
-        <a href="https://github.com/arran4/goa4web">GitHub</a> Version {{if $releaseURL}}<a href="{{ $releaseURL }}">{{ $version }}</a>{{else}}{{ $version }}{{end}} {{ buildDate }}
+        <a href="https://github.com/arran4/goa4web">GitHub</a> Version {{if $releaseURL}}<a href="{{ $releaseURL }}">{{ $version }}</a>{{else}}{{ $version }}{{end}} {{ buildDate }}<br>
+        {{ if cd.HasAdminRole }}
+            {{ if cd.AdminMode }}
+                <a href="?">Disable admin mode</a>
+            {{ else }}
+                <a href="?mode=admin">Enable admin mode</a>
+            {{ end }}
+        {{ end }}
 </div>
 {{end}}

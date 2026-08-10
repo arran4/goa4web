@@ -25,15 +25,13 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	} else {
 		if threadID != "" {
 			items = append(items, common.IndexItem{
-				Name: "Private topic list",
-				Link: fmt.Sprintf("/private/topic/%s", topicID),
+				Name: "Private topic list", Icon: "📋", Link: fmt.Sprintf("/private/topic/%s", topicID),
 			})
 		}
 		if tid, err := strconv.Atoi(topicID); err == nil {
 			if cd.HasGrant("privateforum", "topic", "edit", int32(tid)) {
 				items = append(items, common.IndexItem{
-					Name: "Edit Topic",
-					Link: fmt.Sprintf("/private/topic/%d/edit", tid),
+					Name: "Edit Topic", Icon: "✏️", Link: fmt.Sprintf("/private/topic/%d/edit", tid),
 				})
 			}
 		}

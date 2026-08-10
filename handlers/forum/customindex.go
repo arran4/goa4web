@@ -36,15 +36,15 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		cd.AtomFeedURL = fmt.Sprintf("%s/topic/%s.atom", base, topicID)
 		cd.AtomFeedTitle = "Topic Atom Feed"
 		items = append(items,
-			common.IndexItem{Name: "Topic Atom Feed", Link: cd.AtomFeedURL, Folded: true},
-			common.IndexItem{Name: "Topic RSS Feed", Link: cd.RSSFeedURL, Folded: true},
+			common.IndexItem{Name: "Topic Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "Topic RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, Folded: true},
 		)
 	}
 
 	if threadID != "" && topicID != "" {
 		if cd.IsAdmin() && cd.IsAdminMode() {
 			items = append(items, common.IndexItem{
-				Name: "[ADMIN]",
+				Name: "[ADMIN]", Icon: "🛡️",
 				Link: fmt.Sprintf("/admin/forum/topics/topic/%s", topicID),
 			})
 		}
@@ -55,15 +55,13 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 					Link: markThreadReadLink(base, threadID, r.URL.RequestURI()),
 				},
 				common.IndexItem{
-					Name: "Mark as read and go back",
-					Link: markThreadReadLink(base, threadID, fmt.Sprintf("%s/topic/%s", base, topicID)),
+					Name: "Mark as read and go back", Icon: "🔙", Link: markThreadReadLink(base, threadID, fmt.Sprintf("%s/topic/%s", base, topicID)),
 				},
 			)
 		}
 		if section != "privateforum" {
 			items = append(items, common.IndexItem{
-				Name: "Go to topic",
-				Link: fmt.Sprintf("%s/topic/%s", base, topicID),
+				Name: "Go to topic", Icon: "➡️", Link: fmt.Sprintf("%s/topic/%s", base, topicID),
 			})
 		}
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "reply", int32(tid)) {
@@ -110,8 +108,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		if tid, err := strconv.Atoi(topicID); err == nil && cd.HasGrant(section, "topic", "label", int32(tid)) {
 			items = append(items,
 				common.IndexItem{
-					Name: "Manage Labels",
-					Link: fmt.Sprintf("%s/topic/%s/labels", base, topicID),
+					Name: "Manage Labels", Icon: "🏷️", Link: fmt.Sprintf("%s/topic/%s/labels", base, topicID),
 				},
 			)
 		}

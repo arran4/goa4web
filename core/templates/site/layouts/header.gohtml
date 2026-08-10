@@ -5,13 +5,9 @@
             <span class="hamburger-icon" aria-hidden="true">&#9776;</span>
             <span class="hamburger-text">Menu</span>
         </label>
-        {{ if cd.HasAdminRole }}
-            {{ if cd.AdminMode }}
-                <a href="?">Disable admin mode</a>
-            {{ else }}
-                <a href="?mode=admin">Enable admin mode</a>
-            {{ end }}
-        {{ end }}
+        <label for="shrink-toggle" class="shrink-icon" aria-label="Shrink index" title="Toggle index view">
+            <span aria-hidden="true">&#9776;</span>
+        </label>
         {{- $crumbs := cd.Breadcrumbs }}
         {{- if $crumbs }}
             <nav class="breadcrumbs" aria-label="Breadcrumb">

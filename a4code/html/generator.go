@@ -171,7 +171,7 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	if n.IsBlock {
+	if ast.IsBlockNode(n) {
 		_, _ = fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
 		_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
 		_, _ = io.WriteString(w, htmlEscape(n.Value))
@@ -194,7 +194,7 @@ func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
 }
 
 func (g *Generator) Quote(w io.Writer, n *ast.Quote) error {
-	if n.IsBlock {
+	if ast.IsBlockNode(n) {
 		colorClass := fmt.Sprintf("quote-color-%d", g.Depth%6)
 		_, _ = fmt.Fprintf(w, `<blockquote class="a4code-block a4code-quote %s"%s>`, colorClass, g.SourceAttrs(n.Start, n.End))
 		_, _ = io.WriteString(w, "<div class=\"quote-body\">")

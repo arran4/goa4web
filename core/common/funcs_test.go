@@ -159,6 +159,16 @@ func TestVersionReleaseURL(t *testing.T) {
 			want:    "https://github.com/arran4/goa4web/releases/tag/v1.2.3",
 		},
 		{
+			name:    "no v prefix",
+			version: "1.2.3",
+			want:    "https://github.com/arran4/goa4web/releases/tag/v1.2.3",
+		},
+		{
+			name:    "no v prefix with spaces",
+			version: " 1.2.3 ",
+			want:    "https://github.com/arran4/goa4web/releases/tag/v1.2.3",
+		},
+		{
 			name:    "dev version",
 			version: "dev",
 		},
@@ -183,7 +193,7 @@ func TestVersionReleaseURL(t *testing.T) {
 
 func TestFooterLinksReleaseVersion(t *testing.T) {
 	origVersion := goa4web.Version
-	goa4web.Version = "v1.2.3"
+	goa4web.Version = "1.2.3"
 	defer func() {
 		goa4web.Version = origVersion
 	}()
@@ -196,7 +206,7 @@ func TestFooterLinksReleaseVersion(t *testing.T) {
 		t.Fatalf("ExecuteTemplate footer: %v", err)
 	}
 
-	want := `<a href="https://github.com/arran4/goa4web/releases/tag/v1.2.3">v1.2.3</a>`
+	want := `<a href="https://github.com/arran4/goa4web/releases/tag/v1.2.3">1.2.3</a>`
 	if !strings.Contains(buf.String(), want) {
 		t.Fatalf("footer missing version release link %q in %s", want, buf.String())
 	}

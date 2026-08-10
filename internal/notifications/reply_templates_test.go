@@ -1,9 +1,9 @@
 package notifications_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
-	"fmt"
 
 	"github.com/arran4/goa4web/internal/eventbus"
 

@@ -13,6 +13,7 @@ import (
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions {
 	r.HandleFunc("/goto", RedirectHandler).Methods("GET")
 	r.HandleFunc("/goto", handlers.TaskHandler(reloadExternalLinkTask)).Methods("POST")
+	r.HandleFunc("/goto/prefetch", handlers.TaskHandler(prefetchExternalLinkTask)).Methods("POST")
 	return nil
 }
 

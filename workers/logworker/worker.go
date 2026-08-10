@@ -25,7 +25,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus) {
 				env.Ack()
 				continue
 			}
-			log.Printf("event path=%s task=%s uid=%d data=%v", evt.Path, evt.Task, evt.UserID, cleanData(evt.Data))
+			log.Printf("event path=%s task=%s uid=%d data=%v", evt.Path, evt.Task, evt.UserID, cleanData(evt.Path, evt.Data))
 			env.Ack()
 		case <-ctx.Done():
 			return
@@ -33,9 +33,12 @@ func Worker(ctx context.Context, bus *eventbus.Bus) {
 	}
 }
 
-func cleanData(data map[string]any) map[string]any {
+func cleanData(path string, data map[string]any) map[string]any {
 	if data == nil {
 		return nil
+	}
+	if strings.HasPrefix(path, "/private/") {
+		return map[string]any{"redacted": true}
 	}
 	newData := make(map[string]any, len(data))
 	for k, v := range data {

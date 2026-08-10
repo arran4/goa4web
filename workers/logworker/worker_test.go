@@ -19,7 +19,7 @@ func TestCleanData(t *testing.T) {
 		"Multiline": "Line 1\nLine 2\rLine 3",
 	}
 
-	cleaned := cleanData(data)
+	cleaned := cleanData("/public/path", data)
 
 	cleanedBody, ok := cleaned["Body"].(string)
 	if !ok {
@@ -63,5 +63,25 @@ func TestCleanData(t *testing.T) {
 	}
 	if strings.ContainsAny(cleanedMultiline, "\n\r") {
 		t.Error("Expected newlines to be removed/replaced")
+	}
+}
+
+func TestCleanDataPrivate(t *testing.T) {
+	data := map[string]any{
+		"Body": "secret message",
+	}
+
+	cleaned := cleanData("/private/topic/21/thread/186", data)
+
+	if len(cleaned) != 1 {
+		t.Errorf("Expected 1 key in cleaned data, got %d", len(cleaned))
+	}
+
+	if redacted, ok := cleaned["redacted"].(bool); !ok || !redacted {
+		t.Error("Expected 'redacted' to be true")
+	}
+
+	if _, ok := cleaned["Body"]; ok {
+		t.Error("Expected 'Body' to be redacted")
 	}
 }

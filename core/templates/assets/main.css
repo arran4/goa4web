@@ -1472,3 +1472,40 @@ kbd {
     color: #ffffff;
     cursor: pointer;
 }
+
+/* Image Paste Gallery */
+.image-paste-gallery {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.image-paste-gallery-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 150px;
+    background-color: #f9f9f9;
+}
+
+.image-paste-thumb {
+    max-width: 100px;
+    max-height: 100px;
+    object-fit: contain;
+}
+
+.image-paste-status {
+    font-size: 0.8em;
+    margin-top: 5px;
+    word-break: break-all;
+    text-align: center;
+}
+
+.image-paste-insert-btn {
+    margin-top: 5px;
+    padding: 2px 5px;
+    cursor: pointer;
+}

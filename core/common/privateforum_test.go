@@ -41,7 +41,7 @@ func TestCoreData_PrivateForumTopics(t *testing.T) {
 		t.Fatalf("expected 1 topic, got %d", len(topics))
 	}
 
-	if topics[0].Idforumtopic != 1 {
-		t.Errorf("expected topic id 1, got %d", topics[0].Idforumtopic)
+	if topics[0].ListPrivateTopicsByUserIDRow.Idforumtopic != 1 {
+		t.Errorf("expected topic id 1, got %d", topics[0].ListPrivateTopicsByUserIDRow.Idforumtopic)
 	}
 }

@@ -17,19 +17,19 @@ const (
 	PrivateTopicDefaultTitlePrefix = "Private chat with "
 )
 
-// GetPrivateTopicDisplayTitle returns the display title for a private topic.
-// If the topic has a custom title (not starting with the default prefix), it is returned as is.
-// Otherwise, it returns a comma-separated list of all participants.
-func (cd *CoreData) GetPrivateTopicDisplayTitle(topicID int32, originalTitle string) string {
-	if !strings.HasPrefix(originalTitle, PrivateTopicDefaultTitlePrefix) {
-		return originalTitle
+// GetPrivateTopicDetails fetches the participant list from the database and returns the computed display title,
+// the participant names (excluding the current user), and the total number of participants (including the current user).
+func (cd *CoreData) GetPrivateTopicDetails(topicID int32, originalTitle string) (displayTitle string, participants []string, totalParticipants int, err error) {
+	displayTitle = originalTitle
+	if cd.queries == nil {
+		return
 	}
-
 	parts, err := cd.queries.AdminListPrivateTopicParticipantsByTopicID(cd.ctx, sql.NullInt32{Int32: topicID, Valid: true})
 	if err != nil {
-		log.Printf("list private participants: %v", err)
-		return originalTitle
+		return
 	}
+
+	totalParticipants = len(parts)
 
 	var names []string
 	var allNames []string
@@ -41,34 +41,41 @@ func (cd *CoreData) GetPrivateTopicDisplayTitle(topicID int32, originalTitle str
 			}
 		}
 	}
-	if len(names) == 0 {
-		if len(allNames) > 0 {
-			names = allNames
-		} else {
-			return originalTitle
+	participants = names
+
+	if strings.HasPrefix(originalTitle, PrivateTopicDefaultTitlePrefix) {
+		if len(names) == 0 {
+			if len(allNames) > 0 {
+				names = allNames
+			} else {
+				displayTitle = originalTitle
+				return
+			}
 		}
+		displayTitle = strings.Join(names, ", ")
 	}
-	return strings.Join(names, ", ")
+	return
+}
+
+// GetPrivateTopicDisplayTitle returns the display title for a private topic.
+// If the topic has a custom title (not starting with the default prefix), it is returned as is.
+// Otherwise, it returns a comma-separated list of all participants.
+func (cd *CoreData) GetPrivateTopicDisplayTitle(topicID int32, originalTitle string) string {
+	displayTitle, _, _, err := cd.GetPrivateTopicDetails(topicID, originalTitle)
+	if err != nil {
+		log.Printf("list private participants: %v", err)
+		return originalTitle
+	}
+	return displayTitle
 }
 
 // GetPrivateTopicParticipants returns the list of participants (excluding viewer) for a private topic.
 func (cd *CoreData) GetPrivateTopicParticipants(topicID int32) ([]string, error) {
-	if cd.queries == nil {
-		return nil, nil
-	}
-	parts, err := cd.queries.AdminListPrivateTopicParticipantsByTopicID(cd.ctx, sql.NullInt32{Int32: topicID, Valid: true})
+	_, participants, _, err := cd.GetPrivateTopicDetails(topicID, "")
 	if err != nil {
 		return nil, err
 	}
-	var names []string
-	for _, p := range parts {
-		if p.Username.Valid {
-			if cd.UserID == 0 || p.Idusers != cd.UserID {
-				names = append(names, p.Username.String)
-			}
-		}
-	}
-	return names, nil
+	return participants, nil
 }
 
 // PrivateTopic represents a private conversation with a computed title.
@@ -77,6 +84,7 @@ type PrivateTopic struct {
 	DisplayTitle       string
 	Labels             []templates.TopicLabel
 	ParticipantsString string
+	TotalParticipants  int
 }
 
 // PrivateForumTopics returns private forum topics visible to the current user.
@@ -99,15 +107,12 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 		for _, t := range tops {
 			title := t.Title.String
 			var participants []string
+			var totalParticipants int
 			if t.Title.Valid {
-				if strings.HasPrefix(t.Title.String, PrivateTopicDefaultTitlePrefix) {
-					title = cd.GetPrivateTopicDisplayTitle(t.Idforumtopic, t.Title.String)
-				} else {
-					if p, err := cd.GetPrivateTopicParticipants(t.Idforumtopic); err == nil {
-						participants = p
-					} else {
-						log.Printf("get participants: %v", err)
-					}
+				var err error
+				title, participants, totalParticipants, err = cd.GetPrivateTopicDetails(t.Idforumtopic, t.Title.String)
+				if err != nil {
+					log.Printf("get private topic details: %v", err)
 				}
 			}
 			var labels []templates.TopicLabel
@@ -191,7 +196,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				}
 			}
 
-			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, ParticipantsString: strings.Join(participants, ", ")})
+			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, ParticipantsString: strings.Join(participants, ", "), TotalParticipants: totalParticipants})
 		}
 		return pts, nil
 	})

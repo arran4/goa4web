@@ -22,32 +22,28 @@ func WritingsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.In
 	cd.PublicAtomFeedURL = path + "/atom" + suffix
 
 	items = append(items,
-		common.IndexItem{Name: "Writings Atom Feed", Link: cd.AtomFeedURL, Folded: true},
-		common.IndexItem{Name: "Writings RSS Feed", Link: cd.RSSFeedURL, Folded: true},
+		common.IndexItem{Name: "Writings Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, Folded: true},
+		common.IndexItem{Name: "Writings RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, Folded: true},
 	)
 
 	if cd.IsAdmin() {
 		items = append(items, common.IndexItem{
-			Name: "Writings Admin",
-			Link: "/admin/writings",
+			Name: "Writings Admin", Icon: "⚙️", Link: "/admin/writings",
 		})
 	}
 	userHasWriter := cd.HasGrant("writing", "category", "post", 0)
 	if userHasWriter {
 		items = append(items, common.IndexItem{
-			Name: "Write writings",
-			Link: "/writings/add",
+			Name: "Write writings", Icon: "✍️", Link: "/writings/add",
 		})
 	}
 
 	items = append(items, common.IndexItem{
-		Name: "Writers",
-		Link: "/writings/writers",
+		Name: "Writers", Icon: "👥", Link: "/writings/writers",
 	})
 
 	items = append(items, common.IndexItem{
-		Name: "Return to list",
-		Link: "/writings?offset=0",
+		Name: "Return to list", Icon: "🔙", Link: "/writings?offset=0",
 	})
 	return items
 }
@@ -59,28 +55,24 @@ func WritingsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.In
 		canEdit := cd.HasGrant("writing", "article", "edit", writing.Idwriting)
 		if canEdit {
 			items = append(items, common.IndexItem{
-				Name: "Edit Writing",
-				Link: fmt.Sprintf("/writings/article/%d/edit", writing.Idwriting),
+				Name: "Edit Writing", Icon: "✏️", Link: fmt.Sprintf("/writings/article/%d/edit", writing.Idwriting),
 			})
 		}
 
 		// Admin
 		if cd.IsAdmin() && cd.IsAdminMode() {
 			items = append(items, common.IndexItem{
-				Name: "Writing Admin",
-				Link: fmt.Sprintf("/admin/writings/article/%d", writing.Idwriting),
+				Name: "Writing Admin", Icon: "⚙️", Link: fmt.Sprintf("/admin/writings/article/%d", writing.Idwriting),
 			})
 		}
 
 		if hasWritingUnread(cd, writing.Idwriting, writing.Writerid) {
 			redirect := r.URL.RequestURI()
 			items = append(items, common.IndexItem{
-				Name: "Mark as read",
-				Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(redirect)),
+				Name: "Mark as read", Icon: "✔️", Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(redirect)),
 			})
 			items = append(items, common.IndexItem{
-				Name: "Mark as read and go back",
-				Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(fmt.Sprintf("/writings/category/%d", writing.WritingCategoryID))),
+				Name: "Mark as read and go back", Icon: "🔙", Link: fmt.Sprintf("/writings/article/%d/labels?task=Mark+Thread+Read&redirect=%s", writing.Idwriting, url.QueryEscape(fmt.Sprintf("/writings/category/%d", writing.WritingCategoryID))),
 			})
 		}
 	}

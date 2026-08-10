@@ -19,8 +19,8 @@ func CustomLinkerIndex(data *common.CoreData, r *http.Request) {
 		data.AtomFeedURL = data.GenerateFeedURL("/linker/atom")
 		data.AtomFeedTitle = "Linker Atom Feed"
 		data.CustomIndexItems = append(data.CustomIndexItems,
-			common.IndexItem{Name: "Linker Atom Feed", Link: data.AtomFeedURL, Folded: true},
-			common.IndexItem{Name: "Linker RSS Feed", Link: data.RSSFeedURL, Folded: true},
+			common.IndexItem{Name: "Linker Atom Feed", Icon: "⚛️", Link: data.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "Linker RSS Feed", Icon: "📡", Link: data.RSSFeedURL, Folded: true},
 		)
 	}
 }

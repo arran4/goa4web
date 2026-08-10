@@ -26,8 +26,8 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 		cd.PublicAtomFeedURL = path + "/atom" + suffix
 
 		items = append(items,
-			common.IndexItem{Name: "Blogs Atom Feed", Link: cd.AtomFeedURL, Folded: true},
-			common.IndexItem{Name: "Blogs RSS Feed", Link: cd.RSSFeedURL, Folded: true},
+			common.IndexItem{Name: "Blogs Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, Folded: true},
+			common.IndexItem{Name: "Blogs RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, Folded: true},
 		)
 	}
 
@@ -45,8 +45,7 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 		})
 	}
 	items = append(items, common.IndexItem{
-		Name: "List bloggers",
-		Link: "/blogs/bloggers",
+		Name: "List bloggers", Icon: "👥", Link: "/blogs/bloggers",
 	})
 	return items
 }
@@ -56,25 +55,21 @@ func BlogsPageSpecificItems(cd *common.CoreData, r *http.Request) []common.Index
 	if blog, err := cd.BlogPost(); err == nil && blog != nil {
 		if cd.CanEditBlog(blog.Idblogs, blog.UsersIdusers) {
 			items = append(items, common.IndexItem{
-				Name: "Edit Blog",
-				Link: fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs),
+				Name: "Edit Blog", Icon: "✏️", Link: fmt.Sprintf("/blogs/blog/%d/edit", blog.Idblogs),
 			})
 		}
 		if cd.IsAdmin() && cd.IsAdminMode() {
 			items = append(items, common.IndexItem{
-				Name: "Blog Admin",
-				Link: fmt.Sprintf("/admin/blogs/blog/%d", blog.Idblogs),
+				Name: "Blog Admin", Icon: "⚙️", Link: fmt.Sprintf("/admin/blogs/blog/%d", blog.Idblogs),
 			})
 		}
 		if hasBlogUnread(cd, blog.Idblogs, blog.UsersIdusers) {
 			items = append(items,
 				common.IndexItem{
-					Name: "Mark as read",
-					Link: markBlogReadLink(blog.Idblogs, r.URL.RequestURI()),
+					Name: "Mark as read", Icon: "✔️", Link: markBlogReadLink(blog.Idblogs, r.URL.RequestURI()),
 				},
 				common.IndexItem{
-					Name: "Mark as read and go back",
-					Link: markBlogReadLink(blog.Idblogs, "/blogs"),
+					Name: "Mark as read and go back", Icon: "🔙", Link: markBlogReadLink(blog.Idblogs, "/blogs"),
 				},
 			)
 		}

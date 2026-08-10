@@ -13,11 +13,9 @@ func BookmarksPage(w http.ResponseWriter, r *http.Request) {
 func bookmarksCustomIndex(data *common.CoreData, r *http.Request) {
 	data.CustomIndexItems = []common.IndexItem{}
 	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "Show",
-		Link: "/bookmarks/mine",
+		Name: "Show", Icon: "👁️", Link: "/bookmarks/mine",
 	})
 	data.CustomIndexItems = append(data.CustomIndexItems, common.IndexItem{
-		Name: "Edit",
-		Link: "/bookmarks/edit",
+		Name: "Edit", Icon: "✏️", Link: "/bookmarks/edit",
 	})
 }

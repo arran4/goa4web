@@ -24,7 +24,7 @@ textarea {
 }
 
 .text-centered {
-        text-align: center;
+
 }
 
 .centered-table {
@@ -100,7 +100,7 @@ textarea {
 
 .navbar-center {
         flex: 1;
-        text-align: center;
+
         font-weight: bold;
 	font-family: tahoma, arial, helvetica, sans-serif;
 	color: #800000;
@@ -110,6 +110,40 @@ textarea {
 .nav-toggle {
         display: none;
 }
+.shrink-toggle {
+        display: none;
+}
+
+.shrink-icon {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 1.5em;
+        line-height: 1;
+        padding-right: 0.5em;
+}
+
+.shrink-toggle:checked ~ .layout .sidebar {
+        width: 28px;
+
+
+        overflow: hidden;
+}
+
+.shrink-toggle:checked ~ .layout .sidebar a span,
+.shrink-toggle:checked ~ .layout .sidebar .user-panel span,
+.shrink-toggle:checked ~ .layout .sidebar .user-panel form {
+        display: none;
+}
+
+.shrink-toggle:checked ~ .layout .sidebar .folded-toggle {
+        font-size: 0;
+}
+.shrink-toggle:checked ~ .layout .sidebar .folded-toggle::before {
+        content: "⚙️";
+        font-size: 16px;
+}
+
 
 .hamburger {
         display: none;
@@ -155,7 +189,7 @@ textarea {
 }
 
 .site-footer {
-        text-align: center;
+
         font-size: 0.7em;
         color: #666;
 }
@@ -173,7 +207,7 @@ a:hover {
 }
 h1 {
 	font-family: tahoma, arial, helvetica, sans-serif;
-        text-align: center;
+
 	color: #800000;
 	background-color: transparent;
 }
@@ -235,28 +269,28 @@ h2, h3 {
         color: #800000;
 }
 div.index {
-        text-align: center;
+
 }
 div.index table {
 	margin-left: auto;
 	margin-right: auto;
-	text-align: center;
+
 }
 div.navigation {
-	text-align: center;
+
 }
 div.navigation table {
 	margin-left: auto;
 	margin-right: auto;
-	text-align: center;
+
 }
 div.photograph {
-	text-align: center;
+
 }
 div.photograph table {
 	margin-left: auto;
 	margin-right: auto;
-	text-align: center;
+
 }
 td.thumbcell {
 	width: 100px;
@@ -271,7 +305,7 @@ div.title {
 }
 .caption {
 	font-family: tahoma, arial, helvetica, sans-serif;
-	text-align: center;
+
 	font-size: 0.8em;
 	color: #800000;
 	background-color: transparent;
@@ -282,7 +316,7 @@ div.title {
 	font-family: tahoma, arial, helvetica, sans-serif;
 }
 .textleft {
-	text-align: left;
+
 	font-family: tahoma, arial, helvetica, sans-serif;
 	font-size: 0.8em;
 	color: #800000;
@@ -297,10 +331,10 @@ div.title {
 }
 
 .text-center {
-        text-align: center;
+
 }
 .textcenter {
-        text-align: center;
+
         font-family: tahoma, arial, helvetica, sans-serif;
         font-size: 0.8em;
         color: #800000;
@@ -347,7 +381,7 @@ div.title {
 }
 .pagination-center {
         flex: 1;
-        text-align: center;
+
 }
 .pagination-bar a, .pagination-bar strong {
         margin: 0 0.25em;
@@ -649,7 +683,7 @@ tr.unsupported td {
         cursor: pointer;
         padding: 5px;
         margin-top: 10px;
-        text-align: left;
+
         font-size: 0.9em;
         user-select: none;
         color: #808000;
@@ -869,16 +903,16 @@ tr.unsupported td {
 
 .last-reply {
         flex: 0 0 300px;
-        text-align: center;
+
 }
 
 .threads-replies {
         flex: 0 0 100px;
-        text-align: center;
+
 }
 
 .topic-item.no-topics {
-        text-align: center;
+
 }
 
 
@@ -942,12 +976,16 @@ tr.unsupported td {
        .navbar-right,
        .navbar-center {
                width: 100%;
-               text-align: left;
+
        }
 
        .hamburger {
                display: inline-flex;
        }
+       .shrink-icon {
+               display: none;
+       }
+
 
        .logout-link {
                display: none;

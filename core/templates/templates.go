@@ -407,13 +407,20 @@ func GetCompiledEmailTextTemplates(funcs ttemplate.FuncMap, opts ...Option) *tte
 	return root
 }
 
-func GetMainCSSData(opts ...Option) []byte { return readFile("assets/main.css", opts...) }
+// GetAssetData returns a function that reads the given asset file.
+func GetAssetData(filename string) func(opts ...Option) []byte {
+	return func(opts ...Option) []byte {
+		return readFile("assets/"+filename, opts...)
+	}
+}
 
-// GetFaviconData returns the site's favicon image.
-func GetFaviconData(opts ...Option) []byte { return readFile("assets/favicon.svg", opts...) }
-
-// GetFaviconPNG returns the site's favicon image as PNG.
-func GetFaviconPNG(opts ...Option) []byte { return readFile("assets/favicon.png", opts...) }
+var (
+	GetMainCSSData = GetAssetData("main.css")
+	// GetFaviconData returns the site's favicon image.
+	GetFaviconData = GetAssetData("favicon.svg")
+	// GetFaviconPNG returns the site's favicon image as PNG.
+	GetFaviconPNG = GetAssetData("favicon.png")
+)
 
 // MissingImageData describes the SVG placeholder for unavailable images.
 type MissingImageData struct {
@@ -484,38 +491,34 @@ func GetMissingImageSVG(data MissingImageData, opts ...Option) []byte {
 	return buf.Bytes()
 }
 
-// GetPasteImageJSData returns the JavaScript that enables image pasting.
-func GetPasteImageJSData(opts ...Option) []byte { return readFile("assets/pasteimg.js", opts...) }
+var (
+	// GetPasteImageJSData returns the JavaScript that enables image pasting.
+	GetPasteImageJSData = GetAssetData("pasteimg.js")
 
-// GetNotificationsJSData returns the JavaScript used for real-time notification updates.
-func GetNotificationsJSData(opts ...Option) []byte {
-	return readFile("assets/notifications.js", opts...)
-}
+	// GetNotificationsJSData returns the JavaScript used for real-time notification updates.
+	GetNotificationsJSData = GetAssetData("notifications.js")
 
-// GetRoleGrantsEditorJSData returns the JavaScript powering the role grants drag-and-drop editor.
-func GetRoleGrantsEditorJSData(opts ...Option) []byte {
-	return readFile("assets/role_grants_editor.js", opts...)
-}
+	// GetRoleGrantsEditorJSData returns the JavaScript powering the role grants drag-and-drop editor.
+	GetRoleGrantsEditorJSData = GetAssetData("role_grants_editor.js")
 
-// GetGrantAddJSData returns the JavaScript powering the admin grant add page.
-func GetGrantAddJSData(opts ...Option) []byte { return readFile("assets/grant_add.js", opts...) }
+	// GetGrantAddJSData returns the JavaScript powering the admin grant add page.
+	GetGrantAddJSData = GetAssetData("grant_add.js")
 
-// GetPrivateForumJSData returns the JavaScript for private forum pages.
-func GetPrivateForumJSData(opts ...Option) []byte {
-	return readFile("assets/private_forum.js", opts...)
-}
+	// GetPrivateForumJSData returns the JavaScript for private forum pages.
+	GetPrivateForumJSData = GetAssetData("private_forum.js")
 
-// GetTopicLabelsJSData returns the JavaScript for topic label editing.
-func GetTopicLabelsJSData(opts ...Option) []byte { return readFile("assets/topic_labels.js", opts...) }
+	// GetTopicLabelsJSData returns the JavaScript for topic label editing.
+	GetTopicLabelsJSData = GetAssetData("topic_labels.js")
 
-// GetSiteJSData returns the main site JavaScript.
-func GetSiteJSData(opts ...Option) []byte { return readFile("assets/site.js", opts...) }
+	// GetSiteJSData returns the main site JavaScript.
+	GetSiteJSData = GetAssetData("site.js")
 
-// GetA4CodeJSData returns the A4Code parser/converter JavaScript.
-func GetA4CodeJSData(opts ...Option) []byte { return readFile("assets/a4code.js", opts...) }
+	// GetA4CodeJSData returns the A4Code parser/converter JavaScript.
+	GetA4CodeJSData = GetAssetData("a4code.js")
 
-// GetRobotsTXTData returns the robots.txt file.
-func GetRobotsTXTData(opts ...Option) []byte { return readFile("assets/robots.txt", opts...) }
+	// GetRobotsTXTData returns the robots.txt file.
+	GetRobotsTXTData = GetAssetData("robots.txt")
+)
 
 // ListSiteTemplateNames returns the relative paths of all site templates
 // (under the site/ directory), e.g. "domains/news/postPage.gohtml".

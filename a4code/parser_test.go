@@ -1,6 +1,7 @@
 package a4code
 
 import (
+	"golang.org/x/tools/txtar"
 	"strings"
 	"testing"
 
@@ -407,7 +408,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[link url]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
+				if !ast.IsBlockNode(l) {
 					t.Error("Expected standalone link in root to be block")
 				}
 			},
@@ -417,7 +418,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "\n[link url]\n",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
+				if !ast.IsBlockNode(l) {
 					t.Error("Expected link surrounded by new lines to be block")
 				}
 			},
@@ -427,7 +428,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "foo[link url]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if l.IsBlock {
+				if ast.IsBlockNode(l) {
 					t.Error("Expected link after text to be inline")
 				}
 			},
@@ -437,7 +438,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[link url]foo",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if l.IsBlock {
+				if ast.IsBlockNode(l) {
 					t.Error("Expected link before text to be inline")
 				}
 			},
@@ -447,7 +448,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quote [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
+				if !ast.IsBlockNode(l) {
 					t.Error("Expected link in quote to be block")
 				}
 			},
@@ -457,7 +458,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quote \n[link url]\n]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
+				if !ast.IsBlockNode(l) {
 					t.Error("Expected link in quote with new lines to be block")
 				}
 			},
@@ -467,7 +468,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[b [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if l.IsBlock {
+				if ast.IsBlockNode(l) {
 					t.Error("Expected link in bold (inline context) to be inline")
 				}
 			},
@@ -477,7 +478,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[quoteof user [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
+				if !ast.IsBlockNode(l) {
 					t.Error("Expected link in quoteof to be block")
 				}
 			},
@@ -487,8 +488,8 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[spoiler [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
-					t.Error("Expected link in spoiler to be block")
+				if ast.IsBlockNode(l) {
+					t.Error("Expected link in spoiler to be inline")
 				}
 			},
 		},
@@ -497,7 +498,7 @@ func TestUpdateBlockStatus(t *testing.T) {
 			input: "[indent [link url]]",
 			checkLink: func(t *testing.T, root *ast.Root) {
 				l := findFirstLink(root)
-				if !l.IsBlock {
+				if !ast.IsBlockNode(l) {
 					t.Error("Expected link in indent to be block")
 				}
 			},
@@ -516,10 +517,10 @@ func TestUpdateBlockStatus(t *testing.T) {
 				if len(links) != 2 {
 					t.Fatalf("Expected 2 links, got %d", len(links))
 				}
-				if !links[0].IsBlock {
+				if !ast.IsBlockNode(links[0]) {
 					t.Error("Expected first link to be block")
 				}
-				if !links[1].IsBlock {
+				if !ast.IsBlockNode(links[1]) {
 					t.Error("Expected second link to be block")
 				}
 			},
@@ -538,10 +539,10 @@ func TestUpdateBlockStatus(t *testing.T) {
 				if len(links) != 2 {
 					t.Fatalf("Expected 2 links, got %d", len(links))
 				}
-				if links[0].IsBlock {
+				if ast.IsBlockNode(links[0]) {
 					t.Error("Expected first link (after text) to be inline")
 				}
-				if !links[1].IsBlock {
+				if !ast.IsBlockNode(links[1]) {
 					t.Error("Expected second link (after new line) to be block")
 				}
 			},
@@ -602,13 +603,13 @@ func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
 			name:           "quote remains block before whitespace and a following link",
 			input:          "[quote text] \n[link url]",
 			wantLinkBlock:  true,
-			wantQuoteBlock: new(true),
+			wantQuoteBlock: func() *bool { b := true; return &b }(),
 		},
 		{
 			name:           "inline quote and link remain inline",
 			input:          "text [quote text] [link url]",
 			wantLinkBlock:  false,
-			wantQuoteBlock: new(false),
+			wantQuoteBlock: func() *bool { b := false; return &b }(),
 		},
 	}
 
@@ -623,8 +624,8 @@ func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
 			if link == nil {
 				t.Fatal("expected link")
 			}
-			if link.IsBlock != tt.wantLinkBlock {
-				t.Errorf("link IsBlock = %t, want %t", link.IsBlock, tt.wantLinkBlock)
+			if ast.IsBlockNode(link) != tt.wantLinkBlock {
+				t.Errorf("link IsBlock = %t, want %t", ast.IsBlockNode(link), tt.wantLinkBlock)
 			}
 
 			if tt.wantQuoteBlock != nil {
@@ -632,8 +633,8 @@ func TestQuoteAdjacentLinkBoundaries(t *testing.T) {
 				if quote == nil {
 					t.Fatal("expected quote")
 				}
-				if quote.IsBlock != *tt.wantQuoteBlock {
-					t.Errorf("quote IsBlock = %t, want %t", quote.IsBlock, *tt.wantQuoteBlock)
+				if ast.IsBlockNode(quote) != *tt.wantQuoteBlock {
+					t.Errorf("quote IsBlock = %t, want %t", ast.IsBlockNode(quote), *tt.wantQuoteBlock)
 				}
 			}
 		})
@@ -835,4 +836,100 @@ func findFirstQuote(n ast.Node) *ast.Quote {
 		return nil
 	})
 	return found
+}
+
+func TestBlockInlineInteractions(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		check func(*testing.T, *ast.Root)
+	}{
+		{
+			name:  "Both block due to only whitespace",
+			input: "[quote test] [link test]",
+			check: func(t *testing.T, root *ast.Root) {
+				assert.Equal(t, 3, len(root.Children))
+				q, ok := root.Children[0].(*ast.Quote)
+				assert.True(t, ok)
+				assert.True(t, ast.IsBlockNode(q), "Quote should be block")
+
+				txt, ok := root.Children[1].(*ast.Text)
+				assert.True(t, ok)
+				assert.Equal(t, " ", txt.Value)
+
+				l, ok := root.Children[2].(*ast.Link)
+				assert.True(t, ok)
+				assert.True(t, ast.IsBlockNode(l), "Link should be block")
+			},
+		},
+		{
+			name:  "Both inline due to strictly inline text",
+			input: "[link test]: [quote test]",
+			check: func(t *testing.T, root *ast.Root) {
+				assert.Equal(t, 3, len(root.Children))
+				l, ok := root.Children[0].(*ast.Link)
+				assert.True(t, ok)
+				assert.False(t, ast.IsBlockNode(l), "Link should be inline")
+
+				txt, ok := root.Children[1].(*ast.Text)
+				assert.True(t, ok)
+				assert.Equal(t, ": ", txt.Value)
+
+				q, ok := root.Children[2].(*ast.Quote)
+				assert.True(t, ok)
+				assert.False(t, ast.IsBlockNode(q), "Quote should be inline")
+			},
+		},
+		{
+			name:  "Both block adjacent",
+			input: "[link test][quote test]",
+			check: func(t *testing.T, root *ast.Root) {
+				assert.Equal(t, 2, len(root.Children))
+				l, ok := root.Children[0].(*ast.Link)
+				assert.True(t, ok)
+				assert.True(t, ast.IsBlockNode(l), "Link should be block")
+
+				q, ok := root.Children[1].(*ast.Quote)
+				assert.True(t, ok)
+				assert.True(t, ast.IsBlockNode(q), "Quote should be block")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := ParseString(tt.input)
+			assert.NoError(t, err)
+			tt.check(t, root)
+		})
+	}
+}
+
+func TestTxtarBlockInline(t *testing.T) {
+	arc, err := txtar.ParseFile("testdata/block_inline.txtar")
+	if err != nil {
+		t.Fatalf("ParseFile: %v", err)
+	}
+	var in, out string
+	for _, f := range arc.Files {
+		switch f.Name {
+		case "MixedBlockInline.in":
+			in = string(f.Data)
+		case "MixedBlockInline.out":
+			out = string(f.Data)
+		}
+	}
+	if in == "" || out == "" {
+		t.Fatalf("missing input/output files in txtar")
+	}
+
+	root, err := ParseString(in)
+	if err != nil {
+		t.Fatalf("ParseString error: %v", err)
+	}
+	got := ToHTML(root)
+	if strings.TrimSpace(got) != strings.TrimSpace(out) {
+		// Output it properly to generate baseline if needed
+		t.Errorf("got %q want %q", got, out)
+	}
 }

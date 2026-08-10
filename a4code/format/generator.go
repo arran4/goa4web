@@ -103,7 +103,7 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 	_, _ = io.WriteString(w, "[code")
-	if n.IsBlock {
+	if ast.IsBlockNode(n) {
 		_, _ = io.WriteString(w, "\n")
 	} else if len(n.Value) > 0 {
 		first := n.Value[0]

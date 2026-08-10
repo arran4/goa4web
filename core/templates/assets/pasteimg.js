@@ -42,6 +42,41 @@
         const placeholder = '[img uploading:'+id+']';
         const pos = insertAtCaret(e.target, placeholder);
         autoSize(e.target);
+
+        let gallery = e.target.previousElementSibling;
+        if (!gallery || !gallery.classList.contains('image-paste-gallery')) {
+            gallery = document.createElement('div');
+            gallery.className = 'image-paste-gallery';
+            e.target.parentNode.insertBefore(gallery, e.target);
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(re) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'image-paste-gallery-item';
+            itemDiv.id = 'gallery-item-' + id;
+
+            const img = document.createElement('img');
+            img.src = re.target.result;
+            img.className = 'image-paste-thumb';
+
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'image-paste-status';
+            statusDiv.innerText = 'Uploading...';
+
+            const insertBtn = document.createElement('button');
+            insertBtn.className = 'image-paste-insert-btn';
+            insertBtn.innerText = 'click to insert';
+            insertBtn.disabled = true;
+            insertBtn.type = 'button';
+
+            itemDiv.appendChild(img);
+            itemDiv.appendChild(statusDiv);
+            itemDiv.appendChild(insertBtn);
+            gallery.appendChild(itemDiv);
+        };
+        reader.readAsDataURL(file);
+
         const fd = new FormData();
         fd.append('image', file);
         fd.append('id', id);
@@ -63,6 +98,13 @@
             }
         });
         xhr.onload = function(){
+            const galleryItem = document.getElementById('gallery-item-' + id);
+            let statusDiv, insertBtn;
+            if (galleryItem) {
+                statusDiv = galleryItem.querySelector('.image-paste-status');
+                insertBtn = galleryItem.querySelector('.image-paste-insert-btn');
+            }
+
             if(xhr.status >= 200 && xhr.status < 300){
                 const ref = xhr.responseText;
                 const finalText = '[img '+ref+']';
@@ -70,6 +112,18 @@
                 e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, finalText);
                 e.target.setSelectionRange(pos+finalText.length, pos+finalText.length);
                 autoSize(e.target);
+
+                if (statusDiv) {
+                    statusDiv.innerText = ref;
+                }
+                if (insertBtn) {
+                    insertBtn.disabled = false;
+                    insertBtn.onclick = function() {
+                        const curPos = insertAtCaret(e.target, '[img ' + ref + ']');
+                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
+                        autoSize(e.target);
+                    };
+                }
             } else if (xhr.status === 403) {
                 let reason = xhr.responseText;
                 if (reason) {
@@ -84,6 +138,10 @@
                 e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
                 e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
                 autoSize(e.target);
+
+                if (statusDiv) {
+                    statusDiv.innerText = 'Denied';
+                }
             } else {
                 console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);
                 const failedText = '[img upload failed]';
@@ -91,6 +149,10 @@
                 e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
                 e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
                 autoSize(e.target);
+
+                if (statusDiv) {
+                    statusDiv.innerText = 'Failed';
+                }
             }
         };
         xhr.onerror = function(){
@@ -100,6 +162,14 @@
             e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
             e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
             autoSize(e.target);
+
+            const galleryItem = document.getElementById('gallery-item-' + id);
+            if (galleryItem) {
+                const statusDiv = galleryItem.querySelector('.image-paste-status');
+                if (statusDiv) {
+                    statusDiv.innerText = 'Error';
+                }
+            }
         };
         xhr.send(fd);
     }

@@ -75,3 +75,8 @@ func TestHandlerName(t *testing.T) {
     ```
 *   **Mocking:** Use `testhelpers.NewQuerierStub()` for database interaction. Manually update the stub if SQLC generates new methods.
 *   **Sub-tests:** Use `t.Run()` for all distinct test cases. This mimics a `@Before` / `@After` structure where the outer function handles common setup if designed correctly, though explicit setup per `t.Run` is preferred for isolation.
+
+## Admin Maintenance Tasks
+
+* **Preview and Verification:** For all bulk or maintenance admin functionality, a preview of the changes MUST be provided before execution.
+* **Execution Summary:** After executing a bulk or maintenance task, a summary of the actions performed MUST be presented to the user.

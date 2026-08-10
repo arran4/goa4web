@@ -1,0 +1,12 @@
+-- MixedBlockInline.in --
+[quote
+test]
+
+[link test]
+[link test]: [quote test]
+-- MixedBlockInline.out --
+<blockquote class="a4code-block a4code-quote quote-color-0" data-start-pos="0" data-end-pos="4"><div class="quote-body"><span data-start-pos="0" data-end-pos="4">test</span></div></blockquote><span data-start-pos="4" data-end-pos="6"><br />
+<br />
+</span><span data-start-pos="6" data-end-pos="6">test</span><span data-start-pos="6" data-end-pos="7"><br />
+</span><span data-start-pos="7" data-end-pos="7">test</span><span data-start-pos="7" data-end-pos="9">: </span><q class="a4code-inline a4code-quote" data-start-pos="9" data-end-pos="13"><span data-start-pos="9" data-end-pos="13">test</span></q><span data-start-pos="13" data-end-pos="14"><br />
+</span>

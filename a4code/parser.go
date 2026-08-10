@@ -84,103 +84,6 @@ func (s *scanner) PeekNextNonHorizontalWhitespace() (byte, error) {
 	}
 }
 
-func isBlockContext(n ast.Node) bool {
-	if _, ok := n.(*ast.Root); ok {
-		return true
-	}
-	// Check specific types that have IsBlock field
-	// Actually, the AST nodes embed BaseNode, but the interface ast.Node doesn't expose it directly except via getter?
-	// But we are casting to specific types usually.
-	// Let's use type switch and access the field.
-	switch t := n.(type) {
-	case *ast.Quote:
-		return t.IsBlock
-	case *ast.QuoteOf:
-		return t.IsBlock // Always true
-	case *ast.Spoiler:
-		return t.IsBlock
-	case *ast.Indent:
-		return t.IsBlock // Always true
-	case *ast.Link:
-		return t.IsBlock
-	case *ast.Code:
-		return t.IsBlock
-	}
-	return false
-}
-
-func startsWithLineBreakAfterHorizontalWhitespace(value string) bool {
-	value = strings.TrimLeft(value, " \t")
-	return strings.HasPrefix(value, "\n") || strings.HasPrefix(value, "\r")
-}
-
-func updateBlockStatus(children []ast.Node, newChild ast.Node, isContextBlock bool) {
-	if len(children) > 0 {
-		prev := children[len(children)-1]
-		if l, ok := prev.(*ast.Link); ok && l.IsBlock {
-			// Check if newChild starts with newline or is a block element
-			startsNewline := false
-
-			if isBlockContext(newChild) {
-				startsNewline = true
-			} else if txt, ok := newChild.(*ast.Text); ok {
-				if startsWithLineBreakAfterHorizontalWhitespace(txt.Value) {
-					startsNewline = true
-				}
-			}
-
-			if !startsNewline {
-				l.IsBlock = false
-			}
-		}
-	}
-
-	if isContextBlock {
-		if l, ok := newChild.(*ast.Link); ok {
-			// Check previous sibling, skipping whitespace
-			prevIsNewline := false
-
-			// Start checking from the last child
-			idx := len(children) - 1
-			for idx >= 0 {
-				lastChild := children[idx]
-
-				if isBlockContext(lastChild) {
-					prevIsNewline = true
-					break
-				} else if txt, ok := lastChild.(*ast.Text); ok {
-					if strings.HasSuffix(txt.Value, "\n") {
-						prevIsNewline = true
-						break
-					}
-					if strings.TrimSpace(txt.Value) != "" {
-						// Found non-whitespace text that doesn't end in newline
-						prevIsNewline = false
-						break
-					}
-					// If strictly whitespace, continue looking back
-				} else {
-					// Other inline element (e.g. bold, italic, image)
-					prevIsNewline = false
-					break
-				}
-				idx--
-			}
-
-			// If we exhausted children without finding content (or children was empty), it's start of block
-			if idx < 0 {
-				prevIsNewline = true
-			}
-
-			if prevIsNewline {
-				l.IsBlock = true
-			} else {
-				l.IsBlock = false
-			}
-		}
-	}
-}
-
 func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 	br := bufio.NewReader(r)
 	s := &scanner{r: br, pos: 0}
@@ -210,8 +113,6 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 		buf.Reset()
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := p.GetChildren()
-			updateBlockStatus(children, t, isBlockContext(p.(ast.Node)))
 			p.AddChild(t)
 		}
 		return yield(t, len(stack)+1)
@@ -235,8 +136,6 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 
 					if len(stack) > 0 {
 						p := stack[len(stack)-1]
-						children := p.GetChildren()
-						updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 						p.AddChild(n)
 					}
 					if !yield(n, len(stack)+1) {
@@ -273,28 +172,10 @@ func streamImpl(r io.Reader, yield func(ast.Node, int) bool) {
 					start, _ := nNode.GetPos()
 					nNode.SetPos(start, visiblePos)
 
-					// Determine IsBlock for closed node (Quote, etc)
-					switch t := nNode.(type) {
-					case *ast.Quote:
-						if t.IsBlock {
-							next, err := s.PeekNextNonHorizontalWhitespace()
-							if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
-								// Kept as block
-							} else {
-								t.IsBlock = false
-							}
-						}
-					case *ast.QuoteOf:
-						t.IsBlock = true
-					case *ast.Indent:
-						t.IsBlock = true
-					}
 				}
 
 				if len(stack) > 0 {
 					p := stack[len(stack)-1]
-					children := p.GetChildren()
-					updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 					p.AddChild(n)
 				}
 				if !yield(n, len(stack)+1) {
@@ -339,7 +220,7 @@ func Parse(r io.Reader) (*ast.Root, error) {
 
 	for n := range Stream(r, WithDepth(1)) {
 		// Update block status for Root children
-		updateBlockStatus(nodes, n, true) // Root is always block context
+		n.SetParent(root)
 		nodes = append(nodes, n)
 	}
 
@@ -365,7 +246,6 @@ func ParseString(s string) (*ast.Root, error) {
 func ParseNodesReader(r io.Reader) ([]ast.Node, error) {
 	var nodes []ast.Node
 	for n := range Stream(r, WithDepth(1)) {
-		updateBlockStatus(nodes, n, true) // Treat as root context for block logic
 		nodes = append(nodes, n)
 	}
 	return nodes, nil
@@ -391,28 +271,7 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		skipArgPrefix(s)      // Consume any whitespace separator between tag and content
 		n.SetPos(startPos, 0) // End will be set when popped
 
-		parentIsBlock := true
-		if len(stack) > 0 {
-			parentIsBlock = isBlockContext(stack[len(stack)-1].(ast.Node))
-		}
-
 		// Determine initial IsBlock status
-		isBlockStart := (lastChar == '\n' || lastChar == '\r' || startPos == 0) && parentIsBlock
-
-		// Set IsBlock on the node if possible
-		switch t := n.(type) {
-		case *ast.Quote:
-			t.IsBlock = isBlockStart
-		case *ast.QuoteOf:
-			t.IsBlock = true // QuoteOf is always block
-		case *ast.Link:
-			t.IsBlock = isBlockStart
-		case *ast.Indent:
-			t.IsBlock = true
-		case *ast.Spoiler:
-			// Spoiler usually inline?
-			t.IsBlock = false
-		}
 
 		stack = append(stack, n)
 	}
@@ -444,8 +303,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		visiblePos++
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := p.GetChildren()
-			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}
 		yield(n, depth)
@@ -483,21 +340,11 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n.SetPos(startPos, innerEnd) // Code node includes content
 
 		// Determine IsBlock for Code
-		isBlockStart := lastChar == '\n' || lastChar == '\r' || startPos == 0
-		isBlockEnd := false
-		next, err := s.Peek()
-		if err == io.EOF || (err == nil && (next == '\n' || next == '\r')) {
-			isBlockEnd = true
-		}
-
-		n.IsBlock = isBlockStart && isBlockEnd
 
 		visiblePos += contentLen
 
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := p.GetChildren()
-			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}
 		yield(n, depth)
@@ -529,8 +376,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := p.GetChildren()
-			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}
 		yield(n, depth)
@@ -547,7 +392,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 	case "spoiler", "sp":
 		n := &ast.Spoiler{}
 		createNode(n)
-		n.IsBlock = lastChar == '\n' || lastChar == '\r' || startPos == 0
 	case "indent":
 		createNode(&ast.Indent{})
 	case "hr":
@@ -560,8 +404,6 @@ func parseCommand(s *scanner, stack []ast.Container, depth int, yield func(ast.N
 		n.SetPos(startPos, visiblePos)
 		if len(stack) > 0 {
 			p := stack[len(stack)-1]
-			children := p.GetChildren()
-			updateBlockStatus(children, n, isBlockContext(p.(ast.Node)))
 			p.AddChild(n)
 		}
 		yield(n, depth)

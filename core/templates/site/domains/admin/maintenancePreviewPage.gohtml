@@ -1,7 +1,7 @@
 {{ template "head" $ }}
-<h1>Maintenance Task Preview</h1>
+<h1>Maintenance Task {{ if .IsPreview }}Preview{{ else }}Summary{{ end }}</h1>
 <div style="margin-bottom: 20px;">
-    <p>Preview completed. The following topics would be merged:</p>
+    <p>{{ if .IsPreview }}Preview{{ else }}Merge{{ end }} completed. The following topics {{ if .IsPreview }}would be{{ else }}were{{ end }} merged:</p>
 </div>
 
 {{ if .Groups }}
@@ -16,6 +16,15 @@
 	</ul>
 {{ else }}
 	<p>No topics found to merge.</p>
+{{ end }}
+
+{{ if .IsPreview }}
+<br>
+<form method="post" action="/admin/maintenance" class="inline-form" style="margin-bottom: 20px;">
+  <input type="hidden" name="task" value="{{ .TaskName }}">
+  <input type="hidden" name="preview" value="false">
+  <input type="submit" value="Execute Merge Private Forums With Same Participants">
+</form>
 {{ end }}
 
 <br>

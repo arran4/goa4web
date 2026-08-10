@@ -1,0 +1,45 @@
+{{ template "head" $ }}
+<h1>Private Forum Consistency Check Task {{ if .IsPreview }}Preview{{ else }}Summary{{ end }}</h1>
+<div style="margin-bottom: 20px;">
+    <p>{{ if .IsPreview }}Preview{{ else }}Fix{{ end }} completed. The following inconsistencies {{ if .IsPreview }}were found{{ else }}were addressed{{ end }}:</p>
+</div>
+
+{{ if .IsPreview }}
+<form method="post" action="/admin/maintenance" class="inline-form" style="margin-bottom: 20px;">
+  <input type="hidden" name="task" value="{{ .TaskName }}">
+  <input type="hidden" name="preview" value="false">
+{{ end }}
+
+{{ if .Inconsistencies }}
+	<ul>
+	{{ range .Inconsistencies }}
+		<li>
+			{{ if $.IsPreview }}
+			<input type="checkbox" name="fix_id" value="{{ .ID }}" checked>
+			{{ end }}
+			<strong>Grant ID:</strong> {{ .GrantID }}<br>
+			<strong>Section:</strong> {{ .Section }}<br>
+			<strong>Item:</strong> {{ .Item }}<br>
+			<strong>Action:</strong> {{ .Action }}<br>
+			<strong>ItemID:</strong> {{ .ItemID }}<br>
+			<strong>RoleName:</strong> {{ .RoleName }}<br>
+			<strong>UserID:</strong> {{ .UserID }}<br>
+			<strong>Username:</strong> {{ .Username }}<br>
+			<strong>Issue:</strong> {{ .Issue }}<br>
+			<strong>Fix:</strong> {{ .FixAction }}
+		</li>
+	{{ end }}
+	</ul>
+{{ else }}
+	<p>No inconsistencies found.</p>
+{{ end }}
+
+{{ if .IsPreview }}
+<br>
+  <input type="submit" value="Execute Fixes">
+</form>
+{{ end }}
+
+<br>
+<a href="/admin/maintenance">Back to Maintenance</a>
+{{ template "tail" $ }}

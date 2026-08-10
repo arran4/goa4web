@@ -150,3 +150,22 @@ WHERE forumtopic_idforumtopic = ?;
 UPDATE grants
 SET item_id = ?
 WHERE section = 'privateforum' AND item = 'topic' AND item_id = ?;
+
+-- name: AdminListAllPrivateForumGrants :many
+SELECT
+    g.id,
+    g.section,
+    g.item,
+    g.action,
+    g.item_id,
+    r.name AS role_name,
+    u.idusers AS user_id,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section IN ('privateforum', 'privateforum_thread');

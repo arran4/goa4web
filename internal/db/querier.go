@@ -144,6 +144,7 @@ type Querier interface {
 	AdminListAdministratorEmails(ctx context.Context) ([]string, error)
 	AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error)
 	AdminListAllImagePosts(ctx context.Context, arg AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error)
+	AdminListAllPrivateForumGrants(ctx context.Context) ([]*AdminListAllPrivateForumGrantsRow, error)
 	AdminListAllPrivateForumThreads(ctx context.Context) ([]*AdminListAllPrivateForumThreadsRow, error)
 	AdminListAllPrivateTopics(ctx context.Context) ([]*AdminListAllPrivateTopicsRow, error)
 	AdminListAllUploadedImages(ctx context.Context) ([]*AdminListAllUploadedImagesRow, error)

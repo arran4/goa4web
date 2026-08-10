@@ -30,6 +30,69 @@ func (q *Queries) AdminGetSubsequentCommentID(ctx context.Context, arg AdminGetS
 	return idcomments, err
 }
 
+const adminListAllPrivateForumGrants = `-- name: AdminListAllPrivateForumGrants :many
+SELECT
+    g.id,
+    g.section,
+    g.item,
+    g.action,
+    g.item_id,
+    r.name AS role_name,
+    u.idusers AS user_id,
+    u.username
+FROM
+    grants g
+LEFT JOIN
+    roles r ON g.role_id = r.id
+LEFT JOIN
+    users u ON g.user_id = u.idusers
+WHERE
+    g.section IN ('privateforum', 'privateforum_thread')
+`
+
+type AdminListAllPrivateForumGrantsRow struct {
+	ID       int32
+	Section  string
+	Item     sql.NullString
+	Action   string
+	ItemID   sql.NullInt32
+	RoleName sql.NullString
+	UserID   sql.NullInt32
+	Username sql.NullString
+}
+
+func (q *Queries) AdminListAllPrivateForumGrants(ctx context.Context) ([]*AdminListAllPrivateForumGrantsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAllPrivateForumGrants)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*AdminListAllPrivateForumGrantsRow
+	for rows.Next() {
+		var i AdminListAllPrivateForumGrantsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Section,
+			&i.Item,
+			&i.Action,
+			&i.ItemID,
+			&i.RoleName,
+			&i.UserID,
+			&i.Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListAllPrivateForumThreads = `-- name: AdminListAllPrivateForumThreads :many
 SELECT
     t.idforumthread,

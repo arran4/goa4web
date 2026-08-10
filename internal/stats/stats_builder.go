@@ -53,7 +53,11 @@ func BuildServerStatsData(cfg *config.RuntimeConfig, configFile string, tasksReg
 			ext := config.ExtendedUsageMap(dbReg)
 			ex := config.ExamplesMap()
 			keys := make([]string, 0, len(envMap))
-			for k := range envMap {
+			for k, v := range envMap {
+				kUpper := strings.ToUpper(k)
+				if (strings.Contains(kUpper, "SECRET") || strings.Contains(kUpper, "PASS") || strings.Contains(kUpper, "KEY")) && v != "" {
+					envMap[k] = "<redacted>"
+				}
 				keys = append(keys, k)
 			}
 			sort.Strings(keys)

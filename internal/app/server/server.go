@@ -427,8 +427,13 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 		modules = srv.RouterReg.Names()
 	}
 	data := stats.BuildServerStatsData(srv.Config, srv.ConfigFile, srv.TasksReg, srv.DBReg, srv.DLQReg, srv.EmailReg, modules)
-	if b, err := json.Marshal(data); err == nil {
-		log.Printf("Server stats: %s", string(b))
+
+	logData := data
+	logData.ConfigEnv = ""
+	logData.ConfigJSON = ""
+	logData.ConfigValues = nil
+	if b, err := json.MarshalIndent(logData, "", "  "); err == nil {
+		log.Printf("Server stats:\n%s", string(b))
 	} else {
 		log.Printf("Server stats error: %v", err)
 	}
@@ -441,8 +446,8 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), usageTimeout)
 		defer cancel()
 		usageData := stats.BuildUsageStatsData(ctx, queries, customQueries, srv.Config.StatsStartYear)
-		if b, err := json.Marshal(usageData); err == nil {
-			log.Printf("Usage stats: %s", string(b))
+		if b, err := json.MarshalIndent(usageData, "", "  "); err == nil {
+			log.Printf("Usage stats:\n%s", string(b))
 		} else {
 			log.Printf("Usage stats error: %v", err)
 		}

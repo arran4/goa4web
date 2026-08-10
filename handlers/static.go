@@ -10,124 +10,53 @@ import (
 	"github.com/arran4/goa4web/core/templates"
 )
 
-// MainCSS serves the site's stylesheet.
-func MainCSS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+// StaticAssetHandler returns a function that generates an http.HandlerFunc for the given asset.
+func StaticAssetHandler(filename, contentType string, getter func(opts ...templates.Option) []byte) func(cfg *config.RuntimeConfig) http.HandlerFunc {
+	return func(cfg *config.RuntimeConfig) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			var opts []templates.Option
+			if cfg != nil && cfg.TemplatesDir != "" {
+				opts = append(opts, templates.WithDir(cfg.TemplatesDir))
+			}
+			if contentType != "" {
+				w.Header().Set("Content-Type", contentType)
+			}
+			http.ServeContent(w, r, filename, time.Time{}, bytes.NewReader(getter(opts...)))
 		}
-		http.ServeContent(w, r, "main.css", time.Time{}, bytes.NewReader(templates.GetMainCSSData(opts...)))
 	}
 }
 
-// Favicon serves the site's favicon image.
-func Favicon(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "image/svg+xml")
-		http.ServeContent(w, r, "favicon.svg", time.Time{}, bytes.NewReader(templates.GetFaviconData(opts...)))
-	}
-}
+var (
+	// MainCSS serves the site's stylesheet.
+	MainCSS = StaticAssetHandler("main.css", "", templates.GetMainCSSData)
 
-// PasteImageJS serves the JavaScript enabling clipboard image pasting.
-func PasteImageJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "pasteimg.js", time.Time{}, bytes.NewReader(templates.GetPasteImageJSData(opts...)))
-	}
-}
+	// Favicon serves the site's favicon image.
+	Favicon = StaticAssetHandler("favicon.svg", "image/svg+xml", templates.GetFaviconData)
 
-// RoleGrantsEditorJS serves the JavaScript for the role grants editor.
-func RoleGrantsEditorJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "role_grants_editor.js", time.Time{}, bytes.NewReader(templates.GetRoleGrantsEditorJSData(opts...)))
-	}
-}
+	// PasteImageJS serves the JavaScript enabling clipboard image pasting.
+	PasteImageJS = StaticAssetHandler("pasteimg.js", "application/javascript", templates.GetPasteImageJSData)
 
-// GrantAddJS serves the JavaScript for the admin grant add page.
-func GrantAddJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "grant_add.js", time.Time{}, bytes.NewReader(templates.GetGrantAddJSData(opts...)))
-	}
-}
+	// RoleGrantsEditorJS serves the JavaScript for the role grants editor.
+	RoleGrantsEditorJS = StaticAssetHandler("role_grants_editor.js", "application/javascript", templates.GetRoleGrantsEditorJSData)
 
-// PrivateForumJS serves the JavaScript for the private forum pages.
-func PrivateForumJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "private_forum.js", time.Time{}, bytes.NewReader(templates.GetPrivateForumJSData(opts...)))
-	}
-}
+	// GrantAddJS serves the JavaScript for the admin grant add page.
+	GrantAddJS = StaticAssetHandler("grant_add.js", "application/javascript", templates.GetGrantAddJSData)
 
-// TopicLabelsJS serves the JavaScript for topic label editing.
-func TopicLabelsJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "topic_labels.js", time.Time{}, bytes.NewReader(templates.GetTopicLabelsJSData(opts...)))
-	}
-}
+	// PrivateForumJS serves the JavaScript for the private forum pages.
+	PrivateForumJS = StaticAssetHandler("private_forum.js", "application/javascript", templates.GetPrivateForumJSData)
 
-// SiteJS serves the main site JavaScript.
-func SiteJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "site.js", time.Time{}, bytes.NewReader(templates.GetSiteJSData(opts...)))
-	}
-}
+	// TopicLabelsJS serves the JavaScript for topic label editing.
+	TopicLabelsJS = StaticAssetHandler("topic_labels.js", "application/javascript", templates.GetTopicLabelsJSData)
 
-// A4CodeJS serves the A4Code parser/converter JavaScript.
-func A4CodeJS(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeContent(w, r, "a4code.js", time.Time{}, bytes.NewReader(templates.GetA4CodeJSData(opts...)))
-	}
-}
+	// SiteJS serves the main site JavaScript.
+	SiteJS = StaticAssetHandler("site.js", "application/javascript", templates.GetSiteJSData)
 
-// RobotsTXT serves the robots.txt file.
-func RobotsTXT(cfg *config.RuntimeConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var opts []templates.Option
-		if cfg != nil && cfg.TemplatesDir != "" {
-			opts = append(opts, templates.WithDir(cfg.TemplatesDir))
-		}
-		w.Header().Set("Content-Type", "text/plain")
-		http.ServeContent(w, r, "robots.txt", time.Time{}, bytes.NewReader(templates.GetRobotsTXTData(opts...)))
-	}
-}
+	// A4CodeJS serves the A4Code parser/converter JavaScript.
+	A4CodeJS = StaticAssetHandler("a4code.js", "application/javascript", templates.GetA4CodeJSData)
+
+	// RobotsTXT serves the robots.txt file.
+	RobotsTXT = StaticAssetHandler("robots.txt", "text/plain", templates.GetRobotsTXTData)
+)
 
 // RedirectPermanent returns a handler that redirects to the provided path using StatusPermanentRedirect.
 func RedirectPermanent(to string) http.HandlerFunc {

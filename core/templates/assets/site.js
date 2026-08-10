@@ -128,6 +128,46 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     setupKeyboardShortcuts();
+
+    let lastQuoteState = { comment: null, hidden: false };
+
+    document.addEventListener('selectionchange', function() {
+        const selection = window.getSelection();
+
+        let currentComment = null;
+        let hideAll = false;
+
+        if (!selection.isCollapsed && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            let commonAncestor = range.commonAncestorContainer;
+            if (commonAncestor.nodeType === 3) {
+                commonAncestor = commonAncestor.parentNode;
+            }
+
+            currentComment = commonAncestor.closest('.comment');
+            if (!currentComment || !currentComment.contains(range.startContainer) || !currentComment.contains(range.endContainer)) {
+                currentComment = null;
+                hideAll = true;
+            }
+        }
+
+        if (lastQuoteState.comment !== currentComment || lastQuoteState.hidden !== hideAll) {
+            document.querySelectorAll('.quote-actions').forEach(el => el.style.display = '');
+            document.querySelectorAll('.quote-action-full-para').forEach(el => el.style.display = '');
+            document.querySelectorAll('.quote-action-selected').forEach(el => el.style.display = 'none');
+
+            if (hideAll) {
+                document.querySelectorAll('.quote-actions').forEach(el => el.style.display = 'none');
+            } else if (currentComment) {
+                const actions = currentComment.querySelector('.quote-actions');
+                if (actions) {
+                    actions.querySelector('.quote-action-full-para').style.display = 'none';
+                    actions.querySelector('.quote-action-selected').style.display = '';
+                }
+            }
+            lastQuoteState = { comment: currentComment, hidden: hideAll };
+        }
+    });
 });
 
 function insertA4CodeTag(targetId, tag) {

@@ -150,11 +150,7 @@ func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
 func TestUnhappyPathBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
 	req = mux.SetURLVars(req, map[string]string{"blog": "1"})
-	q := testhelpers.NewQuerierStub()
-	q.GetBlogEntryForListerByIDRow = &db.GetBlogEntryForListerByIDRow{
-		Idblogs: 1,
-	}
-	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()

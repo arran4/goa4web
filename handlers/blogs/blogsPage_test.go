@@ -149,11 +149,16 @@ func TestUnhappyPathBlogsBlogAddPage_Unauthorized(t *testing.T) {
 
 func TestUnhappyPathBlogsBlogEditPage_Unauthorized(t *testing.T) {
 	req := httptest.NewRequest("GET", "/blogs/1/edit", nil)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	req = mux.SetURLVars(req, map[string]string{"blog": "1"})
+	q := testhelpers.NewQuerierStub()
+	q.GetBlogEntryForListerByIDRow = &db.GetBlogEntryForListerByIDRow{
+		Idblogs: 1,
+	}
+	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
-	BlogEditPage(rr, req)
+	RequireBlogAuthor(http.HandlerFunc(BlogEditPage)).ServeHTTP(rr, req)
 	if rr.Result().StatusCode != http.StatusForbidden {
 		t.Fatalf("expected %d got %d", http.StatusForbidden, rr.Result().StatusCode)
 	}

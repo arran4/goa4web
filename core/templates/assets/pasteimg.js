@@ -66,7 +66,7 @@
 
             const insertBtn = document.createElement('button');
             insertBtn.className = 'image-paste-insert-btn';
-            insertBtn.innerText = 'Insert';
+            insertBtn.innerText = 'click to insert';
             insertBtn.disabled = true;
             insertBtn.type = 'button';
 

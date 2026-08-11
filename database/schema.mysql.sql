@@ -439,9 +439,11 @@ CREATE TABLE IF NOT EXISTS `api_keys` (
 );
 
 -- Track schema upgrades.
-CREATE TABLE IF NOT EXISTS `schema_version` (
-  `version` int NOT NULL,
-  `id` tinyint(1) NOT NULL DEFAULT 1,
+CREATE TABLE IF NOT EXISTS `goose_db_version` (
+  `id` serial NOT NULL,
+  `version_id` bigint NOT NULL,
+  `is_applied` boolean NOT NULL,
+  `tstamp` timestamp NULL default now(),
   PRIMARY KEY (`id`)
 );
 
@@ -811,5 +813,4 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `schema_version` (`version`) VALUES (89)
-ON DUPLICATE KEY UPDATE version = VALUES(version);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (89, 1);

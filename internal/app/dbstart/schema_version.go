@@ -3,9 +3,15 @@ package dbstart
 import (
 	"context"
 	"database/sql"
+
+	"github.com/pressly/goose/v3"
 )
 
 // SchemaVersion returns the current schema version from the database.
 func SchemaVersion(ctx context.Context, db *sql.DB) (int, error) {
-	return ensureVersionTable(ctx, db)
+	if err := goose.SetDialect("mysql"); err != nil {
+		return 0, err
+	}
+	version, err := goose.GetDBVersion(db)
+	return int(version), err
 }

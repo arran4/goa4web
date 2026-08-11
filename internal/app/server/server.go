@@ -219,13 +219,11 @@ func New(opts ...Option) *Server {
 			rpID = u.Hostname()
 		}
 		wconfig := &webauthn.Config{
-			RPDisplayName: "",
+			RPDisplayName: "goa4web",
 			RPID:          rpID,
 			RPOrigins:     []string{s.Config.BaseURL},
 		}
-		if "" == "" {
-			wconfig.RPDisplayName = "goa4web"
-		}
+
 		wa, err := webauthn.New(wconfig)
 		if err == nil {
 			s.WebAuthn = wa

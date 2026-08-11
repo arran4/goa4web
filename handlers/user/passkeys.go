@@ -38,12 +38,9 @@ func passkeysBeginRegistration(w http.ResponseWriter, r *http.Request) {
 
 	sess := cd.GetSession()
 	sess.Values["webauthn_reg_session"] = sessionData
-	if err := sess.Save(r, w); err != nil {
-		http.Error(w, "Failed to save session", http.StatusInternalServerError)
-		return
-	}
+	if err := sess.Save(r, w); err != nil { log.Printf("Failed to save session: %v", err); http.Error(w, "Failed to save session", http.StatusInternalServerError); return }
 
-	json.NewEncoder(w).Encode(options)
+	if err := json.NewEncoder(w).Encode(options); err != nil { log.Printf("Failed to encode JSON: %v", err) }
 }
 
 func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
@@ -95,9 +92,9 @@ func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delete(sess.Values, "webauthn_reg_session")
-	sess.Save(r, w)
+	if err := sess.Save(r, w); err != nil { log.Printf("Failed to save session: %v", err) }
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil { log.Printf("Failed to encode JSON: %v", err) }
 }
 
 func passkeysDelete(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +107,7 @@ func passkeysDelete(w http.ResponseWriter, r *http.Request) {
 	// For simplicity, just convert to int or assume it's the ID.
 	// Wait, let's implement the DB delete passing id as int32
 	var id int32
-	fmt.Sscanf(idStr, "%d", &id)
+	if _, err := fmt.Sscanf(idStr, "%d", &id); err != nil { log.Printf("Failed to parse id: %v", err) }
 	err := cd.Queries().DeletePasskey(r.Context(), db.DeletePasskeyParams{
 		ID:     id,
 		UserID: cd.UserID,
@@ -131,9 +128,6 @@ func passkeysPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd.PageTitle = "Manage Passkeys"
-	type Data struct {
-		Passkeys []common.WebAuthnUser
-	}
 	if err := cd.ExecuteSiteTemplate(w, r, "domains/user/passkeys.gohtml", user); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 	}

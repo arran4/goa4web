@@ -44,7 +44,9 @@ func loginPasskeyBegin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(options)
+	if err := json.NewEncoder(w).Encode(options); err != nil {
+		log.Printf("Failed to encode JSON: %v", err)
+	}
 }
 
 func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
@@ -116,5 +118,7 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
+		log.Printf("Failed to encode JSON: %v", err)
+	}
 }

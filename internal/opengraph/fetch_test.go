@@ -1,6 +1,7 @@
 package opengraph
 
 import (
+	"time"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -348,5 +349,18 @@ func TestParse(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNewSafeClient(t *testing.T) {
+	client := NewSafeClient()
+	if client == nil {
+		t.Fatal("Expected non-nil client")
+	}
+	if client.Timeout != 2*time.Second {
+		t.Errorf("Expected Timeout of 2s, got %v", client.Timeout)
+	}
+	if client.CheckRedirect == nil {
+		t.Error("Expected CheckRedirect to be set")
 	}
 }

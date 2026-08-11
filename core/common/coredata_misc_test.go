@@ -42,7 +42,7 @@ func TestCreatePrivateTopicUsesProvidedUsernames(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(topicID, 1))
 
 	for _, uid := range []int32{1, 2} {
-		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
+		for _, act := range []string{"see", "view", "post", "reply"} {
 			mock.ExpectExec("INSERT INTO grants").
 				WithArgs(
 					sql.NullInt32{Int32: uid, Valid: true},
@@ -117,7 +117,7 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 		).WillReturnResult(sqlmock.NewResult(topicID, 1))
 
 	for _, uid := range []int32{1, 2} {
-		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
+		for _, act := range []string{"see", "view", "post", "reply"} {
 			mock.ExpectExec("INSERT INTO grants").
 				WithArgs(
 					sql.NullInt32{Int32: uid, Valid: true},

@@ -78,7 +78,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 	topicID = int32(tid)
 	for _, participant := range p.Participants {
 		uid := participant.ID
-		for _, act := range []string{"see", "view", "post", "reply", "edit"} {
+		for _, act := range []string{"see", "view", "post", "reply"} {
 			if _, err := cd.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
 				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}

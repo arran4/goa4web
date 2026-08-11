@@ -16,7 +16,7 @@ import (
 
 func userAppearancePage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.PageTitle = "Appearance Settings"
+	cd.PageTitle = "Appearance & Thumbnail Settings"
 
 	pref, err := cd.Preference()
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -121,7 +121,7 @@ func (AppearanceSaveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd.SetCurrentNotice("Appearance settings updated")
 
 	// Render directly with the new value to ensure it is displayed even if pref was not cached
-	cd.PageTitle = "Appearance Settings"
+	cd.PageTitle = "Appearance & Thumbnail Settings"
 	data := struct {
 		CustomCSS      string
 		SafeDimensions []string

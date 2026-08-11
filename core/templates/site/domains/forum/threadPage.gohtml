@@ -7,6 +7,7 @@
     {{ template "threadComments" }}
     {{ template "forumReply" $ }}
 
+    <div id="gallery-target"></div>
     <div class="label-editor">
         <form method="post" action="{{$base}}/thread/{{.Thread.Idforumthread}}/labels" id="label-form">
             {{ csrfField }}

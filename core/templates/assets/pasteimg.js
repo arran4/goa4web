@@ -71,11 +71,26 @@
         const pos = insertAtCaret(e.target, placeholder);
         autoSize(e.target);
 
-        let gallery = e.target.previousElementSibling;
-        if (!gallery || !gallery.classList.contains('image-paste-gallery')) {
-            gallery = document.createElement('div');
-            gallery.className = 'image-paste-gallery';
-            e.target.parentNode.insertBefore(gallery, e.target);
+        let galleryTarget = null;
+        if (e.target.dataset.galleryTarget) {
+            galleryTarget = document.querySelector(e.target.dataset.galleryTarget);
+        }
+
+        let gallery = null;
+        if (galleryTarget) {
+            gallery = galleryTarget.querySelector('.image-paste-gallery');
+            if (!gallery) {
+                gallery = document.createElement('div');
+                gallery.className = 'image-paste-gallery';
+                galleryTarget.appendChild(gallery);
+            }
+        } else {
+            gallery = e.target.previousElementSibling;
+            if (!gallery || !gallery.classList.contains('image-paste-gallery')) {
+                gallery = document.createElement('div');
+                gallery.className = 'image-paste-gallery';
+                e.target.parentNode.insertBefore(gallery, e.target);
+            }
         }
 
         const reader = new FileReader();

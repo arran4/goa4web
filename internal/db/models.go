@@ -311,6 +311,13 @@ type Forumtopic struct {
 	DeletedAt                    sql.NullTime
 }
 
+type GooseDbVersion struct {
+	ID        uint64
+	VersionID int64
+	IsApplied bool
+	Tstamp    sql.NullTime
+}
+
 type Grant struct {
 	ID        int32
 	CreatedAt sql.NullTime
@@ -512,11 +519,6 @@ type SchedulerState struct {
 	TaskName  string
 	LastRunAt sql.NullTime
 	Metadata  sql.NullString
-}
-
-type SchemaVersion struct {
-	Version int32
-	ID      bool
 }
 
 type Searchwordlist struct {

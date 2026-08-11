@@ -294,7 +294,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			return fmt.Errorf("listing private topic participants: %w", err)
 		}
 		for _, p := range participants {
-			for _, permission := range []string{"view", "see", "reply"} {
+			for _, permission := range []string{"see", "view", "post", "reply"} {
 				if _, err = cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, permission); err != nil {
 					return fmt.Errorf("granting %s thread access to %d: %w", permission, p.Idusers, err)
 				}

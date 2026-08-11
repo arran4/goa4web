@@ -88,6 +88,24 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 			continue
 		}
 
+		// Rule 2.5: Clean up legacy 'edit' topic grants
+		if grant.Section == "privateforum" && grant.Item.String == "topic" && grant.Action == "edit" {
+			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
+				ID:        fmt.Sprintf("delete-%d", grant.ID),
+				GrantID:   grant.ID,
+				Section:   grant.Section,
+				Item:      grant.Item.String,
+				Action:    grant.Action,
+				ItemID:    grant.ItemID.Int32,
+				RoleName:  roleName,
+				UserID:    userID,
+				Username:  username,
+				Issue:     "Legacy 'edit' action on topic no longer supported",
+				FixAction: "Delete grant",
+			})
+			continue
+		}
+
 		// Track user access
 		if grant.UserID.Valid {
 			if grant.Section == "privateforum" && grant.Item.String == "topic" {
@@ -134,7 +152,8 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		topicID, exists := threadToTopic[threadID]
 
 		// Check if user has thread access but NO topic access for the same action
-		if exists && !userTopicAccess[userID][topicID][grant.Action] {
+		// Also clean up any legacy 'edit' thread grants even if they have the topic grant
+		if exists && (!userTopicAccess[userID][topicID][grant.Action] || grant.Action == "edit") {
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,

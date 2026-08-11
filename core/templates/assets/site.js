@@ -187,6 +187,26 @@ function insertA4CodeTag(targetId, tag) {
         replacement = `[b ${selectedText}]`;
     } else if (tag === 'i') {
         replacement = `[i ${selectedText}]`;
+    } else if (tag === 'prefetch') {
+        const url = prompt("Enter URL to prefetch:", selectedText || "https://");
+        if (url) {
+            const formData = new URLSearchParams();
+            formData.append('url', url);
+            fetch('/goto/prefetch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            }).then(r => {
+                if(r.ok) {
+                    console.log('Prefetch initiated');
+                }
+            });
+            replacement = `[a ${url} ${selectedText || url}]`;
+        } else {
+            return; // Cancelled
+        }
     } else if (tag === 'a') {
         const url = prompt("Enter URL:", "https://");
         if (url) {

@@ -69,7 +69,7 @@ func TestNewServer_Success(t *testing.T) {
 	querier := &mockQuerier{}
 
 	// Create directory before running since app.NewServer might try to create it.
-	os.MkdirAll(cfg.ImageUploadDir, 0755)
+	_ = os.MkdirAll(cfg.ImageUploadDir, 0755)
 
 	srv, err := NewServer(context.Background(), cfg, nil,
 		WithQuerier(querier),

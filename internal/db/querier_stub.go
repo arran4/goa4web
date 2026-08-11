@@ -3278,3 +3278,23 @@ func (q *QuerierStub) RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams) 
 	}
 	return nil
 }
+
+func (q *QuerierStub) InsertPasskey(ctx context.Context, arg InsertPasskeyParams) error {
+	return nil
+}
+
+func (q *QuerierStub) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error) {
+	return nil, nil
+}
+
+func (q *QuerierStub) GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error) {
+	return nil, nil
+}
+
+func (q *QuerierStub) UpdatePasskeySignCount(ctx context.Context, arg UpdatePasskeySignCountParams) error {
+	return nil
+}
+
+func (q *QuerierStub) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error {
+	return nil
+}

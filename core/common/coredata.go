@@ -1,6 +1,8 @@
 package common
 
 import (
+	"github.com/go-webauthn/webauthn/webauthn"
+
 	"bytes"
 	"context"
 	"database/sql"
@@ -184,6 +186,8 @@ type CoreData struct {
 	routerModules map[string]struct{}
 
 	languageCache *LanguageCache
+
+	WebAuthn *webauthn.WebAuthn
 
 	httpClient *http.Client
 
@@ -2839,6 +2843,11 @@ func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 // WithSiteTitle sets the site title used by templates.
 func WithSiteTitle(title string) CoreOption {
 	return func(cd *CoreData) { cd.SiteTitle = title }
+}
+
+// WithWebAuthn sets the WebAuthn instance.
+func WithWebAuthn(w *webauthn.WebAuthn) CoreOption {
+	return func(cd *CoreData) { cd.WebAuthn = w }
 }
 
 // WithImageSignKey sets the image signing key and initializes the mapper.

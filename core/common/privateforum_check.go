@@ -2,11 +2,11 @@ package common
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"slices"
-	"database/sql"
-	"github.com/arran4/goa4web/internal/db"
 )
 
 // PrivateForumInconsistency represents a found inconsistency in private forum grants
@@ -195,15 +195,14 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					log.Printf("Fixing inconsistency: Creating grant for user %d thread %d (%s)", inconsistency.UserID, inconsistency.ItemID, inconsistency.Issue)
 
 					_, err := cd.queries.SystemCreateGrant(ctx, db.SystemCreateGrantParams{
-						Section:   inconsistency.Section,
-						Item:      sql.NullString{String: inconsistency.Item, Valid: true},
-						Action:    inconsistency.Action,
-						UserID:    sql.NullInt32{Int32: inconsistency.UserID, Valid: true},
-						RoleID:    sql.NullInt32{},
-						ItemID:    sql.NullInt32{Int32: inconsistency.ItemID, Valid: true},
-						ItemRule:  sql.NullString{},
-						RuleType:  "allow",
-
+						Section:  inconsistency.Section,
+						Item:     sql.NullString{String: inconsistency.Item, Valid: true},
+						Action:   inconsistency.Action,
+						UserID:   sql.NullInt32{Int32: inconsistency.UserID, Valid: true},
+						RoleID:   sql.NullInt32{},
+						ItemID:   sql.NullInt32{Int32: inconsistency.ItemID, Valid: true},
+						ItemRule: sql.NullString{},
+						RuleType: "allow",
 					})
 
 					if err != nil {

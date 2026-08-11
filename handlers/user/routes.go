@@ -39,6 +39,12 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 	ur.HandleFunc("/profile", userPublicProfileSettingPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/profile", handlers.TaskHandler(publicProfileSaveTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(publicProfileSaveTask.Matcher())
 
+	// Passkeys
+	ur.HandleFunc("/passkeys", passkeysPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/passkeys/add/begin", passkeysBeginRegistration).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/passkeys/add/finish", passkeysFinishRegistration).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/passkeys/remove", passkeysDelete).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
+
 	// API Keys
 	ur.HandleFunc("/api-keys", ListAPIKeysPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/api-keys/swagger.yaml", DownloadSwagger).Methods(http.MethodGet)

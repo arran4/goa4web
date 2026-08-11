@@ -1,0 +1,111 @@
+{{ template "head" $ }}
+<h2>Manage Passkeys</h2>
+<p>Passkeys allow you to securely sign in without a password.</p>
+
+<table class="table-list">
+    <thead>
+        <tr>
+            <th>Attestation</th>
+            <th>Added On</th>
+            <th>Sign Count</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .Passkeys }}
+        <tr>
+            <td>{{ .AttestationType }}</td>
+            <td>{{ .CreatedAt.Time }}</td>
+            <td>{{ .SignCount }}</td>
+            <td>
+                <form method="post" action="/usr/passkeys/remove?id={{ .ID }}">
+                    {{ csrfField }}
+                    <input type="submit" value="Remove" onclick="return confirm('Are you sure you want to remove this passkey?');">
+                </form>
+            </td>
+        </tr>
+        {{ else }}
+        <tr>
+            <td colspan="4">No passkeys registered yet.</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<br>
+<button id="register-passkey" class="btn">Add Passkey</button>
+
+<script>
+document.getElementById('register-passkey').addEventListener('click', async () => {
+    try {
+        const resp = await fetch('/usr/passkeys/add/begin');
+        if (!resp.ok) {
+            throw new Error('Failed to start passkey registration');
+        }
+        const options = await resp.json();
+
+        // Base64URL decode helper for ArrayBuffer
+        const bufferDecode = (value) => {
+            const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        const bufferEncode = (value) => {
+            const bytes = new Uint8Array(value);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        };
+
+        options.publicKey.challenge = bufferDecode(options.publicKey.challenge);
+        options.publicKey.user.id = bufferDecode(options.publicKey.user.id);
+        if (options.publicKey.excludeCredentials) {
+            options.publicKey.excludeCredentials.forEach(c => {
+                c.id = bufferDecode(c.id);
+            });
+        }
+
+        const credential = await navigator.credentials.create(options);
+
+        const credentialResponse = {
+            id: credential.id,
+            rawId: bufferEncode(credential.rawId),
+            type: credential.type,
+            response: {
+                attestationObject: bufferEncode(credential.response.attestationObject),
+                clientDataJSON: bufferEncode(credential.response.clientDataJSON),
+            },
+        };
+
+        // Fetch CSRF token for the POST request
+        const csrfToken = document.querySelector('input[name="gorilla.csrf.Token"]')?.value;
+
+        const finishResp = await fetch('/usr/passkeys/add/finish', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify(credentialResponse)
+        });
+
+        if (finishResp.ok) {
+            window.location.reload();
+        } else {
+            alert('Failed to register passkey: ' + (await finishResp.text()));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Passkey registration failed or was cancelled.');
+    }
+});
+</script>
+
+{{ template "tail" $ }}

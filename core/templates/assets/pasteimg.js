@@ -6,6 +6,34 @@
             return v.toString(16);
         });
     }
+    function replacePlaceholder(el, placeholder, finalText) {
+        const v = el.value;
+        const idx = v.indexOf(placeholder);
+        if (idx !== -1) {
+            const currentStart = el.selectionStart;
+            const currentEnd = el.selectionEnd;
+
+            el.value = v.substring(0, idx) + finalText + v.substring(idx + placeholder.length);
+
+            const diff = finalText.length - placeholder.length;
+            let newStart = currentStart;
+            let newEnd = currentEnd;
+
+            if (currentStart >= idx + placeholder.length) {
+                newStart += diff;
+            } else if (currentStart > idx) {
+                newStart = idx + finalText.length;
+            }
+
+            if (currentEnd >= idx + placeholder.length) {
+                newEnd += diff;
+            } else if (currentEnd > idx) {
+                newEnd = idx + finalText.length;
+            }
+
+            el.setSelectionRange(newStart, newEnd);
+        }
+    }
     function insertAtCaret(el, text){
         const start = el.selectionStart;
         const end = el.selectionEnd;
@@ -108,9 +136,7 @@
             if(xhr.status >= 200 && xhr.status < 300){
                 const ref = xhr.responseText;
                 const finalText = '[img '+ref+']';
-                const v = e.target.value;
-                e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, finalText);
-                e.target.setSelectionRange(pos+finalText.length, pos+finalText.length);
+                replacePlaceholder(e.target, placeholder, finalText);
                 autoSize(e.target);
 
                 if (statusDiv) {
@@ -134,9 +160,7 @@
                 }
                 console.error('Image upload forbidden:', reason);
                 const failedText = '[img upload denied: ' + reason.substring(0, 30) + ']';
-                const v = e.target.value;
-                e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
-                e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
+                replacePlaceholder(e.target, placeholder, failedText);
                 autoSize(e.target);
 
                 if (statusDiv) {
@@ -145,9 +169,7 @@
             } else {
                 console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);
                 const failedText = '[img upload failed]';
-                const v = e.target.value;
-                e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
-                e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
+                replacePlaceholder(e.target, placeholder, failedText);
                 autoSize(e.target);
 
                 if (statusDiv) {
@@ -158,9 +180,7 @@
         xhr.onerror = function(){
             console.error('Image upload failed: network error');
             const failedText = '[img upload failed]';
-            const v = e.target.value;
-            e.target.value = v.substring(0,pos) + v.substring(pos).replace(placeholder, failedText);
-            e.target.setSelectionRange(pos+failedText.length, pos+failedText.length);
+            replacePlaceholder(e.target, placeholder, failedText);
             autoSize(e.target);
 
             const galleryItem = document.getElementById('gallery-item-' + id);

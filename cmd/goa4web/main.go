@@ -16,6 +16,7 @@ import (
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
 	bloghandlers "github.com/arran4/goa4web/handlers/blogs"
 	bookmarkhandlers "github.com/arran4/goa4web/handlers/bookmarks"
+	externallinkhandlers "github.com/arran4/goa4web/handlers/externallink"
 	faqhandlers "github.com/arran4/goa4web/handlers/faq"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	imagebbshandlers "github.com/arran4/goa4web/handlers/imagebbs"
@@ -59,6 +60,7 @@ func registerTasks(reg *tasks.Registry, ah *adminhandlers.Handlers) {
 	register("auth", authhandlers.RegisterTasks())
 	register("blogs", bloghandlers.RegisterTasks())
 	register("bookmarks", bookmarkhandlers.RegisterTasks())
+	register("externallink", externallinkhandlers.RegisterTasks())
 	register("faq", faqhandlers.RegisterTasks())
 	register("forum", forumhandlers.RegisterTasks())
 	register("privateforum", privateforumhandlers.RegisterTasks())

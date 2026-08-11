@@ -107,7 +107,7 @@ func TestAppearanceSaveTask(t *testing.T) {
 		}
 		// Verify it re-renders
 		body := rr.Body.String()
-		if !strings.Contains(body, "Appearance Settings") {
+		if !strings.Contains(body, "Appearance & Thumbnail Settings") {
 			t.Fatalf("expected re-render: %q", body)
 		}
 	})

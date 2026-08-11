@@ -1,5 +1,5 @@
 {{ template "head" $ }}
-        <h2>Appearance Settings</h2>
+        <h2>Appearance & Thumbnail Settings</h2>
 
         {{ if .CustomCSS }}
         <div class="alert alert-info">
@@ -20,7 +20,7 @@
             </div>
 
             <div class="form-group">
-                <label for="image_safe_dimension">Default Image Safe Dimension</label>
+                <label for="image_safe_dimension">Default Thumbnail Resizing</label>
                 <select class="form-control" id="image_safe_dimension" name="image_safe_dimension">
                     {{ range .SafeDimensions }}
                     <option value="{{ . }}" {{ if eq . $.SafeDimension }}selected{{ end }}>{{ . }}</option>

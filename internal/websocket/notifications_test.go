@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/eventbus"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 )
@@ -116,5 +117,24 @@ func TestNotificationsHandlerAuthenticationRequired(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "authentication required") {
 		t.Fatalf("body=%q", rec.Body.String())
+	}
+}
+
+func TestNewNotificationsHandler(t *testing.T) {
+	bus := eventbus.NewBus()
+	cfg := &config.RuntimeConfig{
+		BaseURL: "http://example.com, http://example.org",
+	}
+
+	h := NewNotificationsHandler(bus, cfg)
+
+	if h.Bus != bus {
+		t.Errorf("expected Bus to be set correctly, got %v", h.Bus)
+	}
+	if h.Config != cfg {
+		t.Errorf("expected Config to be set correctly, got %v", h.Config)
+	}
+	if h.Upgrader.CheckOrigin == nil {
+		t.Error("expected Upgrader.CheckOrigin to be initialized, got nil")
 	}
 }

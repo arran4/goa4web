@@ -320,7 +320,7 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 	return cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
 		UserID:   uid,
 		RoleID:   rid,
-		Section:  "privateforum",
+		Section:  "privateforum_thread",
 		Item:     sql.NullString{String: "thread", Valid: true},
 		RuleType: "allow",
 		ItemID:   sql.NullInt32{Int32: threadID, Valid: true},

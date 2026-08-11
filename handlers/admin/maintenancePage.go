@@ -23,6 +23,7 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 		Topics        []*maintenanceTopic
 		TaskName      string
 		MergeTaskName string
+		CheckTaskName string
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Once Off & Maintenance"
@@ -44,6 +45,7 @@ func AdminMaintenancePage(w http.ResponseWriter, r *http.Request) {
 		Topics:        topics,
 		TaskName:      string(TaskForumTopicConvertPrivate),
 		MergeTaskName: string(TaskMergePrivateTopics),
+		CheckTaskName: string(TaskCheckPrivateForumGrants),
 	}
 	_ = AdminMaintenancePageTmpl.Handle(w, r, data)
 }

@@ -107,6 +107,7 @@ func (h *Handlers) registerSystemRoutes(ar *mux.Router) {
 	ar.HandleFunc("/maintenance", AdminMaintenancePage).Methods("GET")
 	ar.HandleFunc("/maintenance", handlers.TaskHandler(convertTopicToPrivateTask)).Methods("POST").MatcherFunc(convertTopicToPrivateTask.Matcher())
 	ar.HandleFunc("/maintenance", handlers.TaskHandler(mergePrivateTopicsTask)).Methods("POST").MatcherFunc(mergePrivateTopicsTask.Matcher())
+	ar.HandleFunc("/maintenance", handlers.TaskHandler(checkPrivateForumGrantsTask)).Methods("POST").MatcherFunc(checkPrivateForumGrantsTask.Matcher())
 
 	ar.HandleFunc("/audit", AdminAuditLogPage).Methods("GET")
 	ar.HandleFunc("/settings", h.AdminSiteSettingsPage).Methods("GET", "POST")

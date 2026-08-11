@@ -371,3 +371,8 @@ const (
 	// TaskGrantUpdateActive updates a grant's active state.
 	TaskGrantUpdateActive tasks.TaskString = "Update grant"
 )
+
+const (
+	// TaskCheckPrivateForumGrants checks private forum grants for inconsistencies.
+	TaskCheckPrivateForumGrants tasks.TaskString = "Check private forum grants"
+)

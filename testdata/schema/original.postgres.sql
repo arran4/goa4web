@@ -273,6 +273,7 @@ CREATE TABLE `topicrestrictions` (
   `readlevel` int(10) DEFAULT NULL,
   `modlevel` int(10) DEFAULT NULL,
   `adminlevel` int(10) DEFAULT NULL,
+  PRIMARY KEY (`forumtopic_idforumtopic`),
   KEY `threadrestrictions_FKIndex1` (`forumtopic_idforumtopic`)
 );
 

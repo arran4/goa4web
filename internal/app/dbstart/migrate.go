@@ -39,8 +39,10 @@ func transitionToGoose(ctx context.Context, db *sql.DB) error {
 
 	if gooseVer == 0 {
 		// Sync Goose with the legacy version
-		if _, err := db.ExecContext(ctx, "INSERT INTO goose_db_version (version_id, is_applied) VALUES (?, 1)", legacyVer); err != nil {
-			return fmt.Errorf("sync goose_db_version: %w", err)
+		for i := 1; i <= legacyVer; i++ {
+			if _, err := db.ExecContext(ctx, "INSERT INTO goose_db_version (version_id, is_applied) VALUES (?, 1)", i); err != nil {
+				return fmt.Errorf("sync goose_db_version: %w", err)
+			}
 		}
 		log.Printf("transitioned to goose_db_version at version %d", legacyVer)
 	}

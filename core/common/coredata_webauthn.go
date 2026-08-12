@@ -1,9 +1,11 @@
 package common
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 
 	"encoding/gob"
@@ -47,6 +49,10 @@ func (u *WebAuthnUser) WebAuthnCredentials() []webauthn.Credential {
 			ID:              p.CredentialID,
 			PublicKey:       p.PublicKey,
 			AttestationType: p.AttestationType,
+			Flags: webauthn.CredentialFlags{
+				BackupEligible: p.BackupEligible.Valid && p.BackupEligible.Bool,
+				BackupState:    p.BackupState.Valid && p.BackupState.Bool,
+			},
 			Authenticator: webauthn.Authenticator{
 				AAGUID:       p.Aaguid,
 				SignCount:    uint32(p.SignCount),
@@ -55,6 +61,19 @@ func (u *WebAuthnUser) WebAuthnCredentials() []webauthn.Credential {
 		})
 	}
 	return creds
+}
+
+// EstablishLegacyCredentialFlags uses the current assertion flags only for a
+// credential created before backup flags were persisted. Validation still
+// performs the normal WebAuthn backup-eligibility consistency check.
+func (u *WebAuthnUser) EstablishLegacyCredentialFlags(credentialID []byte, flags protocol.AuthenticatorFlags) {
+	for _, passkey := range u.Passkeys {
+		if bytes.Equal(passkey.CredentialID, credentialID) && !passkey.BackupEligible.Valid {
+			passkey.BackupEligible = sql.NullBool{Bool: flags.HasBackupEligible(), Valid: true}
+			passkey.BackupState = sql.NullBool{Bool: flags.HasBackupState(), Valid: true}
+			return
+		}
+	}
 }
 
 // Ensure interface is fulfilled
@@ -100,6 +119,8 @@ func (cd *CoreData) SavePasskey(passkey *webauthn.Credential, userID int32, name
 	return cd.queries.InsertPasskey(cd.ctx, db.InsertPasskeyParams{
 		UserID:          userID,
 		Name:            name,
+		BackupEligible:  sql.NullBool{Bool: passkey.Flags.BackupEligible, Valid: true},
+		BackupState:     sql.NullBool{Bool: passkey.Flags.BackupState, Valid: true},
 		CredentialID:    passkey.ID,
 		PublicKey:       passkey.PublicKey,
 		AttestationType: passkey.AttestationType,
@@ -108,9 +129,11 @@ func (cd *CoreData) SavePasskey(passkey *webauthn.Credential, userID int32, name
 	})
 }
 
-func ToUpdatePasskeySignCountParams(cred *webauthn.Credential) db.UpdatePasskeySignCountParams {
-	return db.UpdatePasskeySignCountParams{
-		CredentialID: cred.ID,
-		SignCount:    int32(cred.Authenticator.SignCount),
-	}
+func (cd *CoreData) UpdatePasskeyAfterLogin(cred *webauthn.Credential) error {
+	return cd.queries.UpdatePasskeyAfterLogin(cd.ctx, db.UpdatePasskeyAfterLoginParams{
+		CredentialID:   cred.ID,
+		SignCount:      int32(cred.Authenticator.SignCount),
+		BackupEligible: sql.NullBool{Bool: cred.Flags.BackupEligible, Valid: true},
+		BackupState:    sql.NullBool{Bool: cred.Flags.BackupState, Valid: true},
+	})
 }

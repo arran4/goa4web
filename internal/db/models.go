@@ -620,6 +620,8 @@ type UserPasskey struct {
 	ID              int32
 	UserID          int32
 	Name            string
+	BackupEligible  sql.NullBool
+	BackupState     sql.NullBool
 	CredentialID    []byte
 	PublicKey       []byte
 	AttestationType string

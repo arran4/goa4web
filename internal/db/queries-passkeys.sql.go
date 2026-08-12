@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const deletePasskey = `-- name: DeletePasskey :exec
@@ -24,7 +25,7 @@ func (q *Queries) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) er
 }
 
 const getPasskeyByCredentialID = `-- name: GetPasskeyByCredentialID :one
-SELECT id, user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE credential_id = ?
+SELECT id, user_id, name, backup_eligible, backup_state, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE credential_id = ?
 `
 
 func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error) {
@@ -34,6 +35,8 @@ func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []b
 		&i.ID,
 		&i.UserID,
 		&i.Name,
+		&i.BackupEligible,
+		&i.BackupState,
 		&i.CredentialID,
 		&i.PublicKey,
 		&i.AttestationType,
@@ -48,7 +51,7 @@ func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []b
 }
 
 const getPasskeysByUserID = `-- name: GetPasskeysByUserID :many
-SELECT id, user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE user_id = ?
+SELECT id, user_id, name, backup_eligible, backup_state, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE user_id = ?
 `
 
 func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error) {
@@ -64,6 +67,8 @@ func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*Use
 			&i.ID,
 			&i.UserID,
 			&i.Name,
+			&i.BackupEligible,
+			&i.BackupState,
 			&i.CredentialID,
 			&i.PublicKey,
 			&i.AttestationType,
@@ -89,15 +94,17 @@ func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*Use
 
 const insertPasskey = `-- name: InsertPasskey :exec
 INSERT INTO user_passkeys (
-    user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count
+    user_id, name, backup_eligible, backup_state, credential_id, public_key, attestation_type, aaguid, sign_count
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 `
 
 type InsertPasskeyParams struct {
 	UserID          int32
 	Name            string
+	BackupEligible  sql.NullBool
+	BackupState     sql.NullBool
 	CredentialID    []byte
 	PublicKey       []byte
 	AttestationType string
@@ -109,6 +116,8 @@ func (q *Queries) InsertPasskey(ctx context.Context, arg InsertPasskeyParams) er
 	_, err := q.db.ExecContext(ctx, insertPasskey,
 		arg.UserID,
 		arg.Name,
+		arg.BackupEligible,
+		arg.BackupState,
 		arg.CredentialID,
 		arg.PublicKey,
 		arg.AttestationType,
@@ -118,16 +127,28 @@ func (q *Queries) InsertPasskey(ctx context.Context, arg InsertPasskeyParams) er
 	return err
 }
 
-const updatePasskeySignCount = `-- name: UpdatePasskeySignCount :exec
-UPDATE user_passkeys SET sign_count = ? WHERE credential_id = ?
+const updatePasskeyAfterLogin = `-- name: UpdatePasskeyAfterLogin :exec
+UPDATE user_passkeys
+SET sign_count = ?,
+    backup_eligible = COALESCE(backup_eligible, ?),
+    backup_state = ?,
+    last_used_at = CURRENT_TIMESTAMP
+WHERE credential_id = ?
 `
 
-type UpdatePasskeySignCountParams struct {
-	SignCount    int32
-	CredentialID []byte
+type UpdatePasskeyAfterLoginParams struct {
+	SignCount      int32
+	BackupEligible sql.NullBool
+	BackupState    sql.NullBool
+	CredentialID   []byte
 }
 
-func (q *Queries) UpdatePasskeySignCount(ctx context.Context, arg UpdatePasskeySignCountParams) error {
-	_, err := q.db.ExecContext(ctx, updatePasskeySignCount, arg.SignCount, arg.CredentialID)
+func (q *Queries) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error {
+	_, err := q.db.ExecContext(ctx, updatePasskeyAfterLogin,
+		arg.SignCount,
+		arg.BackupEligible,
+		arg.BackupState,
+		arg.CredentialID,
+	)
 	return err
 }

@@ -671,7 +671,7 @@ type Querier interface {
 	UpdateLastWeeklyDigestSentAt(ctx context.Context, arg UpdateLastWeeklyDigestSentAtParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
-	UpdatePasskeySignCount(ctx context.Context, arg UpdatePasskeySignCountParams) error
+	UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error

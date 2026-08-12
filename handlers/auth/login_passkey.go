@@ -91,6 +91,7 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+	user.EstablishLegacyCredentialFlags(parsedResponse.RawID, parsedResponse.Response.AuthenticatorData.Flags)
 
 	cred, err := validatePasskeyLogin(cd.WebAuthn, user, sessionData, parsedResponse)
 
@@ -100,8 +101,8 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update sign count
-	err = cd.Queries().UpdatePasskeySignCount(r.Context(), common.ToUpdatePasskeySignCountParams(cred))
+	// Persist the authenticator counter and its current backup state.
+	err = cd.UpdatePasskeyAfterLogin(cred)
 	if err != nil {
 		log.Printf("Failed to update sign count: %v", err)
 	}

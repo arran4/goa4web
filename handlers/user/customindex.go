@@ -6,7 +6,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
-// CustomIndex injects additional index items for user pages. No items are added currently.
+// CustomIndex injects account-setting links for user pages.
 var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 	cd.CustomIndexItems = []common.IndexItem{}
 	if cd.UserID != 0 {
@@ -21,5 +21,10 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			common.IndexItem{Name: "Public profile settings", Link: "/usr/profile"},
 			common.IndexItem{Name: "API Keys", Link: "/usr/api-keys"},
 		)
+		if cd.WebAuthn != nil {
+			cd.CustomIndexItems = append(cd.CustomIndexItems,
+				common.IndexItem{Name: "Passkeys", Link: "/usr/passkeys"},
+			)
+		}
 	}
 }

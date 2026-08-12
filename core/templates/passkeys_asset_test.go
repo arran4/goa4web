@@ -8,7 +8,11 @@ import (
 func TestPasskeysJavaScriptIsExternal(t *testing.T) {
 	t.Run("Asset contains WebAuthn calls", func(t *testing.T) {
 		asset := string(GetPasskeysJSData())
-		for _, expected := range []string{"navigator.credentials.create", "navigator.credentials.get"} {
+		for _, expected := range []string{
+			"navigator.credentials.create",
+			"navigator.credentials.get",
+			`form.querySelector('input[name="gorilla.csrf.Token"]')`,
+		} {
 			if !strings.Contains(asset, expected) {
 				t.Errorf("passkeys asset does not contain %q", expected)
 			}

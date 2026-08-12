@@ -37,6 +37,15 @@ async function responseJSON(response, message) {
     return response.json();
 }
 
+function jsonHeaders(form) {
+    const headers = {'Content-Type': 'application/json'};
+    const csrfField = form.querySelector('input[name="gorilla.csrf.Token"]');
+    if (csrfField) {
+        headers['X-CSRF-Token'] = csrfField.value;
+    }
+    return headers;
+}
+
 async function registerPasskey(form) {
     const creation = await responseJSON(
         await fetch('/usr/passkeys/add/begin'),
@@ -51,10 +60,7 @@ async function registerPasskey(form) {
 
     const response = await fetch('/usr/passkeys/add/finish', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': form.elements['gorilla.csrf.Token'].value,
-        },
+        headers: jsonHeaders(form),
         body: JSON.stringify({
             id: credential.id,
             rawId: encodeBase64URL(credential.rawId),
@@ -86,10 +92,7 @@ async function loginWithPasskey(form) {
 
     const response = await fetch('/login/passkey/finish', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('input[name="gorilla.csrf.Token"]').value,
-        },
+        headers: jsonHeaders(form),
         body: JSON.stringify({
             id: credential.id,
             rawId: encodeBase64URL(credential.rawId),

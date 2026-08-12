@@ -28,7 +28,7 @@ func NewsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	items = append(items, common.IndexItem{
 		Name:   "News RSS Feed",
 		Link:   cd.RSSFeedURL,
-		Folded: true,
+		GroupID: "advanced",
 	})
 
 	if CanPostNews(cd) {

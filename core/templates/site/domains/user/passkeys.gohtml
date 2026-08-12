@@ -42,11 +42,17 @@ document.getElementById('register-passkey').addEventListener('click', async () =
         if (!resp.ok) {
             throw new Error('Failed to start passkey registration');
         }
-        const options = await resp.json();
+
+
+        const optionsResp = await resp.json();
+        const options = optionsResp.Response || optionsResp; // go-webauthn wraps it in Response in newer versions usually but let's be safe
+
 
         // Base64URL decode helper for ArrayBuffer
         const bufferDecode = (value) => {
-            const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+            if (!value) return new Uint8Array(0).buffer;
+            const padding = (4 - (value.length % 4)) % 4;
+            const base64 = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padding);
             const binary = atob(base64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -64,15 +70,23 @@ document.getElementById('register-passkey').addEventListener('click', async () =
             return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
         };
 
-        options.publicKey.challenge = bufferDecode(options.publicKey.challenge);
-        options.publicKey.user.id = bufferDecode(options.publicKey.user.id);
-        if (options.publicKey.excludeCredentials) {
-            options.publicKey.excludeCredentials.forEach(c => {
+        // The go-webauthn library encodes options as JSON where []byte is base64url encoded strings.
+        // We must convert these base64url strings back into ArrayBuffers before passing to navigator.credentials.create
+
+        const opts = options.publicKey;
+
+        opts.challenge = bufferDecode(opts.challenge);
+        opts.user.id = bufferDecode(opts.user.id);
+        if (opts.excludeCredentials) {
+            opts.excludeCredentials = opts.excludeCredentials.map(c => {
                 c.id = bufferDecode(c.id);
+                return c;
             });
         }
 
-        const credential = await navigator.credentials.create(options);
+        console.log("Calling credentials.create with:", opts);
+        const credential = await navigator.credentials.create({ publicKey: opts });
+        console.log("Created credential:", credential);
 
         const credentialResponse = {
             id: credential.id,
@@ -83,6 +97,7 @@ document.getElementById('register-passkey').addEventListener('click', async () =
                 clientDataJSON: bufferEncode(credential.response.clientDataJSON),
             },
         };
+
 
         // Fetch CSRF token for the POST request
         const csrfToken = document.querySelector('input[name="gorilla.csrf.Token"]')?.value;

@@ -50,17 +50,21 @@
                 alert('Passkey login not available for this user.');
                 return;
             }
-            const options = await resp.json();
 
-            const bufferDecode = (value) => {
-                const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
-                const binary = atob(base64);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-                return bytes.buffer;
-            };
+
+        const optionsResp = await resp.json();
+        const options = optionsResp.Response || optionsResp; // go-webauthn wraps it in Response in newer versions usually but let's be safe
+        const bufferDecode = (value) => {
+            if (!value) return new Uint8Array(0).buffer;
+            const padding = (4 - (value.length % 4)) % 4;
+            const base64 = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padding);
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
 
             const bufferEncode = (value) => {
                 const bytes = new Uint8Array(value);
@@ -71,14 +75,16 @@
                 return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
             };
 
-            options.publicKey.challenge = bufferDecode(options.publicKey.challenge);
-            if (options.publicKey.allowCredentials) {
-                options.publicKey.allowCredentials.forEach(c => {
+            const opts = options.publicKey;
+            opts.challenge = bufferDecode(opts.challenge);
+            if (opts.allowCredentials) {
+                opts.allowCredentials = opts.allowCredentials.map(c => {
                     c.id = bufferDecode(c.id);
+                    return c;
                 });
             }
 
-            const credential = await navigator.credentials.get(options);
+            const credential = await navigator.credentials.get({ publicKey: opts });
 
             const credentialResponse = {
                 id: credential.id,
@@ -91,6 +97,7 @@
                     userHandle: credential.response.userHandle ? bufferEncode(credential.response.userHandle) : null,
                 },
             };
+
 
             const finishResp = await fetch('/login/passkey/finish', {
                 method: 'POST',

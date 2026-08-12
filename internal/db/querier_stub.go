@@ -25,11 +25,13 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
-	CreateAPIKeyStub         func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
-	GetAPIKeyByHashStub      func(ctx context.Context, apiKey string) (*ApiKey, error)
-	ListAPIKeysByUserStub    func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
-	UpdateAPIKeyLastUsedStub func(ctx context.Context, id int32) error
-	RevokeAPIKeyStub         func(ctx context.Context, arg RevokeAPIKeyParams) error
+	CreateAPIKeyStub            func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
+	GetAPIKeyByHashStub         func(ctx context.Context, apiKey string) (*ApiKey, error)
+	ListAPIKeysByUserStub       func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
+	UpdateAPIKeyLastUsedStub    func(ctx context.Context, id int32) error
+	RevokeAPIKeyStub            func(ctx context.Context, arg RevokeAPIKeyParams) error
+	InsertPasskeyStub           func(ctx context.Context, arg InsertPasskeyParams) error
+	UpdatePasskeyAfterLoginStub func(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
 
 	Querier
 	mu sync.Mutex
@@ -3276,5 +3278,31 @@ func (q *QuerierStub) RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams) 
 	if q.RevokeAPIKeyStub != nil {
 		return q.RevokeAPIKeyStub(ctx, arg)
 	}
+	return nil
+}
+
+func (q *QuerierStub) InsertPasskey(ctx context.Context, arg InsertPasskeyParams) error {
+	if q.InsertPasskeyStub != nil {
+		return q.InsertPasskeyStub(ctx, arg)
+	}
+	return nil
+}
+
+func (q *QuerierStub) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error) {
+	return nil, nil
+}
+
+func (q *QuerierStub) GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error) {
+	return nil, nil
+}
+
+func (q *QuerierStub) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error {
+	if q.UpdatePasskeyAfterLoginStub != nil {
+		return q.UpdatePasskeyAfterLoginStub(ctx, arg)
+	}
+	return nil
+}
+
+func (q *QuerierStub) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error {
 	return nil
 }

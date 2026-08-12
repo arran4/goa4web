@@ -17,4 +17,17 @@
         <input type="submit" name="task" value="Login">
         <br><a href="/forgot">Forgot password?</a>
     </form>
+    {{ if cd.WebAuthn }}
+    <hr>
+    <h3>Login with Passkey</h3>
+    <form id="passkey-login-form">
+        {{ csrfField }}
+        {{- if .BackURL }}
+        <input type="hidden" name="back" value="{{ .BackURL }}">
+        {{- end }}
+        Username: <input type="text" name="username" required><br>
+        <button type="submit">Login with Passkey</button>
+    </form>
+    <script src="{{ assetHash "/static/passkeys.js" }}"></script>
+    {{ end }}
 {{ template "tail" $ }}

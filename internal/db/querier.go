@@ -322,6 +322,7 @@ type Querier interface {
 	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt32) error
 	DeleteImageCacheEntry(ctx context.Context, id string) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
+	DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error
 	DeletePendingPassword(ctx context.Context, userID int32) error
 	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
@@ -408,6 +409,8 @@ type Querier interface {
 	GetNotificationCountForLister(ctx context.Context, listerID int32) (int64, error)
 	GetNotificationEmailByUserID(ctx context.Context, userID int32) (*UserEmail, error)
 	GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error)
+	GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error)
+	GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error)
 	GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)
 	GetPasswordResetByUser(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error)
 	GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error)
@@ -462,6 +465,7 @@ type Querier interface {
 	InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error
 	InsertFAQQuestionForWriter(ctx context.Context, arg InsertFAQQuestionForWriterParams) (sql.Result, error)
 	InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error
+	InsertPasskey(ctx context.Context, arg InsertPasskeyParams) error
 	InsertPassword(ctx context.Context, arg InsertPasswordParams) error
 	InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error
 	InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error
@@ -667,6 +671,7 @@ type Querier interface {
 	UpdateLastWeeklyDigestSentAt(ctx context.Context, arg UpdateLastWeeklyDigestSentAtParams) error
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
+	UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error

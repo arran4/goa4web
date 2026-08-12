@@ -43,9 +43,14 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("logout success session=%s", handlers.HashSessionID(session.ID))
 
-	cd.UserID = 0
+	clearLoggedOutCoreData(cd)
 
 	_ = UserLogoutPage.Handle(w, r, struct{}{})
+}
+
+func clearLoggedOutCoreData(cd *common.CoreData) {
+	cd.UserID = 0
+	cd.CustomIndexItems = nil
 }
 
 const UserLogoutPage tasks.Template = "domains/user/logoutPage.gohtml"

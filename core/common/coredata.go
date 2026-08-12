@@ -1,6 +1,8 @@
 package common
 
 import (
+	"github.com/go-webauthn/webauthn/webauthn"
+
 	"bytes"
 	"context"
 	"database/sql"
@@ -195,6 +197,8 @@ type CoreData struct {
 	routerModules map[string]struct{}
 
 	languageCache *LanguageCache
+
+	WebAuthn *webauthn.WebAuthn
 
 	httpClient *http.Client
 
@@ -2850,6 +2854,41 @@ func WithConfig(cfg *config.RuntimeConfig) CoreOption {
 // WithSiteTitle sets the site title used by templates.
 func WithSiteTitle(title string) CoreOption {
 	return func(cd *CoreData) { cd.SiteTitle = title }
+}
+
+// WithWebAuthn configures the WebAuthn instance.
+func WithWebAuthn() CoreOption {
+	return func(cd *CoreData) {
+		if cd.Config != nil && !cd.Config.WebAuthnEnabled {
+			return
+		}
+		rpID := "localhost"
+		if cd.Config != nil {
+			if u, err := url.Parse(cd.Config.BaseURL); err == nil {
+				rpID = u.Hostname()
+			}
+		}
+
+		var rpOrigins []string
+		var rpDisplayName = "goa4web"
+		if cd.Config != nil {
+			rpOrigins = []string{cd.Config.BaseURL}
+			if cd.SiteTitle != "" {
+				rpDisplayName = cd.SiteTitle
+			}
+		}
+
+		wconfig := &webauthn.Config{
+			RPDisplayName: rpDisplayName,
+			RPID:          rpID,
+			RPOrigins:     rpOrigins,
+		}
+
+		wa, err := webauthn.New(wconfig)
+		if err == nil {
+			cd.WebAuthn = wa
+		}
+	}
 }
 
 // WithImageSignKey sets the image signing key and initializes the mapper.

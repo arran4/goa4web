@@ -20,7 +20,7 @@ CREATE TABLE `blogs` (
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
   `blog` longtext DEFAULT NULL,
-  `written` DATETIME NOT NULL DEFAULT NOW(),
+  `written` TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (`idblogs`),
   KEY `blogs_FKIndex1` (`language_id`),
   KEY `blogs_FKIndex2` (`users_idusers`),
@@ -445,3 +445,21 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   KEY `audit_log_user_idx` (`users_idusers`)
 );
 
+
+
+
+CREATE TABLE user_passkeys (
+    id SERIAL,
+    user_id INT NOT NULL,
+    credential_id BYTEA NOT NULL,
+    public_key BYTEA NOT NULL,
+    attestation_type VARCHAR(255) NOT NULL,
+    aaguid BYTEA NOT NULL,
+    sign_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP DEFAULT NULL,
+    expires_at TIMESTAMP DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (credential_id)
+);

@@ -17,7 +17,7 @@ var mergePrivateTopicsTask = &MergePrivateTopicsTask{TaskString: TaskMergePrivat
 var _ tasks.Task = (*MergePrivateTopicsTask)(nil)
 
 type mergePrivateTopicsData struct {
-	Groups   []common.MergeGroup
+	Groups    []common.MergeGroup
 	IsPreview bool
 	TaskName  string
 }
@@ -37,7 +37,7 @@ func (MergePrivateTopicsTask) Action(w http.ResponseWriter, r *http.Request) any
 	}
 
 	_ = AdminMaintenancePreviewPageTmpl.Handle(w, r, mergePrivateTopicsData{
-		Groups:   groups,
+		Groups:    groups,
 		IsPreview: dryRun,
 		TaskName:  string(TaskMergePrivateTopics),
 	})

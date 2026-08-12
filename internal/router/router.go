@@ -17,6 +17,7 @@ func RegisterRoutes(r *mux.Router, reg *Registry, cfg *config.RuntimeConfig, nav
 	r.HandleFunc("/main.css", handlers.MainCSS(cfg)).Methods("GET")
 	r.HandleFunc("/favicon.svg", handlers.Favicon(cfg)).Methods("GET")
 	r.HandleFunc("/static/site.js", handlers.SiteJS(cfg)).Methods("GET")
+	r.HandleFunc("/static/passkeys.js", handlers.PasskeysJS(cfg)).Methods("GET")
 	r.HandleFunc("/static/a4code.js", handlers.A4CodeJS(cfg)).Methods("GET")
 
 	reg.InitModules(r, cfg, navReg)

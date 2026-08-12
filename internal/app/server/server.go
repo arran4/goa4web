@@ -206,6 +206,7 @@ func New(opts ...Option) *Server {
 	for _, o := range opts {
 		o(s)
 	}
+
 	return s
 }
 
@@ -346,6 +347,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithSiteTitle("Arran's Site"),
 		common.WithTrustedProxies(trustedProxies),
 		common.WithLanguageCache(s.LanguageCache),
+		common.WithWebAuthn(),
 	)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()

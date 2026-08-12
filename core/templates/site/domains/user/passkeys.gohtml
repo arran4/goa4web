@@ -1,0 +1,46 @@
+{{ template "head" $ }}
+<h2>Manage Passkeys</h2>
+<p>Passkeys allow you to securely sign in without a password.</p>
+
+<table class="table-list">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Attestation</th>
+            <th>Added On</th>
+            <th>Sign Count</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .Passkeys }}
+        <tr>
+            <td>{{ .Name }}</td>
+            <td>{{ .AttestationType }}</td>
+            <td>{{ cd.LocalTime .CreatedAt }}</td>
+            <td>{{ .SignCount }}</td>
+            <td>
+                <form method="post" action="/usr/passkeys/remove?id={{ .ID }}">
+                    {{ csrfField }}
+                    <input type="submit" value="Remove" onclick="return confirm('Are you sure you want to remove this passkey?');">
+                </form>
+            </td>
+        </tr>
+        {{ else }}
+        <tr>
+            <td colspan="5">No passkeys registered yet.</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+<br>
+<form id="register-passkey-form">
+    {{ csrfField }}
+    <label for="passkey-name">Passkey name:</label>
+    <input id="passkey-name" name="name" type="text" maxlength="255" required>
+    <button id="register-passkey" class="btn" type="submit">Add Passkey</button>
+</form>
+<script src="{{ assetHash "/static/passkeys.js" }}"></script>
+
+{{ template "tail" $ }}

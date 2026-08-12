@@ -1,12 +1,12 @@
 CREATE TABLE `1_old_forumthread` (
-  `idforumthread` int(10) NOT NULL AUTO_INCREMENT,
+  `idforumthread` int(10) NOT NULL AUTOINCREMENT,
   `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idforumthread`),
   KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`)
 );
 
 CREATE TABLE `1_old_forumtopic` (
-  `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
+  `idforumtopic` int(10) NOT NULL AUTOINCREMENT,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE `1_old_forumtopic` (
 );
 
 CREATE TABLE `blogs` (
-  `idblogs` int(10) NOT NULL AUTO_INCREMENT,
+  `idblogs` int(10) NOT NULL AUTOINCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
@@ -36,7 +36,7 @@ CREATE TABLE `blogsSearch` (
 );
 
 CREATE TABLE `bookmarks` (
-  `idbookmarks` int(10) NOT NULL AUTO_INCREMENT,
+  `idbookmarks` int(10) NOT NULL AUTOINCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `list` mediumblob DEFAULT NULL,
   PRIMARY KEY (`idbookmarks`),
@@ -44,7 +44,7 @@ CREATE TABLE `bookmarks` (
 );
 
 CREATE TABLE `comments` (
-  `idcomments` int(10) NOT NULL AUTO_INCREMENT,
+  `idcomments` int(10) NOT NULL AUTOINCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
@@ -65,7 +65,7 @@ CREATE TABLE `commentsSearch` (
 );
 
 CREATE TABLE `faq` (
-  `idfaq` int(10) NOT NULL AUTO_INCREMENT,
+  `idfaq` int(10) NOT NULL AUTOINCREMENT,
   `faqCategories_idfaqCategories` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
@@ -78,13 +78,13 @@ CREATE TABLE `faq` (
 );
 
 CREATE TABLE `faqCategories` (
-  `idfaqCategories` int(10) NOT NULL AUTO_INCREMENT,
+  `idfaqCategories` int(10) NOT NULL AUTOINCREMENT,
   `name` tinytext DEFAULT NULL,
   PRIMARY KEY (`idfaqCategories`)
 );
 
 CREATE TABLE `forumcategory` (
-  `idforumcategory` int(10) NOT NULL AUTO_INCREMENT,
+  `idforumcategory` int(10) NOT NULL AUTOINCREMENT,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` mediumtext DEFAULT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE `forumcategory` (
 );
 
 CREATE TABLE `forumthread` (
-  `idforumthread` int(10) NOT NULL AUTO_INCREMENT,
+  `idforumthread` int(10) NOT NULL AUTOINCREMENT,
   `firstpost` int(10) NOT NULL DEFAULT 0,
   `lastposter` int(10) NOT NULL DEFAULT 0,
   `forumtopic_idforumtopic` int(10) NOT NULL DEFAULT 0,
@@ -107,7 +107,7 @@ CREATE TABLE `forumthread` (
 );
 
 CREATE TABLE `forumtopic` (
-  `idforumtopic` int(10) NOT NULL AUTO_INCREMENT,
+  `idforumtopic` int(10) NOT NULL AUTOINCREMENT,
   `lastposter` int(10) NOT NULL DEFAULT 0,
   `forumcategory_idforumcategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE `forumtopic` (
 );
 
 CREATE TABLE `imageboard` (
-  `idimageboard` int(10) NOT NULL AUTO_INCREMENT,
+  `idimageboard` int(10) NOT NULL AUTOINCREMENT,
   `imageboard_idimageboard` int(10) DEFAULT NULL,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE `imageboard` (
 );
 
 CREATE TABLE `imagepost` (
-  `idimagepost` int(10) NOT NULL AUTO_INCREMENT,
+  `idimagepost` int(10) NOT NULL AUTOINCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `imageboard_idimageboard` int(10) DEFAULT NULL,
@@ -156,13 +156,13 @@ CREATE TABLE `imagepostSearch` (
 );
 
 CREATE TABLE `language` (
-  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `id` int(10) NOT NULL AUTOINCREMENT,
   `nameof` tinytext DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `linker` (
-  `idlinker` int(10) NOT NULL AUTO_INCREMENT,
+  `idlinker` int(10) NOT NULL AUTOINCREMENT,
   `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `linkerCategory_idlinkerCategory` int(10) NOT NULL DEFAULT 0,
@@ -179,7 +179,7 @@ CREATE TABLE `linker` (
 );
 
 CREATE TABLE `linkerCategory` (
-  `idlinkerCategory` int(10) NOT NULL AUTO_INCREMENT,
+  `idlinkerCategory` int(10) NOT NULL AUTOINCREMENT,
   `position` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `sortorder` int(10) NOT NULL DEFAULT 0,
@@ -187,7 +187,7 @@ CREATE TABLE `linkerCategory` (
 );
 
 CREATE TABLE `linkerQueue` (
-  `idlinkerQueue` int(10) NOT NULL AUTO_INCREMENT,
+  `idlinkerQueue` int(10) NOT NULL AUTOINCREMENT,
   `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `linkerCategory_idlinkerCategory` int(10) NOT NULL DEFAULT 0,
@@ -209,7 +209,7 @@ CREATE TABLE `linkerSearch` (
 );
 
 CREATE TABLE `permissions` (
-  `idpermissions` int(10) NOT NULL AUTO_INCREMENT,
+  `idpermissions` int(10) NOT NULL AUTOINCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `section` tinytext DEFAULT NULL,
   `level` tinyblob DEFAULT NULL,
@@ -218,7 +218,7 @@ CREATE TABLE `permissions` (
 );
 
 CREATE TABLE `preferences` (
-  `idpreferences` int(10) NOT NULL AUTO_INCREMENT,
+  `idpreferences` int(10) NOT NULL AUTOINCREMENT,
   `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `emailforumupdates` tinyint(1) DEFAULT 0,
@@ -229,7 +229,7 @@ CREATE TABLE `preferences` (
 );
 
 CREATE TABLE `searchwordlist` (
-  `idsearchwordlist` int(10) NOT NULL AUTO_INCREMENT,
+  `idsearchwordlist` int(10) NOT NULL AUTOINCREMENT,
   `word` tinytext DEFAULT NULL,
   PRIMARY KEY (`idsearchwordlist`)
 );
@@ -243,7 +243,7 @@ CREATE TABLE `searchwordlist_has_linker` (
 );
 
 CREATE TABLE `siteNews` (
-  `idsiteNews` int(10) NOT NULL AUTO_INCREMENT,
+  `idsiteNews` int(10) NOT NULL AUTOINCREMENT,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
@@ -277,7 +277,7 @@ CREATE TABLE `topicrestrictions` (
 );
 
 CREATE TABLE `userlang` (
-  `iduserlang` int(10) NOT NULL AUTO_INCREMENT,
+  `iduserlang` int(10) NOT NULL AUTOINCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`iduserlang`),
@@ -286,7 +286,7 @@ CREATE TABLE `userlang` (
 );
 
 CREATE TABLE `users` (
-  `idusers` int(10) NOT NULL AUTO_INCREMENT,
+  `idusers` int(10) NOT NULL AUTOINCREMENT,
   `email` tinytext DEFAULT NULL,
   `passwd` tinytext DEFAULT NULL,
   `passwd_algorithm` tinytext DEFAULT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE `userstopiclevel` (
 );
 
 CREATE TABLE `writing` (
-  `idwriting` int(10) NOT NULL AUTO_INCREMENT,
+  `idwriting` int(10) NOT NULL AUTOINCREMENT,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `forumthread_idforumthread` int(10) NOT NULL DEFAULT 0,
   `language_id` int(10) NOT NULL DEFAULT 0,
@@ -324,7 +324,7 @@ CREATE TABLE `writing` (
 );
 
 CREATE TABLE `writingCategory` (
-  `idwritingCategory` int(10) NOT NULL AUTO_INCREMENT,
+  `idwritingCategory` int(10) NOT NULL AUTOINCREMENT,
   `writingCategory_idwritingCategory` int(10) NOT NULL DEFAULT 0,
   `title` tinytext DEFAULT NULL,
   `description` tinytext DEFAULT NULL,
@@ -357,7 +357,7 @@ CREATE TABLE IF NOT EXISTS `schema_version` (
 
 -- Store subscribed users for notifications.
 CREATE TABLE IF NOT EXISTS `subscriptions` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `users_idusers` int NOT NULL,
   `item_type` varchar(32) NOT NULL,
   `target_id` int NOT NULL,
@@ -367,7 +367,7 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
 
 -- Queue outbound emails.
 CREATE TABLE IF NOT EXISTS `pending_emails` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `to_email` text NOT NULL,
   `subject` text NOT NULL,
   `body` text NOT NULL,
@@ -378,7 +378,7 @@ CREATE TABLE IF NOT EXISTS `pending_emails` (
 
 -- Internal notification list.
 CREATE TABLE IF NOT EXISTS `notifications` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `users_idusers` int NOT NULL,
   `link` text,
   `message` text,
@@ -398,7 +398,7 @@ CREATE TABLE IF NOT EXISTS `sessions` (
 
 -- Site announcements referencing promoted news posts.
 CREATE TABLE IF NOT EXISTS `site_announcements` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `site_news_id` int NOT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -408,7 +408,7 @@ CREATE TABLE IF NOT EXISTS `site_announcements` (
 
 -- Track failed login attempts.
 CREATE TABLE IF NOT EXISTS `login_attempts` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `username` varchar(255) NOT NULL,
   `ip_address` varchar(45) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -417,7 +417,7 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
 
 -- IP addresses banned from accessing the site.
 CREATE TABLE IF NOT EXISTS `banned_ips` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `ip_net` varchar(50) NOT NULL,
   `reason` text,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -437,7 +437,7 @@ CREATE TABLE IF NOT EXISTS `template_overrides` (
 
 -- Audit log of administrative actions.
 CREATE TABLE IF NOT EXISTS `audit_log` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTOINCREMENT,
   `users_idusers` int NOT NULL,
   `action` text NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -445,3 +445,21 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   KEY `audit_log_user_idx` (`users_idusers`)
 );
 
+
+
+
+CREATE TABLE user_passkeys (
+    id INT NOT NULL AUTOINCREMENT,
+    user_id INT NOT NULL,
+    credential_id BLOB NOT NULL,
+    public_key BLOB NOT NULL,
+    attestation_type VARCHAR(255) NOT NULL,
+    aaguid BLOB NOT NULL,
+    sign_count INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME DEFAULT NULL,
+    expires_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (credential_id)
+);

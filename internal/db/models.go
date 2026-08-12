@@ -616,6 +616,23 @@ type UserLanguage struct {
 	LanguageID   int32
 }
 
+type UserPasskey struct {
+	ID              int32
+	UserID          int32
+	Name            string
+	BackupEligible  sql.NullBool
+	BackupState     sql.NullBool
+	CredentialID    []byte
+	PublicKey       []byte
+	AttestationType string
+	Aaguid          []byte
+	SignCount       int32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	LastUsedAt      sql.NullTime
+	ExpiresAt       sql.NullTime
+}
+
 type UserRole struct {
 	IduserRoles  int32
 	UsersIdusers int32

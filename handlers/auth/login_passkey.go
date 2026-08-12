@@ -2,10 +2,10 @@ package auth
 
 import (
 	"encoding/json"
-	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/config"
-	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"log"

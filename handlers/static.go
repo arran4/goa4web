@@ -51,6 +51,9 @@ var (
 	// SiteJS serves the main site JavaScript.
 	SiteJS = StaticAssetHandler("site.js", "application/javascript", templates.GetSiteJSData)
 
+	// PasskeysJS serves the JavaScript for passkey registration and login.
+	PasskeysJS = StaticAssetHandler("passkeys.js", "application/javascript", templates.GetPasskeysJSData)
+
 	// A4CodeJS serves the A4Code parser/converter JavaScript.
 	A4CodeJS = StaticAssetHandler("a4code.js", "application/javascript", templates.GetA4CodeJSData)
 

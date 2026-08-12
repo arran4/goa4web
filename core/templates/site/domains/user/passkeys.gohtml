@@ -33,103 +33,10 @@
 </table>
 
 <br>
-<button id="register-passkey" class="btn">Add Passkey</button>
-
-<script>
-document.getElementById('register-passkey').addEventListener('click', async () => {
-    try {
-        const resp = await fetch('/usr/passkeys/add/begin');
-        if (!resp.ok) {
-            throw new Error('Failed to start passkey registration');
-        }
-
-
-        const optionsResp = await resp.json();
-        const options = optionsResp.Response || optionsResp; // go-webauthn wraps it in Response in newer versions usually but let's be safe
-
-
-        // Base64URL decode helper for ArrayBuffer
-        const bufferDecode = (value) => {
-            if (!value) return new Uint8Array(0).buffer;
-            const padding = (4 - (value.length % 4)) % 4;
-            const base64 = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padding);
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return bytes.buffer;
-        };
-
-        const bufferEncode = (value) => {
-            const bytes = new Uint8Array(value);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        };
-
-        // The go-webauthn library encodes options as JSON where []byte is base64url encoded strings.
-        // We must convert these base64url strings back into ArrayBuffers before passing to navigator.credentials.create
-
-
-        const opts = options.publicKey;
-
-        // Dynamically fix RP ID to match window location to prevent domain mismatch errors in development
-        if (opts.rp) {
-            opts.rp.id = window.location.hostname;
-        } else if (opts.rpId) { // for login
-            opts.rpId = window.location.hostname;
-        }
-
-
-        opts.challenge = bufferDecode(opts.challenge);
-        opts.user.id = bufferDecode(opts.user.id);
-        if (opts.excludeCredentials) {
-            opts.excludeCredentials = opts.excludeCredentials.map(c => {
-                c.id = bufferDecode(c.id);
-                return c;
-            });
-        }
-
-        console.log("Calling credentials.create with:", opts);
-        const credential = await navigator.credentials.create({ publicKey: opts });
-        console.log("Created credential:", credential);
-
-        const credentialResponse = {
-            id: credential.id,
-            rawId: bufferEncode(credential.rawId),
-            type: credential.type,
-            response: {
-                attestationObject: bufferEncode(credential.response.attestationObject),
-                clientDataJSON: bufferEncode(credential.response.clientDataJSON),
-            },
-        };
-
-
-        // Fetch CSRF token for the POST request
-        const csrfToken = document.querySelector('input[name="gorilla.csrf.Token"]')?.value;
-
-        const finishResp = await fetch('/usr/passkeys/add/finish', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': csrfToken
-            },
-            body: JSON.stringify(credentialResponse)
-        });
-
-        if (finishResp.ok) {
-            window.location.reload();
-        } else {
-            alert('Failed to register passkey: ' + (await finishResp.text()));
-        }
-    } catch (e) {
-        console.error(e);
-        alert('Passkey registration failed: ' + e.message);
-    }
-});
-</script>
+<form id="register-passkey-form">
+    {{ csrfField }}
+    <button id="register-passkey" class="btn" type="submit">Add Passkey</button>
+</form>
+<script src="{{ assetHash "/static/passkeys.js" }}"></script>
 
 {{ template "tail" $ }}

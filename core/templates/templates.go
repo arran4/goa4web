@@ -513,6 +513,9 @@ var (
 	// GetSiteJSData returns the main site JavaScript.
 	GetSiteJSData = GetAssetData("site.js")
 
+	// GetPasskeysJSData returns the JavaScript powering passkey registration and login.
+	GetPasskeysJSData = GetAssetData("passkeys.js")
+
 	// GetA4CodeJSData returns the A4Code parser/converter JavaScript.
 	GetA4CodeJSData = GetAssetData("a4code.js")
 

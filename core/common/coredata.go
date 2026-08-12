@@ -2845,7 +2845,6 @@ func WithSiteTitle(title string) CoreOption {
 	return func(cd *CoreData) { cd.SiteTitle = title }
 }
 
-
 // WithWebAuthn configures the WebAuthn instance.
 func WithWebAuthn() CoreOption {
 	return func(cd *CoreData) {
@@ -2880,7 +2879,6 @@ func WithWebAuthn() CoreOption {
 		}
 	}
 }
-
 
 // WithImageSignKey sets the image signing key and initializes the mapper.
 func WithImageSignKey(key string) CoreOption {

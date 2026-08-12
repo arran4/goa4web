@@ -1,8 +1,6 @@
 package server
 
 import (
-
-
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -208,7 +206,6 @@ func New(opts ...Option) *Server {
 	for _, o := range opts {
 		o(s)
 	}
-
 
 	return s
 }

@@ -4,7 +4,7 @@
         <tr><th>ID</th><th>User</th><th>Email</th><th>Actions</th></tr>
         {{range .Rows}}
         <tr>
-            <td><a href="/admin/user/{{.Idusers}}">{{.Idusers}}</a></td><td>{{.Username.String}}</td><td>{{.Email}}</td>
+            <td><a href="/admin/user/{{.Idusers}}">{{.Idusers}}</a></td><td>{{.Username.String}}</td><td>{{.PrimaryEmail}}</td>
             <td>
                 <form class="inline-form" method="post" action="/admin/users/pending/approve">
                     {{ csrfField }}<input type="hidden" name="uid" value="{{.Idusers}}">

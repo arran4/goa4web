@@ -30,7 +30,7 @@ func adminUserAddCommentPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.LoadSelectionsFromRequest(r)
 	user := cd.CurrentProfileUser()
-	back := "/admin/user"
+	back := "/admin/users"
 	if user != nil {
 		back = fmt.Sprintf("/admin/user/%d", user.Idusers)
 	}

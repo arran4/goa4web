@@ -116,6 +116,8 @@ CREATE TABLE `forumthread` (
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `locked` tinyint(1) DEFAULT NULL,
+  `reply_to_comment_id` int(10) DEFAULT NULL,
+  `reply_to_thread_id` int(10) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumthread`),
   KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`),

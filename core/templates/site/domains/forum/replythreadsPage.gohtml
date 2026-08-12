@@ -1,0 +1,43 @@
+{{ template "head" . }}
+
+<h1 class="page-title">Reply Threads to <a href="{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}">#{{.Thread.Idforumthread}}</a></h1>
+
+{{ if eq (len .ReplyThreads) 0 }}
+    <p>No reply threads found.</p>
+{{ else }}
+    <div class="threads-list">
+        {{ $base := "/forum" }}
+        {{ with cd.ForumBasePath }}{{ $base = . }}{{ end }}
+        {{ range .ReplyThreads }}
+            <div class="thread-item">
+                <h3>
+                    <a href="{{ $base }}/topic/{{$.Topic.Idforumtopic}}/thread/{{.Idforumthread}}">
+                        {{ if .FirstPostText.Valid }}
+                            {{ (slice .FirstPostText.String 0 (min (len .FirstPostText.String) 100)) }}...
+                        {{ else }}
+                            Thread #{{.Idforumthread}}
+                        {{ end }}
+                    </a>
+                </h3>
+                <div class="thread-meta">
+                    <span class="replies">Replies: {{.TotalComments.Int32}}</span>
+                    <span class="last-active">Last active: {{ cd.LocalTime .Lastaddition.Time }}</span>
+                    {{ if .LastPosterName.Valid }}
+                        <span class="last-poster">by {{.LastPosterName.String}}</span>
+                    {{ end }}
+                    {{ if .ReplyToCommentId.Valid }}
+                        <span class="reply-context">
+                            <a id="c{{.ReplyToCommentId.Int32}}" href="{{ $base }}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}#comment-{{.ReplyToCommentId.Int32}}">Original Comment #{{.ReplyToCommentId.Int32}}</a>
+                        </span>
+                    {{ end }}
+                </div>
+            </div>
+        {{ end }}
+    </div>
+{{ end }}
+
+<div class="back-link" style="margin-top: 1rem;">
+    <a href="{{ cd.ForumBasePath }}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}">← Back to Thread</a>
+</div>
+
+{{ template "tail" . }}

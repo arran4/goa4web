@@ -625,3 +625,28 @@ WHERE t.handler = 'private'
           )
       )
   );
+
+-- name: SetThreadReplyTo :exec
+UPDATE forumthread
+SET reply_to_comment_id = sqlc.arg(reply_to_comment_id),
+    reply_to_thread_id = sqlc.arg(reply_to_thread_id)
+WHERE idforumthread = sqlc.arg(idforumthread);
+
+-- name: GetReplyThreadsForThread :many
+SELECT t.*,
+       c.text as first_post_text,
+       t.comments as total_comments,
+       t.idforumthread,
+       u.username as last_poster_name
+FROM forumthread t
+LEFT JOIN comments c ON t.firstpost = c.idcomments
+LEFT JOIN users u ON t.lastposter = u.idusers
+WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
+ORDER BY t.lastaddition DESC;
+
+-- name: GetReplyThreadCountsForComments :many
+SELECT t.reply_to_comment_id, COUNT(t.idforumthread) as thread_count
+FROM forumthread t
+WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
+  AND t.reply_to_comment_id IN (sqlc.slice('comment_ids'))
+GROUP BY t.reply_to_comment_id;

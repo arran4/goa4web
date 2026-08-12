@@ -5,6 +5,7 @@
 <table class="table-list">
     <thead>
         <tr>
+            <th>Name</th>
             <th>Attestation</th>
             <th>Added On</th>
             <th>Sign Count</th>
@@ -14,8 +15,9 @@
     <tbody>
         {{ range .Passkeys }}
         <tr>
+            <td>{{ .Name }}</td>
             <td>{{ .AttestationType }}</td>
-            <td>{{ .CreatedAt.Time }}</td>
+            <td>{{ cd.LocalTime .CreatedAt }}</td>
             <td>{{ .SignCount }}</td>
             <td>
                 <form method="post" action="/usr/passkeys/remove?id={{ .ID }}">
@@ -26,7 +28,7 @@
         </tr>
         {{ else }}
         <tr>
-            <td colspan="4">No passkeys registered yet.</td>
+            <td colspan="5">No passkeys registered yet.</td>
         </tr>
         {{ end }}
     </tbody>
@@ -35,6 +37,8 @@
 <br>
 <form id="register-passkey-form">
     {{ csrfField }}
+    <label for="passkey-name">Passkey name:</label>
+    <input id="passkey-name" name="name" type="text" maxlength="255" required>
     <button id="register-passkey" class="btn" type="submit">Add Passkey</button>
 </form>
 <script src="{{ assetHash "/static/passkeys.js" }}"></script>

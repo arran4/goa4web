@@ -1,8 +1,8 @@
 -- name: InsertPasskey :exec
 INSERT INTO user_passkeys (
-    user_id, credential_id, public_key, attestation_type, aaguid, sign_count
+    user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 );
 
 -- name: GetPasskeysByUserID :many

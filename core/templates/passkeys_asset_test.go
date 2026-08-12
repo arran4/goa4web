@@ -12,6 +12,7 @@ func TestPasskeysJavaScriptIsExternal(t *testing.T) {
 			"navigator.credentials.create",
 			"navigator.credentials.get",
 			`form.querySelector('input[name="gorilla.csrf.Token"]')`,
+			"form.elements.name.value.trim()",
 		} {
 			if !strings.Contains(asset, expected) {
 				t.Errorf("passkeys asset does not contain %q", expected)

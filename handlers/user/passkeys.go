@@ -2,8 +2,10 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -11,7 +13,6 @@ import (
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 
-	"fmt"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -28,6 +29,15 @@ func passkeysBeginRegistration(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
+	if name == "" {
+		http.Error(w, "Passkey name is required", http.StatusBadRequest)
+		return
+	}
+	if len(name) > 255 {
+		http.Error(w, "Passkey name is too long", http.StatusBadRequest)
+		return
+	}
 
 	options, sessionData, err := cd.WebAuthn.BeginRegistration(user)
 	if err != nil {
@@ -38,6 +48,7 @@ func passkeysBeginRegistration(w http.ResponseWriter, r *http.Request) {
 
 	sess := cd.GetSession()
 	sess.Values["webauthn_reg_session"] = sessionData
+	sess.Values["webauthn_reg_name"] = name
 	if err := sess.Save(r, w); err != nil {
 		log.Printf("Failed to save session: %v", err)
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
@@ -69,6 +80,11 @@ func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid session data", http.StatusInternalServerError)
 		return
 	}
+	name, ok := sess.Values["webauthn_reg_name"].(string)
+	if !ok || name == "" {
+		http.Error(w, "Invalid passkey name", http.StatusBadRequest)
+		return
+	}
 
 	user, err := cd.GetWebAuthnUserByID(cd.UserID)
 	if err != nil {
@@ -90,7 +106,7 @@ func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = cd.SavePasskey(cred, cd.UserID)
+	err = cd.SavePasskey(cred, cd.UserID, name)
 	if err != nil {
 		log.Printf("SavePasskey failed: %v", err)
 		http.Error(w, "Failed to save passkey", http.StatusInternalServerError)
@@ -98,6 +114,7 @@ func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delete(sess.Values, "webauthn_reg_session")
+	delete(sess.Values, "webauthn_reg_name")
 	if err := sess.Save(r, w); err != nil {
 		log.Printf("Failed to save session: %v", err)
 	}

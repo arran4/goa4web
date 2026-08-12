@@ -47,8 +47,9 @@ function jsonHeaders(form) {
 }
 
 async function registerPasskey(form) {
-    const creation = await responseJSON(
-        await fetch('/usr/passkeys/add/begin'),
+	const name = form.elements.name.value.trim();
+	const creation = await responseJSON(
+		await fetch('/usr/passkeys/add/begin?name=' + encodeURIComponent(name)),
         'Failed to start passkey registration',
     );
     const credential = await navigator.credentials.create({

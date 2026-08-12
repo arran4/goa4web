@@ -813,12 +813,13 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (90, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (91, 1);
 
 
 CREATE TABLE user_passkeys (
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
     credential_id BLOB NOT NULL,
     public_key BLOB NOT NULL,
     attestation_type VARCHAR(255) NOT NULL,

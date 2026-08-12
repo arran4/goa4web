@@ -96,9 +96,10 @@ func (cd *CoreData) GetWebAuthnUserByID(id int32) (*WebAuthnUser, error) {
 	}, nil
 }
 
-func (cd *CoreData) SavePasskey(passkey *webauthn.Credential, userID int32) error {
+func (cd *CoreData) SavePasskey(passkey *webauthn.Credential, userID int32, name string) error {
 	return cd.queries.InsertPasskey(cd.ctx, db.InsertPasskeyParams{
 		UserID:          userID,
+		Name:            name,
 		CredentialID:    passkey.ID,
 		PublicKey:       passkey.PublicKey,
 		AttestationType: passkey.AttestationType,

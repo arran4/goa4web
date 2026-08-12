@@ -24,7 +24,7 @@ func (q *Queries) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) er
 }
 
 const getPasskeyByCredentialID = `-- name: GetPasskeyByCredentialID :one
-SELECT id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE credential_id = ?
+SELECT id, user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE credential_id = ?
 `
 
 func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error) {
@@ -33,6 +33,7 @@ func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []b
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.Name,
 		&i.CredentialID,
 		&i.PublicKey,
 		&i.AttestationType,
@@ -47,7 +48,7 @@ func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []b
 }
 
 const getPasskeysByUserID = `-- name: GetPasskeysByUserID :many
-SELECT id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE user_id = ?
+SELECT id, user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE user_id = ?
 `
 
 func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error) {
@@ -62,6 +63,7 @@ func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*Use
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
+			&i.Name,
 			&i.CredentialID,
 			&i.PublicKey,
 			&i.AttestationType,
@@ -87,14 +89,15 @@ func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*Use
 
 const insertPasskey = `-- name: InsertPasskey :exec
 INSERT INTO user_passkeys (
-    user_id, credential_id, public_key, attestation_type, aaguid, sign_count
+    user_id, name, credential_id, public_key, attestation_type, aaguid, sign_count
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 )
 `
 
 type InsertPasskeyParams struct {
 	UserID          int32
+	Name            string
 	CredentialID    []byte
 	PublicKey       []byte
 	AttestationType string
@@ -105,6 +108,7 @@ type InsertPasskeyParams struct {
 func (q *Queries) InsertPasskey(ctx context.Context, arg InsertPasskeyParams) error {
 	_, err := q.db.ExecContext(ctx, insertPasskey,
 		arg.UserID,
+		arg.Name,
 		arg.CredentialID,
 		arg.PublicKey,
 		arg.AttestationType,

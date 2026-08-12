@@ -716,7 +716,7 @@ CREATE TABLE IF NOT EXISTS `external_links` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `updated_by` int DEFAULT NULL,
   `card_title` tinytext,
-  `card_description` tinytext,
+  `card_description` text,
   `card_image` tinytext,
   `card_image_cache` tinytext,
   `favicon_cache` tinytext,
@@ -814,6 +814,7 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 
 -- Set the schema version to the latest migration.
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (92, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (93, 1);
 
 
 CREATE TABLE user_passkeys (

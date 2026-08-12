@@ -105,10 +105,22 @@ func (UpdateExternalLinkMetadataTask) Action(w http.ResponseWriter, r *http.Requ
 		return sql.NullString{String: s, Valid: s != ""}
 	}
 
+	desc := r.FormValue("card_description")
+	if len(desc) > 65000 {
+		runes := []rune(desc)
+		if len(runes) > 16000 {
+			desc = string(runes[:16000])
+		}
+		for len(desc) > 65000 {
+			runes = []rune(desc)
+			desc = string(runes[:len(runes)-100])
+		}
+	}
+
 	arg := db.UpdateExternalLinkMetadataParams{
 		ID:              int32(id),
 		CardTitle:       toNullString(r.FormValue("card_title")),
-		CardDescription: toNullString(r.FormValue("card_description")),
+		CardDescription: toNullString(desc),
 		CardImage:       toNullString(r.FormValue("card_image")),
 		CardDuration:    toNullString(r.FormValue("card_duration")),
 		CardUploadDate:  toNullString(r.FormValue("card_upload_date")),

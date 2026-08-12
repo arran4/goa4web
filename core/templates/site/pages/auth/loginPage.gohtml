@@ -75,7 +75,16 @@
                 return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
             };
 
-            const opts = options.publicKey;
+
+        const opts = options.publicKey;
+
+        // Dynamically fix RP ID to match window location to prevent domain mismatch errors in development
+        if (opts.rp) {
+            opts.rp.id = window.location.hostname;
+        } else if (opts.rpId) { // for login
+            opts.rpId = window.location.hostname;
+        }
+
             opts.challenge = bufferDecode(opts.challenge);
             if (opts.allowCredentials) {
                 opts.allowCredentials = opts.allowCredentials.map(c => {
@@ -115,7 +124,7 @@
             }
         } catch (e) {
             console.error(e);
-            alert('Passkey login failed or was cancelled.');
+            alert('Passkey login failed: ' + e.message);
         }
     }
     </script>

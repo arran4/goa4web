@@ -73,7 +73,16 @@ document.getElementById('register-passkey').addEventListener('click', async () =
         // The go-webauthn library encodes options as JSON where []byte is base64url encoded strings.
         // We must convert these base64url strings back into ArrayBuffers before passing to navigator.credentials.create
 
+
         const opts = options.publicKey;
+
+        // Dynamically fix RP ID to match window location to prevent domain mismatch errors in development
+        if (opts.rp) {
+            opts.rp.id = window.location.hostname;
+        } else if (opts.rpId) { // for login
+            opts.rpId = window.location.hostname;
+        }
+
 
         opts.challenge = bufferDecode(opts.challenge);
         opts.user.id = bufferDecode(opts.user.id);
@@ -118,7 +127,7 @@ document.getElementById('register-passkey').addEventListener('click', async () =
         }
     } catch (e) {
         console.error(e);
-        alert('Passkey registration failed or was cancelled.');
+        alert('Passkey registration failed: ' + e.message);
     }
 });
 </script>

@@ -24,7 +24,7 @@ func (q *Queries) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) er
 }
 
 const getPasskeyByCredentialID = `-- name: GetPasskeyByCredentialID :one
-SELECT id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at FROM user_passkeys WHERE credential_id = ?
+SELECT id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE credential_id = ?
 `
 
 func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error) {
@@ -40,12 +40,14 @@ func (q *Queries) GetPasskeyByCredentialID(ctx context.Context, credentialID []b
 		&i.SignCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastUsedAt,
+		&i.ExpiresAt,
 	)
 	return &i, err
 }
 
 const getPasskeysByUserID = `-- name: GetPasskeysByUserID :many
-SELECT id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at FROM user_passkeys WHERE user_id = ?
+SELECT id, user_id, credential_id, public_key, attestation_type, aaguid, sign_count, created_at, updated_at, last_used_at, expires_at FROM user_passkeys WHERE user_id = ?
 `
 
 func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error) {
@@ -67,6 +69,8 @@ func (q *Queries) GetPasskeysByUserID(ctx context.Context, userID int32) ([]*Use
 			&i.SignCount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LastUsedAt,
+			&i.ExpiresAt,
 		); err != nil {
 			return nil, err
 		}

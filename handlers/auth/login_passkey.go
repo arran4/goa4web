@@ -17,7 +17,8 @@ func loginPasskeyBegin(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	username := r.URL.Query().Get("username")
 
-	if cd.WebAuthn == nil {
+	wa, err := cd.GetWebAuthn()
+	if err != nil {
 		http.Error(w, "WebAuthn not configured", http.StatusInternalServerError)
 		return
 	}
@@ -30,7 +31,7 @@ func loginPasskeyBegin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	options, sessionData, err := cd.WebAuthn.BeginLogin(user)
+	options, sessionData, err := wa.BeginLogin(user)
 	if err != nil {
 		log.Printf("BeginLogin failed: %v", err)
 		http.Error(w, "BeginLogin failed", http.StatusInternalServerError)
@@ -54,7 +55,8 @@ func loginPasskeyBegin(w http.ResponseWriter, r *http.Request) {
 func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	if cd.WebAuthn == nil {
+	wa, err := cd.GetWebAuthn()
+	if err != nil {
 		http.Error(w, "WebAuthn not configured", http.StatusInternalServerError)
 		return
 	}
@@ -92,7 +94,7 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cred, err := cd.WebAuthn.ValidateDiscoverableLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
+	cred, err := wa.ValidateDiscoverableLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
 		return user, nil
 	}, sessionData, parsedResponse)
 

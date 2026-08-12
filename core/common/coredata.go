@@ -3531,3 +3531,32 @@ func isPrivateOrLocalhost(host string) bool {
 	}
 	return false
 }
+
+func (cd *CoreData) GetWebAuthn() (*webauthn.WebAuthn, error) {
+    if cd.WebAuthn != nil {
+        return cd.WebAuthn, nil
+    }
+
+    if cd.Config == nil {
+        return nil, fmt.Errorf("no config available")
+    }
+
+    rpID := "localhost"
+    if u, err := url.Parse(cd.Config.BaseURL); err == nil {
+        rpID = u.Hostname()
+    }
+
+    wconfig := &webauthn.Config{
+        RPDisplayName: cd.SiteTitle,
+        RPID:          rpID,
+        RPOrigins:     []string{cd.Config.BaseURL},
+    }
+
+    wa, err := webauthn.New(wconfig)
+    if err != nil {
+        return nil, err
+    }
+
+    cd.WebAuthn = wa
+    return wa, nil
+}

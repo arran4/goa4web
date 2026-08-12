@@ -22,8 +22,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 	lr.HandleFunc("", handlers.TaskHandler(loginTask)).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(loginTask.Matcher())
 	lr.HandleFunc("/verify", handlers.TaskHandler(verifyPasswordTask)).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(verifyPasswordTask.Matcher())
 
-	lr.HandleFunc("/passkey/begin", handlers.WithNoCache(loginPasskeyBegin)).Methods("GET")
-	lr.HandleFunc("/passkey/finish", loginPasskeyFinish).Methods("POST")
+	lr.HandleFunc("/passkey/begin", HasWebAuthn(handlers.WithNoCache(loginPasskeyBegin))).Methods("GET")
+	lr.HandleFunc("/passkey/finish", HasWebAuthn(loginPasskeyFinish)).Methods("POST")
 
 	fr := r.PathPrefix("/forgot").Subrouter()
 	fr.HandleFunc("", handlers.WithNoCache(forgotPasswordTask.Page)).Methods("GET").MatcherFunc(gml.Not(handlers.RequiresAnAccount()))

@@ -626,6 +626,8 @@ type UserPasskey struct {
 	SignCount       int32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	LastUsedAt      sql.NullTime
+	ExpiresAt       sql.NullTime
 }
 
 type UserRole struct {

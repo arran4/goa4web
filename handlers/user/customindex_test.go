@@ -37,3 +37,20 @@ func TestCustomIndexPasskeys(t *testing.T) {
 		}
 	})
 }
+
+func TestLogoutClearsUserCustomIndex(t *testing.T) {
+	t.Run("Logged-out users cannot see account settings", func(t *testing.T) {
+		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+		cd.UserID = 1
+		CustomIndex(cd, httptest.NewRequest("GET", "/usr/logout", nil))
+		if len(cd.CustomIndexItems) == 0 {
+			t.Fatal("test setup did not create account settings")
+		}
+
+		clearLoggedOutCoreData(cd)
+
+		if cd.UserID != 0 || len(cd.CustomIndexItems) != 0 {
+			t.Fatalf("logout retained account access: user=%d items=%v", cd.UserID, cd.CustomIndexItems)
+		}
+	})
+}

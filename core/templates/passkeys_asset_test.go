@@ -24,6 +24,7 @@ func TestPasskeysJavaScriptIsExternal(t *testing.T) {
 		for _, name := range []string{
 			"site/domains/user/passkeys.gohtml",
 			"site/pages/auth/loginPage.gohtml",
+			"site/pages/auth/accessDeniedLoginPage.gohtml",
 		} {
 			source := string(readFile(name))
 			if !strings.Contains(source, `assetHash "/static/passkeys.js"`) {

@@ -24,16 +24,15 @@ func loginPasskeyBegin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := cd.GetWebAuthnUser(username)
 	if err != nil {
-		// Log the error but don't leak info
 		log.Printf("GetWebAuthnUser failed: %v", err)
-		http.Error(w, "User not found or no passkeys", http.StatusNotFound)
+		writePasskeyUnavailable(w)
 		return
 	}
 
 	options, sessionData, err := cd.WebAuthn.BeginLogin(user)
 	if err != nil {
 		log.Printf("BeginLogin failed: %v", err)
-		http.Error(w, "BeginLogin failed", http.StatusInternalServerError)
+		writePasskeyUnavailable(w)
 		return
 	}
 
@@ -49,6 +48,10 @@ func loginPasskeyBegin(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(options); err != nil {
 		log.Printf("Failed to encode JSON: %v", err)
 	}
+}
+
+func writePasskeyUnavailable(w http.ResponseWriter) {
+	http.Error(w, "Passkey login unavailable", http.StatusNotFound)
 }
 
 func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {

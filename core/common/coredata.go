@@ -2860,7 +2860,7 @@ func WithWebAuthn() CoreOption {
 		}
 
 		var rpOrigins []string
-		var rpDisplayName string = "goa4web"
+		var rpDisplayName = "goa4web"
 		if cd.Config != nil {
 			rpOrigins = []string{cd.Config.BaseURL}
 			if cd.SiteTitle != "" {

@@ -6,14 +6,15 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
 	nav "github.com/arran4/goa4web/internal/navigation"
+	"github.com/arran4/goa4web/workers/externallinkworker"
 	"github.com/arran4/goa4web/internal/router"
 )
 
 // RegisterRoutes attaches the external link redirect endpoint to r.
 func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions {
 	r.HandleFunc("/goto", RedirectHandler).Methods("GET")
-	r.HandleFunc("/goto", handlers.TaskHandler(reloadExternalLinkTask)).Methods("POST")
-	r.HandleFunc("/goto/prefetch", handlers.TaskHandler(prefetchExternalLinkTask)).Methods("POST")
+	r.HandleFunc("/goto", handlers.TaskHandler(externallinkworker.GetReloadExternalLinkTask())).Methods("POST")
+	r.HandleFunc("/goto/prefetch", handlers.TaskHandler(externallinkworker.GetPrefetchExternalLinkTask())).Methods("POST")
 	return nil
 }
 

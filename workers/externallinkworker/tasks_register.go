@@ -1,4 +1,4 @@
-package externallink
+package externallinkworker
 
 import "github.com/arran4/goa4web/internal/tasks"
 

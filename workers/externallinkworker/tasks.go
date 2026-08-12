@@ -1,4 +1,4 @@
-package externallink
+package externallinkworker
 
 import (
 	"context"
@@ -221,4 +221,12 @@ func (PrefetchExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) a
 	}
 
 	return handlers.TextByteWriter("ok")
+}
+
+func GetReloadExternalLinkTask() *ReloadExternalLinkTask {
+	return reloadExternalLinkTask
+}
+
+func GetPrefetchExternalLinkTask() *PrefetchExternalLinkTask {
+	return prefetchExternalLinkTask
 }

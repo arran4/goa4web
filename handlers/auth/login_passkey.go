@@ -92,9 +92,7 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cred, err := cd.WebAuthn.ValidateDiscoverableLogin(func(rawID, userHandle []byte) (webauthn.User, error) {
-		return user, nil
-	}, sessionData, parsedResponse)
+	cred, err := validatePasskeyLogin(cd.WebAuthn, user, sessionData, parsedResponse)
 
 	if err != nil {
 		log.Printf("ValidateLogin passkey failed for user %d: %v", uid, err)
@@ -127,4 +125,8 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
 		log.Printf("Failed to encode JSON: %v", err)
 	}
+}
+
+func validatePasskeyLogin(wa *webauthn.WebAuthn, user webauthn.User, session webauthn.SessionData, response *protocol.ParsedCredentialAssertionData) (*webauthn.Credential, error) {
+	return wa.ValidateLogin(user, session, response)
 }

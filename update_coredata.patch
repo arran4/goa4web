@@ -1,0 +1,6 @@
+<<<<<<< SEARCH
+	PageTitle         string
+=======
+	PageTitle         string
+	PageTitleLink     string
+>>>>>>> REPLACE

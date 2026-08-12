@@ -212,12 +212,12 @@ func New(opts ...Option) *Server {
 		o(s)
 	}
 
-	// Initialize WebAuthn
 	if s.Config != nil {
 		rpID := "localhost"
 		if u, err := url.Parse(s.Config.BaseURL); err == nil {
 			rpID = u.Hostname()
 		}
+
 		wconfig := &webauthn.Config{
 			RPDisplayName: "goa4web",
 			RPID:          rpID,
@@ -227,10 +227,9 @@ func New(opts ...Option) *Server {
 		wa, err := webauthn.New(wconfig)
 		if err == nil {
 			s.WebAuthn = wa
-		} else {
-			log.Printf("WebAuthn initialization error: %v", err)
 		}
 	}
+
 	return s
 }
 

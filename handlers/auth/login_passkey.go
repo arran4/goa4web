@@ -3,6 +3,8 @@ package auth
 import (
 	"encoding/json"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -95,7 +97,7 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 	}, sessionData, parsedResponse)
 
 	if err != nil {
-		log.Printf("ValidateLogin failed: %v", err)
+		log.Printf("ValidateLogin passkey failed for user %d: %v", uid, err)
 		http.Error(w, "Validation failed", http.StatusBadRequest)
 		return
 	}
@@ -112,6 +114,10 @@ func loginPasskeyFinish(w http.ResponseWriter, r *http.Request) {
 	sess.Values["UID"] = int32(user.Idusers)
 	sess.Values["LoginTime"] = time.Now().Unix()
 	sess.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
+
+	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
+		log.Printf("login success passkey uid=%d session=%s", user.Idusers, handlers.HashSessionID(sess.ID))
+	}
 
 	if err := sess.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)

@@ -813,7 +813,8 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 );
 
 -- Set the schema version to the latest migration.
-INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (89, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (90, 1);
+
 
 CREATE TABLE user_passkeys (
     id INT NOT NULL AUTO_INCREMENT,
@@ -825,6 +826,8 @@ CREATE TABLE user_passkeys (
     sign_count INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_used_at DATETIME DEFAULT NULL,
+    expires_at DATETIME DEFAULT NULL,
     PRIMARY KEY (id),
     KEY user_passkeys_user_idx (user_id),
     UNIQUE KEY user_passkeys_cred_idx (credential_id(255))

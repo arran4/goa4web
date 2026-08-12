@@ -445,17 +445,3 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
   KEY `audit_log_user_idx` (`users_idusers`)
 );
 
-
-CREATE TABLE user_passkeys (
-    id INT NOT NULL AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    credential_id BLOB NOT NULL,
-    public_key BLOB NOT NULL,
-    attestation_type VARCHAR(255) NOT NULL,
-    aaguid BLOB NOT NULL,
-    sign_count INT NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY user_passkeys_cred_idx (credential_id(255))
-);

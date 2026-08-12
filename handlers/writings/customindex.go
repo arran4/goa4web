@@ -22,8 +22,8 @@ func WritingsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.In
 	cd.PublicAtomFeedURL = path + "/atom" + suffix
 
 	items = append(items,
-		common.IndexItem{Name: "Writings Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, Folded: true},
-		common.IndexItem{Name: "Writings RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, Folded: true},
+		common.IndexItem{Name: "Writings Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, GroupID: "advanced"},
+		common.IndexItem{Name: "Writings RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, GroupID: "advanced"},
 	)
 
 	if cd.IsAdmin() {

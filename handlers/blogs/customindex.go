@@ -26,8 +26,8 @@ func BlogsGeneralIndexItems(cd *common.CoreData, r *http.Request) []common.Index
 		cd.PublicAtomFeedURL = path + "/atom" + suffix
 
 		items = append(items,
-			common.IndexItem{Name: "Blogs Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, Folded: true},
-			common.IndexItem{Name: "Blogs RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, Folded: true},
+			common.IndexItem{Name: "Blogs Atom Feed", Icon: "⚛️", Link: cd.AtomFeedURL, GroupID: "advanced"},
+			common.IndexItem{Name: "Blogs RSS Feed", Icon: "📡", Link: cd.RSSFeedURL, GroupID: "advanced"},
 		)
 	}
 

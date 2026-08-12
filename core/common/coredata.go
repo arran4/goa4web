@@ -71,6 +71,15 @@ func (lc *LanguageCache) Invalidate() {
 	lc.mu.Unlock()
 }
 
+// IndexGroup represents a section for index items.
+type IndexGroup struct {
+	ID          string
+	Name        string
+	ClickToShow bool
+	ItalicTitle bool
+	Priority    int
+}
+
 // IndexItem represents a navigation item linking to site sections.
 type IndexItem struct {
 	Icon         template.HTML
@@ -78,7 +87,8 @@ type IndexItem struct {
 	Link         string
 	TemplateName string
 	TemplateData any
-	Folded       bool
+	GroupID      string
+	Priority     int
 }
 
 // AdminSection groups admin navigation links under a section heading.
@@ -150,6 +160,7 @@ type CoreData struct {
 	AutoRefresh       string
 	Config            *config.RuntimeConfig
 	CustomIndexItems  []IndexItem
+	CustomIndexGroups []IndexGroup
 	DLQReg            *dlq.Registry
 	FeedsEnabled      bool
 
@@ -2933,6 +2944,26 @@ func assignIDFromString(m map[string]*int32, k, v string) {
 	*dest = int32(i)
 }
 
+// SortedCustomIndexGroups returns CustomIndexGroups sorted by Priority.
+func (cd *CoreData) SortedCustomIndexGroups() []IndexGroup {
+	res := make([]IndexGroup, len(cd.CustomIndexGroups))
+	copy(res, cd.CustomIndexGroups)
+	slices.SortFunc(res, func(a, b IndexGroup) int {
+		return a.Priority - b.Priority
+	})
+	return res
+}
+
+// SortedCustomIndexItems returns CustomIndexItems sorted by Priority.
+func (cd *CoreData) SortedCustomIndexItems() []IndexItem {
+	res := make([]IndexItem, len(cd.CustomIndexItems))
+	copy(res, cd.CustomIndexItems)
+	slices.SortFunc(res, func(a, b IndexItem) int {
+		return a.Priority - b.Priority
+	})
+	return res
+}
+
 // LoadSelectionsFromRequest extracts integer identifiers from the request and
 // stores them on the CoreData instance. It searches path variables, query
 // parameters and finally form values.
@@ -2983,6 +3014,10 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 		},
 		Config: cfg,
 	}
+	cd.CustomIndexGroups = append(cd.CustomIndexGroups,
+		IndexGroup{ID: "advanced", Name: "Advanced", ClickToShow: true, Priority: 100},
+		IndexGroup{ID: "danger", Name: "Danger Zone", ClickToShow: true, ItalicTitle: false, Priority: 200},
+	)
 	if cq, ok := q.(db.CustomQueries); ok {
 		cd.customQueries = cq
 	}

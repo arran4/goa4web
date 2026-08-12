@@ -1,31 +1,40 @@
 {{- define "index"}}
     {{- template "indexItems" $ }}
     {{- template "userPanel" $ }}
-    {{- $advanced := false }}
-    {{- range $i := cd.CustomIndexItems }}
-        {{- if not $i.Folded }}
+    {{- /* Default group items (GroupID == "") */ -}}
+    {{- range $i := cd.SortedCustomIndexItems }}
+        {{- if eq $i.GroupID "" }}
             {{ if ne $i.TemplateName "" }}
                 {{ include $i.TemplateName $i.TemplateData }}
             {{ else }}
                 <a href="{{ addmode $i.Link }}" style="text-decoration: none;">{{ if $i.Icon }}{{ $i.Icon }}&nbsp;{{ end }}<span style="text-decoration: underline;">{{ $i.Name }}</span></a><br>
             {{ end }}
-        {{- else }}
-            {{- $advanced = true }}
         {{- end }}
     {{- end }}
-    {{- if $advanced }}
-        <div class="folded-toggle" data-target="folded-items">Advanced / Danger Zone</div>
-        <div id="folded-items" class="folded-items hidden">
-            {{- range $i := cd.CustomIndexItems }}
-                {{- if $i.Folded }}
-                    {{ if ne $i.TemplateName "" }}
-                        {{ include $i.TemplateName $i.TemplateData }}
-                    {{ else }}
-                        <a href="{{ addmode $i.Link }}" style="text-decoration: none;">{{ if $i.Icon }}{{ $i.Icon }}&nbsp;{{ end }}<span style="text-decoration: underline;">{{ $i.Name }}</span></a><br>
-                    {{ end }}
-                {{- end }}
+
+    {{- /* Grouped items */ -}}
+    {{- range $group := cd.SortedCustomIndexGroups }}
+        {{- $hasItems := false }}
+        {{- range $i := cd.SortedCustomIndexItems }}
+            {{- if eq $i.GroupID $group.ID }}
+                {{- $hasItems = true }}
             {{- end }}
-        </div>
+        {{- end }}
+
+        {{- if $hasItems }}
+            <div {{ if $group.ClickToShow }}class="folded-toggle" data-target="group-{{ $group.ID }}"{{ end }} {{ if $group.ItalicTitle }}style="font-style: italic;"{{ end }}>{{ $group.Name }}</div>
+            <div id="group-{{ $group.ID }}" {{ if $group.ClickToShow }}class="folded-items hidden"{{ end }}>
+                {{- range $i := cd.SortedCustomIndexItems }}
+                    {{- if eq $i.GroupID $group.ID }}
+                        {{ if ne $i.TemplateName "" }}
+                            {{ include $i.TemplateName $i.TemplateData }}
+                        {{ else }}
+                            <a href="{{ addmode $i.Link }}" style="text-decoration: none;">{{ if $i.Icon }}{{ $i.Icon }}&nbsp;{{ end }}<span style="text-decoration: underline;">{{ $i.Name }}</span></a><br>
+                        {{ end }}
+                    {{- end }}
+                {{- end }}
+            </div>
+        {{- end }}
     {{- end }}
     {{ if cd.HasAdminRole }}
         {{ if cd.AdminMode }}

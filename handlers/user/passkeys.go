@@ -18,8 +18,7 @@ import (
 func passkeysBeginRegistration(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	wa, err := cd.GetWebAuthn()
-	if err != nil {
+	if cd.WebAuthn == nil {
 		http.Error(w, "WebAuthn not configured", http.StatusInternalServerError)
 		return
 	}
@@ -30,7 +29,7 @@ func passkeysBeginRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	options, sessionData, err := wa.BeginRegistration(user)
+	options, sessionData, err := cd.WebAuthn.BeginRegistration(user)
 	if err != nil {
 		log.Printf("BeginRegistration failed: %v", err)
 		http.Error(w, "BeginRegistration failed", http.StatusInternalServerError)
@@ -47,8 +46,7 @@ func passkeysBeginRegistration(w http.ResponseWriter, r *http.Request) {
 func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	wa, err := cd.GetWebAuthn()
-	if err != nil {
+	if cd.WebAuthn == nil {
 		http.Error(w, "WebAuthn not configured", http.StatusInternalServerError)
 		return
 	}
@@ -79,7 +77,7 @@ func passkeysFinishRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cred, err := wa.CreateCredential(user, sessionData, parsedResponse)
+	cred, err := cd.WebAuthn.CreateCredential(user, sessionData, parsedResponse)
 	if err != nil {
 		log.Printf("CreateCredential failed: %v", err)
 		http.Error(w, "Registration failed", http.StatusBadRequest)

@@ -267,6 +267,9 @@ type RuntimeConfig struct {
 
 	// TrustedProxies is a comma-separated list of trusted proxy CIDRs.
 	TrustedProxies string
+
+	// WebAuthnEnabled toggles WebAuthn support.
+	WebAuthnEnabled bool
 }
 
 // Option configures RuntimeConfig values.

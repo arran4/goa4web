@@ -141,4 +141,5 @@ var BoolOptions = []BoolOption{
 	{"auto-migrate", EnvAutoMigrate, "Run database migrations on startup.", false, "", func(c *RuntimeConfig) *bool { return &c.AutoMigrate }},
 	{"create-dirs", EnvCreateDirs, "Enable or disable the automatic creation of missing directories.", false, "", func(c *RuntimeConfig) *bool { return &c.CreateDirs }},
 	{"skip-startup-media-check", EnvSkipStartupMediaCheck, "Skip the startup media check entirely.", false, "", func(c *RuntimeConfig) *bool { return &c.SkipStartupMediaCheck }},
+	{"webauthn-enabled", EnvWebAuthnEnabled, "Enable or disable WebAuthn support.", true, "", func(c *RuntimeConfig) *bool { return &c.WebAuthnEnabled }},
 }

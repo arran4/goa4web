@@ -1,9 +1,7 @@
 package server
 
 import (
-	"github.com/go-webauthn/webauthn/webauthn"
 
-	"net/url"
 
 	"context"
 	"database/sql"
@@ -66,7 +64,6 @@ type Server struct {
 	DLQReg         *dlq.Registry
 	Websocket      *websocket.Module
 	LanguageCache  *common.LanguageCache
-	WebAuthn       *webauthn.WebAuthn
 
 	WorkerCancel context.CancelFunc
 
@@ -212,23 +209,6 @@ func New(opts ...Option) *Server {
 		o(s)
 	}
 
-	if s.Config != nil {
-		rpID := "localhost"
-		if u, err := url.Parse(s.Config.BaseURL); err == nil {
-			rpID = u.Hostname()
-		}
-
-		wconfig := &webauthn.Config{
-			RPDisplayName: "goa4web",
-			RPID:          rpID,
-			RPOrigins:     []string{s.Config.BaseURL},
-		}
-
-		wa, err := webauthn.New(wconfig)
-		if err == nil {
-			s.WebAuthn = wa
-		}
-	}
 
 	return s
 }
@@ -370,7 +350,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithSiteTitle("Arran's Site"),
 		common.WithTrustedProxies(trustedProxies),
 		common.WithLanguageCache(s.LanguageCache),
-		common.WithWebAuthn(s.WebAuthn),
+		common.WithWebAuthn(),
 	)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()

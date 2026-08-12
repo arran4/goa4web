@@ -235,4 +235,6 @@ const (
 
 	// EnvTrustedProxies is a comma-separated list of trusted proxy CIDRs.
 	EnvTrustedProxies = "TRUSTED_PROXIES"
+	// EnvWebAuthnEnabled toggles WebAuthn.
+	EnvWebAuthnEnabled = "WEBAUTHN_ENABLED"
 )

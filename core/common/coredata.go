@@ -2845,10 +2845,42 @@ func WithSiteTitle(title string) CoreOption {
 	return func(cd *CoreData) { cd.SiteTitle = title }
 }
 
-// WithWebAuthn sets the WebAuthn instance.
-func WithWebAuthn(w *webauthn.WebAuthn) CoreOption {
-	return func(cd *CoreData) { cd.WebAuthn = w }
+
+// WithWebAuthn configures the WebAuthn instance.
+func WithWebAuthn() CoreOption {
+	return func(cd *CoreData) {
+		if cd.Config != nil && !cd.Config.WebAuthnEnabled {
+			return
+		}
+		rpID := "localhost"
+		if cd.Config != nil {
+			if u, err := url.Parse(cd.Config.BaseURL); err == nil {
+				rpID = u.Hostname()
+			}
+		}
+
+		var rpOrigins []string
+		var rpDisplayName string = "goa4web"
+		if cd.Config != nil {
+			rpOrigins = []string{cd.Config.BaseURL}
+			if cd.SiteTitle != "" {
+				rpDisplayName = cd.SiteTitle
+			}
+		}
+
+		wconfig := &webauthn.Config{
+			RPDisplayName: rpDisplayName,
+			RPID:          rpID,
+			RPOrigins:     rpOrigins,
+		}
+
+		wa, err := webauthn.New(wconfig)
+		if err == nil {
+			cd.WebAuthn = wa
+		}
+	}
 }
+
 
 // WithImageSignKey sets the image signing key and initializes the mapper.
 func WithImageSignKey(key string) CoreOption {
@@ -3530,33 +3562,4 @@ func isPrivateOrLocalhost(host string) bool {
 		return true
 	}
 	return false
-}
-
-func (cd *CoreData) GetWebAuthn() (*webauthn.WebAuthn, error) {
-    if cd.WebAuthn != nil {
-        return cd.WebAuthn, nil
-    }
-
-    if cd.Config == nil {
-        return nil, fmt.Errorf("no config available")
-    }
-
-    rpID := "localhost"
-    if u, err := url.Parse(cd.Config.BaseURL); err == nil {
-        rpID = u.Hostname()
-    }
-
-    wconfig := &webauthn.Config{
-        RPDisplayName: cd.SiteTitle,
-        RPID:          rpID,
-        RPOrigins:     []string{cd.Config.BaseURL},
-    }
-
-    wa, err := webauthn.New(wconfig)
-    if err != nil {
-        return nil, err
-    }
-
-    cd.WebAuthn = wa
-    return wa, nil
 }

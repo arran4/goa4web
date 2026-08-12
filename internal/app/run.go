@@ -155,7 +155,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	case "strict":
 		sameSite = http.SameSiteStrictMode
 	}
-	store.Options = &sessions.Options{Path: "/", HttpOnly: true, Secure: true, SameSite: sameSite}
+	store.Options = sessionCookieOptions(cfg.BaseURL, sameSite)
 
 	if o.DB == nil && o.Querier == nil {
 		var err error
@@ -269,4 +269,9 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	srv.TasksReg = o.TasksReg
 
 	return srv, nil
+}
+
+func sessionCookieOptions(baseURL string, sameSite http.SameSite) *sessions.Options {
+	secure := strings.HasPrefix(strings.ToLower(baseURL), "https://")
+	return &sessions.Options{Path: "/", HttpOnly: true, Secure: secure, SameSite: sameSite}
 }

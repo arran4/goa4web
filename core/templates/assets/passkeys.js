@@ -49,7 +49,7 @@ function jsonHeaders(form) {
 async function registerPasskey(form) {
 	const name = form.elements.name.value.trim();
 	const creation = await responseJSON(
-		await fetch('/usr/passkeys/add/begin?name=' + encodeURIComponent(name)),
+		await fetch('/usr/passkeys/add/begin?name=' + encodeURIComponent(name), {credentials: 'same-origin'}),
         'Failed to start passkey registration',
     );
     const credential = await navigator.credentials.create({
@@ -59,8 +59,9 @@ async function registerPasskey(form) {
         throw new Error('The authenticator did not create a credential');
     }
 
-    const response = await fetch('/usr/passkeys/add/finish', {
-        method: 'POST',
+	const response = await fetch('/usr/passkeys/add/finish', {
+		method: 'POST',
+		credentials: 'same-origin',
         headers: jsonHeaders(form),
         body: JSON.stringify({
             id: credential.id,
@@ -81,7 +82,7 @@ async function registerPasskey(form) {
 async function loginWithPasskey(form) {
     const username = form.elements.username.value;
     const request = await responseJSON(
-        await fetch('/login/passkey/begin?username=' + encodeURIComponent(username)),
+		await fetch('/login/passkey/begin?username=' + encodeURIComponent(username), {credentials: 'same-origin'}),
         'Passkey login is not available for this user',
     );
     const credential = await navigator.credentials.get({
@@ -91,8 +92,9 @@ async function loginWithPasskey(form) {
         throw new Error('The authenticator did not return a credential');
     }
 
-    const response = await fetch('/login/passkey/finish', {
-        method: 'POST',
+	const response = await fetch('/login/passkey/finish', {
+		method: 'POST',
+		credentials: 'same-origin',
         headers: jsonHeaders(form),
         body: JSON.stringify({
             id: credential.id,

@@ -35,6 +35,7 @@
     <hr>
     {{ if cd.WebAuthn }}<h3>Login with Passkey</h3>
     <form id="passkey-login-form">
+        {{ csrfField }}
         Username: <input type="text" id="passkey-username" name="username" required><br>
         <button type="submit">Login with Passkey</button>
     </form>

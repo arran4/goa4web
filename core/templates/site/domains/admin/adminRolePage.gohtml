@@ -10,6 +10,16 @@
     </tr>
 </table>
 
+{{ if .Errors }}
+<div class="alert alert-danger">
+    <ul>
+    {{ range .Errors }}
+        <li>{{ . }}</li>
+    {{ end }}
+    </ul>
+</div>
+{{ end }}
+
 <h3>Users</h3>
 {{- if .Users }}
 <table class="table table-bordered perm-table">
@@ -48,7 +58,7 @@
     <div>
         <label for="usernames">Usernames (comma or newline separated):</label>
         <br>
-        <textarea name="usernames" id="usernames" rows="3" cols="50" required></textarea>
+        <textarea name="usernames" id="usernames" rows="3" cols="50" required>{{ if .Usernames }}{{ .Usernames }}{{ end }}</textarea>
     </div>
     <div style="margin-top: 10px;">
         <input type="submit" value="Add Users">

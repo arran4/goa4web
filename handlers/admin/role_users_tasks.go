@@ -38,7 +38,6 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("usernames input is required %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
 
-	// Split by comma or newline
 	var usernames []string
 	for _, part := range strings.Split(strings.ReplaceAll(usernamesInput, "\n", ","), ",") {
 		username := strings.TrimSpace(part)
@@ -47,12 +46,14 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	var errs []error
+	var errs []string
+	var failedUsernames []string
 	for _, username := range usernames {
 		u, err := queries.SystemGetUserByUsername(r.Context(), sql.NullString{Valid: true, String: username})
 		if err != nil {
 			log.Printf("Failed to lookup user %s: %v", username, err)
-			errs = append(errs, fmt.Errorf("failed to lookup %s", username))
+			errs = append(errs, fmt.Sprintf("Failed to lookup user '%s'", username))
+			failedUsernames = append(failedUsernames, username)
 			continue
 		}
 
@@ -61,12 +62,50 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 			RoleID:       roleID,
 		}); err != nil {
 			log.Printf("Failed to add user %s to role %d: %v", username, roleID, err)
-			errs = append(errs, fmt.Errorf("failed to add %s", username))
+			errs = append(errs, fmt.Sprintf("Failed to add user '%s'", username))
+			failedUsernames = append(failedUsernames, username)
 		}
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("errors occurred: %v %w", errs, handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
+		role, err := queries.AdminGetRoleByID(r.Context(), roleID)
+		if err != nil {
+			return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/role/%d", roleID)}
+		}
+
+		id := roleID
+		emailRows, _ := queries.GetVerifiedUserEmails(r.Context())
+		emailsByUser := make(map[int32][]string)
+		for _, row := range emailRows {
+			emailsByUser[row.UserID] = append(emailsByUser[row.UserID], row.Email)
+		}
+
+		users, _ := queries.AdminListUsersByRoleID(r.Context(), id)
+		roleUsers := make([]*roleUser, 0, len(users))
+		for _, u := range users {
+			ru := &roleUser{ID: u.Idusers, User: u.Username, UserID: u.Idusers, IduserRoles: u.IduserRoles}
+			if emails, ok := emailsByUser[u.Idusers]; ok {
+				ru.Email = emails
+			}
+			roleUsers = append(roleUsers, ru)
+		}
+
+		groups, _ := buildGrantGroups(r.Context(), cd, id)
+
+		data := struct {
+			Role        *db.Role
+			Users       []*roleUser
+			GrantGroups []GrantGroup
+			Errors      []string
+			Usernames   string
+		}{
+			Role:        role,
+			Users:       roleUsers,
+			GrantGroups: groups,
+			Errors:      errs,
+			Usernames:   strings.Join(failedUsernames, "\n"),
+		}
+		return handlers.TemplateWithDataHandler(AdminRolePageTmpl, data)
 	}
 
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/role/%d", roleID)}

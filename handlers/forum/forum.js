@@ -3,25 +3,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelFilter = document.querySelector('.label-filter');
     if (labelFilter) {
         labelFilter.addEventListener('input', () => {
-            const filterTerms = labelFilter.value.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+            const filterValue = labelFilter.value.trim();
             const items = document.querySelectorAll('.topic-item, .thread');
+
+            if (!filterValue) {
+                items.forEach(item => item.style.display = '');
+                return;
+            }
+
+            // Split by " OR " (explicit upper case OR)
+            const orGroups = filterValue.split(/\s+OR\s+/).filter(g => g.trim().length > 0);
+
             items.forEach(item => {
-                const searchableElements = item.querySelectorAll('.label, .participant');
+                const labels = Array.from(item.querySelectorAll('.label')).map(el => el.textContent.toLowerCase());
+                const participants = Array.from(item.querySelectorAll('.participant')).map(el => el.textContent.toLowerCase());
 
-                let allTermsFound = true;
-                if (filterTerms.length > 0) {
-                    allTermsFound = filterTerms.every(term => {
-                        let termFound = false;
-                        searchableElements.forEach(el => {
-                            if (el.textContent.toLowerCase().includes(term)) {
-                                termFound = true;
-                            }
-                        });
-                        return termFound;
+                // OR logic: if any of the groups match, show the item
+                const anyGroupMatches = orGroups.some(group => {
+                    // AND logic within each OR group
+                    const andTerms = group.trim().split(/\s+/).filter(t => t.length > 0);
+
+                    return andTerms.every(term => {
+                        const termLower = term.toLowerCase();
+                        if (termLower.startsWith('label:')) {
+                            const val = termLower.substring(6);
+                            return labels.some(l => l.includes(val));
+                        } else if (termLower.startsWith('participant:')) {
+                            const val = termLower.substring(12);
+                            return participants.some(p => p.includes(val));
+                        } else {
+                            // Fallback: search both
+                            return labels.some(l => l.includes(termLower)) || participants.some(p => p.includes(termLower));
+                        }
                     });
-                }
+                });
 
-                if (allTermsFound) {
+                if (anyGroupMatches) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
@@ -31,18 +48,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Allow clicking on labels/participants to add them to the filter
         document.addEventListener('click', (e) => {
-            if (e.target.matches('.label') || e.target.matches('.participant')) {
-                const text = e.target.textContent.trim();
+            const targetEl = e.target.closest('.label, .participant');
+            if (targetEl) {
+                const text = targetEl.textContent.trim();
+                const prefix = targetEl.matches('.label') ? 'label:' : 'participant:';
+                const token = `${prefix}${text}`;
+
                 if (text) {
                     const currentVal = labelFilter.value.trim();
                     if (currentVal) {
-                        // Avoid adding duplicates
-                        const terms = currentVal.split(/\s+/);
-                        if (!terms.includes(text)) {
-                            labelFilter.value = currentVal + ' ' + text;
+                        // Avoid adding duplicates (robust check)
+                        const terms = currentVal.toLowerCase().split(/\s+/);
+                        if (!terms.includes(token.toLowerCase())) {
+                            labelFilter.value = currentVal + ' ' + token;
                         }
                     } else {
-                        labelFilter.value = text;
+                        labelFilter.value = token;
                     }
                     // Trigger input event to re-filter
                     labelFilter.dispatchEvent(new Event('input'));

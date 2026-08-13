@@ -75,6 +75,7 @@
 {{ else }}
 <p>No groups.</p>
 {{ end }}
+<p><a href="/admin/user/{{ $u.Idusers }}/permissions">Manage Groups (Roles/Permissions)</a></p>
 
 {{ $stats := cd.CurrentProfileStats }}
 <h4>Posting Stats</h4>

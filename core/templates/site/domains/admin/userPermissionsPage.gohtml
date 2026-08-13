@@ -20,10 +20,10 @@
         {{- end}}
     </tbody>
 </table>
-<h3>Add Role / Group / Permission</h3>
+<h3>Add Role</h3>
 <form id="add-permission-form" action="/admin/user/{{.User.Idusers}}/permissions" method="POST">
     <input type="hidden" name="username" value="{{.User.Username.String}}">
-    Role/Group:
+    Role:
     <select name="role">
         {{- range $.Roles }}<option value="{{.Name}}">{{.Name}}</option>{{- end }}
     </select>

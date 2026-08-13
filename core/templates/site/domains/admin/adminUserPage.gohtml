@@ -11,7 +11,7 @@
     <li><a href="/blogs/blogger/{{ $u.Username.String }}">View Blog</a></li>
     <li><a href="/admin/users/export?uid={{ $u.Idusers }}">Export ZIP</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/edit">Edit Profile</a></li>
-    <li><a href="/admin/user/{{ $u.Idusers }}/permissions">Permissions</a></li>
+    <li><a href="/admin/user/{{ $u.Idusers }}/permissions">Permissions / Manage Roles</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/reset">Reset Password</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/disable">Disable Account</a></li>
     <li><a href="/admin/user/{{ $u.Idusers }}/blogs">Blog Posts</a></li>
@@ -65,7 +65,7 @@
 </form>
 
 {{ $roles := cd.CurrentProfileRoles }}
-<h4>Groups</h4>
+<h4>Roles</h4>
 {{ if $roles }}
 <ul>
 {{ range $roles }}
@@ -73,8 +73,9 @@
 {{ end }}
 </ul>
 {{ else }}
-<p>No groups.</p>
+<p>No roles.</p>
 {{ end }}
+<p><a href="/admin/user/{{ $u.Idusers }}/permissions">Manage Roles</a></p>
 
 {{ $stats := cd.CurrentProfileStats }}
 <h4>Posting Stats</h4>

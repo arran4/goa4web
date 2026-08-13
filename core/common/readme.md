@@ -2,73 +2,73 @@
 
 ## Purpose
 
-Package `common` provides core functionality and abstractions for the common component of the Goa4Web system. It manages the specific business logic, data structures, and operational boundaries required within this domain.
+Package `common` contains foundational business logic and shared utilities for `common` that are used application-wide.
 
 ## Structure and Components
 
-This package encapsulates logic specific to its domain. The primary files and their general responsibilities include:
+The primary files and their general responsibilities include:
 
-- `signing.go`: Contains implementations and definitions related to the specific operations of this module.
-- `breadcrumb.go`: Contains implementations and definitions related to the specific operations of this module.
-- `breadcrumb_private_title_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `download_image.go`: Contains implementations and definitions related to the specific operations of this module.
-- `faq_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `jsonld.go`: Contains implementations and definitions related to the specific operations of this module.
-- `search_words.go`: Contains implementations and definitions related to the specific operations of this module.
-- `sectionitemtype_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `testutil_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_news.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_images_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `faq.go`: Contains implementations and definitions related to the specific operations of this module.
-- `link_provider_favicon_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `role.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_request_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum_merge.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_admin.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_labels.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_webauthn.go`: Contains implementations and definitions related to the specific operations of this module.
-- `url.go`: Contains implementations and definitions related to the specific operations of this module.
-- `usererror.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_auth.go`: Contains implementations and definitions related to the specific operations of this module.
-- `errors.go`: Contains implementations and definitions related to the specific operations of this module.
-- `highlight_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `link_provider.go`: Contains implementations and definitions related to the specific operations of this module.
-- `search.go`: Contains implementations and definitions related to the specific operations of this module.
-- `permissions.go`: Contains implementations and definitions related to the specific operations of this module.
-- `thread_sideeffects_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_misc.go`: Contains implementations and definitions related to the specific operations of this module.
-- `link_provider_duration_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `opengraph_methods.go`: Contains implementations and definitions related to the specific operations of this module.
-- `pagination.go`: Contains implementations and definitions related to the specific operations of this module.
-- `highlight.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_allroles_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_webauthn_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `encryption.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum_check.go`: Contains implementations and definitions related to the specific operations of this module.
-- `breadcrumb_private_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_user.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum_topic_labels_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `search_words_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_blogs.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_misc_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_writings.go`: Contains implementations and definitions related to the specific operations of this module.
-- `funcs.go`: Contains implementations and definitions related to the specific operations of this module.
-- `link_provider_tooltip_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_imagebbs.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_search.go`: Contains implementations and definitions related to the specific operations of this module.
-- `datacache.go`: Contains implementations and definitions related to the specific operations of this module.
-- `thread_sideeffects.go`: Contains implementations and definitions related to the specific operations of this module.
-- `absolute_url_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `link_provider_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `testutil.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_read_markers.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `coredata_forum.go`: Contains implementations and definitions related to the specific operations of this module.
-- `download_image_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum_display_title_test.go`: Contains implementations and definitions related to the specific operations of this module.
-- `privateforum_labels_test.go`: Contains implementations and definitions related to the specific operations of this module.
+- `breadcrumb_private_test.go`
+- `coredata_forum.go`
+- `datacache.go`
+- `download_image.go`
+- `link_provider_duration_test.go`
+- `link_provider_favicon_test.go`
+- `opengraph_methods.go`
+- `signing.go`
+- `role.go`
+- `coredata_request_test.go`
+- `link_provider.go`
+- `search_words_test.go`
+- `testutil_test.go`
+- `url.go`
+- `breadcrumb_private_title_test.go`
+- `highlight_test.go`
+- `search.go`
+- `search_words.go`
+- `coredata_allroles_test.go`
+- `errors.go`
+- `coredata_admin.go`
+- `coredata_webauthn.go`
+- `link_provider_test.go`
+- `coredata_imagebbs.go`
+- `coredata_labels.go`
+- `coredata_misc.go`
+- `coredata_read_markers.go`
+- `privateforum_test.go`
+- `coredata_images_test.go`
+- `link_provider_tooltip_test.go`
+- `privateforum_labels_test.go`
+- `sectionitemtype_test.go`
+- `coredata_user.go`
+- `encryption.go`
+- `faq.go`
+- `jsonld.go`
+- `privateforum_topic_labels_test.go`
+- `absolute_url_test.go`
+- `coredata_writings.go`
+- `funcs.go`
+- `permissions.go`
+- `privateforum.go`
+- `coredata_news.go`
+- `coredata_search.go`
+- `highlight.go`
+- `privateforum_display_title_test.go`
+- `coredata_blogs.go`
+- `coredata.go`
+- `coredata_misc_test.go`
+- `download_image_test.go`
+- `pagination.go`
+- `privateforum_merge.go`
+- `testutil.go`
+- `thread_sideeffects.go`
+- `usererror.go`
+- `privateforum_check.go`
+- `breadcrumb.go`
+- `coredata_auth.go`
+- `coredata_webauthn_test.go`
+- `faq_test.go`
+- `thread_sideeffects_test.go`
 
 ## Usage
 
@@ -78,14 +78,6 @@ To utilize the features provided by this package, import it into your Go files u
 import "goa4web/core/common"
 ```
 
-Instantiate the necessary structs or invoke the exported functions as defined in the package API. Refer to the specific file implementations for detailed method signatures and required parameters. Generally, you will inject configuration and database dependencies (often via the `CoreData` struct) into these modules.
-
-## Context and Why It Exists
-
-This package was designed to enforce separation of concerns within the Goa4Web architecture. By isolating these specific responsibilities into their own package, the system remains modular, testable, and easier to maintain. It prevents god-objects and tangled dependencies across the broader application.
-
 ## Limitations and Constraints
 
 - **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
-- **State Management**: If this package manages state, care must be taken to ensure thread safety and prevent race conditions when used concurrently (e.g., across multiple HTTP requests or background workers).
-- **Database Interactions**: Packages that interact with the database (directly or indirectly) must adhere to the project's SQL naming conventions (`specs/query_naming.md`) and utilize the generated `sqlc` models (`db.Querier`). Avoid raw SQL inside Go code where possible.

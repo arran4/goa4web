@@ -8,17 +8,21 @@ Package `websocket` provides internal, non-exported utilities and service integr
 
 The primary files and their general responsibilities include:
 
+- `notifications.go`
 - `notifications_test.go`
 - `static.go`
-- `notifications.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Module`
-- `NotificationsHandler`
+- **`Module`**:
+  - Methods: `Register`
+- **`NotificationsHandler`**:
+  - Methods: `ServeHTTP`
 
 ### Exported Functions
 
+- `NewModule`
+- `NewNotificationsHandler`
 - `TestNotificationsHandlerCheckOriginConfig`
 - `TestNotificationsHandlerCheckOriginMultipleHosts`
 - `TestNotificationsHandlerCheckOriginHostHeader`
@@ -26,8 +30,6 @@ The primary files and their general responsibilities include:
 - `TestNotificationsJSRoute`
 - `TestNotificationsHandlerInvalidSession`
 - `TestNotificationsHandlerAuthenticationRequired`
-- `NewModule`
-- `NewNotificationsHandler`
 
 ## Usage
 

@@ -12,9 +12,9 @@ The primary files and their general responsibilities include:
 - `prefixes.go`
 - `time_formats.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ContextKey`
+- **`ContextKey`**:
 
 ## Usage
 

@@ -11,10 +11,11 @@ The primary files and their general responsibilities include:
 - `mock.go`
 - `mock_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Record`
-- `Provider`
+- **`Record`**:
+- **`Provider`**:
+  - Methods: `Record`
 
 ### Exported Functions
 

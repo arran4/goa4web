@@ -10,10 +10,11 @@ The primary files and their general responsibilities include:
 
 - `registry.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `DBDriver`
-- `Registry`
+- **`DBDriver`** (Interface): Defines a core contract for this module.
+- **`Registry`**:
+  - Methods: `RegisterDriver`, `Drivers`, `Connector`, `Driver`, `Backup`, `Restore`, `Names`
 
 ### Exported Functions
 

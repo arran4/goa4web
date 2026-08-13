@@ -11,9 +11,9 @@ The primary files and their general responsibilities include:
 - `share_sign.go`
 - `util.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `SignedData`
+- **`SignedData`**:
 
 ### Exported Functions
 

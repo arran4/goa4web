@@ -10,9 +10,10 @@ The primary files and their general responsibilities include:
 
 - `smtp.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
+- **`Provider`**:
+  - Methods: `Send`, `TestConfig`
 
 ### Exported Functions
 

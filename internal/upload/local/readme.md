@@ -11,10 +11,11 @@ The primary files and their general responsibilities include:
 - `local.go`
 - `local_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `FileSystem`
-- `Provider`
+- **`FileSystem`** (Interface): Defines a core contract for this module.
+- **`Provider`**:
+  - Methods: `Check`, `Write`, `Read`, `Cleanup`
 
 ### Exported Functions
 

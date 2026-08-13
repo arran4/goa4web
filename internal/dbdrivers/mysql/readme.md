@@ -10,9 +10,10 @@ The primary files and their general responsibilities include:
 
 - `driver.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Driver`
+- **`Driver`**:
+  - Methods: `Name`, `Examples`, `OpenConnector`, `Backup`, `Restore`
 
 ### Exported Functions
 

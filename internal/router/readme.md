@@ -13,10 +13,11 @@ The primary files and their general responsibilities include:
 - `roles_test.go`
 - `router.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Module`
-- `Registry`
+- **`Module`**:
+- **`Registry`**:
+  - Methods: `RegisterModule`, `InitModules`, `Names`
 
 ### Exported Functions
 

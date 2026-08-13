@@ -8,14 +8,14 @@ Package `logworker` implements a specific background worker (`logworker`). Worke
 
 The primary files and their general responsibilities include:
 
-- `worker.go`
 - `worker_test.go`
+- `worker.go`
 
 ### Exported Functions
 
-- `Worker`
 - `TestCleanData`
 - `TestCleanDataPrivate`
+- `Worker`
 
 ## Usage
 

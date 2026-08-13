@@ -12,13 +12,13 @@ The primary files and their general responsibilities include:
 - `diff.go`
 - `templates.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ApplyLogger`
-- `RoleDiff`
-- `TemplateDef`
-- `RoleDef`
-- `GrantDef`
+- **`ApplyLogger`** (Interface): Defines a core contract for this module.
+- **`RoleDiff`**:
+- **`TemplateDef`**:
+- **`RoleDef`**:
+- **`GrantDef`**:
 
 ### Exported Functions
 

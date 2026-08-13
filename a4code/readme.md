@@ -8,55 +8,38 @@ Package `a4code` is the root package for the custom A4Code markup engine. It def
 
 The primary files and their general responsibilities include:
 
-- `a4code.go`
-- `quote_test.go`
-- `snip_test.go`
 - `substring.go`
 - `substring_test.go`
+- `a4code.go`
 - `common.go`
 - `html.go`
-- `output.go`
 - `parser.go`
 - `parser_test.go`
 - `quote.go`
+- `quote_test.go`
 - `sanitize.go`
+- `output.go`
 - `snip.go`
+- `snip_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ScannerInterface`
-- `StreamOption`
-- `QuoteOption`
-- `RestrictedQuoteDepth`
-- `TruncatedQuoteDepth`
+- **`TruncatedQuoteDepth`**:
+- **`ScannerInterface`** (Interface): Defines a core contract for this module.
+- **`StreamOption`**:
+- **`QuoteOption`**:
+- **`RestrictedQuoteDepth`**:
 
 ### Exported Functions
 
-- `ToA4Code`
-- `TestQuote`
-- `TestQuoteFullParagraphs`
-- `TestQuoteFullEscaping`
-- `TestQuoteFullImage`
-- `TestQuoteTrim`
-- `TestQuoteOfWithSpaces`
-- `TestQuoteOfWithSpacesAndEscapedQuote`
-- `TestQuoteRoundTripComplexName`
-- `TestSubstring`
-- `TestQuoteDepthOptions`
-- `TestQuoteTxtar`
-- `TestIsPureQuote`
-- `TestSnip`
-- `TestSnipText`
 - `Substring`
 - `TestSubstringIncludesSelectedImage`
 - `TestSubstringIncludesImageBetweenText`
+- `ToA4Code`
 - `ConsumeCodeBlock`
 - `GetNextArg`
 - `GetNext`
 - `ToHTML`
-- `ToCode`
-- `ToCleanText`
-- `ToText`
 - `WithDepth`
 - `WithAllNodes`
 - `Stream`
@@ -98,11 +81,28 @@ The primary files and their general responsibilities include:
 - `QuoteText`
 - `IsQuoteBlock`
 - `QuoteReduce`
+- `TestQuote`
+- `TestQuoteFullParagraphs`
+- `TestQuoteFullEscaping`
+- `TestQuoteFullImage`
+- `TestQuoteTrim`
+- `TestQuoteOfWithSpaces`
+- `TestQuoteOfWithSpacesAndEscapedQuote`
+- `TestQuoteRoundTripComplexName`
+- `TestSubstring`
+- `TestQuoteDepthOptions`
+- `TestQuoteTxtar`
+- `TestIsPureQuote`
 - `SanitizeURL`
+- `ToCode`
+- `ToCleanText`
+- `ToText`
 - `Snip`
 - `SnipText`
 - `SnipWords`
 - `SnipTextWords`
+- `TestSnip`
+- `TestSnipText`
 
 ## Usage
 

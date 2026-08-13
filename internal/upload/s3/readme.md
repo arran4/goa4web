@@ -12,10 +12,11 @@ The primary files and their general responsibilities include:
 - `s3_stub.go`
 - `s3_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
-- `ClientFactory`
+- **`Provider`**:
+  - Methods: `Check`, `Write`, `Read`
+- **`ClientFactory`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 

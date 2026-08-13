@@ -13,15 +13,18 @@ The primary files and their general responsibilities include:
 - `multi.go`
 - `registry.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `DLQ`
-- `Manageable`
-- `LogDLQ`
-- `Message`
-- `MultiDLQ`
-- `ProviderFactory`
-- `Registry`
+- **`DLQ`** (Interface): Defines a core contract for this module.
+- **`Manageable`** (Interface): Defines a core contract for this module.
+- **`LogDLQ`**:
+  - Methods: `Record`
+- **`Message`**:
+- **`MultiDLQ`**:
+  - Methods: `Record`
+- **`ProviderFactory`**:
+- **`Registry`**:
+  - Methods: `RegisterProvider`, `ProviderFromConfig`, `ProviderNames`
 
 ### Exported Functions
 

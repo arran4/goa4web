@@ -8,20 +8,20 @@ Package `postcountworker` implements a specific background worker (`postcountwor
 
 The primary files and their general responsibilities include:
 
+- `postupdate.go`
 - `postupdate_test.go`
 - `worker.go`
-- `postupdate.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `UpdateEventData`
-- `PostUpdateQuerier`
+- **`PostUpdateQuerier`** (Interface): Defines a core contract for this module.
+- **`UpdateEventData`**:
 
 ### Exported Functions
 
+- `PostUpdate`
 - `TestPostUpdate`
 - `Worker`
-- `PostUpdate`
 
 ## Usage
 

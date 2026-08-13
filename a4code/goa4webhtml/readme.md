@@ -10,14 +10,15 @@ The primary files and their general responsibilities include:
 
 - `generator.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `LinkProvider`
-- `ImageMapper`
-- `FullImageMapper`
-- `UserColorMapper`
-- `Generator`
-- `Option`
+- **`FullImageMapper`**:
+- **`UserColorMapper`**:
+- **`Generator`**:
+  - Methods: `Link`, `Image`, `QuoteOf`
+- **`Option`**:
+- **`LinkProvider`** (Interface): Defines a core contract for this module.
+- **`ImageMapper`**:
 
 ### Exported Functions
 

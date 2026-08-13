@@ -10,9 +10,10 @@ The primary files and their general responsibilities include:
 
 - `email.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `DLQ`
+- **`DLQ`**:
+  - Methods: `Record`
 
 ### Exported Functions
 

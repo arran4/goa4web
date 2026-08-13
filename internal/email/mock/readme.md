@@ -11,10 +11,11 @@ The primary files and their general responsibilities include:
 - `mock.go`
 - `mock_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `SentMail`
-- `Provider`
+- **`SentMail`**:
+- **`Provider`**:
+  - Methods: `Send`, `TestConfig`
 
 ### Exported Functions
 

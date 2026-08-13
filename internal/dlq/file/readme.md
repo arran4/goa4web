@@ -12,10 +12,11 @@ The primary files and their general responsibilities include:
 - `file_test.go`
 - `tail.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `DLQ`
-- `Record`
+- **`DLQ`**:
+  - Methods: `Record`
+- **`Record`**:
 
 ### Exported Functions
 

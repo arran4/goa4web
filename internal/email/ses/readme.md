@@ -8,12 +8,13 @@ Package `ses` provides concrete implementations or abstractions for the `ses` em
 
 The primary files and their general responsibilities include:
 
-- `ses.go`
 - `ses_stub.go`
+- `ses.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
+- **`Provider`**:
+  - Methods: `Send`, `TestConfig`
 
 ### Exported Functions
 

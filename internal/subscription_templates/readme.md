@@ -10,9 +10,9 @@ The primary files and their general responsibilities include:
 
 - `embedded.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Pattern`
+- **`Pattern`**:
 
 ### Exported Functions
 

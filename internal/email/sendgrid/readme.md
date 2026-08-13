@@ -8,12 +8,13 @@ Package `sendgrid` provides concrete implementations or abstractions for the `se
 
 The primary files and their general responsibilities include:
 
-- `sendgrid.go`
 - `sendgrid_stub.go`
+- `sendgrid.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
+- **`Provider`**:
+  - Methods: `Send`, `TestConfig`
 
 ### Exported Functions
 

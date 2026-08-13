@@ -11,12 +11,14 @@ The primary files and their general responsibilities include:
 - `generator.go`
 - `issue_link_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Generator`
-- `SourceAttrBuilder`
-- `Option`
-- `DataPositionAttrs`
+- **`Option`**:
+- **`DataPositionAttrs`**:
+  - Methods: `SourceAttrs`
+- **`Generator`**:
+  - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`, `SourceAttrs`
+- **`SourceAttrBuilder`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 

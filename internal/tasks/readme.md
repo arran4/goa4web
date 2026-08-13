@@ -8,29 +8,32 @@ Package `tasks` provides internal, non-exported utilities and service integratio
 
 The primary files and their general responsibilities include:
 
+- `task_event.go`
+- `template.go`
+- `admin_task.go`
 - `background_tasker.go`
 - `matchers.go`
 - `matchers_test.go`
 - `registry.go`
-- `task_event.go`
-- `template.go`
-- `admin_task.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `BackgroundTasker`
-- `PostResultAction`
-- `NamedTask`
-- `Entry`
-- `Registry`
-- `Task`
-- `TemplatesRequired`
-- `EmailTemplatesRequired`
-- `TaskMatcher`
-- `Name`
-- `TaskString`
-- `Template`
-- `AuditableTask`
+- **`BackgroundTasker`** (Interface): Defines a core contract for this module.
+- **`PostResultAction`**:
+- **`NamedTask`** (Interface): Defines a core contract for this module.
+- **`Task`** (Interface): Defines a core contract for this module.
+- **`Name`** (Interface): Defines a core contract for this module.
+- **`Template`**:
+  - Methods: `String`, `Handle`, `TemplateExecute`, `Exists`, `Handler`
+- **`Entry`**:
+- **`Registry`**:
+  - Methods: `Register`, `Registered`, `Entries`
+- **`TemplatesRequired`** (Interface): Defines a core contract for this module.
+- **`EmailTemplatesRequired`** (Interface): Defines a core contract for this module.
+- **`TaskMatcher`** (Interface): Defines a core contract for this module.
+- **`TaskString`**:
+  - Methods: `Name`, `Action`, `Matcher`
+- **`AuditableTask`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 

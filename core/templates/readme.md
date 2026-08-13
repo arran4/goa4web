@@ -8,49 +8,42 @@ Package `templates` contains foundational business logic and shared utilities fo
 
 The primary files and their general responsibilities include:
 
+- `notification_open_template_test.go`
+- `article_page_test.go`
+- `verification.go`
+- `tableTopics_tags_test.go`
+- `templates.go`
+- `thread_page_test.go`
+- `asset_hash_test.go`
 - `comment_test.go`
+- `extract.go`
 - `news_post_page_test.go`
+- `passkeys_asset_test.go`
 - `threadPage_labels_test.go`
 - `thread_new_page_test.go`
-- `verification.go`
-- `article_page_test.go`
 - `label.go`
-- `notification_open_template_test.go`
-- `tableTopics_tags_test.go`
 - `no_empty_templates_test.go`
-- `templates.go`
-- `asset_hash_test.go`
-- `extract.go`
-- `passkeys_asset_test.go`
-- `thread_page_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `MockUser`
-- `MockComment`
-- `MockCoreData`
-- `TopicLabel`
-- `Option`
-- `MissingImageData`
-- `TemplateSet`
+- **`TemplateSet`**:
+- **`MockUser`**:
+- **`MockComment`**:
+- **`MockCoreData`**:
+  - Methods: `LocalTime`
+- **`TopicLabel`**:
+- **`Option`** (Interface): Defines a core contract for this module.
+- **`MissingImageData`**:
 
 ### Exported Functions
 
-- `TestCommentTimestampSelfLink`
-- `TestCommentUsernameBold`
-- `TestNewsPostPageLabelFormIncludesCSRF`
-- `TestNewsPostPageReplyFormIncludesCSRF`
-- `TestNewsPostPageDoesNotContainInlineMarkRead`
-- `TestThreadPageShowsDefaultPrivateLabels`
-- `TestThreadNewPageJS`
-- `LoadAllTemplatesMap`
-- `IsTemplateAvailable`
+- `TestNotificationOpenTemplateExists`
 - `TestArticlePageLabelFormIncludesCSRF`
 - `TestArticlePageReplyFormIncludesCSRF`
 - `TestArticlePageDoesNotContainInlineMarkRead`
-- `TestNotificationOpenTemplateExists`
+- `LoadAllTemplatesMap`
+- `IsTemplateAvailable`
 - `TestTableTopicsShowsLabels`
-- `TestNoEmptyTemplates`
 - `SetDir`
 - `WithDir`
 - `WithSilence`
@@ -68,13 +61,21 @@ The primary files and their general responsibilities include:
 - `EmailTemplateExists`
 - `NotificationTemplateExists`
 - `AnyTemplateExists`
+- `TestThreadPageLabelFormIncludesCSRF`
+- `TestThreadPageDoesNotContainInlineMarkRead`
 - `TestGetAssetHash`
+- `TestCommentTimestampSelfLink`
+- `TestCommentUsernameBold`
 - `WriteToDir`
 - `WriteTemplateSetsToDir`
 - `ArchiveTemplates`
+- `TestNewsPostPageLabelFormIncludesCSRF`
+- `TestNewsPostPageReplyFormIncludesCSRF`
+- `TestNewsPostPageDoesNotContainInlineMarkRead`
 - `TestPasskeysJavaScriptIsExternal`
-- `TestThreadPageLabelFormIncludesCSRF`
-- `TestThreadPageDoesNotContainInlineMarkRead`
+- `TestThreadPageShowsDefaultPrivateLabels`
+- `TestThreadNewPageJS`
+- `TestNoEmptyTemplates`
 
 ## Usage
 

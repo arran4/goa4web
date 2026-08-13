@@ -8,26 +8,26 @@ Package `navigation` provides internal, non-exported utilities and service integ
 
 The primary files and their general responsibilities include:
 
-- `hierarchy_test.go`
-- `options.go`
 - `registry.go`
 - `registry_test.go`
+- `hierarchy_test.go`
+- `options.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `RouterOptions`
-- `IndexLinkOption`
-- `IndexLinkWithViewPermissionOption`
-- `AdminControlCenterLinkOption`
-- `Section`
-- `Registry`
+- **`Section`** (Interface): Defines a core contract for this module.
+- **`Registry`**:
+  - Methods: `RegisterIndexLink`, `RegisterIndexLinkWithViewPermission`, `RegisterAdminControlCenter`, `IndexItems`, `IndexItemsWithPermission`, `AdminLinks`, `AdminSections`
+- **`RouterOptions`** (Interface): Defines a core contract for this module.
+- **`IndexLinkOption`**:
+  - Methods: `Apply`
+- **`IndexLinkWithViewPermissionOption`**:
+  - Methods: `Apply`
+- **`AdminControlCenterLinkOption`**:
+  - Methods: `Apply`
 
 ### Exported Functions
 
-- `TestAdminSectionsHierarchy`
-- `NewIndexLink`
-- `NewIndexLinkWithViewPermission`
-- `NewAdminControlCenterLink`
 - `AdminCCCategory`
 - `AdminCCCategories`
 - `NewRegistry`
@@ -42,6 +42,10 @@ The primary files and their general responsibilities include:
 - `TestIndexItemsOrdering`
 - `TestIndexItemsSkipEmpty`
 - `TestIndexItemsPermissionFilter`
+- `TestAdminSectionsHierarchy`
+- `NewIndexLink`
+- `NewIndexLinkWithViewPermission`
+- `NewAdminControlCenterLink`
 
 ## Usage
 

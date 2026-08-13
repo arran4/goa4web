@@ -8,22 +8,28 @@ Package `images` provides internal, non-exported utilities and service integrati
 
 The primary files and their general responsibilities include:
 
+- `resize.go`
+- `resize_test.go`
 - `thumbnails.go`
 - `thumbnails_test.go`
 - `validation.go`
 - `validation_test.go`
 - `encode.go`
-- `resize.go`
-- `resize_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ThumbnailGenerator`
-- `BildThumbnailGenerator`
-- `DrawThumbnailGenerator`
+- **`ThumbnailGenerator`** (Interface): Defines a core contract for this module.
+- **`BildThumbnailGenerator`**:
+  - Methods: `Generate`
+- **`DrawThumbnailGenerator`**:
+  - Methods: `Generate`
 
 ### Exported Functions
 
+- `ParseDimension`
+- `GenerateSafeSize`
+- `TestParseDimension`
+- `TestGenerateSafeSize`
 - `GetThumbnailGenerator`
 - `RegisterThumbnailGenerator`
 - `GenerateThumbnail`
@@ -39,10 +45,6 @@ The primary files and their general responsibilities include:
 - `TestValidID`
 - `TestAllowedExtension`
 - `EncoderByExtension`
-- `ParseDimension`
-- `GenerateSafeSize`
-- `TestParseDimension`
-- `TestGenerateSafeSize`
 
 ## Usage
 

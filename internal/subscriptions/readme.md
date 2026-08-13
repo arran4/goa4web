@@ -8,28 +8,29 @@ Package `subscriptions` provides internal, non-exported utilities and service in
 
 The primary files and their general responsibilities include:
 
-- `definitions_test.go`
-- `matching_test.go`
 - `benchmark_test.go`
 - `definitions.go`
+- `definitions_test.go`
+- `matching_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Definition`
-- `Parameter`
-- `SubscriptionInstance`
-- `SubscriptionGroup`
+- **`Definition`**:
+- **`Parameter`**:
+- **`SubscriptionInstance`**:
+  - Methods: `HasMethod`
+- **`SubscriptionGroup`**:
 
 ### Exported Functions
 
+- `BenchmarkMatchDefinition`
+- `GetUserSubscriptions`
+- `MatchDefinition`
 - `TestGetUserSubscriptions_UnknownPattern`
 - `TestGetUserSubscriptions_KnownPattern`
 - `TestGetUserSubscriptions_ReportedIssues`
 - `TestGetUserSubscriptions_LegacyUpgrade`
 - `TestMatchDefinition_Repro`
-- `BenchmarkMatchDefinition`
-- `GetUserSubscriptions`
-- `MatchDefinition`
 
 ## Usage
 

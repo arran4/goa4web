@@ -12,12 +12,12 @@ The primary files and their general responsibilities include:
 - `configexplain_test.go`
 - `test_bug3_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `SourceKind`
-- `Inputs`
-- `SourceDetail`
-- `OptionInfo`
+- **`OptionInfo`**:
+- **`SourceKind`**:
+- **`Inputs`**:
+- **`SourceDetail`**:
 
 ### Exported Functions
 

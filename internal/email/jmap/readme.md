@@ -11,12 +11,13 @@ The primary files and their general responsibilities include:
 - `jmap.go`
 - `jmap_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
-- `Account`
-- `SessionResponse`
-- `EmailHeader`
+- **`Provider`**:
+  - Methods: `Send`, `TestConfig`, `GetAccountID`, `GetIdentity`, `GetEndpoint`, `GetInboxID`, `QueryInbox`, `GetMessages`, `GetAllMessages`
+- **`Account`**:
+- **`SessionResponse`**:
+- **`EmailHeader`**:
 
 ### Exported Functions
 

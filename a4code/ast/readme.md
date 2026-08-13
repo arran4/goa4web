@@ -8,48 +8,83 @@ Package `ast` defines the Abstract Syntax Tree (AST) nodes for the A4Code markup
 
 The primary files and their general responsibilities include:
 
+- `generator.go`
 - `nodes.go`
 - `nodes_test.go`
 - `walk.go`
-- `generator.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Node`
-- `BaseNode`
-- `Container`
-- `Root`
-- `Text`
-- `Bold`
-- `Italic`
-- `Underline`
-- `Sup`
-- `Sub`
-- `Link`
-- `Image`
-- `Code`
-- `CodeIn`
-- `Quote`
-- `QuoteOf`
-- `Spoiler`
-- `Indent`
-- `HR`
-- `Custom`
-- `Block`
-- `BlockWithInlinable`
-- `Inline`
-- `InlineWithBlockable`
-- `Generator`
+- **`Sup`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Code`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `Transform`, `String`
+- **`QuoteOf`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`HR`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `String`
+- **`BlockWithInlinable`** (Interface): Defines a core contract for this module.
+- **`Container`** (Interface): Defines a core contract for this module.
+- **`Text`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `String`
+- **`Italic`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`CodeIn`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `Transform`, `String`
+- **`Spoiler`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Inline`** (Interface): Defines a core contract for this module.
+- **`Node`** (Interface): Defines a core contract for this module.
+- **`BaseNode`**:
+  - Methods: `SetPos`, `GetPos`, `GetParent`, `SetParent`
+- **`Sub`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Link`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Blockable`, `AddChild`, `GetChildren`, `IsImmediateClose`, `Transform`, `String`
+- **`Image`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `String`
+- **`Indent`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Block`** (Interface): Defines a core contract for this module.
+- **`InlineWithBlockable`** (Interface): Defines a core contract for this module.
+- **`Underline`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Quote`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Custom`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Generator`** (Interface): Defines a core contract for this module.
+- **`Root`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `AddChild`, `GetChildren`, `String`
+- **`Bold`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
 
 ### Exported Functions
 
+- `Generate`
 - `IsBlockNode`
 - `TestIsBlockNode`
 - `TestNodeGettersSettersAndPos`
 - `TestNodeStringMethods`
 - `TestNodeTransform`
 - `Walk`
-- `Generate`
 
 ## Usage
 

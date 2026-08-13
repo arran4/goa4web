@@ -11,9 +11,10 @@ The primary files and their general responsibilities include:
 - `local.go`
 - `local_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
+- **`Provider`**:
+  - Methods: `Send`, `TestConfig`
 
 ### Exported Functions
 

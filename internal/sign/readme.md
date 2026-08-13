@@ -8,29 +8,29 @@ Package `sign` provides internal, non-exported utilities and service integration
 
 The primary files and their general responsibilities include:
 
-- `sign.go`
 - `compat.go`
+- `sign.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `SignOption`
-- `WithNonce`
-- `WithExpiry`
-- `WithAbsoluteExpiry`
-- `WithHostname`
-- `WithIssuedAt`
+- **`WithNonce`**:
+- **`WithExpiry`**:
+- **`WithAbsoluteExpiry`**:
+- **`WithHostname`**:
+- **`WithIssuedAt`**:
+- **`SignOption`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 
+- `WithExpiryTime`
+- `WithExpiryTimeUnix`
+- `WithOutNonce`
 - `Sign`
 - `Verify`
 - `AddQuerySig`
 - `AddPathSig`
 - `ExtractQuerySig`
 - `ExtractPathSig`
-- `WithExpiryTime`
-- `WithExpiryTimeUnix`
-- `WithOutNonce`
 
 ## Usage
 

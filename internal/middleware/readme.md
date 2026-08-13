@@ -8,38 +8,42 @@ Package `middleware` provides internal, non-exported utilities and service integ
 
 The primary files and their general responsibilities include:
 
+- `taskbus.go`
 - `core_utils_test.go`
-- `router_utils.go`
-- `security.go`
-- `security_test.go`
-- `taskbus_test.go`
-- `middleware.go`
 - `middleware_test.go`
 - `request_logger_test.go`
+- `taskbus_test.go`
+- `middleware.go`
+- `router_utils.go`
+- `security.go`
 - `security_ip_test.go`
-- `taskbus.go`
+- `security_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Configuration`
-- `RouterWrapper`
-- `RouterWrapperFunc`
-- `TaskEventMiddleware`
-- `TaskEventMiddlewareOption`
+- **`TaskEventMiddleware`**:
+  - Methods: `Middleware`, `Events`, `Flush`, `SetBus`
+- **`TaskEventMiddlewareOption`**:
+- **`Configuration`**:
+- **`RouterWrapper`** (Interface): Defines a core contract for this module.
+- **`RouterWrapperFunc`**:
+  - Methods: `Wrap`
 
 ### Exported Functions
 
+- `WithLogger`
+- `WithDLQ`
+- `NewTaskEventMiddleware`
+- `TaskEventMiddlewareWithBus`
 - `NewConfiguration`
 - `X2c`
 - `TestConfigurationSetGet`
 - `TestConfigurationRead`
 - `TestX2c`
-- `NewMiddlewareChain`
-- `SecurityHeadersMiddleware`
-- `TestSecurityHeadersMiddlewareHTTP`
-- `TestSecurityHeadersMiddlewareHTTPS`
-- `TestSecurityHeadersMiddlewareForwardedProto`
-- `TestSecurityHeadersMiddleware`
+- `TestRedirectToLogin`
+- `TestRedirectToLoginIncludesBackAndQuery`
+- `TestRedirectToLoginPreservesPostData`
+- `TestRequestLoggerMiddleware`
 - `TestTaskEventMiddleware`
 - `TestStatusRecorderWriteHeaderOnce`
 - `TestTaskEventQueue`
@@ -53,20 +57,18 @@ The primary files and their general responsibilities include:
 - `RequestLoggerMiddleware`
 - `RecoverMiddleware`
 - `RedirectToLogin`
-- `TestRedirectToLogin`
-- `TestRedirectToLoginIncludesBackAndQuery`
-- `TestRedirectToLoginPreservesPostData`
-- `TestRequestLoggerMiddleware`
+- `NewMiddlewareChain`
+- `SecurityHeadersMiddleware`
 - `TestRequestIPSpoofing_Untrusted`
 - `TestRequestIPSpoofing_Trusted`
 - `TestRequestIPSpoofing_TrustedChain`
 - `TestRequestIPSpoofing_UntrustedInChain`
 - `TestRequestIPSpoofing_GarbageHeader`
 - `TestRequestIPSpoofing_IPv6_CIDR`
-- `WithLogger`
-- `WithDLQ`
-- `NewTaskEventMiddleware`
-- `TaskEventMiddlewareWithBus`
+- `TestSecurityHeadersMiddlewareHTTP`
+- `TestSecurityHeadersMiddlewareHTTPS`
+- `TestSecurityHeadersMiddlewareForwardedProto`
+- `TestSecurityHeadersMiddleware`
 
 ## Usage
 

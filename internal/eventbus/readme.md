@@ -8,22 +8,28 @@ Package `eventbus` provides internal, non-exported utilities and service integra
 
 The primary files and their general responsibilities include:
 
+- `benchmark_test.go`
 - `eventbus.go`
 - `eventbus_test.go`
-- `benchmark_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `MessageType`
-- `Message`
-- `Envelope`
-- `TaskEvent`
-- `EmailQueueEvent`
-- `DigestRunEvent`
-- `Bus`
+- **`TaskEvent`**:
+  - Methods: `Type`
+- **`EmailQueueEvent`**:
+  - Methods: `Type`
+- **`DigestRunEvent`**:
+  - Methods: `Type`
+- **`Bus`**:
+  - Methods: `Subscribe`, `Publish`, `Shutdown`
+- **`MessageType`**:
+- **`Message`** (Interface): Defines a core contract for this module.
+- **`Envelope`**:
+  - Methods: `Ack`
 
 ### Exported Functions
 
+- `BenchmarkShutdown`
 - `NewBus`
 - `TestBus_Shutdown`
 - `TestBus_Ack`
@@ -37,7 +43,6 @@ The primary files and their general responsibilities include:
 - `TestShutdown_Timeout`
 - `TestSyncPublish`
 - `TestConcurrentAccess`
-- `BenchmarkShutdown`
 
 ## Usage
 

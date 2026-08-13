@@ -10,9 +10,9 @@ The primary files and their general responsibilities include:
 
 - `definitions.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `GrantDefinition`
+- **`GrantDefinition`**:
 
 ## Usage
 

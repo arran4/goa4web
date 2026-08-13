@@ -8,22 +8,22 @@ Package `upload` provides internal, non-exported utilities and service integrati
 
 The primary files and their general responsibilities include:
 
-- `registry.go`
 - `provider.go`
 - `provider_factory.go`
+- `registry.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ProviderFactory`
-- `Provider`
-- `CacheProvider`
+- **`CacheProvider`** (Interface): Defines a core contract for this module.
+- **`ProviderFactory`**:
+- **`Provider`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 
-- `RegisterProvider`
-- `ProviderNames`
 - `ProviderFromConfig`
 - `CacheProviderFromConfig`
+- `RegisterProvider`
+- `ProviderNames`
 
 ## Usage
 

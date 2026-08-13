@@ -8,24 +8,25 @@ The `internal/email` directory encapsulates all logic related to constructing, d
 
 The primary files and their general responsibilities include:
 
+- `address.go`
 - `logging.go`
 - `message.go`
 - `provider.go`
 - `registry.go`
-- `address.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Provider`
-- `ProviderFactory`
-- `Registry`
+- **`Registry`**:
+  - Methods: `RegisterProvider`, `ProviderFromConfig`, `ProviderNames`
+- **`Provider`** (Interface): Defines a core contract for this module.
+- **`ProviderFactory`**:
 
 ### Exported Functions
 
+- `ParseAddress`
 - `SetDefaultFromName`
 - `BuildMessage`
 - `NewRegistry`
-- `ParseAddress`
 
 ## Usage
 

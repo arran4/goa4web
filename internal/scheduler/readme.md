@@ -8,21 +8,22 @@ Package `scheduler` provides internal, non-exported utilities and service integr
 
 The primary files and their general responsibilities include:
 
-- `scheduler.go`
 - `scheduler_test.go`
+- `scheduler.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Handler`
-- `TaskType`
-- `Task`
-- `Scheduler`
+- **`Handler`**:
+- **`TaskType`**:
+- **`Task`**:
+- **`Scheduler`**:
+  - Methods: `Register`, `Run`
 
 ### Exported Functions
 
-- `New`
 - `TestScheduler_ProcessTasks_Backfill`
 - `TestScheduler_ProcessTasks_Periodic`
+- `New`
 
 ## Usage
 

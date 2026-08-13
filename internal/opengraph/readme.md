@@ -8,25 +8,25 @@ Package `opengraph` provides internal, non-exported utilities and service integr
 
 The primary files and their general responsibilities include:
 
-- `fetch_test2.go`
-- `fetch_wikipedia_test.go`
 - `fetch.go`
 - `fetch_test.go`
+- `fetch_test2.go`
+- `fetch_wikipedia_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Info`
+- **`Info`**:
 
 ### Exported Functions
 
-- `TestParse_Keywords`
-- `TestFetchWikipedia`
-- `TestFetchUserAgent`
 - `NewSafeClient`
 - `Fetch`
 - `Parse`
 - `TestFetch`
 - `TestParse`
+- `TestParse_Keywords`
+- `TestFetchWikipedia`
+- `TestFetchUserAgent`
 
 ## Usage
 

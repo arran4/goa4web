@@ -10,11 +10,14 @@ The primary files and their general responsibilities include:
 
 - `generator.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `SmartWriter`
-- `PrefixWriter`
-- `Generator`
+- **`Generator`**:
+  - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`
+- **`SmartWriter`**:
+  - Methods: `Write`
+- **`PrefixWriter`**:
+  - Methods: `Write`
 
 ### Exported Functions
 

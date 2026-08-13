@@ -11,10 +11,11 @@ The primary files and their general responsibilities include:
 - `coredata_middleware_test.go`
 - `server.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `Server`
-- `Option`
+- **`Server`**:
+  - Methods: `Addr`, `Start`, `Shutdown`, `Close`, `GetCoreData`, `CoreDataMiddleware`, `RunContext`
+- **`Option`**:
 
 ### Exported Functions
 

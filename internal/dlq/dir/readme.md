@@ -11,10 +11,11 @@ The primary files and their general responsibilities include:
 - `dir.go`
 - `dir_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `DLQ`
-- `Record`
+- **`Record`**:
+- **`DLQ`**:
+  - Methods: `Record`, `Get`, `Delete`
 
 ### Exported Functions
 

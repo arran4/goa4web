@@ -8,19 +8,19 @@ Package `stats` provides internal, non-exported utilities and service integratio
 
 The primary files and their general responsibilities include:
 
-- `stats_usage.go`
-- `stats.go`
-- `stats_builder.go`
 - `stats_linux.go`
 - `stats_other.go`
 - `stats_types.go`
+- `stats_usage.go`
+- `stats.go`
+- `stats_builder.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ServerStatsMetrics`
-- `ServerStatsRegistries`
-- `ServerStatsData`
-- `UsageStatsData`
+- **`ServerStatsData`**:
+- **`UsageStatsData`**:
+- **`ServerStatsMetrics`**:
+- **`ServerStatsRegistries`**:
 
 ### Exported Functions
 

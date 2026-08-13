@@ -8,22 +8,23 @@ Package `searchworker` implements a specific background worker (`searchworker`).
 
 The primary files and their general responsibilities include:
 
+- `worker.go`
+- `http.go`
 - `insert.go`
 - `postupdate.go`
 - `tokenize.go`
 - `tokenize_test.go`
-- `worker.go`
-- `http.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `InsertFunc`
-- `IndexedTask`
-- `WordCount`
-- `IndexEventData`
+- **`WordCount`**:
+- **`IndexEventData`**:
+- **`InsertFunc`**:
+- **`IndexedTask`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 
+- `Worker`
 - `InsertWords`
 - `IsAlphanumericOrPunctuation`
 - `BreakupTextToWords`
@@ -38,7 +39,6 @@ The primary files and their general responsibilities include:
 - `TestBreakupTextToWordsEdge`
 - `TestSearchWordIdsFromText`
 - `TestSearchWordIdsFromTextError`
-- `Worker`
 
 ## Usage
 

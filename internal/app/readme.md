@@ -14,9 +14,9 @@ The primary files and their general responsibilities include:
 - `startup.go`
 - `startup_test.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `ServerOption`
+- **`ServerOption`**:
 
 ### Exported Functions
 

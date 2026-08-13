@@ -8,22 +8,22 @@ Package `configformat` provides internal, non-exported utilities and service int
 
 The primary files and their general responsibilities include:
 
+- `format.go`
 - `parse.go`
 - `parse_test.go`
-- `format.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `AsOptions`
+- **`AsOptions`**:
 
 ### Exported Functions
 
-- `ParseAsFlags`
-- `TestParseAsFlags`
 - `FormatAsEnv`
 - `FormatAsEnvFile`
 - `FormatAsJSON`
 - `FormatAsCLI`
+- `ParseAsFlags`
+- `TestParseAsFlags`
 
 ## Usage
 

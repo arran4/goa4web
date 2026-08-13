@@ -11,10 +11,10 @@ The primary files and their general responsibilities include:
 - `helpers.go`
 - `querier_stub.go`
 
-### Exported Types
+### Exported Types and Interfaces
 
-- `StubConfig`
-- `StubOption`
+- **`StubConfig`**:
+- **`StubOption`**:
 
 ### Exported Functions
 

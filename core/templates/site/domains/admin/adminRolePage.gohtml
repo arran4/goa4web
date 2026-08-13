@@ -9,16 +9,63 @@
         <td>{{ if .Role.PublicProfileAllowedAt.Valid }}enabled{{ else }}disabled{{ end }}</td>
     </tr>
 </table>
+
+{{ if .Errors }}
+<div class="alert alert-danger">
+    <ul>
+    {{ range .Errors }}
+        <li>{{ . }}</li>
+    {{ end }}
+    </ul>
+</div>
+{{ end }}
+
 <h3>Users</h3>
-<ul>
-    {{- if .Users }}
+{{- if .Users }}
+<table class="table table-bordered perm-table">
+    <thead>
+        <tr>
+            <th class="sortable">Username</th>
+            <th>Email</th>
+            <th>Remove</th>
+        </tr>
+    </thead>
+    <tbody>
         {{- range .Users }}
-        <li><a href="/admin/user/{{ .ID }}">{{ .User.String }}</a> ({{ if .EmailList }}{{ .EmailList }}{{ else }}No email{{ end }})</li>
+        <tr>
+            <td><a href="/admin/user/{{ .ID }}">{{ .User.String }}</a></td>
+            <td>{{ if .EmailList }}{{ .EmailList }}{{ else }}No email{{ end }}</td>
+            <td>
+                <form method="post" action="/admin/role/{{ $.Role.ID }}/users" class="inline-form">
+                    {{ csrfField }}
+                    <input type="hidden" name="task" value="Users Disallow">
+                    <input type="hidden" name="permid" value="{{ .IduserRoles }}">
+                    <input type="submit" value="Remove" class="delete-btn">
+                </form>
+            </td>
+        </tr>
         {{- end }}
-    {{- else }}
-        <li>No users</li>
-    {{- end }}
-</ul>
+    </tbody>
+</table>
+{{- else }}
+<p>No users assigned to this role.</p>
+{{- end }}
+
+<h4>Add Users</h4>
+<form method="post" action="/admin/role/{{ $.Role.ID }}/users">
+    {{ csrfField }}
+    <input type="hidden" name="task" value="Users Allow">
+    <div>
+        <label for="usernames">Usernames (comma or newline separated):</label>
+        <br>
+        <textarea name="usernames" id="usernames" rows="3" cols="50" required>{{ if .Usernames }}{{ .Usernames }}{{ end }}</textarea>
+    </div>
+    <div style="margin-top: 10px;">
+        <input type="submit" value="Add Users">
+    </div>
+</form>
+
+<hr>
 <p><a href="/admin/role/{{ .Role.ID }}/grant/add">Add Grant</a></p>
 {{ template "domains/admin/roleGrantsEditor.gohtml" . }}
 {{ template "tail" $ }}

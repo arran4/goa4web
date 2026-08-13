@@ -182,6 +182,7 @@ type CoreData struct {
 	NotificationCount int32
 	Pagination        Pagination
 	PageTitle         string
+	PageTitleLink     string
 	OpenGraph         *OpenGraph
 	PrevLink          string
 	RSSFeedURL        string

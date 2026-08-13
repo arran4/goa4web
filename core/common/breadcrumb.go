@@ -223,7 +223,7 @@ func (cd *CoreData) adminBreadcrumbs() ([]Breadcrumb, error) {
 	crumbs := []Breadcrumb{{Title: "Admin", Link: "/admin"}}
 	switch {
 	case cd.currentProfileUserID != 0:
-		crumbs = append(crumbs, Breadcrumb{Title: "Users", Link: "/admin/user"})
+		crumbs = append(crumbs, Breadcrumb{Title: "Users", Link: "/admin/users"})
 		if u := cd.CurrentProfileUser(); u != nil {
 			title := fmt.Sprintf("User %d", u.Idusers)
 			if u.Username.Valid {

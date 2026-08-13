@@ -218,6 +218,12 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		}
 		funcs["loginURL"] = func() string { return makeAuthURL("/login") }
 		funcs["registerURL"] = func() string { return makeAuthURL("/register") }
+		funcs["currentURL"] = func() string {
+			if r != nil {
+				return r.URL.RequestURI()
+			}
+			return ""
+		}
 	}
 
 	if cd != nil {

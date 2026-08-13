@@ -1,24 +1,204 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Parser for label filter
+    function tokenize(input) {
+        const tokens = [];
+        let i = 0;
+        while (i < input.length) {
+            let char = input[i];
+            if (/\s/.test(char)) {
+                i++;
+                continue;
+            }
+            if (char === '(' || char === ')') {
+                tokens.push({ type: 'PAREN', value: char });
+                i++;
+                continue;
+            }
+
+            let val = '';
+            let inQuotes = false;
+
+            while (i < input.length) {
+                char = input[i];
+
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                    val += char;
+                    i++;
+                    continue;
+                }
+
+                if (!inQuotes && /[\s()]/.test(char)) {
+                    break;
+                }
+
+                val += char;
+                i++;
+            }
+
+            if (val === 'OR') {
+                tokens.push({ type: 'OR', value: val });
+            } else {
+                tokens.push({ type: 'TERM', value: val });
+            }
+        }
+        return tokens;
+    }
+
+    function parse(tokens) {
+        let current = 0;
+
+        function walk() {
+            if (current >= tokens.length) return null;
+
+            let left = parseAnd();
+
+            while (current < tokens.length && tokens[current].type === 'OR') {
+                current++; // skip OR
+                let right = parseAnd();
+                left = { type: 'LogicalExpression', operator: 'OR', left, right };
+            }
+
+            return left;
+        }
+
+        function parseAnd() {
+            let left = parsePrimary();
+
+            // Implicit AND is any sequential term/paren that isn't separated by OR
+            while (current < tokens.length && tokens[current].type !== 'OR' && tokens[current].value !== ')') {
+                let right = parsePrimary();
+                if (right !== null) {
+                    left = { type: 'LogicalExpression', operator: 'AND', left, right };
+                }
+            }
+            return left;
+        }
+
+        function parsePrimary() {
+            if (current >= tokens.length) return null;
+            let token = tokens[current];
+
+            if (token.type === 'PAREN' && token.value === '(') {
+                current++; // skip (
+                let node = walk();
+                if (current < tokens.length && tokens[current].value === ')') {
+                    current++; // skip )
+                }
+                return node;
+            }
+
+            if (token.type === 'TERM') {
+                current++;
+                return { type: 'Term', value: token.value };
+            }
+
+            return null; // Should ideally not reach here for well-formed queries
+        }
+
+        return walk();
+    }
+
+    function evaluateAST(node, labels, participants) {
+        if (!node) return true; // empty matches everything
+
+        if (node.type === 'LogicalExpression') {
+            if (node.operator === 'OR') {
+                return evaluateAST(node.left, labels, participants) || evaluateAST(node.right, labels, participants);
+            }
+            if (node.operator === 'AND') {
+                return evaluateAST(node.left, labels, participants) && evaluateAST(node.right, labels, participants);
+            }
+        }
+
+        if (node.type === 'Term') {
+            // Strip any wrapping quotes from token value
+            let termVal = node.value;
+            if (termVal.startsWith('label:')) {
+                let inner = termVal.substring(6);
+                if (inner.startsWith('"') && inner.endsWith('"')) {
+                    inner = inner.substring(1, inner.length - 1);
+                }
+                termVal = 'label:' + inner;
+            } else if (termVal.startsWith('participant:')) {
+                let inner = termVal.substring(12);
+                if (inner.startsWith('"') && inner.endsWith('"')) {
+                    inner = inner.substring(1, inner.length - 1);
+                }
+                termVal = 'participant:' + inner;
+            } else {
+                if (termVal.startsWith('"') && termVal.endsWith('"')) {
+                    termVal = termVal.substring(1, termVal.length - 1);
+                }
+            }
+
+            const termLower = termVal.toLowerCase();
+            if (termLower.startsWith('label:')) {
+                const val = termLower.substring(6);
+                return labels.some(l => l.includes(val));
+            } else if (termLower.startsWith('participant:')) {
+                const val = termLower.substring(12);
+                return participants.some(p => p.includes(val));
+            } else {
+                return labels.some(l => l.includes(termLower)) || participants.some(p => p.includes(termLower));
+            }
+        }
+
+        return true;
+    }
+
     // Label filtering
     const labelFilter = document.querySelector('.label-filter');
     if (labelFilter) {
         labelFilter.addEventListener('input', () => {
-            const filterValue = labelFilter.value.toLowerCase();
+            const filterValue = labelFilter.value.trim();
             const items = document.querySelectorAll('.topic-item, .thread');
+
+            if (!filterValue) {
+                items.forEach(item => item.style.display = '');
+                return;
+            }
+
+            const tokens = tokenize(filterValue);
+            const ast = parse(tokens);
+
             items.forEach(item => {
-                const labels = item.querySelectorAll('.label');
-                let found = false;
-                labels.forEach(label => {
-                    if (label.textContent.toLowerCase().includes(filterValue)) {
-                        found = true;
-                    }
-                });
-                if (found || filterValue === '') {
+                const labels = Array.from(item.querySelectorAll('.label')).map(el => el.textContent.toLowerCase());
+                const participants = Array.from(item.querySelectorAll('.participant')).map(el => el.textContent.toLowerCase());
+
+                if (evaluateAST(ast, labels, participants)) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
                 }
             });
+        });
+
+        // Allow clicking on labels/participants to add them to the filter
+        document.addEventListener('click', (e) => {
+            const targetEl = e.target.closest('.label, .participant');
+            if (targetEl) {
+                const text = targetEl.textContent.trim();
+                const prefix = targetEl.matches('.label') ? 'label:' : 'participant:';
+
+                const hasSpaces = /\s/.test(text);
+                const safeText = hasSpaces ? `"${text}"` : text;
+                const token = `${prefix}${safeText}`;
+
+                if (text) {
+                    const currentVal = labelFilter.value.trim();
+                    if (currentVal) {
+                        // We do a simple indexOf check to avoid obvious duplicates.
+                        if (currentVal.indexOf(token) === -1) {
+                            labelFilter.value = currentVal + ' ' + token;
+                        }
+                    } else {
+                        labelFilter.value = token;
+                    }
+                    // Trigger input event to re-filter
+                    labelFilter.dispatchEvent(new Event('input'));
+                }
+            }
         });
     }
 

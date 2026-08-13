@@ -18,6 +18,7 @@ type roleUser struct {
 	ID     int32
 	Email  []string
 	User   sql.NullString
+	IduserRoles int32
 	UserID int32
 }
 
@@ -55,7 +56,7 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 	}
 	roleUsers := make([]*roleUser, 0, len(users))
 	for _, u := range users {
-		ru := &roleUser{ID: u.Idusers, User: u.Username, UserID: u.Idusers}
+		ru := &roleUser{ID: u.Idusers, User: u.Username, UserID: u.Idusers, IduserRoles: u.IduserRoles}
 		if emails, ok := emailsByUser[u.Idusers]; ok {
 			ru.Email = emails
 		}

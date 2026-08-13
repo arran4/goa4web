@@ -228,3 +228,4 @@ Field types in `Dot` are automatically fixed:
   - **workers/logworker**
   - **workers/postcountworker**
   - **workers/searchworker**
+- When generating sqlc files, always ensure that the version of sqlc used is equal to or newer than the version previously used to generate the files (check the generated `*.sql.go` files for the last used version).

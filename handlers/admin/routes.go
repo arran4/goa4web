@@ -79,6 +79,8 @@ func (h *Handlers) registerRoleAndGrantRoutes(ar *mux.Router, cfg *config.Runtim
 	ar.HandleFunc("/role/{role}", adminRolePage).Methods("GET")
 	ar.HandleFunc("/role/{role}/edit", adminRoleEditFormPage).Methods("GET")
 	ar.HandleFunc("/role/{role}/edit", adminRoleEditSavePage).Methods("POST")
+	ar.HandleFunc("/role/{role}/users", handlers.TaskHandler(roleUsersAllowTask)).Methods("POST").MatcherFunc(roleUsersAllowTask.Matcher())
+	ar.HandleFunc("/role/{role}/users", handlers.TaskHandler(roleUsersDisallowTask)).Methods("POST").MatcherFunc(roleUsersDisallowTask.Matcher())
 	ar.HandleFunc("/role/{role}/grant/add", adminRoleGrantAddPage).Methods("GET")
 	ar.HandleFunc("/role/{role}/grant", handlers.TaskHandler(roleGrantCreateTask)).Methods("POST").MatcherFunc(roleGrantCreateTask.Matcher())
 	ar.HandleFunc("/role/{role}/grant/update", handlers.TaskHandler(roleGrantUpdateTask)).Methods("POST").MatcherFunc(roleGrantUpdateTask.Matcher())

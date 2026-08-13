@@ -21,7 +21,7 @@ SELECT id, name, can_login, is_admin, private_labels, public_profile_allowed_at 
 
 -- name: AdminListUsersByRoleID :many
 -- admin task
-SELECT u.idusers, u.username
+SELECT ur.iduser_roles, u.idusers, u.username
 FROM users u
 JOIN user_roles ur ON ur.users_idusers = u.idusers
 WHERE ur.role_id = ?

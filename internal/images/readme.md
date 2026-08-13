@@ -8,13 +8,13 @@ Package `images` provides internal, non-exported utilities and service integrati
 
 The primary files and their general responsibilities include:
 
+- `validation_test.go`
+- `encode.go`
 - `resize.go`
 - `resize_test.go`
 - `thumbnails.go`
 - `thumbnails_test.go`
 - `validation.go`
-- `validation_test.go`
-- `encode.go`
 
 ### Exported Types and Interfaces
 
@@ -26,6 +26,10 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
+- `TestCleanExtension`
+- `TestValidID`
+- `TestAllowedExtension`
+- `EncoderByExtension`
 - `ParseDimension`
 - `GenerateSafeSize`
 - `TestParseDimension`
@@ -41,10 +45,6 @@ The primary files and their general responsibilities include:
 - `AllowedExtension`
 - `CleanExtension`
 - `ValidID`
-- `TestCleanExtension`
-- `TestValidID`
-- `TestAllowedExtension`
-- `EncoderByExtension`
 
 ## Usage
 

@@ -15,66 +15,66 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`Sup`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Code`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Inlinable`, `Transform`, `String`
-- **`QuoteOf`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`HR`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Transform`, `String`
-- **`BlockWithInlinable`** (Interface): Defines a core contract for this module.
-- **`Container`** (Interface): Defines a core contract for this module.
-- **`Text`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Transform`, `String`
-- **`Italic`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`CodeIn`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Inlinable`, `Transform`, `String`
-- **`Spoiler`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Inline`** (Interface): Defines a core contract for this module.
 - **`Node`** (Interface): Defines a core contract for this module.
 - **`BaseNode`**:
   - Methods: `SetPos`, `GetPos`, `GetParent`, `SetParent`
-- **`Sub`**:
+- **`Italic`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Link`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Blockable`, `AddChild`, `GetChildren`, `IsImmediateClose`, `Transform`, `String`
 - **`Image`**:
   - Implements: Node (partially/fully)
   - Methods: `Transform`, `String`
 - **`Indent`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Block`** (Interface): Defines a core contract for this module.
-- **`InlineWithBlockable`** (Interface): Defines a core contract for this module.
-- **`Underline`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Quote`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Inlinable`, `AddChild`, `GetChildren`, `Transform`, `String`
 - **`Custom`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
 - **`Generator`** (Interface): Defines a core contract for this module.
-- **`Root`**:
+- **`Container`** (Interface): Defines a core contract for this module.
+- **`Text`**:
   - Implements: Node (partially/fully)
-  - Methods: `Transform`, `AddChild`, `GetChildren`, `String`
+  - Methods: `Transform`, `String`
+- **`Sub`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Code`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `Transform`, `String`
+- **`Quote`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `AddChild`, `GetChildren`, `Transform`, `String`
+- **`HR`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `String`
+- **`Block`** (Interface): Defines a core contract for this module.
 - **`Bold`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Underline`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Link`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Blockable`, `AddChild`, `GetChildren`, `IsImmediateClose`, `Transform`, `String`
+- **`CodeIn`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `Transform`, `String`
+- **`BlockWithInlinable`** (Interface): Defines a core contract for this module.
+- **`Inline`** (Interface): Defines a core contract for this module.
+- **`Root`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `AddChild`, `GetChildren`, `String`
+- **`Sup`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`QuoteOf`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Spoiler`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`InlineWithBlockable`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 

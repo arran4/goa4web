@@ -8,16 +8,16 @@ Package `faq_templates` provides internal, non-exported utilities and service in
 
 The primary files and their general responsibilities include:
 
+- `parse_test.go`
 - `embed.go`
 - `parse.go`
-- `parse_test.go`
 
 ### Exported Functions
 
+- `TestParseTemplateContent`
 - `List`
 - `Get`
 - `ParseTemplateContent`
-- `TestParseTemplateContent`
 
 ## Usage
 

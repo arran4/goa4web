@@ -8,8 +8,8 @@ Package `migrations` provides functionality specific to `migrations`.
 
 The primary files and their general responsibilities include:
 
-- `migrations_test.go`
 - `embed.go`
+- `migrations_test.go`
 
 ### Exported Functions
 

@@ -8,6 +8,25 @@ Package `images` handles HTTP requests for the `images` route or feature set. Th
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Types and Interfaces
+
+- **`UploadImageTask`**:
+  - Methods: `Action`
+
+### Exported Functions
+
+- `TestUploadImageTask_Action_SecurityFix`
+- `APIListGallery`
+- `APIUploadImage`
+- `RegisterRoutes`
+- `ServeMissingImage`
+- `Register`
+- `TestValidID`
+- `TestImageRoutes`
+- `TestThumbnailRequest`
+- `TestHappyPathThumbnailRegeneration`
+- `RegisterTasks`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

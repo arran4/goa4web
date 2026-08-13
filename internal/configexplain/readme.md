@@ -14,10 +14,10 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
+- **`SourceDetail`**:
 - **`OptionInfo`**:
 - **`SourceKind`**:
 - **`Inputs`**:
-- **`SourceDetail`**:
 
 ### Exported Functions
 

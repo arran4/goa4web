@@ -14,9 +14,9 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`CacheProvider`** (Interface): Defines a core contract for this module.
 - **`ProviderFactory`**:
 - **`Provider`** (Interface): Defines a core contract for this module.
+- **`CacheProvider`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 

@@ -8,21 +8,21 @@ Package `dir` provides internal, non-exported utilities and service integrations
 
 The primary files and their general responsibilities include:
 
-- `dir.go`
 - `dir_test.go`
+- `dir.go`
 
 ### Exported Types and Interfaces
 
-- **`Record`**:
 - **`DLQ`**:
   - Methods: `Record`, `Get`, `Delete`
+- **`Record`**:
 
 ### Exported Functions
 
-- `Register`
-- `List`
 - `TestDLQRecord`
 - `TestListLegacy`
+- `Register`
+- `List`
 
 ## Usage
 

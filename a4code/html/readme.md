@@ -13,12 +13,12 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`Option`**:
-- **`DataPositionAttrs`**:
-  - Methods: `SourceAttrs`
 - **`Generator`**:
   - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`, `SourceAttrs`
 - **`SourceAttrBuilder`** (Interface): Defines a core contract for this module.
+- **`Option`**:
+- **`DataPositionAttrs`**:
+  - Methods: `SourceAttrs`
 
 ### Exported Functions
 

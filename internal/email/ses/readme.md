@@ -23,12 +23,16 @@ The primary files and their general responsibilities include:
 
 ## Usage
 
-To utilize the features provided by this package, import it into your Go files using:
+This package implements the `email.Sender` interface specifically for Amazon Simple Email Service (SES). It requires AWS credentials to be configured appropriately.
 
 ```go
 import "goa4web/internal/email/ses"
+
+sender, err := ses.NewSESSender(ctx, awsConfig)
+err = sender.Send(emailMsg)
 ```
 
 ## Limitations and Constraints
 
 - **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+- **Build Constraints**: Implementations interacting with AWS might be excluded during standard builds if specific build tags (e.g. `nosqlite ses`) are not provided.

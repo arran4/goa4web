@@ -14,10 +14,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`TaskEvent`**:
-  - Methods: `Type`
-- **`EmailQueueEvent`**:
-  - Methods: `Type`
 - **`DigestRunEvent`**:
   - Methods: `Type`
 - **`Bus`**:
@@ -26,6 +22,10 @@ The primary files and their general responsibilities include:
 - **`Message`** (Interface): Defines a core contract for this module.
 - **`Envelope`**:
   - Methods: `Ack`
+- **`TaskEvent`**:
+  - Methods: `Type`
+- **`EmailQueueEvent`**:
+  - Methods: `Type`
 
 ### Exported Functions
 
@@ -46,10 +46,19 @@ The primary files and their general responsibilities include:
 
 ## Usage
 
-To utilize the features provided by this package, import it into your Go files using:
+The eventbus is the central nervous system for async work. Use it to decouple HTTP handlers from slow background tasks.
 
 ```go
 import "goa4web/internal/eventbus"
+
+// Publisher
+eventbus.Publish(ctx, "UserRegistered", user.ID)
+
+// Subscriber (typically inside a worker init)
+eventbus.Subscribe("UserRegistered", func(ctx context.Context, payload interface{}) {
+    userID := payload.(int)
+    // process it
+})
 ```
 
 ## Limitations and Constraints

@@ -8,8 +8,8 @@ Package `sendgrid` provides concrete implementations or abstractions for the `se
 
 The primary files and their general responsibilities include:
 
-- `sendgrid_stub.go`
 - `sendgrid.go`
+- `sendgrid_stub.go`
 
 ### Exported Types and Interfaces
 

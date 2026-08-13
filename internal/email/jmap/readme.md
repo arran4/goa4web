@@ -8,8 +8,8 @@ Package `jmap` provides concrete implementations or abstractions for the `jmap` 
 
 The primary files and their general responsibilities include:
 
-- `jmap.go`
 - `jmap_test.go`
+- `jmap.go`
 
 ### Exported Types and Interfaces
 
@@ -21,6 +21,9 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
+- `TestGetJMAPDiscoveryEndpoint`
+- `TestResolveJMAPSettings`
+- `TestProviderFromConfig`
 - `NewProvider`
 - `Register`
 - `DiscoverSession`
@@ -28,9 +31,6 @@ The primary files and their general responsibilities include:
 - `SelectAccountID`
 - `SelectIdentityID`
 - `DiscoverIdentityID`
-- `TestGetJMAPDiscoveryEndpoint`
-- `TestResolveJMAPSettings`
-- `TestProviderFromConfig`
 
 ## Usage
 

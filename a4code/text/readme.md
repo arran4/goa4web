@@ -12,12 +12,12 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`Generator`**:
-  - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`
 - **`SmartWriter`**:
   - Methods: `Write`
 - **`PrefixWriter`**:
   - Methods: `Write`
+- **`Generator`**:
+  - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`
 
 ### Exported Functions
 

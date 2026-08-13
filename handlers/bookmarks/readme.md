@@ -8,6 +8,29 @@ Package `bookmarks` handles HTTP requests for the `bookmarks` route or feature s
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Types and Interfaces
+
+- **`SaveTask`**:
+  - Methods: `Action`
+- **`Entry`**:
+- **`Category`**:
+- **`Column`**:
+- **`CreateTask`**:
+  - Methods: `Action`
+
+### Exported Functions
+
+- `MinePage`
+- `RegisterRoutes`
+- `Register`
+- `EditPage`
+- `RegisterTasks`
+- `NewBookmarksTask`
+- `ParseColumns`
+- `TestParseColumns`
+- `TestMinePage`
+- `BookmarksPage`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

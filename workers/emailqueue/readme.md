@@ -8,19 +8,19 @@ Package `emailqueue` implements a specific background worker (`emailqueue`). Wor
 
 The primary files and their general responsibilities include:
 
-- `email_queue_test.go`
 - `email_queue.go`
+- `email_queue_test.go`
 
 ### Exported Functions
 
-- `TestProcessPendingEmail_NilProvider_IncrementsErrorCount`
-- `TestResolveQueuedEmailAddress_DirectEmail_VerifiedUser_Success`
-- `TestResolveQueuedEmailAddress_DirectEmail_NonUser_Fails`
-- `TestResolveQueuedEmailAddress_DirectEmail_UnverifiedUser_Success`
 - `StartEventListener`
 - `AdminBypassAddr`
 - `ResolveQueuedEmailAddress`
 - `ProcessPendingEmail`
+- `TestProcessPendingEmail_NilProvider_IncrementsErrorCount`
+- `TestResolveQueuedEmailAddress_DirectEmail_VerifiedUser_Success`
+- `TestResolveQueuedEmailAddress_DirectEmail_NonUser_Fails`
+- `TestResolveQueuedEmailAddress_DirectEmail_UnverifiedUser_Success`
 
 ## Usage
 

@@ -8,57 +8,29 @@ Package `middleware` provides internal, non-exported utilities and service integ
 
 The primary files and their general responsibilities include:
 
-- `taskbus.go`
-- `core_utils_test.go`
-- `middleware_test.go`
-- `request_logger_test.go`
-- `taskbus_test.go`
-- `middleware.go`
-- `router_utils.go`
-- `security.go`
 - `security_ip_test.go`
 - `security_test.go`
+- `taskbus_test.go`
+- `core_utils_test.go`
+- `security.go`
+- `taskbus.go`
+- `middleware.go`
+- `middleware_test.go`
+- `request_logger_test.go`
+- `router_utils.go`
 
 ### Exported Types and Interfaces
 
 - **`TaskEventMiddleware`**:
   - Methods: `Middleware`, `Events`, `Flush`, `SetBus`
 - **`TaskEventMiddlewareOption`**:
-- **`Configuration`**:
 - **`RouterWrapper`** (Interface): Defines a core contract for this module.
 - **`RouterWrapperFunc`**:
   - Methods: `Wrap`
+- **`Configuration`**:
 
 ### Exported Functions
 
-- `WithLogger`
-- `WithDLQ`
-- `NewTaskEventMiddleware`
-- `TaskEventMiddlewareWithBus`
-- `NewConfiguration`
-- `X2c`
-- `TestConfigurationSetGet`
-- `TestConfigurationRead`
-- `TestX2c`
-- `TestRedirectToLogin`
-- `TestRedirectToLoginIncludesBackAndQuery`
-- `TestRedirectToLoginPreservesPostData`
-- `TestRequestLoggerMiddleware`
-- `TestTaskEventMiddleware`
-- `TestStatusRecorderWriteHeaderOnce`
-- `TestTaskEventQueue`
-- `TestTaskEventMiddleware_PublishesWhenTaskComesFromContext`
-- `TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue`
-- `TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask`
-- `TestTaskEventMiddleware_DoesNotLogForGetWithoutTask`
-- `TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured`
-- `TestTaskEventMiddleware_EventProvided`
-- `TestTaskEventMiddleware_NoCoreDataPanic`
-- `RequestLoggerMiddleware`
-- `RecoverMiddleware`
-- `RedirectToLogin`
-- `NewMiddlewareChain`
-- `SecurityHeadersMiddleware`
 - `TestRequestIPSpoofing_Untrusted`
 - `TestRequestIPSpoofing_Trusted`
 - `TestRequestIPSpoofing_TrustedChain`
@@ -69,6 +41,34 @@ The primary files and their general responsibilities include:
 - `TestSecurityHeadersMiddlewareHTTPS`
 - `TestSecurityHeadersMiddlewareForwardedProto`
 - `TestSecurityHeadersMiddleware`
+- `TestTaskEventMiddleware`
+- `TestStatusRecorderWriteHeaderOnce`
+- `TestTaskEventQueue`
+- `TestTaskEventMiddleware_PublishesWhenTaskComesFromContext`
+- `TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue`
+- `TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask`
+- `TestTaskEventMiddleware_DoesNotLogForGetWithoutTask`
+- `TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured`
+- `TestTaskEventMiddleware_EventProvided`
+- `TestTaskEventMiddleware_NoCoreDataPanic`
+- `NewConfiguration`
+- `X2c`
+- `TestConfigurationSetGet`
+- `TestConfigurationRead`
+- `TestX2c`
+- `SecurityHeadersMiddleware`
+- `WithLogger`
+- `WithDLQ`
+- `NewTaskEventMiddleware`
+- `TaskEventMiddlewareWithBus`
+- `RequestLoggerMiddleware`
+- `RecoverMiddleware`
+- `RedirectToLogin`
+- `TestRedirectToLogin`
+- `TestRedirectToLoginIncludesBackAndQuery`
+- `TestRedirectToLoginPreservesPostData`
+- `TestRequestLoggerMiddleware`
+- `NewMiddlewareChain`
 
 ## Usage
 

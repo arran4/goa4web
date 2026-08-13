@@ -8,38 +8,44 @@ Package `a4code` is the root package for the custom A4Code markup engine. It def
 
 The primary files and their general responsibilities include:
 
+- `sanitize.go`
+- `snip.go`
 - `substring.go`
 - `substring_test.go`
-- `a4code.go`
 - `common.go`
-- `html.go`
-- `parser.go`
-- `parser_test.go`
-- `quote.go`
-- `quote_test.go`
-- `sanitize.go`
 - `output.go`
-- `snip.go`
+- `parser.go`
+- `quote.go`
 - `snip_test.go`
+- `a4code.go`
+- `html.go`
+- `parser_test.go`
+- `quote_test.go`
 
 ### Exported Types and Interfaces
 
-- **`TruncatedQuoteDepth`**:
 - **`ScannerInterface`** (Interface): Defines a core contract for this module.
 - **`StreamOption`**:
 - **`QuoteOption`**:
 - **`RestrictedQuoteDepth`**:
+- **`TruncatedQuoteDepth`**:
 
 ### Exported Functions
 
+- `SanitizeURL`
+- `Snip`
+- `SnipText`
+- `SnipWords`
+- `SnipTextWords`
 - `Substring`
 - `TestSubstringIncludesSelectedImage`
 - `TestSubstringIncludesImageBetweenText`
-- `ToA4Code`
 - `ConsumeCodeBlock`
 - `GetNextArg`
 - `GetNext`
-- `ToHTML`
+- `ToCode`
+- `ToCleanText`
+- `ToText`
 - `WithDepth`
 - `WithAllNodes`
 - `Stream`
@@ -47,6 +53,18 @@ The primary files and their general responsibilities include:
 - `ParseString`
 - `ParseNodesReader`
 - `ParseNodes`
+- `WithParagraphQuote`
+- `WithTrimSpace`
+- `WithRestrictedQuoteDepth`
+- `WithTruncatedQuoteDepth`
+- `WithFullQuote`
+- `QuoteText`
+- `IsQuoteBlock`
+- `QuoteReduce`
+- `TestSnip`
+- `TestSnipText`
+- `ToA4Code`
+- `ToHTML`
 - `TestParseToHTML`
 - `TestParseImage`
 - `TestRoundTrip`
@@ -73,14 +91,6 @@ The primary files and their general responsibilities include:
 - `TestToText_Code`
 - `TestBlockInlineInteractions`
 - `TestTxtarBlockInline`
-- `WithParagraphQuote`
-- `WithTrimSpace`
-- `WithRestrictedQuoteDepth`
-- `WithTruncatedQuoteDepth`
-- `WithFullQuote`
-- `QuoteText`
-- `IsQuoteBlock`
-- `QuoteReduce`
 - `TestQuote`
 - `TestQuoteFullParagraphs`
 - `TestQuoteFullEscaping`
@@ -93,16 +103,6 @@ The primary files and their general responsibilities include:
 - `TestQuoteDepthOptions`
 - `TestQuoteTxtar`
 - `TestIsPureQuote`
-- `SanitizeURL`
-- `ToCode`
-- `ToCleanText`
-- `ToText`
-- `Snip`
-- `SnipText`
-- `SnipWords`
-- `SnipTextWords`
-- `TestSnip`
-- `TestSnipText`
 
 ## Usage
 

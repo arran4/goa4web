@@ -17,10 +17,10 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`ServerStatsData`**:
 - **`UsageStatsData`**:
 - **`ServerStatsMetrics`**:
 - **`ServerStatsRegistries`**:
+- **`ServerStatsData`**:
 
 ### Exported Functions
 

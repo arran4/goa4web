@@ -8,8 +8,8 @@ Package `adminapi` provides internal, non-exported utilities and service integra
 
 The primary files and their general responsibilities include:
 
-- `sign_test.go`
 - `sign.go`
+- `sign_test.go`
 
 ### Exported Types and Interfaces
 
@@ -18,8 +18,8 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestSignVerify`
 - `NewSigner`
+- `TestSignVerify`
 
 ## Usage
 

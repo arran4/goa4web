@@ -8,18 +8,18 @@ Package `algorithms` provides internal, non-exported utilities and service integ
 
 The primary files and their general responsibilities include:
 
-- `loop.go`
 - `loop_test.go`
+- `loop.go`
 
 ### Exported Functions
 
-- `WouldCreateLoop`
 - `TestWouldCreateLoopSelf`
 - `TestWouldCreateLoopChain`
 - `TestWouldCreateLoopExisting`
 - `TestWouldCreateLoopNone`
 - `TestWouldCreateLoopRoot`
 - `TestWouldCreateLoopDangling`
+- `WouldCreateLoop`
 
 ## Usage
 

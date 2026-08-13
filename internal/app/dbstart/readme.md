@@ -8,31 +8,31 @@ Package `dbstart` provides internal, non-exported utilities and service integrat
 
 The primary files and their general responsibilities include:
 
-- `automigrate.go`
 - `dbstart_test.go`
 - `ensure_schema_test.go`
-- `migrate.go`
 - `schema_version.go`
+- `version_test.go`
 - `dbstart.go`
 - `ensure_schema_log_test.go`
+- `migrate.go`
 - `templates.go`
-- `version_test.go`
+- `automigrate.go`
 
 ### Exported Functions
 
-- `MaybeAutoMigrate`
 - `TestCheckUploadDir`
 - `TestEnsureSchemaVersionMatch`
 - `TestEnsureSchemaVersionMismatch`
-- `Apply`
 - `SchemaVersion`
+- `TestExpectedSchemaVersionMatchesMigrations`
 - `InitDB`
 - `PerformStartupChecks`
 - `CheckUploadDir`
 - `EnsureSchema`
 - `TestEnsureSchemaLogsVersion`
+- `Apply`
 - `RenderSchemaMismatch`
-- `TestExpectedSchemaVersionMatchesMigrations`
+- `MaybeAutoMigrate`
 
 ## Usage
 

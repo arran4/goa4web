@@ -8,6 +8,24 @@ Package `externallink` handles HTTP requests for the `externallink` route or fea
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Types and Interfaces
+
+- **`RoundTripFunc`**:
+  - Methods: `RoundTrip`
+- **`ReloadExternalLinkTask`**:
+  - Methods: `Action`, `Matcher`
+- **`PrefetchExternalLinkTask`**:
+  - Methods: `Action`
+
+### Exported Functions
+
+- `RedirectHandler`
+- `NewTestClient`
+- `TestRedirectHandler`
+- `RegisterRoutes`
+- `Register`
+- `TestReloadExternalLinkTask`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

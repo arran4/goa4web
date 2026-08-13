@@ -12,13 +12,13 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
+- **`LinkProvider`** (Interface): Defines a core contract for this module.
+- **`ImageMapper`**:
 - **`FullImageMapper`**:
 - **`UserColorMapper`**:
 - **`Generator`**:
   - Methods: `Link`, `Image`, `QuoteOf`
 - **`Option`**:
-- **`LinkProvider`** (Interface): Defines a core contract for this module.
-- **`ImageMapper`**:
 
 ### Exported Functions
 

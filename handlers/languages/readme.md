@@ -8,6 +8,23 @@ Package `languages` handles HTTP requests for the `languages` route or feature s
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Types and Interfaces
+
+- **`DeleteLanguageTask`**:
+  - Methods: `Action`, `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`
+- **`RenameLanguageTask`**:
+  - Methods: `Action`, `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`
+- **`CreateLanguageTask`**:
+  - Methods: `Action`, `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`
+
+### Exported Functions
+
+- `TestDeleteLanguageTask`
+- `RegisterAdminRoutes`
+- `Register`
+- `TestLanguageTaskTemplates`
+- `TestRenameLanguageTask`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

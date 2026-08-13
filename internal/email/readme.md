@@ -16,10 +16,10 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`Registry`**:
-  - Methods: `RegisterProvider`, `ProviderFromConfig`, `ProviderNames`
 - **`Provider`** (Interface): Defines a core contract for this module.
 - **`ProviderFactory`**:
+- **`Registry`**:
+  - Methods: `RegisterProvider`, `ProviderFromConfig`, `ProviderNames`
 
 ### Exported Functions
 

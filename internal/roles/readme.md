@@ -8,14 +8,15 @@ Package `roles` provides internal, non-exported utilities and service integratio
 
 The primary files and their general responsibilities include:
 
+- `apply.go`
 - `embedded.go`
 - `load.go`
 - `parse.go`
 - `parse_test.go`
-- `apply.go`
 
 ### Exported Functions
 
+- `ApplyRoleGrants`
 - `ReadEmbeddedRole`
 - `ListEmbeddedRoles`
 - `ListEmbeddedRoleNames`
@@ -28,7 +29,6 @@ The primary files and their general responsibilities include:
 - `ParseRoleGrants`
 - `TestParseRoleNameFromComment`
 - `TestParseRoleGrants`
-- `ApplyRoleGrants`
 
 ## Usage
 

@@ -8,6 +8,68 @@ Package `imagebbs` handles HTTP requests for the `imagebbs` route or feature set
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Types and Interfaces
+
+- **`DeletePostTask`**:
+  - Methods: `Action`
+- **`ProcessImageTask`**:
+  - Methods: `BackgroundTask`
+- **`DeleteBoardTask`**:
+  - Methods: `Action`
+- **`ModifyPostTask`**:
+  - Methods: `Action`
+- **`ApprovePostTask`**:
+  - Methods: `Action`, `SelfEmailTemplate`, `SelfInternalNotificationTemplate`, `RequiredTemplates`, `AuditRecord`
+- **`ReplyTask`**:
+  - Methods: `IndexType`, `IndexData`, `SubscribedEmailTemplate`, `SubscribedInternalNotificationTemplate`, `RequiredTemplates`, `AutoSubscribePath`, `AutoSubscribeGrants`, `Action`
+- **`NewBoardTask`**:
+  - Methods: `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`, `Action`
+- **`UploadImageTask`**:
+  - Methods: `IndexType`, `IndexData`, `Action`, `AuditRecord`
+- **`ModifyBoardTask`**:
+  - Methods: `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`, `Action`
+
+### Exported Functions
+
+- `AdminBoardListPage`
+- `BoardThreadPage`
+- `TestHappyPathRequireImagebbsGrantWithBoard`
+- `TestHappyPathRequireImagebbsGrantWithPost`
+- `TestApprovePostTask`
+- `PosterPage`
+- `NewImagebbsTask`
+- `TestHappyPathImageBbsReply`
+- `TestHappyPathReplyTaskAutoSubscribe`
+- `AdminNewBoardPage`
+- `TestHappyPathImagebbsTasksTemplatesRequiredExist`
+- `CheckBoardViewGrant`
+- `ImagebbsPage`
+- `CustomImageBBSIndex`
+- `TestHappyPathImageBbsTemplatesExist`
+- `RegisterAdminRoutes`
+- `AdminPage`
+- `AdminBoardViewPage`
+- `TestHappyPathBoardPage`
+- `RssPage`
+- `AtomPage`
+- `BoardRssPage`
+- `BoardAtomPage`
+- `ImagebbsBoardPage`
+- `AdminBoardPage`
+- `NewImagebbsBoardTask`
+- `TestBoardThreadPage_Forbidden`
+- `TestHappyPathImagebbsFeed`
+- `TestHappyPathPagesExist`
+- `RegisterTasks`
+- `AdminBoardsPage`
+- `AdminPostEditPage`
+- `AdminPostDashboardPage`
+- `AdminPostCommentsPage`
+- `TestCheckBoardViewGrant_Denied`
+- `TestCheckBoardViewGrant_Allowed`
+- `RegisterRoutes`
+- `Register`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

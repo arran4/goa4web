@@ -8,6 +8,56 @@ Package `privateforum` handles HTTP requests for the `privateforum` route or fea
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Types and Interfaces
+
+- **`UserExistsResponse`**:
+- **`PrivateTopicCreateTask`**:
+  - Methods: `Action`, `AutoSubscribePath`, `AutoSubscribeGrants`
+- **`QuerierProxier`**:
+  - Methods: `SystemGetUserByUsername`
+
+### Exported Functions
+
+- `APIListTopics`
+- `APICreateTopic`
+- `APIListThreads`
+- `APIShowComments`
+- `APIPostComment`
+- `TopicRssPage`
+- `TopicAtomPage`
+- `TopicFeedHandler`
+- `DisablePrivateForumCaching`
+- `EnforcePrivateForumTopicSeeAccess`
+- `TestHappyPathPrivateForumTasksTemplatesRequiredExist`
+- `TestPrivateRoute`
+- `TestHappyPathTopicPage_Prefix`
+- `UserExistsAPI`
+- `TestStartGroupDiscussionPage_RouterGrantFailure`
+- `TestHappyPathPrivateTopicCreateTaskAutoSubscribe`
+- `TestHappyPathPrivateTopicCreateTaskAutoSubscribePath`
+- `TestPrivateLabelRoutes`
+- `RegisterTasks`
+- `TopicEditPage`
+- `TopicEditSubmit`
+- `RegisterRoutes`
+- `Register`
+- `SharedThreadPreviewPage`
+- `SharedTopicPreviewPage`
+- `TopicCancelAlias`
+- `ThreadPage`
+- `TestDisablePrivateForumCaching`
+- `TestHappyPathPagesExist`
+- `UnreadThreadsPage`
+- `TestUnhappyPathPage_NoAccess`
+- `TestHappyPathPage_Access`
+- `TestHappyPathPage_SeeNoCreate`
+- `TestHappyPathPage_AdminLinks`
+- `NewPrivateForumTask`
+- `TopicPage`
+- `TestUserExistsAPI`
+- `PrivateForumPage`
+- `StartGroupDiscussionPage`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

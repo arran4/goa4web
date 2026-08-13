@@ -13,8 +13,8 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`StubConfig`**:
 - **`StubOption`**:
+- **`StubConfig`**:
 
 ### Exported Functions
 

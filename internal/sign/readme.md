@@ -13,12 +13,12 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`WithNonce`**:
 - **`WithExpiry`**:
 - **`WithAbsoluteExpiry`**:
 - **`WithHostname`**:
 - **`WithIssuedAt`**:
 - **`SignOption`** (Interface): Defines a core contract for this module.
+- **`WithNonce`**:
 
 ### Exported Functions
 

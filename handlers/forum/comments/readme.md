@@ -8,6 +8,11 @@ Package `comments` handles HTTP requests for the `comments` route or feature set
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
+### Exported Functions
+
+- `RequireCommentAuthor`
+- `TestRequireCommentAuthor`
+
 ## Usage
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.

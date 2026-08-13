@@ -8,27 +8,27 @@ Package `core` contains foundational business logic and shared utilities for `co
 
 The primary files and their general responsibilities include:
 
+- `session.go`
 - `fs.go`
 - `memfs_testutil.go`
-- `session.go`
 
 ### Exported Types and Interfaces
 
+- **`OSDirFS`**:
+  - Methods: `MkdirAll`, `Stat`, `Remove`
+- **`ContextValues`**:
 - **`FileSystem`** (Interface): Defines a core contract for this module.
 - **`DirFS`** (Interface): Defines a core contract for this module.
 - **`OSFS`**:
   - Methods: `ReadFile`, `WriteFile`
-- **`OSDirFS`**:
-  - Methods: `MkdirAll`, `Stat`, `Remove`
-- **`ContextValues`**:
 
 ### Exported Functions
 
-- `UseMemFS`
 - `GetSession`
 - `GetSessionOrFail`
 - `SessionErrorRedirect`
 - `SessionError`
+- `UseMemFS`
 
 ## Usage
 

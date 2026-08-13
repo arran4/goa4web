@@ -1,50 +1,14 @@
-# a4code/markdown
+# Markdown generator
 
-## Purpose
-
-Package `markdown` provides utilities for converting standard Markdown input into A4Code markup, or potentially rendering A4Code as Markdown.
-
-## Why It Exists
-
-Markdown is ubiquitous. Allowing users to write in Markdown and converting it to A4Code reduces friction for new users who are already familiar with standard Markdown syntax.
-
-## What It Allows
-
-It allows the system to seamlessly interoperate with Markdown while internally standardizing on A4Code, providing a fallback compatibility layer.
-
-## Structure and Components
-
-The primary files and their general responsibilities include:
-
-- `generator.go`
-
-### Exported Types and Interfaces
-
-- **`SmartWriter`**:
-  - Methods: `Write`
-- **`Generator`**:
-  - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`
-
-### Exported Functions
-
-- `NewGenerator`
-
-## Usage Examples
-
-Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
+This package converts an **A4Code AST to Markdown**. It does not parse Markdown
+and cannot convert Markdown input into A4Code.
 
 ```go
-import "goa4web/a4code"
-
-// 1. Parse raw input string into an AST
-astRoot, err := a4code.Parse("Some [b]input[/b] text")
-if err != nil {
-    // handle parser errors
-}
-
-// 2. The AST is now ready to be traversed or rendered.
+root, err := a4code.ParseString("[b bold]")
+if err != nil { return err }
+var out bytes.Buffer
+err = ast.Generate(&out, root, markdown.NewGenerator())
 ```
 
-## Limitations and Constraints
-
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+Markdown cannot represent every application-specific A4Code behavior exactly.
+Add or change a node only after deciding on a safe, readable fallback here.

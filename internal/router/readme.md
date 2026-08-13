@@ -30,11 +30,6 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `NewRegistry`
-- `TestInitModulesOnce`
-- `TestInitModulesDependencyOrder`
-- `TestRegistryNames`
-- `TestRoleCheckerMiddlewareAllowed`
-- `TestRoleCheckerMiddlewareDenied`
 - `RegisterRoutes`
 - `RoleCheckerMiddleware`
 - `AdminCheckerMiddleware`
@@ -44,7 +39,7 @@ The primary files and their general responsibilities include:
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/router"
+import "github.com/arran4/goa4web/internal/router"
 ```
 
 ## Limitations and Constraints

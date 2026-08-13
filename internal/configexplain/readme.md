@@ -30,16 +30,13 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `Explain`
-- `TestExplain`
-- `TestExplainBugStringNormalization`
-- `TestExplainBugBoolNormalization`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/configexplain"
+import "github.com/arran4/goa4web/internal/configexplain"
 ```
 
 ## Limitations and Constraints

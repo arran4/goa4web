@@ -28,20 +28,13 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `Register`
-- `TestCleanup`
-- `TestWriteRejectsTraversal`
-- `TestWriteRejectsAbs`
-- `TestWriteRejectsCleanEscape`
-- `TestReadRejectsTraversal`
-- `TestReadRejectsAbs`
-- `TestReadRejectsCleanEscape`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/upload/local"
+import "github.com/arran4/goa4web/internal/upload/local"
 ```
 
 ## Limitations and Constraints

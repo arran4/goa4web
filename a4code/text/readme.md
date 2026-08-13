@@ -1,53 +1,15 @@
-# a4code/text
+# Plain-text generator
 
-## Purpose
-
-Package `text` provides a plain-text renderer for the A4Code Abstract Syntax Tree (AST), useful for stripping formatting and extracting pure content.
-
-## Why It Exists
-
-Sometimes we need to display a snippet of user content without any formatting (e.g., in an email subject, an OpenGraph description, or a search index summary). HTML rendering would break these contexts.
-
-## What It Allows
-
-It allows extracting pure text content by traversing the AST and stripping all visual tags, producing clean string outputs.
-
-## Structure and Components
-
-The primary files and their general responsibilities include:
-
-- `generator.go`
-
-### Exported Types and Interfaces
-
-- **`SmartWriter`**:
-  - Methods: `Write`
-- **`PrefixWriter`**:
-  - Methods: `Write`
-- **`Generator`**:
-  - Methods: `Root`, `Text`, `Bold`, `Italic`, `Underline`, `Sup`, `Sub`, `Link`, `Image`, `Code`, `CodeIn`, `Quote`, `QuoteOf`, `Spoiler`, `Indent`, `HR`, `Custom`
-
-### Exported Functions
-
-- `NewGenerator`
-- `NewCleanGenerator`
-
-## Usage Examples
-
-Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
+The text generator converts an A4Code AST into readable plain text for search,
+email, summaries, and other contexts where markup is inappropriate.
 
 ```go
-import "goa4web/a4code"
-
-// 1. Parse raw input string into an AST
-astRoot, err := a4code.Parse("Some [b]input[/b] text")
-if err != nil {
-    // handle parser errors
-}
-
-// 2. The AST is now ready to be traversed or rendered.
+root, err := a4code.ParseString("Hello [b world]")
+if err != nil { return err }
+var out bytes.Buffer
+err = ast.Generate(&out, root, text.NewGenerator())
 ```
 
-## Limitations and Constraints
-
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+It intentionally discards visual formatting while preserving meaningful content.
+When adding a node, decide whether its label, URL, or children convey the best
+plain-text meaning and add focused generator tests.

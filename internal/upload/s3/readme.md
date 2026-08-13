@@ -1,51 +1,18 @@
-# internal/upload/s3
+# S3 upload provider
 
-## Purpose
-
-Package `s3` provides internal, non-exported utilities and service integrations specific to `s3`.
-
-## Why It Exists
-
-To encapsulate the logic necessary for this specific operational domain, ensuring modularity within the codebase.
-
-## What It Allows
-
-It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
-
-## Structure and Components
-
-The primary files and their general responsibilities include:
-
-- `s3_test.go`
-- `s3.go`
-- `s3_stub.go`
-
-### Exported Types and Interfaces
-
-- **`Provider`**:
-  - Methods: `Check`, `Write`, `Read`
-- **`ClientFactory`** (Interface): Defines a core contract for this module.
-
-### Exported Functions
-
-- `TestProviderCheckSuccess`
-- `TestProviderCheckWriteError`
-- `TestProviderRead`
-- `Register`
-- `Register`
-
-## Usage Examples
-
-This package implements the `upload.Storage` interface for AWS S3. It is used to persist files to object storage rather than local disk.
+The S3 backend is optional (`-tags s3`) and joins the upload provider registry via
+`s3.Register()`. Application startup selects it from runtime configuration; code
+using uploads should depend on `upload.Provider`, whose operations are `Check`,
+`Write`, and `Read`, rather than constructing an S3 client directly.
 
 ```go
-import "goa4web/internal/upload/s3"
-
-uploader := s3.NewS3Uploader(s3Config)
-url, err := uploader.Upload(ctx, fileBytes, "filename.jpg")
+s3.Register()
+// Startup resolves the configured "s3" provider and injects upload.Provider.
+if err := provider.Check(ctx); err != nil { return err }
+if err := provider.Write(ctx, name, data); err != nil { return err }
+data, err := provider.Read(ctx, name)
 ```
 
-## Limitations and Constraints
-
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
-- **Build Constraints**: Implementations interacting with AWS might be excluded during standard builds if specific build tags (e.g. `nosqlite ses`) are not provided.
+The configured target is an `s3://bucket/prefix` URL. `Write` does not return a
+public URL. Without the build tag, registration uses the stub behavior; tests
+should mock `upload.Provider` instead of contacting AWS.

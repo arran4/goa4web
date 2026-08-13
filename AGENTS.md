@@ -11,6 +11,22 @@ The `specs/` directory documents the current implementation and architecture. Th
 
 Refer to `specs/query_naming.md` for SQL naming conventions and `specs/permissions.md` for the permissions model.
 
+## Database and migrations
+
+These rules intentionally live at repository scope because a database change often
+touches `internal/db`, `database`, `migrations`, handlers, and application code:
+
+- Add application queries to `internal/db/*.sql`, run `sqlc generate`, and never
+  edit generated `*.sql.go` files by hand. Prefer the generated `db.Querier`
+  interface over exposing `*sql.DB`, and proxy queries through `CoreData` rather
+  than calling `cd.Queries()` so caching and invalidation remain possible.
+- Every schema change requires a new numbered migration. Never edit an existing
+  migration: deployed installations may already have applied it.
+- Keep `database/schema.mysql.sql` synchronized with every schema migration, and
+  update the migration's `schema_version` plus `ExpectedSchemaVersion` in
+  `handlers/constants.go`.
+- Keep roles introduced by migrations synchronized with `database/seed.sql`.
+
 ## Configuration
 
 Configuration values may be supplied in three ways and must be resolved in this order:
@@ -113,6 +129,7 @@ Field types in `Dot` are automatically fixed:
     - **a4code/markdown/test**
   - **a4code/text**
     - **a4code/text/test**
+- **cmd**
   - **cmd/a4code2html**
   - **cmd/gen-permutations**
   - **cmd/goa4web**
@@ -145,6 +162,7 @@ Field types in `Dot` are automatically fixed:
   - **handlers/share**
   - **handlers/user**
   - **handlers/writings**
+- **internal**
   - **internal/adminapi**
   - **internal/algorithms**
   - **internal/app**

@@ -1,74 +1,45 @@
-# internal/eventbus
+# Internal event bus
 
-## Purpose
+## Why it exists
 
-Package `eventbus` provides internal, non-exported utilities and service integrations specific to `eventbus`.
+The event bus decouples request-time publishers from in-process background
+consumers. It is appropriate for best-effort signals where the work may happen
+after the HTTP response. It is not durable: use the database-backed task or queue
+mechanisms when work must survive a restart.
 
-## Why It Exists
+## Message model
 
-To encapsulate the logic necessary for this specific operational domain, ensuring modularity within the codebase.
+Every message implements `Message` by returning a `MessageType`. The built-in
+messages are `TaskEvent`, `EmailQueueEvent`, and `DigestRunEvent`. A `Bus` is an
+instance passed to publishers and workers; there are no package-level publish or
+subscribe functions. Subscribers receive `Envelope` values and must call `Ack`
+once processing is finished so `Shutdown` can drain outstanding delivery.
 
-## What It Allows
-
-It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
-
-## Structure and Components
-
-The primary files and their general responsibilities include:
-
-- `benchmark_test.go`
-- `eventbus.go`
-- `eventbus_test.go`
-
-### Exported Types and Interfaces
-
-- **`TaskEvent`**:
-  - Methods: `Type`
-- **`EmailQueueEvent`**:
-  - Methods: `Type`
-- **`DigestRunEvent`**:
-  - Methods: `Type`
-- **`Bus`**:
-  - Methods: `Subscribe`, `Publish`, `Shutdown`
-- **`MessageType`**:
-- **`Message`** (Interface): Defines a core contract for this module.
-- **`Envelope`**:
-  - Methods: `Ack`
-
-### Exported Functions
-
-- `BenchmarkShutdown`
-- `NewBus`
-- `TestBus_Shutdown`
-- `TestBus_Ack`
-- `TestBus_Backpressure`
-- `TestBus_ShutdownContext`
-- `TestNewBus`
-- `TestSubscribe`
-- `TestPublish`
-- `TestPublish_NonBlocking`
-- `TestShutdown`
-- `TestShutdown_Timeout`
-- `TestSyncPublish`
-- `TestConcurrentAccess`
-
-## Usage Examples
-
-The eventbus is the central nervous system for async work. Use it to decouple HTTP handlers from slow background tasks.
+## Publishing and consuming
 
 ```go
-import "goa4web/internal/eventbus"
+bus := eventbus.NewBus()
+events := bus.Subscribe(eventbus.TaskMessageType)
 
-// Publisher
-eventbus.Publish(ctx, "UserRegistered", user.ID)
+go func() {
+    for envelope := range events {
+        event, ok := envelope.Msg.(eventbus.TaskEvent)
+        if ok {
+            // Process event. Record/log failures according to the worker policy.
+            _ = event
+        }
+        envelope.Ack()
+    }
+}()
 
-// Subscriber (typically inside a worker init)
-eventbus.Subscribe("UserRegistered", func(ctx context.Context, payload interface{}) {
-    userID := payload.(int)
-    // process it
+err := bus.Publish(eventbus.TaskEvent{
+    Path: "/forum/topic/42",
+    Task: task,
+    UserID: userID,
+    Time: time.Now(),
 })
 ```
 
-## Limitations and Constraints
-
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+Subscribe before publishing. Delivery is non-blocking and a full subscriber
+buffer drops the message, so do not use this API for required or retryable work.
+On shutdown, stop publishers and call `bus.Shutdown(ctx)` with a deadline.

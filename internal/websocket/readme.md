@@ -31,20 +31,13 @@ The primary files and their general responsibilities include:
 
 - `NewModule`
 - `NewNotificationsHandler`
-- `TestNotificationsHandlerCheckOriginConfig`
-- `TestNotificationsHandlerCheckOriginMultipleHosts`
-- `TestNotificationsHandlerCheckOriginHostHeader`
-- `TestNotificationsHandlerCheckOriginDenied`
-- `TestNotificationsJSRoute`
-- `TestNotificationsHandlerInvalidSession`
-- `TestNotificationsHandlerAuthenticationRequired`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/websocket"
+import "github.com/arran4/goa4web/internal/websocket"
 ```
 
 ## Limitations and Constraints

@@ -145,16 +145,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestCreateCommentValidatesGalleryImages`
-- `TestMapImageURLUsesDefaultThumbnailForLargeUploadedImage`
-- `TestMapImageURLUsesDefaultThumbnailForLargeCachedImage`
-- `TestMapImageURLUsesThumbnailForCachedImageWithoutMetadata`
-- `TestRecordUploadedImageThumbnailLinksSourceImage`
-- `TestStoreImageRecordsDefaultThumbnail`
-- `TestSanitizeCodeImagesQueuesImageAliasGoogleRedirect`
-- `TestCreatePrivateTopicUsesProvidedUsernames`
-- `TestCreatePrivateTopicBuildsUsernamesWhenMissing`
-- `TestMapLinkURL`
 - `NewLanguageCache`
 - `WithImageURLMapper`
 - `WithLanguageCache`
@@ -192,39 +182,9 @@ The primary files and their general responsibilities include:
 - `WithTrustedProxies`
 - `CanSearch`
 - `Allowed`
-- `TestQuerierFakeGrantStubs`
-- `TestQuerierFakeTopicListing`
-- `TestHighlightSearchTermsEscapesAndHighlights`
-- `TestHighlightSearchTermsRespectsWordBoundaries`
-- `TestHighlightSearchTermsWithoutWordsEscapesHTML`
-- `TestFormatDuration`
-- `TestGetPrivateTopicDisplayTitle`
-- `TestCoreData_PrivateForumTopics_LabelsBug`
-- `TestCoreData_PrivateForumTopics_UnreadNew`
-- `TestCoreData_PrivateForumTopics_OwnThreadNotNew`
-- `TestHandleThreadUpdatedMarksThreadAndItemLabels`
-- `TestRenderLink_Tooltips`
-- `TestSearchWordsFromRequestCachesAndReturnsCopy`
-- `TestPrivateForumBreadcrumbBasePath`
-- `TestBackupEligiblePasskeyPersistence`
-- `TestCoreData_PrivateForumTopics_ShowsTopicLabels`
-- `TestRenderLink_RoutesThroughGoto`
-- `TestAllAnsweredFAQ_Categories`
-- `TestDownloadAndCacheImageRecordsRemoteMetadata`
-- `TestPrepareImageCacheEntryForServeRefreshesExpiredRemoteEntry`
-- `TestQueueRemoteImageCacheCreatesPendingEntry`
-- `TestDownloadExternalImageUsesOpenGraphImageFromHTML`
-- `TestCreateCommentStartsImmediateRemoteImageFetch`
-- `TestProcessPendingRemoteImageCacheEntriesRecordsRetryFailure`
-- `TestPrepareImageCacheEntryForServeAllowsMissingMetadataWhenExpiryDisabled`
-- `TestPrepareImageCacheEntryForServeRejectsExpiredRemoteEntryWithoutSource`
 - `WithPrivateForumTopics`
-- `TestAbsoluteURL`
 - `HighlightSearchTerms`
 - `UnmarshalJSONLD`
-- `TestPrivateForumBreadcrumbUsesDisplayTitle`
-- `TestCoreData_PrivateForumTopics`
-- `TestLoadSelectionsFromRequest`
 - `GetTemplateFuncs`
 - `A4Code2String`
 - `TopicTitleOrDefault`
@@ -240,18 +200,15 @@ The primary files and their general responsibilities include:
 - `ToJSON`
 - `TimeAgo`
 - `Since`
-- `TestRenderLink_Favicon`
-- `TestSectionItemType`
 - `NewGoa4WebLinkProvider`
 - `NewTestCoreData`
-- `TestAllRolesLazy`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/core/common"
+import "github.com/arran4/goa4web/core/common"
 ```
 
 ## Limitations and Constraints

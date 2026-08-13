@@ -21,7 +21,7 @@ The core schema definitions (`schema.mysql.sql`) and testing seeds (`seed.sql`) 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/database"
+import "github.com/arran4/goa4web/database"
 ```
 
 ## Limitations and Constraints

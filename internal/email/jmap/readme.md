@@ -36,16 +36,13 @@ The primary files and their general responsibilities include:
 - `SelectAccountID`
 - `SelectIdentityID`
 - `DiscoverIdentityID`
-- `TestGetJMAPDiscoveryEndpoint`
-- `TestResolveJMAPSettings`
-- `TestProviderFromConfig`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/email/jmap"
+import "github.com/arran4/goa4web/internal/email/jmap"
 ```
 
 ## Limitations and Constraints

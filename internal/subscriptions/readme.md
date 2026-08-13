@@ -31,21 +31,15 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `BenchmarkMatchDefinition`
 - `GetUserSubscriptions`
 - `MatchDefinition`
-- `TestGetUserSubscriptions_UnknownPattern`
-- `TestGetUserSubscriptions_KnownPattern`
-- `TestGetUserSubscriptions_ReportedIssues`
-- `TestGetUserSubscriptions_LegacyUpgrade`
-- `TestMatchDefinition_Repro`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/subscriptions"
+import "github.com/arran4/goa4web/internal/subscriptions"
 ```
 
 ## Limitations and Constraints

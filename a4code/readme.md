@@ -1,133 +1,36 @@
-# a4code
+# A4Code parser
 
-## Purpose
+## Why it exists
 
-Package `a4code` is the root package for the custom A4Code markup engine. It defines the core parser, tokenization, and entry points for evaluating A4Code strings.
+A4Code is Goa4Web's deliberately small, Lisp-style user-markup language. Parsing
+untrusted input into a typed AST lets each output target escape and interpret
+content deliberately instead of accepting raw HTML.
 
-## Why It Exists
+## Parse and render
 
-Goa4Web uses a custom, lightweight markup language (A4Code) rather than allowing raw HTML to ensure strict security and prevent XSS, while offering a simpler syntax than full Markdown for core forum features.
-
-## What It Allows
-
-It allows users to safely format their posts (bold, italic, images, links) without exposing the platform to malicious payloads. It acts as the gatekeeper for user content.
-
-## Structure and Components
-
-The primary files and their general responsibilities include:
-
-- `output.go`
-- `parser_test.go`
-- `sanitize.go`
-- `snip.go`
-- `parser.go`
-- `quote.go`
-- `quote_test.go`
-- `snip_test.go`
-- `substring.go`
-- `substring_test.go`
-- `a4code.go`
-- `common.go`
-- `html.go`
-
-### Exported Types and Interfaces
-
-- **`TruncatedQuoteDepth`**:
-- **`ScannerInterface`** (Interface): Defines a core contract for this module.
-- **`StreamOption`**:
-- **`QuoteOption`**:
-- **`RestrictedQuoteDepth`**:
-
-### Exported Functions
-
-- `ToCode`
-- `ToCleanText`
-- `ToText`
-- `TestParseToHTML`
-- `TestParseImage`
-- `TestRoundTrip`
-- `TestParseNodes`
-- `TestOffsets`
-- `TestQuoteHTML`
-- `TestQuoteOfHTML`
-- `TestInlineCode`
-- `TestBlockCode`
-- `TestInlineCodeWithBrackets`
-- `TestInlineQuote`
-- `TestBlockQuote`
-- `TestQuoteOfAlwaysBlock`
-- `TestCodeIn`
-- `TestCodeWhitespace`
-- `TestCodeInGenerator`
-- `TestCodeWithNestedQuote`
-- `TestQOMarkup`
-- `TestInvalidTags`
-- `TestUpdateBlockStatus`
-- `TestQuoteAdjacentLinkBoundaries`
-- `TestCodeBlockEscaping`
-- `TestLinkIsImmediateClose`
-- `TestToText_Code`
-- `TestBlockInlineInteractions`
-- `TestTxtarBlockInline`
-- `SanitizeURL`
-- `Snip`
-- `SnipText`
-- `SnipWords`
-- `SnipTextWords`
-- `WithDepth`
-- `WithAllNodes`
-- `Stream`
-- `Parse`
-- `ParseString`
-- `ParseNodesReader`
-- `ParseNodes`
-- `WithParagraphQuote`
-- `WithTrimSpace`
-- `WithRestrictedQuoteDepth`
-- `WithTruncatedQuoteDepth`
-- `WithFullQuote`
-- `QuoteText`
-- `IsQuoteBlock`
-- `QuoteReduce`
-- `TestQuote`
-- `TestQuoteFullParagraphs`
-- `TestQuoteFullEscaping`
-- `TestQuoteFullImage`
-- `TestQuoteTrim`
-- `TestQuoteOfWithSpaces`
-- `TestQuoteOfWithSpacesAndEscapedQuote`
-- `TestQuoteRoundTripComplexName`
-- `TestSubstring`
-- `TestQuoteDepthOptions`
-- `TestQuoteTxtar`
-- `TestIsPureQuote`
-- `TestSnip`
-- `TestSnipText`
-- `Substring`
-- `TestSubstringIncludesSelectedImage`
-- `TestSubstringIncludesImageBetweenText`
-- `ToA4Code`
-- `ConsumeCodeBlock`
-- `GetNextArg`
-- `GetNext`
-- `ToHTML`
-
-## Usage Examples
-
-Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
+Tags contain their arguments and children inside one pair of brackets: `[b bold
+text]` and `[link https://example.com label]`. Closing tags such as `[/b]` are
+invalid.
 
 ```go
-import "goa4web/a4code"
+root, err := a4code.ParseString("Hello [b world]")
+if err != nil { return fmt.Errorf("parse A4Code: %w", err) }
 
-// 1. Parse raw input string into an AST
-astRoot, err := a4code.Parse("Some [b]input[/b] text")
-if err != nil {
-    // handle parser errors
+var out bytes.Buffer
+if err := ast.Generate(&out, root, html.NewGenerator()); err != nil {
+    return fmt.Errorf("render A4Code: %w", err)
 }
-
-// 2. The AST is now ready to be traversed or rendered.
 ```
 
-## Limitations and Constraints
+Use `Parse(io.Reader)` for streams and `ParseString` for an in-memory value. Pick
+a generator for the destination: `html`, `goa4webhtml`, `format`, `markdown`, or
+`text`. `SanitizeURL`, quote, snip, and substring helpers support the forum's
+preview and quoting workflows; preserve source positions when a caller needs
+selection-aware behavior.
 
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+## Extending the language
+
+A new node requires coordinated parser, AST, generator, and test changes. Add the
+node to `a4code/ast`, teach the parser when to construct it, and implement every
+`ast.Generator` method so no output format silently loses content. Use the syntax
+rules in `a4code/AGENTS.md` in examples and fixtures.

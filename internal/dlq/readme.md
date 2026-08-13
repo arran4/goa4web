@@ -45,7 +45,7 @@ The primary files and their general responsibilities include:
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/dlq"
+import "github.com/arran4/goa4web/internal/dlq"
 ```
 
 ## Limitations and Constraints

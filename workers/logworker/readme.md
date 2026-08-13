@@ -22,15 +22,13 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `Worker`
-- `TestCleanData`
-- `TestCleanDataPrivate`
 
 ## Usage Examples
 
 Workers subscribe to topics on the `eventbus`. To trigger a worker, a handler publishes an event to the bus. The worker receives the payload, executes its logic, and optionally publishes a new event (e.g. via Websockets) when complete.
 
 ```go
-import "goa4web/internal/eventbus"
+import "github.com/arran4/goa4web/internal/eventbus"
 
 // Trigger a background task from a handler
 eventbus.Publish(ctx, "my_queue_topic", myDataStruct)

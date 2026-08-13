@@ -39,40 +39,13 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestRequestLoggerMiddleware`
 - `NewMiddlewareChain`
-- `TestRequestIPSpoofing_Untrusted`
-- `TestRequestIPSpoofing_Trusted`
-- `TestRequestIPSpoofing_TrustedChain`
-- `TestRequestIPSpoofing_UntrustedInChain`
-- `TestRequestIPSpoofing_GarbageHeader`
-- `TestRequestIPSpoofing_IPv6_CIDR`
-- `TestTaskEventMiddleware`
-- `TestStatusRecorderWriteHeaderOnce`
-- `TestTaskEventQueue`
-- `TestTaskEventMiddleware_PublishesWhenTaskComesFromContext`
-- `TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue`
-- `TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask`
-- `TestTaskEventMiddleware_DoesNotLogForGetWithoutTask`
-- `TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured`
-- `TestTaskEventMiddleware_EventProvided`
-- `TestTaskEventMiddleware_NoCoreDataPanic`
 - `NewConfiguration`
 - `X2c`
-- `TestConfigurationSetGet`
-- `TestConfigurationRead`
-- `TestX2c`
 - `RequestLoggerMiddleware`
 - `RecoverMiddleware`
 - `RedirectToLogin`
-- `TestRedirectToLogin`
-- `TestRedirectToLoginIncludesBackAndQuery`
-- `TestRedirectToLoginPreservesPostData`
 - `SecurityHeadersMiddleware`
-- `TestSecurityHeadersMiddlewareHTTP`
-- `TestSecurityHeadersMiddlewareHTTPS`
-- `TestSecurityHeadersMiddlewareForwardedProto`
-- `TestSecurityHeadersMiddleware`
 - `WithLogger`
 - `WithDLQ`
 - `NewTaskEventMiddleware`
@@ -83,7 +56,7 @@ The primary files and their general responsibilities include:
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/middleware"
+import "github.com/arran4/goa4web/internal/middleware"
 ```
 
 ## Limitations and Constraints

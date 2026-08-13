@@ -1,29 +1,52 @@
-# config
+# Configuration
 
-## Purpose
+## Why this package exists
 
-Package `config` defines the data structures and parsing logic for the Goa4Web application configuration. It handles reading from environment variables, command-line flags, and configuration files.
+`config` is the typed boundary between deployment inputs and application code. It
+keeps flag, config-file, and environment handling in one place so handlers and
+workers consume a validated `RuntimeConfig` rather than reading process state.
+Values are resolved in this order: command-line flag, config file, environment,
+then a default when the value is still empty.
 
-## Why It Exists
+## Where to look
 
-To manage environment variables, CLI flags, and configuration files in a single, strongly-typed location.
+- `runtime.go` defines `RuntimeConfig`, option metadata, parsing, precedence, and
+  validation. Start here when adding a setting.
+- `env.go` is the canonical list of environment-variable names.
+- `defaults.go` supplies defaults; use it only when empty is not meaningful.
+- `examples/` contains user-facing configuration examples that must use the same
+  keys.
+- `internal/configformat` and `internal/configexplain` provide CLI presentation
+  and diagnostics; update them when a new kind of value needs special handling.
 
-## What It Allows
+## Adding a setting
 
-It allows the application to be deployed flexibly across local dev, staging, and production environments without changing code, ensuring environment parity.
+Adding only a struct field does **not** populate it. A complete change normally:
 
-## Structure and Components
+1. Add the typed field to `RuntimeConfig` in `runtime.go`.
+2. Add its environment key to `env.go`.
+3. Register a `StringOption`, `IntOption`, or `BoolOption` in `runtime.go`. The
+   option connects the flag/config key, environment key, and destination field.
+4. Add a default only if the zero value is not the desired fallback.
+5. Add the same key to the relevant file under `examples/`.
+6. Extend precedence, validation, environment-map, and help-output tests as
+   appropriate, then run the full test suite.
 
-The primary configuration definitions are found within `runtimeconfig.go` where `RuntimeConfig` is defined. Ensure any new configuration parameters are appended to this struct.
+Use an existing option of the same type as the template; this preserves the
+required flag > file > environment > default precedence. Never read `os.Getenv`
+directly from feature code.
 
-## Usage Examples
+## Consuming configuration
 
-To utilize the features provided by this package, import it into your Go files using:
+Receive `*config.RuntimeConfig` through an existing constructor or options struct:
 
 ```go
-import "goa4web/config"
+import "github.com/arran4/goa4web/config"
+
+type Service struct { cfg *config.RuntimeConfig }
+func NewService(cfg *config.RuntimeConfig) *Service { return &Service{cfg: cfg} }
 ```
 
-## Limitations and Constraints
-
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+Runtime construction belongs at the executable/application boundary. Packages
+should not create a second config or depend on global state, because that bypasses
+validation and makes tests order-dependent.

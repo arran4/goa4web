@@ -256,31 +256,19 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestExecuteUsageWithGroups`
-- `TestPrintFlagsHelp`
-- `TestRoleListSQL`
-- `TestRoleListNames`
-- `TestGrantExportCmdJSON`
-- `TestUserApproveCmd`
-- `TestUserRenameCmd`
-- `TestRootCmd_Logger_Caller`
-- `TestListAndReadEmbeddedRoles`
-- `TestConfigAsFormattingMatchesCLI`
-- `TestUserPasswordApproveCmd`
-- `TestToEnvMapLoops`
-- `TestBuildRoleGrantsExport`
-- `TestWriteRoleGrantsExportCSV`
-- `TestTemplateLinks`
-- `TestGrantListCmd`
 
-## Usage Examples
+## Building and running
 
-To utilize the features provided by this package, import it into your Go files using:
+`cmd/goa4web` is the main executable, not an importable package. From the repository root:
 
-```go
-import "goa4web/cmd/goa4web"
+```sh
+go run ./cmd/goa4web --help
+go build -o goa4web ./cmd/goa4web
+./goa4web --help
 ```
+
+Use command-specific `--help` before administrative operations. Configuration is resolved through the `config` package; do not add command-local environment parsing.
 
 ## Limitations and Constraints
 
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+The command composes application dependencies and should keep business logic in reusable packages. Errors from `main`/`run` paths must be logged or wrapped with context.

@@ -1,43 +1,25 @@
-# internal/dbdrivers/mysql
+# MySQL database driver
 
-## Purpose
+## Why it exists
 
-Package `mysql` encapsulates the database driver initialization and specific dialect requirements for `mysql`.
+This package adapts `go-sql-driver/mysql` to Goa4Web's instance-based
+`dbdrivers.Registry`. Registration keeps startup composition explicit and lets
+tests supply isolated registries without global driver state.
 
-## Why It Exists
-
-To abstract the specific SQL connection logic away from the rest of the application. It handles connection pooling, dialect specifics, and initialization.
-
-## What It Allows
-
-It allows the application to easily switch databases (e.g., from MySQL to SQLite for local testing) without rewriting query logic or changing core implementation files.
-
-## Structure and Components
-
-The primary files and their general responsibilities include:
-
-- `driver.go`
-
-### Exported Types and Interfaces
-
-- **`Driver`**:
-  - Methods: `Name`, `Examples`, `OpenConnector`, `Backup`, `Restore`
-
-### Exported Functions
-
-- `SetTimezone`
-- `Register`
-
-## Usage Examples
-
-This package is typically used implicitly when `goa4web` initializes the DB driver. Example of creating a connection:
+## Startup workflow
 
 ```go
-import "goa4web/internal/dbdrivers"
+registry := dbdrivers.NewRegistry()
+mysql.Register(registry)
 
-db, err := dbdrivers.InitDB("mysql", dsn)
+connector, err := registry.Connector("mysql", dsn)
+if err != nil { return fmt.Errorf("create MySQL connector: %w", err) }
+db := sql.OpenDB(connector)
+defer db.Close()
 ```
 
-## Limitations and Constraints
-
-- **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
+Application startup normally performs this wiring; feature packages should
+receive a `db.Querier`, not open their own connection. `SetTimezone` controls the
+location inserted when a DSN omits one. `Driver.Backup` and `Driver.Restore`
+invoke the external `mysqldump` and `mysql` programs and therefore belong in
+operational paths, not unit tests.

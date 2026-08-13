@@ -27,11 +27,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestFetch`
-- `TestParse`
-- `TestParse_Keywords`
-- `TestFetchWikipedia`
-- `TestFetchUserAgent`
 - `NewSafeClient`
 - `Fetch`
 - `Parse`
@@ -41,7 +36,7 @@ The primary files and their general responsibilities include:
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/opengraph"
+import "github.com/arran4/goa4web/internal/opengraph"
 ```
 
 ## Limitations and Constraints

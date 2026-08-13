@@ -69,23 +69,7 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestBuildPatterns`
-- `TestBuildPatternsAdditional`
-- `TestExpandPatternSeparators`
-- `TestCollectSubscribersQuery`
-- `TestProcessEventDLQ`
-- `TestProcessEventSubscribeSelf`
-- `TestProcessEventNoAutoSubscribe`
-- `TestProcessEventAdminNotify`
-- `TestProcessEventWritingSubscribers`
-- `TestProcessEventTargetUsers`
-- `TestNotifySubscribersNews`
-- `TestBusWorker`
-- `TestProcessEventAutoSubscribe`
-- `TestProcessEventAutoSubscribeMissingPreference`
-- `TestProcessEventSelfNotifyWithUserIDTemplate`
 - `NewDigestConsumer`
-- `TestLinkerQueueNotifierMessages`
 - `WithSilence`
 - `WithQueries`
 - `WithCustomQueries`
@@ -94,30 +78,22 @@ The primary files and their general responsibilities include:
 - `WithConfig`
 - `New`
 - `NewEmailTemplates`
-- `TestRenderEmailFromTemplates_AdminSubject`
 - `HTMLTemplatesNew`
 - `TextTemplatesNew`
 - `NotificationTemplateFilenameGenerator`
 - `EmailTextTemplateFilenameGenerator`
 - `EmailHTMLTemplateFilenameGenerator`
 - `EmailSubjectTemplateFilenameGenerator`
-- `TestNotificationDigestWorker_ScheduleDigest`
-- `TestNotificationDigestWorker_SendDigest`
 - `WithAdmin`
 - `WithRecipient`
-- `TestNotificationsQueries`
-- `TestNotifierNotifyAdmins`
-- `TestNotifierInitialization`
-- `TestAdminNotificationTemplate`
 - `GetUpdateEmailText`
-- `TestRenderNotificationUsesSequentialOverrides`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/notifications"
+import "github.com/arran4/goa4web/internal/notifications"
 ```
 
 ## Limitations and Constraints

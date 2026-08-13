@@ -29,10 +29,6 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `MaybeAutoMigrate`
-- `TestCheckUploadDir`
-- `TestEnsureSchemaLogsVersion`
-- `TestEnsureSchemaVersionMatch`
-- `TestEnsureSchemaVersionMismatch`
 - `SchemaVersion`
 - `InitDB`
 - `PerformStartupChecks`
@@ -40,14 +36,13 @@ The primary files and their general responsibilities include:
 - `EnsureSchema`
 - `Apply`
 - `RenderSchemaMismatch`
-- `TestExpectedSchemaVersionMatchesMigrations`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/app/dbstart"
+import "github.com/arran4/goa4web/internal/app/dbstart"
 ```
 
 ## Limitations and Constraints

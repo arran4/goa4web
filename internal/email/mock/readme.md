@@ -28,14 +28,13 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `Register`
-- `TestProvider`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/email/mock"
+import "github.com/arran4/goa4web/internal/email/mock"
 ```
 
 ## Limitations and Constraints

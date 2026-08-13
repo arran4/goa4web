@@ -34,20 +34,12 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestGenerateThumbnail`
-- `TestGenerateThumbnailWithinBoundsPreservesAspectRatio`
-- `TestDimensionsWithinBoundsEdgeCases`
 - `AllowedExtension`
 - `CleanExtension`
 - `ValidID`
-- `TestCleanExtension`
-- `TestValidID`
-- `TestAllowedExtension`
 - `EncoderByExtension`
 - `ParseDimension`
 - `GenerateSafeSize`
-- `TestParseDimension`
-- `TestGenerateSafeSize`
 - `GetThumbnailGenerator`
 - `RegisterThumbnailGenerator`
 - `GenerateThumbnail`
@@ -59,7 +51,7 @@ The primary files and their general responsibilities include:
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/images"
+import "github.com/arran4/goa4web/internal/images"
 ```
 
 ## Limitations and Constraints

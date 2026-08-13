@@ -29,15 +29,13 @@ The primary files and their general responsibilities include:
 
 - `Register`
 - `List`
-- `TestDLQRecord`
-- `TestListLegacy`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/dlq/dir"
+import "github.com/arran4/goa4web/internal/dlq/dir"
 ```
 
 ## Limitations and Constraints

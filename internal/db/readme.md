@@ -662,60 +662,18 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestQueries_ListWritersForLister`
-- `TestQueries_ListWritersSearchForLister`
-- `TestQueries_GetWritingForListerByID_GlobalGrant`
 - `EmailsByUserID`
 - `PrimaryEmail`
-- `TestGlobalItemGrantQueries`
-- `TestQueries_ListBoardsByParentIDForLister`
-- `TestQueries_ListImagePostsByBoardForLister_GlobalGrant`
-- `TestQueries_AdminListUsersFiltered`
-- `TestQueries_AdminSearchUsersFiltered`
-- `TestQueries_AdminIsUserDeactivated`
-- `TestQueries_AdminListDeactivatedUsers`
-- `TestQueries_AdminIsBlogDeactivated`
-- `TestQueries_AdminListDeactivatedBlogs`
-- `TestQueries_AdminIsCommentDeactivated`
-- `TestQueries_AdminListDeactivatedComments`
-- `TestQueries_AdminIsWritingDeactivated`
-- `TestQueries_AdminListDeactivatedWritings`
-- `TestQueries_AdminIsImagepostDeactivated`
-- `TestQueries_AdminListDeactivatedImageposts`
-- `TestQueries_AdminIsLinkDeactivated`
-- `TestQueries_AdminListDeactivatedLinks`
-- `TestBlogQueriesAllowGlobalGrants`
-- `TestQueries_AdminUpdateRole`
-- `TestEmailsByUserID`
-- `TestPrimaryEmail`
 - `NewSessionProxy`
-- `TestTemplateOverride`
-- `TestUserMonthlyUsageCounts_LinkerJoin`
-- `TestMonthlyUsageCounts`
-- `TestQuerierStub_InsertFAQQuestionForWriter`
 - `NewLoggingConnector`
 - `New`
-- `TestGetThreadLastPosterAndPerms_AllowsGlobalGrants`
-- `TestGlobalGrantsNews`
-- `TestGlobalGrantsFAQ`
-- `TestGlobalGrantsImageBBS`
-- `TestGlobalGrantsThreads`
-- `TestGlobalGrantsLinker`
-- `TestQueries_InsertFAQQuestionForWriter`
-- `TestFAQQueriesAllowGlobalGrants`
-- `TestQueries_AdminListAllUserIDs`
-- `TestQueries_AdminListAllUsers`
-- `TestQueries_SystemListAllUsers`
-- `TestQueries_AdminDeleteUserByID`
-- `TestQueries_AdminUpdateUsernameByID`
-- `TestForumQueriesAllowGlobalGrants`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/db"
+import "github.com/arran4/goa4web/internal/db"
 ```
 
 ## Limitations and Constraints

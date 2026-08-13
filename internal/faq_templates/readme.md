@@ -25,14 +25,13 @@ The primary files and their general responsibilities include:
 - `List`
 - `Get`
 - `ParseTemplateContent`
-- `TestParseTemplateContent`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/faq_templates"
+import "github.com/arran4/goa4web/internal/faq_templates"
 ```
 
 ## Limitations and Constraints

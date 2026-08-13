@@ -28,7 +28,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestServerOptions`
 - `WithSessionSecret`
 - `WithImageSignSecret`
 - `WithLinkSignSecret`
@@ -44,20 +43,16 @@ The primary files and their general responsibilities include:
 - `WithQuerier`
 - `WithRouterRegistry`
 - `NewServer`
-- `TestSessionCookieOptions`
 - `PerformChecks`
 - `CheckUploadTarget`
 - `CheckMediaFiles`
-- `TestCheckUploadTargetOK`
-- `TestCheckUploadTargetFail`
-- `TestCheckUploadTargetNoProvider`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/app"
+import "github.com/arran4/goa4web/internal/app"
 ```
 
 ## Limitations and Constraints

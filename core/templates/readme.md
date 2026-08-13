@@ -45,10 +45,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestPasskeysJavaScriptIsExternal`
-- `TestNewsPostPageLabelFormIncludesCSRF`
-- `TestNewsPostPageReplyFormIncludesCSRF`
-- `TestNewsPostPageDoesNotContainInlineMarkRead`
 - `SetDir`
 - `WithDir`
 - `WithSilence`
@@ -68,29 +64,16 @@ The primary files and their general responsibilities include:
 - `AnyTemplateExists`
 - `LoadAllTemplatesMap`
 - `IsTemplateAvailable`
-- `TestArticlePageLabelFormIncludesCSRF`
-- `TestArticlePageReplyFormIncludesCSRF`
-- `TestArticlePageDoesNotContainInlineMarkRead`
 - `WriteToDir`
 - `WriteTemplateSetsToDir`
 - `ArchiveTemplates`
-- `TestNoEmptyTemplates`
-- `TestThreadPageShowsDefaultPrivateLabels`
-- `TestGetAssetHash`
-- `TestTableTopicsShowsLabels`
-- `TestThreadNewPageJS`
-- `TestThreadPageLabelFormIncludesCSRF`
-- `TestThreadPageDoesNotContainInlineMarkRead`
-- `TestCommentTimestampSelfLink`
-- `TestCommentUsernameBold`
-- `TestNotificationOpenTemplateExists`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/core/templates"
+import "github.com/arran4/goa4web/core/templates"
 ```
 
 ## Limitations and Constraints

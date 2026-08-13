@@ -24,17 +24,13 @@ The primary files and their general responsibilities include:
 - `NewCSRFMiddleware`
 - `Token`
 - `TemplateField`
-- `TestCSRFLoginFlow`
-- `TestCSRFCrossSite`
-- `TestCSRFDisabled`
-- `TestCSRFRotatesAfterAuthentication`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/middleware/csrf"
+import "github.com/arran4/goa4web/internal/middleware/csrf"
 ```
 
 ## Limitations and Constraints

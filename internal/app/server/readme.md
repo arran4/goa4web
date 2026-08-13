@@ -27,8 +27,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestCoreDataMiddlewareUserRoles`
-- `TestCoreDataMiddlewareAnonymous`
 - `WithHandler`
 - `WithStore`
 - `WithDB`
@@ -56,7 +54,7 @@ The primary files and their general responsibilities include:
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/app/server"
+import "github.com/arran4/goa4web/internal/app/server"
 ```
 
 ## Limitations and Constraints

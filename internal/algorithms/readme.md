@@ -22,19 +22,13 @@ The primary files and their general responsibilities include:
 ### Exported Functions
 
 - `WouldCreateLoop`
-- `TestWouldCreateLoopSelf`
-- `TestWouldCreateLoopChain`
-- `TestWouldCreateLoopExisting`
-- `TestWouldCreateLoopNone`
-- `TestWouldCreateLoopRoot`
-- `TestWouldCreateLoopDangling`
 
 ## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/algorithms"
+import "github.com/arran4/goa4web/internal/algorithms"
 ```
 
 ## Limitations and Constraints

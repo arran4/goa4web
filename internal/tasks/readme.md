@@ -4,45 +4,48 @@
 
 Package `tasks` provides internal, non-exported utilities and service integrations specific to `tasks`.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
-**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
-**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+To encapsulate the logic necessary for this specific operational domain, ensuring modularity within the codebase.
+
+## What It Allows
+
+It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `background_tasker.go`
-- `matchers.go`
-- `matchers_test.go`
 - `registry.go`
 - `task_event.go`
 - `template.go`
 - `admin_task.go`
+- `background_tasker.go`
+- `matchers.go`
+- `matchers_test.go`
 
 ### Exported Types and Interfaces
 
-- **`EmailTemplatesRequired`** (Interface): Defines a core contract for this module.
-- **`TaskMatcher`** (Interface): Defines a core contract for this module.
-- **`TaskString`**:
-  - Methods: `Name`, `Action`, `Matcher`
-- **`AuditableTask`** (Interface): Defines a core contract for this module.
-- **`BackgroundTasker`** (Interface): Defines a core contract for this module.
-- **`NamedTask`** (Interface): Defines a core contract for this module.
 - **`Entry`**:
 - **`Registry`**:
   - Methods: `Register`, `Registered`, `Entries`
-- **`Task`** (Interface): Defines a core contract for this module.
 - **`TemplatesRequired`** (Interface): Defines a core contract for this module.
-- **`Name`** (Interface): Defines a core contract for this module.
+- **`EmailTemplatesRequired`** (Interface): Defines a core contract for this module.
 - **`Template`**:
   - Methods: `String`, `Handle`, `TemplateExecute`, `Exists`, `Handler`
+- **`AuditableTask`** (Interface): Defines a core contract for this module.
+- **`BackgroundTasker`** (Interface): Defines a core contract for this module.
+- **`NamedTask`** (Interface): Defines a core contract for this module.
+- **`Task`** (Interface): Defines a core contract for this module.
+- **`TaskMatcher`** (Interface): Defines a core contract for this module.
+- **`Name`** (Interface): Defines a core contract for this module.
+- **`TaskString`**:
+  - Methods: `Name`, `Action`, `Matcher`
 - **`PostResultAction`**:
 
 ### Exported Functions
 
+- `NewRegistry`
 - `HasTask`
 - `HasFormTask`
 - `HasQueryTask`
@@ -50,7 +53,6 @@ The primary files and their general responsibilities include:
 - `HasNoTask`
 - `TestTaskMatcher`
 - `TestNoTask`
-- `NewRegistry`
 
 ## Usage Examples
 

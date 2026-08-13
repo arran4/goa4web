@@ -4,11 +4,13 @@
 
 Package `comments` handles HTTP requests for the `comments` route or feature set. This directory contains HTTP handler logic, input validation, and rendering integration. These handlers orchestrate core data models and interact with the database indirectly through `CoreData` methods to produce appropriate web responses or JSON APIs.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To map user-facing URLs (like `/login` or `/forum/view`) to the Go code that actually fetches the data and renders the page.
-**What this allows:** It acts as the controller layer. It allows parsing form data, checking user permissions, querying the database via `CoreData`, and executing HTML templates.
-**How to use it:** Implement a function matching the `http.HandlerFunc` signature. Register this function with the Gorilla Mux router in `internal/router/router.go`. Extract path variables, invoke `cd.HasGrant` for security, and end by calling `handlers.RenderTemplate`.
+To map user-facing URLs (like `/login` or `/forum/view`) to the Go code that actually fetches the data and renders the page.
+
+## What It Allows
+
+It acts as the controller layer. It allows parsing form data, checking user permissions, querying the database via `CoreData`, and executing HTML templates, bridging the gap between HTTP and internal logic.
 
 ## Structure and Components
 
@@ -16,7 +18,25 @@ Specific endpoint logic is typically separated into individual files (e.g., `vie
 
 ## Usage Examples
 
-Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.
+Implement a function matching the `http.HandlerFunc` signature. Register this function with the Gorilla Mux router in `internal/router/router.go`. Extract path variables, invoke `cd.HasGrant` for security, and end by calling `handlers.RenderTemplate`.
+
+```go
+func MyNewHandler(w http.ResponseWriter, r *http.Request) {
+    cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+    // check permissions
+    if !cd.HasGrant("view_feature") {
+         handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+         return
+    }
+
+    // Fetch data
+    data, err := cd.Queries().GetMyData(r.Context())
+
+    // Render response
+    handlers.RenderTemplate(w, r, tasks.MyTemplate, data)
+}
+```
 
 ## Limitations and Constraints
 

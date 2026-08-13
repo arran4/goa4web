@@ -4,11 +4,13 @@
 
 Package `core` contains foundational business logic and shared utilities for `core` that are used application-wide.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To house logic, constants, and utilities that are required universally across handlers, workers, and internal services.
-**What this allows:** It prevents code duplication. For example, `CoreData` is defined here and passed everywhere to provide unified access to the database and configuration.
-**How to use it:** Import the `core/*` package and invoke its exported utilities. Avoid adding dependencies from `core` to higher-level packages like `handlers` to prevent import cycles.
+To house logic, constants, and utilities that are required universally across handlers, workers, and internal services.
+
+## What It Allows
+
+It prevents code duplication. For example, `CoreData` is defined here and passed everywhere to provide unified access to the database and configuration state.
 
 ## Structure and Components
 
@@ -20,13 +22,13 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`ContextValues`**:
-- **`FileSystem`** (Interface): Defines a core contract for this module.
-- **`DirFS`** (Interface): Defines a core contract for this module.
 - **`OSFS`**:
   - Methods: `ReadFile`, `WriteFile`
 - **`OSDirFS`**:
   - Methods: `MkdirAll`, `Stat`, `Remove`
+- **`ContextValues`**:
+- **`FileSystem`** (Interface): Defines a core contract for this module.
+- **`DirFS`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 

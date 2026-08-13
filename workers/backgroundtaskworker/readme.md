@@ -4,11 +4,13 @@
 
 Package `backgroundtaskworker` implements a specific background worker (`backgroundtaskworker`). Workers are detached, asynchronous processors that respond to eventbus notifications, manage scheduled tasks, or process queues (like email or external link scanning). They handle heavy, long-running, or non-blocking tasks that should not delay the HTTP request-response cycle.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To keep the web application fast. Operations like sending emails, recounting forum posts, or auditing logs take time. Doing them during an HTTP request blocks the user.
-**What this allows:** It allows the system to fire-and-forget tasks. The web handler returns instantly, and the worker processes the heavy lifting in the background.
-**How to use it:** Workers subscribe to topics on the `eventbus`. To trigger a worker, a handler publishes an event to the bus. The worker receives the payload, executes its logic, and optionally publishes a new event (e.g. via Websockets) when complete.
+To keep the web application fast. Operations like sending emails, recounting forum posts, or auditing logs take time. Doing them during an HTTP request blocks the user from seeing their page load.
+
+## What It Allows
+
+It allows the system to fire-and-forget tasks. The web handler returns instantly, and the worker processes the heavy lifting in the background reliably.
 
 ## Structure and Components
 
@@ -22,12 +24,12 @@ The primary files and their general responsibilities include:
 
 ## Usage Examples
 
-Workers are initialized in `cmd/goa4web/main.go` and run as background goroutines. To dispatch work to them, you publish strongly typed events to the central `eventbus`.
+Workers subscribe to topics on the `eventbus`. To trigger a worker, a handler publishes an event to the bus. The worker receives the payload, executes its logic, and optionally publishes a new event (e.g. via Websockets) when complete.
 
 ```go
 import "goa4web/internal/eventbus"
 
-// Trigger a background task
+// Trigger a background task from a handler
 eventbus.Publish(ctx, "my_queue_topic", myDataStruct)
 ```
 

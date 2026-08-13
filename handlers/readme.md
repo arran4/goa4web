@@ -4,11 +4,13 @@
 
 The `handlers` package and its subdirectories encompass the web presentation layer for Goa4Web. This is where HTTP requests are received, authorized, routed to specific logical sub-handlers, and responded to. It is the primary entry point for user interaction via the web interface. Things that should become handlers: new API routes, page views, and form submission endpoints.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To map user-facing URLs (like `/login` or `/forum/view`) to the Go code that actually fetches the data and renders the page.
-**What this allows:** It acts as the controller layer. It allows parsing form data, checking user permissions, querying the database via `CoreData`, and executing HTML templates.
-**How to use it:** Implement a function matching the `http.HandlerFunc` signature. Register this function with the Gorilla Mux router in `internal/router/router.go`. Extract path variables, invoke `cd.HasGrant` for security, and end by calling `handlers.RenderTemplate`.
+To map user-facing URLs (like `/login` or `/forum/view`) to the Go code that actually fetches the data and renders the page.
+
+## What It Allows
+
+It acts as the controller layer. It allows parsing form data, checking user permissions, querying the database via `CoreData`, and executing HTML templates, bridging the gap between HTTP and internal logic.
 
 ## Structure and Components
 
@@ -16,7 +18,25 @@ Specific endpoint logic is typically separated into individual files (e.g., `vie
 
 ## Usage Examples
 
-Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.
+Implement a function matching the `http.HandlerFunc` signature. Register this function with the Gorilla Mux router in `internal/router/router.go`. Extract path variables, invoke `cd.HasGrant` for security, and end by calling `handlers.RenderTemplate`.
+
+```go
+func MyNewHandler(w http.ResponseWriter, r *http.Request) {
+    cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+
+    // check permissions
+    if !cd.HasGrant("view_feature") {
+         handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+         return
+    }
+
+    // Fetch data
+    data, err := cd.Queries().GetMyData(r.Context())
+
+    // Render response
+    handlers.RenderTemplate(w, r, tasks.MyTemplate, data)
+}
+```
 
 ## Limitations and Constraints
 

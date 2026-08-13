@@ -4,43 +4,45 @@
 
 Package `a4code` is the root package for the custom A4Code markup engine. It defines the core parser, tokenization, and entry points for evaluating A4Code strings.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** Goa4Web uses a custom, lightweight markup language (A4Code) rather than allowing raw HTML to ensure strict security and prevent XSS, while offering a simpler syntax than full Markdown for core forum features.
-**What this allows:** It allows users to safely format their posts (bold, italic, images, links) without exposing the platform to malicious payloads.
-**How to use it:** Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
+Goa4Web uses a custom, lightweight markup language (A4Code) rather than allowing raw HTML to ensure strict security and prevent XSS, while offering a simpler syntax than full Markdown for core forum features.
+
+## What It Allows
+
+It allows users to safely format their posts (bold, italic, images, links) without exposing the platform to malicious payloads. It acts as the gatekeeper for user content.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `common.go`
-- `parser_test.go`
-- `snip.go`
-- `snip_test.go`
-- `substring_test.go`
-- `a4code.go`
-- `html.go`
 - `output.go`
+- `parser_test.go`
+- `sanitize.go`
+- `snip.go`
 - `parser.go`
 - `quote.go`
 - `quote_test.go`
-- `sanitize.go`
+- `snip_test.go`
 - `substring.go`
+- `substring_test.go`
+- `a4code.go`
+- `common.go`
+- `html.go`
 
 ### Exported Types and Interfaces
 
-- **`RestrictedQuoteDepth`**:
 - **`TruncatedQuoteDepth`**:
 - **`ScannerInterface`** (Interface): Defines a core contract for this module.
 - **`StreamOption`**:
 - **`QuoteOption`**:
+- **`RestrictedQuoteDepth`**:
 
 ### Exported Functions
 
-- `ConsumeCodeBlock`
-- `GetNextArg`
-- `GetNext`
+- `ToCode`
+- `ToCleanText`
+- `ToText`
 - `TestParseToHTML`
 - `TestParseImage`
 - `TestRoundTrip`
@@ -67,19 +69,11 @@ The primary files and their general responsibilities include:
 - `TestToText_Code`
 - `TestBlockInlineInteractions`
 - `TestTxtarBlockInline`
+- `SanitizeURL`
 - `Snip`
 - `SnipText`
 - `SnipWords`
 - `SnipTextWords`
-- `TestSnip`
-- `TestSnipText`
-- `TestSubstringIncludesSelectedImage`
-- `TestSubstringIncludesImageBetweenText`
-- `ToA4Code`
-- `ToHTML`
-- `ToCode`
-- `ToCleanText`
-- `ToText`
 - `WithDepth`
 - `WithAllNodes`
 - `Stream`
@@ -107,12 +101,20 @@ The primary files and their general responsibilities include:
 - `TestQuoteDepthOptions`
 - `TestQuoteTxtar`
 - `TestIsPureQuote`
-- `SanitizeURL`
+- `TestSnip`
+- `TestSnipText`
 - `Substring`
+- `TestSubstringIncludesSelectedImage`
+- `TestSubstringIncludesImageBetweenText`
+- `ToA4Code`
+- `ConsumeCodeBlock`
+- `GetNextArg`
+- `GetNext`
+- `ToHTML`
 
 ## Usage Examples
 
-The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
+Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
 
 ```go
 import "goa4web/a4code"

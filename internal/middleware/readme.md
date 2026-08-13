@@ -4,39 +4,59 @@
 
 Package `middleware` provides internal, non-exported utilities and service integrations specific to `middleware`.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
-**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
-**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+To encapsulate the logic necessary for this specific operational domain, ensuring modularity within the codebase.
+
+## What It Allows
+
+It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
+- `request_logger_test.go`
+- `router_utils.go`
+- `security_ip_test.go`
+- `taskbus_test.go`
 - `core_utils_test.go`
 - `middleware.go`
 - `middleware_test.go`
-- `router_utils.go`
 - `security.go`
-- `security_ip_test.go`
-- `taskbus.go`
-- `taskbus_test.go`
-- `request_logger_test.go`
 - `security_test.go`
+- `taskbus.go`
 
 ### Exported Types and Interfaces
 
 - **`Configuration`**:
-- **`RouterWrapper`** (Interface): Defines a core contract for this module.
-- **`RouterWrapperFunc`**:
-  - Methods: `Wrap`
 - **`TaskEventMiddleware`**:
   - Methods: `Middleware`, `Events`, `Flush`, `SetBus`
 - **`TaskEventMiddlewareOption`**:
+- **`RouterWrapper`** (Interface): Defines a core contract for this module.
+- **`RouterWrapperFunc`**:
+  - Methods: `Wrap`
 
 ### Exported Functions
 
+- `TestRequestLoggerMiddleware`
+- `NewMiddlewareChain`
+- `TestRequestIPSpoofing_Untrusted`
+- `TestRequestIPSpoofing_Trusted`
+- `TestRequestIPSpoofing_TrustedChain`
+- `TestRequestIPSpoofing_UntrustedInChain`
+- `TestRequestIPSpoofing_GarbageHeader`
+- `TestRequestIPSpoofing_IPv6_CIDR`
+- `TestTaskEventMiddleware`
+- `TestStatusRecorderWriteHeaderOnce`
+- `TestTaskEventQueue`
+- `TestTaskEventMiddleware_PublishesWhenTaskComesFromContext`
+- `TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue`
+- `TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask`
+- `TestTaskEventMiddleware_DoesNotLogForGetWithoutTask`
+- `TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured`
+- `TestTaskEventMiddleware_EventProvided`
+- `TestTaskEventMiddleware_NoCoreDataPanic`
 - `NewConfiguration`
 - `X2c`
 - `TestConfigurationSetGet`
@@ -48,33 +68,15 @@ The primary files and their general responsibilities include:
 - `TestRedirectToLogin`
 - `TestRedirectToLoginIncludesBackAndQuery`
 - `TestRedirectToLoginPreservesPostData`
-- `NewMiddlewareChain`
 - `SecurityHeadersMiddleware`
-- `TestRequestIPSpoofing_Untrusted`
-- `TestRequestIPSpoofing_Trusted`
-- `TestRequestIPSpoofing_TrustedChain`
-- `TestRequestIPSpoofing_UntrustedInChain`
-- `TestRequestIPSpoofing_GarbageHeader`
-- `TestRequestIPSpoofing_IPv6_CIDR`
-- `WithLogger`
-- `WithDLQ`
-- `NewTaskEventMiddleware`
-- `TaskEventMiddlewareWithBus`
-- `TestTaskEventMiddleware`
-- `TestStatusRecorderWriteHeaderOnce`
-- `TestTaskEventQueue`
-- `TestTaskEventMiddleware_PublishesWhenTaskComesFromContext`
-- `TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue`
-- `TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask`
-- `TestTaskEventMiddleware_DoesNotLogForGetWithoutTask`
-- `TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured`
-- `TestTaskEventMiddleware_EventProvided`
-- `TestTaskEventMiddleware_NoCoreDataPanic`
-- `TestRequestLoggerMiddleware`
 - `TestSecurityHeadersMiddlewareHTTP`
 - `TestSecurityHeadersMiddlewareHTTPS`
 - `TestSecurityHeadersMiddlewareForwardedProto`
 - `TestSecurityHeadersMiddleware`
+- `WithLogger`
+- `WithDLQ`
+- `NewTaskEventMiddleware`
+- `TaskEventMiddlewareWithBus`
 
 ## Usage Examples
 

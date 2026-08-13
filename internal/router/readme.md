@@ -4,20 +4,22 @@
 
 Package `router` provides internal, non-exported utilities and service integrations specific to `router`.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
-**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
-**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+To encapsulate the logic necessary for this specific operational domain, ensuring modularity within the codebase.
+
+## What It Allows
+
+It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `router.go`
 - `registry.go`
 - `registry_test.go`
 - `roles_test.go`
+- `router.go`
 
 ### Exported Types and Interfaces
 
@@ -27,15 +29,15 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `RegisterRoutes`
-- `RoleCheckerMiddleware`
-- `AdminCheckerMiddleware`
 - `NewRegistry`
 - `TestInitModulesOnce`
 - `TestInitModulesDependencyOrder`
 - `TestRegistryNames`
 - `TestRoleCheckerMiddlewareAllowed`
 - `TestRoleCheckerMiddlewareDenied`
+- `RegisterRoutes`
+- `RoleCheckerMiddleware`
+- `AdminCheckerMiddleware`
 
 ## Usage Examples
 

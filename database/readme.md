@@ -4,11 +4,13 @@
 
 Package `database` manages the application's core data storage strategies and query bindings for `database`. This involves sqlc-generated structs and interfaces.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To centralize the schema definitions and test data. This is the source of truth for the database structure.
-**What this allows:** It allows easy deployment of new environments and reliable unit testing against a known, consistent schema.
-**How to use it:** When adding a new table, add the migration to `migrations/` and manually reflect the final state in `database/schema.mysql.sql`.
+To centralize the schema definitions and test data. This directory acts as the single source of truth for the physical database structure.
+
+## What It Allows
+
+It allows easy deployment of new environments and reliable unit testing against a known, consistent schema.
 
 ## Structure and Components
 

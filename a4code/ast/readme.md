@@ -4,71 +4,32 @@
 
 Package `ast` defines the Abstract Syntax Tree (AST) nodes for the A4Code markup language. It provides the core data structures used to represent parsed A4Code elements in memory before they are formatted or rendered.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** When the parser reads raw text, it needs an intermediate representation to apply rules, strip invalid tags, or transform content before turning it into HTML or Text. The AST provides this structured, type-safe tree.
-**What this allows:** It allows developers to programmatically inspect, modify, and traverse user-submitted content. For instance, you can count the number of images, strip out specific formatting, or enforce nesting limits.
-**How to use it:** You interact with the AST primarily by writing functions that accept `ast.Node` and use a type-switch to determine the specific element type (e.g., `*ast.Text`, `*ast.Bold`).
+When the parser reads raw text, it needs an intermediate representation to apply rules, strip invalid tags, or transform content before turning it into HTML or Text. The AST provides this structured, type-safe tree, serving as the central nervous system of the markup engine.
+
+## What It Allows
+
+It allows developers to programmatically inspect, modify, and traverse user-submitted content prior to final output. For instance, you can count the number of images, strip out specific formatting, or enforce nesting limits by simply walking the tree.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `walk.go`
 - `generator.go`
 - `nodes.go`
 - `nodes_test.go`
+- `walk.go`
 
 ### Exported Types and Interfaces
 
-- **`Generator`** (Interface): Defines a core contract for this module.
-- **`Container`** (Interface): Defines a core contract for this module.
-- **`Bold`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
 - **`Underline`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Spoiler`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Block`** (Interface): Defines a core contract for this module.
-- **`Inline`** (Interface): Defines a core contract for this module.
-- **`Node`** (Interface): Defines a core contract for this module.
-- **`Sup`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
 - **`Sub`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Link`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Blockable`, `AddChild`, `GetChildren`, `IsImmediateClose`, `Transform`, `String`
-- **`CodeIn`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Inlinable`, `Transform`, `String`
-- **`Quote`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Inlinable`, `AddChild`, `GetChildren`, `Transform`, `String`
 - **`Indent`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`HR`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Transform`, `String`
-- **`Root`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Transform`, `AddChild`, `GetChildren`, `String`
-- **`Italic`**:
-  - Implements: Node (partially/fully)
-  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
-- **`Image`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Transform`, `String`
-- **`Code`**:
-  - Implements: Node (partially/fully)
-  - Methods: `Inlinable`, `Transform`, `String`
-- **`QuoteOf`**:
   - Implements: Node (partially/fully)
   - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
 - **`Custom`**:
@@ -80,21 +41,62 @@ The primary files and their general responsibilities include:
 - **`Text`**:
   - Implements: Node (partially/fully)
   - Methods: `Transform`, `String`
+- **`Italic`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Code`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `Transform`, `String`
+- **`CodeIn`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `Transform`, `String`
+- **`Quote`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Inlinable`, `AddChild`, `GetChildren`, `Transform`, `String`
+- **`HR`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `String`
+- **`Generator`** (Interface): Defines a core contract for this module.
+- **`Node`** (Interface): Defines a core contract for this module.
+- **`Root`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `AddChild`, `GetChildren`, `String`
+- **`Bold`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Link`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Blockable`, `AddChild`, `GetChildren`, `IsImmediateClose`, `Transform`, `String`
+- **`QuoteOf`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Spoiler`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Block`** (Interface): Defines a core contract for this module.
+- **`Sup`**:
+  - Implements: Node (partially/fully)
+  - Methods: `AddChild`, `GetChildren`, `Transform`, `String`
+- **`Image`**:
+  - Implements: Node (partially/fully)
+  - Methods: `Transform`, `String`
 - **`BlockWithInlinable`** (Interface): Defines a core contract for this module.
+- **`Inline`** (Interface): Defines a core contract for this module.
+- **`Container`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 
-- `Walk`
 - `Generate`
 - `IsBlockNode`
 - `TestIsBlockNode`
 - `TestNodeGettersSettersAndPos`
 - `TestNodeStringMethods`
 - `TestNodeTransform`
+- `Walk`
 
 ## Usage Examples
 
-This package is foundational to the a4code compiler. It defines all the nodes. Below is an example of the typical structure and how to walk it:
+You interact with the AST primarily by writing functions that accept `ast.Node` and use a type-switch to determine the specific element type (e.g., `*ast.Text`, `*ast.Bold`). Below is an example of the typical structure and how to walk it:
 
 ```go
 import "goa4web/a4code/ast"

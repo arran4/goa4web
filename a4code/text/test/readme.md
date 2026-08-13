@@ -4,11 +4,13 @@
 
 Package `text` provides a plain-text renderer for the A4Code Abstract Syntax Tree (AST), useful for stripping formatting and extracting pure content.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** Sometimes we need to display a snippet of user content without any formatting (e.g., in an email subject, an OpenGraph description, or a search index summary).
-**What this allows:** It allows stripping all A4Code tags and returning pure text.
-**How to use it:** Pass the AST to the text renderer to retrieve a plain string.
+Sometimes we need to display a snippet of user content without any formatting (e.g., in an email subject, an OpenGraph description, or a search index summary). HTML rendering would break these contexts.
+
+## What It Allows
+
+It allows extracting pure text content by traversing the AST and stripping all visual tags, producing clean string outputs.
 
 ## Structure and Components
 
@@ -17,7 +19,7 @@ The primary files and their general responsibilities include:
 
 ## Usage Examples
 
-The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
+Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
 
 ```go
 import "goa4web/a4code"

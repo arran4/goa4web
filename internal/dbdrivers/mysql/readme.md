@@ -4,11 +4,13 @@
 
 Package `mysql` encapsulates the database driver initialization and specific dialect requirements for `mysql`.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To abstract the specific SQL connection logic away from the rest of the application. It handles connection pooling, dialect specifics, and initialization.
-**What this allows:** It allows the application to easily switch databases (e.g., from MySQL to SQLite for local testing) without rewriting query logic.
-**How to use it:** The driver is invoked once at server startup (`cmd/goa4web/main.go`). It returns a standard `*sql.DB` connection pool.
+To abstract the specific SQL connection logic away from the rest of the application. It handles connection pooling, dialect specifics, and initialization.
+
+## What It Allows
+
+It allows the application to easily switch databases (e.g., from MySQL to SQLite for local testing) without rewriting query logic or changing core implementation files.
 
 ## Structure and Components
 

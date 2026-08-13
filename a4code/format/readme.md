@@ -4,11 +4,13 @@
 
 Package `format` provides utilities for taking an A4Code Abstract Syntax Tree (AST) and formatting it back into a valid, normalized A4Code string. This is useful for pretty-printing or normalizing user input.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** User input is often messy. Tags might be improperly cased or spaced. The formatter exists to take a parsed AST and output clean, standard A4Code text.
-**What this allows:** It allows the application to 'auto-correct' user input, storing a clean version in the database, or providing a 'pretty-print' preview back to the user.
-**How to use it:** Pass a parsed `ast.Node` root into the formatter's main function to retrieve the normalized string.
+User input is often messy. Tags might be improperly cased or spaced. The formatter exists to take a parsed AST and output clean, standard A4Code text, ensuring database consistency.
+
+## What It Allows
+
+It allows the application to 'auto-correct' user input, storing a clean version in the database, or providing a 'pretty-print' preview back to the user.
 
 ## Structure and Components
 
@@ -27,7 +29,7 @@ The primary files and their general responsibilities include:
 
 ## Usage Examples
 
-You would use this to normalize A4Code strings. Pass a parsed AST into the formatter to get a standard representation back. The formatter uses a visitor pattern internally.
+Pass a parsed `ast.Node` root into the formatter's main function to retrieve the normalized string. The formatter uses a visitor pattern internally.
 
 ```go
 import "goa4web/a4code"

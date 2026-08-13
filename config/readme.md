@@ -4,11 +4,13 @@
 
 Package `config` defines the data structures and parsing logic for the Goa4Web application configuration. It handles reading from environment variables, command-line flags, and configuration files.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To manage environment variables, CLI flags, and configuration files in a single, strongly-typed location.
-**What this allows:** It allows the application to be deployed flexibly across local dev, staging, and production environments without changing code.
-**How to use it:** Add fields to `RuntimeConfig`. The configuration parsing logic will automatically populate them from the environment or config files on startup.
+To manage environment variables, CLI flags, and configuration files in a single, strongly-typed location.
+
+## What It Allows
+
+It allows the application to be deployed flexibly across local dev, staging, and production environments without changing code, ensuring environment parity.
 
 ## Structure and Components
 

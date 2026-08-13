@@ -4,31 +4,33 @@
 
 Package `templates` contains foundational business logic and shared utilities for `templates` that are used application-wide.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To house logic, constants, and utilities that are required universally across handlers, workers, and internal services.
-**What this allows:** It prevents code duplication. For example, `CoreData` is defined here and passed everywhere to provide unified access to the database and configuration.
-**How to use it:** Import the `core/*` package and invoke its exported utilities. Avoid adding dependencies from `core` to higher-level packages like `handlers` to prevent import cycles.
+To house logic, constants, and utilities that are required universally across handlers, workers, and internal services.
+
+## What It Allows
+
+It prevents code duplication. For example, `CoreData` is defined here and passed everywhere to provide unified access to the database and configuration state.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `tableTopics_tags_test.go`
-- `thread_page_test.go`
+- `passkeys_asset_test.go`
+- `news_post_page_test.go`
+- `templates.go`
 - `verification.go`
 - `article_page_test.go`
-- `comment_test.go`
-- `templates.go`
 - `extract.go`
 - `label.go`
 - `no_empty_templates_test.go`
-- `notification_open_template_test.go`
-- `asset_hash_test.go`
-- `news_post_page_test.go`
-- `passkeys_asset_test.go`
 - `threadPage_labels_test.go`
+- `asset_hash_test.go`
+- `tableTopics_tags_test.go`
 - `thread_new_page_test.go`
+- `thread_page_test.go`
+- `comment_test.go`
+- `notification_open_template_test.go`
 
 ### Exported Types and Interfaces
 
@@ -43,16 +45,10 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestTableTopicsShowsLabels`
-- `TestThreadPageLabelFormIncludesCSRF`
-- `TestThreadPageDoesNotContainInlineMarkRead`
-- `LoadAllTemplatesMap`
-- `IsTemplateAvailable`
-- `TestArticlePageLabelFormIncludesCSRF`
-- `TestArticlePageReplyFormIncludesCSRF`
-- `TestArticlePageDoesNotContainInlineMarkRead`
-- `TestCommentTimestampSelfLink`
-- `TestCommentUsernameBold`
+- `TestPasskeysJavaScriptIsExternal`
+- `TestNewsPostPageLabelFormIncludesCSRF`
+- `TestNewsPostPageReplyFormIncludesCSRF`
+- `TestNewsPostPageDoesNotContainInlineMarkRead`
 - `SetDir`
 - `WithDir`
 - `WithSilence`
@@ -70,18 +66,24 @@ The primary files and their general responsibilities include:
 - `EmailTemplateExists`
 - `NotificationTemplateExists`
 - `AnyTemplateExists`
+- `LoadAllTemplatesMap`
+- `IsTemplateAvailable`
+- `TestArticlePageLabelFormIncludesCSRF`
+- `TestArticlePageReplyFormIncludesCSRF`
+- `TestArticlePageDoesNotContainInlineMarkRead`
 - `WriteToDir`
 - `WriteTemplateSetsToDir`
 - `ArchiveTemplates`
 - `TestNoEmptyTemplates`
-- `TestNotificationOpenTemplateExists`
-- `TestGetAssetHash`
-- `TestNewsPostPageLabelFormIncludesCSRF`
-- `TestNewsPostPageReplyFormIncludesCSRF`
-- `TestNewsPostPageDoesNotContainInlineMarkRead`
-- `TestPasskeysJavaScriptIsExternal`
 - `TestThreadPageShowsDefaultPrivateLabels`
+- `TestGetAssetHash`
+- `TestTableTopicsShowsLabels`
 - `TestThreadNewPageJS`
+- `TestThreadPageLabelFormIncludesCSRF`
+- `TestThreadPageDoesNotContainInlineMarkRead`
+- `TestCommentTimestampSelfLink`
+- `TestCommentUsernameBold`
+- `TestNotificationOpenTemplateExists`
 
 ## Usage Examples
 

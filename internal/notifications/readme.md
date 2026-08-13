@@ -4,76 +4,71 @@
 
 Package `notifications` provides internal, non-exported utilities and service integrations specific to `notifications`.
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
-**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
-**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+To encapsulate the logic necessary for this specific operational domain, ensuring modularity within the codebase.
+
+## What It Allows
+
+It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
+- `bus_worker_test.go`
+- `digest_consumer.go`
+- `linker_queue_test.go`
+- `notifier.go`
+- `subscriptionsinterfaces.go`
+- `email_test.go`
 - `templates.go`
 - `types.go`
-- `digest_worker.go`
-- `email_test.go`
-- `self_notify_task_test.go`
-- `bus_worker.go`
-- `bus_worker_test.go`
 - `digest_worker_test.go`
-- `templates_test.go`
-- `update_email.go`
-- `digest_consumer.go`
-- `notifications_test.go`
-- `notifier.go`
-- `dlq.go`
 - `email.go`
-- `linker_queue_test.go`
-- `subscriptionsinterfaces.go`
+- `notifications_test.go`
+- `self_notify_task_test.go`
 - `template_render_test.go`
+- `update_email.go`
+- `bus_worker.go`
+- `digest_worker.go`
+- `dlq.go`
+- `templates_test.go`
 
 ### Exported Types and Interfaces
 
-- **`NewTemplateEngine`** (Interface): Defines a core contract for this module.
-- **`DigestType`**:
-- **`Notifier`**:
-  - Methods: `ScheduleDigest`, `ProcessDigestForTime`, `SendDigestToUser`, `BusWorker`, `RegisterSync`, `ProcessEvent`, `NotifyAdmins`, `PurgeReadNotifications`, `CreateEmailTemplateAndQueue`, `RenderEmailFromTemplates`
-- **`NotificationTemplateName`**:
-  - Methods: `String`, `NotificationTemplate`, `RequiredTemplates`
-- **`GrantsRequiredProvider`** (Interface): Defines a core contract for this module.
-- **`SubscriptionTarget`** (Interface): Defines a core contract for this module.
-- **`GrantRequirement`**:
-- **`EmailTemplates`**:
-- **`EmailTemplateName`**:
-  - Methods: `String`, `EmailTemplates`, `NotificationTemplate`, `RequiredTemplates`
-- **`AdminEmailTemplateProvider`** (Interface): Defines a core contract for this module.
-- **`SelfNotificationTemplateProvider`** (Interface): Defines a core contract for this module.
-- **`SubscribersNotificationTemplateProvider`** (Interface): Defines a core contract for this module.
-- **`Target`**:
-  - Methods: `SubscriptionTarget`
-- **`EmailData`**:
-- **`EmailOption`**:
-- **`SelfEmailBroadcaster`** (Interface): Defines a core contract for this module.
-- **`AutoSubscribeProvider`** (Interface): Defines a core contract for this module.
-- **`TargetUsersNotificationProvider`** (Interface): Defines a core contract for this module.
 - **`TemplateEngine`** (Interface): Defines a core contract for this module.
 - **`TestTask`**:
   - Methods: `Action`
+- **`EmailTemplates`**:
+- **`NotificationTemplateName`**:
+  - Methods: `String`, `NotificationTemplate`, `RequiredTemplates`
+- **`AdminEmailTemplateProvider`** (Interface): Defines a core contract for this module.
+- **`SelfNotificationTemplateProvider`** (Interface): Defines a core contract for this module.
+- **`NewTemplateEngine`** (Interface): Defines a core contract for this module.
+- **`EmailData`**:
+- **`TargetUsersNotificationProvider`** (Interface): Defines a core contract for this module.
+- **`GrantsRequiredProvider`** (Interface): Defines a core contract for this module.
+- **`SubscriptionTarget`** (Interface): Defines a core contract for this module.
+- **`DigestType`**:
+- **`SubscribersNotificationTemplateProvider`** (Interface): Defines a core contract for this module.
 - **`DigestConsumer`**:
   - Methods: `Run`
-- **`Option`**:
+- **`SelfEmailBroadcaster`** (Interface): Defines a core contract for this module.
 - **`DirectEmailNotificationTemplateProvider`** (Interface): Defines a core contract for this module.
+- **`Target`**:
+  - Methods: `SubscriptionTarget`
+- **`GrantRequirement`**:
+- **`EmailOption`**:
+- **`Notifier`**:
+  - Methods: `NotifyAdmins`, `PurgeReadNotifications`, `CreateEmailTemplateAndQueue`, `RenderEmailFromTemplates`, `BusWorker`, `RegisterSync`, `ProcessEvent`, `ScheduleDigest`, `ProcessDigestForTime`, `SendDigestToUser`
+- **`Option`**:
+- **`EmailTemplateName`**:
+  - Methods: `String`, `EmailTemplates`, `NotificationTemplate`, `RequiredTemplates`
+- **`AutoSubscribeProvider`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 
-- `HTMLTemplatesNew`
-- `TextTemplatesNew`
-- `NotificationTemplateFilenameGenerator`
-- `EmailTextTemplateFilenameGenerator`
-- `EmailHTMLTemplateFilenameGenerator`
-- `EmailSubjectTemplateFilenameGenerator`
-- `TestRenderEmailFromTemplates_AdminSubject`
 - `TestBuildPatterns`
 - `TestBuildPatternsAdditional`
 - `TestExpandPatternSeparators`
@@ -89,14 +84,8 @@ The primary files and their general responsibilities include:
 - `TestProcessEventAutoSubscribe`
 - `TestProcessEventAutoSubscribeMissingPreference`
 - `TestProcessEventSelfNotifyWithUserIDTemplate`
-- `TestNotificationDigestWorker_ScheduleDigest`
-- `TestNotificationDigestWorker_SendDigest`
-- `TestRenderNotificationUsesSequentialOverrides`
-- `GetUpdateEmailText`
 - `NewDigestConsumer`
-- `TestNotificationsQueries`
-- `TestNotifierNotifyAdmins`
-- `TestNotifierInitialization`
+- `TestLinkerQueueNotifierMessages`
 - `WithSilence`
 - `WithQueries`
 - `WithCustomQueries`
@@ -104,11 +93,24 @@ The primary files and their general responsibilities include:
 - `WithBus`
 - `WithConfig`
 - `New`
+- `NewEmailTemplates`
+- `TestRenderEmailFromTemplates_AdminSubject`
+- `HTMLTemplatesNew`
+- `TextTemplatesNew`
+- `NotificationTemplateFilenameGenerator`
+- `EmailTextTemplateFilenameGenerator`
+- `EmailHTMLTemplateFilenameGenerator`
+- `EmailSubjectTemplateFilenameGenerator`
+- `TestNotificationDigestWorker_ScheduleDigest`
+- `TestNotificationDigestWorker_SendDigest`
 - `WithAdmin`
 - `WithRecipient`
-- `TestLinkerQueueNotifierMessages`
-- `NewEmailTemplates`
+- `TestNotificationsQueries`
+- `TestNotifierNotifyAdmins`
+- `TestNotifierInitialization`
 - `TestAdminNotificationTemplate`
+- `GetUpdateEmailText`
+- `TestRenderNotificationUsesSequentialOverrides`
 
 ## Usage Examples
 

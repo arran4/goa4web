@@ -4,18 +4,20 @@
 
 Package `mock` provides concrete implementations or abstractions for the `mock` email provider/protocol. This allows Goa4Web to dynamically support multiple email sending and receiving strategies (e.g., SES, SendGrid, SMTP, or local mock for testing).
 
-## Context and Use Cases (How and Why)
+## Why It Exists
 
-**Why it exists:** To provide a unified interface for sending emails, hiding the complexity of connecting to SES, SMTP, or Sendgrid.
-**What this allows:** It allows developers to call `emailService.Send()` without caring how the email actually traverses the internet. It also allows mocking emails during tests.
-**How to use it:** Configure the desired provider in the runtime config. The application will instantiate the correct sender (e.g. `ses.NewSESSender`) which implements the standard `Sender` interface.
+To provide a unified interface for sending emails, hiding the complexity of connecting to SES, SMTP, or Sendgrid from the rest of the app.
+
+## What It Allows
+
+It allows developers to call `emailService.Send()` without caring how the email actually traverses the internet. It also enables easy mocking of emails during unit tests.
 
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `mock_test.go`
 - `mock.go`
+- `mock_test.go`
 
 ### Exported Types and Interfaces
 
@@ -25,8 +27,8 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestProvider`
 - `Register`
+- `TestProvider`
 
 ## Usage Examples
 

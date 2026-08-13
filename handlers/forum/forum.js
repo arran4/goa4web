@@ -3,22 +3,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const labelFilter = document.querySelector('.label-filter');
     if (labelFilter) {
         labelFilter.addEventListener('input', () => {
-            const filterValue = labelFilter.value.toLowerCase();
+            const filterTerms = labelFilter.value.toLowerCase().split(/\s+/).filter(t => t.length > 0);
             const items = document.querySelectorAll('.topic-item, .thread');
             items.forEach(item => {
-                const labels = item.querySelectorAll('.label');
-                let found = false;
-                labels.forEach(label => {
-                    if (label.textContent.toLowerCase().includes(filterValue)) {
-                        found = true;
-                    }
-                });
-                if (found || filterValue === '') {
+                const searchableElements = item.querySelectorAll('.label, .participant');
+
+                let allTermsFound = true;
+                if (filterTerms.length > 0) {
+                    allTermsFound = filterTerms.every(term => {
+                        let termFound = false;
+                        searchableElements.forEach(el => {
+                            if (el.textContent.toLowerCase().includes(term)) {
+                                termFound = true;
+                            }
+                        });
+                        return termFound;
+                    });
+                }
+
+                if (allTermsFound) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
                 }
             });
+        });
+
+        // Allow clicking on labels/participants to add them to the filter
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.label') || e.target.matches('.participant')) {
+                const text = e.target.textContent.trim();
+                if (text) {
+                    const currentVal = labelFilter.value.trim();
+                    if (currentVal) {
+                        // Avoid adding duplicates
+                        const terms = currentVal.split(/\s+/);
+                        if (!terms.includes(text)) {
+                            labelFilter.value = currentVal + ' ' + text;
+                        }
+                    } else {
+                        labelFilter.value = text;
+                    }
+                    // Trigger input event to re-filter
+                    labelFilter.dispatchEvent(new Event('input'));
+                }
+            }
         });
     }
 

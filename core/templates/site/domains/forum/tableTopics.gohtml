@@ -4,6 +4,7 @@
     {{ $isAdmin := .IsAdmin }}
     <section class="topics">
         <div class="topic-controls">
+            {{ if .IsPrivate }}<input type="text" class="label-filter" placeholder="Filter by label or participant...">{{ end }}
             <div class="sort-buttons">
                 <span>Sort by:</span>
                 <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
@@ -27,7 +28,13 @@
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
                 {{- $participants := default "" .ParticipantsString }}
-                {{- if $participants }}<br><small>Participants: {{ $participants }}</small>{{ end }}
+                {{- if $participants }}<br><small>Participants:
+                {{- if .Participants }}
+                    {{- range $index, $p := .Participants }}{{ if $index }}, {{ end }}<a class="participant">{{ $p }}</a>{{ end }}
+                {{- else }}
+                    {{- $participants }}
+                {{- end }}
+                </small>{{ end }}
             </div>
                 <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ if ne .Lastposter cd.UserID }}<strong>{{ .Lastposterusername.String }}</strong>{{ else }}{{ .Lastposterusername.String }}{{ end }}</div>
                 <div class="threads-replies">{{ .Threads.Int32 }}<br>{{ .Comments.Int32 }}</div>

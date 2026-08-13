@@ -14,10 +14,10 @@ This package is typically composed of core implementations, model definitions, a
 
 ## Usage
 
-To utilize the features provided by this package, import it into your Go files using:
+Workers are initialized in `cmd/goa4web/main.go` and run as background goroutines. To dispatch work to them, you publish strongly typed events to the central `eventbus`.
 
 ```go
-import "goa4web/workers"
+eventbus.Publish(ctx, "my_queue", myDataStruct)
 ```
 
 ## Limitations and Constraints

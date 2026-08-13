@@ -10,10 +10,15 @@ This package is typically composed of core implementations, model definitions, a
 
 ## Usage
 
-To utilize the features provided by this package, import it into your Go files using:
+The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
 
 ```go
-import "goa4web/a4code/html/test"
+import "goa4web/a4code"
+
+// 1. Parse raw input string into an AST
+astRoot, err := a4code.Parse("Some input text")
+
+// 2. Process or render the AST...
 ```
 
 ## Limitations and Constraints

@@ -10,11 +10,7 @@ Specific endpoint logic is typically separated into individual files (e.g., `vie
 
 ## Usage
 
-To utilize the features provided by this package, import it into your Go files using:
-
-```go
-import "goa4web/handlers/search"
-```
+Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.
 
 ## Limitations and Constraints
 

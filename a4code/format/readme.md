@@ -10,10 +10,14 @@ This package is typically composed of core implementations, model definitions, a
 
 ## Usage
 
-To utilize the features provided by this package, import it into your Go files using:
+You would use this to normalize A4Code strings. Pass a parsed AST into the formatter to get a standard representation back.
 
 ```go
+import "goa4web/a4code"
 import "goa4web/a4code/format"
+
+// parsed contains your AST root
+formattedStr := format.Format(parsed)
 ```
 
 ## Limitations and Constraints

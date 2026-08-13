@@ -82,50 +82,44 @@ func listImageCacheEntries(dir string) ([]ImageCacheEntry, int64, error) {
 		return nil, 0, fmt.Errorf("cache dir is not a directory")
 	}
 
-	entriesChan := make(chan ImageCacheEntry, 64)
-	errChan := make(chan error, 1)
+	var entries []ImageCacheEntry
+	var total int64
+	var mu sync.Mutex
+
 	sem := make(chan struct{}, 64)
 	var wg sync.WaitGroup
 
-	go func() {
-		defer close(entriesChan)
-		defer close(errChan)
-		if err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-			if err != nil || d.IsDir() {
-				return nil
+	err = filepath.WalkDir(dir, func(path string, d os.DirEntry, walkErr error) error {
+		if walkErr != nil || d.IsDir() {
+			return nil
+		}
+
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(p string, entry os.DirEntry) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			info, ierr := entry.Info()
+			if ierr != nil {
+				return
+			}
+			id := filepath.Base(p)
+			if !intimages.ValidID(id) {
+				return
 			}
 
-			wg.Add(1)
-			sem <- struct{}{}
-			go func(path string, d os.DirEntry) {
-				defer wg.Done()
-				defer func() { <-sem }()
+			mu.Lock()
+			entries = append(entries, ImageCacheEntry{ID: id, Size: info.Size()})
+			total += info.Size()
+			mu.Unlock()
+		}(path, d)
+		return nil
+	})
 
-				info, err := d.Info()
-				if err != nil {
-					return
-				}
-				id := filepath.Base(path)
-				if !intimages.ValidID(id) {
-					return
-				}
-				entriesChan <- ImageCacheEntry{ID: id, Size: info.Size()}
-			}(path, d)
-			return nil
-		}); err != nil {
-			errChan <- err
-		}
-		wg.Wait()
-	}()
+	wg.Wait()
 
-	var entries []ImageCacheEntry
-	var total int64
-	for entry := range entriesChan {
-		entries = append(entries, entry)
-		total += entry.Size
-	}
-
-	if err := <-errChan; err != nil {
+	if err != nil {
 		return nil, total, err
 	}
 

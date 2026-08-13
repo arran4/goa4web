@@ -17,7 +17,13 @@ import (
 // Template helpers are provided via the CoreData in the request context,
 // accessible in templates as Funcs["cd"] (*common.CoreData).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any) error {
-	DisableCaching(w)
+	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if cd != nil && cd.UserID == 0 {
+		// Existing public pages accessible to those without an account should cache when there is no user logged in.
+	} else {
+		DisableCaching(w)
+	}
+
 	if err := tmpl.TemplateExecute(w, r, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {

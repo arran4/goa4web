@@ -1,22 +1,33 @@
-# internal/email/sendgrid
+# a4code
 
 ## Purpose
 
-Package `sendgrid` provides concrete implementations or abstractions for the `sendgrid` email provider/protocol. This allows Goa4Web to dynamically support multiple email sending and receiving strategies (e.g., SES, SendGrid, SMTP, or local mock for testing).
+Package `a4code` is part of the custom A4Code markup parsing and rendering engine. It handles specific string processing, tokenization, or abstract syntax tree manipulation specific to `a4code`.
 
 ## Structure and Components
 
 This package encapsulates logic specific to its domain. The primary files and their general responsibilities include:
 
-- `sendgrid.go`: Contains implementations and definitions related to the specific operations of this module.
-- `sendgrid_stub.go`: Contains implementations and definitions related to the specific operations of this module.
+- `html.go`: Contains implementations and definitions related to the specific operations of this module.
+- `parser_test.go`: Contains implementations and definitions related to the specific operations of this module.
+- `quote.go`: Contains implementations and definitions related to the specific operations of this module.
+- `quote_test.go`: Contains implementations and definitions related to the specific operations of this module.
+- `snip_test.go`: Contains implementations and definitions related to the specific operations of this module.
+- `a4code.go`: Contains implementations and definitions related to the specific operations of this module.
+- `output.go`: Contains implementations and definitions related to the specific operations of this module.
+- `parser.go`: Contains implementations and definitions related to the specific operations of this module.
+- `sanitize.go`: Contains implementations and definitions related to the specific operations of this module.
+- `snip.go`: Contains implementations and definitions related to the specific operations of this module.
+- `substring.go`: Contains implementations and definitions related to the specific operations of this module.
+- `substring_test.go`: Contains implementations and definitions related to the specific operations of this module.
+- `common.go`: Contains implementations and definitions related to the specific operations of this module.
 
 ## Usage
 
 To utilize the features provided by this package, import it into your Go files using:
 
 ```go
-import "goa4web/internal/email/sendgrid"
+import "goa4web/a4code"
 ```
 
 Instantiate the necessary structs or invoke the exported functions as defined in the package API. Refer to the specific file implementations for detailed method signatures and required parameters. Generally, you will inject configuration and database dependencies (often via the `CoreData` struct) into these modules.

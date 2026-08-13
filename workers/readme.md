@@ -4,9 +4,11 @@
 
 The `workers` directory contains asynchronous background processors. A 'worker' in Goa4Web is a component that listens to the central eventbus or a queue and executes tasks outside the critical path of an HTTP request.
 
-**Why it exists:** To keep the web application fast, operations like sending emails, recounting forum posts, or auditing logs are offloaded to workers.
-**What should become a worker:** Any long-running task, external API call, or batched database update that can be processed eventually and asynchronously without user intervention.
-**Requirements:** A worker must handle context cancellation gracefully, connect to the eventbus, process its specific event type, and report errors without crashing the main application server.
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To keep the web application fast. Operations like sending emails, recounting forum posts, or auditing logs take time. Doing them during an HTTP request blocks the user.
+**What this allows:** It allows the system to fire-and-forget tasks. The web handler returns instantly, and the worker processes the heavy lifting in the background.
+**How to use it:** Workers subscribe to topics on the `eventbus`. To trigger a worker, a handler publishes an event to the bus. The worker receives the payload, executes its logic, and optionally publishes a new event (e.g. via Websockets) when complete.
 
 ## Structure and Components
 
@@ -18,7 +20,7 @@ The primary files and their general responsibilities include:
 
 - `Start`
 
-## Usage
+## Usage Examples
 
 Workers are initialized in `cmd/goa4web/main.go` and run as background goroutines. To dispatch work to them, you publish strongly typed events to the central `eventbus`.
 

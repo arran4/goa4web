@@ -4,6 +4,12 @@
 
 Package `eventbus` provides internal, non-exported utilities and service integrations specific to `eventbus`.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
+**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
+**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -14,6 +20,8 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
+- **`EmailQueueEvent`**:
+  - Methods: `Type`
 - **`DigestRunEvent`**:
   - Methods: `Type`
 - **`Bus`**:
@@ -23,8 +31,6 @@ The primary files and their general responsibilities include:
 - **`Envelope`**:
   - Methods: `Ack`
 - **`TaskEvent`**:
-  - Methods: `Type`
-- **`EmailQueueEvent`**:
   - Methods: `Type`
 
 ### Exported Functions
@@ -44,7 +50,7 @@ The primary files and their general responsibilities include:
 - `TestSyncPublish`
 - `TestConcurrentAccess`
 
-## Usage
+## Usage Examples
 
 The eventbus is the central nervous system for async work. Use it to decouple HTTP handlers from slow background tasks.
 

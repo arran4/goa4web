@@ -4,6 +4,12 @@
 
 The `internal/email` directory encapsulates all logic related to constructing, dispatching, and managing electronic mail within the system. It abstracts the underlying providers so the core application logic remains decoupled from specific services like AWS SES.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To provide a unified interface for sending emails, hiding the complexity of connecting to SES, SMTP, or Sendgrid.
+**What this allows:** It allows developers to call `emailService.Send()` without caring how the email actually traverses the internet. It also allows mocking emails during tests.
+**How to use it:** Configure the desired provider in the runtime config. The application will instantiate the correct sender (e.g. `ses.NewSESSender`) which implements the standard `Sender` interface.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -28,7 +34,7 @@ The primary files and their general responsibilities include:
 - `BuildMessage`
 - `NewRegistry`
 
-## Usage
+## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 

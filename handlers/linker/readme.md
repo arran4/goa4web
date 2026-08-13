@@ -4,71 +4,17 @@
 
 Package `linker` handles HTTP requests for the `linker` route or feature set. This directory contains HTTP handler logic, input validation, and rendering integration. These handlers orchestrate core data models and interact with the database indirectly through `CoreData` methods to produce appropriate web responses or JSON APIs.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To map user-facing URLs (like `/login` or `/forum/view`) to the Go code that actually fetches the data and renders the page.
+**What this allows:** It acts as the controller layer. It allows parsing form data, checking user permissions, querying the database via `CoreData`, and executing HTML templates.
+**How to use it:** Implement a function matching the `http.HandlerFunc` signature. Register this function with the Gorilla Mux router in `internal/router/router.go`. Extract path variables, invoke `cd.HasGrant` for security, and end by calling `handlers.RenderTemplate`.
+
 ## Structure and Components
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
-### Exported Types and Interfaces
-
-- **`EditReplyTask`**:
-  - Methods: `Action`
-- **`CategoryGrantCreateTask`**:
-  - Methods: `Action`
-- **`LinkGrantCreateTask`**:
-  - Methods: `Action`
-- **`SuggestTask`**:
-  - Methods: `Action`
-
-### Exported Functions
-
-- `TestPagesExist`
-- `RegisterAdminRoutes`
-- `FetchPageTitle`
-- `AdminCategoryPage`
-- `AdminLinkGrantsPage`
-- `AdminQueuePage`
-- `AdminQueueUpdateActionPage`
-- `CategoriesPage`
-- `LinkerCategoryPage`
-- `TestCommentsPage`
-- `TestCommentsPageEditControls`
-- `TestAdminLinkViewPage`
-- `AdminLinksPage`
-- `CommentsPage`
-- `LinkerPage`
-- `CustomLinkerIndex`
-- `TestLinkerTemplatesExist`
-- `TestLinkerApprove`
-- `AdminDashboardPage`
-- `CommentEditActionCancelPage`
-- `ShowPage`
-- `ShowReplyPage`
-- `RedirectReplyError`
-- `UserCanCreateLink`
-- `AdminCategoryGrantsPage`
-- `RssPage`
-- `AtomPage`
-- `TestLinkerQueueTemplatesExist`
-- `RegisterRoutes`
-- `Register`
-- `AdminAddPage`
-- `UserPage`
-- `NewLinkerCategoryTask`
-- `TestLinkerFeed`
-- `TestLinkerApproveAddsToSearch`
-- `SuggestPage`
-- `TestLinkerTasksTemplatesRequiredExist`
-- `EnforceLinkerCommentsAccess`
-- `EnforceLinkViewAccess`
-- `TestEnforceLinkerCommentsAccess`
-- `TestEnforceLinkViewAccess`
-- `TestUserCanCreateLink`
-- `AdminCategoriesPage`
-- `AdminCategoryEditPage`
-- `RegisterTasks`
-- `NewLinkerTask`
-
-## Usage
+## Usage Examples
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.
 

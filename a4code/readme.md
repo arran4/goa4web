@@ -4,67 +4,43 @@
 
 Package `a4code` is the root package for the custom A4Code markup engine. It defines the core parser, tokenization, and entry points for evaluating A4Code strings.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** Goa4Web uses a custom, lightweight markup language (A4Code) rather than allowing raw HTML to ensure strict security and prevent XSS, while offering a simpler syntax than full Markdown for core forum features.
+**What this allows:** It allows users to safely format their posts (bold, italic, images, links) without exposing the platform to malicious payloads.
+**How to use it:** Call `a4code.Parse()` on a raw user string. If successful, you receive an Abstract Syntax Tree (AST) that can be passed to various renderers (HTML, Text, Format).
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `sanitize.go`
-- `snip.go`
-- `substring.go`
-- `substring_test.go`
 - `common.go`
+- `parser_test.go`
+- `snip.go`
+- `snip_test.go`
+- `substring_test.go`
+- `a4code.go`
+- `html.go`
 - `output.go`
 - `parser.go`
 - `quote.go`
-- `snip_test.go`
-- `a4code.go`
-- `html.go`
-- `parser_test.go`
 - `quote_test.go`
+- `sanitize.go`
+- `substring.go`
 
 ### Exported Types and Interfaces
 
+- **`RestrictedQuoteDepth`**:
+- **`TruncatedQuoteDepth`**:
 - **`ScannerInterface`** (Interface): Defines a core contract for this module.
 - **`StreamOption`**:
 - **`QuoteOption`**:
-- **`RestrictedQuoteDepth`**:
-- **`TruncatedQuoteDepth`**:
 
 ### Exported Functions
 
-- `SanitizeURL`
-- `Snip`
-- `SnipText`
-- `SnipWords`
-- `SnipTextWords`
-- `Substring`
-- `TestSubstringIncludesSelectedImage`
-- `TestSubstringIncludesImageBetweenText`
 - `ConsumeCodeBlock`
 - `GetNextArg`
 - `GetNext`
-- `ToCode`
-- `ToCleanText`
-- `ToText`
-- `WithDepth`
-- `WithAllNodes`
-- `Stream`
-- `Parse`
-- `ParseString`
-- `ParseNodesReader`
-- `ParseNodes`
-- `WithParagraphQuote`
-- `WithTrimSpace`
-- `WithRestrictedQuoteDepth`
-- `WithTruncatedQuoteDepth`
-- `WithFullQuote`
-- `QuoteText`
-- `IsQuoteBlock`
-- `QuoteReduce`
-- `TestSnip`
-- `TestSnipText`
-- `ToA4Code`
-- `ToHTML`
 - `TestParseToHTML`
 - `TestParseImage`
 - `TestRoundTrip`
@@ -91,6 +67,34 @@ The primary files and their general responsibilities include:
 - `TestToText_Code`
 - `TestBlockInlineInteractions`
 - `TestTxtarBlockInline`
+- `Snip`
+- `SnipText`
+- `SnipWords`
+- `SnipTextWords`
+- `TestSnip`
+- `TestSnipText`
+- `TestSubstringIncludesSelectedImage`
+- `TestSubstringIncludesImageBetweenText`
+- `ToA4Code`
+- `ToHTML`
+- `ToCode`
+- `ToCleanText`
+- `ToText`
+- `WithDepth`
+- `WithAllNodes`
+- `Stream`
+- `Parse`
+- `ParseString`
+- `ParseNodesReader`
+- `ParseNodes`
+- `WithParagraphQuote`
+- `WithTrimSpace`
+- `WithRestrictedQuoteDepth`
+- `WithTruncatedQuoteDepth`
+- `WithFullQuote`
+- `QuoteText`
+- `IsQuoteBlock`
+- `QuoteReduce`
 - `TestQuote`
 - `TestQuoteFullParagraphs`
 - `TestQuoteFullEscaping`
@@ -103,8 +107,10 @@ The primary files and their general responsibilities include:
 - `TestQuoteDepthOptions`
 - `TestQuoteTxtar`
 - `TestIsPureQuote`
+- `SanitizeURL`
+- `Substring`
 
-## Usage
+## Usage Examples
 
 The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
 

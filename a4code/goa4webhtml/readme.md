@@ -4,6 +4,12 @@
 
 Package `goa4webhtml` provides specialized HTML rendering for A4Code that is specifically tailored and integrated with the Goa4Web templating and asset system.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** The standard `a4code/html` package renders generic HTML. However, Goa4Web requires specific extensions—such as resolving internal resource links, applying framework-specific CSS classes, and securely rendering user-generated forum content.
+**What this allows:** It allows the application to take raw A4Code entered by a user in a forum post or comment and safely display it on the frontend, ensuring Goa4Web's styling and security rules are applied.
+**How to use it:** Typically, you do not call this directly in handlers. Instead, it is used by the template functions or core rendering pipelines. If you need to invoke it, you parse the string into an AST, then pass it to the renderer.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -12,13 +18,13 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`LinkProvider`** (Interface): Defines a core contract for this module.
 - **`ImageMapper`**:
 - **`FullImageMapper`**:
 - **`UserColorMapper`**:
 - **`Generator`**:
   - Methods: `Link`, `Image`, `QuoteOf`
 - **`Option`**:
+- **`LinkProvider`** (Interface): Defines a core contract for this module.
 
 ### Exported Functions
 
@@ -29,20 +35,13 @@ The primary files and their general responsibilities include:
 - `WithDataPositions`
 - `NewGenerator`
 
-## Usage
-
-The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
+## Usage Examples
 
 ```go
-import "goa4web/a4code"
+import "goa4web/a4code/goa4webhtml"
 
-// 1. Parse raw input string into an AST
-astRoot, err := a4code.Parse("Some [b]input[/b] text")
-if err != nil {
-    // handle parser errors
-}
-
-// 2. The AST is now ready to be traversed or rendered.
+// Render custom HTML
+err := goa4webhtml.Render(&buf, astRoot)
 ```
 
 ## Limitations and Constraints

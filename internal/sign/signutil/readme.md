@@ -4,6 +4,12 @@
 
 Package `signutil` provides internal, non-exported utilities and service integrations specific to `signutil`.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
+**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
+**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -26,7 +32,7 @@ The primary files and their general responsibilities include:
 - `GenerateNonce`
 - `GetSignedData`
 
-## Usage
+## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 

@@ -4,6 +4,12 @@
 
 Package `text` provides a plain-text renderer for the A4Code Abstract Syntax Tree (AST), useful for stripping formatting and extracting pure content.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** Sometimes we need to display a snippet of user content without any formatting (e.g., in an email subject, an OpenGraph description, or a search index summary).
+**What this allows:** It allows stripping all A4Code tags and returning pure text.
+**How to use it:** Pass the AST to the text renderer to retrieve a plain string.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -24,7 +30,7 @@ The primary files and their general responsibilities include:
 - `NewGenerator`
 - `NewCleanGenerator`
 
-## Usage
+## Usage Examples
 
 The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
 

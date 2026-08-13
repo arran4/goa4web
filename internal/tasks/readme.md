@@ -4,6 +4,12 @@
 
 Package `tasks` provides internal, non-exported utilities and service integrations specific to `tasks`.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
+**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
+**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -18,22 +24,22 @@ The primary files and their general responsibilities include:
 
 ### Exported Types and Interfaces
 
-- **`Registry`**:
-  - Methods: `Register`, `Registered`, `Entries`
+- **`EmailTemplatesRequired`** (Interface): Defines a core contract for this module.
 - **`TaskMatcher`** (Interface): Defines a core contract for this module.
-- **`Name`** (Interface): Defines a core contract for this module.
 - **`TaskString`**:
   - Methods: `Name`, `Action`, `Matcher`
-- **`Template`**:
-  - Methods: `String`, `Handle`, `TemplateExecute`, `Exists`, `Handler`
-- **`Entry`**:
-- **`Task`** (Interface): Defines a core contract for this module.
-- **`TemplatesRequired`** (Interface): Defines a core contract for this module.
-- **`EmailTemplatesRequired`** (Interface): Defines a core contract for this module.
 - **`AuditableTask`** (Interface): Defines a core contract for this module.
 - **`BackgroundTasker`** (Interface): Defines a core contract for this module.
-- **`PostResultAction`**:
 - **`NamedTask`** (Interface): Defines a core contract for this module.
+- **`Entry`**:
+- **`Registry`**:
+  - Methods: `Register`, `Registered`, `Entries`
+- **`Task`** (Interface): Defines a core contract for this module.
+- **`TemplatesRequired`** (Interface): Defines a core contract for this module.
+- **`Name`** (Interface): Defines a core contract for this module.
+- **`Template`**:
+  - Methods: `String`, `Handle`, `TemplateExecute`, `Exists`, `Handler`
+- **`PostResultAction`**:
 
 ### Exported Functions
 
@@ -46,7 +52,7 @@ The primary files and their general responsibilities include:
 - `TestNoTask`
 - `NewRegistry`
 
-## Usage
+## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 

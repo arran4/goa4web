@@ -4,73 +4,17 @@
 
 Package `imagebbs` handles HTTP requests for the `imagebbs` route or feature set. This directory contains HTTP handler logic, input validation, and rendering integration. These handlers orchestrate core data models and interact with the database indirectly through `CoreData` methods to produce appropriate web responses or JSON APIs.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To map user-facing URLs (like `/login` or `/forum/view`) to the Go code that actually fetches the data and renders the page.
+**What this allows:** It acts as the controller layer. It allows parsing form data, checking user permissions, querying the database via `CoreData`, and executing HTML templates.
+**How to use it:** Implement a function matching the `http.HandlerFunc` signature. Register this function with the Gorilla Mux router in `internal/router/router.go`. Extract path variables, invoke `cd.HasGrant` for security, and end by calling `handlers.RenderTemplate`.
+
 ## Structure and Components
 
 Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
-### Exported Types and Interfaces
-
-- **`DeletePostTask`**:
-  - Methods: `Action`
-- **`ProcessImageTask`**:
-  - Methods: `BackgroundTask`
-- **`DeleteBoardTask`**:
-  - Methods: `Action`
-- **`ModifyPostTask`**:
-  - Methods: `Action`
-- **`ApprovePostTask`**:
-  - Methods: `Action`, `SelfEmailTemplate`, `SelfInternalNotificationTemplate`, `RequiredTemplates`, `AuditRecord`
-- **`ReplyTask`**:
-  - Methods: `IndexType`, `IndexData`, `SubscribedEmailTemplate`, `SubscribedInternalNotificationTemplate`, `RequiredTemplates`, `AutoSubscribePath`, `AutoSubscribeGrants`, `Action`
-- **`NewBoardTask`**:
-  - Methods: `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`, `Action`
-- **`UploadImageTask`**:
-  - Methods: `IndexType`, `IndexData`, `Action`, `AuditRecord`
-- **`ModifyBoardTask`**:
-  - Methods: `AdminEmailTemplate`, `AdminInternalNotificationTemplate`, `RequiredTemplates`, `Action`
-
-### Exported Functions
-
-- `AdminBoardListPage`
-- `BoardThreadPage`
-- `TestHappyPathRequireImagebbsGrantWithBoard`
-- `TestHappyPathRequireImagebbsGrantWithPost`
-- `TestApprovePostTask`
-- `PosterPage`
-- `NewImagebbsTask`
-- `TestHappyPathImageBbsReply`
-- `TestHappyPathReplyTaskAutoSubscribe`
-- `AdminNewBoardPage`
-- `TestHappyPathImagebbsTasksTemplatesRequiredExist`
-- `CheckBoardViewGrant`
-- `ImagebbsPage`
-- `CustomImageBBSIndex`
-- `TestHappyPathImageBbsTemplatesExist`
-- `RegisterAdminRoutes`
-- `AdminPage`
-- `AdminBoardViewPage`
-- `TestHappyPathBoardPage`
-- `RssPage`
-- `AtomPage`
-- `BoardRssPage`
-- `BoardAtomPage`
-- `ImagebbsBoardPage`
-- `AdminBoardPage`
-- `NewImagebbsBoardTask`
-- `TestBoardThreadPage_Forbidden`
-- `TestHappyPathImagebbsFeed`
-- `TestHappyPathPagesExist`
-- `RegisterTasks`
-- `AdminBoardsPage`
-- `AdminPostEditPage`
-- `AdminPostDashboardPage`
-- `AdminPostCommentsPage`
-- `TestCheckBoardViewGrant_Denied`
-- `TestCheckBoardViewGrant_Allowed`
-- `RegisterRoutes`
-- `Register`
-
-## Usage
+## Usage Examples
 
 Handlers are registered during server initialization. They are not typically called directly by other Go code. To add a new endpoint, implement an `http.HandlerFunc` or implement `tasks.Task` for the admin framework, and map it in the router initialization.
 

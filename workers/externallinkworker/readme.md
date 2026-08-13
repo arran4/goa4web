@@ -4,6 +4,12 @@
 
 Package `externallinkworker` implements a specific background worker (`externallinkworker`). Workers are detached, asynchronous processors that respond to eventbus notifications, manage scheduled tasks, or process queues (like email or external link scanning). They handle heavy, long-running, or non-blocking tasks that should not delay the HTTP request-response cycle.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To keep the web application fast. Operations like sending emails, recounting forum posts, or auditing logs take time. Doing them during an HTTP request blocks the user.
+**What this allows:** It allows the system to fire-and-forget tasks. The web handler returns instantly, and the worker processes the heavy lifting in the background.
+**How to use it:** Workers subscribe to topics on the `eventbus`. To trigger a worker, a handler publishes an event to the bus. The worker receives the payload, executes its logic, and optionally publishes a new event (e.g. via Websockets) when complete.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
@@ -14,7 +20,7 @@ The primary files and their general responsibilities include:
 
 - `Worker`
 
-## Usage
+## Usage Examples
 
 Workers are initialized in `cmd/goa4web/main.go` and run as background goroutines. To dispatch work to them, you publish strongly typed events to the central `eventbus`.
 

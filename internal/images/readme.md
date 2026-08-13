@@ -4,17 +4,23 @@
 
 Package `images` provides internal, non-exported utilities and service integrations specific to `images`.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** To encapsulate the logic necessary for this specific operational domain, ensuring modularity.
+**What this allows:** It allows the system to remain decoupled. Code outside this package can rely on its exported API without worrying about its internal implementation details.
+**How to use it:** Import the package and call its exported functions or instantiate its public interfaces.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
-- `validation_test.go`
-- `encode.go`
 - `resize.go`
 - `resize_test.go`
 - `thumbnails.go`
 - `thumbnails_test.go`
 - `validation.go`
+- `validation_test.go`
+- `encode.go`
 
 ### Exported Types and Interfaces
 
@@ -26,10 +32,6 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `TestCleanExtension`
-- `TestValidID`
-- `TestAllowedExtension`
-- `EncoderByExtension`
 - `ParseDimension`
 - `GenerateSafeSize`
 - `TestParseDimension`
@@ -45,8 +47,12 @@ The primary files and their general responsibilities include:
 - `AllowedExtension`
 - `CleanExtension`
 - `ValidID`
+- `TestCleanExtension`
+- `TestValidID`
+- `TestAllowedExtension`
+- `EncoderByExtension`
 
-## Usage
+## Usage Examples
 
 To utilize the features provided by this package, import it into your Go files using:
 

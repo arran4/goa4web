@@ -4,12 +4,18 @@
 
 Package `markdown` provides utilities for converting standard Markdown input into A4Code markup, or potentially rendering A4Code as Markdown.
 
+## Context and Use Cases (How and Why)
+
+**Why it exists:** Markdown is ubiquitous. Allowing users to write in Markdown and converting it to A4Code reduces friction for new users who are already familiar with standard Markdown syntax.
+**What this allows:** It allows the system to seamlessly interoperate with Markdown while internally standardizing on A4Code.
+**How to use it:** Use the conversion functions provided to map Markdown text into A4Code strings before saving to the database.
+
 ## Structure and Components
 
 The primary files and their general responsibilities include:
 
 
-## Usage
+## Usage Examples
 
 The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
 

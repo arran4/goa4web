@@ -60,3 +60,24 @@ func RenderNotFoundOrLogin(w http.ResponseWriter, r *http.Request) {
 		RenderPermissionDenied(w, r)
 	}
 }
+
+// MaximumCache sets headers to cache the response for a long time (1 year).
+func MaximumCache(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+}
+
+// WithMaximumCache wraps a handler and ensures maximum caching headers are set.
+func WithMaximumCache(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		MaximumCache(w)
+		h.ServeHTTP(w, r)
+	})
+}
+
+// WithMaximumCacheFunc wraps a HandlerFunc and ensures maximum caching headers are set.
+func WithMaximumCacheFunc(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		MaximumCache(w)
+		h(w, r)
+	}
+}

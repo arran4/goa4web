@@ -17,6 +17,7 @@ import (
 // Template helpers are provided via the CoreData in the request context,
 // accessible in templates as Funcs["cd"] (*common.CoreData).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any) error {
+	DisableCaching(w)
 	if err := tmpl.TemplateExecute(w, r, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {

@@ -6,7 +6,18 @@ Package `mysql` encapsulates the database driver initialization and specific dia
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `driver.go`
+
+### Exported Types
+
+- `Driver`
+
+### Exported Functions
+
+- `SetTimezone`
+- `Register`
 
 ## Usage
 

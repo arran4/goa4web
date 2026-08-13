@@ -6,7 +6,43 @@ Package `images` provides internal, non-exported utilities and service integrati
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `thumbnails.go`
+- `thumbnails_test.go`
+- `validation.go`
+- `validation_test.go`
+- `encode.go`
+- `resize.go`
+- `resize_test.go`
+
+### Exported Types
+
+- `ThumbnailGenerator`
+- `BildThumbnailGenerator`
+- `DrawThumbnailGenerator`
+
+### Exported Functions
+
+- `GetThumbnailGenerator`
+- `RegisterThumbnailGenerator`
+- `GenerateThumbnail`
+- `GenerateThumbnailWithinBounds`
+- `DimensionsWithinBounds`
+- `TestGenerateThumbnail`
+- `TestGenerateThumbnailWithinBoundsPreservesAspectRatio`
+- `TestDimensionsWithinBoundsEdgeCases`
+- `AllowedExtension`
+- `CleanExtension`
+- `ValidID`
+- `TestCleanExtension`
+- `TestValidID`
+- `TestAllowedExtension`
+- `EncoderByExtension`
+- `ParseDimension`
+- `GenerateSafeSize`
+- `TestParseDimension`
+- `TestGenerateSafeSize`
 
 ## Usage
 

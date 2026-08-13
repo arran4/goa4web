@@ -6,7 +6,24 @@ Package `upload` provides internal, non-exported utilities and service integrati
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `registry.go`
+- `provider.go`
+- `provider_factory.go`
+
+### Exported Types
+
+- `ProviderFactory`
+- `Provider`
+- `CacheProvider`
+
+### Exported Functions
+
+- `RegisterProvider`
+- `ProviderNames`
+- `ProviderFromConfig`
+- `CacheProviderFromConfig`
 
 ## Usage
 

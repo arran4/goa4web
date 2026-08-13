@@ -6,7 +6,31 @@ Package `testhelpers` provides internal, non-exported utilities and service inte
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `helpers.go`
+- `querier_stub.go`
+
+### Exported Types
+
+- `StubConfig`
+- `StubOption`
+
+### Exported Functions
+
+- `Must`
+- `GrantKey`
+- `FromScenario`
+- `ScenarioAdmin`
+- `WithGrant`
+- `WithGrants`
+- `WithDefaultGrantAllowed`
+- `WithGrantResult`
+- `WithGrantError`
+- `WithPermissions`
+- `WithPrivateLabels`
+- `WithSubscriptions`
+- `NewQuerierStub`
 
 ## Usage
 

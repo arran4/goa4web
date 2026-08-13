@@ -6,7 +6,18 @@ Package `faq_templates` provides internal, non-exported utilities and service in
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `embed.go`
+- `parse.go`
+- `parse_test.go`
+
+### Exported Functions
+
+- `List`
+- `Get`
+- `ParseTemplateContent`
+- `TestParseTemplateContent`
 
 ## Usage
 

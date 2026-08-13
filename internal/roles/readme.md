@@ -6,7 +6,29 @@ Package `roles` provides internal, non-exported utilities and service integratio
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `apply.go`
+- `embedded.go`
+- `load.go`
+- `parse.go`
+- `parse_test.go`
+
+### Exported Functions
+
+- `ApplyRoleGrants`
+- `ReadEmbeddedRole`
+- `ListEmbeddedRoles`
+- `ListEmbeddedRoleNames`
+- `ReadEmbeddedRoleName`
+- `FindEmbeddedRoleByName`
+- `ReadRoleSQL`
+- `ApplyRoleSQL`
+- `LoadRole`
+- `ParseRoleName`
+- `ParseRoleGrants`
+- `TestParseRoleNameFromComment`
+- `TestParseRoleGrants`
 
 ## Usage
 

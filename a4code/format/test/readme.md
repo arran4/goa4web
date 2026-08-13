@@ -6,19 +6,28 @@ Package `format` provides utilities for taking an A4Code Abstract Syntax Tree (A
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
 
 ## Usage
 
-You would use this to normalize A4Code strings. Pass a parsed AST into the formatter to get a standard representation back.
+You would use this to normalize A4Code strings. Pass a parsed AST into the formatter to get a standard representation back. The formatter uses a visitor pattern internally.
 
 ```go
 import "goa4web/a4code"
 import "goa4web/a4code/format"
 
-// parsed contains your AST root
+// Parse raw input
+parsed, err := a4code.Parse("[b]some bold text[/b]")
+if err != nil {
+    // handle
+}
+
+// Normalize/format the parsed AST
 formattedStr := format.Format(parsed)
 ```
+
+If you add a new AST node, you **must** update the switch statements in this package to handle how it should be converted back to raw a4code text.
 
 ## Limitations and Constraints
 

@@ -6,7 +6,24 @@ Package `s3` provides internal, non-exported utilities and service integrations 
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `s3.go`
+- `s3_stub.go`
+- `s3_test.go`
+
+### Exported Types
+
+- `Provider`
+- `ClientFactory`
+
+### Exported Functions
+
+- `Register`
+- `Register`
+- `TestProviderCheckSuccess`
+- `TestProviderCheckWriteError`
+- `TestProviderRead`
 
 ## Usage
 

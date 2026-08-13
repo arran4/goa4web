@@ -6,7 +6,19 @@ Package `subscriptiontemplates` provides internal, non-exported utilities and se
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `embedded.go`
+
+### Exported Types
+
+- `Pattern`
+
+### Exported Functions
+
+- `GetEmbeddedTemplate`
+- `ListEmbeddedTemplates`
+- `ParseTemplatePatterns`
 
 ## Usage
 

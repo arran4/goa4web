@@ -6,19 +6,39 @@ Package `html` provides the rendering engine that converts an A4Code Abstract Sy
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `generator.go`
+- `issue_link_test.go`
+
+### Exported Types
+
+- `Generator`
+- `SourceAttrBuilder`
+- `Option`
+- `DataPositionAttrs`
+
+### Exported Functions
+
+- `WithDataPositions`
+- `WithSourceAttrBuilder`
+- `NewGenerator`
+- `SanitizeURL`
+- `TestLinkWithWhitespaceChildren`
 
 ## Usage
 
-The typical workflow involves parsing an input string into an AST, then handing that AST off to a renderer (like `a4code2html` or `markdown`).
+The HTML package recursively translates an `ast.Node` tree into raw HTML bytes.
 
 ```go
 import "goa4web/a4code"
+import "goa4web/a4code/html"
 
-// 1. Parse raw input string into an AST
-astRoot, err := a4code.Parse("Some input text")
+astRoot, _ := a4code.Parse("Some input text")
 
-// 2. Process or render the AST...
+// Render to an io.Writer (like a strings.Builder or http.ResponseWriter)
+var buf strings.Builder
+err := html.Render(&buf, astRoot)
 ```
 
 ## Limitations and Constraints

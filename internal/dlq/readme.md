@@ -6,7 +6,28 @@ Package `dlq` provides internal, non-exported utilities and service integrations
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `dlq.go`
+- `message.go`
+- `multi.go`
+- `registry.go`
+
+### Exported Types
+
+- `DLQ`
+- `Manageable`
+- `LogDLQ`
+- `Message`
+- `MultiDLQ`
+- `ProviderFactory`
+- `Registry`
+
+### Exported Functions
+
+- `RegisterLogDLQ`
+- `NewMulti`
+- `NewRegistry`
 
 ## Usage
 

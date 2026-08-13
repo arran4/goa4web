@@ -6,7 +6,25 @@ Package `signutil` provides internal, non-exported utilities and service integra
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `share_sign.go`
+- `util.go`
+
+### Exported Types
+
+- `SignedData`
+
+### Exported Functions
+
+- `SignSharePath`
+- `SignAndAddQuery`
+- `SignAndAddPath`
+- `VerifyQueryURL`
+- `VerifyPathURL`
+- `InjectShared`
+- `GenerateNonce`
+- `GetSignedData`
 
 ## Usage
 

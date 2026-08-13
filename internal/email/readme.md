@@ -6,7 +6,26 @@ The `internal/email` directory encapsulates all logic related to constructing, d
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `logging.go`
+- `message.go`
+- `provider.go`
+- `registry.go`
+- `address.go`
+
+### Exported Types
+
+- `Provider`
+- `ProviderFactory`
+- `Registry`
+
+### Exported Functions
+
+- `SetDefaultFromName`
+- `BuildMessage`
+- `NewRegistry`
+- `ParseAddress`
 
 ## Usage
 

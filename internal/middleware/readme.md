@@ -6,7 +6,67 @@ Package `middleware` provides internal, non-exported utilities and service integ
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `core_utils_test.go`
+- `router_utils.go`
+- `security.go`
+- `security_test.go`
+- `taskbus_test.go`
+- `middleware.go`
+- `middleware_test.go`
+- `request_logger_test.go`
+- `security_ip_test.go`
+- `taskbus.go`
+
+### Exported Types
+
+- `Configuration`
+- `RouterWrapper`
+- `RouterWrapperFunc`
+- `TaskEventMiddleware`
+- `TaskEventMiddlewareOption`
+
+### Exported Functions
+
+- `NewConfiguration`
+- `X2c`
+- `TestConfigurationSetGet`
+- `TestConfigurationRead`
+- `TestX2c`
+- `NewMiddlewareChain`
+- `SecurityHeadersMiddleware`
+- `TestSecurityHeadersMiddlewareHTTP`
+- `TestSecurityHeadersMiddlewareHTTPS`
+- `TestSecurityHeadersMiddlewareForwardedProto`
+- `TestSecurityHeadersMiddleware`
+- `TestTaskEventMiddleware`
+- `TestStatusRecorderWriteHeaderOnce`
+- `TestTaskEventQueue`
+- `TestTaskEventMiddleware_PublishesWhenTaskComesFromContext`
+- `TestTaskEventMiddleware_PublishesWhenTaskComesFromFormValue`
+- `TestTaskEventMiddleware_LogsWhenStateChangeSuccessHasNoTask`
+- `TestTaskEventMiddleware_DoesNotLogForGetWithoutTask`
+- `TestTaskEventMiddleware_RecordsMissingTaskToDLQWhenConfigured`
+- `TestTaskEventMiddleware_EventProvided`
+- `TestTaskEventMiddleware_NoCoreDataPanic`
+- `RequestLoggerMiddleware`
+- `RecoverMiddleware`
+- `RedirectToLogin`
+- `TestRedirectToLogin`
+- `TestRedirectToLoginIncludesBackAndQuery`
+- `TestRedirectToLoginPreservesPostData`
+- `TestRequestLoggerMiddleware`
+- `TestRequestIPSpoofing_Untrusted`
+- `TestRequestIPSpoofing_Trusted`
+- `TestRequestIPSpoofing_TrustedChain`
+- `TestRequestIPSpoofing_UntrustedInChain`
+- `TestRequestIPSpoofing_GarbageHeader`
+- `TestRequestIPSpoofing_IPv6_CIDR`
+- `WithLogger`
+- `WithDLQ`
+- `NewTaskEventMiddleware`
+- `TaskEventMiddlewareWithBus`
 
 ## Usage
 

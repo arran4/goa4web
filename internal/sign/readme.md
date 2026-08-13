@@ -6,7 +6,31 @@ Package `sign` provides internal, non-exported utilities and service integration
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `sign.go`
+- `compat.go`
+
+### Exported Types
+
+- `SignOption`
+- `WithNonce`
+- `WithExpiry`
+- `WithAbsoluteExpiry`
+- `WithHostname`
+- `WithIssuedAt`
+
+### Exported Functions
+
+- `Sign`
+- `Verify`
+- `AddQuerySig`
+- `AddPathSig`
+- `ExtractQuerySig`
+- `ExtractPathSig`
+- `WithExpiryTime`
+- `WithExpiryTimeUnix`
+- `WithOutNonce`
 
 ## Usage
 

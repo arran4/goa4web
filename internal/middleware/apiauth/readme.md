@@ -6,7 +6,14 @@ Package `apiauth` provides internal, non-exported utilities and service integrat
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `apiauth.go`
+
+### Exported Functions
+
+- `APIKeyAuthMiddleware`
+- `RequireScope`
 
 ## Usage
 

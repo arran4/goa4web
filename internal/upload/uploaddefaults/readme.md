@@ -6,7 +6,14 @@ Package `uploaddefaults` provides internal, non-exported utilities and service i
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `defaults.go`
+- `s3.go`
+
+### Exported Functions
+
+- `Register`
 
 ## Usage
 

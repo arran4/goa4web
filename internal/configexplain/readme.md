@@ -6,7 +6,25 @@ Package `configexplain` provides internal, non-exported utilities and service in
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `configexplain.go`
+- `configexplain_test.go`
+- `test_bug3_test.go`
+
+### Exported Types
+
+- `SourceKind`
+- `Inputs`
+- `SourceDetail`
+- `OptionInfo`
+
+### Exported Functions
+
+- `Explain`
+- `TestExplain`
+- `TestExplainBugStringNormalization`
+- `TestExplainBugBoolNormalization`
 
 ## Usage
 

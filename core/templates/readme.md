@@ -6,7 +6,75 @@ Package `templates` contains foundational business logic and shared utilities fo
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `comment_test.go`
+- `news_post_page_test.go`
+- `threadPage_labels_test.go`
+- `thread_new_page_test.go`
+- `verification.go`
+- `article_page_test.go`
+- `label.go`
+- `notification_open_template_test.go`
+- `tableTopics_tags_test.go`
+- `no_empty_templates_test.go`
+- `templates.go`
+- `asset_hash_test.go`
+- `extract.go`
+- `passkeys_asset_test.go`
+- `thread_page_test.go`
+
+### Exported Types
+
+- `MockUser`
+- `MockComment`
+- `MockCoreData`
+- `TopicLabel`
+- `Option`
+- `MissingImageData`
+- `TemplateSet`
+
+### Exported Functions
+
+- `TestCommentTimestampSelfLink`
+- `TestCommentUsernameBold`
+- `TestNewsPostPageLabelFormIncludesCSRF`
+- `TestNewsPostPageReplyFormIncludesCSRF`
+- `TestNewsPostPageDoesNotContainInlineMarkRead`
+- `TestThreadPageShowsDefaultPrivateLabels`
+- `TestThreadNewPageJS`
+- `LoadAllTemplatesMap`
+- `IsTemplateAvailable`
+- `TestArticlePageLabelFormIncludesCSRF`
+- `TestArticlePageReplyFormIncludesCSRF`
+- `TestArticlePageDoesNotContainInlineMarkRead`
+- `TestNotificationOpenTemplateExists`
+- `TestTableTopicsShowsLabels`
+- `TestNoEmptyTemplates`
+- `SetDir`
+- `WithDir`
+- `WithSilence`
+- `Asset`
+- `GetAssetHash`
+- `GetCompiledSiteTemplates`
+- `GetCompiledNotificationTemplates`
+- `GetCompiledEmailHtmlTemplates`
+- `GetCompiledEmailTextTemplates`
+- `GetAssetData`
+- `GetMissingImageData`
+- `GetMissingImageSVG`
+- `ListSiteTemplateNames`
+- `TemplateExists`
+- `EmailTemplateExists`
+- `NotificationTemplateExists`
+- `AnyTemplateExists`
+- `TestGetAssetHash`
+- `WriteToDir`
+- `WriteTemplateSetsToDir`
+- `ArchiveTemplates`
+- `TestPasskeysJavaScriptIsExternal`
+- `TestThreadPageLabelFormIncludesCSRF`
+- `TestThreadPageDoesNotContainInlineMarkRead`
 
 ## Usage
 

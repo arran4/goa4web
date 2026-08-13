@@ -6,7 +6,24 @@ Package `configformat` provides internal, non-exported utilities and service int
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `parse.go`
+- `parse_test.go`
+- `format.go`
+
+### Exported Types
+
+- `AsOptions`
+
+### Exported Functions
+
+- `ParseAsFlags`
+- `TestParseAsFlags`
+- `FormatAsEnv`
+- `FormatAsEnvFile`
+- `FormatAsJSON`
+- `FormatAsCLI`
 
 ## Usage
 

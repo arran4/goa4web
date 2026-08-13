@@ -6,7 +6,15 @@ Package `migrations` provides functionality specific to `migrations`.
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `embed.go`
+- `migrations_test.go`
+
+### Exported Functions
+
+- `TestMigrationFileNaming`
+- `TestSchemaVersionUpdated`
 
 ## Usage
 

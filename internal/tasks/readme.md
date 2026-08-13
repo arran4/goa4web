@@ -6,7 +6,42 @@ Package `tasks` provides internal, non-exported utilities and service integratio
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `background_tasker.go`
+- `matchers.go`
+- `matchers_test.go`
+- `registry.go`
+- `task_event.go`
+- `template.go`
+- `admin_task.go`
+
+### Exported Types
+
+- `BackgroundTasker`
+- `PostResultAction`
+- `NamedTask`
+- `Entry`
+- `Registry`
+- `Task`
+- `TemplatesRequired`
+- `EmailTemplatesRequired`
+- `TaskMatcher`
+- `Name`
+- `TaskString`
+- `Template`
+- `AuditableTask`
+
+### Exported Functions
+
+- `HasTask`
+- `HasFormTask`
+- `HasQueryTask`
+- `HasFormOrQueryTask`
+- `HasNoTask`
+- `TestTaskMatcher`
+- `TestNoTask`
+- `NewRegistry`
 
 ## Usage
 

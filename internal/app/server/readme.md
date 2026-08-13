@@ -6,7 +6,41 @@ Package `server` provides internal, non-exported utilities and service integrati
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `coredata_middleware_test.go`
+- `server.go`
+
+### Exported Types
+
+- `Server`
+- `Option`
+
+### Exported Functions
+
+- `TestCoreDataMiddlewareUserRoles`
+- `TestCoreDataMiddlewareAnonymous`
+- `WithHandler`
+- `WithStore`
+- `WithDB`
+- `WithQuerier`
+- `WithConfig`
+- `WithConfigFile`
+- `WithRouterRegistry`
+- `WithNavRegistry`
+- `WithDLQRegistry`
+- `WithBus`
+- `WithEmailRegistry`
+- `WithImageSignKey`
+- `WithLinkSignKey`
+- `WithShareSignKey`
+- `WithFeedSignKey`
+- `WithSessionManager`
+- `WithDBRegistry`
+- `WithWebsocket`
+- `WithTasksRegistry`
+- `New`
+- `Run`
 
 ## Usage
 

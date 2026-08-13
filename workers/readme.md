@@ -10,14 +10,23 @@ The `workers` directory contains asynchronous background processors. A 'worker' 
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `workers.go`
+
+### Exported Functions
+
+- `Start`
 
 ## Usage
 
 Workers are initialized in `cmd/goa4web/main.go` and run as background goroutines. To dispatch work to them, you publish strongly typed events to the central `eventbus`.
 
 ```go
-eventbus.Publish(ctx, "my_queue", myDataStruct)
+import "goa4web/internal/eventbus"
+
+// Trigger a background task
+eventbus.Publish(ctx, "my_queue_topic", myDataStruct)
 ```
 
 ## Limitations and Constraints

@@ -6,7 +6,27 @@ Package `stats` provides internal, non-exported utilities and service integratio
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `stats_usage.go`
+- `stats.go`
+- `stats_builder.go`
+- `stats_linux.go`
+- `stats_other.go`
+- `stats_types.go`
+
+### Exported Types
+
+- `ServerStatsMetrics`
+- `ServerStatsRegistries`
+- `ServerStatsData`
+- `UsageStatsData`
+
+### Exported Functions
+
+- `BuildUsageStatsData`
+- `IncrementAutoSubscribePreferenceFailures`
+- `BuildServerStatsData`
 
 ## Usage
 

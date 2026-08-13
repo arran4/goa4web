@@ -6,7 +6,17 @@ Package `email` provides internal, non-exported utilities and service integratio
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `email.go`
+
+### Exported Types
+
+- `DLQ`
+
+### Exported Functions
+
+- `Register`
 
 ## Usage
 

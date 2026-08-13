@@ -6,7 +6,8 @@ Package `goa4webhtml` provides specialized HTML rendering for A4Code that is spe
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
 
 ## Usage
 
@@ -16,9 +17,12 @@ The typical workflow involves parsing an input string into an AST, then handing 
 import "goa4web/a4code"
 
 // 1. Parse raw input string into an AST
-astRoot, err := a4code.Parse("Some input text")
+astRoot, err := a4code.Parse("Some [b]input[/b] text")
+if err != nil {
+    // handle parser errors
+}
 
-// 2. Process or render the AST...
+// 2. The AST is now ready to be traversed or rendered.
 ```
 
 ## Limitations and Constraints

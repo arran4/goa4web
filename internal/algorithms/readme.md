@@ -6,7 +6,20 @@ Package `algorithms` provides internal, non-exported utilities and service integ
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `loop.go`
+- `loop_test.go`
+
+### Exported Functions
+
+- `WouldCreateLoop`
+- `TestWouldCreateLoopSelf`
+- `TestWouldCreateLoopChain`
+- `TestWouldCreateLoopExisting`
+- `TestWouldCreateLoopNone`
+- `TestWouldCreateLoopRoot`
+- `TestWouldCreateLoopDangling`
 
 ## Usage
 

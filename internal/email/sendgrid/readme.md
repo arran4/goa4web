@@ -6,7 +6,19 @@ Package `sendgrid` provides concrete implementations or abstractions for the `se
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `sendgrid.go`
+- `sendgrid_stub.go`
+
+### Exported Types
+
+- `Provider`
+
+### Exported Functions
+
+- `Register`
+- `Register`
 
 ## Usage
 

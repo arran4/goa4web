@@ -6,7 +6,43 @@ Package `app` provides internal, non-exported utilities and service integrations
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `options_test.go`
+- `run.go`
+- `session_cookie_test.go`
+- `startup.go`
+- `startup_test.go`
+
+### Exported Types
+
+- `ServerOption`
+
+### Exported Functions
+
+- `TestServerOptions`
+- `WithSessionSecret`
+- `WithImageSignSecret`
+- `WithLinkSignSecret`
+- `WithShareSignSecret`
+- `WithAPISecret`
+- `WithDBRegistry`
+- `WithEmailRegistry`
+- `WithDLQRegistry`
+- `WithTasksRegistry`
+- `WithBus`
+- `WithStore`
+- `WithDB`
+- `WithQuerier`
+- `WithRouterRegistry`
+- `NewServer`
+- `TestSessionCookieOptions`
+- `PerformChecks`
+- `CheckUploadTarget`
+- `CheckMediaFiles`
+- `TestCheckUploadTargetOK`
+- `TestCheckUploadTargetFail`
+- `TestCheckUploadTargetNoProvider`
 
 ## Usage
 

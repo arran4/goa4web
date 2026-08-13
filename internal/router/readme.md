@@ -6,7 +6,29 @@ Package `router` provides internal, non-exported utilities and service integrati
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `registry.go`
+- `registry_test.go`
+- `roles_test.go`
+- `router.go`
+
+### Exported Types
+
+- `Module`
+- `Registry`
+
+### Exported Functions
+
+- `NewRegistry`
+- `TestInitModulesOnce`
+- `TestInitModulesDependencyOrder`
+- `TestRegistryNames`
+- `TestRoleCheckerMiddlewareAllowed`
+- `TestRoleCheckerMiddlewareDenied`
+- `RegisterRoutes`
+- `RoleCheckerMiddleware`
+- `AdminCheckerMiddleware`
 
 ## Usage
 

@@ -6,7 +6,42 @@ Package `navigation` provides internal, non-exported utilities and service integ
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `hierarchy_test.go`
+- `options.go`
+- `registry.go`
+- `registry_test.go`
+
+### Exported Types
+
+- `RouterOptions`
+- `IndexLinkOption`
+- `IndexLinkWithViewPermissionOption`
+- `AdminControlCenterLinkOption`
+- `Section`
+- `Registry`
+
+### Exported Functions
+
+- `TestAdminSectionsHierarchy`
+- `NewIndexLink`
+- `NewIndexLinkWithViewPermission`
+- `NewAdminControlCenterLink`
+- `AdminCCCategory`
+- `AdminCCCategories`
+- `NewRegistry`
+- `SetDefaultRegistry`
+- `RegisterIndexLink`
+- `RegisterIndexLinkWithViewPermission`
+- `RegisterAdminControlCenter`
+- `IndexItems`
+- `IndexItemsWithPermission`
+- `AdminLinks`
+- `AdminSections`
+- `TestIndexItemsOrdering`
+- `TestIndexItemsSkipEmpty`
+- `TestIndexItemsPermissionFilter`
 
 ## Usage
 

@@ -6,7 +6,38 @@ Package `eventbus` provides internal, non-exported utilities and service integra
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `eventbus.go`
+- `eventbus_test.go`
+- `benchmark_test.go`
+
+### Exported Types
+
+- `MessageType`
+- `Message`
+- `Envelope`
+- `TaskEvent`
+- `EmailQueueEvent`
+- `DigestRunEvent`
+- `Bus`
+
+### Exported Functions
+
+- `NewBus`
+- `TestBus_Shutdown`
+- `TestBus_Ack`
+- `TestBus_Backpressure`
+- `TestBus_ShutdownContext`
+- `TestNewBus`
+- `TestSubscribe`
+- `TestPublish`
+- `TestPublish_NonBlocking`
+- `TestShutdown`
+- `TestShutdown_Timeout`
+- `TestSyncPublish`
+- `TestConcurrentAccess`
+- `BenchmarkShutdown`
 
 ## Usage
 

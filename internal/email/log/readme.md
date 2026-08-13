@@ -6,7 +6,17 @@ Package `log` provides concrete implementations or abstractions for the `log` em
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `log.go`
+
+### Exported Types
+
+- `Provider`
+
+### Exported Functions
+
+- `Register`
 
 ## Usage
 

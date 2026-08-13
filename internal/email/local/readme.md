@@ -6,7 +6,19 @@ Package `local` provides concrete implementations or abstractions for the `local
 
 ## Structure and Components
 
-This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
+The primary files and their general responsibilities include:
+
+- `local.go`
+- `local_test.go`
+
+### Exported Types
+
+- `Provider`
+
+### Exported Functions
+
+- `Register`
+- `TestProviderInvalidAddr`
 
 ## Usage
 

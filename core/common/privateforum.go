@@ -83,6 +83,7 @@ type PrivateTopic struct {
 	*db.ListPrivateTopicsByUserIDRow
 	DisplayTitle       string
 	Labels             []templates.TopicLabel
+	Participants       []string
 	ParticipantsString string
 	TotalParticipants  int
 }
@@ -196,7 +197,7 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 				}
 			}
 
-			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, ParticipantsString: strings.Join(participants, ", "), TotalParticipants: totalParticipants})
+			pts = append(pts, &PrivateTopic{ListPrivateTopicsByUserIDRow: t, DisplayTitle: title, Labels: labels, Participants: participants, ParticipantsString: strings.Join(participants, ", "), TotalParticipants: totalParticipants})
 		}
 		return pts, nil
 	})

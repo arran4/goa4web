@@ -97,7 +97,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOption
 		MatcherFunc(handlers.RequiresAnAccount()).
 		MatcherFunc(uploadImageTask.Matcher())
 	ir.HandleFunc("/pasteimg.js", handlers.PasteImageJS(cfg)).Methods(http.MethodGet)
-	ir.Handle("/image/{id}", verifyMiddleware("image:")(http.HandlerFunc(serveImage))).
+	ir.Handle("/image/{id}", verifyMiddleware("image:")(handlers.WithMaximumCacheFunc(serveImage))).
 		Methods(http.MethodGet)
 
 	api := ir.PathPrefix("/api").Subrouter()
@@ -111,7 +111,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []nav.RouterOption
 	apiWrite.Use(apiauth.RequireScope("images:write"))
 	apiWrite.HandleFunc("/upload", APIUploadImage).Methods(http.MethodPost)
 
-	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(http.HandlerFunc(serveCache))).
+	ir.Handle("/cache/{id}", verifyMiddleware("cache:")(handlers.WithMaximumCacheFunc(serveCache))).
 		Methods(http.MethodGet)
 	return nil
 }

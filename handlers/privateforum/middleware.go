@@ -12,7 +12,7 @@ import (
 func DisablePrivateForumCaching(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handlers.DisableCaching(w)
-		w.Header().Set("Cloudflare-CDN-Cache-Control", "no-store")
+
 		next.ServeHTTP(w, r)
 	})
 }

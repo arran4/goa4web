@@ -6,43 +6,7 @@ Package `imagebbs` handles HTTP requests for the `imagebbs` route or feature set
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `imagebbsFeed.go`
-- `permissions.go`
-- `image_process_task.go`
-- `imagebbsAdminApprove.go`
-- `imagebbsAdminBoardListPage.go`
-- `imagebbsAdminBoardPage.go`
-- `imagebbsAdminBoardViewPage.go`
-- `imagebbsTemplates_test.go`
-- `routes_admin.go`
-- `imagebbsAdminPostPage.go`
-- `imagebbsFeed_test.go`
-- `pages_test.go`
-- `permissions_regression_test.go`
-- `tasks.go`
-- `imagebbsAdminPage.go`
-- `imagebbsBoardPage.go`
-- `imagebbsBoardTask.go`
-- `imagebbsPosterPage.go`
-- `imagebbs_reply_notifications_test.go`
-- `routes.go`
-- `tasks_register.go`
-- `constants.go`
-- `imagebbsAdminBoardsPage.go`
-- `imagebbsAdminNewBoardPage.go`
-- `imagebbsBoardPage_test.go`
-- `imagebbsPage.go`
-- `section.go`
-- `imagebbsAdminPermissions_test.go`
-- `imagebbsBoardThreadPage.go`
-- `imagebbsTask.go`
-- `imagebbs_tasks_test.go`
-- `notification_templates.go`
-- `auto_subscribe_test.go`
-- `imagebbsAdminBoardDelete.go`
-- `imagebbsBoardThreadPage_test.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

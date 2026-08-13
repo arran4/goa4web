@@ -10,9 +10,7 @@ The `workers` directory contains asynchronous background processors. A 'worker' 
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `workers.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

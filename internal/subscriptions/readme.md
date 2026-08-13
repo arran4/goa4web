@@ -6,12 +6,7 @@ Package `subscriptions` provides internal, non-exported utilities and service in
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `matching_test.go`
-- `benchmark_test.go`
-- `definitions.go`
-- `definitions_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

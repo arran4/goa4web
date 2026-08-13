@@ -6,16 +6,7 @@ Package `images` handles HTTP requests for the `images` route or feature set. Th
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `routes.go`
-- `routes_test.go`
-- `tasks.go`
-- `tasks_register.go`
-- `upload_task.go`
-- `upload_task_test.go`
-- `api_rest.go`
-- `customindex.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

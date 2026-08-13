@@ -6,19 +6,7 @@ Package `languages` handles HTTP requests for the `languages` route or feature s
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `admin.go`
-- `create_language_task.go`
-- `delete_language_task.go`
-- `rename_language_task_test.go`
-- `routes.go`
-- `delete_language_task_test.go`
-- `languageTasks.go`
-- `languagesTemplates_test.go`
-- `notification_templates.go`
-- `rename_language_task.go`
-- `section.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

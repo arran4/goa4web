@@ -6,33 +6,7 @@ Package `config` defines the data structures and parsing logic for the Goa4Web a
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `runtime_unix.go`
-- `appconfig.go`
-- `envfile.go`
-- `logflags.go`
-- `runtime_windows.go`
-- `session_secret.go`
-- `smtp_fallbacks.go`
-- `admin_api_secret_test.go`
-- `envmap_runtime.go`
-- `runtime_site_config_test.go`
-- `templates_runtime.go`
-- `image_sign_secret.go`
-- `merge.go`
-- `merge_test.go`
-- `runtime.go`
-- `runtime_db_validation_test.go`
-- `share_sign_secret.go`
-- `site_config.go`
-- `admin_api_secret.go`
-- `email.go`
-- `env.go`
-- `link_sign_secret.go`
-- `maps_runtime.go`
-- `options_runtime.go`
-- `runtime_session_secret_test.go`
+The primary configuration definitions are found within `runtimeconfig.go` where `RuntimeConfig` is defined. Ensure any new configuration parameters are appended to this struct.
 
 ## Usage
 

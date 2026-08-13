@@ -6,13 +6,7 @@ Package `externallink` handles HTTP requests for the `externallink` route or fea
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `redirect.go`
-- `redirect_test.go`
-- `routes.go`
-- `tasks.go`
-- `tasks_test.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

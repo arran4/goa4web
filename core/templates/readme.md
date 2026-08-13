@@ -6,23 +6,7 @@ Package `templates` contains foundational business logic and shared utilities fo
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `verification.go`
-- `article_page_test.go`
-- `templates.go`
-- `extract.go`
-- `label.go`
-- `notification_open_template_test.go`
-- `tableTopics_tags_test.go`
-- `threadPage_labels_test.go`
-- `asset_hash_test.go`
-- `comment_test.go`
-- `news_post_page_test.go`
-- `passkeys_asset_test.go`
-- `thread_new_page_test.go`
-- `no_empty_templates_test.go`
-- `thread_page_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

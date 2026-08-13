@@ -6,9 +6,7 @@ Package `smtp` provides concrete implementations or abstractions for the `smtp` 
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `smtp.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

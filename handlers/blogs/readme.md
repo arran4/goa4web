@@ -6,52 +6,7 @@ Package `blogs` handles HTTP requests for the `blogs` route or feature set. This
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `blogsCommentPage.go`
-- `blogsIndexPermissions_test.go`
-- `bloggerListPage.go`
-- `bloggerListPage_search_test.go`
-- `blogsAdminBlogEditPage.go`
-- `blogsAdminPage.go`
-- `blogsAutoSubscribe_test.go`
-- `blogsBlogAddPage_test.go`
-- `bloggerPostsPage.go`
-- `blogsAdminBlogCommentsPage_test.go`
-- `blogsBlogAddPage.go`
-- `blogsBloggersBloggerPage.go`
-- `label_read_tasks.go`
-- `label_tasks.go`
-- `section.go`
-- `tasks.go`
-- `blogsBlogEditPage.go`
-- `blogsCommentEditCancelTask.go`
-- `customindex.go`
-- `tasks_register.go`
-- `auto_subscribe_test.go`
-- `constants.go`
-- `routes_admin.go`
-- `blogsCommentEditReplyTask.go`
-- `blogsPage.go`
-- `blogsBlogAddPage_logic_test.go`
-- `blogs_tasks_test.go`
-- `matchers.go`
-- `pages_test.go`
-- `blogsAdminBlogPage.go`
-- `blogsAdminBlogPage_test.go`
-- `blogsBlogPage.go`
-- `blogsPage_test.go`
-- `blogsTask.go`
-- `blogs_reply_notifications_test.go`
-- `blogsBloggersBloggerPage_test.go`
-- `blogsAdminBlogCommentsPage.go`
-- `blogsBlogEditPage_test.go`
-- `blogsBlogReplyPage.go`
-- `blogsCommentTask.go`
-- `notification_templates.go`
-- `routes.go`
-- `routes_test.go`
-- `shared_preview.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

@@ -6,14 +6,7 @@ Package `searchworker` implements a specific background worker (`searchworker`).
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `http.go`
-- `insert.go`
-- `postupdate.go`
-- `tokenize.go`
-- `tokenize_test.go`
-- `worker.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

@@ -6,19 +6,7 @@ Package `bookmarks` handles HTTP requests for the `bookmarks` route or feature s
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `bookmarksTask.go`
-- `createTask.go`
-- `mine.go`
-- `mine_test.go`
-- `section.go`
-- `tasks.go`
-- `columns.go`
-- `page.go`
-- `routes.go`
-- `saveTask.go`
-- `tasks_register.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

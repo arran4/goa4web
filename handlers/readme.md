@@ -6,37 +6,7 @@ The `handlers` package and its subdirectories encompass the web presentation lay
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `redirect_test.go`
-- `section.go`
-- `static.go`
-- `error_acknowledgement.go`
-- `httperrors.go`
-- `redirects.go`
-- `taskhandler.go`
-- `taskresulthandlers.go`
-- `access_test.go`
-- `logutils.go`
-- `logutils_test.go`
-- `page_title.go`
-- `access_cache_test.go`
-- `matchers_test.go`
-- `notification_test_helpers.go`
-- `pages_test.go`
-- `errorpage.go`
-- `feed.go`
-- `matchers.go`
-- `notification_registry_test.go`
-- `pages.go`
-- `auto_refresh.go`
-- `constants.go`
-- `preview.go`
-- `template.go`
-- `errorhandlers.go`
-- `errorpage_test.go`
-- `form.go`
-- `access.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

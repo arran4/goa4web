@@ -6,17 +6,7 @@ Package `share` handles HTTP requests for the `share` route or feature set. This
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `interfaces.go`
-- `opengraph.go`
-- `routes.go`
-- `share.go`
-- `share_handler.go`
-- `generator_default.go`
-- `generator_forum.go`
-- `opengraph_methods.go`
-- `options.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

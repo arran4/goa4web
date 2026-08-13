@@ -6,10 +6,7 @@ Package `csrf` provides internal, non-exported utilities and service integration
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `csrf.go`
-- `csrf_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

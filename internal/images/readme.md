@@ -6,15 +6,7 @@ Package `images` provides internal, non-exported utilities and service integrati
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `resize_test.go`
-- `thumbnails.go`
-- `thumbnails_test.go`
-- `validation.go`
-- `validation_test.go`
-- `encode.go`
-- `resize.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

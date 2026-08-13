@@ -6,10 +6,7 @@ Package `database` manages the application's core data storage strategies and qu
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `embed.go`
-- `embed_roles.go`
+The core schema definitions (`schema.mysql.sql`) and testing seeds (`seed.sql`) are maintained here. SQL queries for use with `sqlc` should generally be placed under `internal/db/`.
 
 ## Usage
 

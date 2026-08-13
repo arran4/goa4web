@@ -6,11 +6,7 @@ Package `postcountworker` implements a specific background worker (`postcountwor
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `postupdate.go`
-- `postupdate_test.go`
-- `worker.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

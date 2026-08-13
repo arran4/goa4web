@@ -6,9 +6,7 @@ Package `dbdrivers` encapsulates the database driver initialization and specific
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `registry.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

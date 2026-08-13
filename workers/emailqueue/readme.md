@@ -6,10 +6,7 @@ Package `emailqueue` implements a specific background worker (`emailqueue`). Wor
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `email_queue.go`
-- `email_queue_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

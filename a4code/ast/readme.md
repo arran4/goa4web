@@ -6,12 +6,7 @@ Package `ast` defines the Abstract Syntax Tree (AST) nodes for the A4Code markup
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `generator.go`
-- `nodes.go`
-- `nodes_test.go`
-- `walk.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

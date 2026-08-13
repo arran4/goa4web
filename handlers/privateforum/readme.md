@@ -6,38 +6,7 @@ Package `privateforum` handles HTTP requests for the `privateforum` route or fea
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `middleware_test.go`
-- `repro_test.go`
-- `start_group_discussion_page.go`
-- `topic_edit_page.go`
-- `topic_page_test.go`
-- `unread.go`
-- `customindex.go`
-- `section.go`
-- `shared_preview.go`
-- `api_rest.go`
-- `auto_subscribe_test.go`
-- `topic_create_task.go`
-- `api_test.go`
-- `feed.go`
-- `page.go`
-- `privateforum_tasks_test.go`
-- `routes.go`
-- `tasks_register.go`
-- `topic_cancel_alias.go`
-- `api.go`
-- `tasks.go`
-- `consts.go`
-- `labels_test.go`
-- `middleware.go`
-- `start_group_discussion_test.go`
-- `topic.go`
-- `page_test.go`
-- `pages_test.go`
-- `privateForumTask.go`
-- `thread.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

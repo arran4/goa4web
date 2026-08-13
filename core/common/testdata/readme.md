@@ -6,9 +6,7 @@ Package `testdata` contains foundational business logic and shared utilities for
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `querier_stub.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

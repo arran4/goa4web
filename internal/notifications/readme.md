@@ -6,26 +6,7 @@ Package `notifications` provides internal, non-exported utilities and service in
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `types.go`
-- `update_email.go`
-- `digest_worker.go`
-- `subscriptionsinterfaces.go`
-- `template_render_test.go`
-- `templates.go`
-- `templates_test.go`
-- `bus_worker.go`
-- `bus_worker_test.go`
-- `digest_worker_test.go`
-- `linker_queue_test.go`
-- `dlq.go`
-- `self_notify_task_test.go`
-- `notifier.go`
-- `digest_consumer.go`
-- `email.go`
-- `email_test.go`
-- `notifications_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

@@ -6,61 +6,7 @@ Package `writings` handles HTTP requests for the `writings` route or feature set
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `reply_task_test.go`
-- `update_writing_task.go`
-- `writingsAdminPage.go`
-- `writingsCategoriesPage.go`
-- `writingsFeed_test.go`
-- `category_grant_create_task.go`
-- `constants.go`
-- `permissions.go`
-- `writingsPage.go`
-- `label_tasks.go`
-- `role_info.go`
-- `submit_writing_task.go`
-- `writingsAdminCategoryEditPage.go`
-- `writingsArticlePage.go`
-- `writingsTemplates_test.go`
-- `writingsWriterListPage.go`
-- `writingsWriterListPage_test.go`
-- `writingsAdminCategoryPage.go`
-- `writingsArticleAddPage.go`
-- `writingsArticlePage_test.go`
-- `writingsCategoryPage.go`
-- `writingsFeed.go`
-- `writingsTask.go`
-- `writingsWriterPage.go`
-- `writings_tasks_test.go`
-- `edit_reply_task.go`
-- `notification_templates.go`
-- `section.go`
-- `writingsArticleCommentEditPage.go`
-- `writingsArticleEditPage.go`
-- `customindex.go`
-- `matchers_test.go`
-- `routes.go`
-- `tasks.go`
-- `writing_category_create_task.go`
-- `matchers.go`
-- `shared_preview.go`
-- `tasks_register.go`
-- `writing_category_change_task.go`
-- `writingsAdminCategoryEditPage_test.go`
-- `writingsAdminCategoryGrantsPage.go`
-- `writings_reply_notifications_test.go`
-- `category_grant_delete_task.go`
-- `permissions_test.go`
-- `routes_admin.go`
-- `templates_test.go`
-- `writing_category_change_task_test.go`
-- `writingsAdminCategoriesPage.go`
-- `writingsAdminCategoriesPage_test.go`
-- `writingsAdminCategoryGrantsPage_test.go`
-- `admin_pages.go`
-- `cancel_task.go`
-- `reply_task.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

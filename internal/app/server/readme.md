@@ -6,10 +6,7 @@ Package `server` provides internal, non-exported utilities and service integrati
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `coredata_middleware_test.go`
-- `server.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

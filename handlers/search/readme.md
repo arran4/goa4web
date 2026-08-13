@@ -6,40 +6,7 @@ Package `search` handles HTTP requests for the `search` route or feature set. Th
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `remakeImageFinishedTask.go`
-- `remakeNewsFinishedTask.go`
-- `remakeWritingTask.go`
-- `searchResultLinkerActionPage.go`
-- `section.go`
-- `remakeWritingFinishedTask.go`
-- `routes_admin.go`
-- `searchResultWritingsActionPage.go`
-- `remakeBlogFinishedTask.go`
-- `remakeBlogTask.go`
-- `searchResultBlogsActionPage.go`
-- `notification_templates.go`
-- `remakeLinkerTask.go`
-- `routes.go`
-- `tasks.go`
-- `tasks_register.go`
-- `pages_test.go`
-- `permissions_test.go`
-- `reindex.go`
-- `remakeCommentsFinishedTask.go`
-- `remakeCommentsTask.go`
-- `searchPage.go`
-- `remakeLinkerFinishedTask.go`
-- `admin.go`
-- `admin_wordlist.go`
-- `remakeImageTask.go`
-- `searchNewsTask.go`
-- `searchResultForumActionPage.go`
-- `searchTask.go`
-- `remakeNewsTask.go`
-- `search_tasks_test.go`
-- `customindex.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

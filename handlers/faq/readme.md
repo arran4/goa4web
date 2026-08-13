@@ -6,39 +6,7 @@ Package `faq` handles HTTP requests for the `faq` route or feature set. This dir
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `create_question_task.go`
-- `delete_category_task.go`
-- `routes.go`
-- `update_category_task.go`
-- `admin_question.go`
-- `admin_templates_page_test.go`
-- `edit_question_task.go`
-- `admin_questions_test.go`
-- `ask_test.go`
-- `create_template_task.go`
-- `delete_question_task.go`
-- `ask.go`
-- `faqIndexPermissions_test.go`
-- `page_test.go`
-- `tasks.go`
-- `tasks_register.go`
-- `admin_edit_question_page.go`
-- `admin_templates_page.go`
-- `page.go`
-- `section.go`
-- `create_category_task.go`
-- `admin_category_page.go`
-- `faqCategoryTasks.go`
-- `faqTemplates_test.go`
-- `grant_tasks.go`
-- `pages_test.go`
-- `remove_question_task.go`
-- `admin_categories.go`
-- `admin_questions_page.go`
-- `admin_revision_page.go`
-- `notification_templates.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

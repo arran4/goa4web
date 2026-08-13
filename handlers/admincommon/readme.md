@@ -6,9 +6,7 @@ Package `admincommon` handles HTTP requests for the `admincommon` route or featu
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `user_roles.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

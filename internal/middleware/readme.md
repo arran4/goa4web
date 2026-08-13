@@ -6,18 +6,7 @@ Package `middleware` provides internal, non-exported utilities and service integ
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `middleware_test.go`
-- `router_utils.go`
-- `security.go`
-- `security_ip_test.go`
-- `taskbus_test.go`
-- `request_logger_test.go`
-- `security_test.go`
-- `taskbus.go`
-- `core_utils_test.go`
-- `middleware.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

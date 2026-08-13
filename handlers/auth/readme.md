@@ -6,38 +6,7 @@ Package `auth` handles HTTP requests for the `auth` route or feature set. This d
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `redirectBackPageHandler_test.go`
-- `cache_test.go`
-- `email_association_request_task.go`
-- `forgotPassword_no_email_test.go`
-- `loginPage_test.go`
-- `password.go`
-- `login_task.go`
-- `verify_password_task.go`
-- `loginPage.go`
-- `task_template_test.go`
-- `webauthn_middleware.go`
-- `test_utils_test.go`
-- `forgotPassword_event_test.go`
-- `login_passkey.go`
-- `login_security_test.go`
-- `login_task_test.go`
-- `registerPage.go`
-- `tasks.go`
-- `tasks_register.go`
-- `registerPage_test.go`
-- `verify_password_task_test.go`
-- `forgotPassword_test.go`
-- `login_passkey_test.go`
-- `notification_templates.go`
-- `pages_test.go`
-- `customindex.go`
-- `forgotPassword_limit_test.go`
-- `forgot_password_task.go`
-- `password_reset_flow_test.go`
-- `routes.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

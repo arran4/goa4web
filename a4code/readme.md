@@ -6,21 +6,7 @@ Package `a4code` is the root package for the custom A4Code markup engine. It def
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `common.go`
-- `html.go`
-- `output.go`
-- `parser.go`
-- `parser_test.go`
-- `quote.go`
-- `quote_test.go`
-- `sanitize.go`
-- `a4code.go`
-- `snip.go`
-- `snip_test.go`
-- `substring.go`
-- `substring_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

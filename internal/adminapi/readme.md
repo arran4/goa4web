@@ -6,10 +6,7 @@ Package `adminapi` provides internal, non-exported utilities and service integra
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `sign.go`
-- `sign_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

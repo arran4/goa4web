@@ -6,8 +6,7 @@ Package `text` provides a plain-text renderer for the A4Code Abstract Syntax Tre
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

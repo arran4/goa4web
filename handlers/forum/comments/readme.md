@@ -6,10 +6,7 @@ Package `comments` handles HTTP requests for the `comments` route or feature set
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `matchers.go`
-- `matchers_test.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

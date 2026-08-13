@@ -6,10 +6,7 @@ Package `scheduler` provides internal, non-exported utilities and service integr
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `scheduler.go`
-- `scheduler_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

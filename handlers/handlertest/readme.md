@@ -6,10 +6,7 @@ Package `handlertest` handles HTTP requests for the `handlertest` route or featu
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `funcs.go`
-- `request.go`
+Specific endpoint logic is typically separated into individual files (e.g., `view.go`, `submit.go`). `init.go` or `handler.go` often register these routes against a provided multiplexer.
 
 ## Usage
 

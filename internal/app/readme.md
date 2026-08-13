@@ -6,13 +6,7 @@ Package `app` provides internal, non-exported utilities and service integrations
 
 ## Structure and Components
 
-The primary files and their general responsibilities include:
-
-- `run.go`
-- `session_cookie_test.go`
-- `startup.go`
-- `startup_test.go`
-- `options_test.go`
+This package is typically composed of core implementations, model definitions, and occasional testing utilities related specifically to this domain.
 
 ## Usage
 

@@ -104,3 +104,9 @@ The JSON data file should contain the data structure expected by the template (t
 Field types in `Dot` are automatically fixed:
 - Strings in RFC3339 format are converted to `time.Time`.
 - Whole number `float64` values are converted to `int32` to match typical DB IDs.
+
+**Agent Skill Notes:**
+- When a user asks to modify a frontend web application, use this tool to verify your changes. You can generate a screenshot to confirm it works correctly before completing the task.
+- Use `frontend_verification_instructions` for guidance on how to write Playwright scripts to take screenshots of the output rendered by this tool.
+- First create a mock JSON data file based on the structure described above, compile `goa4web` using `go build -o goa4web ./cmd/goa4web/`, and start the verification server in the background: `nohup ./goa4web test verification template -template <path/to/template.gohtml> -data <data.json> -listen :8080 > server.log 2>&1 &`.
+- Wait a few seconds for the server to start, then run a Playwright script to capture the screenshot of `http://localhost:8080`.

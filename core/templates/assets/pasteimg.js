@@ -40,10 +40,12 @@
 
             if (form.dataset.uploadError === 'true') {
                 form.dataset.uploadError = 'false';
-                form.querySelectorAll('textarea').forEach(t => t.disabled = false);
+                const ta = form.querySelector('textarea');
+                if (ta) ta.disabled = false;
                 alert('An image upload failed. Please review your post before submitting.');
             } else {
-                form.querySelectorAll('textarea').forEach(t => t.disabled = false);
+                const ta = form.querySelector('textarea');
+                if (ta) ta.disabled = false;
                 if (btn) {
                     btn.click();
                 } else {
@@ -366,7 +368,7 @@
                             btn.disabled = true;
                         }
 
-                        ev.target.querySelectorAll('textarea').forEach(ta => ta.disabled = true);
+                        t.disabled = true;
                     }
                 });
             }

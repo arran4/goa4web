@@ -13,31 +13,30 @@
             form.dataset.uploadError = 'true';
         }
 
-        if (uploads === 0 && form.dataset.pendingSubmit === 'true') {
-            form.dataset.pendingSubmit = 'false';
+        const btnId = form.dataset.submitButtonId;
+        let btn = null;
+        if (btnId) {
+            btn = document.getElementById(btnId);
+        }
 
-            const btnId = form.dataset.submitButtonId;
-            let btn = null;
-            if (btnId) {
-                btn = document.getElementById(btnId);
+        if (uploads === 0 && btn && btn.disabled) {
+            btn.disabled = false;
+
+            if (btn.dataset.originalText) {
+                if (btn.tagName === 'INPUT') {
+                    btn.value = btn.dataset.originalText;
+                } else {
+                    btn.innerHTML = btn.dataset.originalText;
+                }
             }
 
-            if (btn) {
-                btn.disabled = false;
-                if (btn.dataset.originalText) {
-                    if (btn.tagName === 'INPUT') {
-                        btn.value = btn.dataset.originalText;
-                    } else {
-                        btn.innerHTML = btn.dataset.originalText;
-                    }
-                }
-
-                if (form.dataset.uploadError === 'true') {
-                    form.dataset.uploadError = 'false';
-                    alert('An image upload failed. Please review your post before submitting.');
-                } else {
-                    btn.click();
-                }
+            if (form.dataset.uploadError === 'true') {
+                form.dataset.uploadError = 'false';
+                form.querySelectorAll('textarea').forEach(t => t.disabled = false);
+                alert('An image upload failed. Please review your post before submitting.');
+            } else {
+                form.querySelectorAll('textarea').forEach(t => t.disabled = false);
+                btn.click();
             }
         }
     }
@@ -333,7 +332,8 @@
                     let uploads = parseInt(ev.target.dataset.activeUploads || '0', 10);
                     if (uploads > 0) {
                         ev.preventDefault();
-                        ev.target.dataset.pendingSubmit = 'true';
+
+                        ev.target.querySelectorAll('textarea').forEach(ta => ta.disabled = true);
 
                         let btn = ev.submitter;
                         if (!btn) {

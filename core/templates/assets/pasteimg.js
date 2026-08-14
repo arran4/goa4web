@@ -19,14 +19,22 @@
             btn = document.getElementById(btnId);
         }
 
-        if (uploads === 0 && btn && btn.disabled) {
-            btn.disabled = false;
+        let isPending = false;
+        if (btn && btn.disabled) {
+            isPending = true;
+        } else if (form.querySelector('textarea:disabled')) {
+            isPending = true;
+        }
 
-            if (btn.dataset.originalText) {
-                if (btn.tagName === 'INPUT') {
-                    btn.value = btn.dataset.originalText;
-                } else {
-                    btn.innerHTML = btn.dataset.originalText;
+        if (uploads === 0 && isPending) {
+            if (btn) {
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    if (btn.tagName === 'INPUT') {
+                        btn.value = btn.dataset.originalText;
+                    } else {
+                        btn.innerHTML = btn.dataset.originalText;
+                    }
                 }
             }
 
@@ -36,7 +44,11 @@
                 alert('An image upload failed. Please review your post before submitting.');
             } else {
                 form.querySelectorAll('textarea').forEach(t => t.disabled = false);
-                btn.click();
+                if (btn) {
+                    btn.click();
+                } else {
+                    form.submit();
+                }
             }
         }
     }
@@ -333,8 +345,6 @@
                     if (uploads > 0) {
                         ev.preventDefault();
 
-                        ev.target.querySelectorAll('textarea').forEach(ta => ta.disabled = true);
-
                         let btn = ev.submitter;
                         if (!btn) {
                             btn = ev.target.querySelector('button[type="submit"], input[type="submit"]');
@@ -355,6 +365,8 @@
                             }
                             btn.disabled = true;
                         }
+
+                        ev.target.querySelectorAll('textarea').forEach(ta => ta.disabled = true);
                     }
                 });
             }

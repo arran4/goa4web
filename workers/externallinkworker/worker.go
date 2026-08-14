@@ -103,9 +103,21 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						}
 					}
 
+					desc := info.Description
+					if len(desc) > 65000 {
+						runes := []rune(desc)
+						if len(runes) > 16000 {
+							desc = string(runes[:16000])
+						}
+						for len(desc) > 65000 {
+							runes = []rune(desc)
+							desc = string(runes[:len(runes)-100])
+						}
+					}
+
 					if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
 						CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-						CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
+						CardDescription: sql.NullString{String: desc, Valid: desc != ""},
 						CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
 						CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
 						CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},

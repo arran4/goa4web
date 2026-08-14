@@ -1,5 +1,60 @@
 (function(){
     const uploadUrl = '/images/upload/image';
+
+    function finalizeUpload(form, error) {
+        if (!form) return;
+
+        let uploads = parseInt(form.dataset.activeUploads || '0', 10);
+        uploads--;
+        if (uploads < 0) uploads = 0;
+        form.dataset.activeUploads = uploads;
+
+        if (error) {
+            form.dataset.uploadError = 'true';
+        }
+
+        const btnId = form.dataset.submitButtonId;
+        let btn = null;
+        if (btnId) {
+            btn = document.getElementById(btnId);
+        }
+
+        let isPending = false;
+        if (btn && btn.disabled) {
+            isPending = true;
+        } else if (form.querySelector('textarea:disabled')) {
+            isPending = true;
+        }
+
+        if (uploads === 0 && isPending) {
+            if (btn) {
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    if (btn.tagName === 'INPUT') {
+                        btn.value = btn.dataset.originalText;
+                    } else {
+                        btn.innerHTML = btn.dataset.originalText;
+                    }
+                }
+            }
+
+            if (form.dataset.uploadError === 'true') {
+                form.dataset.uploadError = 'false';
+                const ta = form.querySelector('textarea');
+                if (ta) ta.disabled = false;
+                alert('An image upload failed. Please review your post before submitting.');
+            } else {
+                const ta = form.querySelector('textarea');
+                if (ta) ta.disabled = false;
+                if (btn) {
+                    btn.click();
+                } else {
+                    form.submit();
+                }
+            }
+        }
+    }
+
     function uuidv4(){
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
             const r = Math.random()*16|0, v = c=='x'?r:(r&0x3|0x8);
@@ -165,6 +220,7 @@
                         autoSize(e.target);
                     };
                 }
+                finalizeUpload(e.target.form, false);
             } else if (xhr.status === 403) {
                 let reason = xhr.responseText;
                 if (reason) {
@@ -181,6 +237,7 @@
                 if (statusDiv) {
                     statusDiv.innerText = 'Denied';
                 }
+                finalizeUpload(e.target.form, true);
             } else {
                 console.error('Image upload failed:', xhr.status, xhr.statusText, xhr.responseText);
                 const failedText = '[img upload failed]';
@@ -190,6 +247,7 @@
                 if (statusDiv) {
                     statusDiv.innerText = 'Failed';
                 }
+                finalizeUpload(e.target.form, true);
             }
         };
         xhr.onerror = function(){
@@ -205,7 +263,14 @@
                     statusDiv.innerText = 'Error';
                 }
             }
+            finalizeUpload(e.target.form, true);
         };
+
+        if (e.target.form) {
+            let uploads = parseInt(e.target.form.dataset.activeUploads || '0', 10);
+            e.target.form.dataset.activeUploads = uploads + 1;
+        }
+
         xhr.send(fd);
     }
 
@@ -275,6 +340,38 @@
             t.addEventListener('input', function(){
                 autoSize(this);
             });
+            if (t.form && !t.form.dataset.pasteimgSubmitBound) {
+                t.form.dataset.pasteimgSubmitBound = 'true';
+                t.form.addEventListener('submit', function(ev) {
+                    let uploads = parseInt(ev.target.dataset.activeUploads || '0', 10);
+                    if (uploads > 0) {
+                        ev.preventDefault();
+
+                        let btn = ev.submitter;
+                        if (!btn) {
+                            btn = ev.target.querySelector('button[type="submit"], input[type="submit"]');
+                        }
+
+                        if (btn) {
+                            if (!btn.id) {
+                                btn.id = 'submit-btn-' + uuidv4();
+                            }
+                            ev.target.dataset.submitButtonId = btn.id;
+
+                            if (btn.tagName === 'INPUT') {
+                                btn.dataset.originalText = btn.value;
+                                btn.value = 'Waiting for uploads...';
+                            } else {
+                                btn.dataset.originalText = btn.innerHTML;
+                                btn.innerHTML = 'Waiting for uploads...';
+                            }
+                            btn.disabled = true;
+                        }
+
+                        t.disabled = true;
+                    }
+                });
+            }
         });
     });
 })();

@@ -99,5 +99,6 @@
   "TEMPLATES_DIR": "",
   "TIMEZONE": "Australia/Melbourne",
   "TRUSTED_PROXIES": "",
-  "TWITTER_SITE": ""
+  "TWITTER_SITE": "",
+  "WEBAUTHN_ENABLED": "true"
 }

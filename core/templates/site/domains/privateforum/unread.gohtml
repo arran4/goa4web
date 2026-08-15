@@ -19,7 +19,7 @@
     {{ else }}
         {{ $base := "/private" }}
         <div class="thread-controls">
-            <input type="text" class="label-filter" placeholder="Filter by label...">
+            <input type="text" class="label-filter" placeholder="Filter by label, poster, or topic...">
             <div class="sort-buttons">
                 <span>Sort by:</span>
                 <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
@@ -33,7 +33,7 @@
                 <div class="thread-meta thread-header">
                     First poster: <span class="poster-name first" {{ if ne .Firstpostuserid.Int32 $.CD.UserID }}style="font-weight: bold;"{{ end }}>{{ .Firstpostusername.String }}</span>
                     At <span class="post-time first">{{ $.CD.LocalTime .Firstpostwritten.Time }}</span>
-                    in Topic: <strong>{{ .DisplayTitle | default "Untitled Topic" }}</strong>
+                    in Topic: <strong class="topic-name-filter">{{ .DisplayTitle | default "Untitled Topic" }}</strong>
                 </div>
                 <div class="thread-content foldable">
                     {{ .Firstposttext.String | a4code2html }}<br>

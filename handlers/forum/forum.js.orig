@@ -104,10 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (node.type === 'LogicalExpression') {
             if (node.operator === 'OR') {
-                return evaluateAST(node.left, labels, participants, posters, topics) || evaluateAST(node.right, labels, participants, posters, topics);
+                return evaluateAST(node.left, labels, participants) || evaluateAST(node.right, labels, participants);
             }
             if (node.operator === 'AND') {
-                return evaluateAST(node.left, labels, participants, posters, topics) && evaluateAST(node.right, labels, participants, posters, topics);
+                return evaluateAST(node.left, labels, participants) && evaluateAST(node.right, labels, participants);
             }
         }
 

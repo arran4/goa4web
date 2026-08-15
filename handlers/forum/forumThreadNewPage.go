@@ -41,6 +41,7 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
+	_ notif.GrantsRequiredProvider                  = (*CreateThreadTask)(nil)
 	_ tasks.EmailTemplatesRequired                  = (*CreateThreadTask)(nil)
 	_ searchworker.IndexedTask                      = CreateThreadTask{}
 )
@@ -109,6 +110,10 @@ func (CreateThreadTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.Gra
 		return []notif.GrantRequirement{{Section: section, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, nil
+}
+
+func (CreateThreadTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	return privateThreadSubscriberGrants(evt)
 }
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {

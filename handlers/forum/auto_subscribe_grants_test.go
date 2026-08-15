@@ -5,8 +5,46 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/eventbus"
+	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
+
+func TestPrivateForumTasksRequireThreadViewGrantForSubscriberDelivery(t *testing.T) {
+	evt := eventbus.TaskEvent{
+		Data: map[string]any{
+			postcountworker.EventKey: postcountworker.UpdateEventData{ThreadID: 55, TopicID: 44},
+		},
+		Path: "/private/topic/44/thread/55",
+	}
+	for name, task := range map[string]any{
+		"create thread": createThreadTask,
+		"reply":         replyTask,
+	} {
+		provider, ok := task.(notif.GrantsRequiredProvider)
+		if !ok {
+			t.Errorf("%s task does not filter subscriber delivery by grants", name)
+			continue
+		}
+		requirements, err := provider.GrantsRequired(evt)
+		if err != nil {
+			t.Errorf("%s GrantsRequired: %v", name, err)
+			continue
+		}
+		if len(requirements) != 1 {
+			t.Errorf("%s grant requirements = %d, want 1", name, len(requirements))
+			continue
+		}
+		want := notif.GrantRequirement{
+			Section: consts.PermissionSectionPrivateForumThread,
+			Item:    consts.PermissionItemThread,
+			ItemID:  55,
+			Action:  consts.PermissionActionView,
+		}
+		if requirements[0] != want {
+			t.Errorf("%s grant requirement = %+v, want %+v", name, requirements[0], want)
+		}
+	}
+}
 
 func TestHappyPathCreateThreadTaskAutoSubscribeGrants(t *testing.T) {
 	evt := eventbus.TaskEvent{

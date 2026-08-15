@@ -99,3 +99,22 @@ func TestSystemCopyPrivateTopicGrantsToThreadPreservesPrincipalsAndActions(t *te
 		}
 	}
 }
+
+func TestPrivateCommentReadQueriesBindParentGrantToTopicNamespace(t *testing.T) {
+	queries := map[string]string{
+		"comment":      getCommentByIdForUser,
+		"comment list": getCommentsByIdsForUserWithThreadInfo,
+		"thread":       getCommentsByThreadIdForUser,
+	}
+	checks := []string{
+		"((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))",
+		"((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))",
+	}
+	for name, query := range queries {
+		for _, check := range checks {
+			if !strings.Contains(query, check) {
+				t.Errorf("%s query does not bind its parent grant with %q", name, check)
+			}
+		}
+	}
+}

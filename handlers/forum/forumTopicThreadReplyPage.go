@@ -39,6 +39,7 @@ var (
 	_                notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 	_                notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
 	_                notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+	_                notif.GrantsRequiredProvider                  = (*ReplyTask)(nil)
 	_                tasks.EmailTemplatesRequired                  = (*ReplyTask)(nil)
 	_                searchworker.IndexedTask                      = ReplyTask{}
 )
@@ -104,6 +105,11 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 	}
 	return nil, nil
 }
+
+func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	return privateThreadSubscriberGrants(evt)
+}
+
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session := cd.GetSession()

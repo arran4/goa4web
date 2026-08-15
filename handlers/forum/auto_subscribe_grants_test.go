@@ -83,7 +83,7 @@ func TestHappyPathCreateThreadTaskAutoSubscribeGrants(t *testing.T) {
 	}
 }
 
-func TestCreateThreadTaskAutoSubscribeGrantsPrivateThread(t *testing.T) {
+func TestHappyPathCreateThreadTaskAutoSubscribeGrantsPrivateThread(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{
@@ -129,7 +129,7 @@ func TestHappyPathReplyTaskAutoSubscribeGrants(t *testing.T) {
 	}
 }
 
-func TestReplyTaskAutoSubscribeGrantsPrivateThread(t *testing.T) {
+func TestHappyPathReplyTaskAutoSubscribeGrantsPrivateThread(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{

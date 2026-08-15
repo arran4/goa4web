@@ -12,12 +12,13 @@ import (
 // UserCanCreateThread reports whether uid may create a thread in the topic.
 func UserCanCreateThread(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
-		ViewerID: uid,
-		Section:  section.String(),
-		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
-		Action:   consts.PermissionActionPost.String(),
-		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:               uid,
+		Section:                section.String(),
+		Item:                   sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
+		Action:                 consts.PermissionActionPost.String(),
+		ItemID:                 sql.NullInt32{Int32: topicID, Valid: true},
+		IsSpecificPrivateForum: (section.String() == "privateforum" || section.String() == "privateforum_thread") && topicID != 0,
+		UserID:                 sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err == nil {
 		return true, nil
@@ -33,12 +34,13 @@ func UserCanCreateThread(ctx context.Context, q db.Querier, section consts.Permi
 // UserCanCreateTopic reports whether uid may create a topic in the category.
 func UserCanCreateTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, categoryID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
-		ViewerID: uid,
-		Section:  section.String(),
-		Item:     sql.NullString{String: consts.PermissionItemCategory.String(), Valid: true},
-		Action:   consts.PermissionActionPost.String(),
-		ItemID:   sql.NullInt32{Int32: categoryID, Valid: true},
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:               uid,
+		Section:                section.String(),
+		Item:                   sql.NullString{String: consts.PermissionItemCategory.String(), Valid: true},
+		Action:                 consts.PermissionActionPost.String(),
+		ItemID:                 sql.NullInt32{Int32: categoryID, Valid: true},
+		IsSpecificPrivateForum: false,
+		UserID:                 sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err == nil {
 		return true, nil
@@ -54,12 +56,13 @@ func UserCanCreateTopic(ctx context.Context, q db.Querier, section consts.Permis
 // UserCanLabelTopic reports whether uid may add/remove labels on the topic.
 func UserCanLabelTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
-		ViewerID: uid,
-		Section:  section.String(),
-		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
-		Action:   consts.PermissionActionLabel.String(),
-		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
-		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerID:               uid,
+		Section:                section.String(),
+		Item:                   sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
+		Action:                 consts.PermissionActionLabel.String(),
+		ItemID:                 sql.NullInt32{Int32: topicID, Valid: true},
+		IsSpecificPrivateForum: (section.String() == "privateforum" || section.String() == "privateforum_thread") && topicID != 0,
+		UserID:                 sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err == nil {
 		return true, nil

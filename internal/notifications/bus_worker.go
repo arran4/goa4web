@@ -382,12 +382,13 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 				for id := range m {
 					for _, g := range reqs {
 						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
-							ViewerID: id,
-							Section:  g.Section.String(),
-							Item:     sql.NullString{String: g.Item.String(), Valid: g.Item != ""},
-							Action:   g.Action.String(),
-							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
-							UserID:   sql.NullInt32{Int32: id, Valid: id != 0},
+							ViewerID:               id,
+							Section:                g.Section.String(),
+							Item:                   sql.NullString{String: g.Item.String(), Valid: g.Item != ""},
+							Action:                 g.Action.String(),
+							ItemID:                 sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
+							IsSpecificPrivateForum: (g.Section.String() == "privateforum" || g.Section.String() == "privateforum_thread") && g.ItemID != 0,
+							UserID:                 sql.NullInt32{Int32: id, Valid: id != 0},
 						}); err != nil {
 							delete(m, id)
 							break
@@ -463,12 +464,13 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 					}
 					for _, g := range reqs {
 						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
-							ViewerID: userID,
-							Section:  g.Section.String(),
-							Item:     sql.NullString{String: g.Item.String(), Valid: g.Item != ""},
-							Action:   g.Action.String(),
-							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
-							UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
+							ViewerID:               userID,
+							Section:                g.Section.String(),
+							Item:                   sql.NullString{String: g.Item.String(), Valid: g.Item != ""},
+							Action:                 g.Action.String(),
+							ItemID:                 sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
+							IsSpecificPrivateForum: (g.Section.String() == "privateforum" || g.Section.String() == "privateforum_thread") && g.ItemID != 0,
+							UserID:                 sql.NullInt32{Int32: userID, Valid: userID != 0},
 						}); err != nil {
 							return false
 						}

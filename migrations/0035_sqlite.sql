@@ -1,0 +1,2 @@
+-- +goose Up
+-- ALTER TABLE user_roles CHANGE COLUMN idpermissions iduser_roles INT NOT NULL AUTO_INCREMENT;

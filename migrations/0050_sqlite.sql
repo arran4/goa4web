@@ -1,0 +1,9 @@
+-- +goose Up
+CREATE TABLE IF NOT EXISTS faq_revisions (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+faq_id INT NOT NULL,
+users_idusers INT NOT NULL,
+question TEXT,
+answer TEXT,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

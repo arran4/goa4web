@@ -1,0 +1,12 @@
+-- +goose Up
+ALTER TABLE comments ADD COLUMN last_index datetime DEFAULT NULL;
+
+ALTER TABLE site_news ADD COLUMN last_index datetime DEFAULT NULL;
+
+ALTER TABLE blogs ADD COLUMN last_index datetime DEFAULT NULL;
+
+ALTER TABLE writing ADD COLUMN last_index datetime DEFAULT NULL;
+
+ALTER TABLE linker ADD COLUMN last_index datetime DEFAULT NULL;
+
+ALTER TABLE imagepost ADD COLUMN last_index datetime DEFAULT NULL;

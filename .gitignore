@@ -125,3 +125,17 @@ cmd/goa4web/cert.pem
 cmd/goa4web/key.pem
 node_modules
 /.data/cache/
+fix_*
+sqlc.sqlite.*
+error*
+fix_*
+generate_sqlite_schema.py
+sqlc.sqlite.*
+build_err.log
+test_out.log
+out.txt
+
+error*.log
+fix_*
+generate_sqlite_schema.py
+sqlc.sqlite.*

@@ -1,0 +1,7 @@
+-- +goose Up
+CREATE TABLE admin_request_comments (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+request_id INT NOT NULL,
+comment TEXT NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

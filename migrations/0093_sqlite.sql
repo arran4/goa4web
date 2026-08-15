@@ -1,0 +1,2 @@
+-- +goose Up
+-- ALTER TABLE external_links MODIFY card_description TEXT;

@@ -1,0 +1,12 @@
+-- +goose Up
+CREATE TABLE IF NOT EXISTS passwords (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+users_idusers INT NOT NULL,
+passwd TEXT NOT NULL,
+passwd_algorithm TEXT,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ALTER TABLE users
+    DROP COLUMN IF EXISTS passwd,
+    DROP COLUMN IF EXISTS passwd_algorithm;

@@ -1,0 +1,2 @@
+-- +goose Up
+-- ALTER TABLE user_roles DROP COLUMN section;

@@ -111,9 +111,10 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 				Locked:                 rt.Locked,
 				DeletedAt:              rt.DeletedAt,
 				Lastposterusername:     rt.LastPosterName,
-				Firstpostuserid:        sql.NullInt32{},
-				Firstpostwritten:       sql.NullTime{},
+				Firstpostuserid:        rt.Firstpostuserid,
+				Firstpostwritten:       rt.Firstpostwritten,
 				Firstposttext:          rt.FirstPostText,
+				Firstpostusername:     rt.Firstpostusername,
 			},
 			Labels: labels,
 		})

@@ -1512,10 +1512,14 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
        c.text as first_post_text,
        t.comments as total_comments,
        t.idforumthread,
-       u.username as last_poster_name
+       u.username as last_poster_name,
+       cu.username as firstpostusername,
+       cu.idusers as firstpostuserid,
+       c.written as firstpostwritten
 FROM forumthread t
 LEFT JOIN comments c ON t.firstpost = c.idcomments
 LEFT JOIN users u ON t.lastposter = u.idusers
+LEFT JOIN users cu ON c.users_idusers = cu.idusers
 WHERE t.reply_to_thread_id = ?
 ORDER BY t.lastaddition DESC
 `
@@ -1535,6 +1539,9 @@ type GetReplyThreadsForThreadRow struct {
 	TotalComments          sql.NullInt32
 	Idforumthread_2        int32
 	LastPosterName         sql.NullString
+	Firstpostusername      sql.NullString
+	Firstpostuserid        sql.NullInt32
+	Firstpostwritten       sql.NullTime
 }
 
 func (q *Queries) GetReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) ([]*GetReplyThreadsForThreadRow, error) {
@@ -1561,6 +1568,9 @@ func (q *Queries) GetReplyThreadsForThread(ctx context.Context, replyToThreadID 
 			&i.TotalComments,
 			&i.Idforumthread_2,
 			&i.LastPosterName,
+			&i.Firstpostusername,
+			&i.Firstpostuserid,
+			&i.Firstpostwritten,
 		); err != nil {
 			return nil, err
 		}

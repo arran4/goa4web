@@ -22,7 +22,7 @@
             {{- range $threads }}
                 <div class="thread" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-creation-time="{{ .Firstpostwritten.Time.Unix }}" data-comments="{{ .Comments.Int32 }}">
                     <div class="thread-meta thread-header">
-                        First poster: <span class="poster-name first" {{ if ne .Firstpostuserid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Firstpostusername.String }}</span>
+                        Forked at: <span class="poster-name first" {{ if ne .Firstpostuserid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Firstpostusername.String }}</span>
                         At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
                     </div>
                     <div class="thread-content foldable">

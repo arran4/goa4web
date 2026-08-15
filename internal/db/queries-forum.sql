@@ -722,10 +722,14 @@ SELECT t.*,
        c.text as first_post_text,
        t.comments as total_comments,
        t.idforumthread,
-       u.username as last_poster_name
+       u.username as last_poster_name,
+       cu.username as firstpostusername,
+       cu.idusers as firstpostuserid,
+       c.written as firstpostwritten
 FROM forumthread t
 LEFT JOIN comments c ON t.firstpost = c.idcomments
 LEFT JOIN users u ON t.lastposter = u.idusers
+LEFT JOIN users cu ON c.users_idusers = cu.idusers
 WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
 ORDER BY t.lastaddition DESC;
 

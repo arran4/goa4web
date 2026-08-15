@@ -1,0 +1,18 @@
+--- handlers/externallink/tasks_test.go
++++ handlers/externallink/tasks_test.go
+@@ -53,6 +53,7 @@
+			})
+
+			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key), common.WithHTTPClient(client))
++			cd.SetEvent(&eventbus.TaskEvent{})
+
+			u := "/?u=" + url.QueryEscape(link) + "&sig=" + sig
+			req := httptest.NewRequest(http.MethodPost, u, nil)
+@@ -107,6 +108,7 @@
+			})
+
+			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key), common.WithHTTPClient(client))
++			cd.SetEvent(&eventbus.TaskEvent{})
+
+			u := "/?id=" + idStr + "&sig=" + sig
+			req := httptest.NewRequest(http.MethodPost, u, nil)

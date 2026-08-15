@@ -1,0 +1,48 @@
+--- handlers/externallink/tasks_test.go
++++ handlers/externallink/tasks_test.go
+@@ -35,6 +35,10 @@
+			qs.UpdateExternalLinkImageCacheFn = func(ctx context.Context, arg db.UpdateExternalLinkImageCacheParams) error {
+				return nil
+			}
++			qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
++				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
++			}
++
+
+			link := "https://example.com/some/link"
+			sig := sign.Sign("link:"+link, key)
+@@ -64,6 +68,12 @@
+			if string(val) != u+"&msg=Reloading+Open+Graph+data+in+the+background..." {
+				t.Errorf("Expected '%s', got '%s'", u+"&msg=Reloading+Open+Graph+data+in+the+background...", string(val))
+			}
++
++			// Verify task was set
++			evtTask := cd.Event().Task
++			if evtTask == nil {
++				t.Errorf("Expected Task to be set in cd.Event()")
++			}
+		})
+
+		t.Run("Action with ID", func(t *testing.T) {
+@@ -77,6 +87,9 @@
+				// Should find existing or just update
+				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
+			}
++			qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
++				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
++			}
+			qs.UpdateExternalLinkMetadataFn = func(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
+				if arg.ID != 123 {
+					t.Errorf("Expected ID 123, got %d", arg.ID)
+@@ -107,6 +120,12 @@
+			if _, ok := res.(handlers.RedirectHandler); !ok {
+				t.Fatalf("Expected handlers.RedirectHandler, got %T", res)
+			}
++
++			// Verify task was set
++			evtTask := cd.Event().Task
++			if evtTask == nil {
++				t.Errorf("Expected Task to be set in cd.Event()")
++			}
+		})
+	})

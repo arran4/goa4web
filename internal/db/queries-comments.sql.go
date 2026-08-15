@@ -148,7 +148,7 @@ WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = ?
       AND (g.item = ? OR g.item IS NULL)
-      AND g.action = 'reply'
+      AND g.action = ?
       AND g.active = 1
       AND (g.item_id = ? OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -167,6 +167,7 @@ type CreateCommentInSectionForCommenterParams struct {
 	Timezone      sql.NullString
 	Section       string
 	ItemType      sql.NullString
+	Action        string
 	ItemID        sql.NullInt32
 }
 
@@ -180,6 +181,7 @@ func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg Cr
 		arg.Timezone,
 		arg.Section,
 		arg.ItemType,
+		arg.Action,
 		arg.ItemID,
 		arg.CommenterID,
 		arg.CommenterID,

@@ -35,6 +35,9 @@ func TestCreatePrivateForumCommentUsesPrivateThreadGrant(t *testing.T) {
 	if !call.ItemID.Valid || call.ItemID.Int32 != 4 {
 		t.Errorf("grant item ID = %#v, want thread ID 4", call.ItemID)
 	}
+	if call.Action != consts.PermissionActionReply.String() {
+		t.Errorf("grant action = %q, want reply", call.Action)
+	}
 }
 
 func TestPrivateForumThreadActions(t *testing.T) {

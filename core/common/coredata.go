@@ -2182,6 +2182,10 @@ func (cd *CoreData) SelectedLinkerThreadCanReply() bool {
 }
 
 func (cd *CoreData) CreateCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenter(section, itemType, consts.PermissionActionReply, itemID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) createCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
 	}
@@ -2204,6 +2208,7 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section consts.Permission
 		Section:       section.String(),
 		ItemType:      sql.NullString{String: itemType.String(), Valid: itemType != ""},
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
+		Action:        action.String(),
 	})
 	if err != nil {
 		return 0, err
@@ -2227,6 +2232,16 @@ func (cd *CoreData) CreateForumCommentForCommenter(commenterID, threadID, topicI
 
 func (cd *CoreData) CreatePrivateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionPrivateForumThread, consts.PermissionItemThread, threadID, threadID, commenterID, languageID, text)
+}
+
+// CreateForumOpeningCommentForPoster creates a public thread's opening comment using the parent topic's post grant.
+func (cd *CoreData) CreateForumOpeningCommentForPoster(posterID, threadID, topicID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenter(consts.PermissionSectionForum, consts.PermissionItemTopic, consts.PermissionActionPost, topicID, threadID, posterID, languageID, text)
+}
+
+// CreatePrivateForumOpeningCommentForPoster creates a private thread's opening comment using the parent topic's post grant.
+func (cd *CoreData) CreatePrivateForumOpeningCommentForPoster(posterID, threadID, topicID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenter(consts.PermissionSectionPrivateForum, consts.PermissionItemTopic, consts.PermissionActionPost, topicID, threadID, posterID, languageID, text)
 }
 
 func (cd *CoreData) CreateBlogCommentForCommenter(commenterID, threadID, entryID, languageID int32, text string) (int64, error) {

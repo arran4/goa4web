@@ -291,13 +291,13 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
 			return fmt.Errorf("copying private topic grants to thread: %w", err)
 		}
-		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+		cid, err = cd.CreatePrivateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
 			return fmt.Errorf("creating private topic comment: %w", err)
 		}
 	} else {
-		cid, err = cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+		cid, err = cd.CreateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
 			return fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err))

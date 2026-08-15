@@ -49,6 +49,14 @@ func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThrea
 	return cd.ForumThreadByID(id, ops...)
 }
 
+// AdminForumThreadByID returns a thread without applying user-facing grants.
+func (cd *CoreData) AdminForumThreadByID(id int32) (*db.AdminGetForumThreadByIdRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	return cd.queries.AdminGetForumThreadById(cd.ctx, id)
+}
+
 // ForumThreads loads the threads for a forum topic once per topic.
 func (cd *CoreData) ForumThreads(topicID int32) ([]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
 	if cd.cache.forumThreads == nil {

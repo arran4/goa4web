@@ -15,13 +15,21 @@ func privateThreadSubscriberGrants(evt eventbus.TaskEvent) ([]notif.GrantRequire
 		return nil, nil
 	}
 	data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData)
-	if !ok || data.ThreadID == 0 {
+	if !ok || data.TopicID == 0 || data.ThreadID == 0 {
 		return nil, fmt.Errorf("private thread notification context not provided")
 	}
-	return []notif.GrantRequirement{{
-		Section: consts.PermissionSectionPrivateForumThread,
-		Item:    consts.PermissionItemThread,
-		ItemID:  data.ThreadID,
-		Action:  consts.PermissionActionView,
-	}}, nil
+	return []notif.GrantRequirement{
+		{
+			Section: consts.PermissionSectionPrivateForum,
+			Item:    consts.PermissionItemTopic,
+			ItemID:  data.TopicID,
+			Action:  consts.PermissionActionView,
+		},
+		{
+			Section: consts.PermissionSectionPrivateForumThread,
+			Item:    consts.PermissionItemThread,
+			ItemID:  data.ThreadID,
+			Action:  consts.PermissionActionView,
+		},
+	}, nil
 }

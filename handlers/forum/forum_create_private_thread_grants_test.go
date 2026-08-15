@@ -76,6 +76,22 @@ func TestCreatePrivateThreadDoesNotSynthesizeParticipantReplyGrant(t *testing.T)
 	if got := queries.SystemCopyPrivateTopicGrantsToThreadCalls[0]; got != wantCopy {
 		t.Errorf("topic grant copy = %#v, want %#v", got, wantCopy)
 	}
+	if len(queries.CreateCommentInSectionForCommenterCalls) != 1 {
+		t.Fatalf("opening comment calls = %d, want 1", len(queries.CreateCommentInSectionForCommenterCalls))
+	}
+	openingComment := queries.CreateCommentInSectionForCommenterCalls[0]
+	if openingComment.Section != consts.PermissionSectionPrivateForum.String() {
+		t.Errorf("opening comment section = %q, want %q", openingComment.Section, consts.PermissionSectionPrivateForum)
+	}
+	if !openingComment.ItemType.Valid || openingComment.ItemType.String != consts.PermissionItemTopic.String() {
+		t.Errorf("opening comment item = %#v, want topic", openingComment.ItemType)
+	}
+	if !openingComment.ItemID.Valid || openingComment.ItemID.Int32 != topicID {
+		t.Errorf("opening comment item ID = %#v, want topic %d", openingComment.ItemID, topicID)
+	}
+	if openingComment.Action != consts.PermissionActionPost.String() {
+		t.Errorf("opening comment action = %q, want %q", openingComment.Action, consts.PermissionActionPost)
+	}
 
 	for _, call := range queries.AdminCreateGrantCalls {
 		if call.UserID.Valid && call.UserID.Int32 == participantID && call.Action == consts.PermissionActionReply.String() {

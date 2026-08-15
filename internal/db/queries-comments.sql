@@ -139,7 +139,7 @@ WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)
       AND (g.item = sqlc.arg(item_type) OR g.item IS NULL)
-      AND g.action = 'reply'
+      AND g.action = sqlc.arg(action)
       AND g.active = 1
       AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
       AND (g.user_id = sqlc.narg(commenter_id) OR g.user_id IS NULL)

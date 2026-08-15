@@ -9,40 +9,53 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
-func TestPrivateForumTasksRequireThreadViewGrantForSubscriberDelivery(t *testing.T) {
+func TestHappyPathPrivateForumTasksRequireParentAndThreadViewGrantsForSubscriberDelivery(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
 			postcountworker.EventKey: postcountworker.UpdateEventData{ThreadID: 55, TopicID: 44},
 		},
 		Path: "/private/topic/44/thread/55",
 	}
-	for name, task := range map[string]any{
-		"create thread": createThreadTask,
-		"reply":         replyTask,
-	} {
-		provider, ok := task.(notif.GrantsRequiredProvider)
-		if !ok {
-			t.Errorf("%s task does not filter subscriber delivery by grants", name)
-			continue
-		}
-		requirements, err := provider.GrantsRequired(evt)
-		if err != nil {
-			t.Errorf("%s GrantsRequired: %v", name, err)
-			continue
-		}
-		if len(requirements) != 1 {
-			t.Errorf("%s grant requirements = %d, want 1", name, len(requirements))
-			continue
-		}
-		want := notif.GrantRequirement{
+	tests := []struct {
+		name string
+		task any
+	}{
+		{name: "create thread", task: createThreadTask},
+		{name: "reply", task: replyTask},
+	}
+	want := []notif.GrantRequirement{
+		{
+			Section: consts.PermissionSectionPrivateForum,
+			Item:    consts.PermissionItemTopic,
+			ItemID:  44,
+			Action:  consts.PermissionActionView,
+		},
+		{
 			Section: consts.PermissionSectionPrivateForumThread,
 			Item:    consts.PermissionItemThread,
 			ItemID:  55,
 			Action:  consts.PermissionActionView,
-		}
-		if requirements[0] != want {
-			t.Errorf("%s grant requirement = %+v, want %+v", name, requirements[0], want)
-		}
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider, ok := test.task.(notif.GrantsRequiredProvider)
+			if !ok {
+				t.Fatalf("task does not filter subscriber delivery by grants")
+			}
+			requirements, err := provider.GrantsRequired(evt)
+			if err != nil {
+				t.Fatalf("GrantsRequired: %v", err)
+			}
+			if len(requirements) != len(want) {
+				t.Fatalf("grant requirements = %d, want %d", len(requirements), len(want))
+			}
+			for i := range want {
+				if requirements[i] != want[i] {
+					t.Errorf("grant requirement %d = %+v, want %+v", i, requirements[i], want[i])
+				}
+			}
+		})
 	}
 }
 

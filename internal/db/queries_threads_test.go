@@ -118,3 +118,15 @@ func TestPrivateCommentReadQueriesBindParentGrantToTopicNamespace(t *testing.T) 
 		}
 	}
 }
+
+func TestGetThreadLastPosterAndPermsForUserBindsParentGrantToHandler(t *testing.T) {
+	checks := []string{
+		"((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))",
+		"((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))",
+	}
+	for _, check := range checks {
+		if !strings.Contains(getThreadLastPosterAndPermsForUser, check) {
+			t.Errorf("ForUser thread query does not bind its parent grant with %q", check)
+		}
+	}
+}

@@ -71,7 +71,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	threadRow, err := cd.Queries().AdminGetForumThreadById(r.Context(), int32(threadID))
+	threadRow, err := cd.AdminForumThreadByID(int32(threadID))
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "/admin/forum/threads", err)
 		return

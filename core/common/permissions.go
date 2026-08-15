@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -14,6 +15,17 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 	if cd.IsAdmin() {
 		return true
 	}
+
+	// Index navigation historically asks for view permission at item ID zero.
+	// For the private forum, discovery of the area is intentionally governed by
+	// the global topic/see grant; topic/view remains scoped to actual topic IDs.
+	if section == consts.PermissionSectionPrivateForum.String() &&
+		item == consts.PermissionItemTopic.String() &&
+		action == consts.PermissionActionView.String() &&
+		itemID == 0 {
+		action = consts.PermissionActionSee.String()
+	}
+
 	if cd.queries == nil {
 		if cd.cache.testGrants != nil {
 			for _, g := range cd.cache.testGrants {

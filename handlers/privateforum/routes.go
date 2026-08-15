@@ -93,7 +93,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
 	pr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods(http.MethodGet, http.MethodHead)
 
-	pr.Handle("/topic/{topic}/thread/{thread}/replythreads", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(forumhandlers.ReplyThreadsPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/thread/{thread}/replies", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(forumhandlers.ReplyThreadsPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.Handle("/topic/{topic}/thread/{thread}", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskDoneAutoRefreshPage))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 	pr.Handle("/topic/{topic}/thread/{thread}/reply", forumhandlers.RequireThreadAndTopic(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ReplyTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ReplyTaskHandler.Matcher())

@@ -3,23 +3,19 @@ package forum
 import (
 	"fmt"
 	"net/http"
-	"github.com/arran4/goa4web/core/common"
 	"strconv"
-
-
-	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/tasks"
-
 	"database/sql"
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
-const ReplyThreadsPageTmpl tasks.Template = "domains/forum/replythreadsPage.gohtml"
-
-
-
+const ReplyThreadsPageTmpl tasks.Template = "domains/forum/repliesPage.gohtml"
 
 func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -39,10 +35,15 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type threadWithLabels struct {
+		db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
+		Labels []templates.TopicLabel
+	}
+
 	type Data struct {
 		Topic        *db.GetForumTopicByIdForUserRow
 		Thread       *db.GetThreadLastPosterAndPermsForUserRow
-		ReplyThreads []*db.GetReplyThreadsForThreadRow
+		Threads 	 []*threadWithLabels
 	}
 
 	uid, _ := cd.GetSession().Values["UID"].(int32)
@@ -61,7 +62,7 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 
 	thread, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
-		ThreadID: int32(threadId),
+		ThreadID: 	   int32(threadId),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
@@ -77,11 +78,46 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var mappedThreads []*threadWithLabels
+	for _, rt := range replyThreads {
+		var labels []templates.TopicLabel
+		if pub, author, err := cd.ThreadPublicLabels(rt.Idforumthread); err == nil {
+			for _, l := range pub {
+				labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
+			}
+			for _, l := range author {
+				labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
+			}
+		}
+		if priv, err := cd.ThreadPrivateLabels(rt.Idforumthread, rt.Lastposter); err == nil {
+			for _, l := range priv {
+				labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
+			}
+		}
+		mappedThreads = append(mappedThreads, &threadWithLabels{
+			GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
+				Idforumthread:          rt.Idforumthread,
+				Firstpost:              rt.Firstpost,
+				Lastposter:             rt.Lastposter,
+				ForumtopicIdforumtopic: rt.ForumtopicIdforumtopic,
+				Comments:               rt.TotalComments,
+				Lastaddition:           rt.Lastaddition,
+				Locked:                 rt.Locked,
+				DeletedAt:              rt.DeletedAt,
+				Lastposterusername:     rt.LastPosterName,
+				Firstpostuserid:        sql.NullInt32{},
+				Firstpostwritten:       sql.NullTime{},
+				Firstposttext:          rt.FirstPostText,
+			},
+			Labels: labels,
+		})
+	}
+
 	cd.PageTitle = "Reply Threads - " + topic.Title.String
 	data := Data{
 		Topic:        topic,
 		Thread:       thread,
-		ReplyThreads: replyThreads,
+		Threads:      mappedThreads,
 	}
 
 	if err := ReplyThreadsPageTmpl.Handle(w, r, data); err != nil {

@@ -1,0 +1,17 @@
+{{ template "head" . }}
+<link rel="stylesheet" href="{{ assetHash "/forum/forum.css" }}">
+<script src="{{ assetHash "/forum/forum.js" }}"></script>
+
+<h1 class="page-title">Replies to <a href="{{ cd.ForumBasePath }}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}">#{{.Thread.Idforumthread}}</a></h1>
+
+{{ if eq (len .Threads) 0 }}
+    <p>No replies found.</p>
+{{ else }}
+    {{ template "topicThreads" . }}
+{{ end }}
+
+<div class="back-link" style="margin-top: 1rem;">
+    <a href="{{ cd.ForumBasePath }}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}">← Back to Thread</a>
+</div>
+
+{{ template "tail" . }}

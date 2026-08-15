@@ -172,9 +172,9 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 				var text string
 				switch quoteType {
 				case "paragraph":
-					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
+					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote()) + "\n\n"
 				case "full":
-					text = a4code.QuoteText(c.Username.String, c.Text.String)
+					text = a4code.QuoteText(c.Username.String, c.Text.String) + "\n\n"
 				case "selected":
 					start, _ := strconv.Atoi(r.URL.Query().Get("quote_start"))
 					end, _ := strconv.Atoi(r.URL.Query().Get("quote_end"))
@@ -182,9 +182,9 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 					if err != nil {
 						log.Printf("Substring error: %v", err)
 					}
-					text = a4code.QuoteText(c.Username.String, sub)
+					text = a4code.QuoteText(c.Username.String, sub) + "\n\n"
 				default:
-					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote())
+					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote()) + "\n\n"
 				}
 
 				// Append a link back to the original thread/comment.

@@ -102,14 +102,11 @@ func (CreateThreadTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.Gra
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
-		section := strings.TrimPrefix(base, "/")
-		switch section {
-		case "private":
-			section = "privateforum"
-		case "":
-			section = "forum"
+		section := consts.PermissionSectionForum
+		if base == "/private" {
+			section = consts.PermissionSectionPrivateForumThread
 		}
-		return []notif.GrantRequirement{{Section: section, Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+		return []notif.GrantRequirement{{Section: section, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, nil
 }
@@ -237,9 +234,9 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	section := strings.TrimPrefix(base, "/")
-	if section == "private" {
-		section = "privateforum"
+	section := consts.PermissionSectionForum
+	if base == "/private" {
+		section = consts.PermissionSectionPrivateForum
 	}
 	allowed, err := UserCanCreateThread(r.Context(), queries, section, int32(topicId), uid)
 	if err != nil {

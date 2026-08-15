@@ -116,7 +116,7 @@ func (UpdateWritingTask) RequiredTemplates() []tasks.Template {
 
 func (UpdateWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
-		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}, nil
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionWriting, Item: consts.PermissionItemArticle, ItemID: t.ID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, fmt.Errorf("target not provided")
 }

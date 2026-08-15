@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/arran4/go-be-lazy"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -320,8 +321,8 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 	return cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
 		UserID:   uid,
 		RoleID:   rid,
-		Section:  "privateforum_thread",
-		Item:     sql.NullString{String: "thread", Valid: true},
+		Section:  consts.PermissionSectionPrivateForumThread.String(),
+		Item:     sql.NullString{String: consts.PermissionItemThread.String(), Valid: true},
 		RuleType: "allow",
 		ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
 		ItemRule: sql.NullString{},

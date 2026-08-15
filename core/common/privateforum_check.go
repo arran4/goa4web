@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"slices"
@@ -89,7 +90,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		}
 
 		// Rule 2.5: Clean up legacy 'edit' topic grants
-		if grant.Section == "privateforum" && grant.Item.String == "topic" && grant.Action == "edit" {
+		if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() && grant.Action == consts.PermissionActionEdit.String() {
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -108,7 +109,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 
 		// Track user access
 		if grant.UserID.Valid {
-			if grant.Section == "privateforum" && grant.Item.String == "topic" {
+			if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() {
 				if userTopicAccess[userID] == nil {
 					userTopicAccess[userID] = make(map[int32]map[string]bool)
 				}
@@ -116,7 +117,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					userTopicAccess[userID][grant.ItemID.Int32] = make(map[string]bool)
 				}
 				userTopicAccess[userID][grant.ItemID.Int32][grant.Action] = true
-			} else if grant.Section == "privateforum_thread" && grant.Item.String == "thread" {
+			} else if grant.Section == consts.PermissionSectionPrivateForumThread.String() && grant.Item.String == consts.PermissionItemThread.String() {
 				if userThreadAccess[userID] == nil {
 					userThreadAccess[userID] = make(map[int32]map[string]bool)
 				}
@@ -143,7 +144,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 
 	// Rule 3: Check if user has thread access but NO topic access
 	for _, grant := range grants {
-		if !grant.UserID.Valid || grant.Section != "privateforum_thread" || grant.Item.String != "thread" || !grant.ItemID.Valid {
+		if !grant.UserID.Valid || grant.Section != consts.PermissionSectionPrivateForumThread.String() || grant.Item.String != consts.PermissionItemThread.String() || !grant.ItemID.Valid {
 			continue
 		}
 
@@ -186,8 +187,8 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					if !userThreadAccess[userID][threadID][action] {
 						inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 							ID:        fmt.Sprintf("create-%d-thread-%d-%s", userID, threadID, action),
-							Section:   "privateforum_thread",
-							Item:      "thread",
+							Section:   consts.PermissionSectionPrivateForumThread.String(),
+							Item:      consts.PermissionItemThread.String(),
 							Action:    action,
 							ItemID:    threadID,
 							UserID:    userID,

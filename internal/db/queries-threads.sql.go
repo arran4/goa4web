@@ -482,7 +482,7 @@ WHERE th.idforumthread=?
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   ) AND (t.handler IS NULL OR t.handler != 'private' OR EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='privateforum')
+    WHERE g.section='privateforum_thread'
       AND g.item='thread'
       AND g.action='view'
       AND g.active=1

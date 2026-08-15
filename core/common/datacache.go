@@ -36,7 +36,7 @@ type DataCache struct {
 	forumCategories               lazy.Value[[]*db.Forumcategory]
 	forumComments                 map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
 	forumThreadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
-	forumThreadRows               map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
+	forumThreadRows               map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsForUserRow]
 	forumThreads                  map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
 	forumTopicLists               map[int32]*lazy.Value[[]*db.GetForumTopicsForUserRow]
 	forumTopics                   map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]

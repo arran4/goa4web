@@ -36,7 +36,7 @@ func TestHappyPathAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	q.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{
 		{Idcomments: 1},
 	}
-	q.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+	q.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
 		Idforumthread: 1,
 	}
 

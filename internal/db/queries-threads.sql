@@ -70,7 +70,7 @@ JOIN
 ORDER BY t.idforumthread
 LIMIT ? OFFSET ?;
 
--- name: GetThreadLastPosterAndPerms :one
+-- name: GetThreadLastPosterAndPermsForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION

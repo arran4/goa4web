@@ -2022,7 +2022,7 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 }
 
 // SelectedThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) SelectedThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) SelectedThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 	if cd.currentThreadID == 0 {
 		// Attempt to resolve thread ID from selected linker item
 		if cd.currentLinkID != 0 {
@@ -2077,7 +2077,7 @@ func (cd *CoreData) SelectedSectionThreadComments() ([]*db.GetCommentsByThreadId
 }
 
 // SelectedThreadLoaded returns the cached current thread without database access.
-func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
+func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsForUserRow {
 	if cd.cache.forumThreadRows == nil {
 		return nil
 	}

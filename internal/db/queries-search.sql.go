@@ -347,6 +347,20 @@ WHERE swl.word=?
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND (
+      ft.handler IS NULL
+      OR ft.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = fth.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 `
 
 type ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams struct {
@@ -371,6 +385,7 @@ func (q *Queries) ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx 
 	}
 	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -430,6 +445,20 @@ WHERE swl.word=?
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND (
+      ft.handler IS NULL
+      OR ft.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = fth.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 `
 
 type ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams struct {
@@ -444,6 +473,7 @@ func (q *Queries) ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(c
 		arg.Word,
 		arg.ListerID,
 		arg.ListerID,
+		arg.UserID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -504,6 +534,20 @@ WHERE swl.word=?
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND (
+      ft.handler IS NULL
+      OR ft.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = fth.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 `
 
 type ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams struct {
@@ -537,6 +581,7 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx c
 	}
 	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -597,6 +642,20 @@ WHERE swl.word=?
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND (
+      ft.handler IS NULL
+      OR ft.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = fth.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 `
 
 type ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams struct {
@@ -621,6 +680,7 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ct
 	}
 	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UserID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {

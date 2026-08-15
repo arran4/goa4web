@@ -13,7 +13,7 @@ func TestGlobalItemGrantQueries(t *testing.T) {
 	}{
 		{"UpdatePublicProfileEnabledAtForUser", updatePublicProfileEnabledAtForUser, "public_profile"},
 		{"GetForumTopicByIdForUser", getForumTopicByIdForUser, "topic"},
-		{"GetThreadLastPosterAndPerms", getThreadLastPosterAndPerms, "topic"},
+		{"GetThreadLastPosterAndPermsForUser", getThreadLastPosterAndPermsForUser, "topic"},
 		{"GetImagePostByIDForLister", getImagePostByIDForLister, "board"},
 		{"GetWritingForListerByID", getWritingForListerByID, "article"},
 		{"UpdateNewsPostForWriter", updateNewsPostForWriter, "post"},

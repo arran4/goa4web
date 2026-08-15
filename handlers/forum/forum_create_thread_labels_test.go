@@ -57,8 +57,8 @@ func TestHappyPathCreateThreadLabels(t *testing.T) {
 		return 1, nil
 	}
 	// Mock for HandleThreadUpdated -> notifications
-	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-		return &db.GetThreadLastPosterAndPermsRow{
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
 			Idforumthread:          newThreadID,
 			ForumtopicIdforumtopic: topicID,
 			Lastposterusername:     sql.NullString{String: "creator", Valid: true},

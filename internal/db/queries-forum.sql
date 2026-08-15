@@ -335,6 +335,20 @@ WHERE th.forumtopic_idforumtopic=sqlc.arg(topic_id)
       AND (g.user_id = sqlc.arg(viewer_match_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = sqlc.arg(viewer_match_id) OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 ORDER BY th.lastaddition DESC;
 
 -- name: ListPrivateTopicsByUserID :many
@@ -483,7 +497,12 @@ WHERE (g.item = 'topic')
   AND g.item_id = sqlc.arg(topic_id)
   AND g.active = 1;
 
--- name: GetPrivateTopicThreadsAndLabels :many
+-- name: GetPrivateTopicThreadsAndLabelsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(user_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
 SELECT th.idforumthread, c.users_idusers AS author_id, cpl.label, cpl.invert
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
@@ -491,7 +510,17 @@ LEFT JOIN content_private_labels cpl
     ON cpl.item = 'thread'
     AND cpl.item_id = th.idforumthread
     AND cpl.user_id = sqlc.arg(user_id)
-WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id);
+WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id)
+  AND EXISTS (
+      SELECT 1 FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.action = 'view'
+        AND thread_grant.active = 1
+        AND thread_grant.item_id = th.idforumthread
+        AND (thread_grant.user_id = sqlc.narg(viewer_match_id) OR thread_grant.user_id IS NULL)
+        AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+  );
 
 
 -- name: ListUnreadPrivateThreadsForUser :many
@@ -529,6 +558,16 @@ WHERE t.handler = 'private'
       AND g.item_id = t.idforumtopic
       AND (g.user_id = sqlc.arg(grant_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.action = 'view'
+        AND thread_grant.active = 1
+        AND thread_grant.item_id = th.idforumthread
+        AND (thread_grant.user_id = sqlc.arg(grant_user_id) OR thread_grant.user_id IS NULL)
+        AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
   )
   AND (
       -- If thread has an unread label (and invert=false), it's unread
@@ -589,6 +628,16 @@ WHERE t.handler = 'private'
       AND g.item_id = t.idforumtopic
       AND (g.user_id = sqlc.arg(grant_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.action = 'view'
+        AND thread_grant.active = 1
+        AND thread_grant.item_id = th.idforumthread
+        AND (thread_grant.user_id = sqlc.arg(grant_user_id) OR thread_grant.user_id IS NULL)
+        AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
   )
   AND (
       -- If thread has an unread label (and invert=false), it's unread

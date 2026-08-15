@@ -119,9 +119,10 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 			}
 			var labels []templates.TopicLabel
 
-			rows, err := cd.queries.GetPrivateTopicThreadsAndLabels(cd.ctx, db.GetPrivateTopicThreadsAndLabelsParams{
-				TopicID: t.Idforumtopic,
-				UserID:  cd.UserID,
+			rows, err := cd.queries.GetPrivateTopicThreadsAndLabelsForUser(cd.ctx, db.GetPrivateTopicThreadsAndLabelsForUserParams{
+				TopicID:       t.Idforumtopic,
+				UserID:        cd.UserID,
+				ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			})
 			if err != nil {
 				log.Printf("get topic threads and labels: %v", err)

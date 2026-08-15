@@ -80,7 +80,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 		uid, _ = session.Values["UID"].(int32)
 	}
 
-	threadRow, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+	threadRow, err := cd.Queries().GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
 		ThreadID:      int32(threadID),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -92,7 +92,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "Forum Admin Thread"
 	data := struct {
-		Thread *db.GetThreadLastPosterAndPermsRow
+		Thread *db.GetThreadLastPosterAndPermsForUserRow
 	}{
 		Thread: threadRow,
 	}

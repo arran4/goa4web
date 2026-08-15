@@ -97,7 +97,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if event.Thread != nil {
 			evt.Data["Thread"] = event.Thread
 		} else if event.ThreadID != 0 && cd != nil && cd.queries != nil {
-			thread, err := cd.queries.GetThreadLastPosterAndPerms(ctx, db.GetThreadLastPosterAndPermsParams{
+			thread, err := cd.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
 				ViewerID:      cd.UserID,
 				ThreadID:      event.ThreadID,
 				ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

@@ -45,8 +45,8 @@ func TestHappyPathForumReplyRedirect(t *testing.T) {
 			ForumtopicIdforumtopic: topicID,
 		}, nil
 	}
-	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-		return &db.GetThreadLastPosterAndPermsRow{
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
 			Idforumthread:          threadID,
 			ForumtopicIdforumtopic: topicID,
 			Lastposterusername:     sql.NullString{String: "replier", Valid: true},
@@ -100,10 +100,10 @@ func TestHappyPathForumReplyRedirect(t *testing.T) {
 	cd := common.NewCoreData(ctx, qs, cfg, common.WithSession(sess), common.WithEvent(evt), common.WithUserRoles([]string{"member"}))
 	cd.UserID = replierUID
 
-	thread := &db.GetThreadLastPosterAndPermsRow{Idforumthread: threadID, ForumtopicIdforumtopic: topicID, Lastposterusername: sql.NullString{String: "replier", Valid: true}, Comments: sql.NullInt32{Int32: 5, Valid: true}}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: threadID, ForumtopicIdforumtopic: topicID, Lastposterusername: sql.NullString{String: "replier", Valid: true}, Comments: sql.NullInt32{Int32: 5, Valid: true}}
 	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: topicID, Title: sql.NullString{String: "Test Topic", Valid: true}, Handler: "forum"}
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
-	_, _ = cd.ForumThreadByID(threadID, lazy.Set[int32, *db.GetThreadLastPosterAndPermsRow](thread))
+	_, _ = cd.ForumThreadByID(threadID, lazy.Set[int32, *db.GetThreadLastPosterAndPermsForUserRow](thread))
 	_, _ = cd.ForumTopicByID(topicID, lazy.Set[int32, *db.GetForumTopicByIdForUserRow](topic))
 
 	ctx = context.WithValue(ctx, core.ContextValues("session"), sess)

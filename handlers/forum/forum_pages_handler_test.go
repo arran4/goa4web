@@ -376,7 +376,7 @@ func TestForumPageHandlers(t *testing.T) {
 
 	t.Run("thread page private sets title", func(t *testing.T) {
 		queries := testhelpers.NewQuerierStub()
-		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
 			Idforumthread:          1,
 			Firstpost:              1,
 			Lastposter:             1,
@@ -536,7 +536,7 @@ func TestThreadPageTitle(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		// Setup
 		queries := testhelpers.NewQuerierStub()
-		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+		queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
 			Idforumthread:          1,
 			Firstpost:              1,
 			Lastposter:             1,

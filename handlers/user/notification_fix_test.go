@@ -36,9 +36,9 @@ func TestFixNotificationLinkAndGetData(t *testing.T) {
 			return nil, sql.ErrNoRows
 		}
 
-		qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+		qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 			if arg.ThreadID == 47 {
-				return &db.GetThreadLastPosterAndPermsRow{
+				return &db.GetThreadLastPosterAndPermsForUserRow{
 					Firstpost: 100,
 				}, nil
 			}

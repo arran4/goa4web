@@ -30,8 +30,8 @@ func TestGlobalGrantsImageBBS(t *testing.T) {
 }
 
 func TestGlobalGrantsThreads(t *testing.T) {
-	if !strings.Contains(getThreadLastPosterAndPerms, "g.item_id = t.idforumtopic OR g.item_id IS NULL") {
-		t.Errorf("global grant missing in GetThreadLastPosterAndPerms")
+	if !strings.Contains(getThreadLastPosterAndPermsForUser, "g.item_id = t.idforumtopic OR g.item_id IS NULL") {
+		t.Errorf("global grant missing in GetThreadLastPosterAndPermsForUser")
 	}
 }
 

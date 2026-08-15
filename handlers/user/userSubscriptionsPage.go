@@ -98,7 +98,7 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 					case "threadid":
 						if id, err := strconv.Atoi(p.Value); err == nil {
 							// Ensure the user has permission to view the thread
-							_, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+							_, err := cd.Queries().GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 								ViewerID:      cd.UserID,
 								ThreadID:      int32(id),
 								ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

@@ -30,12 +30,12 @@ func (cd *CoreData) ForumCategory(id int32) (*db.Forumcategory, error) {
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
-	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
+		return cd.queries.GetThreadLastPosterAndPermsForUser(cd.ctx, db.GetThreadLastPosterAndPermsForUserParams{
 			ViewerID:      cd.UserID,
 			ThreadID:      i,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -45,7 +45,7 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetT
 }
 
 // ForumThread is a convenience wrapper around ForumThreadByID.
-func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 	return cd.ForumThreadByID(id, ops...)
 }
 

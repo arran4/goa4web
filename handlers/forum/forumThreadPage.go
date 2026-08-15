@@ -23,7 +23,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	type Data struct {
 		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
-		Thread         *db.GetThreadLastPosterAndPermsRow
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
 		Text           string

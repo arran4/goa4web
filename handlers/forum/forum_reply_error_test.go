@@ -38,8 +38,8 @@ func TestForumReplyErrorRetainsText(t *testing.T) {
 	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
 		return &db.GetForumTopicByIdForUserRow{Idforumtopic: topicID, Handler: "forum"}, nil
 	}
-	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-		return &db.GetThreadLastPosterAndPermsRow{
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
 			Idforumthread: threadID,
 		}, nil
 	}

@@ -107,7 +107,7 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 	if err := cd.validateImagePathsForThread(editorID, comment.ForumthreadID, paths); err != nil {
 		return ThreadInfo{}, fmt.Errorf("validate images: %w", err)
 	}
-	thread, err := cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
+	thread, err := cd.queries.GetThreadLastPosterAndPermsForUser(cd.ctx, db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      editorID,
 		ThreadID:      comment.ForumthreadID,
 		ViewerMatchID: sql.NullInt32{Int32: editorID, Valid: editorID != 0},

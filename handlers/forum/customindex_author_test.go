@@ -22,8 +22,8 @@ func TestCustomForumIndex_Author_NewStatus(t *testing.T) {
 	)
 
 	// Mock Thread details to simulate User 7 is the author
-	q.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-		return &db.GetThreadLastPosterAndPermsRow{
+	q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
 			Idforumthread:   3,
 			Firstpostuserid: sql.NullInt32{Int32: 7, Valid: true},
 		}, nil

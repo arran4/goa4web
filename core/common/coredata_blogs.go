@@ -43,7 +43,7 @@ func (cd *CoreData) EditableBlogPost(id int32) (*db.GetBlogEntryForListerByIDRow
 
 // BlogCommentThread returns the thread associated with the current blog
 // and ensures it is selected for comment helpers.
-func (cd *CoreData) BlogCommentThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) BlogCommentThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 	blog, err := cd.BlogPost()
 	if err != nil {
 		return nil, err

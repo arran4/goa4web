@@ -88,7 +88,7 @@ func TestSystemCopyPrivateTopicGrantsToThreadPreservesPrincipalsAndActions(t *te
 	checks := []string{
 		"topic_grant.user_id, topic_grant.role_id",
 		"thread_row.idforumthread, NULL, topic_grant.action",
-		"topic_grant.action IN ('view', 'reply')",
+		"topic_grant.action IN ('view', 'reply', 'post')",
 		"thread_grant.action = topic_grant.action",
 		"thread_grant.user_id <=> topic_grant.user_id",
 		"thread_grant.role_id <=> topic_grant.role_id",

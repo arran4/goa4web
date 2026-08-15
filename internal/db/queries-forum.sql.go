@@ -1794,7 +1794,7 @@ WHERE topic.idforumtopic = ?
   AND topic_grant.item = 'topic'
   AND topic_grant.rule_type = 'allow'
   AND topic_grant.active = 1
-  AND topic_grant.action IN ('view', 'reply')
+  AND topic_grant.action IN ('view', 'reply', 'post')
   AND (topic_grant.user_id IS NOT NULL OR topic_grant.role_id IS NOT NULL)
   AND NOT EXISTS (
       SELECT 1

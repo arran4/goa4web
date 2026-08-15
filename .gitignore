@@ -139,3 +139,4 @@ error*.log
 fix_*
 generate_sqlite_schema.py
 sqlc.sqlite.*
+full_test_out.log

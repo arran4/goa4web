@@ -1,10 +1,12 @@
 package common
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
@@ -53,7 +55,7 @@ func (cd *CoreData) CreatePrivateTopicWithAccess(p CreatePrivateTopicParams) (to
 	title := p.Title
 	description := p.Description
 	if title == "" {
-		title = fmt.Sprintf("%s%s", PrivateTopicDefaultTitlePrefix, joinPrivateTopicUsernames(usernames))
+		title = fmt.Sprintf("%s%s", PrivateTopicDefaultTitlePrefix, strings.Join(usernames, ", "))
 		if description == "" {
 			description = title
 		}
@@ -155,15 +157,4 @@ func ensurePrivateForumTopicSeeGrant(ctx context.Context, queries *db.Queries, u
 		return fmt.Errorf("create private forum see grant: %w", err)
 	}
 	return nil
-}
-
-func joinPrivateTopicUsernames(usernames []string) string {
-	result := ""
-	for i, username := range usernames {
-		if i > 0 {
-			result += ", "
-		}
-		result += username
-	}
-	return result
 }

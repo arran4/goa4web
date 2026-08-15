@@ -98,7 +98,7 @@ func TestSchemaVersionUpdated(t *testing.T) {
 		t.Skip("No migrations found")
 	}
 
-	schemaPath := filepath.Join("..", "database", "schema.mysql.sql|sqlite.sql")
+	schemaPath := filepath.Join("..", "database", "schema.mysql.sql")
 	content, err := os.ReadFile(schemaPath)
 	if err != nil {
 		t.Fatalf("Failed to read schema file at %s: %v", schemaPath, err)
@@ -109,12 +109,12 @@ func TestSchemaVersionUpdated(t *testing.T) {
 	// Allow for some whitespace variation
 	expected := fmt.Sprintf("INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (%d, 1)", maxVersion)
 	if !strings.Contains(schemaStr, expected) {
-		t.Errorf("Schema file %s does not contain expected version update:\nExpected substring: %s\nEnsure you have updated the goose_db_version insert in database/schema.mysql.sql|sqlite.sql", schemaPath, expected)
+		t.Errorf("Schema file %s does not contain expected version update:\nExpected substring: %s\nEnsure you have updated the goose_db_version insert in database/schema.mysql.sql", schemaPath, expected)
 	}
 }
 
 func TestPrivateForumThreadGrantMigration(t *testing.T) {
-	content, err := FS.ReadFile("0094_mysql.sql|sqlite.sql")
+	content, err := FS.ReadFile("0094_mysql.sql")
 	if err != nil {
 		t.Fatalf("read private forum thread grant migration: %v", err)
 	}

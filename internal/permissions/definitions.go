@@ -1,5 +1,7 @@
 package permissions
 
+import "github.com/arran4/goa4web/core/consts"
+
 // This file provides a centralized registry of all grant permissions in the system.
 // When adding a new permission check (e.g., using `cd.HasGrant`), you must also
 // add a corresponding entry to the `Definitions` slice below. This ensures that
@@ -51,6 +53,18 @@ var (
 	PrivateforumTopicSee   = &GrantDefinition{"privateforum", "topic", "see", "Allows seeing private topics."}
 	PrivateforumTopicPost  = &GrantDefinition{"privateforum", "topic", "post", "Allows posting new threads in a private topic."}
 	PrivateforumTopicReply = &GrantDefinition{"privateforum", "topic", "reply", "Allows replying to threads in a private topic."}
+	PrivateforumThreadView = &GrantDefinition{
+		consts.PermissionSectionPrivateForumThread.String(),
+		consts.PermissionItemThread.String(),
+		consts.PermissionActionView.String(),
+		"Allows viewing a private forum thread.",
+	}
+	PrivateforumThreadReply = &GrantDefinition{
+		consts.PermissionSectionPrivateForumThread.String(),
+		consts.PermissionItemThread.String(),
+		consts.PermissionActionReply.String(),
+		"Allows replying to a private forum thread.",
+	}
 
 	// ImageBBS
 	ImagebbsBoardView    = &GrantDefinition{"imagebbs", "board", "view", "Allows viewing image boards."}
@@ -110,6 +124,8 @@ var Definitions = []*GrantDefinition{
 	PrivateforumTopicSee,
 	PrivateforumTopicPost,
 	PrivateforumTopicReply,
+	PrivateforumThreadView,
+	PrivateforumThreadReply,
 
 	// ImageBBS
 	ImagebbsBoardView,

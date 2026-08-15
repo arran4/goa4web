@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/gorilla/mux"
 )
 
@@ -108,11 +107,7 @@ func APIListThreads(w http.ResponseWriter, r *http.Request) {
 	}
 	pageSize := cd.PageSize()
 
-	rows, err := cd.Queries().GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(r.Context(), db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams{
-		TopicID:       int32(topicID),
-		ViewerID:      cd.UserID,
-		ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	rows, err := cd.ForumThreads(int32(topicID))
 
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -148,11 +143,7 @@ func APIShowComments(w http.ResponseWriter, r *http.Request) {
 	}
 	pageSize := cd.PageSize()
 
-	comments, err := cd.Queries().GetCommentsByThreadIdForUser(r.Context(), db.GetCommentsByThreadIdForUserParams{
-		ViewerID: cd.UserID,
-		ThreadID: int32(threadID),
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	})
+	comments, err := cd.ThreadComments(int32(threadID))
 
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -223,9 +223,9 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	if base == "" {
 		base = "/forum"
 	}
-	section := strings.TrimPrefix(base, "/")
-	if section == "private" {
-		section = "privateforum"
+	section := consts.PermissionSectionForum
+	if base == "/private" {
+		section = consts.PermissionSectionPrivateForum
 	}
 	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), section, int32(pcid), uid)
 	if err != nil {

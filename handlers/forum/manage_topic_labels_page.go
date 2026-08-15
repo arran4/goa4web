@@ -37,9 +37,9 @@ func ManageTopicLabelsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	section := "forum"
+	section := consts.PermissionSectionForum
 	if strings.HasPrefix(basePath, "/private") {
-		section = "privateforum"
+		section = consts.PermissionSectionPrivateForum
 	}
 
 	canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))

@@ -527,6 +527,16 @@ WHERE t.handler = 'private'
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND EXISTS (
+      SELECT 1 FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.action = 'view'
+        AND thread_grant.active = 1
+        AND thread_grant.item_id = th.idforumthread
+        AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+        AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+  )
   AND (
       -- If thread has an unread label (and invert=false), it's unread
       EXISTS (
@@ -576,6 +586,7 @@ func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg Coun
 		arg.GranteeID,
 		arg.TopicIDNull,
 		arg.TopicIDVal,
+		arg.GrantUserID,
 		arg.GrantUserID,
 		arg.GranteeID,
 		arg.GranteeID,
@@ -1019,6 +1030,20 @@ WHERE th.forumtopic_idforumtopic=?
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 ORDER BY th.lastaddition DESC
 `
 
@@ -1046,7 +1071,12 @@ type GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextR
 }
 
 func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText(ctx context.Context, arg GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextParams) ([]*GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow, error) {
-	rows, err := q.db.QueryContext(ctx, getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText, arg.ViewerID, arg.TopicID, arg.ViewerMatchID)
+	rows, err := q.db.QueryContext(ctx, getForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostText,
+		arg.ViewerID,
+		arg.TopicID,
+		arg.ViewerMatchID,
+		arg.ViewerMatchID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1344,7 +1374,12 @@ func (q *Queries) GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsF
 	return items, nil
 }
 
-const getPrivateTopicThreadsAndLabels = `-- name: GetPrivateTopicThreadsAndLabels :many
+const getPrivateTopicThreadsAndLabelsForUser = `-- name: GetPrivateTopicThreadsAndLabelsForUser :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
 SELECT th.idforumthread, c.users_idusers AS author_id, cpl.label, cpl.invert
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
@@ -1353,29 +1388,45 @@ LEFT JOIN content_private_labels cpl
     AND cpl.item_id = th.idforumthread
     AND cpl.user_id = ?
 WHERE th.forumtopic_idforumtopic = ?
+  AND EXISTS (
+      SELECT 1 FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.action = 'view'
+        AND thread_grant.active = 1
+        AND thread_grant.item_id = th.idforumthread
+        AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+        AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+  )
 `
 
-type GetPrivateTopicThreadsAndLabelsParams struct {
-	UserID  int32
-	TopicID int32
+type GetPrivateTopicThreadsAndLabelsForUserParams struct {
+	UserID        int32
+	TopicID       int32
+	ViewerMatchID sql.NullInt32
 }
 
-type GetPrivateTopicThreadsAndLabelsRow struct {
+type GetPrivateTopicThreadsAndLabelsForUserRow struct {
 	Idforumthread int32
 	AuthorID      int32
 	Label         sql.NullString
 	Invert        sql.NullBool
 }
 
-func (q *Queries) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPrivateTopicThreadsAndLabels, arg.UserID, arg.TopicID)
+func (q *Queries) GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsForUserParams) ([]*GetPrivateTopicThreadsAndLabelsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPrivateTopicThreadsAndLabelsForUser,
+		arg.UserID,
+		arg.UserID,
+		arg.TopicID,
+		arg.ViewerMatchID,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetPrivateTopicThreadsAndLabelsRow
+	var items []*GetPrivateTopicThreadsAndLabelsForUserRow
 	for rows.Next() {
-		var i GetPrivateTopicThreadsAndLabelsRow
+		var i GetPrivateTopicThreadsAndLabelsForUserRow
 		if err := rows.Scan(
 			&i.Idforumthread,
 			&i.AuthorID,
@@ -1601,6 +1652,16 @@ WHERE t.handler = 'private'
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
+  AND EXISTS (
+      SELECT 1 FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.action = 'view'
+        AND thread_grant.active = 1
+        AND thread_grant.item_id = th.idforumthread
+        AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+        AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+  )
   AND (
       -- If thread has an unread label (and invert=false), it's unread
       EXISTS (
@@ -1670,6 +1731,7 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 		arg.TopicIDNull,
 		arg.TopicIDVal,
 		arg.GrantUserID,
+		arg.GrantUserID,
 		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,
@@ -1709,6 +1771,53 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 		return nil, err
 	}
 	return items, nil
+}
+
+const systemCopyPrivateTopicGrantsToThread = `-- name: SystemCopyPrivateTopicGrantsToThread :exec
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type,
+    item_id, item_rule, action, extra, active
+)
+SELECT DISTINCT
+    NOW(), topic_grant.user_id, topic_grant.role_id,
+    'privateforum_thread', 'thread', 'allow',
+    thread_row.idforumthread, NULL, topic_grant.action, NULL, 1
+FROM grants topic_grant
+JOIN forumtopic topic
+    ON topic.idforumtopic = topic_grant.item_id
+   AND topic.handler = 'private'
+JOIN forumthread thread_row
+    ON thread_row.idforumthread = ?
+   AND thread_row.forumtopic_idforumtopic = topic.idforumtopic
+WHERE topic.idforumtopic = ?
+  AND topic_grant.section = 'privateforum'
+  AND topic_grant.item = 'topic'
+  AND topic_grant.rule_type = 'allow'
+  AND topic_grant.active = 1
+  AND topic_grant.action IN ('view', 'reply')
+  AND (topic_grant.user_id IS NOT NULL OR topic_grant.role_id IS NOT NULL)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM grants thread_grant
+      WHERE thread_grant.section = 'privateforum_thread'
+        AND thread_grant.item = 'thread'
+        AND thread_grant.rule_type = 'allow'
+        AND thread_grant.item_id = thread_row.idforumthread
+        AND thread_grant.action = topic_grant.action
+        AND thread_grant.active = 1
+        AND (thread_grant.user_id <=> topic_grant.user_id)
+        AND (thread_grant.role_id <=> topic_grant.role_id)
+  )
+`
+
+type SystemCopyPrivateTopicGrantsToThreadParams struct {
+	ThreadID int32
+	TopicID  int32
+}
+
+func (q *Queries) SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error {
+	_, err := q.db.ExecContext(ctx, systemCopyPrivateTopicGrantsToThread, arg.ThreadID, arg.TopicID)
+	return err
 }
 
 const systemGetForumTopicByTitle = `-- name: SystemGetForumTopicByTitle :one

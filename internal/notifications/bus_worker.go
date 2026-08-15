@@ -383,9 +383,9 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 					for _, g := range reqs {
 						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 							ViewerID: id,
-							Section:  g.Section,
-							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
-							Action:   g.Action,
+							Section:  g.Section.String(),
+							Item:     sql.NullString{String: g.Item.String(), Valid: g.Item != ""},
+							Action:   g.Action.String(),
 							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
 							UserID:   sql.NullInt32{Int32: id, Valid: id != 0},
 						}); err != nil {
@@ -464,9 +464,9 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 					for _, g := range reqs {
 						if _, err := n.Queries.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 							ViewerID: userID,
-							Section:  g.Section,
-							Item:     sql.NullString{String: g.Item, Valid: g.Item != ""},
-							Action:   g.Action,
+							Section:  g.Section.String(),
+							Item:     sql.NullString{String: g.Item.String(), Valid: g.Item != ""},
+							Action:   g.Action.String(),
 							ItemID:   sql.NullInt32{Int32: g.ItemID, Valid: g.ItemID != 0},
 							UserID:   sql.NullInt32{Int32: userID, Valid: userID != 0},
 						}); err != nil {

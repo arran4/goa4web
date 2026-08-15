@@ -41,7 +41,7 @@ func RequireThreadAndTopic(next http.Handler) http.Handler {
 			uid, _ = session.Values["UID"].(int32)
 		}
 
-		threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+		threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 			ViewerID:      uid,
 			ThreadID:      int32(threadID),
 			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

@@ -125,7 +125,7 @@ type ImageBBSThread struct {
 	BoardID       int
 	ForumThreadID int
 	ImagePost     *db.GetImagePostByIDForListerRow
-	Thread        *db.GetThreadLastPosterAndPermsRow
+	Thread        *db.GetThreadLastPosterAndPermsForUserRow
 }
 
 // ImageBBSThreadPosts retrieves comment rows for the currently selected thread.

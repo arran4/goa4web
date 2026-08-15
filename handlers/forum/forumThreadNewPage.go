@@ -41,6 +41,7 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
+	_ notif.GrantsRequiredProvider                  = (*CreateThreadTask)(nil)
 	_ tasks.EmailTemplatesRequired                  = (*CreateThreadTask)(nil)
 	_ searchworker.IndexedTask                      = CreateThreadTask{}
 )
@@ -102,16 +103,17 @@ func (CreateThreadTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.Gra
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
-		section := strings.TrimPrefix(base, "/")
-		switch section {
-		case "private":
-			section = "privateforum"
-		case "":
-			section = "forum"
+		section := consts.PermissionSectionForum
+		if base == "/private" {
+			section = consts.PermissionSectionPrivateForumThread
 		}
-		return []notif.GrantRequirement{{Section: section, Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+		return []notif.GrantRequirement{{Section: section, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, nil
+}
+
+func (CreateThreadTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	return privateThreadSubscriberGrants(evt)
 }
 
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
@@ -237,9 +239,9 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	section := strings.TrimPrefix(base, "/")
-	if section == "private" {
-		section = "privateforum"
+	section := consts.PermissionSectionForum
+	if base == "/private" {
+		section = consts.PermissionSectionPrivateForum
 	}
 	allowed, err := UserCanCreateThread(r.Context(), queries, section, int32(topicId), uid)
 	if err != nil {
@@ -286,32 +288,16 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var cid int64
 	if topic.Handler == "private" {
-		participants, err := queries.ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-			TopicID:  sql.NullInt32{Int32: int32(topicId), Valid: true},
-			ViewerID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
-		if err != nil {
-			return fmt.Errorf("listing private topic participants: %w", err)
+		if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
+			return fmt.Errorf("copying private topic grants to thread: %w", err)
 		}
-		for _, p := range participants {
-			for _, permission := range []string{"see", "view", "post", "reply"} {
-				if _, err = cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, permission); err != nil {
-					return fmt.Errorf("granting %s thread access to %d: %w", permission, p.Idusers, err)
-				}
-			}
-			for _, permission := range []string{ /* Disabled */ } {
-				if _, err = cd.GrantForumTopic(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, permission); err != nil {
-					return fmt.Errorf("granting %s topic access to %d: %w", permission, p.Idusers, err)
-				}
-			}
-		}
-		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+		cid, err = cd.CreatePrivateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
 			return fmt.Errorf("creating private topic comment: %w", err)
 		}
 	} else {
-		cid, err = cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+		cid, err = cd.CreateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
 			return fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err))

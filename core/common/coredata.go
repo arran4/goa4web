@@ -2022,7 +2022,7 @@ func (cd *CoreData) SelectedLinkerItemsForCurrentUser(catID, offset int32) ([]*d
 }
 
 // SelectedThread returns the currently requested thread lazily loaded.
-func (cd *CoreData) SelectedThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) SelectedThread(ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 	if cd.currentThreadID == 0 {
 		// Attempt to resolve thread ID from selected linker item
 		if cd.currentLinkID != 0 {
@@ -2056,6 +2056,8 @@ func sectionItemType(section string) string {
 		return "topic"
 	case "privateforum":
 		return "topic"
+	case string(consts.PermissionSectionPrivateForumThread):
+		return string(consts.PermissionItemThread)
 	case "imagebbs":
 		return "board"
 	case "linker":
@@ -2077,7 +2079,7 @@ func (cd *CoreData) SelectedSectionThreadComments() ([]*db.GetCommentsByThreadId
 }
 
 // SelectedThreadLoaded returns the cached current thread without database access.
-func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsRow {
+func (cd *CoreData) SelectedThreadLoaded() *db.GetThreadLastPosterAndPermsForUserRow {
 	if cd.cache.forumThreadRows == nil {
 		return nil
 	}
@@ -2155,7 +2157,7 @@ func (cd *CoreData) SelectedForumThreadCanReply() bool {
 }
 
 func (cd *CoreData) SelectedPrivateForumThreadCanReply() bool {
-	return cd.sectionThreadCanReply("privateforum", cd.currentTopicID)
+	return cd.sectionThreadCanReply(consts.PermissionSectionPrivateForumThread.String(), cd.currentThreadID)
 }
 
 func (cd *CoreData) SelectedBlogThreadCanReply() bool {
@@ -2179,7 +2181,11 @@ func (cd *CoreData) SelectedLinkerThreadCanReply() bool {
 	return cd.sectionThreadCanReply("linker", cd.currentLinkID)
 }
 
-func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
+func (cd *CoreData) CreateCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenter(section, itemType, consts.PermissionActionReply, itemID, threadID, commenterID, languageID, text)
+}
+
+func (cd *CoreData) createCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
 	}
@@ -2199,9 +2205,10 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 		Text:          sql.NullString{String: text, Valid: text != ""},
 		Written:       sql.NullTime{Time: time.Now().UTC(), Valid: true},
 		Timezone:      sql.NullString{String: cd.Location().String(), Valid: true},
-		Section:       section,
-		ItemType:      sql.NullString{String: itemType, Valid: itemType != ""},
+		Section:       section.String(),
+		ItemType:      sql.NullString{String: itemType.String(), Valid: itemType != ""},
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
+		Action:        action.String(),
 	})
 	if err != nil {
 		return 0, err
@@ -2216,31 +2223,41 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 }
 
 func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("news", "post", postID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionNews, consts.PermissionItemPost, postID, threadID, commenterID, languageID, text)
 }
 
 func (cd *CoreData) CreateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("forum", "topic", topicID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionForum, consts.PermissionItemTopic, topicID, threadID, commenterID, languageID, text)
 }
 
 func (cd *CoreData) CreatePrivateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("privateforum", "thread", threadID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionPrivateForumThread, consts.PermissionItemThread, threadID, threadID, commenterID, languageID, text)
+}
+
+// CreateForumOpeningCommentForPoster creates a public thread's opening comment using the parent topic's post grant.
+func (cd *CoreData) CreateForumOpeningCommentForPoster(posterID, threadID, topicID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenter(consts.PermissionSectionForum, consts.PermissionItemTopic, consts.PermissionActionPost, topicID, threadID, posterID, languageID, text)
+}
+
+// CreatePrivateForumOpeningCommentForPoster creates a private thread's opening comment using the parent topic's post grant.
+func (cd *CoreData) CreatePrivateForumOpeningCommentForPoster(posterID, threadID, topicID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenter(consts.PermissionSectionPrivateForum, consts.PermissionItemTopic, consts.PermissionActionPost, topicID, threadID, posterID, languageID, text)
 }
 
 func (cd *CoreData) CreateBlogCommentForCommenter(commenterID, threadID, entryID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("blogs", "entry", entryID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionBlogs, consts.PermissionItemEntry, entryID, threadID, commenterID, languageID, text)
 }
 
 func (cd *CoreData) CreateImageBBSCommentForCommenter(commenterID, threadID, boardID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("imagebbs", "board", boardID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionImageBBS, consts.PermissionItemBoard, boardID, threadID, commenterID, languageID, text)
 }
 
 func (cd *CoreData) CreateWritingCommentForCommenter(commenterID, threadID, articleID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("writing", "article", articleID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionWriting, consts.PermissionItemArticle, articleID, threadID, commenterID, languageID, text)
 }
 
 func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkID, languageID int32, text string) (int64, error) {
-	return cd.CreateCommentInSectionForCommenter("linker", "link", linkID, threadID, commenterID, languageID, text)
+	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionLinker, consts.PermissionItemLink, linkID, threadID, commenterID, languageID, text)
 }
 
 // CanEditComment reports whether the current user may edit the supplied

@@ -446,7 +446,7 @@ func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg 
 	return &i, err
 }
 
-const getThreadLastPosterAndPerms = `-- name: GetThreadLastPosterAndPerms :one
+const getThreadLastPosterAndPermsForUser = `-- name: GetThreadLastPosterAndPermsForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
     UNION
@@ -473,16 +473,16 @@ WHERE th.idforumthread=?
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
       AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   ) AND (t.handler IS NULL OR t.handler != 'private' OR EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='privateforum')
+    WHERE g.section='privateforum_thread'
       AND g.item='thread'
       AND g.action='view'
       AND g.active=1
@@ -493,13 +493,13 @@ WHERE th.idforumthread=?
 ORDER BY t.lastaddition DESC
 `
 
-type GetThreadLastPosterAndPermsParams struct {
+type GetThreadLastPosterAndPermsForUserParams struct {
 	ViewerID      int32
 	ThreadID      int32
 	ViewerMatchID sql.NullInt32
 }
 
-type GetThreadLastPosterAndPermsRow struct {
+type GetThreadLastPosterAndPermsForUserRow struct {
 	Idforumthread          int32
 	Firstpost              int32
 	Lastposter             int32
@@ -512,8 +512,8 @@ type GetThreadLastPosterAndPermsRow struct {
 	Firstpostuserid        sql.NullInt32
 }
 
-func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
-	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPerms,
+func (q *Queries) GetThreadLastPosterAndPermsForUser(ctx context.Context, arg GetThreadLastPosterAndPermsForUserParams) (*GetThreadLastPosterAndPermsForUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPermsForUser,
 		arg.ViewerID,
 		arg.ThreadID,
 		arg.ViewerID,
@@ -521,7 +521,7 @@ func (q *Queries) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThread
 		arg.ViewerMatchID,
 		arg.ViewerMatchID,
 	)
-	var i GetThreadLastPosterAndPermsRow
+	var i GetThreadLastPosterAndPermsForUserRow
 	err := row.Scan(
 		&i.Idforumthread,
 		&i.Firstpost,

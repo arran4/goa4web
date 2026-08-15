@@ -25,14 +25,28 @@ WHERE c.idcomments = sqlc.arg(id)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = sqlc.arg(user_id) OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 LIMIT 1;
 
 -- name: UpdateCommentForEditor :exec
@@ -93,13 +107,27 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = sqlc.arg(user_id) OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
   )
 ORDER BY c.written DESC
 ;
@@ -111,7 +139,7 @@ WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)
       AND (g.item = sqlc.arg(item_type) OR g.item IS NULL)
-      AND g.action = 'reply'
+      AND g.action = sqlc.arg(action)
       AND g.active = 1
       AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
       AND (g.user_id = sqlc.narg(commenter_id) OR g.user_id IS NULL)
@@ -148,14 +176,28 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = sqlc.arg(user_id) OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 ORDER BY c.written;
 
 -- Viewing comments in a section-specific thread requires 'view' on the
@@ -193,7 +235,21 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
       AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = sqlc.arg(user_id) OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 ORDER BY c.written;
 
 

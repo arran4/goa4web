@@ -44,7 +44,7 @@ func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-		Thread         *db.GetThreadLastPosterAndPermsRow
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		ReplyText      string
 		IsReplyable    bool
@@ -120,7 +120,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		log.Printf("thread comments: %v", err)
 	}
 
-	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
 		ThreadID:      int32(post.ForumthreadID),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

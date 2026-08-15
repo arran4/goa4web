@@ -1,17 +1,14 @@
 package forum
 
 import (
-	"database/sql"
-	"github.com/arran4/goa4web/internal/tasks"
 	"net/http"
 	"strconv"
 
-	"github.com/arran4/goa4web/core/consts"
-
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/gorilla/mux"
 )
@@ -74,17 +71,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 	}
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	session, _ := core.GetSession(r)
-	var uid int32
-	if session != nil {
-		uid, _ = session.Values["UID"].(int32)
-	}
-
-	threadRow, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
-		ViewerID:      uid,
-		ThreadID:      int32(threadID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
+	threadRow, err := cd.AdminForumThreadByID(int32(threadID))
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "/admin/forum/threads", err)
 		return
@@ -92,7 +79,7 @@ func AdminThreadPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = "Forum Admin Thread"
 	data := struct {
-		Thread *db.GetThreadLastPosterAndPermsRow
+		Thread *db.AdminGetForumThreadByIdRow
 	}{
 		Thread: threadRow,
 	}

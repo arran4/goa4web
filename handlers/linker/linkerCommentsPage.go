@@ -27,7 +27,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		Text           string
 		CanEdit        bool
 		UserId         int32
-		Thread         *db.GetThreadLastPosterAndPermsRow
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -83,7 +83,7 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
 		ThreadID:      link.ThreadID,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

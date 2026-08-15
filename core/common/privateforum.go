@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 )
@@ -118,9 +119,10 @@ func (cd *CoreData) PrivateForumTopics() ([]*PrivateTopic, error) {
 			}
 			var labels []templates.TopicLabel
 
-			rows, err := cd.queries.GetPrivateTopicThreadsAndLabels(cd.ctx, db.GetPrivateTopicThreadsAndLabelsParams{
-				TopicID: t.Idforumtopic,
-				UserID:  cd.UserID,
+			rows, err := cd.queries.GetPrivateTopicThreadsAndLabelsForUser(cd.ctx, db.GetPrivateTopicThreadsAndLabelsForUserParams{
+				TopicID:       t.Idforumtopic,
+				UserID:        cd.UserID,
+				ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 			})
 			if err != nil {
 				log.Printf("get topic threads and labels: %v", err)
@@ -217,8 +219,8 @@ func (cd *CoreData) GrantPrivateForumTopic(topicID int32, uid, rid sql.NullInt32
 	return cd.queries.SystemCreateGrant(cd.ctx, db.SystemCreateGrantParams{
 		UserID:   uid,
 		RoleID:   rid,
-		Section:  "privateforum",
-		Item:     sql.NullString{String: "topic", Valid: true},
+		Section:  consts.PermissionSectionPrivateForum.String(),
+		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
 		RuleType: "allow",
 		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
 		ItemRule: sql.NullString{},

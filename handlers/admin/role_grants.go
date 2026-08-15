@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -47,6 +48,13 @@ var GrantActionMap = map[string]GrantDefinition{
 	"faq|question/answer": {Actions: []string{"see", "view"}},
 	"search|":             {Actions: []string{"search"}},
 	"privateforum|topic":  {Actions: []string{"see", "view", "reply", "post", "edit", "create"}},
+	consts.PermissionSectionPrivateForumThread.String() + "|" + consts.PermissionItemThread.String(): {
+		Actions: []string{
+			consts.PermissionActionView.String(),
+			consts.PermissionActionReply.String(),
+		},
+		RequireItemID: true,
+	},
 }
 
 // GrantAction represents a single grant action and whether it's unsupported.

@@ -84,7 +84,7 @@ func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, erro
 
 func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return []notif.GrantRequirement{{Section: "forum", Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionForum, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, nil
 }

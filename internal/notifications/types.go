@@ -1,5 +1,7 @@
 package notifications
 
+import "github.com/arran4/goa4web/core/consts"
+
 // SubscriptionTarget exposes a subscribeable object.
 type SubscriptionTarget interface {
 	// SubscriptionTarget returns the item type and id used when building
@@ -18,8 +20,8 @@ func (t Target) SubscriptionTarget() (string, int32) { return t.Type, t.ID }
 
 // GrantRequirement describes a single permission check.
 type GrantRequirement struct {
-	Section string
-	Item    string
+	Section consts.PermissionSection
+	Item    consts.PermissionItem
 	ItemID  int32
-	Action  string
+	Action  consts.PermissionAction
 }

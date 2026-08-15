@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/arran4/go-be-lazy"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -29,12 +30,12 @@ func (cd *CoreData) ForumCategory(id int32) (*db.Forumcategory, error) {
 }
 
 // ForumThreadByID returns a single forum thread lazily loading it once per ID.
-func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
-	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+	fetch := func(i int32) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 		if cd.queries == nil {
 			return nil, nil
 		}
-		return cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
+		return cd.queries.GetThreadLastPosterAndPermsForUser(cd.ctx, db.GetThreadLastPosterAndPermsForUserParams{
 			ViewerID:      cd.UserID,
 			ThreadID:      i,
 			ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
@@ -44,8 +45,16 @@ func (cd *CoreData) ForumThreadByID(id int32, ops ...lazy.Option[int32, *db.GetT
 }
 
 // ForumThread is a convenience wrapper around ForumThreadByID.
-func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsRow]) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThreadLastPosterAndPermsForUserRow]) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 	return cd.ForumThreadByID(id, ops...)
+}
+
+// AdminForumThreadByID returns a thread without applying user-facing grants.
+func (cd *CoreData) AdminForumThreadByID(id int32) (*db.AdminGetForumThreadByIdRow, error) {
+	if cd.queries == nil {
+		return nil, nil
+	}
+	return cd.queries.AdminGetForumThreadById(cd.ctx, id)
 }
 
 // ForumThreads loads the threads for a forum topic once per topic.
@@ -320,13 +329,24 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 	return cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
 		UserID:   uid,
 		RoleID:   rid,
-		Section:  "privateforum_thread",
-		Item:     sql.NullString{String: "thread", Valid: true},
+		Section:  consts.PermissionSectionPrivateForumThread.String(),
+		Item:     sql.NullString{String: consts.PermissionItemThread.String(), Valid: true},
 		RuleType: "allow",
 		ItemID:   sql.NullInt32{Int32: threadID, Valid: true},
 		ItemRule: sql.NullString{},
 		Action:   action,
 		Extra:    sql.NullString{},
+	})
+}
+
+// CopyPrivateTopicGrantsToThread materializes the topic's view and reply grants on a new private thread.
+func (cd *CoreData) CopyPrivateTopicGrantsToThread(topicID, threadID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.SystemCopyPrivateTopicGrantsToThread(cd.ctx, db.SystemCopyPrivateTopicGrantsToThreadParams{
+		ThreadID: threadID,
+		TopicID:  topicID,
 	})
 }
 

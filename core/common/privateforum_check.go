@@ -2,11 +2,11 @@ package common
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"slices"
+
+	"github.com/arran4/goa4web/core/consts"
 )
 
 // PrivateForumInconsistency represents a found inconsistency in private forum grants
@@ -34,13 +34,9 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		return nil, fmt.Errorf("getting private forum grants: %w", err)
 	}
 
-	// Topic access tracking
-	// UserID -> TopicID -> Action -> bool
-	userTopicAccess := make(map[int32]map[int32]map[string]bool)
-
-	// Thread access tracking
-	// UserID -> ThreadID -> Action -> bool
-	userThreadAccess := make(map[int32]map[int32]map[string]bool)
+	// Topic view is the parent eligibility boundary for fine-grained thread grants.
+	// UserID -> TopicID -> bool
+	userTopicViewAccess := make(map[int32]map[int32]bool)
 
 	for _, grant := range grants {
 		roleName := ""
@@ -89,7 +85,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		}
 
 		// Rule 2.5: Clean up legacy 'edit' topic grants
-		if grant.Section == "privateforum" && grant.Item.String == "topic" && grant.Action == "edit" {
+		if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() && grant.Action == consts.PermissionActionEdit.String() {
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -108,22 +104,13 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 
 		// Track user access
 		if grant.UserID.Valid {
-			if grant.Section == "privateforum" && grant.Item.String == "topic" {
-				if userTopicAccess[userID] == nil {
-					userTopicAccess[userID] = make(map[int32]map[string]bool)
+			if grant.Section == consts.PermissionSectionPrivateForum.String() &&
+				grant.Item.String == consts.PermissionItemTopic.String() &&
+				grant.Action == consts.PermissionActionView.String() {
+				if userTopicViewAccess[userID] == nil {
+					userTopicViewAccess[userID] = make(map[int32]bool)
 				}
-				if userTopicAccess[userID][grant.ItemID.Int32] == nil {
-					userTopicAccess[userID][grant.ItemID.Int32] = make(map[string]bool)
-				}
-				userTopicAccess[userID][grant.ItemID.Int32][grant.Action] = true
-			} else if grant.Section == "privateforum_thread" && grant.Item.String == "thread" {
-				if userThreadAccess[userID] == nil {
-					userThreadAccess[userID] = make(map[int32]map[string]bool)
-				}
-				if userThreadAccess[userID][grant.ItemID.Int32] == nil {
-					userThreadAccess[userID][grant.ItemID.Int32] = make(map[string]bool)
-				}
-				userThreadAccess[userID][grant.ItemID.Int32][grant.Action] = true
+				userTopicViewAccess[userID][grant.ItemID.Int32] = true
 			}
 		}
 	}
@@ -135,15 +122,13 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	}
 
 	threadToTopic := make(map[int32]int32)
-	topicToThreads := make(map[int32][]int32)
 	for _, thread := range threads {
 		threadToTopic[thread.Idforumthread] = thread.Idforumtopic
-		topicToThreads[thread.Idforumtopic] = append(topicToThreads[thread.Idforumtopic], thread.Idforumthread)
 	}
 
-	// Rule 3: Check if user has thread access but NO topic access
+	// Rule 3: Fine-grained thread view and reply grants require parent topic view.
 	for _, grant := range grants {
-		if !grant.UserID.Valid || grant.Section != "privateforum_thread" || grant.Item.String != "thread" || !grant.ItemID.Valid {
+		if !grant.UserID.Valid || grant.Section != consts.PermissionSectionPrivateForumThread.String() || grant.Item.String != consts.PermissionItemThread.String() || !grant.ItemID.Valid {
 			continue
 		}
 
@@ -151,9 +136,9 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		threadID := grant.ItemID.Int32
 		topicID, exists := threadToTopic[threadID]
 
-		// Check if user has thread access but NO topic access for the same action
-		// Also clean up any legacy 'edit' thread grants even if they have the topic grant
-		if exists && (!userTopicAccess[userID][topicID][grant.Action] || grant.Action == "edit") {
+		missingParentView := isPrivateForumThreadAction(grant.Action) && !userTopicViewAccess[userID][topicID]
+		// Also clean up any legacy 'edit' thread grants even if they have topic view.
+		if exists && (missingParentView || grant.Action == consts.PermissionActionEdit.String()) {
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -164,40 +149,9 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 				RoleName:  "",
 				UserID:    userID,
 				Username:  grant.Username.String,
-				Issue:     fmt.Sprintf("User has access to thread %d but not its parent topic %d", threadID, topicID),
+				Issue:     fmt.Sprintf("User has %s access to thread %d without view access to parent topic %d", grant.Action, threadID, topicID),
 				FixAction: "Delete grant",
 			})
-		}
-	}
-
-	// Rule 4: User has topic access but is missing access to a thread in that topic
-	// We need username mapping
-	usernameMap := make(map[int32]string)
-	for _, grant := range grants {
-		if grant.UserID.Valid {
-			usernameMap[grant.UserID.Int32] = grant.Username.String
-		}
-	}
-
-	for userID, topics := range userTopicAccess {
-		for topicID, actions := range topics {
-			for _, threadID := range topicToThreads[topicID] {
-				for action := range actions {
-					if !userThreadAccess[userID][threadID][action] {
-						inconsistencies = append(inconsistencies, PrivateForumInconsistency{
-							ID:        fmt.Sprintf("create-%d-thread-%d-%s", userID, threadID, action),
-							Section:   "privateforum_thread",
-							Item:      "thread",
-							Action:    action,
-							ItemID:    threadID,
-							UserID:    userID,
-							Username:  usernameMap[userID],
-							Issue:     fmt.Sprintf("User has %s access to topic %d but missing it for thread %d", action, topicID, threadID),
-							FixAction: "Create missing thread grant",
-						})
-					}
-				}
-			}
 		}
 	}
 
@@ -209,23 +163,6 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					err := cd.queries.AdminDeleteGrant(ctx, inconsistency.GrantID)
 					if err != nil {
 						log.Printf("Error deleting grant %d: %v", inconsistency.GrantID, err)
-					}
-				} else { // Create operation
-					log.Printf("Fixing inconsistency: Creating grant for user %d thread %d (%s)", inconsistency.UserID, inconsistency.ItemID, inconsistency.Issue)
-
-					_, err := cd.queries.SystemCreateGrant(ctx, db.SystemCreateGrantParams{
-						Section:  inconsistency.Section,
-						Item:     sql.NullString{String: inconsistency.Item, Valid: true},
-						Action:   inconsistency.Action,
-						UserID:   sql.NullInt32{Int32: inconsistency.UserID, Valid: true},
-						RoleID:   sql.NullInt32{},
-						ItemID:   sql.NullInt32{Int32: inconsistency.ItemID, Valid: true},
-						ItemRule: sql.NullString{},
-						RuleType: "allow",
-					})
-
-					if err != nil {
-						log.Printf("Error creating missing grant: %v", err)
 					}
 				}
 			}
@@ -241,4 +178,8 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	}
 
 	return inconsistencies, nil
+}
+
+func isPrivateForumThreadAction(action string) bool {
+	return action == consts.PermissionActionView.String() || action == consts.PermissionActionReply.String()
 }

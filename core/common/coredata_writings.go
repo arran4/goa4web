@@ -136,7 +136,7 @@ func (cd *CoreData) WriterWritings(userID int32, r *http.Request) ([]*db.ListPub
 }
 
 // UpdateWritingReply updates a comment reply and returns thread metadata.
-func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string) (*db.GetThreadLastPosterAndPermsRow, error) {
+func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 	cmt, err := cd.CommentByID(commentID)
 	if err != nil || cmt == nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 	if err := cd.validateImagePathsForThread(uid, cmt.ForumthreadID, paths); err != nil {
 		return nil, fmt.Errorf("validate images: %w", err)
 	}
-	thread, err := cd.queries.GetThreadLastPosterAndPerms(cd.ctx, db.GetThreadLastPosterAndPermsParams{
+	thread, err := cd.queries.GetThreadLastPosterAndPermsForUser(cd.ctx, db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
 		ThreadID:      cmt.ForumthreadID,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

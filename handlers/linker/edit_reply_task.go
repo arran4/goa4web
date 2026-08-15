@@ -47,7 +47,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+	thread, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
 		ThreadID:      comment.ForumthreadID,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

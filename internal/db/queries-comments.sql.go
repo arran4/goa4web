@@ -148,7 +148,7 @@ WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = ?
       AND (g.item = ? OR g.item IS NULL)
-      AND g.action = 'reply'
+      AND g.action = ?
       AND g.active = 1
       AND (g.item_id = ? OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
@@ -167,6 +167,7 @@ type CreateCommentInSectionForCommenterParams struct {
 	Timezone      sql.NullString
 	Section       string
 	ItemType      sql.NullString
+	Action        string
 	ItemID        sql.NullInt32
 }
 
@@ -180,6 +181,7 @@ func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg Cr
 		arg.Timezone,
 		arg.Section,
 		arg.ItemType,
+		arg.Action,
 		arg.ItemID,
 		arg.CommenterID,
 		arg.CommenterID,
@@ -272,14 +274,28 @@ WHERE c.idcomments = ?
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 LIMIT 1
 `
 
@@ -310,6 +326,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 		arg.ID,
 		arg.ViewerID,
 		arg.ViewerID,
+		arg.UserID,
 		arg.UserID,
 	)
 	var i GetCommentByIdForUserRow
@@ -360,13 +377,27 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
   )
 ORDER BY c.written DESC
 `
@@ -412,6 +443,7 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 	}
 	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.ViewerID)
+	queryParams = append(queryParams, arg.UserID)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -486,7 +518,21 @@ WHERE c.forumthread_id=?
       AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 ORDER BY c.written
 `
 
@@ -523,6 +569,7 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 		arg.ViewerID,
 		arg.Section,
 		arg.ItemType,
+		arg.UserID,
 		arg.UserID,
 	)
 	if err != nil {
@@ -586,14 +633,28 @@ WHERE c.forumthread_id=?
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE (g.section='forum' OR g.section='privateforum')
+    WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
-      AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
+      AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = ? OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-)
+  )
+  AND (
+      t.handler IS NULL
+      OR t.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = th.idforumthread
+            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
 ORDER BY c.written
 `
 
@@ -624,6 +685,7 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 		arg.ThreadID,
 		arg.ViewerID,
 		arg.ViewerID,
+		arg.UserID,
 		arg.UserID,
 	)
 	if err != nil {

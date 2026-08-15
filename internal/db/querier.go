@@ -420,14 +420,14 @@ type Querier interface {
 	GetPermissionsByUserID(ctx context.Context, usersIdusers int32) ([]*GetPermissionsByUserIDRow, error)
 	GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error)
 	GetPreferenceForLister(ctx context.Context, listerID int32) (*Preference, error)
-	GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error)
+	GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsForUserParams) ([]*GetPrivateTopicThreadsAndLabelsForUserRow, error)
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
 	GetRoleByName(ctx context.Context, name string) (*Role, error)
 	GetSchedulerState(ctx context.Context, taskName string) (*SchedulerState, error)
 	GetSubscriptionArchetypesByRole(ctx context.Context, roleID int32) ([]*RoleSubscriptionArchetype, error)
 	GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
-	GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
+	GetThreadLastPosterAndPermsForUser(ctx context.Context, arg GetThreadLastPosterAndPermsForUserParams) (*GetThreadLastPosterAndPermsForUserRow, error)
 	// GetUnreadNotificationCountForLister returns the number of unread notifications for a
 	// lister.
 	// Parameters:
@@ -560,6 +560,7 @@ type Querier interface {
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
 	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
 	SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
+	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)

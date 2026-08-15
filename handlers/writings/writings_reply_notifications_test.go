@@ -94,8 +94,8 @@ func TestWritingReply_Notifications(t *testing.T) {
 			}
 			return nil, sql.ErrNoRows
 		}
-		qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-			return &db.GetThreadLastPosterAndPermsRow{
+		qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+			return &db.GetThreadLastPosterAndPermsForUserRow{
 				Idforumthread:          threadID,
 				ForumtopicIdforumtopic: topicID,
 				Lastposterusername:     sql.NullString{String: "replier", Valid: true},

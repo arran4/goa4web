@@ -815,6 +815,7 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 -- Set the schema version to the latest migration.
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (92, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (93, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (94, 1);
 
 
 

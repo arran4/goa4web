@@ -31,7 +31,7 @@ func TestCoreData_PrivateForumTopics_ShowsTopicLabels(t *testing.T) {
 	}
 
 	// No derived thread labels (empty)
-	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{}
+	q.GetPrivateTopicThreadsAndLabelsForUserReturns = []*db.GetPrivateTopicThreadsAndLabelsForUserRow{}
 
 	ctx := context.TODO()
 

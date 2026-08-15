@@ -156,7 +156,7 @@ func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string,
 
 func (PrivateTopicCreateTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		return []notif.GrantRequirement{{Section: "privateforum", Item: "topic", ItemID: data.TopicID, Action: "view"}}, nil
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionPrivateForum, Item: consts.PermissionItemTopic, ItemID: data.TopicID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, nil
 }

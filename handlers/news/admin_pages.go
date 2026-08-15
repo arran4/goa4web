@@ -55,7 +55,7 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Post           *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		TopicID        int32
-		Thread         *db.GetThreadLastPosterAndPermsRow
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
@@ -94,13 +94,13 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("GetCommentsByThreadIdForUser: %v", err)
 	}
-	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      cd.UserID,
 		ThreadID:      int32(post.ForumthreadID),
 		ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Printf("GetThreadLastPosterAndPerms: %v", err)
+		log.Printf("GetThreadLastPosterAndPermsForUser: %v", err)
 	}
 
 	cd.PageTitle = fmt.Sprintf("News Post %d", pid)

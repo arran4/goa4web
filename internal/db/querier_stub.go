@@ -233,10 +233,13 @@ type QuerierStub struct {
 	SystemCreateNotificationErr   error
 	SystemCreateNotificationCalls []SystemCreateNotificationParams
 
-	SystemCreateThreadCalls   []int32
-	SystemCreateThreadReturns int64
-	SystemCreateThreadErr     error
-	SystemCreateThreadFn      func(context.Context, int32) (int64, error)
+	SystemCreateThreadCalls                   []int32
+	SystemCreateThreadReturns                 int64
+	SystemCreateThreadErr                     error
+	SystemCreateThreadFn                      func(context.Context, int32) (int64, error)
+	SystemCopyPrivateTopicGrantsToThreadCalls []SystemCopyPrivateTopicGrantsToThreadParams
+	SystemCopyPrivateTopicGrantsToThreadErr   error
+	SystemCopyPrivateTopicGrantsToThreadFn    func(context.Context, SystemCopyPrivateTopicGrantsToThreadParams) error
 
 	SystemGetForumTopicByTitleCalls   []sql.NullString
 	SystemGetForumTopicByTitleReturns *Forumtopic
@@ -726,7 +729,7 @@ type QuerierStub struct {
 	SystemInsertDeadLetterFn  func(context.Context, string) error
 	SystemInsertDeadLetterErr error
 
-	GetThreadLastPosterAndPermsFn func(context.Context, GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error)
+	GetThreadLastPosterAndPermsForUserFn func(context.Context, GetThreadLastPosterAndPermsForUserParams) (*GetThreadLastPosterAndPermsForUserRow, error)
 
 	GetThreadBySectionThreadIDForReplierFn func(context.Context, GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error)
 
@@ -834,14 +837,14 @@ type QuerierStub struct {
 	GetNotificationCountForListerReturns int64
 	GetNotificationCountForListerErr     error
 
-	GetThreadLastPosterAndPermsCalls   []GetThreadLastPosterAndPermsParams
-	GetThreadLastPosterAndPermsReturns *GetThreadLastPosterAndPermsRow
-	GetThreadLastPosterAndPermsErr     error
+	GetThreadLastPosterAndPermsForUserCalls   []GetThreadLastPosterAndPermsForUserParams
+	GetThreadLastPosterAndPermsForUserReturns *GetThreadLastPosterAndPermsForUserRow
+	GetThreadLastPosterAndPermsForUserErr     error
 
-	GetPrivateTopicThreadsAndLabelsCalls   []GetPrivateTopicThreadsAndLabelsParams
-	GetPrivateTopicThreadsAndLabelsReturns []*GetPrivateTopicThreadsAndLabelsRow
-	GetPrivateTopicThreadsAndLabelsErr     error
-	GetPrivateTopicThreadsAndLabelsFn      func(context.Context, GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error)
+	GetPrivateTopicThreadsAndLabelsForUserCalls   []GetPrivateTopicThreadsAndLabelsForUserParams
+	GetPrivateTopicThreadsAndLabelsForUserReturns []*GetPrivateTopicThreadsAndLabelsForUserRow
+	GetPrivateTopicThreadsAndLabelsForUserErr     error
+	GetPrivateTopicThreadsAndLabelsForUserFn      func(context.Context, GetPrivateTopicThreadsAndLabelsForUserParams) ([]*GetPrivateTopicThreadsAndLabelsForUserRow, error)
 
 	ListBlogEntriesForListerCalls   []ListBlogEntriesForListerParams
 	ListBlogEntriesForListerReturns []*ListBlogEntriesForListerRow
@@ -2402,15 +2405,15 @@ func (s *QuerierStub) GetThreadBySectionThreadIDForReplier(ctx context.Context, 
 	return s.GetThreadBySectionThreadIDForReplierReturn, s.GetThreadBySectionThreadIDForReplierErr
 }
 
-func (s *QuerierStub) GetThreadLastPosterAndPerms(ctx context.Context, arg GetThreadLastPosterAndPermsParams) (*GetThreadLastPosterAndPermsRow, error) {
+func (s *QuerierStub) GetThreadLastPosterAndPermsForUser(ctx context.Context, arg GetThreadLastPosterAndPermsForUserParams) (*GetThreadLastPosterAndPermsForUserRow, error) {
 	s.mu.Lock()
-	s.GetThreadLastPosterAndPermsCalls = append(s.GetThreadLastPosterAndPermsCalls, arg)
-	fn := s.GetThreadLastPosterAndPermsFn
+	s.GetThreadLastPosterAndPermsForUserCalls = append(s.GetThreadLastPosterAndPermsForUserCalls, arg)
+	fn := s.GetThreadLastPosterAndPermsForUserFn
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)
 	}
-	return s.GetThreadLastPosterAndPermsReturns, s.GetThreadLastPosterAndPermsErr
+	return s.GetThreadLastPosterAndPermsForUserReturns, s.GetThreadLastPosterAndPermsForUserErr
 }
 
 func (s *QuerierStub) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error) {
@@ -2545,6 +2548,19 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 		return fn(ctx, forumtopicIdforumtopic)
 	}
 	return ret, err
+}
+
+// SystemCopyPrivateTopicGrantsToThread records the call and returns the configured response.
+func (s *QuerierStub) SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error {
+	s.mu.Lock()
+	s.SystemCopyPrivateTopicGrantsToThreadCalls = append(s.SystemCopyPrivateTopicGrantsToThreadCalls, arg)
+	fn := s.SystemCopyPrivateTopicGrantsToThreadFn
+	err := s.SystemCopyPrivateTopicGrantsToThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 func (s *QuerierStub) SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
@@ -3062,12 +3078,12 @@ func (s *QuerierStub) UpdateExternalLinkMetadata(ctx context.Context, arg Update
 	return err
 }
 
-func (s *QuerierStub) GetPrivateTopicThreadsAndLabels(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsParams) ([]*GetPrivateTopicThreadsAndLabelsRow, error) {
+func (s *QuerierStub) GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsForUserParams) ([]*GetPrivateTopicThreadsAndLabelsForUserRow, error) {
 	s.mu.Lock()
-	s.GetPrivateTopicThreadsAndLabelsCalls = append(s.GetPrivateTopicThreadsAndLabelsCalls, arg)
-	fn := s.GetPrivateTopicThreadsAndLabelsFn
-	ret := s.GetPrivateTopicThreadsAndLabelsReturns
-	err := s.GetPrivateTopicThreadsAndLabelsErr
+	s.GetPrivateTopicThreadsAndLabelsForUserCalls = append(s.GetPrivateTopicThreadsAndLabelsForUserCalls, arg)
+	fn := s.GetPrivateTopicThreadsAndLabelsForUserFn
+	ret := s.GetPrivateTopicThreadsAndLabelsForUserReturns
+	err := s.GetPrivateTopicThreadsAndLabelsForUserErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

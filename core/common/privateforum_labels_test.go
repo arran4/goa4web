@@ -42,14 +42,14 @@ func TestCoreData_PrivateForumTopics_LabelsBug(t *testing.T) {
 		Label:  "Misapplied",
 	})
 
-	// Stub GetPrivateTopicThreadsAndLabels to return a simple thread with no special labels (so Read and NotNew effectively if we assume default... wait)
+	// Stub GetPrivateTopicThreadsAndLabelsForUser to return a simple thread with no special labels (so Read and NotNew effectively if we assume default... wait)
 	// Default:
 	// Unread: If "unread" label missing -> Unread.
 	// New: If "new" label missing -> New.
 	// But we want to test "Bug Fix", i.e. no random labels.
 	// If we return empty list, no labels.
 	// If we return a thread with "unread" inverted=true and "new" inverted=true, we should have NO labels.
-	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{
+	q.GetPrivateTopicThreadsAndLabelsForUserReturns = []*db.GetPrivateTopicThreadsAndLabelsForUserRow{
 		{
 			Idforumthread: 100,
 			AuthorID:      2, // Other user
@@ -108,9 +108,9 @@ func TestCoreData_PrivateForumTopics_UnreadNew(t *testing.T) {
 		{Idusers: 2, Username: sql.NullString{String: "participant1", Valid: true}},
 	}
 
-	// Stub GetPrivateTopicThreadsAndLabels
+	// Stub GetPrivateTopicThreadsAndLabelsForUser
 	// Thread 101: Author=2 (other). No labels. -> Should be Unread and New.
-	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{
+	q.GetPrivateTopicThreadsAndLabelsForUserReturns = []*db.GetPrivateTopicThreadsAndLabelsForUserRow{
 		{
 			Idforumthread: 101,
 			AuthorID:      2,
@@ -158,7 +158,7 @@ func TestCoreData_PrivateForumTopics_OwnThreadNotNew(t *testing.T) {
 	q.ListPrivateTopicParticipantsByTopicIDForUserReturns = []*db.ListPrivateTopicParticipantsByTopicIDForUserRow{}
 
 	// Thread 102: Author=1 (Me). No labels. -> Should be Unread (if not read) but NOT New (because I wrote it).
-	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{
+	q.GetPrivateTopicThreadsAndLabelsForUserReturns = []*db.GetPrivateTopicThreadsAndLabelsForUserRow{
 		{
 			Idforumthread: 102,
 			AuthorID:      1, // Me

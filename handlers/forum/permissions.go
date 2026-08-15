@@ -5,16 +5,17 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
 
 // UserCanCreateThread reports whether uid may create a thread in the topic.
-func UserCanCreateThread(ctx context.Context, q db.Querier, section string, topicID, uid int32) (bool, error) {
+func UserCanCreateThread(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
-		Section:  section,
-		Item:     sql.NullString{String: "topic", Valid: true},
-		Action:   "post",
+		Section:  section.String(),
+		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
+		Action:   consts.PermissionActionPost.String(),
 		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
@@ -30,12 +31,12 @@ func UserCanCreateThread(ctx context.Context, q db.Querier, section string, topi
 }
 
 // UserCanCreateTopic reports whether uid may create a topic in the category.
-func UserCanCreateTopic(ctx context.Context, q db.Querier, section string, categoryID, uid int32) (bool, error) {
+func UserCanCreateTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, categoryID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
-		Section:  section,
-		Item:     sql.NullString{String: "category", Valid: true},
-		Action:   "post",
+		Section:  section.String(),
+		Item:     sql.NullString{String: consts.PermissionItemCategory.String(), Valid: true},
+		Action:   consts.PermissionActionPost.String(),
 		ItemID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
@@ -51,12 +52,12 @@ func UserCanCreateTopic(ctx context.Context, q db.Querier, section string, categ
 }
 
 // UserCanLabelTopic reports whether uid may add/remove labels on the topic.
-func UserCanLabelTopic(ctx context.Context, q db.Querier, section string, topicID, uid int32) (bool, error) {
+func UserCanLabelTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
-		Section:  section,
-		Item:     sql.NullString{String: "topic", Valid: true},
-		Action:   "label",
+		Section:  section.String(),
+		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
+		Action:   consts.PermissionActionLabel.String(),
 		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

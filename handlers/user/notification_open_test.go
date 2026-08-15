@@ -77,8 +77,8 @@ func TestUserNotificationOpenPage_SetsTitle(t *testing.T) {
 					return &db.Forumtopic{Idforumtopic: id, Handler: handler}, nil
 				}
 
-				qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
-					return &db.GetThreadLastPosterAndPermsRow{
+				qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+					return &db.GetThreadLastPosterAndPermsForUserRow{
 						Idforumthread: arg.ThreadID,
 						Firstpost:     100 + arg.ThreadID,
 					}, nil

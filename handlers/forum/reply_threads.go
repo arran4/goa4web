@@ -43,7 +43,7 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Topic        *db.GetForumTopicByIdForUserRow
 		Thread       *db.GetThreadLastPosterAndPermsForUserRow
-		Threads 	 []*threadWithLabels
+		ThreadsByComment map[int32][]*threadWithLabels
 	}
 
 	uid, _ := cd.GetSession().Values["UID"].(int32)
@@ -78,7 +78,7 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var mappedThreads []*threadWithLabels
+	mappedThreads := make(map[int32][]*threadWithLabels)
 	for _, rt := range replyThreads {
 		var labels []templates.TopicLabel
 		if pub, author, err := cd.ThreadPublicLabels(rt.Idforumthread); err == nil {
@@ -94,7 +94,13 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 				labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
 			}
 		}
-		mappedThreads = append(mappedThreads, &threadWithLabels{
+
+		commentID := int32(0)
+		if rt.ReplyToCommentID.Valid {
+			commentID = rt.ReplyToCommentID.Int32
+		}
+
+		mappedThreads[commentID] = append(mappedThreads[commentID], &threadWithLabels{
 			GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
 				Idforumthread:          rt.Idforumthread,
 				Firstpost:              rt.Firstpost,
@@ -113,11 +119,11 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	cd.PageTitle = "Reply Threads - " + topic.Title.String
+	cd.PageTitle = "Replies - " + topic.Title.String
 	data := Data{
 		Topic:        topic,
 		Thread:       thread,
-		Threads:      mappedThreads,
+		ThreadsByComment: mappedThreads,
 	}
 
 	if err := ReplyThreadsPageTmpl.Handle(w, r, data); err != nil {

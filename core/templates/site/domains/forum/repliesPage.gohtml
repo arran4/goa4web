@@ -4,10 +4,42 @@
 
 <h1 class="page-title">Replies to <a href="{{ cd.ForumBasePath }}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}">#{{.Thread.Idforumthread}}</a></h1>
 
-{{ if eq (len .Threads) 0 }}
+{{ if eq (len .ThreadsByComment) 0 }}
     <p>No replies found.</p>
 {{ else }}
-    {{ template "topicThreads" . }}
+    {{ $base := "/forum" }}
+    {{ with cd.ForumBasePath }}{{ $base = . }}{{ end }}
+    {{ range $commentID, $threads := .ThreadsByComment }}
+        <div class="comment-group" id="c{{ $commentID }}">
+            <h2 style="margin-top: 2rem; border-bottom: 2px solid #ccc; padding-bottom: 0.5rem;">
+                {{ if eq $commentID 0 }}
+                    Replies to Thread
+                {{ else }}
+                    Replies to Comment <a href="{{ $base }}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}#c{{ $commentID }}">#{{ $commentID }}</a>
+                {{ end }}
+            </h2>
+            <div class="thread-list">
+            {{- range $threads }}
+                <div class="thread" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-creation-time="{{ .Firstpostwritten.Time.Unix }}" data-comments="{{ .Comments.Int32 }}">
+                    <div class="thread-meta thread-header">
+                        First poster: <span class="poster-name first" {{ if ne .Firstpostuserid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Firstpostusername.String }}</span>
+                        At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
+                    </div>
+                    <div class="thread-content foldable">
+                        {{ .Firstposttext.String | a4code2html }}<br>
+                    </div>
+                    <div class="thread-meta">
+                        Lastposter: <span class="poster-name last" {{ if ne .Lastposterid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Lastposterusername.String }}</span>
+                        At <span class="post-time last">{{ cd.LocalTime .Lastaddition.Time }}</span>
+                        [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
+                            {{- .Comments.Int32 }} comments.</a>]{{" "}}
+                        {{- template "topicLabels" .Labels }}
+                    </div>
+                </div>
+            {{- end }}
+            </div>
+        </div>
+    {{ end }}
 {{ end }}
 
 <div class="back-link" style="margin-top: 1rem;">

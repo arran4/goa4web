@@ -104,15 +104,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		participants = append(participants, common.PrivateTopicParticipant{ID: creator, Username: username})
 	}
 
-	// Private forum routing requires a global topic/see grant. Inviting a user
-	// should establish that prerequisite rather than requiring it beforehand.
-	for _, participant := range participants {
-		if err := cd.EnsurePrivateForumTopicSeeGrant(participant.ID); err != nil {
-			return fmt.Errorf("ensure private forum access for user %d: %w", participant.ID, handlers.ErrRedirectOnSamePageHandler(err))
-		}
-	}
-
-	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
+	topicID, err := cd.CreatePrivateTopicWithAccess(common.CreatePrivateTopicParams{
 		CreatorID:    creator,
 		Participants: participants,
 		Title:        title,

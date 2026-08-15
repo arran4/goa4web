@@ -23,7 +23,7 @@ func TestMigrationFileNaming(t *testing.T) {
 
 	// Regex to match NNNN_<driver>.sql
 	// NNNN is 4 digits
-	validNameStrict := regexp.MustCompile(`^\d{4}_(mysql)\.sql$`)
+	validNameStrict := regexp.MustCompile(`^\d{4}_(?:mysql|sqlite)\.sql$`)
 
 	// Regex for files with descriptions (temporarily disallowed)
 	// Matches NNNN_description.sql or NNNN_description.mysql.sql|sqlite.sql
@@ -44,7 +44,7 @@ func TestMigrationFileNaming(t *testing.T) {
 
 		// Check for description usage (disallowed for now)
 		if validNameDesc.MatchString(name) && !validNameStrict.MatchString(name) {
-			t.Errorf("Migration file %s uses a description which is currently disabled. Use format NNNN_mysql.sql or NNNN_sqlite.sql|sqlite.sql", name)
+			t.Errorf("Migration file %s uses a description which is currently disabled. Use format NNNN_mysql.sql or NNNN_sqlite.sql", name)
 		}
 
 		// Validate naming convention

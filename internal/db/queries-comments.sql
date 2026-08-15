@@ -27,7 +27,7 @@ WHERE c.idcomments = sqlc.arg(id)
     SELECT 1 FROM grants g
     WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
       AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
@@ -109,7 +109,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
     SELECT 1 FROM grants g
     WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
       AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)
@@ -178,7 +178,7 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
     SELECT 1 FROM grants g
     WHERE ((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))
       AND (g.item='topic' OR g.item IS NULL)
-      AND g.action='see'
+      AND g.action='view'
       AND g.active=1
       AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
       AND (g.user_id = sqlc.arg(user_id) OR g.user_id IS NULL)

@@ -119,6 +119,42 @@ func TestPrivateCommentReadQueriesBindParentGrantToTopicNamespace(t *testing.T) 
 	}
 }
 
+func TestPrivateCommentContentReadQueriesRequireParentTopicView(t *testing.T) {
+	queries := map[string]string{
+		"comment":      getCommentByIdForUser,
+		"comment list": getCommentsByIdsForUserWithThreadInfo,
+		"thread":       getCommentsByThreadIdForUser,
+	}
+	for name, query := range queries {
+		if !strings.Contains(query, "g.action='view'") {
+			t.Errorf("%s query does not require parent topic view", name)
+		}
+		if strings.Contains(query, "g.action='see'") {
+			t.Errorf("%s query still accepts parent topic see for full comment content", name)
+		}
+	}
+}
+
+func TestPrivateCommentSearchQueriesBindParentGrantToTopicNamespace(t *testing.T) {
+	queries := map[string]string{
+		"first unrestricted": listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic,
+		"next unrestricted":  listCommentIDsBySearchWordNextForListerNotInRestrictedTopic,
+		"first restricted":   listCommentIDsBySearchWordFirstForListerInRestrictedTopic,
+		"next restricted":    listCommentIDsBySearchWordNextForListerInRestrictedTopic,
+	}
+	checks := []string{
+		"((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))",
+		"((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))",
+	}
+	for name, query := range queries {
+		for _, check := range checks {
+			if !strings.Contains(query, check) {
+				t.Errorf("%s query does not bind its parent grant with %q", name, check)
+			}
+		}
+	}
+}
+
 func TestGetThreadLastPosterAndPermsForUserBindsParentGrantToHandler(t *testing.T) {
 	checks := []string{
 		"((t.handler = 'private' AND g.section = 'privateforum') OR (t.handler <> 'private' AND g.section = 'forum'))",

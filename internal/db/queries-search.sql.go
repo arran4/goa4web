@@ -339,11 +339,11 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE (g.section='forum' OR g.section='privateforum')
+      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -437,11 +437,11 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE (g.section='forum' OR g.section='privateforum')
+      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -526,11 +526,11 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE (g.section='forum' OR g.section='privateforum')
+      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
@@ -634,11 +634,11 @@ WHERE swl.word=?
   )
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE (g.section='forum' OR g.section='privateforum')
+      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
         AND (g.item='topic' OR g.item IS NULL)
         AND g.action='see'
         AND g.active=1
-        AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)
+        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )

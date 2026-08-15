@@ -46,8 +46,8 @@ func TestPrivateRoute(t *testing.T) {
 			userID:        1,
 			username:      "user",
 			grantReturns:  0, // No grant
-			expectedCode:  http.StatusOK,
-			expectMatched: true,
+			expectedCode:  http.StatusNotFound,
+			expectMatched: false,
 		},
 		{
 			name:         "Authenticated With Grant",

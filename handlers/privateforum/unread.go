@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -65,11 +65,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
-			RedirectURL string
-		}{
-			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
-		})
+		handlers.RenderNotFoundOrLogin(w, r)
 		return
 	}
 

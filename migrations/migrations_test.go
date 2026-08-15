@@ -121,17 +121,27 @@ func TestPrivateForumThreadGrantMigration(t *testing.T) {
 	if !strings.Contains(sql, wantSet) {
 		t.Error("migration does not move grants to privateforum_thread")
 	}
-	wantWhere := fmt.Sprintf("WHERE section = '%s' AND item = '%s'", consts.PermissionSectionPrivateForum, consts.PermissionItemThread)
-	if !strings.Contains(sql, wantWhere) {
+	wantSection := fmt.Sprintf("WHERE section = '%s'", consts.PermissionSectionPrivateForum)
+	wantItem := fmt.Sprintf("AND item = '%s'", consts.PermissionItemThread)
+	if !strings.Contains(sql, wantSection) || !strings.Contains(sql, wantItem) {
 		t.Error("migration is not restricted to legacy private thread grants")
 	}
 	if !strings.Contains(sql, "JOIN forumthread thread_row") {
 		t.Error("migration does not backfill grants for existing private threads")
 	}
-	if !strings.Contains(sql, "topic_grant.action IN ('see', 'view', 'post', 'reply')") {
+	if !strings.Contains(sql, "topic_grant.action IN ('view', 'reply')") {
 		t.Error("migration does not restrict backfilled grants to supported private thread actions")
+	}
+	if !strings.Contains(sql, "rule_type = 'allow'") || !strings.Contains(sql, "active = 1") || !strings.Contains(sql, "item_id IS NOT NULL") {
+		t.Error("migration does not restrict normalized legacy grants to active, valid allow rows")
 	}
 	if !strings.Contains(sql, "AND NOT EXISTS") {
 		t.Error("migration does not guard against duplicate private thread grants")
+	}
+	if !strings.Contains(sql, "thread_grant.rule_type = 'allow'") {
+		t.Error("migration treats non-allow grants as equivalent to the allow grants it backfills")
+	}
+	if !strings.Contains(sql, "UPDATE schema_version SET version = 94") {
+		t.Error("migration does not update the legacy schema version")
 	}
 }

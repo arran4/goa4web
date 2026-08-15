@@ -36,3 +36,16 @@ func TestCreatePrivateForumCommentUsesPrivateThreadGrant(t *testing.T) {
 		t.Errorf("grant item ID = %#v, want thread ID 4", call.ItemID)
 	}
 }
+
+func TestPrivateForumThreadActions(t *testing.T) {
+	for _, action := range []string{consts.PermissionActionView.String(), consts.PermissionActionReply.String()} {
+		if !isPrivateForumThreadAction(action) {
+			t.Errorf("isPrivateForumThreadAction(%q) = false, want true", action)
+		}
+	}
+	for _, action := range []string{consts.PermissionActionSee.String(), consts.PermissionActionPost.String(), consts.PermissionActionEdit.String()} {
+		if isPrivateForumThreadAction(action) {
+			t.Errorf("isPrivateForumThreadAction(%q) = true, want false", action)
+		}
+	}
+}

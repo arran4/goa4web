@@ -109,7 +109,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 
 		// Track user access
 		if grant.UserID.Valid {
-			if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() {
+			if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() && isPrivateForumThreadAction(grant.Action) {
 				if userTopicAccess[userID] == nil {
 					userTopicAccess[userID] = make(map[int32]map[string]bool)
 				}
@@ -242,4 +242,8 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	}
 
 	return inconsistencies, nil
+}
+
+func isPrivateForumThreadAction(action string) bool {
+	return action == consts.PermissionActionView.String() || action == consts.PermissionActionReply.String()
 }

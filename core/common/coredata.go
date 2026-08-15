@@ -2193,7 +2193,7 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 			if section == "privateforum" {
 				appendWindow = cd.Config.PrivateForumPostAppendWindow
 			}
-			if time.Now().Sub(lastComment.Written.Time).Minutes() <= float64(appendWindow) {
+			if time.Since(lastComment.Written.Time).Minutes() <= float64(appendWindow) {
 				hasAppendGrant := cd.HasGrant(section, itemType, "append", itemID)
 				if hasAppendGrant {
 					othersRead, _ := cd.queries.CheckIfOthersReadCommentForPoster(cd.ctx, db.CheckIfOthersReadCommentForPosterParams{

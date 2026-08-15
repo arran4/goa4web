@@ -560,6 +560,7 @@ type Querier interface {
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
 	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
 	SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
+	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)

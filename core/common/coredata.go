@@ -2056,6 +2056,8 @@ func sectionItemType(section string) string {
 		return "topic"
 	case "privateforum":
 		return "topic"
+	case string(consts.PermissionSectionPrivateForumThread):
+		return string(consts.PermissionItemThread)
 	case "imagebbs":
 		return "board"
 	case "linker":
@@ -2155,7 +2157,7 @@ func (cd *CoreData) SelectedForumThreadCanReply() bool {
 }
 
 func (cd *CoreData) SelectedPrivateForumThreadCanReply() bool {
-	return cd.sectionThreadCanReply("privateforum", cd.currentTopicID)
+	return cd.sectionThreadCanReply(consts.PermissionSectionPrivateForumThread.String(), cd.currentThreadID)
 }
 
 func (cd *CoreData) SelectedBlogThreadCanReply() bool {

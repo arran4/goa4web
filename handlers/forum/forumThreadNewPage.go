@@ -283,24 +283,8 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var cid int64
 	if topic.Handler == "private" {
-		participants, err := queries.ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
-			TopicID:  sql.NullInt32{Int32: int32(topicId), Valid: true},
-			ViewerID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-		})
-		if err != nil {
-			return fmt.Errorf("listing private topic participants: %w", err)
-		}
-		for _, p := range participants {
-			for _, permission := range []string{consts.PermissionActionView.String(), consts.PermissionActionReply.String()} {
-				if _, err = cd.GrantForumThread(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, permission); err != nil {
-					return fmt.Errorf("granting %s thread access to %d: %w", permission, p.Idusers, err)
-				}
-			}
-			for _, permission := range []string{ /* Disabled */ } {
-				if _, err = cd.GrantForumTopic(int32(threadId), sql.NullInt32{Int32: p.Idusers, Valid: p.Idusers != 0}, sql.NullInt32{}, permission); err != nil {
-					return fmt.Errorf("granting %s topic access to %d: %w", permission, p.Idusers, err)
-				}
-			}
+		if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
+			return fmt.Errorf("copying private topic grants to thread: %w", err)
 		}
 		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {

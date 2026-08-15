@@ -488,9 +488,9 @@ func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
 		threadID,
 		int32(1),
 		int32(1),
-		"privateforum",
-		sql.NullString{String: "topic", Valid: true},
-		sql.NullInt32{Int32: topicID, Valid: true},
+		consts.PermissionSectionPrivateForumThread.String(),
+		sql.NullString{String: consts.PermissionItemThread.String(), Valid: true},
+		sql.NullInt32{Int32: threadID, Valid: true},
 		sql.NullInt32{Int32: 1, Valid: true},
 	).WillReturnRows(rows)
 

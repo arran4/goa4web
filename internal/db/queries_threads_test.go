@@ -83,3 +83,19 @@ func TestPrivateThreadReadQueryNamesDescribeUserContext(t *testing.T) {
 		}
 	}
 }
+
+func TestSystemCopyPrivateTopicGrantsToThreadPreservesPrincipalsAndActions(t *testing.T) {
+	checks := []string{
+		"topic_grant.user_id, topic_grant.role_id",
+		"thread_row.idforumthread, NULL, topic_grant.action",
+		"topic_grant.action IN ('view', 'reply')",
+		"thread_grant.action = topic_grant.action",
+		"thread_grant.user_id <=> topic_grant.user_id",
+		"thread_grant.role_id <=> topic_grant.role_id",
+	}
+	for _, check := range checks {
+		if !strings.Contains(systemCopyPrivateTopicGrantsToThread, check) {
+			t.Errorf("private topic grant copy query missing %q", check)
+		}
+	}
+}

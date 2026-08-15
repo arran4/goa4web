@@ -331,6 +331,17 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 	})
 }
 
+// CopyPrivateTopicGrantsToThread materializes the topic's view and reply grants on a new private thread.
+func (cd *CoreData) CopyPrivateTopicGrantsToThread(topicID, threadID int32) error {
+	if cd.queries == nil {
+		return nil
+	}
+	return cd.queries.SystemCopyPrivateTopicGrantsToThread(cd.ctx, db.SystemCopyPrivateTopicGrantsToThreadParams{
+		ThreadID: threadID,
+		TopicID:  topicID,
+	})
+}
+
 // RevokeForumThread removes a forum thread grant by ID.
 func (cd *CoreData) RevokeForumThread(grantID int32) error {
 	if cd.queries == nil {

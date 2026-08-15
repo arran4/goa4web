@@ -233,10 +233,13 @@ type QuerierStub struct {
 	SystemCreateNotificationErr   error
 	SystemCreateNotificationCalls []SystemCreateNotificationParams
 
-	SystemCreateThreadCalls   []int32
-	SystemCreateThreadReturns int64
-	SystemCreateThreadErr     error
-	SystemCreateThreadFn      func(context.Context, int32) (int64, error)
+	SystemCreateThreadCalls                   []int32
+	SystemCreateThreadReturns                 int64
+	SystemCreateThreadErr                     error
+	SystemCreateThreadFn                      func(context.Context, int32) (int64, error)
+	SystemCopyPrivateTopicGrantsToThreadCalls []SystemCopyPrivateTopicGrantsToThreadParams
+	SystemCopyPrivateTopicGrantsToThreadErr   error
+	SystemCopyPrivateTopicGrantsToThreadFn    func(context.Context, SystemCopyPrivateTopicGrantsToThreadParams) error
 
 	SystemGetForumTopicByTitleCalls   []sql.NullString
 	SystemGetForumTopicByTitleReturns *Forumtopic
@@ -2545,6 +2548,19 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 		return fn(ctx, forumtopicIdforumtopic)
 	}
 	return ret, err
+}
+
+// SystemCopyPrivateTopicGrantsToThread records the call and returns the configured response.
+func (s *QuerierStub) SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error {
+	s.mu.Lock()
+	s.SystemCopyPrivateTopicGrantsToThreadCalls = append(s.SystemCopyPrivateTopicGrantsToThreadCalls, arg)
+	fn := s.SystemCopyPrivateTopicGrantsToThreadFn
+	err := s.SystemCopyPrivateTopicGrantsToThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }
 
 func (s *QuerierStub) SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {

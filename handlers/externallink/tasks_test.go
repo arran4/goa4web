@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
@@ -43,7 +43,6 @@ func TestReloadExternalLinkTask(t *testing.T) {
 			qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
 				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
 			}
-
 
 			link := "https://example.com/some/link"
 			sig := sign.Sign("link:"+link, key)

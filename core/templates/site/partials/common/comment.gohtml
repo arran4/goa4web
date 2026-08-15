@@ -33,6 +33,16 @@
                 </form>
             {{ else }}
                 <div id="comment-{{ $cmt.Idcomments }}">{{ $cmt.Text.String | a4code2html}}</div>
+                {{ if cd.SelectedThreadCanReply }}
+                    {{ $topicID := 0 }}
+                    {{ if cd.SelectedThreadLoaded }}{{ $topicID = cd.SelectedThreadLoaded.ForumtopicIdforumtopic }}{{ end }}
+                    {{ if $.ReplyThreadCounts }}
+                    {{ if index $.ReplyThreadCounts $cmt.Idcomments }}
+                        {{ $count := index $.ReplyThreadCounts $cmt.Idcomments }}
+                        <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc;"><strong>Forked Conversations:</strong> This comment has <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/{{ cd.SelectedThreadID }}/replies#c{{ $cmt.Idcomments }}">{{ $count }} new thread {{ if eq $count 1 }}reply{{ else }}replies{{ end }}</a>.</div>
+                    {{ end }}
+                    {{ end }}
+                {{ end }}
                 {{ if ne $context "admin" }}
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
@@ -50,12 +60,6 @@
                                  <a href="#" class="quote-new-thread-link" data-comment-id="{{ $cmt.Idcomments }}" data-topic-id="{{ $topicID }}" title="Reply in new thread">[NEW THREAD REPLY]</a>]
                             </span>
                         </span>
-                            {{ if $.ReplyThreadCounts }}
-                            {{ if index $.ReplyThreadCounts $cmt.Idcomments }}
-                                {{ $count := index $.ReplyThreadCounts $cmt.Idcomments }}
-                                <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; border-left: 4px solid #0066cc;"><strong>Forked Conversations:</strong> This comment has <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/{{ cd.SelectedThreadID }}/replies#c{{ $cmt.Idcomments }}">{{ $count }} new thread {{ if eq $count 1 }}reply{{ else }}replies{{ end }}</a>.</div>
-                            {{ end }}
-                            {{ end }}
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}
@@ -63,13 +67,13 @@
                     [<a href="#" class="view-source-link" data-target="source-modal-{{ $cmt.Idcomments }}">VIEW SOURCE</a>]
                 </footer>
                 <div id="source-modal-{{ $cmt.Idcomments }}" class="shortcuts-overlay hidden source-modal-overlay">
-                    <div class="shortcuts-modal" style="width: 800px;">
+                    <div class="shortcuts-modal" style="width: 80vw; height: 80vh; max-width: 1200px; display: flex; flex-direction: column;">
                         <div class="shortcuts-header">
                             <h2 style="margin: 0; font-size: 1.2em;">Source</h2>
                             <button class="close-button close-source-modal" data-target="source-modal-{{ $cmt.Idcomments }}">&times;</button>
                         </div>
-                        <div style="padding: 1rem;">
-                            <textarea readonly style="width: 100%; height: 300px; font-family: monospace; padding: 0.5rem; resize: vertical;">{{ $cmt.Text.String }}</textarea>
+                        <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
+                            <textarea readonly style="width: 100%; flex-grow: 1; font-family: monospace; padding: 0.5rem; resize: none;">{{ $cmt.Text.String }}</textarea>
                         </div>
                     </div>
                 </div>

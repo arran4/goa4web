@@ -187,25 +187,6 @@ func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 					text = a4code.QuoteText(c.Username.String, c.Text.String, a4code.WithParagraphQuote()) + "\n\n"
 				}
 
-				// Append a link back to the original thread/comment.
-				// We need to fetch the full thread context to get the topic ID for the link.
-				// While cd.CommentByID retrieves the comment, it lacks the full context
-				// required to build the canonical URL.
-				if th, err := cd.ForumThreadByID(c.ForumthreadID); err == nil && th != nil {
-					if comments, err := cd.Queries().GetCommentsByIdsForUserWithThreadInfo(r.Context(), db.GetCommentsByIdsForUserWithThreadInfoParams{
-						ViewerID: uid,
-						Ids:      []int32{int32(cId)},
-						UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
-					}); err == nil && len(comments) > 0 {
-						srcC := comments[0]
-						if srcC.Idforumtopic.Valid {
-							srcTopicId := srcC.Idforumtopic.Int32
-							srcThreadId := srcC.Idforumthread.Int32
-							link := fmt.Sprintf("\n\n[url %s/topic/%d/thread/%d#c%d View original]", base, srcTopicId, srcThreadId, cId)
-							text += link
-						}
-					}
-				}
 				data.QuoteText = text
 			}
 		}

@@ -281,6 +281,17 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if u := cd.UserByID(uid); u != nil {
 		author = u.Username.String
 	}
+	quoteCommentId := r.URL.Query().Get("quote_comment_id")
+	var replyToCommentId, replyToThreadId sql.NullInt32
+	if quoteCommentId != "" {
+		if cId, err := strconv.Atoi(quoteCommentId); err == nil {
+			if c, err := cd.CommentByID(int32(cId)); err == nil && c != nil {
+				replyToCommentId = sql.NullInt32{Int32: int32(cId), Valid: true}
+				replyToThreadId = sql.NullInt32{Int32: c.ForumthreadID, Valid: true}
+			}
+		}
+	}
+
 	text := r.PostFormValue("replytext")
 	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
 
@@ -306,6 +317,16 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if cid == 0 {
 		log.Printf("Error: cid == 0 on comment create - no error")
 		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
+	}
+
+	if replyToThreadId.Valid {
+		if err := cd.Queries().SetThreadReplyTo(r.Context(), db.SetThreadReplyToParams{
+			ReplyToCommentID: replyToCommentId,
+			ReplyToThreadID:  replyToThreadId,
+			Idforumthread:    int32(threadId),
+		}); err != nil {
+			log.Printf("Error: setting thread reply to: %s", err)
+		}
 	}
 
 	if evt := cd.Event(); evt != nil {

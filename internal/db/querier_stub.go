@@ -3322,3 +3322,21 @@ func (q *QuerierStub) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePas
 func (q *QuerierStub) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error {
 	return nil
 }
+
+func (s *QuerierStub) GetReplyThreadCountsForComments(ctx context.Context, arg GetReplyThreadCountsForCommentsParams) ([]*GetReplyThreadCountsForCommentsRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return nil, nil
+}
+
+func (s *QuerierStub) GetReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) ([]*GetReplyThreadsForThreadRow, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return nil, nil
+}
+
+func (s *QuerierStub) SetThreadReplyTo(ctx context.Context, arg SetThreadReplyToParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return nil
+}

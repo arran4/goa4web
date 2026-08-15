@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"database/sql"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -21,6 +22,7 @@ import (
 
 func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type Data struct {
+		ReplyThreadCounts map[int32]int64
 		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
 		Thread         *db.GetThreadLastPosterAndPermsForUserRow
@@ -117,6 +119,21 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 
 	commentId := cd.SelectedCommentID()
 	data.Comments = commentRows
+	var commentIds []sql.NullInt32
+	for _, c := range commentRows {
+		commentIds = append(commentIds, sql.NullInt32{Int32: c.Idcomments, Valid: true})
+	}
+
+	replyCounts, _ := cd.Queries().GetReplyThreadCountsForComments(r.Context(), db.GetReplyThreadCountsForCommentsParams{
+		ReplyToThreadID: sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true},
+		CommentIds:      commentIds,
+	})
+	data.ReplyThreadCounts = make(map[int32]int64)
+	for _, rc := range replyCounts {
+		if rc.ReplyToCommentID.Valid {
+			data.ReplyThreadCounts[rc.ReplyToCommentID.Int32] = rc.ThreadCount
+		}
+	}
 
 	if r.Method == http.MethodPost {
 		_ = r.ParseForm()

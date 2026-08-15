@@ -41,15 +41,23 @@
                         <span class="quote-actions">
                             <span class="quote-action-full-para">
                                 [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>
-                                 <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=full" title="Reply in new thread">&#x2197;</a>]
+                                 <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=full" title="Reply in new thread">[NEW THREAD REPLY]</a>]
                                 [<a href="#" class="quote-link" data-quote-type="paragraph" data-comment-id="{{ $cmt.Idcomments }}">PARAGRAPH REPLY</a>
-                                 <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=paragraph" title="Reply in new thread">&#x2197;</a>]
+                                 <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=paragraph" title="Reply in new thread">[NEW THREAD REPLY]</a>]
                             </span>
                             <span class="quote-action-selected" style="display: none;">
                                 [<a href="#" class="quote-link" data-quote-type="selected" data-comment-id="{{ $cmt.Idcomments }}">QUOTE SELECTED</a>
-                                 <a href="#" class="quote-new-thread-link" data-comment-id="{{ $cmt.Idcomments }}" data-topic-id="{{ $topicID }}" title="Reply in new thread">&#x2197;</a>]
+                                 <a href="#" class="quote-new-thread-link" data-comment-id="{{ $cmt.Idcomments }}" data-topic-id="{{ $topicID }}" title="Reply in new thread">[NEW THREAD REPLY]</a>]
                             </span>
                         </span>
+                            {{ if $.ReplyThreadCounts }}
+                            {{ if index $.ReplyThreadCounts $cmt.Idcomments }}
+                                {{ $count := index $.ReplyThreadCounts $cmt.Idcomments }}
+                                <div style="margin-top: 5px;">
+                                    <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/{{ cd.SelectedThreadID }}/replythreads#c{{ $cmt.Idcomments }}">{{ $count }} new thread {{ if eq $count 1 }}reply{{ else }}replies{{ end }}</a>
+                                </div>
+                            {{ end }}
+                            {{ end }}
                     {{ end }}
                     {{ if cd.CanEditComment $cmt }}[<a href="{{ cd.CommentEditURL $cmt }}">EDIT</a>]{{ end }}
                     {{ $admin := cd.CommentAdminURL $cmt }}{{ if $admin }}[<a href="{{ $admin }}">ADMIN</a>]{{ end }}

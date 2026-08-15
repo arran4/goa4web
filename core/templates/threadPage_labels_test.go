@@ -43,7 +43,11 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 
 	data := struct {
 		Topic    struct{ Idforumtopic int32 }
-		Thread   struct{ Idforumthread int32 }
+		Thread   struct{
+			Idforumthread int32
+			ReplyToThreadID struct{ Valid bool; Int32 int32 }
+			ReplyToCommentID struct{ Valid bool; Int32 int32 }
+		}
 		Labels   []TopicLabel
 		BasePath string
 		BackURL  string

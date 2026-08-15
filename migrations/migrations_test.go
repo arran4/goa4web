@@ -102,7 +102,7 @@ func TestSchemaVersionUpdated(t *testing.T) {
 	}
 
 	schemaStr := string(content)
-	// We expect the line: INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (89, 1);
+	// We expect the line: INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (90, 1);
 	// Allow for some whitespace variation
 	expected := fmt.Sprintf("INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (%d, 1)", maxVersion)
 	if !strings.Contains(schemaStr, expected) {

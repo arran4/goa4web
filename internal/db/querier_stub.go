@@ -25,6 +25,9 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
+	AppendToCommentForPosterFn                                                                      func(ctx context.Context, arg AppendToCommentForPosterParams) error
+	CheckIfOthersReadCommentForPosterFn                                                             func(ctx context.Context, arg CheckIfOthersReadCommentForPosterParams) (int32, error)
+	GetLastCommentByThreadIdForPosterFn                                                             func(ctx context.Context, forumthreadID int32) (*Comment, error)
 	CreateAPIKeyStub            func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	GetAPIKeyByHashStub         func(ctx context.Context, apiKey string) (*ApiKey, error)
 	ListAPIKeysByUserStub       func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
@@ -3305,4 +3308,25 @@ func (q *QuerierStub) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePas
 
 func (q *QuerierStub) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error {
 	return nil
+}
+
+func (s *QuerierStub) AppendToCommentForPoster(ctx context.Context, arg AppendToCommentForPosterParams) error {
+	if s.AppendToCommentForPosterFn != nil {
+		return s.AppendToCommentForPosterFn(ctx, arg)
+	}
+	return nil
+}
+
+func (s *QuerierStub) CheckIfOthersReadCommentForPoster(ctx context.Context, arg CheckIfOthersReadCommentForPosterParams) (int32, error) {
+	if s.CheckIfOthersReadCommentForPosterFn != nil {
+		return s.CheckIfOthersReadCommentForPosterFn(ctx, arg)
+	}
+	return 0, nil
+}
+
+func (s *QuerierStub) GetLastCommentByThreadIdForPoster(ctx context.Context, forumthreadID int32) (*Comment, error) {
+	if s.GetLastCommentByThreadIdForPosterFn != nil {
+		return s.GetLastCommentByThreadIdForPosterFn(ctx, forumthreadID)
+	}
+	return nil, nil
 }

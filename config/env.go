@@ -132,6 +132,12 @@ const (
 	// EnvLoginAttemptThreshold sets how many failed logins are allowed
 	// within the window before further attempts are denied.
 	EnvLoginAttemptThreshold = "LOGIN_ATTEMPT_THRESHOLD"
+	// EnvForumPostAppendWindow defines the time window in minutes used to
+	// append consecutive replies from the same user.
+	EnvForumPostAppendWindow = "FORUM_POST_APPEND_WINDOW"
+	// EnvPrivateForumPostAppendWindow defines the time window in minutes used to
+	// append consecutive replies from the same user in private forums.
+	EnvPrivateForumPostAppendWindow = "PRIVATE_FORUM_POST_APPEND_WINDOW"
 	// EnvAdminEmails is a comma-separated list of administrator email addresses.
 	EnvAdminEmails = "ADMIN_EMAILS"
 	// EnvAdminNotify toggles sending administrator notification emails.

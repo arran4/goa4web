@@ -232,3 +232,14 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?;
+
+-- name: GetLastCommentByThreadIdForPoster :one
+SELECT * FROM comments
+WHERE forumthread_id = ?
+ORDER BY Idcomments DESC
+LIMIT 1;
+
+-- name: AppendToCommentForPoster :exec
+UPDATE comments
+SET text = ?, written = ?
+WHERE idcomments = ?;

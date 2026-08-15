@@ -2183,7 +2183,59 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section, itemType string,
 	if cd.queries == nil {
 		return 0, nil
 	}
+
 	var queuedFetches []queuedRemoteImageCacheFetch
+
+	if section == "forum" || section == "privateforum" {
+		lastComment, err := cd.queries.GetLastCommentByThreadIdForPoster(cd.ctx, threadID)
+		if err == nil && lastComment != nil && lastComment.UsersIdusers == commenterID {
+			appendWindow := cd.Config.ForumPostAppendWindow
+			if section == "privateforum" {
+				appendWindow = cd.Config.PrivateForumPostAppendWindow
+			}
+			if time.Now().Sub(lastComment.Written.Time).Minutes() <= float64(appendWindow) {
+				hasAppendGrant := cd.HasGrant(section, itemType, "append", itemID)
+				if hasAppendGrant {
+					othersRead, _ := cd.queries.CheckIfOthersReadCommentForPoster(cd.ctx, db.CheckIfOthersReadCommentForPosterParams{
+						Item:          itemType,
+						ItemID:        itemID,
+						UserID:        commenterID,
+						LastCommentID: lastComment.Idcomments,
+					})
+					if othersRead == 0 {
+						appendedText := lastComment.Text.String + "\n[hr]\n" + text
+						sanitizedText, qFetches := cd.sanitizeCodeImagesAndQueue(appendedText)
+						queuedFetches = qFetches
+
+						paths, err := cd.imagePathsFromText(sanitizedText)
+						if err != nil {
+							return 0, fmt.Errorf("parse images: %w", imageValidationUserError(err))
+						}
+						if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
+							return 0, fmt.Errorf("validate images: %w", err)
+						}
+
+						err = cd.queries.AppendToCommentForPoster(cd.ctx, db.AppendToCommentForPosterParams{
+							Text:       sql.NullString{String: sanitizedText, Valid: true},
+							Written:    sql.NullTime{Time: time.Now().UTC(), Valid: true},
+							Idcomments: lastComment.Idcomments,
+						})
+						if err != nil {
+							return 0, err
+						}
+						if err := cd.recordThreadImages(threadID, paths); err != nil {
+							log.Printf("record thread images: %v", err)
+						}
+						for _, fetch := range queuedFetches {
+							cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
+						}
+						return int64(lastComment.Idcomments), nil
+					}
+				}
+			}
+		}
+	}
+
 	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {

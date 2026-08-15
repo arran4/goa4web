@@ -38,9 +38,12 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	topicTitle := ""
 	// Set the topic ID for breadcrumbs
 	if topicIDVal > 0 {
-		if top, err := cd.ForumTopicByID(topicIDVal); err == nil {
-			topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
+		top, err := cd.ForumTopicByID(topicIDVal)
+		if err != nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			return
 		}
+		topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
 	}
 
 	if topicTitle != "" {

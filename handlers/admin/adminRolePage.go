@@ -15,11 +15,11 @@ import (
 )
 
 type roleUser struct {
-	ID     int32
-	Email  []string
-	User   sql.NullString
+	ID          int32
+	Email       []string
+	User        sql.NullString
 	IduserRoles int32
-	UserID int32
+	UserID      int32
 }
 
 func (ru *roleUser) EmailList() string {

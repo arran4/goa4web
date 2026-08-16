@@ -72,7 +72,7 @@ func (q *Queries) AdminGetForumThreadById(ctx context.Context, idforumthread int
 }
 
 const adminGetThreadsStartedByUser = `-- name: AdminGetThreadsStartedByUser :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, th.reply_to_comment_id, th.reply_to_thread_id
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE c.users_idusers = ?
@@ -97,6 +97,8 @@ func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers
 			&i.Lastaddition,
 			&i.Locked,
 			&i.DeletedAt,
+			&i.ReplyToCommentID,
+			&i.ReplyToThreadID,
 		); err != nil {
 			return nil, err
 		}
@@ -112,7 +114,7 @@ func (q *Queries) AdminGetThreadsStartedByUser(ctx context.Context, usersIdusers
 }
 
 const adminGetThreadsStartedByUserWithTopic = `-- name: AdminGetThreadsStartedByUserWithTopic :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, th.reply_to_comment_id, th.reply_to_thread_id, t.title AS topic_title, fc.idforumcategory AS category_id, fc.title AS category_title
 FROM forumthread th
 JOIN comments c ON th.firstpost = c.idcomments
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
@@ -130,6 +132,8 @@ type AdminGetThreadsStartedByUserWithTopicRow struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullInt64
 	DeletedAt              sql.NullTime
+	ReplyToCommentID       sql.NullInt64
+	ReplyToThreadID        sql.NullInt64
 	TopicTitle             sql.NullString
 	CategoryID             sql.NullInt64
 	CategoryTitle          sql.NullString
@@ -153,6 +157,8 @@ func (q *Queries) AdminGetThreadsStartedByUserWithTopic(ctx context.Context, use
 			&i.Lastaddition,
 			&i.Locked,
 			&i.DeletedAt,
+			&i.ReplyToCommentID,
+			&i.ReplyToThreadID,
 			&i.TopicTitle,
 			&i.CategoryID,
 			&i.CategoryTitle,
@@ -380,7 +386,7 @@ WITH role_ids AS (
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, th.reply_to_comment_id, th.reply_to_thread_id
 FROM forumthread th
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 WHERE th.idforumthread = ?1
@@ -436,6 +442,8 @@ func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg 
 		&i.Lastaddition,
 		&i.Locked,
 		&i.DeletedAt,
+		&i.ReplyToCommentID,
+		&i.ReplyToThreadID,
 	)
 	return &i, err
 }
@@ -446,7 +454,7 @@ WITH role_ids AS (
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, lu.username AS LastPosterUsername, fc.users_idusers AS firstpostuserid
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, th.reply_to_comment_id, th.reply_to_thread_id, lu.username AS LastPosterUsername, fc.users_idusers AS firstpostuserid
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lidusers = th.lastposter
@@ -502,6 +510,8 @@ type GetThreadLastPosterAndPermsForUserRow struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullInt64
 	DeletedAt              sql.NullTime
+	ReplyToCommentID       sql.NullInt64
+	ReplyToThreadID        sql.NullInt64
 	Lastposterusername     sql.NullString
 	Firstpostuserid        sql.NullInt64
 }
@@ -518,10 +528,38 @@ func (q *Queries) GetThreadLastPosterAndPermsForUser(ctx context.Context, arg Ge
 		&i.Lastaddition,
 		&i.Locked,
 		&i.DeletedAt,
+		&i.ReplyToCommentID,
+		&i.ReplyToThreadID,
 		&i.Lastposterusername,
 		&i.Firstpostuserid,
 	)
 	return &i, err
+}
+
+const systemCreateReplyThread = `-- name: SystemCreateReplyThread :execlastid
+INSERT INTO forumthread (
+    forumtopic_idforumtopic,
+    reply_to_comment_id,
+    reply_to_thread_id
+) VALUES (
+    ?1,
+    ?2,
+    ?3
+)
+`
+
+type SystemCreateReplyThreadParams struct {
+	TopicID          int64
+	ReplyToCommentID sql.NullInt64
+	ReplyToThreadID  sql.NullInt64
+}
+
+func (q *Queries) SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateReplyThread, arg.TopicID, arg.ReplyToCommentID, arg.ReplyToThreadID)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 const systemCreateThread = `-- name: SystemCreateThread :execlastid
@@ -534,4 +572,15 @@ func (q *Queries) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic
 		return 0, err
 	}
 	return result.LastInsertId()
+}
+
+const systemDeleteUninitializedThread = `-- name: SystemDeleteUninitializedThread :exec
+DELETE FROM forumthread
+WHERE idforumthread = ?1
+  AND firstpost = 0
+`
+
+func (q *Queries) SystemDeleteUninitializedThread(ctx context.Context, threadID int64) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteUninitializedThread, threadID)
+	return err
 }

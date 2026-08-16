@@ -92,7 +92,9 @@ forumtopic_idforumtopic INTEGER NOT NULL DEFAULT 0,
 comments INTEGER DEFAULT NULL,
 lastaddition DATETIME DEFAULT NULL,
 locked INTEGER DEFAULT NULL,
-deleted_at DATETIME DEFAULT NULL
+deleted_at DATETIME DEFAULT NULL,
+reply_to_comment_id INTEGER DEFAULT NULL,
+reply_to_thread_id INTEGER DEFAULT NULL
 );
 
 CREATE TABLE forumtopic (
@@ -693,3 +695,4 @@ UNIQUE (credential_id)
 );
 
 INSERT INTO goose_db_version (version_id, is_applied) VALUES (94, 1);
+INSERT INTO goose_db_version (version_id, is_applied) VALUES (95, 1);

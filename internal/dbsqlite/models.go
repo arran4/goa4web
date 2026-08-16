@@ -295,6 +295,8 @@ type Forumthread struct {
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullInt64
 	DeletedAt              sql.NullTime
+	ReplyToCommentID       sql.NullInt64
+	ReplyToThreadID        sql.NullInt64
 }
 
 type Forumtopic struct {

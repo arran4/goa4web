@@ -140,3 +140,7 @@ fix_*
 generate_sqlite_schema.py
 sqlc.sqlite.*
 full_test_out.log
+out2.txt
+d.py
+size.txt
+ls.txt

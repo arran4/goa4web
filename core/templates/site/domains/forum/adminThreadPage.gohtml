@@ -4,9 +4,15 @@
     <tr><th>ID<th>Posts<th>Last Addition<th>View public</tr>
     <tr>
         <td>{{ .Thread.Idforumthread }}</td>
+<<<<<<< HEAD
+        <td>{{ .Thread.PostCount.Int32 }}</td>
+        <td>{{ cd.LocalTime .Thread.LastPostAt.Time }}</td>
+        <td><a href="/forum/topic/{{ .Thread.Idforumtopic }}/thread/{{ .Thread.Idforumthread }}">View</a></td>
+=======
         <td>{{ .Thread.Comments.Int32 }}</td>
         <td>{{ cd.LocalTime .Thread.Lastaddition.Time }}</td>
         <td><a href="/forum/topic/{{ .Thread.ForumtopicIdforumtopic }}/thread/{{ .Thread.Idforumthread }}">View</a></td>
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
     </tr>
 </table>
 <p><a href="/admin/forum/thread/{{ .Thread.Idforumthread }}/delete">Delete thread</a></p>

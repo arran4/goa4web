@@ -488,9 +488,15 @@ func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
 		threadID,
 		int32(1),
 		int32(1),
+<<<<<<< HEAD
+		consts.PermissionSectionPrivateForumThread.String(),
+		sql.NullString{String: consts.PermissionItemThread.String(), Valid: true},
+		sql.NullInt32{Int32: threadID, Valid: true},
+=======
 		"privateforum",
 		sql.NullString{String: "topic", Valid: true},
 		sql.NullInt32{Int32: topicID, Valid: true},
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		sql.NullInt32{Int32: 1, Valid: true},
 	).WillReturnRows(rows)
 

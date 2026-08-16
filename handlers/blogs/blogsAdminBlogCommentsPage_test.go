@@ -36,7 +36,11 @@ func TestHappyPathAdminBlogCommentsPage_UsesURLParam(t *testing.T) {
 	q.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{
 		{Idcomments: 1},
 	}
+<<<<<<< HEAD
+	q.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	q.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Idforumthread: 1,
 	}
 

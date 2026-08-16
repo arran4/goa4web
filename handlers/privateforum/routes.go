@@ -22,8 +22,13 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	pr.Use(DisablePrivateForumCaching, handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
+<<<<<<< HEAD
+	pr.HandleFunc("/unread", UnreadThreadsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/topic/{topic}/unread", UnreadThreadsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+=======
 	pr.HandleFunc("/unread", UnreadThreadsPage).Methods(http.MethodGet)
 	pr.HandleFunc("/topic/{topic}/unread", UnreadThreadsPage).Methods(http.MethodGet)
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion

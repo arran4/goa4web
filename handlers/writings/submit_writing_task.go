@@ -102,7 +102,11 @@ func (SubmitWritingTask) RequiredTemplates() []tasks.Template {
 
 func (SubmitWritingTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
+<<<<<<< HEAD
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionWriting, Item: consts.PermissionItemArticle, ItemID: t.ID, Action: consts.PermissionActionView}}, nil
+=======
 		return []notif.GrantRequirement{{Section: "writing", Item: "article", ItemID: t.ID, Action: "view"}}, nil
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	return nil, fmt.Errorf("target not provided")
 }

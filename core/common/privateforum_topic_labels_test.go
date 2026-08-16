@@ -31,7 +31,11 @@ func TestCoreData_PrivateForumTopics_ShowsTopicLabels(t *testing.T) {
 	}
 
 	// No derived thread labels (empty)
+<<<<<<< HEAD
+	q.GetPrivateTopicThreadsAndLabelsForUserReturns = []*db.GetPrivateTopicThreadsAndLabelsForUserRow{}
+=======
 	q.GetPrivateTopicThreadsAndLabelsReturns = []*db.GetPrivateTopicThreadsAndLabelsRow{}
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 
 	ctx := context.TODO()
 

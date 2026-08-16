@@ -46,7 +46,11 @@ func TestPrivateRoute(t *testing.T) {
 			userID:        1,
 			username:      "user",
 			grantReturns:  0, // No grant
+<<<<<<< HEAD
+			expectedCode:  http.StatusNotFound, // Authenticated users without grant receive 404
+=======
 			expectedCode:  http.StatusOK,
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			expectMatched: true,
 		},
 		{
@@ -101,7 +105,11 @@ func TestPrivateRoute(t *testing.T) {
 
 			r.ServeHTTP(rr, req)
 
+<<<<<<< HEAD
+			if tt.expectMatched && tt.expectedCode != http.StatusNotFound && rr.Code == http.StatusNotFound {
+=======
 			if tt.expectMatched && rr.Code == http.StatusNotFound {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 				t.Errorf("Path %s returned 404, expected matched route", tt.path)
 			}
 
@@ -109,6 +117,13 @@ func TestPrivateRoute(t *testing.T) {
 				t.Errorf("Expected 403 Forbidden, got %d", rr.Code)
 			}
 
+<<<<<<< HEAD
+			if tt.expectedCode == http.StatusNotFound && rr.Code != http.StatusNotFound {
+			    t.Errorf("Expected 404 Not Found, got %d", rr.Code)
+			}
+
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			// For the success case, we might get 500 or panic depending on template state.
 			// The key is that it is NOT 404.
 		})

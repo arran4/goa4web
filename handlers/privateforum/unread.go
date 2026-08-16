@@ -5,13 +5,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+<<<<<<< HEAD
+=======
 	"net/url"
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+<<<<<<< HEAD
+	"github.com/arran4/goa4web/handlers"
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -38,9 +45,18 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	topicTitle := ""
 	// Set the topic ID for breadcrumbs
 	if topicIDVal > 0 {
+<<<<<<< HEAD
+		top, err := cd.ForumTopicByID(topicIDVal)
+		if err != nil {
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			return
+		}
+		topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
+=======
 		if top, err := cd.ForumTopicByID(topicIDVal); err == nil {
 			topicTitle = cd.GetPrivateTopicDisplayTitle(topicIDVal, top.Title.String)
 		}
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 
 	if topicTitle != "" {
@@ -65,11 +81,15 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
+<<<<<<< HEAD
+		handlers.RenderNotFoundOrLogin(w, r)
+=======
 		_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 			RedirectURL string
 		}{
 			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
 		})
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		return
 	}
 

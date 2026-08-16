@@ -5,16 +5,29 @@ import (
 	"database/sql"
 	"log"
 
+<<<<<<< HEAD
+	"github.com/arran4/goa4web/core/consts"
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	"github.com/arran4/goa4web/internal/db"
 )
 
 // UserCanCreateThread reports whether uid may create a thread in the topic.
+<<<<<<< HEAD
+func UserCanCreateThread(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32) (bool, error) {
+	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
+		ViewerID: uid,
+		Section:  section.String(),
+		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
+		Action:   consts.PermissionActionPost.String(),
+=======
 func UserCanCreateThread(ctx context.Context, q db.Querier, section string, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
 		Section:  section,
 		Item:     sql.NullString{String: "topic", Valid: true},
 		Action:   "post",
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
@@ -30,12 +43,21 @@ func UserCanCreateThread(ctx context.Context, q db.Querier, section string, topi
 }
 
 // UserCanCreateTopic reports whether uid may create a topic in the category.
+<<<<<<< HEAD
+func UserCanCreateTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, categoryID, uid int32) (bool, error) {
+	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
+		ViewerID: uid,
+		Section:  section.String(),
+		Item:     sql.NullString{String: consts.PermissionItemCategory.String(), Valid: true},
+		Action:   consts.PermissionActionPost.String(),
+=======
 func UserCanCreateTopic(ctx context.Context, q db.Querier, section string, categoryID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
 		Section:  section,
 		Item:     sql.NullString{String: "category", Valid: true},
 		Action:   "post",
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ItemID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
@@ -51,12 +73,21 @@ func UserCanCreateTopic(ctx context.Context, q db.Querier, section string, categ
 }
 
 // UserCanLabelTopic reports whether uid may add/remove labels on the topic.
+<<<<<<< HEAD
+func UserCanLabelTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32) (bool, error) {
+	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
+		ViewerID: uid,
+		Section:  section.String(),
+		Item:     sql.NullString{String: consts.PermissionItemTopic.String(), Valid: true},
+		Action:   consts.PermissionActionLabel.String(),
+=======
 func UserCanLabelTopic(ctx context.Context, q db.Querier, section string, topicID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{
 		ViewerID: uid,
 		Section:  section,
 		Item:     sql.NullString{String: "topic", Valid: true},
 		Action:   "label",
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ItemID:   sql.NullInt32{Int32: topicID, Valid: true},
 		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})

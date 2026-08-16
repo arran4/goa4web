@@ -66,7 +66,11 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
+<<<<<<< HEAD
+	thread, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
+=======
 	thread, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ViewerID:      uid,
 		ThreadID:      comment.ForumthreadID,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

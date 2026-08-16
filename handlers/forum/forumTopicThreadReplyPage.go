@@ -39,6 +39,10 @@ var (
 	_                notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
 	_                notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
 	_                notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
+<<<<<<< HEAD
+	_                notif.GrantsRequiredProvider                  = (*ReplyTask)(nil)
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	_                tasks.EmailTemplatesRequired                  = (*ReplyTask)(nil)
 	_                searchworker.IndexedTask                      = ReplyTask{}
 )
@@ -96,6 +100,21 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
+<<<<<<< HEAD
+		section := consts.PermissionSectionForum
+		if base == "/private" {
+			section = consts.PermissionSectionPrivateForumThread
+		}
+		return []notif.GrantRequirement{{Section: section, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
+	}
+	return nil, nil
+}
+
+func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	return privateThreadSubscriberGrants(evt)
+}
+
+=======
 		section := strings.TrimPrefix(base, "/")
 		switch section {
 		case "private":
@@ -107,6 +126,7 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 	}
 	return nil, nil
 }
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session := cd.GetSession()

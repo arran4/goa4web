@@ -121,8 +121,11 @@ var IntOptions = []IntOption{
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "The number of hours a password reset request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},
 	{"login-attempt-window", EnvLoginAttemptWindow, "The window in minutes for tracking failed login attempts.", 15, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptWindow }},
 	{"login-attempt-threshold", EnvLoginAttemptThreshold, "The number of failed login attempts allowed within the window before throttling.", 5, "", func(c *RuntimeConfig) *int { return &c.LoginAttemptThreshold }},
+<<<<<<< HEAD
+=======
 	{"forum-post-append-window", EnvForumPostAppendWindow, "The window in minutes for appending consecutive replies.", 60, "", func(c *RuntimeConfig) *int { return &c.ForumPostAppendWindow }},
 	{"private-forum-post-append-window", EnvPrivateForumPostAppendWindow, "The window in minutes for appending consecutive replies in private forums.", 60, "", func(c *RuntimeConfig) *int { return &c.PrivateForumPostAppendWindow }},
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	{"stats-start-year", EnvStatsStartYear, "The start year for usage statistics.", 2005, "", func(c *RuntimeConfig) *int { return &c.StatsStartYear }},
 	{"og-image-width", EnvOGImageWidth, "The width of the generated Open Graph image.", 1200, "", func(c *RuntimeConfig) *int { return &c.OGImageWidth }},
 	{"og-image-height", EnvOGImageHeight, "The height of the generated Open Graph image.", 630, "", func(c *RuntimeConfig) *int { return &c.OGImageHeight }},

@@ -57,7 +57,11 @@ func (AddBlogTask) RequiredTemplates() []tasks.Template {
 // GrantsRequired implements notif.GrantsRequiredProvider for new blog entries.
 func (AddBlogTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
+<<<<<<< HEAD
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionBlogs, Item: consts.PermissionItemEntry, ItemID: t.ID, Action: consts.PermissionActionView}}, nil
+=======
 		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}, nil
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	return nil, fmt.Errorf("target not provided")
 }

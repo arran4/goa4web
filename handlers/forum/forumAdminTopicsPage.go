@@ -223,9 +223,15 @@ func AdminTopicCreatePage(w http.ResponseWriter, r *http.Request) {
 	if base == "" {
 		base = "/forum"
 	}
+<<<<<<< HEAD
+	section := consts.PermissionSectionForum
+	if base == "/private" {
+		section = consts.PermissionSectionPrivateForum
+=======
 	section := strings.TrimPrefix(base, "/")
 	if section == "private" {
 		section = "privateforum"
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	allowed, err := UserCanCreateTopic(r.Context(), cd.Queries(), section, int32(pcid), uid)
 	if err != nil {

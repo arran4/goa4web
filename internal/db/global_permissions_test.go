@@ -30,8 +30,13 @@ func TestGlobalGrantsImageBBS(t *testing.T) {
 }
 
 func TestGlobalGrantsThreads(t *testing.T) {
+<<<<<<< HEAD
+	if !strings.Contains(getThreadLastPosterAndPermsForUser, "g.item_id = t.idforumtopic OR g.item_id IS NULL") {
+		t.Errorf("global grant missing in GetThreadLastPosterAndPermsForUser")
+=======
 	if !strings.Contains(getThreadLastPosterAndPerms, "g.item_id = t.idforumtopic OR g.item_id IS NULL") {
 		t.Errorf("global grant missing in GetThreadLastPosterAndPerms")
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 }
 

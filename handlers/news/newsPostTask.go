@@ -44,7 +44,11 @@ func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
+<<<<<<< HEAD
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
+=======
 		Thread         *db.GetThreadLastPosterAndPermsRow
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		ReplyText      string
 		IsReplyable    bool
@@ -120,7 +124,11 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 		log.Printf("thread comments: %v", err)
 	}
 
+<<<<<<< HEAD
+	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
+=======
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ViewerID:      uid,
 		ThreadID:      int32(post.ForumthreadID),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

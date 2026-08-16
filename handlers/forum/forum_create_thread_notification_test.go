@@ -83,8 +83,13 @@ func TestHappyPathCreateThreadNotificationLink(t *testing.T) {
 		// Allow everything
 		return 1, nil
 	}
+<<<<<<< HEAD
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 		return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          newThreadID,
 			ForumtopicIdforumtopic: topicID,
 			Lastposterusername:     sql.NullString{String: "creator", Valid: true},

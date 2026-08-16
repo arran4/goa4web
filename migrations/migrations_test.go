@@ -8,6 +8,11 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+<<<<<<< HEAD
+
+	"github.com/arran4/goa4web/core/consts"
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 )
 
 func TestMigrationFileNaming(t *testing.T) {
@@ -107,3 +112,42 @@ func TestSchemaVersionUpdated(t *testing.T) {
 		t.Errorf("Schema file %s does not contain expected version update:\nExpected substring: %s\nEnsure you have updated the goose_db_version insert in database/schema.mysql.sql", schemaPath, expected)
 	}
 }
+<<<<<<< HEAD
+
+func TestPrivateForumThreadGrantMigration(t *testing.T) {
+	content, err := FS.ReadFile("0094_mysql.sql")
+	if err != nil {
+		t.Fatalf("read private forum thread grant migration: %v", err)
+	}
+
+	sql := string(content)
+	wantSet := fmt.Sprintf("SET section = '%s'", consts.PermissionSectionPrivateForumThread)
+	if !strings.Contains(sql, wantSet) {
+		t.Error("migration does not move grants to privateforum_thread")
+	}
+	wantSection := fmt.Sprintf("WHERE section = '%s'", consts.PermissionSectionPrivateForum)
+	wantItem := fmt.Sprintf("AND item = '%s'", consts.PermissionItemThread)
+	if !strings.Contains(sql, wantSection) || !strings.Contains(sql, wantItem) {
+		t.Error("migration is not restricted to legacy private thread grants")
+	}
+	if !strings.Contains(sql, "JOIN forumthread thread_row") {
+		t.Error("migration does not backfill grants for existing private threads")
+	}
+	if !strings.Contains(sql, "topic_grant.action IN ('view', 'reply')") {
+		t.Error("migration does not restrict backfilled grants to supported private thread actions")
+	}
+	if !strings.Contains(sql, "rule_type = 'allow'") || !strings.Contains(sql, "active = 1") || !strings.Contains(sql, "item_id IS NOT NULL") {
+		t.Error("migration does not restrict normalized legacy grants to active, valid allow rows")
+	}
+	if !strings.Contains(sql, "AND NOT EXISTS") {
+		t.Error("migration does not guard against duplicate private thread grants")
+	}
+	if !strings.Contains(sql, "thread_grant.rule_type = 'allow'") {
+		t.Error("migration treats non-allow grants as equivalent to the allow grants it backfills")
+	}
+	if !strings.Contains(sql, "UPDATE schema_version SET version = 94") {
+		t.Error("migration does not update the legacy schema version")
+	}
+}
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)

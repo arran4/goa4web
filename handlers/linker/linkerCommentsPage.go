@@ -27,7 +27,11 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		Text           string
 		CanEdit        bool
 		UserId         int32
+<<<<<<< HEAD
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
+=======
 		Thread         *db.GetThreadLastPosterAndPermsRow
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
 		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
@@ -83,7 +87,11 @@ func CommentsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+<<<<<<< HEAD
+	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
+=======
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ViewerID:      uid,
 		ThreadID:      link.ThreadID,
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},

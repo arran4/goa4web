@@ -102,8 +102,13 @@ func TestHappyPathImageBbsReply(t *testing.T) {
 		}
 		return nil, sql.ErrNoRows
 	}
+<<<<<<< HEAD
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 		return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          threadID,
 			ForumtopicIdforumtopic: topicID,
 			Lastposterusername:     sql.NullString{String: "replier", Valid: true},

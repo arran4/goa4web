@@ -11,6 +11,10 @@ import (
 	"testing"
 	"time"
 
+<<<<<<< HEAD
+	"github.com/DATA-DOG/go-sqlmock"
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -24,6 +28,54 @@ import (
 )
 
 func TestForumPageHandlers(t *testing.T) {
+<<<<<<< HEAD
+	t.Run("admin thread page uses admin lookup", func(t *testing.T) {
+		const (
+			threadID int32 = 7
+			topicID  int32 = 3
+		)
+		conn, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("sqlmock.New: %v", err)
+		}
+		defer func() { _ = conn.Close() }()
+
+		now := time.Now()
+		rows := sqlmock.NewRows([]string{
+			"idforumthread", "idforumtopic", "title", "created_at", "created_by",
+			"last_post_by", "last_post_at", "post_count", "topic_title", "topic_handler",
+		}).AddRow(threadID, topicID, "Private thread", now, 1, 2, now, 4, "Private topic", "private")
+		mock.ExpectQuery("SELECT[[:space:]]+t.idforumthread").WithArgs(threadID).WillReturnRows(rows)
+
+		originalStore := core.Store
+		originalName := core.SessionName
+		core.Store = sessions.NewCookieStore([]byte("test"))
+		core.SessionName = "test-session"
+		defer func() {
+			core.Store = originalStore
+			core.SessionName = originalName
+		}()
+
+		cd := common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig())
+		request := httptest.NewRequest(http.MethodGet, "/admin/forum/thread/7", nil)
+		request = mux.SetURLVars(request, map[string]string{"thread": "7"})
+		request = request.WithContext(context.WithValue(request.Context(), consts.KeyCoreData, cd))
+		response := httptest.NewRecorder()
+
+		AdminThreadPage(response, request)
+		if response.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+		}
+		if !strings.Contains(response.Body.String(), "Forum thread 7") {
+			t.Errorf("admin thread response missing thread identifier: %q", response.Body.String())
+		}
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("admin lookup expectations: %v", err)
+		}
+	})
+
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	t.Run("admin topics page", func(t *testing.T) {
 		queries := testhelpers.NewQuerierStub()
 		queries.AdminCountForumTopicsReturns = 1
@@ -376,7 +428,11 @@ func TestForumPageHandlers(t *testing.T) {
 
 	t.Run("thread page private sets title", func(t *testing.T) {
 		queries := testhelpers.NewQuerierStub()
+<<<<<<< HEAD
+		queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          1,
 			Firstpost:              1,
 			Lastposter:             1,
@@ -536,7 +592,11 @@ func TestThreadPageTitle(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		// Setup
 		queries := testhelpers.NewQuerierStub()
+<<<<<<< HEAD
+		queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          1,
 			Firstpost:              1,
 			Lastposter:             1,

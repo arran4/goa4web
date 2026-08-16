@@ -163,12 +163,15 @@ type RuntimeConfig struct {
 	// LoginAttemptThreshold is the maximum number of failed login attempts
 	// allowed within the window.
 	LoginAttemptThreshold int
+<<<<<<< HEAD
+=======
 	// ForumPostAppendWindow defines the time window in minutes used to
 	// append consecutive replies from the same user.
 	ForumPostAppendWindow int
 	// PrivateForumPostAppendWindow defines the time window in minutes used to
 	// append consecutive replies from the same user in private forums.
 	PrivateForumPostAppendWindow int
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 
 	PageSizeMin     int
 	PageSizeMax     int

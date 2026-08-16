@@ -2,11 +2,19 @@ package common
 
 import (
 	"context"
+<<<<<<< HEAD
+	"fmt"
+	"log"
+	"slices"
+
+	"github.com/arran4/goa4web/core/consts"
+=======
 	"database/sql"
 	"fmt"
 	"github.com/arran4/goa4web/internal/db"
 	"log"
 	"slices"
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 )
 
 // PrivateForumInconsistency represents a found inconsistency in private forum grants
@@ -34,6 +42,11 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		return nil, fmt.Errorf("getting private forum grants: %w", err)
 	}
 
+<<<<<<< HEAD
+	// Topic view is the parent eligibility boundary for fine-grained thread grants.
+	// UserID -> TopicID -> bool
+	userTopicViewAccess := make(map[int32]map[int32]bool)
+=======
 	// Topic access tracking
 	// UserID -> TopicID -> Action -> bool
 	userTopicAccess := make(map[int32]map[int32]map[string]bool)
@@ -41,6 +54,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	// Thread access tracking
 	// UserID -> ThreadID -> Action -> bool
 	userThreadAccess := make(map[int32]map[int32]map[string]bool)
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 
 	for _, grant := range grants {
 		roleName := ""
@@ -89,7 +103,11 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		}
 
 		// Rule 2.5: Clean up legacy 'edit' topic grants
+<<<<<<< HEAD
+		if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() && grant.Action == consts.PermissionActionEdit.String() {
+=======
 		if grant.Section == "privateforum" && grant.Item.String == "topic" && grant.Action == "edit" {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -108,6 +126,15 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 
 		// Track user access
 		if grant.UserID.Valid {
+<<<<<<< HEAD
+			if grant.Section == consts.PermissionSectionPrivateForum.String() &&
+				grant.Item.String == consts.PermissionItemTopic.String() &&
+				grant.Action == consts.PermissionActionView.String() {
+				if userTopicViewAccess[userID] == nil {
+					userTopicViewAccess[userID] = make(map[int32]bool)
+				}
+				userTopicViewAccess[userID][grant.ItemID.Int32] = true
+=======
 			if grant.Section == "privateforum" && grant.Item.String == "topic" {
 				if userTopicAccess[userID] == nil {
 					userTopicAccess[userID] = make(map[int32]map[string]bool)
@@ -124,6 +151,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					userThreadAccess[userID][grant.ItemID.Int32] = make(map[string]bool)
 				}
 				userThreadAccess[userID][grant.ItemID.Int32][grant.Action] = true
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			}
 		}
 	}
@@ -135,6 +163,15 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	}
 
 	threadToTopic := make(map[int32]int32)
+<<<<<<< HEAD
+	for _, thread := range threads {
+		threadToTopic[thread.Idforumthread] = thread.Idforumtopic
+	}
+
+	// Rule 3: Fine-grained thread view and reply grants require parent topic view.
+	for _, grant := range grants {
+		if !grant.UserID.Valid || grant.Section != consts.PermissionSectionPrivateForumThread.String() || grant.Item.String != consts.PermissionItemThread.String() || !grant.ItemID.Valid {
+=======
 	topicToThreads := make(map[int32][]int32)
 	for _, thread := range threads {
 		threadToTopic[thread.Idforumthread] = thread.Idforumtopic
@@ -144,6 +181,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	// Rule 3: Check if user has thread access but NO topic access
 	for _, grant := range grants {
 		if !grant.UserID.Valid || grant.Section != "privateforum_thread" || grant.Item.String != "thread" || !grant.ItemID.Valid {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			continue
 		}
 
@@ -151,9 +189,15 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		threadID := grant.ItemID.Int32
 		topicID, exists := threadToTopic[threadID]
 
+<<<<<<< HEAD
+		missingParentView := isPrivateForumThreadAction(grant.Action) && !userTopicViewAccess[userID][topicID]
+		// Also clean up any legacy 'edit' thread grants even if they have topic view.
+		if exists && (missingParentView || grant.Action == consts.PermissionActionEdit.String()) {
+=======
 		// Check if user has thread access but NO topic access for the same action
 		// Also clean up any legacy 'edit' thread grants even if they have the topic grant
 		if exists && (!userTopicAccess[userID][topicID][grant.Action] || grant.Action == "edit") {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -164,12 +208,18 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 				RoleName:  "",
 				UserID:    userID,
 				Username:  grant.Username.String,
+<<<<<<< HEAD
+				Issue:     fmt.Sprintf("User has %s access to thread %d without view access to parent topic %d", grant.Action, threadID, topicID),
+=======
 				Issue:     fmt.Sprintf("User has access to thread %d but not its parent topic %d", threadID, topicID),
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 				FixAction: "Delete grant",
 			})
 		}
 	}
 
+<<<<<<< HEAD
+=======
 	// Rule 4: User has topic access but is missing access to a thread in that topic
 	// We need username mapping
 	usernameMap := make(map[int32]string)
@@ -201,6 +251,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		}
 	}
 
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	if !dryRun {
 		for _, inconsistency := range inconsistencies {
 			if slices.Contains(fixIDs, inconsistency.ID) {
@@ -210,6 +261,8 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					if err != nil {
 						log.Printf("Error deleting grant %d: %v", inconsistency.GrantID, err)
 					}
+<<<<<<< HEAD
+=======
 				} else { // Create operation
 					log.Printf("Fixing inconsistency: Creating grant for user %d thread %d (%s)", inconsistency.UserID, inconsistency.ItemID, inconsistency.Issue)
 
@@ -227,6 +280,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 					if err != nil {
 						log.Printf("Error creating missing grant: %v", err)
 					}
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 				}
 			}
 		}
@@ -242,3 +296,10 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 
 	return inconsistencies, nil
 }
+<<<<<<< HEAD
+
+func isPrivateForumThreadAction(action string) bool {
+	return action == consts.PermissionActionView.String() || action == consts.PermissionActionReply.String()
+}
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)

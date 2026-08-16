@@ -55,7 +55,11 @@ func (ReplyBlogTask) RequiredTemplates() []tasks.Template {
 // GrantsRequired implements notif.GrantsRequiredProvider for blog replies.
 func (ReplyBlogTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if t, ok := evt.Data["target"].(notif.Target); ok {
+<<<<<<< HEAD
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionBlogs, Item: consts.PermissionItemEntry, ItemID: t.ID, Action: consts.PermissionActionView}}, nil
+=======
 		return []notif.GrantRequirement{{Section: "blogs", Item: "entry", ItemID: t.ID, Action: "view"}}, nil
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	return nil, fmt.Errorf("target not provided")
 }
@@ -77,7 +81,11 @@ func (ReplyBlogTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, 
 
 func (ReplyBlogTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
 	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+<<<<<<< HEAD
+		return []notif.GrantRequirement{{Section: consts.PermissionSectionForum, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
+=======
 		return []notif.GrantRequirement{{Section: "forum", Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	return nil, nil
 }

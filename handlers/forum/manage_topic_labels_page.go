@@ -37,9 +37,15 @@ func ManageTopicLabelsPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+<<<<<<< HEAD
+	section := consts.PermissionSectionForum
+	if strings.HasPrefix(basePath, "/private") {
+		section = consts.PermissionSectionPrivateForum
+=======
 	section := "forum"
 	if strings.HasPrefix(basePath, "/private") {
 		section = "privateforum"
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 
 	canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))

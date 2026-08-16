@@ -114,8 +114,13 @@ func TestHappyPathForumReply(t *testing.T) {
 				ForumtopicIdforumtopic: topicID,
 			}, nil
 		}
+<<<<<<< HEAD
+		qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+			return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 		qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 			return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 				Idforumthread:          threadID,
 				ForumtopicIdforumtopic: topicID,
 				Lastposterusername:     sql.NullString{String: "replier", Valid: true},
@@ -194,10 +199,17 @@ func TestHappyPathForumReply(t *testing.T) {
 		cd := common.NewCoreData(ctx, qs, cfg, common.WithSession(sess), common.WithEvent(evt), common.WithUserRoles([]string{"member"}))
 		cd.UserID = replierUID
 
+<<<<<<< HEAD
+		thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: threadID, ForumtopicIdforumtopic: topicID, Lastposterusername: sql.NullString{String: "replier", Valid: true}, Comments: sql.NullInt32{Int32: 1, Valid: true}}
+		topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: topicID, Title: sql.NullString{String: "Test Topic", Valid: true}}
+		cd.SetCurrentThreadAndTopic(threadID, topicID)
+		_, _ = cd.ForumThreadByID(threadID, lazy.Set[int32, *db.GetThreadLastPosterAndPermsForUserRow](thread))
+=======
 		thread := &db.GetThreadLastPosterAndPermsRow{Idforumthread: threadID, ForumtopicIdforumtopic: topicID, Lastposterusername: sql.NullString{String: "replier", Valid: true}, Comments: sql.NullInt32{Int32: 1, Valid: true}}
 		topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: topicID, Title: sql.NullString{String: "Test Topic", Valid: true}}
 		cd.SetCurrentThreadAndTopic(threadID, topicID)
 		_, _ = cd.ForumThreadByID(threadID, lazy.Set[int32, *db.GetThreadLastPosterAndPermsRow](thread))
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		_, _ = cd.ForumTopicByID(topicID, lazy.Set[int32, *db.GetForumTopicByIdForUserRow](topic))
 
 		ctx = context.WithValue(ctx, core.ContextValues("session"), sess)

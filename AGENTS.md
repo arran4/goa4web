@@ -27,6 +27,32 @@ touches `internal/db`, `database`, `migrations`, handlers, and application code:
   `handlers/constants.go`.
 - Keep roles introduced by migrations synchronized with `database/seed.sql`.
 
+<<<<<<< HEAD
+## SQL query authorization naming
+
+Every sqlc query name must make its authorization context apparent, following
+`specs/query_naming.md`:
+
+- User-facing queries must include a `For<Role>` qualifier such as `ForUser`,
+  `ForLister`, or `ForWriter`, must accept the matching actor ID, and must
+  enforce that actor's grants in SQL.
+- Administrative queries must begin with `Admin`. Authorization belongs to the
+  administrative caller or middleware, so these queries must not accept a
+  caller/viewer ID for grant enforcement. IDs identifying the records or users
+  being administered are still valid query inputs.
+- Internal trusted queries must begin with `System`. They must not accept a
+  caller/viewer ID for grant enforcement and must not be exposed directly from
+  user-facing handlers.
+- Use an unqualified name only for genuinely authorization-neutral operations.
+  Do not add or modify an ambiguous `Get...` or `List...` query that reads
+  protected data; rename legacy queries when touching them.
+
+When changing an authorization predicate, audit the other queries in the same
+`For<Role>` family so alternate web, API, search, feed, and notification paths
+cannot bypass the new predicate.
+
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 ## Configuration
 
 Configuration values may be supplied in three ways and must be resolved in this order:

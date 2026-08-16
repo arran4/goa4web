@@ -17,9 +17,15 @@ import (
 func TestTopicThreadReplyCancel_BasePath(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
 	cd.ForumBasePath = "/private"
+<<<<<<< HEAD
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 2, ForumtopicIdforumtopic: 1}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 1}
+	if _, err := cd.ForumThreadByID(2, lazy.Set[int32, *db.GetThreadLastPosterAndPermsForUserRow](thread)); err != nil {
+=======
 	thread := &db.GetThreadLastPosterAndPermsRow{Idforumthread: 2, ForumtopicIdforumtopic: 1}
 	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 1}
 	if _, err := cd.ForumThreadByID(2, lazy.Set[int32, *db.GetThreadLastPosterAndPermsRow](thread)); err != nil {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		t.Fatalf("set thread: %v", err)
 	}
 	if _, err := cd.ForumTopicByID(1, lazy.Set[int32, *db.GetForumTopicByIdForUserRow](topic)); err != nil {

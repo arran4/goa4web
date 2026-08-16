@@ -98,7 +98,11 @@ func userSubscriptionsPage(w http.ResponseWriter, r *http.Request) {
 					case "threadid":
 						if id, err := strconv.Atoi(p.Value); err == nil {
 							// Ensure the user has permission to view the thread
+<<<<<<< HEAD
+							_, err := cd.Queries().GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
+=======
 							_, err := cd.Queries().GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 								ViewerID:      cd.UserID,
 								ThreadID:      int32(id),
 								ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},

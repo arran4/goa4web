@@ -41,6 +41,10 @@ var (
 	_ notif.SubscribersNotificationTemplateProvider = (*CreateThreadTask)(nil)
 	_ notif.AdminEmailTemplateProvider              = (*CreateThreadTask)(nil)
 	_ notif.AutoSubscribeProvider                   = (*CreateThreadTask)(nil)
+<<<<<<< HEAD
+	_ notif.GrantsRequiredProvider                  = (*CreateThreadTask)(nil)
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	_ tasks.EmailTemplatesRequired                  = (*CreateThreadTask)(nil)
 	_ searchworker.IndexedTask                      = CreateThreadTask{}
 )
@@ -102,6 +106,13 @@ func (CreateThreadTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.Gra
 		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
 			base = evt.Path[:idx]
 		}
+<<<<<<< HEAD
+		section := consts.PermissionSectionForum
+		if base == "/private" {
+			section = consts.PermissionSectionPrivateForumThread
+		}
+		return []notif.GrantRequirement{{Section: section, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
+=======
 		section := strings.TrimPrefix(base, "/")
 		switch section {
 		case "private":
@@ -110,10 +121,18 @@ func (CreateThreadTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.Gra
 			section = "forum"
 		}
 		return []notif.GrantRequirement{{Section: section, Item: "thread", ItemID: data.ThreadID, Action: "view"}}, nil
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	return nil, nil
 }
 
+<<<<<<< HEAD
+func (CreateThreadTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
+	return privateThreadSubscriberGrants(evt)
+}
+
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 func (CreateThreadTask) Page(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Languages          []*db.Language
@@ -237,9 +256,15 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
+<<<<<<< HEAD
+	section := consts.PermissionSectionForum
+	if base == "/private" {
+		section = consts.PermissionSectionPrivateForum
+=======
 	section := strings.TrimPrefix(base, "/")
 	if section == "private" {
 		section = "privateforum"
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 	allowed, err := UserCanCreateThread(r.Context(), queries, section, int32(topicId), uid)
 	if err != nil {
@@ -286,6 +311,12 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var cid int64
 	if topic.Handler == "private" {
+<<<<<<< HEAD
+		if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
+			return fmt.Errorf("copying private topic grants to thread: %w", err)
+		}
+		cid, err = cd.CreatePrivateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
+=======
 		participants, err := queries.ListPrivateTopicParticipantsByTopicIDForUser(r.Context(), db.ListPrivateTopicParticipantsByTopicIDForUserParams{
 			TopicID:  sql.NullInt32{Int32: int32(topicId), Valid: true},
 			ViewerID: sql.NullInt32{Int32: uid, Valid: uid != 0},
@@ -306,12 +337,17 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			}
 		}
 		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
 			return fmt.Errorf("creating private topic comment: %w", err)
 		}
 	} else {
+<<<<<<< HEAD
+		cid, err = cd.CreateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
+=======
 		cid, err = cd.CreateForumCommentForCommenter(uid, int32(threadId), int32(topicId), int32(languageId), text)
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
 			return fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -71,7 +71,11 @@ func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequi
 	parts := strings.Split(evt.Path, "/")
 	if len(parts) >= 4 && parts[1] == "imagebbss" && parts[2] == "imagebbs" {
 		if bid, err := strconv.Atoi(parts[3]); err == nil {
+<<<<<<< HEAD
+			return []notif.GrantRequirement{{Section: consts.PermissionSectionImageBBS, Item: consts.PermissionItemBoard, ItemID: int32(bid), Action: consts.PermissionActionView}}, nil
+=======
 			return []notif.GrantRequirement{{Section: "imagebbs", Item: "board", ItemID: int32(bid), Action: "view"}}, nil
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		}
 	}
 	return nil, nil

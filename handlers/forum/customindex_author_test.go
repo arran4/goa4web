@@ -22,8 +22,13 @@ func TestCustomForumIndex_Author_NewStatus(t *testing.T) {
 	)
 
 	// Mock Thread details to simulate User 7 is the author
+<<<<<<< HEAD
+	q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	q.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 		return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:   3,
 			Firstpostuserid: sql.NullInt32{Int32: 7, Valid: true},
 		}, nil

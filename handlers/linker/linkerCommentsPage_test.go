@@ -41,7 +41,11 @@ func TestCommentsPage(t *testing.T) {
 			Title_2:    sql.NullString{String: "cat", Valid: true},
 		}
 		queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+<<<<<<< HEAD
+		queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 		queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          1,
 			Firstpost:              1,
 			Lastposter:             1,
@@ -141,7 +145,11 @@ func commentsPageEditControlsUseEditGrant(t *testing.T) {
 	queries.GetThreadBySectionThreadIDForReplierReturn = &db.Forumthread{
 		Idforumthread: 1,
 	}
+<<<<<<< HEAD
+	queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Idforumthread: 1,
 	}
 
@@ -202,7 +210,11 @@ func commentsPageEditControlsRequireGrantNotRole(t *testing.T) {
 		Title_2:    sql.NullString{String: "cat", Valid: true},
 	}
 	queries.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{}
+<<<<<<< HEAD
+	queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Idforumthread:          1,
 		Firstpost:              1,
 		Lastposter:             1,
@@ -294,7 +306,11 @@ func commentsPageEditControlsAllowAdminMode(t *testing.T) {
 			IsOwner:       false,
 		},
 	}
+<<<<<<< HEAD
+	queries.GetThreadLastPosterAndPermsForUserReturns = &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	queries.GetThreadLastPosterAndPermsReturns = &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Idforumthread:          int32(threadID),
 		Firstpost:              1,
 		Lastposter:             1,

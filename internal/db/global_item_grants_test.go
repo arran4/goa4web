@@ -13,7 +13,11 @@ func TestGlobalItemGrantQueries(t *testing.T) {
 	}{
 		{"UpdatePublicProfileEnabledAtForUser", updatePublicProfileEnabledAtForUser, "public_profile"},
 		{"GetForumTopicByIdForUser", getForumTopicByIdForUser, "topic"},
+<<<<<<< HEAD
+		{"GetThreadLastPosterAndPermsForUser", getThreadLastPosterAndPermsForUser, "topic"},
+=======
 		{"GetThreadLastPosterAndPerms", getThreadLastPosterAndPerms, "topic"},
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		{"GetImagePostByIDForLister", getImagePostByIDForLister, "board"},
 		{"GetWritingForListerByID", getWritingForListerByID, "article"},
 		{"UpdateNewsPostForWriter", updateNewsPostForWriter, "post"},

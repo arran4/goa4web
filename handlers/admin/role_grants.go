@@ -9,6 +9,10 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
+<<<<<<< HEAD
+	"github.com/arran4/goa4web/core/consts"
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -47,6 +51,16 @@ var GrantActionMap = map[string]GrantDefinition{
 	"faq|question/answer": {Actions: []string{"see", "view"}},
 	"search|":             {Actions: []string{"search"}},
 	"privateforum|topic":  {Actions: []string{"see", "view", "reply", "post", "edit", "create"}},
+<<<<<<< HEAD
+	consts.PermissionSectionPrivateForumThread.String() + "|" + consts.PermissionItemThread.String(): {
+		Actions: []string{
+			consts.PermissionActionView.String(),
+			consts.PermissionActionReply.String(),
+		},
+		RequireItemID: true,
+	},
+=======
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 }
 
 // GrantAction represents a single grant action and whether it's unsupported.

@@ -55,7 +55,11 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Post           *db.GetNewsPostByIdWithWriterIdAndThreadCommentCountRow
 		TopicID        int32
+<<<<<<< HEAD
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
+=======
 		Thread         *db.GetThreadLastPosterAndPermsRow
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
@@ -94,13 +98,21 @@ func AdminNewsPostPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("GetCommentsByThreadIdForUser: %v", err)
 	}
+<<<<<<< HEAD
+	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
+=======
 	threadRow, err := queries.GetThreadLastPosterAndPerms(r.Context(), db.GetThreadLastPosterAndPermsParams{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		ViewerID:      cd.UserID,
 		ThreadID:      int32(post.ForumthreadID),
 		ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+<<<<<<< HEAD
+		log.Printf("GetThreadLastPosterAndPermsForUser: %v", err)
+=======
 		log.Printf("GetThreadLastPosterAndPerms: %v", err)
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	}
 
 	cd.PageTitle = fmt.Sprintf("News Post %d", pid)

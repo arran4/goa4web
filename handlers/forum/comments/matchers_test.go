@@ -123,10 +123,17 @@ func TestRequireCommentAuthor(t *testing.T) {
 		if got := q.GetCommentByIdForUserCalls[0]; got != want {
 			t.Fatalf("unexpected comment lookup params: %#v", got)
 		}
+<<<<<<< HEAD
+		if len(q.SystemCheckGrantCalls) != 1 {
+			t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
+		}
+		if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "thread", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: threadID, Valid: true}) {
+=======
 		if len(q.SystemCheckGrantCalls) == 0 {
 			t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
 		}
 		if got := q.SystemCheckGrantCalls[1]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "thread", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: threadID, Valid: true}) {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			t.Fatalf("unexpected grant params: %#v", got)
 		}
 	})

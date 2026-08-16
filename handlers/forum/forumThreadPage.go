@@ -23,7 +23,11 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	type Data struct {
 		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
+<<<<<<< HEAD
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
+=======
 		Thread         *db.GetThreadLastPosterAndPermsRow
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
 		Text           string

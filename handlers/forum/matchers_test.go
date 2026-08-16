@@ -21,11 +21,19 @@ func TestRequireThreadAndTopicTrue(t *testing.T) {
 	topicID := int32(1)
 
 	qs := testhelpers.NewQuerierStub()
+<<<<<<< HEAD
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		if arg.ThreadID != threadID {
+			return nil, sql.ErrNoRows
+		}
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 		if arg.ThreadID != threadID {
 			return nil, sql.ErrNoRows
 		}
 		return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          threadID,
 			ForumtopicIdforumtopic: topicID,
 		}, nil
@@ -72,8 +80,13 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 	wrongTopicID := int32(3)
 
 	qs := testhelpers.NewQuerierStub()
+<<<<<<< HEAD
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 		return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 			Idforumthread:          threadID,
 			ForumtopicIdforumtopic: wrongTopicID,
 		}, nil
@@ -108,7 +121,11 @@ func TestRequireThreadAndTopicFalse(t *testing.T) {
 
 func TestRequireThreadAndTopicError(t *testing.T) {
 	qs := testhelpers.NewQuerierStub()
+<<<<<<< HEAD
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+=======
 	qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		return nil, sql.ErrNoRows
 	}
 	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {

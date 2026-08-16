@@ -3,10 +3,17 @@ package privateforum
 import (
 	"log"
 	"net/http"
+<<<<<<< HEAD
+
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
+=======
 	"net/url"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -53,11 +60,15 @@ func (t *privateForumTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
+<<<<<<< HEAD
+		handlers.RenderNotFoundOrLogin(w, r)
+=======
 		_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
 			RedirectURL string
 		}{
 			RedirectURL: url.QueryEscape(r.URL.RequestURI()),
 		})
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 		return
 	}
 	// Show topics only on the main private page (no creation form)

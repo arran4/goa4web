@@ -125,7 +125,11 @@ type ImageBBSThread struct {
 	BoardID       int
 	ForumThreadID int
 	ImagePost     *db.GetImagePostByIDForListerRow
+<<<<<<< HEAD
+	Thread        *db.GetThreadLastPosterAndPermsForUserRow
+=======
 	Thread        *db.GetThreadLastPosterAndPermsRow
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 }
 
 // ImageBBSThreadPosts retrieves comment rows for the currently selected thread.

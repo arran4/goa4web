@@ -36,7 +36,11 @@ type DataCache struct {
 	forumCategories               lazy.Value[[]*db.Forumcategory]
 	forumComments                 map[int32]*lazy.Value[*db.GetCommentByIdForUserRow]
 	forumThreadComments           map[int32]*lazy.Value[[]*db.GetCommentsByThreadIdForUserRow]
+<<<<<<< HEAD
+	forumThreadRows               map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsForUserRow]
+=======
 	forumThreadRows               map[int32]*lazy.Value[*db.GetThreadLastPosterAndPermsRow]
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 	forumThreads                  map[int32]*lazy.Value[[]*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow]
 	forumTopicLists               map[int32]*lazy.Value[[]*db.GetForumTopicsForUserRow]
 	forumTopics                   map[int32]*lazy.Value[*db.GetForumTopicByIdForUserRow]

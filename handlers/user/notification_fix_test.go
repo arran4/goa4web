@@ -36,9 +36,15 @@ func TestFixNotificationLinkAndGetData(t *testing.T) {
 			return nil, sql.ErrNoRows
 		}
 
+<<<<<<< HEAD
+		qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+			if arg.ThreadID == 47 {
+				return &db.GetThreadLastPosterAndPermsForUserRow{
+=======
 		qs.GetThreadLastPosterAndPermsFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsParams) (*db.GetThreadLastPosterAndPermsRow, error) {
 			if arg.ThreadID == 47 {
 				return &db.GetThreadLastPosterAndPermsRow{
+>>>>>>> 585b27a2 (feat(forum): implement post appending within time window)
 					Firstpost: 100,
 				}, nil
 			}

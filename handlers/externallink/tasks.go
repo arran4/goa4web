@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -15,6 +16,79 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
+
+// BackgroundFetchExternalLinkTask fetches OG metadata in the background.
+type BackgroundFetchExternalLinkTask struct {
+	tasks.TaskString
+	RawURL string
+	Config *config.RuntimeConfig
+}
+
+var _ tasks.Task = (*BackgroundFetchExternalLinkTask)(nil)
+var _ tasks.BackgroundTasker = (*BackgroundFetchExternalLinkTask)(nil)
+
+func (t *BackgroundFetchExternalLinkTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {
+	cd := common.NewCoreData(ctx, q, t.Config)
+
+	info, err := opengraph.Fetch(t.RawURL, cd.HTTPClient())
+	if err != nil {
+		log.Printf("background fetch error for %s: %v", t.RawURL, err)
+		return nil, nil
+	}
+
+	var cachedImgName string
+	if info.Image != "" {
+		var err error
+		cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
+		if err != nil {
+			log.Printf("failed to cache image: %v", err)
+		}
+	}
+
+	// Update DB using EnsureExternalLink to handle duplicates properly
+	res, err := cd.EnsureExternalLink(ctx, t.RawURL)
+	var lid int32
+	if err == nil {
+		id, _ := res.LastInsertId()
+		lid = int32(id)
+	}
+
+	// Always fetch existing if EnsureExternalLink returns 0 or fails
+	if lid == 0 {
+		if l, err := cd.GetExternalLink(ctx, t.RawURL); err == nil && l != nil {
+			lid = l.ID
+		}
+	}
+
+	if lid != 0 {
+		err := cd.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
+			CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
+			CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
+			CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
+			CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
+			CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
+			CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
+			ID:              lid,
+		})
+		if err != nil {
+			log.Printf("background update error: %v", err)
+			return nil, nil
+		}
+
+		if cachedImgName != "" {
+			// Update cache
+			err := cd.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
+				CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
+				ID:             lid,
+			})
+			if err != nil {
+				// non-fatal, just log
+				log.Printf("failed to update cache: %v", err)
+			}
+		}
+	}
+	return nil, nil
+}
 
 // ReloadExternalLinkTask reloads OG metadata for a link.
 type ReloadExternalLinkTask struct{ tasks.TaskString }
@@ -32,69 +106,12 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
 	}
 
-	// Spawn a goroutine to fetch OpenGraph data in the background
-	go func() {
-		// create a disconnected context or use background context for DB operations
-		// since the request context will be canceled when this handler returns.
-		bgCtx := context.Background()
-		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
-		if err != nil {
-			log.Printf("background fetch error for %s: %v", rawURL, err)
-			return
-		}
-
-		var cachedImgName string
-		if info.Image != "" {
-			var err error
-			cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
-			if err != nil {
-				log.Printf("failed to cache image: %v", err)
-			}
-		}
-
-		// Update DB using EnsureExternalLink to handle duplicates properly
-		res, err := cd.EnsureExternalLink(bgCtx, rawURL)
-		var lid int32
-		if err == nil {
-			id, _ := res.LastInsertId()
-			lid = int32(id)
-		}
-
-		// Always fetch existing if EnsureExternalLink returns 0 or fails
-		if lid == 0 {
-			if l, err := cd.GetExternalLink(bgCtx, rawURL); err == nil && l != nil {
-				lid = l.ID
-			}
-		}
-
-		if lid != 0 {
-			err := cd.UpdateExternalLinkMetadata(bgCtx, db.UpdateExternalLinkMetadataParams{
-				CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-				CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-				CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-				CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-				CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-				CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-				ID:              lid,
-			})
-			if err != nil {
-				log.Printf("background update error: %v", err)
-				return
-			}
-
-			if cachedImgName != "" {
-				// Update cache
-				err := cd.UpdateExternalLinkImageCache(bgCtx, db.UpdateExternalLinkImageCacheParams{
-					CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
-					ID:             lid,
-				})
-				if err != nil {
-					// non-fatal, just log
-					log.Printf("failed to update cache: %v", err)
-				}
-			}
-		}
-	}()
+	bgTask := &BackgroundFetchExternalLinkTask{
+		TaskString: "externallink:fetch",
+		RawURL:     rawURL,
+		Config:     cd.Config,
+	}
+	cd.SetEventTask(bgTask)
 
 	// Return redirect to the current URL with msg parameter
 	// We reconstruct the URL from params to be safe, or just use RequestURI?
@@ -129,69 +146,12 @@ func (PrefetchExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) a
 		return handlers.TextByteWriter("missing url")
 	}
 
-	// Spawn a goroutine to fetch OpenGraph data in the background
-	go func() {
-		// create a disconnected context or use background context for DB operations
-		// since the request context will be canceled when this handler returns.
-		bgCtx := context.Background()
-		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
-		if err != nil {
-			log.Printf("background fetch error for %s: %v", rawURL, err)
-			return
-		}
-
-		var cachedImgName string
-		if info.Image != "" {
-			var err error
-			cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
-			if err != nil {
-				log.Printf("failed to cache image: %v", err)
-			}
-		}
-
-		// Update DB using EnsureExternalLink to handle duplicates properly
-		res, err := cd.EnsureExternalLink(bgCtx, rawURL)
-		var lid int32
-		if err == nil {
-			id, _ := res.LastInsertId()
-			lid = int32(id)
-		}
-
-		// Always fetch existing if EnsureExternalLink returns 0 or fails
-		if lid == 0 {
-			if l, err := cd.GetExternalLink(bgCtx, rawURL); err == nil && l != nil {
-				lid = l.ID
-			}
-		}
-
-		if lid != 0 {
-			err := cd.UpdateExternalLinkMetadata(bgCtx, db.UpdateExternalLinkMetadataParams{
-				CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-				CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-				CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-				CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-				CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-				CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-				ID:              lid,
-			})
-			if err != nil {
-				log.Printf("background update error: %v", err)
-				return
-			}
-
-			if cachedImgName != "" {
-				// Update cache
-				err := cd.UpdateExternalLinkImageCache(bgCtx, db.UpdateExternalLinkImageCacheParams{
-					CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
-					ID:             lid,
-				})
-				if err != nil {
-					// non-fatal, just log
-					log.Printf("failed to update cache: %v", err)
-				}
-			}
-		}
-	}()
+	bgTask := &BackgroundFetchExternalLinkTask{
+		TaskString: "externallink:fetch",
+		RawURL:     rawURL,
+		Config:     cd.Config,
+	}
+	cd.SetEventTask(bgTask)
 
 	return handlers.TextByteWriter("ok")
 }

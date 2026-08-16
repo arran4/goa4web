@@ -2,12 +2,9 @@ package externallink
 
 import (
 	"context"
-	"database/sql"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/core/common"
@@ -24,34 +21,11 @@ func TestReloadExternalLinkTask(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		t.Run("Action with URL", func(t *testing.T) {
 			qs := testhelpers.NewQuerierStub()
-			qs.CreateExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
-				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
-			}
-			qs.UpdateExternalLinkMetadataFn = func(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
-				if arg.ID != 123 {
-					t.Errorf("Expected ID 123, got %d", arg.ID)
-				}
-				if arg.CardTitle.String != "Test Title" {
-					t.Errorf("Expected title 'Test Title', got '%s'", arg.CardTitle.String)
-				}
-				return nil
-			}
-			qs.UpdateExternalLinkImageCacheFn = func(ctx context.Context, arg db.UpdateExternalLinkImageCacheParams) error {
-				return nil
-			}
 
 			link := "https://example.com/some/link"
 			sig := sign.Sign("link:"+link, key)
 
-			client := NewTestClient(func(req *http.Request) *http.Response {
-				return &http.Response{
-					StatusCode: 200,
-					Body:       io.NopCloser(strings.NewReader(`<html><head><meta property="og:title" content="Test Title"/></head><body></body></html>`)),
-					Header:     make(http.Header),
-				}
-			})
-
-			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key), common.WithHTTPClient(client))
+			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key))
 
 			u := "/?u=" + url.QueryEscape(link) + "&sig=" + sig
 			req := httptest.NewRequest(http.MethodPost, u, nil)
@@ -78,29 +52,11 @@ func TestReloadExternalLinkTask(t *testing.T) {
 			qs.GetExternalLinkByIDFn = func(ctx context.Context, id int32) (*db.ExternalLink, error) {
 				return &db.ExternalLink{ID: 123, Url: link}, nil
 			}
-			qs.CreateExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
-				// Should find existing or just update
-				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
-			}
-			qs.UpdateExternalLinkMetadataFn = func(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
-				if arg.ID != 123 {
-					t.Errorf("Expected ID 123, got %d", arg.ID)
-				}
-				return nil
-			}
 
 			idStr := "123"
 			sig := sign.Sign("link:"+idStr, key)
 
-			client := NewTestClient(func(req *http.Request) *http.Response {
-				return &http.Response{
-					StatusCode: 200,
-					Body:       io.NopCloser(strings.NewReader(`<html><head><meta property="og:title" content="Test Title"/></head><body></body></html>`)),
-					Header:     make(http.Header),
-				}
-			})
-
-			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key), common.WithHTTPClient(client))
+			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key))
 
 			u := "/?id=" + idStr + "&sig=" + sig
 			req := httptest.NewRequest(http.MethodPost, u, nil)

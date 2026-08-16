@@ -294,6 +294,8 @@ type Forumthread struct {
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
+	ReplyToCommentID       sql.NullInt32
+	ReplyToThreadID        sql.NullInt32
 	DeletedAt              sql.NullTime
 }
 

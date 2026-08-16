@@ -1,10 +1,21 @@
 {{ template "head" $ }}
     {{ $base := "/forum" }}
     {{ with .BasePath }}{{ $base = . }}{{ end }}
+    {{ if gt .TotalReplyThreads 0 }}
+        <div class="forked-banner" style="background-color: #e6f7ff; padding: 10px; margin-bottom: 15px; border-left: 4px solid #005ce6;">
+            <strong>Forked Conversations:</strong> This thread has been forked {{ .TotalReplyThreads }} times. <a href="{{ $base }}/topic/{{ .Topic.Idforumtopic }}/thread/{{ .Thread.Idforumthread }}/replies">View all forked threads</a>.
+        </div>
+    {{ end }}
+    {{ with .SourceReference }}
+        <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-bottom: 15px; border-left: 4px solid #0066cc;">
+            <strong>Forked Conversation:</strong> This thread is a reply to
+            <a href="{{ $base }}/topic/{{ .TopicID }}/thread/{{ .ThreadID }}{{ if gt .CommentID 0 }}#comment-{{ .CommentID }}{{ end }}">Thread #{{ .ThreadID }}{{ if gt .CommentID 0 }} Comment #{{ .CommentID }}{{ end }}</a>. <a href="{{ $base }}/topic/{{ .TopicID }}/thread/{{ .ThreadID }}/replies">View all replies</a>.
+        </div>
+    {{ end }}
     <div class="label-bar">
         {{ template "topicLabels" .Labels }}
     </div>
-    {{ template "threadComments" }}
+    {{ template "threadComments" $ }}
     {{ template "forumReply" $ }}
 
     <div id="gallery-target"></div>

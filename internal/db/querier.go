@@ -423,6 +423,10 @@ type Querier interface {
 	GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsForUserParams) ([]*GetPrivateTopicThreadsAndLabelsForUserRow, error)
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
+	// GetReplyThreadsForLister uses the same topic, thread, role, and language
+	// visibility rules as the normal forum thread and comment lists. Its unread
+	// expression intentionally matches ListUnreadPrivateThreadsForUser.
+	GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error)
 	GetRoleByName(ctx context.Context, name string) (*Role, error)
 	GetSchedulerState(ctx context.Context, taskName string) (*SchedulerState, error)
 	GetSubscriptionArchetypesByRole(ctx context.Context, roleID int32) ([]*RoleSubscriptionArchetype, error)
@@ -560,6 +564,7 @@ type Querier interface {
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
 	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
 	SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
+	SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error
 	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	// SystemCountLanguages counts all languages.
@@ -567,6 +572,7 @@ type Querier interface {
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
+	SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error)
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
 	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
 	// This query inserts a new permission into the "permissions" table.
@@ -593,6 +599,7 @@ type Querier interface {
 	SystemDeleteSessionByID(ctx context.Context, sessionID string) error
 	// This query deletes all data from the "site_news_search" table.
 	SystemDeleteSiteNewsSearch(ctx context.Context) error
+	SystemDeleteUninitializedThread(ctx context.Context, threadID int32) error
 	SystemDeleteUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) (sql.Result, error)
 	SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error
 	// This query deletes all data from the "writing_search" table.

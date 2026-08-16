@@ -233,13 +233,28 @@ type QuerierStub struct {
 	SystemCreateNotificationErr   error
 	SystemCreateNotificationCalls []SystemCreateNotificationParams
 
-	SystemCreateThreadCalls                   []int32
-	SystemCreateThreadReturns                 int64
-	SystemCreateThreadErr                     error
-	SystemCreateThreadFn                      func(context.Context, int32) (int64, error)
-	SystemCopyPrivateTopicGrantsToThreadCalls []SystemCopyPrivateTopicGrantsToThreadParams
-	SystemCopyPrivateTopicGrantsToThreadErr   error
-	SystemCopyPrivateTopicGrantsToThreadFn    func(context.Context, SystemCopyPrivateTopicGrantsToThreadParams) error
+	SystemCreateThreadCalls                    []int32
+	SystemCreateThreadReturns                  int64
+	SystemCreateThreadErr                      error
+	SystemCreateThreadFn                       func(context.Context, int32) (int64, error)
+	SystemCreateReplyThreadCalls               []SystemCreateReplyThreadParams
+	SystemCreateReplyThreadReturns             int64
+	SystemCreateReplyThreadErr                 error
+	SystemCreateReplyThreadFn                  func(context.Context, SystemCreateReplyThreadParams) (int64, error)
+	SystemDeleteUninitializedThreadCalls       []int32
+	SystemDeleteUninitializedThreadErr         error
+	SystemDeleteUninitializedThreadFn          func(context.Context, int32) error
+	SystemCopyPrivateTopicGrantsToThreadCalls  []SystemCopyPrivateTopicGrantsToThreadParams
+	SystemCopyPrivateTopicGrantsToThreadErr    error
+	SystemCopyPrivateTopicGrantsToThreadFn     func(context.Context, SystemCopyPrivateTopicGrantsToThreadParams) error
+	SystemCopyPrivateThreadGrantsToThreadCalls []SystemCopyPrivateThreadGrantsToThreadParams
+	SystemCopyPrivateThreadGrantsToThreadErr   error
+	SystemCopyPrivateThreadGrantsToThreadFn    func(context.Context, SystemCopyPrivateThreadGrantsToThreadParams) error
+
+	GetReplyThreadsForListerCalls   []GetReplyThreadsForListerParams
+	GetReplyThreadsForListerReturns []*GetReplyThreadsForListerRow
+	GetReplyThreadsForListerErr     error
+	GetReplyThreadsForListerFn      func(context.Context, GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error)
 
 	SystemGetForumTopicByTitleCalls   []sql.NullString
 	SystemGetForumTopicByTitleReturns *Forumtopic
@@ -2550,6 +2565,31 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 	return ret, err
 }
 
+func (s *QuerierStub) SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error) {
+	s.mu.Lock()
+	s.SystemCreateReplyThreadCalls = append(s.SystemCreateReplyThreadCalls, arg)
+	fn := s.SystemCreateReplyThreadFn
+	ret := s.SystemCreateReplyThreadReturns
+	err := s.SystemCreateReplyThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemDeleteUninitializedThread(ctx context.Context, threadID int32) error {
+	s.mu.Lock()
+	s.SystemDeleteUninitializedThreadCalls = append(s.SystemDeleteUninitializedThreadCalls, threadID)
+	fn := s.SystemDeleteUninitializedThreadFn
+	err := s.SystemDeleteUninitializedThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, threadID)
+	}
+	return err
+}
+
 // SystemCopyPrivateTopicGrantsToThread records the call and returns the configured response.
 func (s *QuerierStub) SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error {
 	s.mu.Lock()
@@ -3321,4 +3361,29 @@ func (q *QuerierStub) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePas
 
 func (q *QuerierStub) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error {
 	return nil
+}
+
+func (s *QuerierStub) GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error) {
+	s.mu.Lock()
+	s.GetReplyThreadsForListerCalls = append(s.GetReplyThreadsForListerCalls, arg)
+	fn := s.GetReplyThreadsForListerFn
+	rows := s.GetReplyThreadsForListerReturns
+	err := s.GetReplyThreadsForListerErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return rows, err
+}
+
+func (s *QuerierStub) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
+	s.mu.Lock()
+	s.SystemCopyPrivateThreadGrantsToThreadCalls = append(s.SystemCopyPrivateThreadGrantsToThreadCalls, arg)
+	fn := s.SystemCopyPrivateThreadGrantsToThreadFn
+	err := s.SystemCopyPrivateThreadGrantsToThreadErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
 }

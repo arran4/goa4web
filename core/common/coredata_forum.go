@@ -340,6 +340,13 @@ func (cd *CoreData) GrantForumThread(threadID int32, uid, rid sql.NullInt32, act
 }
 
 // CopyPrivateTopicGrantsToThread materializes the topic's view and reply grants on a new private thread.
+func (cd *CoreData) CopyPrivateThreadGrantsToThread(srcThreadID, dstThreadID int32) error {
+	return cd.queries.SystemCopyPrivateThreadGrantsToThread(cd.ctx, db.SystemCopyPrivateThreadGrantsToThreadParams{
+		SrcThreadID: sql.NullInt32{Int32: srcThreadID, Valid: true},
+		DstThreadID: sql.NullInt32{Int32: dstThreadID, Valid: true},
+	})
+}
+
 func (cd *CoreData) CopyPrivateTopicGrantsToThread(topicID, threadID int32) error {
 	if cd.queries == nil {
 		return nil

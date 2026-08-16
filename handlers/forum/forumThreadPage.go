@@ -29,6 +29,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Thread         *db.GetThreadLastPosterAndPermsForUserRow
 		Comments       []*db.GetCommentsByThreadIdForUserRow
 		IsReplyable    bool
+		CanFork        bool
 		Text           string
 		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
 		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
@@ -94,6 +95,17 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		titleParts = append(titleParts, "Private Forum")
 	}
 	cd.PageTitle = strings.Join(titleParts, " - ")
+
+	canFork := false
+	uid := cd.UserID
+	section := consts.PermissionSectionForum
+	if basePath == "/private" {
+		section = consts.PermissionSectionPrivateForum
+	}
+	if allowed, err := UserCanCreateThread(r.Context(), cd.Queries(), section, topicRow.Idforumtopic, uid); err == nil && allowed {
+		canFork = true
+	}
+	data.CanFork = canFork
 
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{

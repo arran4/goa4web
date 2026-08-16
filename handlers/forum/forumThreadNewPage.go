@@ -266,10 +266,28 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var replyToCommentId, replyToThreadId sql.NullInt32
 	if quoteCommentId != "" {
 		if cId, err := strconv.Atoi(quoteCommentId); err == nil {
-			if c, err := cd.CommentByID(int32(cId)); err == nil && c != nil {
-				replyToCommentId = sql.NullInt32{Int32: int32(cId), Valid: true}
-				replyToThreadId = sql.NullInt32{Int32: c.ForumthreadID, Valid: true}
+			c, err := cd.CommentByID(int32(cId))
+			if err != nil || c == nil {
+				w.WriteHeader(http.StatusForbidden)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden: cannot access source comment"))
+				return nil
 			}
+
+			th, err := cd.ForumThreadByID(c.ForumthreadID)
+			if err != nil || th == nil {
+				w.WriteHeader(http.StatusForbidden)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden: cannot access source thread"))
+				return nil
+			}
+
+			if th.ForumtopicIdforumtopic != int32(topicId) {
+				w.WriteHeader(http.StatusBadRequest)
+				handlers.RenderErrorPage(w, r, fmt.Errorf("bad request: fork must belong to the same topic"))
+				return nil
+			}
+
+			replyToCommentId = sql.NullInt32{Int32: int32(cId), Valid: true}
+			replyToThreadId = sql.NullInt32{Int32: c.ForumthreadID, Valid: true}
 		}
 	}
 
@@ -280,8 +298,14 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var cid int64
 	if topic.Handler == "private" {
-		if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
-			return fmt.Errorf("copying private topic grants to thread: %w", err)
+		if replyToThreadId.Valid {
+			if err := cd.CopyPrivateThreadGrantsToThread(replyToThreadId.Int32, int32(threadId)); err != nil {
+				return fmt.Errorf("copying private thread grants to thread: %w", err)
+			}
+		} else {
+			if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
+				return fmt.Errorf("copying private topic grants to thread: %w", err)
+			}
 		}
 		cid, err = cd.CreatePrivateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
@@ -307,6 +331,7 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 			Idforumthread:    int32(threadId),
 		}); err != nil {
 			log.Printf("Error: setting thread reply to: %s", err)
+			return fmt.Errorf("setting thread reply to %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
 

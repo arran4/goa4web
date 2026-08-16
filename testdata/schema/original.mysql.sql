@@ -102,6 +102,7 @@ CREATE TABLE `forumthread` (
   `locked` tinyint(1) DEFAULT NULL,
   `reply_to_comment_id` int(10) DEFAULT NULL,
   `reply_to_thread_id` int(10) DEFAULT NULL,
+  KEY `forumthread_reply_to_thread_id` (`reply_to_thread_id`, `reply_to_comment_id`),
   PRIMARY KEY (`idforumthread`),
   KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`),
   KEY `forumthread_FKIndex2` (`lastposter`),

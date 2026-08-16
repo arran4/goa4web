@@ -742,3 +742,33 @@ GROUP BY t.reply_to_comment_id;
 
 -- name: CountReplyThreadsForThread :one
 SELECT COUNT(*) FROM forumthread WHERE reply_to_thread_id = sqlc.arg(reply_to_thread_id);
+
+-- name: SystemCopyPrivateThreadGrantsToThread :exec
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type,
+    item_id, item_rule, action, extra, active
+)
+SELECT DISTINCT
+    NOW(), src_grant.user_id, src_grant.role_id,
+    'privateforum_thread', 'thread', 'allow',
+    sqlc.arg(dst_thread_id), NULL, src_grant.action, NULL, 1
+FROM grants src_grant
+WHERE src_grant.section = 'privateforum_thread'
+  AND src_grant.item = 'thread'
+  AND src_grant.rule_type = 'allow'
+  AND src_grant.active = 1
+  AND src_grant.action IN ('view', 'reply')
+  AND src_grant.item_id = sqlc.arg(src_thread_id)
+  AND (src_grant.user_id IS NOT NULL OR src_grant.role_id IS NOT NULL)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM grants dst_grant
+        WHERE dst_grant.section = 'privateforum_thread'
+          AND dst_grant.item = 'thread'
+          AND dst_grant.rule_type = 'allow'
+          AND dst_grant.item_id = sqlc.arg(dst_thread_id)
+        AND dst_grant.action = src_grant.action
+        AND dst_grant.active = 1
+        AND (dst_grant.user_id <=> src_grant.user_id)
+        AND (dst_grant.role_id <=> src_grant.role_id)
+  );

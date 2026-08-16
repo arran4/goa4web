@@ -3346,3 +3346,9 @@ func (s *QuerierStub) CountReplyThreadsForThread(ctx context.Context, replyToThr
 	defer s.mu.Unlock()
 	return 0, nil
 }
+
+func (s *QuerierStub) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return nil
+}

@@ -1941,6 +1941,47 @@ func (q *Queries) SetThreadReplyTo(ctx context.Context, arg SetThreadReplyToPara
 	return err
 }
 
+const systemCopyPrivateThreadGrantsToThread = `-- name: SystemCopyPrivateThreadGrantsToThread :exec
+INSERT INTO grants (
+    created_at, user_id, role_id, section, item, rule_type,
+    item_id, item_rule, action, extra, active
+)
+SELECT DISTINCT
+    NOW(), src_grant.user_id, src_grant.role_id,
+    'privateforum_thread', 'thread', 'allow',
+    ?, NULL, src_grant.action, NULL, 1
+FROM grants src_grant
+WHERE src_grant.section = 'privateforum_thread'
+  AND src_grant.item = 'thread'
+  AND src_grant.rule_type = 'allow'
+  AND src_grant.active = 1
+  AND src_grant.action IN ('view', 'reply')
+  AND src_grant.item_id = ?
+  AND (src_grant.user_id IS NOT NULL OR src_grant.role_id IS NOT NULL)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM grants dst_grant
+        WHERE dst_grant.section = 'privateforum_thread'
+          AND dst_grant.item = 'thread'
+          AND dst_grant.rule_type = 'allow'
+          AND dst_grant.item_id = ?
+        AND dst_grant.action = src_grant.action
+        AND dst_grant.active = 1
+        AND (dst_grant.user_id <=> src_grant.user_id)
+        AND (dst_grant.role_id <=> src_grant.role_id)
+  )
+`
+
+type SystemCopyPrivateThreadGrantsToThreadParams struct {
+	DstThreadID sql.NullInt32
+	SrcThreadID sql.NullInt32
+}
+
+func (q *Queries) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
+	_, err := q.db.ExecContext(ctx, systemCopyPrivateThreadGrantsToThread, arg.DstThreadID, arg.SrcThreadID, arg.DstThreadID)
+	return err
+}
+
 const systemCopyPrivateTopicGrantsToThread = `-- name: SystemCopyPrivateTopicGrantsToThread :exec
 INSERT INTO grants (
     created_at, user_id, role_id, section, item, rule_type,

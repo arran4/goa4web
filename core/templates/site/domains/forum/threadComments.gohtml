@@ -29,7 +29,7 @@
                 {{ $forkListURL = printf "%s/topic/%d/thread/%d/replies#comment-%d" $base $topicID $threadID $c.Idcomments }}
             {{ end }}
 
-            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev) }}
+            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev "CanFork" $.CanFork) }}
             {{ if $forkCount }}
                 <div class="forked-banner" style="color: #666; font-size: 0.9em; margin-top: 5px; margin-bottom: 15px; border-left: 2px solid #ccc; padding-left: 10px;">
                     <em>Forked here:</em>

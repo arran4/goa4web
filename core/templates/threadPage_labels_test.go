@@ -51,6 +51,7 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 		Labels   []TopicLabel
 		BasePath string
 		BackURL  string
+		TotalReplyThreads int64
 	}{}
 	data.Topic.Idforumtopic = 1
 	data.Thread.Idforumthread = 3

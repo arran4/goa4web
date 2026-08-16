@@ -23,6 +23,7 @@ import (
 func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type Data struct {
 		ReplyThreadCounts map[int32]int64
+		TotalReplyThreads int64
 		Category       *ForumcategoryPlus
 		Topic          *ForumtopicPlus
 		Thread         *db.GetThreadLastPosterAndPermsForUserRow
@@ -132,6 +133,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	for _, rc := range replyCounts {
 		if rc.ReplyToCommentID.Valid {
 			data.ReplyThreadCounts[rc.ReplyToCommentID.Int32] = rc.ThreadCount
+			data.TotalReplyThreads += rc.ThreadCount
 		}
 	}
 

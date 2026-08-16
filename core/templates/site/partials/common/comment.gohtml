@@ -39,7 +39,7 @@
                     {{ if $.ReplyThreadCounts }}
                     {{ if index $.ReplyThreadCounts $cmt.Idcomments }}
                         {{ $count := index $.ReplyThreadCounts $cmt.Idcomments }}
-                        <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc;"><strong>Forked Conversations:</strong> This comment has <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/{{ cd.SelectedThreadID }}/replies#c{{ $cmt.Idcomments }}">{{ $count }} new thread {{ if eq $count 1 }}reply{{ else }}replies{{ end }}</a>.</div>
+                        <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc;"><strong>Forked Conversation:</strong> Conversation was forked here {{ $count }} times / thread total {{ $.TotalReplyThreads }}. <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread/{{ cd.SelectedThreadID }}/replies#c{{ $cmt.Idcomments }}">Complete List</a>.</div>
                     {{ end }}
                     {{ end }}
                 {{ end }}

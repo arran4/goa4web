@@ -201,7 +201,11 @@
                     if (inner.indexOf('|') !== -1 && inner.indexOf('---') !== -1) {
                         return inner;
                     }
-                    return "```\n" + inner + "\n```";
+                    if (inner.indexOf('\n') === -1) {
+                        return "`" + inner + "`";
+                    } else {
+                        return "```\n" + inner + "\n```";
+                    }
                 case 'quote':
                 case 'q':
                     // Blockquote
@@ -444,7 +448,11 @@
                 case 'img':
                     return `[img ${node.args[0]}]`;
                 case 'code':
-                    return `[code]${inner}[/code]`;
+                    if (inner.indexOf('\n') === -1 && inner.indexOf('\r') === -1) {
+                        return `[code ${inner}]`;
+                    } else {
+                        return `[code]${inner}[/code]`;
+                    }
                 case 'quote':
                     return `[quote]${inner}[/quote]`;
                 case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':

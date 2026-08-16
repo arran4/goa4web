@@ -171,20 +171,27 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	if ast.IsBlockNode(n) {
-		_, _ = fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
-		_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
-		_, _ = io.WriteString(w, htmlEscape(n.Value))
-		_, _ = io.WriteString(w, "</span></pre>")
-	} else {
+	if !ast.IsBlockNode(n) {
 		_, _ = fmt.Fprintf(w, `<code class="a4code-inline a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
 		_, _ = io.WriteString(w, htmlEscape(n.Value))
 		_, _ = io.WriteString(w, "</code>")
+		return nil
 	}
+	_, _ = fmt.Fprintf(w, `<pre class="a4code-block a4code-code"%s>`, g.SourceAttrs(n.Start, n.End))
+	_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
+	_, _ = io.WriteString(w, htmlEscape(n.Value))
+	_, _ = io.WriteString(w, "</span></pre>")
 	return nil
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
+	if !ast.IsBlockNode(n) {
+		_, _ = fmt.Fprintf(w, `<code class="a4code-inline a4code-code a4code-language-%s language-%s"%s>`, htmlEscape(n.Language), htmlEscape(n.Language), g.SourceAttrs(n.Start, n.End))
+		_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))
+		_, _ = io.WriteString(w, htmlEscape(n.Value))
+		_, _ = io.WriteString(w, "</span></code>")
+		return nil
+	}
 	_, _ = fmt.Fprintf(w, `<pre class="a4code-block a4code-code a4code-language-%s"%s>`, htmlEscape(n.Language), g.SourceAttrs(n.Start, n.End))
 	_, _ = fmt.Fprintf(w, `<code class="language-%s">`, htmlEscape(n.Language))
 	_, _ = fmt.Fprintf(w, `<span%s>`, g.SourceAttrs(n.InnerStart, n.InnerEnd))

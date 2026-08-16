@@ -4,12 +4,12 @@
 
 <h1 class="page-title">Replies to <a href="{{ cd.ForumBasePath }}/topic/{{.Topic.Idforumtopic}}/thread/{{.Thread.Idforumthread}}">Thread #{{.Thread.Idforumthread}}</a></h1>
 
-{{ if eq (len .ThreadsByComment) 0 }}
+{{ if eq (len .ForksByComment) 0 }}
     <p>No replies found.</p>
 {{ else }}
     {{ $base := "/forum" }}
     {{ with cd.ForumBasePath }}{{ $base = . }}{{ end }}
-    {{ range $commentID, $threads := .ThreadsByComment }}
+    {{ range $commentID, $group := .ForksByComment }}
         <div class="comment-group" id="comment-{{ $commentID }}">
             <h2 style="margin-top: 2rem; border-bottom: 2px solid #ccc; padding-bottom: 0.5rem;">
                 {{ if eq $commentID 0 }}
@@ -19,21 +19,21 @@
                 {{ end }}
             </h2>
             <div class="thread-list">
-            {{- range $threads }}
-                <div class="thread" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-creation-time="{{ .Firstpostwritten.Time.Unix }}" data-comments="{{ .Comments.Int32 }}">
+            {{- range $group.Threads }}
+                <div class="thread" data-last-reply-time="{{ .LastAddition.Unix }}" data-creation-time="{{ .FirstPostWritten.Unix }}" data-comments="{{ .CommentCount }}">
                     <div class="thread-meta thread-header">
-                        Forked at: <span class="poster-name first" {{ if ne .Firstpostuserid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Firstpostusername.String }}</span>
-                        At <span class="post-time first">{{ cd.LocalTime .Firstpostwritten.Time }}</span>
+                        Forked by: <span class="poster-name first" {{ if ne .FirstPosterID cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .FirstPoster }}</span>
+                        At <span class="post-time first">{{ cd.LocalTime .FirstPostWritten }}</span>
+                        {{ template "topicLabels" .Labels }}
                     </div>
                     <div class="thread-content foldable">
-                        {{ .Firstposttext.String | a4code2html }}<br>
+                        {{ .FirstPostText | a4code2html }}<br>
                     </div>
                     <div class="thread-meta">
-                        Lastposter: <span class="poster-name last" {{ if ne .Lastposterid.Int32 cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .Lastposterusername.String }}</span>
-                        At <span class="post-time last">{{ cd.LocalTime .Lastaddition.Time }}</span>
-                        [<a href="{{$base}}/topic/{{.ForumtopicIdforumtopic}}/thread/{{ .Idforumthread }}">
-                            {{- .Comments.Int32 }} comments.</a>]{{" "}}
-                        {{- template "topicLabels" .Labels }}
+                        Lastposter: <span class="poster-name last" {{ if ne .LastPosterID cd.UserID }}style="font-weight: bold;"{{ end }}>{{ .LastPoster }}</span>
+                        At <span class="post-time last">{{ cd.LocalTime .LastAddition }}</span>
+                        [<a href="{{$base}}/topic/{{.TopicID}}/thread/{{ .ThreadID }}">
+                            {{- .CommentCount }} comments.</a>]
                     </div>
                 </div>
             {{- end }}

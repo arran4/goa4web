@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,8 +9,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/go-sql-driver/mysql"
 )
 
 func TestMigrationFileNaming(t *testing.T) {
@@ -144,4 +147,81 @@ func TestPrivateForumThreadGrantMigration(t *testing.T) {
 	if !strings.Contains(sql, "UPDATE schema_version SET version = 94") {
 		t.Error("migration does not update the legacy schema version")
 	}
+}
+
+func TestMigration0095ExecutesSuccessfully(t *testing.T) {
+	dsn := os.Getenv("GOA4WEB_TEST_MYSQL_DSN")
+	if dsn == "" {
+		t.Skip("set GOA4WEB_TEST_MYSQL_DSN to run MySQL migration execution tests")
+	}
+	db := openTemporaryMySQLDatabase(t, dsn)
+	if _, err := db.Exec(`CREATE TABLE forumthread (idforumthread INT NOT NULL AUTO_INCREMENT PRIMARY KEY)`); err != nil {
+		t.Fatalf("create pre-0095 forumthread: %v", err)
+	}
+	if _, err := db.Exec(`CREATE TABLE schema_version (version INT NOT NULL)`); err != nil {
+		t.Fatalf("create schema_version: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO schema_version (version) VALUES (94)`); err != nil {
+		t.Fatalf("seed schema_version: %v", err)
+	}
+	contents, err := FS.ReadFile("0095_mysql.sql")
+	if err != nil {
+		t.Fatalf("read migration: %v", err)
+	}
+	for _, statement := range strings.Split(string(contents), ";") {
+		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Up", ""))
+		if statement == "" {
+			continue
+		}
+		if _, err := db.Exec(statement); err != nil {
+			t.Fatalf("execute migration statement %q: %v", statement, err)
+		}
+	}
+	rows, err := db.Query(`SELECT column_name FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'forumthread' AND index_name = 'forumthread_reply_to_thread_id' ORDER BY seq_in_index`)
+	if err != nil {
+		t.Fatalf("show fork index: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+	var columns []string
+	for rows.Next() {
+		var columnName string
+		if err := rows.Scan(&columnName); err != nil {
+			t.Fatalf("scan fork index: %v", err)
+		}
+		columns = append(columns, columnName)
+	}
+	if got := strings.Join(columns, ","); got != "reply_to_thread_id,reply_to_comment_id" {
+		t.Fatalf("fork index columns = %q", got)
+	}
+}
+
+func openTemporaryMySQLDatabase(t *testing.T, dsn string) *sql.DB {
+	t.Helper()
+	cfg, err := mysql.ParseDSN(dsn)
+	if err != nil {
+		t.Fatalf("parse MySQL DSN: %v", err)
+	}
+	databaseName := fmt.Sprintf("goa4web_migration_%d", time.Now().UnixNano())
+	adminConfig := *cfg
+	adminConfig.DBName = ""
+	adminDB, err := sql.Open("mysql", adminConfig.FormatDSN())
+	if err != nil {
+		t.Fatalf("open MySQL admin connection: %v", err)
+	}
+	if _, err := adminDB.Exec("CREATE DATABASE `" + databaseName + "`"); err != nil {
+		_ = adminDB.Close()
+		t.Fatalf("create temporary database: %v", err)
+	}
+	t.Cleanup(func() {
+		_, _ = adminDB.Exec("DROP DATABASE `" + databaseName + "`")
+		_ = adminDB.Close()
+	})
+	testConfig := *cfg
+	testConfig.DBName = databaseName
+	db, err := sql.Open("mysql", testConfig.FormatDSN())
+	if err != nil {
+		t.Fatalf("open temporary database: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	return db
 }

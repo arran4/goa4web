@@ -298,7 +298,6 @@ type Querier interface {
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
-	CountReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) (int64, error)
 	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
@@ -424,8 +423,10 @@ type Querier interface {
 	GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, arg GetPrivateTopicThreadsAndLabelsForUserParams) ([]*GetPrivateTopicThreadsAndLabelsForUserRow, error)
 	GetPublicProfileRoleForUser(ctx context.Context, usersIdusers int32) (int32, error)
 	GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error)
-	GetReplyThreadCountsForComments(ctx context.Context, arg GetReplyThreadCountsForCommentsParams) ([]*GetReplyThreadCountsForCommentsRow, error)
-	GetReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) ([]*GetReplyThreadsForThreadRow, error)
+	// GetReplyThreadsForLister uses the same topic, thread, role, and language
+	// visibility rules as the normal forum thread and comment lists. Its unread
+	// expression intentionally matches ListUnreadPrivateThreadsForUser.
+	GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error)
 	GetRoleByName(ctx context.Context, name string) (*Role, error)
 	GetSchedulerState(ctx context.Context, taskName string) (*SchedulerState, error)
 	GetSubscriptionArchetypesByRole(ctx context.Context, roleID int32) ([]*RoleSubscriptionArchetype, error)
@@ -547,7 +548,6 @@ type Querier interface {
 	SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
 	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
-	SetThreadReplyTo(ctx context.Context, arg SetThreadReplyToParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
@@ -572,6 +572,7 @@ type Querier interface {
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
+	SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error)
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
 	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error)
 	// This query inserts a new permission into the "permissions" table.
@@ -598,6 +599,7 @@ type Querier interface {
 	SystemDeleteSessionByID(ctx context.Context, sessionID string) error
 	// This query deletes all data from the "site_news_search" table.
 	SystemDeleteSiteNewsSearch(ctx context.Context) error
+	SystemDeleteUninitializedThread(ctx context.Context, threadID int32) error
 	SystemDeleteUnverifiedEmailsExpiresBefore(ctx context.Context, verificationExpiresAt sql.NullTime) (sql.Result, error)
 	SystemDeleteUserEmailsByEmailExceptID(ctx context.Context, arg SystemDeleteUserEmailsByEmailExceptIDParams) error
 	// This query deletes all data from the "writing_search" table.

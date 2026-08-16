@@ -711,13 +711,15 @@ WHERE t.handler = 'private'
       )
   );
 
--- name: SetThreadReplyTo :exec
-UPDATE forumthread
-SET reply_to_comment_id = sqlc.arg(reply_to_comment_id),
-    reply_to_thread_id = sqlc.arg(reply_to_thread_id)
-WHERE idforumthread = sqlc.arg(idforumthread);
-
--- name: GetReplyThreadsForThread :many
+-- GetReplyThreadsForLister uses the same topic, thread, role, and language
+-- visibility rules as the normal forum thread and comment lists. Its unread
+-- expression intentionally matches ListUnreadPrivateThreadsForUser.
+-- name: GetReplyThreadsForLister :many
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
 SELECT t.*,
        c.text as first_post_text,
        t.comments as total_comments,
@@ -725,23 +727,131 @@ SELECT t.*,
        u.username as last_poster_name,
        cu.username as firstpostusername,
        cu.idusers as firstpostuserid,
-       c.written as firstpostwritten
+       c.written as firstpostwritten,
+       CASE WHEN topic.handler = 'private' AND (
+           EXISTS (
+               SELECT 1 FROM content_private_labels cpl
+               WHERE cpl.item = 'thread'
+                 AND cpl.item_id = t.idforumthread
+                 AND cpl.user_id = sqlc.arg(viewer_id)
+                 AND cpl.label = 'unread'
+                 AND cpl.invert = false
+           )
+           OR (
+               NOT EXISTS (
+                   SELECT 1 FROM content_private_labels cpl
+                   WHERE cpl.item = 'thread'
+                     AND cpl.item_id = t.idforumthread
+                     AND cpl.user_id = sqlc.arg(viewer_id)
+                     AND cpl.label = 'unread'
+                     AND cpl.invert = true
+               )
+               AND (
+                   c.users_idusers != sqlc.arg(viewer_id)
+                   OR EXISTS (
+                       SELECT 1 FROM content_private_labels cpl
+                       WHERE cpl.item = 'thread'
+                         AND cpl.item_id = t.idforumthread
+                         AND cpl.user_id = sqlc.arg(viewer_id)
+                         AND cpl.label = 'new'
+                         AND cpl.invert = false
+                   )
+               )
+           )
+       ) THEN 1 ELSE 0 END AS is_unread,
+       CASE WHEN sqlc.arg(viewer_id) != 0 AND (
+           (c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (
+               SELECT 1 FROM content_private_labels cpl
+               WHERE cpl.item = 'thread'
+                 AND cpl.item_id = t.idforumthread
+                 AND cpl.user_id = sqlc.arg(viewer_id)
+                 AND cpl.label = 'new'
+                 AND cpl.invert = true
+           ))
+           OR EXISTS (
+               SELECT 1 FROM content_private_labels cpl
+               WHERE cpl.item = 'thread'
+                 AND cpl.item_id = t.idforumthread
+                 AND cpl.user_id = sqlc.arg(viewer_id)
+                 AND cpl.label = 'new'
+                 AND cpl.invert = false
+           )
+       ) THEN 1 ELSE 0 END AS is_new,
+       (
+           SELECT GROUP_CONCAT(cpl.label ORDER BY cpl.label SEPARATOR '\n')
+           FROM content_public_labels cpl
+           WHERE cpl.item = 'thread' AND cpl.item_id = t.idforumthread
+       ) AS public_labels,
+       (
+           SELECT GROUP_CONCAT(cls.label ORDER BY cls.label SEPARATOR '\n')
+           FROM content_label_status cls
+           WHERE cls.item = 'thread' AND cls.item_id = t.idforumthread
+       ) AS author_labels,
+       (
+           SELECT GROUP_CONCAT(cpl.label ORDER BY cpl.label SEPARATOR '\n')
+           FROM content_private_labels cpl
+           WHERE cpl.item = 'thread'
+             AND cpl.item_id = t.idforumthread
+             AND cpl.user_id = sqlc.arg(viewer_id)
+             AND cpl.invert = false
+             AND cpl.label NOT IN ('new', 'unread')
+       ) AS private_labels
 FROM forumthread t
-LEFT JOIN comments c ON t.firstpost = c.idcomments
+JOIN forumtopic topic ON t.forumtopic_idforumtopic = topic.idforumtopic
+JOIN comments c ON t.firstpost = c.idcomments
 LEFT JOIN users u ON t.lastposter = u.idusers
 LEFT JOIN users cu ON c.users_idusers = cu.idusers
 WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
-ORDER BY t.lastaddition DESC;
-
--- name: GetReplyThreadCountsForComments :many
-SELECT t.reply_to_comment_id, COUNT(t.idforumthread) as thread_count
-FROM forumthread t
-WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
-  AND t.reply_to_comment_id IN (sqlc.slice('comment_ids'))
-GROUP BY t.reply_to_comment_id;
-
--- name: CountReplyThreadsForThread :one
-SELECT COUNT(*) FROM forumthread WHERE reply_to_thread_id = sqlc.arg(reply_to_thread_id);
+  AND (
+      topic.language_id = 0
+      OR topic.language_id IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_id = topic.language_id
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND (
+      c.language_id = 0
+      OR c.language_id IS NULL
+      OR EXISTS (
+          SELECT 1 FROM user_language ul
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
+            AND ul.language_id = c.language_id
+      )
+      OR NOT EXISTS (
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+      )
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants topic_grant
+      WHERE ((topic.handler = 'private' AND topic_grant.section = 'privateforum')
+             OR (topic.handler <> 'private' AND topic_grant.section = 'forum'))
+        AND (topic_grant.item = 'topic' OR topic_grant.item IS NULL)
+        AND topic_grant.action = 'view'
+        AND topic_grant.active = 1
+        AND ((topic.handler = 'private' AND topic_grant.item_id = topic.idforumtopic)
+             OR (topic.handler <> 'private' AND (topic_grant.item_id = topic.idforumtopic OR topic_grant.item_id IS NULL)))
+        AND (topic_grant.user_id = sqlc.arg(viewer_match_id) OR topic_grant.user_id IS NULL)
+        AND (topic_grant.role_id IS NULL OR topic_grant.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      topic.handler <> 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = t.idforumthread
+            AND (thread_grant.user_id = sqlc.arg(viewer_match_id) OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
+ORDER BY is_unread DESC, t.lastaddition DESC;
 
 -- name: SystemCopyPrivateThreadGrantsToThread :exec
 INSERT INTO grants (

@@ -119,6 +119,27 @@ ORDER BY t.lastaddition DESC;
 -- name: SystemCreateThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?);
 
+-- name: SystemCreateReplyThread :execlastid
+INSERT INTO forumthread (
+    forumtopic_idforumtopic,
+    reply_to_comment_id,
+    reply_to_thread_id
+) VALUES (
+    sqlc.arg(topic_id),
+    sqlc.arg(reply_to_comment_id),
+    sqlc.arg(reply_to_thread_id)
+);
+
+-- name: SystemDeleteUninitializedThread :exec
+DELETE thread_row, thread_grant
+FROM forumthread thread_row
+LEFT JOIN grants thread_grant
+  ON thread_grant.section = 'privateforum_thread'
+ AND thread_grant.item = 'thread'
+ AND thread_grant.item_id = thread_row.idforumthread
+WHERE thread_row.idforumthread = sqlc.arg(thread_id)
+  AND thread_row.firstpost = 0;
+
 
 -- name: GetForumTopicIdByThreadId :one
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;

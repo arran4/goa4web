@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
@@ -64,6 +65,29 @@ func TestUserCanCreateThread_Error(t *testing.T) {
 	}
 	if ok {
 		t.Fatalf("expected denied when error occurs")
+	}
+}
+
+func TestCanForkThreadRequiresSourceReplyAndTopicCreation(t *testing.T) {
+	q := testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(true))
+	ok, err := canForkThread(context.Background(), q, consts.PermissionSectionForum, 1, 2, false)
+	if err != nil {
+		t.Fatalf("canForkThread: %v", err)
+	}
+	if ok {
+		t.Fatal("CanFork true without source reply permission")
+	}
+	if len(q.SystemCheckGrantCalls) != 0 {
+		t.Fatalf("creation permission queried despite missing source reply: %#v", q.SystemCheckGrantCalls)
+	}
+
+	q = testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(false))
+	ok, err = canForkThread(context.Background(), q, consts.PermissionSectionForum, 1, 2, true)
+	if err != nil {
+		t.Fatalf("canForkThread: %v", err)
+	}
+	if ok {
+		t.Fatal("CanFork true without topic thread creation permission")
 	}
 }
 

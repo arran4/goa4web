@@ -224,6 +224,21 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "/private" {
 		section = consts.PermissionSectionPrivateForum
 	}
+	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
+		ViewerID:      uid,
+		Idforumtopic:  int32(topicId),
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err != nil || topic == nil {
+		w.WriteHeader(http.StatusNotFound)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found"))
+		return nil
+	}
+	if (base == "/private") != (topic.Handler == "private") {
+		w.WriteHeader(http.StatusBadRequest)
+		handlers.RenderErrorPage(w, r, fmt.Errorf("forum handler does not match topic"))
+		return nil
+	}
 	allowed, err := UserCanCreateThread(r.Context(), queries, section, int32(topicId), uid)
 	if err != nil {
 		log.Printf("UserCanCreateThread error: %v", err)
@@ -237,58 +252,42 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return nil
 	}
 
-	threadId, err := queries.SystemCreateThread(r.Context(), int32(topicId))
+	if err := r.ParseForm(); err != nil {
+		return fmt.Errorf("parse thread form: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+
+	fork, status, err := validateForkRequest(r, cd, topic, uid)
+	if err != nil {
+		w.WriteHeader(status)
+		handlers.RenderErrorPage(w, r, err)
+		return nil
+	}
+
+	var threadId int64
+	if fork != nil {
+		threadId, err = queries.SystemCreateReplyThread(r.Context(), db.SystemCreateReplyThreadParams{
+			TopicID:          topic.Idforumtopic,
+			ReplyToCommentID: sql.NullInt32{Int32: fork.commentID, Valid: true},
+			ReplyToThreadID:  sql.NullInt32{Int32: fork.threadID, Valid: true},
+		})
+	} else {
+		threadId, err = queries.SystemCreateThread(r.Context(), topic.Idforumtopic)
+	}
 	if err != nil {
 		log.Printf("Error: makeThread: %s", err)
 		return fmt.Errorf("make thread %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-
-	if err := r.ParseForm(); err != nil {
-		log.Printf("ParseForm error: %v", err)
-	}
-	if err := cd.SetThreadPublicLabels(int32(threadId), r.PostForm["public"]); err != nil {
-		log.Printf("set public labels: %v", err)
-	}
-	if err := cd.SetThreadPrivateLabels(int32(threadId), r.PostForm["private"]); err != nil {
-		log.Printf("set private labels: %v", err)
+	cleanupUninitialized := func(cause error) error {
+		if cleanupErr := queries.SystemDeleteUninitializedThread(r.Context(), int32(threadId)); cleanupErr != nil {
+			return fmt.Errorf("%w; cleanup uninitialized thread %d: %v", cause, threadId, cleanupErr)
+		}
+		return cause
 	}
 
-	var topicTitle, author string
-	var topic *db.GetForumTopicByIdForUserRow
-	if trow, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{ViewerID: uid, Idforumtopic: int32(topicId), ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0}}); err == nil {
-		topicTitle = trow.Title.String
-		topic = trow
-	}
+	topicTitle := topic.Title.String
+	var author string
 	if u := cd.UserByID(uid); u != nil {
 		author = u.Username.String
-	}
-	quoteCommentId := r.URL.Query().Get("quote_comment_id")
-	var replyToCommentId, replyToThreadId sql.NullInt32
-	if quoteCommentId != "" {
-		if cId, err := strconv.Atoi(quoteCommentId); err == nil {
-			c, err := cd.CommentByID(int32(cId))
-			if err != nil || c == nil {
-				w.WriteHeader(http.StatusForbidden)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden: cannot access source comment"))
-				return nil
-			}
-
-			th, err := cd.ForumThreadByID(c.ForumthreadID)
-			if err != nil || th == nil {
-				w.WriteHeader(http.StatusForbidden)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden: cannot access source thread"))
-				return nil
-			}
-
-			if th.ForumtopicIdforumtopic != int32(topicId) {
-				w.WriteHeader(http.StatusBadRequest)
-				handlers.RenderErrorPage(w, r, fmt.Errorf("bad request: fork must belong to the same topic"))
-				return nil
-			}
-
-			replyToCommentId = sql.NullInt32{Int32: int32(cId), Valid: true}
-			replyToThreadId = sql.NullInt32{Int32: c.ForumthreadID, Valid: true}
-		}
 	}
 
 	text := r.PostFormValue("replytext")
@@ -298,41 +297,37 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	var cid int64
 	if topic.Handler == "private" {
-		if replyToThreadId.Valid {
-			if err := cd.CopyPrivateThreadGrantsToThread(replyToThreadId.Int32, int32(threadId)); err != nil {
-				return fmt.Errorf("copying private thread grants to thread: %w", err)
+		if fork != nil {
+			if err := cd.CopyPrivateThreadGrantsToThread(fork.threadID, int32(threadId)); err != nil {
+				return cleanupUninitialized(fmt.Errorf("copying private thread grants to thread: %w", err))
 			}
 		} else {
 			if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
-				return fmt.Errorf("copying private topic grants to thread: %w", err)
+				return cleanupUninitialized(fmt.Errorf("copying private topic grants to thread: %w", err))
 			}
 		}
 		cid, err = cd.CreatePrivateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
-			return fmt.Errorf("creating private topic comment: %w", err)
+			return cleanupUninitialized(fmt.Errorf("creating private topic comment: %w", err))
 		}
 	} else {
 		cid, err = cd.CreateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
 		if err != nil {
 			log.Printf("Error: create forum comment: %s", err)
-			return fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+			return cleanupUninitialized(fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err)))
 		}
 	}
 	if cid == 0 {
 		log.Printf("Error: cid == 0 on comment create - no error")
-		return fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
+		return cleanupUninitialized(fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)))
 	}
 
-	if replyToThreadId.Valid {
-		if err := cd.Queries().SetThreadReplyTo(r.Context(), db.SetThreadReplyToParams{
-			ReplyToCommentID: replyToCommentId,
-			ReplyToThreadID:  replyToThreadId,
-			Idforumthread:    int32(threadId),
-		}); err != nil {
-			log.Printf("Error: setting thread reply to: %s", err)
-			return fmt.Errorf("setting thread reply to %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
+	if err := cd.SetThreadPublicLabels(int32(threadId), r.PostForm["public"]); err != nil {
+		log.Printf("set public labels: %v", err)
+	}
+	if err := cd.SetThreadPrivateLabels(int32(threadId), r.PostForm["private"]); err != nil {
+		log.Printf("set private labels: %v", err)
 	}
 
 	if evt := cd.Event(); evt != nil {
@@ -366,6 +361,59 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	return handlers.RedirectHandler(endUrl)
+}
+
+type forkRequest struct {
+	commentID int32
+	threadID  int32
+}
+
+func validateForkRequest(r *http.Request, cd *common.CoreData, destinationTopic *db.GetForumTopicByIdForUserRow, uid int32) (*forkRequest, int, error) {
+	rawCommentID := r.URL.Query().Get("quote_comment_id")
+	if rawCommentID == "" {
+		return nil, 0, nil
+	}
+	parsedCommentID, err := strconv.ParseInt(rawCommentID, 10, 32)
+	if err != nil || parsedCommentID <= 0 {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid quote_comment_id")
+	}
+	commentID := int32(parsedCommentID)
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+		return nil, http.StatusForbidden, fmt.Errorf("forbidden: cannot access source comment")
+	}
+	sourceThread, err := cd.ForumThreadByID(comment.ForumthreadID)
+	if err != nil || sourceThread == nil || sourceThread.Idforumthread != comment.ForumthreadID {
+		return nil, http.StatusForbidden, fmt.Errorf("forbidden: cannot access source thread")
+	}
+	sourceTopic, err := cd.Queries().GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
+		ViewerID:      uid,
+		Idforumtopic:  sourceThread.ForumtopicIdforumtopic,
+		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err != nil || sourceTopic == nil {
+		return nil, http.StatusForbidden, fmt.Errorf("forbidden: cannot access source topic")
+	}
+	if sourceThread.ForumtopicIdforumtopic != destinationTopic.Idforumtopic {
+		return nil, http.StatusBadRequest, fmt.Errorf("fork source must belong to the destination topic")
+	}
+	if sourceTopic.Handler != destinationTopic.Handler {
+		return nil, http.StatusBadRequest, fmt.Errorf("fork source and destination forum handlers do not match")
+	}
+
+	section := consts.PermissionSectionForum
+	itemID := sourceTopic.Idforumtopic
+	itemType := consts.PermissionItemTopic
+	if sourceTopic.Handler == "private" {
+		section = consts.PermissionSectionPrivateForumThread
+		itemID = sourceThread.Idforumthread
+		itemType = consts.PermissionItemThread
+	}
+	replyable, err := userCanReplyToThread(r.Context(), cd.Queries(), section, itemType, itemID, sourceThread.Idforumthread, uid)
+	if err != nil || !replyable {
+		return nil, http.StatusForbidden, fmt.Errorf("forbidden: cannot fork source thread")
+	}
+	return &forkRequest{commentID: commentID, threadID: sourceThread.Idforumthread}, 0, nil
 }
 
 func ThreadNewCancelPage(w http.ResponseWriter, r *http.Request) {

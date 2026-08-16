@@ -1,17 +1,16 @@
 package forum
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
-	"database/sql"
 
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/tasks"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
 
@@ -35,15 +34,10 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type threadWithLabels struct {
-		db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow
-		Labels []templates.TopicLabel
-	}
-
 	type Data struct {
-		Topic        *db.GetForumTopicByIdForUserRow
-		Thread       *db.GetThreadLastPosterAndPermsForUserRow
-		ThreadsByComment map[int32][]*threadWithLabels
+		Topic          *db.GetForumTopicByIdForUserRow
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
+		ForksByComment map[int32]*ForkPreviewGroup
 	}
 
 	uid, _ := cd.GetSession().Values["UID"].(int32)
@@ -62,7 +56,7 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 
 	thread, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
 		ViewerID:      uid,
-		ThreadID: 	   int32(threadId),
+		ThreadID:      int32(threadId),
 		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
@@ -71,60 +65,18 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	replyThreads, err := queries.GetReplyThreadsForThread(r.Context(), sql.NullInt32{Int32: int32(threadId), Valid: threadId != 0})
+	forksByComment, _, err := loadForksForViewer(r.Context(), cd, int32(threadId), 0)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RenderErrorPage(w, r, fmt.Errorf("error fetching reply threads"))
 		return
 	}
 
-	mappedThreads := make(map[int32][]*threadWithLabels)
-	for _, rt := range replyThreads {
-		var labels []templates.TopicLabel
-		if pub, author, err := cd.ThreadPublicLabels(rt.Idforumthread); err == nil {
-			for _, l := range pub {
-				labels = append(labels, templates.TopicLabel{Name: l, Type: "public"})
-			}
-			for _, l := range author {
-				labels = append(labels, templates.TopicLabel{Name: l, Type: "author"})
-			}
-		}
-		if priv, err := cd.ThreadPrivateLabels(rt.Idforumthread, rt.Lastposter); err == nil {
-			for _, l := range priv {
-				labels = append(labels, templates.TopicLabel{Name: l, Type: "private"})
-			}
-		}
-
-		commentID := int32(0)
-		if rt.ReplyToCommentID.Valid {
-			commentID = rt.ReplyToCommentID.Int32
-		}
-
-		mappedThreads[commentID] = append(mappedThreads[commentID], &threadWithLabels{
-			GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow: db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{
-				Idforumthread:          rt.Idforumthread,
-				Firstpost:              rt.Firstpost,
-				Lastposter:             rt.Lastposter,
-				ForumtopicIdforumtopic: rt.ForumtopicIdforumtopic,
-				Comments:               rt.TotalComments,
-				Lastaddition:           rt.Lastaddition,
-				Locked:                 rt.Locked,
-				DeletedAt:              rt.DeletedAt,
-				Lastposterusername:     rt.LastPosterName,
-				Firstpostuserid:        rt.Firstpostuserid,
-				Firstpostwritten:       rt.Firstpostwritten,
-				Firstposttext:          rt.FirstPostText,
-				Firstpostusername:      rt.Firstpostusername,
-			},
-			Labels: labels,
-		})
-	}
-
 	cd.PageTitle = "Replies - " + topic.Title.String
 	data := Data{
-		Topic:        topic,
-		Thread:       thread,
-		ThreadsByComment: mappedThreads,
+		Topic:          topic,
+		Thread:         thread,
+		ForksByComment: forksByComment,
 	}
 
 	if err := ReplyThreadsPageTmpl.Handle(w, r, data); err != nil {

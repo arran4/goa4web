@@ -549,6 +549,32 @@ func (q *Queries) GetThreadLastPosterAndPermsForUser(ctx context.Context, arg Ge
 	return &i, err
 }
 
+const systemCreateReplyThread = `-- name: SystemCreateReplyThread :execlastid
+INSERT INTO forumthread (
+    forumtopic_idforumtopic,
+    reply_to_comment_id,
+    reply_to_thread_id
+) VALUES (
+    ?,
+    ?,
+    ?
+)
+`
+
+type SystemCreateReplyThreadParams struct {
+	TopicID          int32
+	ReplyToCommentID sql.NullInt32
+	ReplyToThreadID  sql.NullInt32
+}
+
+func (q *Queries) SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateReplyThread, arg.TopicID, arg.ReplyToCommentID, arg.ReplyToThreadID)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
 const systemCreateThread = `-- name: SystemCreateThread :execlastid
 INSERT INTO forumthread (forumtopic_idforumtopic) VALUES (?)
 `
@@ -559,4 +585,20 @@ func (q *Queries) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic
 		return 0, err
 	}
 	return result.LastInsertId()
+}
+
+const systemDeleteUninitializedThread = `-- name: SystemDeleteUninitializedThread :exec
+DELETE thread_row, thread_grant
+FROM forumthread thread_row
+LEFT JOIN grants thread_grant
+  ON thread_grant.section = 'privateforum_thread'
+ AND thread_grant.item = 'thread'
+ AND thread_grant.item_id = thread_row.idforumthread
+WHERE thread_row.idforumthread = ?
+  AND thread_row.firstpost = 0
+`
+
+func (q *Queries) SystemDeleteUninitializedThread(ctx context.Context, threadID int32) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteUninitializedThread, threadID)
+	return err
 }

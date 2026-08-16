@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"database/sql"
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -22,24 +21,25 @@ import (
 
 func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type Data struct {
-		ReplyThreadCounts map[int32]int64
-		TotalReplyThreads int64
-		Category       *ForumcategoryPlus
-		Topic          *ForumtopicPlus
-		Thread         *db.GetThreadLastPosterAndPermsForUserRow
-		Comments       []*db.GetCommentsByThreadIdForUserRow
-		IsReplyable    bool
-		CanFork        bool
-		Text           string
-		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
-		CanReply       bool
-		BasePath       string
-		Labels         []templates.TopicLabel
-		BackURL        string
+		ForksByComment    map[int32]*ForkPreviewGroup
+		TotalReplyThreads int
+		SourceReference   *AuthorizedSourceReference
+		Category          *ForumcategoryPlus
+		Topic             *ForumtopicPlus
+		Thread            *db.GetThreadLastPosterAndPermsForUserRow
+		Comments          []*db.GetCommentsByThreadIdForUserRow
+		IsReplyable       bool
+		CanFork           bool
+		Text              string
+		CanEditComment    func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL           func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL       func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing           func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL          func(*db.GetCommentsByThreadIdForUserRow) string
+		CanReply          bool
+		BasePath          string
+		Labels            []templates.TopicLabel
+		BackURL           string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -102,7 +102,21 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	if basePath == "/private" {
 		section = consts.PermissionSectionPrivateForum
 	}
-	if allowed, err := UserCanCreateThread(r.Context(), cd.Queries(), section, topicRow.Idforumtopic, uid); err == nil && allowed {
+	replySection := consts.PermissionSectionForum
+	replyItem := consts.PermissionItemTopic
+	replyItemID := topicRow.Idforumtopic
+	if basePath == "/private" {
+		replySection = consts.PermissionSectionPrivateForumThread
+		replyItem = consts.PermissionItemThread
+		replyItemID = threadRow.Idforumthread
+	}
+	sourceReplyable, replyErr := userCanReplyToThread(r.Context(), cd.Queries(), replySection, replyItem, replyItemID, threadRow.Idforumthread, uid)
+	if replyErr != nil {
+		log.Printf("check source fork reply permission: %v", replyErr)
+	}
+	if allowed, err := canForkThread(r.Context(), cd.Queries(), section, topicRow.Idforumtopic, uid, sourceReplyable); err != nil {
+		log.Printf("check fork thread creation permission: %v", err)
+	} else if allowed {
 		canFork = true
 	}
 	data.CanFork = canFork
@@ -132,34 +146,14 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 
 	commentId := cd.SelectedCommentID()
 	data.Comments = commentRows
-	var commentIds []sql.NullInt32
-	for _, c := range commentRows {
-		commentIds = append(commentIds, sql.NullInt32{Int32: c.Idcomments, Valid: true})
+	data.ForksByComment, data.TotalReplyThreads, err = loadForksForViewer(r.Context(), cd, threadRow.Idforumthread, 5)
+	if err != nil {
+		log.Printf("load visible forked threads: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+		return
 	}
-
-	replyCounts, _ := cd.Queries().GetReplyThreadCountsForComments(r.Context(), db.GetReplyThreadCountsForCommentsParams{
-		ReplyToThreadID: sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true},
-		CommentIds:      commentIds,
-	})
-	data.ReplyThreadCounts = make(map[int32]int64)
-	for _, rc := range replyCounts {
-		if rc.ReplyToCommentID.Valid {
-			data.ReplyThreadCounts[rc.ReplyToCommentID.Int32] = rc.ThreadCount
-		}
-	}
-
-	cd.ForkPreviews = make(map[int32][]*db.GetReplyThreadsForThreadRow)
-	forks, _ := cd.Queries().GetReplyThreadsForThread(r.Context(), sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true})
-	for _, fork := range forks {
-		if fork.ReplyToCommentID.Valid {
-			cid := fork.ReplyToCommentID.Int32
-			if len(cd.ForkPreviews[cid]) < 5 {
-				cd.ForkPreviews[cid] = append(cd.ForkPreviews[cid], fork)
-			}
-		}
-	}
-	totalForks, _ := cd.Queries().CountReplyThreadsForThread(r.Context(), sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true})
-	data.TotalReplyThreads = totalForks
+	data.SourceReference = authorizedSourceReference(cd, threadRow)
 
 	if r.Method == http.MethodPost {
 		_ = r.ParseForm()

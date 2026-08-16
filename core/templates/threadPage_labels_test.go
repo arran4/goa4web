@@ -13,6 +13,68 @@ func csrfField() template.HTML { return "" }
 // TestThreadPageShowsDefaultPrivateLabels ensures that the thread page template
 // renders special private labels like "new" and "unread".
 func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
+	tmpl := parseThreadPageTemplate(t)
+
+	data := struct {
+		Topic  struct{ Idforumtopic int32 }
+		Thread struct {
+			Idforumthread int32
+		}
+		Labels            []TopicLabel
+		BasePath          string
+		BackURL           string
+		TotalReplyThreads int
+		SourceReference   any
+	}{}
+	data.Topic.Idforumtopic = 1
+	data.Thread.Idforumthread = 3
+	data.Labels = []TopicLabel{{Name: "new", Type: "private"}, {Name: "unread", Type: "private"}}
+	data.BasePath = "/forum"
+	data.BackURL = "/forum/topic/1/thread/1"
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "threadPage.gohtml", data); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, `value="new"`) || !strings.Contains(out, `value="unread"`) {
+		t.Fatalf("expected new and unread labels in output: %s", out)
+	}
+}
+
+func TestThreadPageAuthorizedSourceUsesDatabaseCommentAnchor(t *testing.T) {
+	tmpl := parseThreadPageTemplate(t)
+	type sourceReference struct {
+		ThreadID  int32
+		TopicID   int32
+		CommentID int32
+	}
+	data := struct {
+		Topic             struct{ Idforumtopic int32 }
+		Thread            struct{ Idforumthread int32 }
+		Labels            []TopicLabel
+		BasePath          string
+		BackURL           string
+		TotalReplyThreads int
+		SourceReference   *sourceReference
+	}{
+		BasePath:        "/forum",
+		SourceReference: &sourceReference{ThreadID: 55, TopicID: 5, CommentID: 66},
+	}
+	data.Topic.Idforumtopic = 5
+	data.Thread.Idforumthread = 99
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "threadPage.gohtml", data); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	if !strings.Contains(buf.String(), `href="/forum/topic/5/thread/55#comment-66"`) {
+		t.Fatalf("authorized source did not use stable database comment anchor: %s", buf.String())
+	}
+}
+
+func parseThreadPageTemplate(t *testing.T) *template.Template {
+	t.Helper()
 	funcMap := template.FuncMap{
 		"csrfField": csrfField,
 		"assetHash": func(s string) string { return s },
@@ -41,30 +103,5 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 		t.Fatalf("parse templates: %v", err)
 	}
 
-	data := struct {
-		Topic    struct{ Idforumtopic int32 }
-		Thread   struct{
-			Idforumthread int32
-			ReplyToThreadID struct{ Valid bool; Int32 int32 }
-			ReplyToCommentID struct{ Valid bool; Int32 int32 }
-		}
-		Labels   []TopicLabel
-		BasePath string
-		BackURL  string
-		TotalReplyThreads int64
-	}{}
-	data.Topic.Idforumtopic = 1
-	data.Thread.Idforumthread = 3
-	data.Labels = []TopicLabel{{Name: "new", Type: "private"}, {Name: "unread", Type: "private"}}
-	data.BasePath = "/forum"
-	data.BackURL = "/forum/topic/1/thread/1"
-
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "threadPage.gohtml", data); err != nil {
-		t.Fatalf("execute: %v", err)
-	}
-	out := buf.String()
-	if !strings.Contains(out, `value="new"`) || !strings.Contains(out, `value="unread"`) {
-		t.Fatalf("expected new and unread labels in output: %s", out)
-	}
+	return tmpl
 }

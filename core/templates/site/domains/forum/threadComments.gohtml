@@ -10,19 +10,13 @@
         {{ if .Topic }}{{ $topicID = .Topic.Idforumtopic }}{{ end }}
         {{ $threadID := 0 }}
         {{ if .Thread }}{{ $threadID = .Thread.Idforumthread }}{{ end }}
-        {{ $replyCounts := .ReplyThreadCounts }}
-        {{ $totalReplyThreads := .TotalReplyThreads }}
+        {{ $forkGroups := .ForksByComment }}
 
         {{ range $i, $c := cd.SelectedSectionThreadComments }}
             {{ $num := add (add $i 1) (cd.Offset) }}
             <hr id="c{{ $num }}">
 
-            {{ $forkCount := 0 }}
-            {{ if $replyCounts }}
-                {{ if index $replyCounts $c.Idcomments }}
-                    {{ $forkCount = index $replyCounts $c.Idcomments }}
-                {{ end }}
-            {{ end }}
+            {{ $forkGroup := index $forkGroups $c.Idcomments }}
 
             {{ $forkListURL := "" }}
             {{ if and (gt $topicID 0) (gt $threadID 0) }}
@@ -30,13 +24,13 @@
             {{ end }}
 
             {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev "CanFork" $.CanFork) }}
-            {{ if $forkCount }}
+            {{ if $forkGroup }}
                 <div class="forked-banner" style="color: #666; font-size: 0.9em; margin-top: 5px; margin-bottom: 15px; border-left: 2px solid #ccc; padding-left: 10px;">
                     <em>Forked here:</em>
-                    {{ range $index, $fork := index cd.ForkPreviews $c.Idcomments }}
-                        <a href="{{ $base }}/topic/{{ $topicID }}/thread/{{ $fork.Idforumthread }}">Thread #{{ $fork.Idforumthread }}</a> by {{ $fork.Firstpostusername.String }} {{ timeAgo (cd.LocalTime $fork.Firstpostwritten.Time) }},
+                    {{ range $index, $fork := $forkGroup.Threads }}
+                        <a href="{{ $base }}/topic/{{ $fork.TopicID }}/thread/{{ $fork.ThreadID }}">Thread #{{ $fork.ThreadID }}</a> by {{ $fork.FirstPoster }} — last reply by {{ $fork.LastPoster }} {{ timeAgo (cd.LocalTime $fork.LastAddition) }},
                     {{ end }}
-                    <a href="{{ $forkListURL }}">See all {{ $forkCount }} replies</a>
+                    <a href="{{ $forkListURL }}">See all {{ $forkGroup.Total }} replies</a>
                 </div>
             {{ end }}
             {{ $prev = $c }}

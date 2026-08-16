@@ -3340,3 +3340,9 @@ func (s *QuerierStub) SetThreadReplyTo(ctx context.Context, arg SetThreadReplyTo
 	defer s.mu.Unlock()
 	return nil
 }
+
+func (s *QuerierStub) CountReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return 0, nil
+}

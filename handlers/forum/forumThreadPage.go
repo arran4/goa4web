@@ -133,9 +133,10 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	for _, rc := range replyCounts {
 		if rc.ReplyToCommentID.Valid {
 			data.ReplyThreadCounts[rc.ReplyToCommentID.Int32] = rc.ThreadCount
-			data.TotalReplyThreads += rc.ThreadCount
 		}
 	}
+	totalForks, _ := cd.Queries().CountReplyThreadsForThread(r.Context(), sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true})
+	data.TotalReplyThreads = totalForks
 
 	if r.Method == http.MethodPost {
 		_ = r.ParseForm()

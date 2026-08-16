@@ -10,12 +10,12 @@
     {{ $base := "/forum" }}
     {{ with cd.ForumBasePath }}{{ $base = . }}{{ end }}
     {{ range $commentID, $threads := .ThreadsByComment }}
-        <div class="comment-group" id="c{{ $commentID }}">
+        <div class="comment-group" id="comment-{{ $commentID }}">
             <h2 style="margin-top: 2rem; border-bottom: 2px solid #ccc; padding-bottom: 0.5rem;">
                 {{ if eq $commentID 0 }}
                     Replies to Thread
                 {{ else }}
-                    Replies to Comment <a href="{{ $base }}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}#c{{ $commentID }}">#{{ $commentID }}</a>
+                    Replies to Comment <a href="{{ $base }}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}#comment-{{ $commentID }}">#{{ $commentID }}</a>
                 {{ end }}
             </h2>
             <div class="thread-list">

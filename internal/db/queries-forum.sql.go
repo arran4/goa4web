@@ -506,6 +506,17 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 	return err
 }
 
+const countReplyThreadsForThread = `-- name: CountReplyThreadsForThread :one
+SELECT COUNT(*) FROM forumthread WHERE reply_to_thread_id = ?
+`
+
+func (q *Queries) CountReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countReplyThreadsForThread, replyToThreadID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUnreadPrivateThreadsForUser = `-- name: CountUnreadPrivateThreadsForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?

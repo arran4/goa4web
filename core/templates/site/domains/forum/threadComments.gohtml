@@ -4,10 +4,32 @@
     {{ end }}
     <section class="comments">
         {{ $prev := 0 }}
+        {{ $base := "/forum" }}
+        {{ with .BasePath }}{{ $base = . }}{{ end }}
+        {{ $topicID := 0 }}
+        {{ if .Topic }}{{ $topicID = .Topic.Idforumtopic }}{{ end }}
+        {{ $threadID := 0 }}
+        {{ if .Thread }}{{ $threadID = .Thread.Idforumthread }}{{ end }}
+        {{ $replyCounts := .ReplyThreadCounts }}
+        {{ $totalReplyThreads := .TotalReplyThreads }}
+
         {{ range $i, $c := cd.SelectedSectionThreadComments }}
             {{ $num := add (add $i 1) (cd.Offset) }}
             <hr id="c{{ $num }}">
-            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev) }}
+
+            {{ $forkCount := 0 }}
+            {{ if $replyCounts }}
+                {{ if index $replyCounts $c.Idcomments }}
+                    {{ $forkCount = index $replyCounts $c.Idcomments }}
+                {{ end }}
+            {{ end }}
+
+            {{ $forkListURL := "" }}
+            {{ if and (gt $topicID 0) (gt $threadID 0) }}
+                {{ $forkListURL = printf "%s/topic/%d/thread/%d/replies#comment-%d" $base $topicID $threadID $c.Idcomments }}
+            {{ end }}
+
+            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev "ForkCount" $forkCount "TotalForkCount" $totalReplyThreads "ForkListURL" $forkListURL) }}
             {{ $prev = $c }}
         {{ else }}
             No comments.

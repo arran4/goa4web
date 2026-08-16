@@ -739,3 +739,6 @@ FROM forumthread t
 WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
   AND t.reply_to_comment_id IN (sqlc.slice('comment_ids'))
 GROUP BY t.reply_to_comment_id;
+
+-- name: CountReplyThreadsForThread :one
+SELECT COUNT(*) FROM forumthread WHERE reply_to_thread_id = sqlc.arg(reply_to_thread_id);

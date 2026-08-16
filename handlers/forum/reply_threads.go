@@ -114,7 +114,7 @@ func ReplyThreadsPage(w http.ResponseWriter, r *http.Request) {
 				Firstpostuserid:        rt.Firstpostuserid,
 				Firstpostwritten:       rt.Firstpostwritten,
 				Firstposttext:          rt.FirstPostText,
-				Firstpostusername:     rt.Firstpostusername,
+				Firstpostusername:      rt.Firstpostusername,
 			},
 			Labels: labels,
 		})

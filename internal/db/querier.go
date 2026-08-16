@@ -298,6 +298,7 @@ type Querier interface {
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
+	CountReplyThreadsForThread(ctx context.Context, replyToThreadID sql.NullInt32) (int64, error)
 	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)

@@ -35,7 +35,7 @@
                     <strong>Forked conversations &mdash; {{ $forkCount }} total</strong><br>
                     <div style="padding-left: 10px; margin-top: 5px; margin-bottom: 5px;">
                         {{ range $index, $fork := index cd.ForkPreviews $c.Idcomments }}
-                            &bull; <a href="{{ $base }}/topic/{{ $topicID }}/thread/{{ $fork.Idforumthread }}">{{ if gt (len $fork.Firstposttext.String) 50 }}{{ slice $fork.Firstposttext.String 0 50 }}...{{ else }}{{ $fork.Firstposttext.String }}{{ end }}</a> &mdash; last reply by {{ $fork.Lastposterusername.String }} &mdash; {{ cd.LocalTime $fork.Lastaddition.Time }} &mdash; {{ $fork.Comments.Int32 }} comments<br>
+                            &bull; <a href="{{ $base }}/topic/{{ $topicID }}/thread/{{ $fork.Idforumthread }}">{{ if gt (len $fork.FirstPostText.String) 50 }}{{ slice $fork.FirstPostText.String 0 50 }}...{{ else }}{{ $fork.FirstPostText.String }}{{ end }}</a> &mdash; last reply by {{ $fork.LastPosterName.String }} &mdash; {{ cd.LocalTime $fork.Lastaddition.Time }} &mdash; {{ $fork.Comments.Int32 }} comments<br>
                         {{ end }}
                     </div>
                     <a href="{{ $forkListURL }}">View all {{ $forkCount }} forked conversations &rarr;</a>

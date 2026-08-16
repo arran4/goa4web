@@ -4,7 +4,7 @@
     {{ if .Thread.ReplyToThreadID.Valid }}
         <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-bottom: 15px; border-left: 4px solid #0066cc;">
             <strong>Forked Conversation:</strong> This thread is a reply to
-            <a href="{{ $base }}/topic/{{ .Topic.Idforumtopic }}/thread/{{ .Thread.ReplyToThreadID.Int32 }}{{ if .Thread.ReplyToCommentID.Valid }}#c{{ .Thread.ReplyToCommentID.Int32 }}{{ end }}">Thread #{{ .Thread.ReplyToThreadID.Int32 }}</a>. <a href="{{ $base }}/topic/{{ .Topic.Idforumtopic }}/thread/{{ .Thread.ReplyToThreadID.Int32 }}/replies">View all replies</a>.
+            <a href="{{ $base }}/topic/{{ .Topic.Idforumtopic }}/thread/{{ .Thread.ReplyToThreadID.Int32 }}{{ if .Thread.ReplyToCommentID.Valid }}#c{{ .Thread.ReplyToCommentID.Int32 }}{{ end }}">Thread #{{ .Thread.ReplyToThreadID.Int32 }}{{ if .Thread.ReplyToCommentID.Valid }} Comment #{{ .Thread.ReplyToCommentID.Int32 }}{{ end }}</a>. <a href="{{ $base }}/topic/{{ .Topic.Idforumtopic }}/thread/{{ .Thread.ReplyToThreadID.Int32 }}/replies">View all replies</a>.
         </div>
     {{ end }}
     <div class="label-bar">

@@ -36,9 +36,6 @@
                 {{ if cd.SelectedThreadCanReply }}
                     {{ $topicID := 0 }}
                     {{ if cd.SelectedThreadLoaded }}{{ $topicID = cd.SelectedThreadLoaded.ForumtopicIdforumtopic }}{{ end }}
-                    {{ if $.ForkCount }}
-                        <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc;"><strong>Forked Conversation:</strong> Conversation was forked here {{ $.ForkCount }} times / thread total {{ $.TotalForkCount }}. <a href="{{ $.ForkListURL }}">Complete List</a>.</div>
-                    {{ end }}
                 {{ end }}
                 {{ if ne $context "admin" }}
                 <footer>

@@ -148,6 +148,7 @@ type NavigationProvider interface {
 // No package-level pagination constants as runtime config provides these values.
 
 type CoreData struct {
+	ForkPreviews map[int32][]*db.GetReplyThreadsForThreadRow
 	// marks records which template sections have been rendered to avoid
 	// duplicate output when re-rendering after an error.
 	marks        map[string]struct{}

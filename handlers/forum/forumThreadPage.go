@@ -135,6 +135,17 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 			data.ReplyThreadCounts[rc.ReplyToCommentID.Int32] = rc.ThreadCount
 		}
 	}
+
+	cd.ForkPreviews = make(map[int32][]*db.GetReplyThreadsForThreadRow)
+	forks, _ := cd.Queries().GetReplyThreadsForThread(r.Context(), sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true})
+	for _, fork := range forks {
+		if fork.ReplyToCommentID.Valid {
+			cid := fork.ReplyToCommentID.Int32
+			if len(cd.ForkPreviews[cid]) < 5 {
+				cd.ForkPreviews[cid] = append(cd.ForkPreviews[cid], fork)
+			}
+		}
+	}
 	totalForks, _ := cd.Queries().CountReplyThreadsForThread(r.Context(), sql.NullInt32{Int32: threadRow.Idforumthread, Valid: true})
 	data.TotalReplyThreads = totalForks
 

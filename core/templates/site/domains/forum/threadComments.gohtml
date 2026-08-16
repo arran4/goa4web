@@ -29,7 +29,18 @@
                 {{ $forkListURL = printf "%s/topic/%d/thread/%d/replies#comment-%d" $base $topicID $threadID $c.Idcomments }}
             {{ end }}
 
-            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev "ForkCount" $forkCount "TotalForkCount" $totalReplyThreads "ForkListURL" $forkListURL) }}
+            {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev) }}
+            {{ if $forkCount }}
+                <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc;">
+                    <strong>Forked conversations &mdash; {{ $forkCount }} total</strong><br>
+                    <div style="padding-left: 10px; margin-top: 5px; margin-bottom: 5px;">
+                        {{ range $index, $fork := index cd.ForkPreviews $c.Idcomments }}
+                            &bull; <a href="{{ $base }}/topic/{{ $topicID }}/thread/{{ $fork.Idforumthread }}">{{ if gt (len $fork.Firstposttext.String) 50 }}{{ slice $fork.Firstposttext.String 0 50 }}...{{ else }}{{ $fork.Firstposttext.String }}{{ end }}</a> &mdash; last reply by {{ $fork.Lastposterusername.String }} &mdash; {{ cd.LocalTime $fork.Lastaddition.Time }} &mdash; {{ $fork.Comments.Int32 }} comments<br>
+                        {{ end }}
+                    </div>
+                    <a href="{{ $forkListURL }}">View all {{ $forkCount }} forked conversations &rarr;</a>
+                </div>
+            {{ end }}
             {{ $prev = $c }}
         {{ else }}
             No comments.

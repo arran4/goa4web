@@ -31,14 +31,12 @@
 
             {{ template "comment" (dict "Comment" $c "Number" $num "Prev" $prev) }}
             {{ if $forkCount }}
-                <div class="forked-banner" style="background-color: #f0f8ff; padding: 10px; margin-top: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc;">
-                    <strong>Forked conversations &mdash; {{ $forkCount }} total</strong><br>
-                    <div style="padding-left: 10px; margin-top: 5px; margin-bottom: 5px;">
-                        {{ range $index, $fork := index cd.ForkPreviews $c.Idcomments }}
-                            &bull; <a href="{{ $base }}/topic/{{ $topicID }}/thread/{{ $fork.Idforumthread }}">{{ if gt (len $fork.FirstPostText.String) 50 }}{{ slice $fork.FirstPostText.String 0 50 }}...{{ else }}{{ $fork.FirstPostText.String }}{{ end }}</a> &mdash; last reply by {{ $fork.LastPosterName.String }} &mdash; {{ cd.LocalTime $fork.Lastaddition.Time }} &mdash; {{ $fork.Comments.Int32 }} comments<br>
-                        {{ end }}
-                    </div>
-                    <a href="{{ $forkListURL }}">View all {{ $forkCount }} forked conversations &rarr;</a>
+                <div class="forked-banner" style="color: #666; font-size: 0.9em; margin-top: 5px; margin-bottom: 15px; border-left: 2px solid #ccc; padding-left: 10px;">
+                    <em>Forked here:</em>
+                    {{ range $index, $fork := index cd.ForkPreviews $c.Idcomments }}
+                        <a href="{{ $base }}/topic/{{ $topicID }}/thread/{{ $fork.Idforumthread }}">Thread #{{ $fork.Idforumthread }}</a> by {{ $fork.Firstpostusername.String }} {{ timeAgo (cd.LocalTime $fork.Firstpostwritten.Time) }},
+                    {{ end }}
+                    <a href="{{ $forkListURL }}">See all {{ $forkCount }} replies</a>
                 </div>
             {{ end }}
             {{ $prev = $c }}

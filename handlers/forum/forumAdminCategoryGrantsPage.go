@@ -48,25 +48,47 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
+	var userIDs []int32
+	var filteredGrants []GrantInfo
 	for _, g := range grants {
 		if g.Section == "forum" && g.Item.Valid && g.Item.String == "category" && g.ItemID.Valid && g.ItemID.Int32 == int32(cid) {
-			gi := GrantInfo{Grant: g}
+			filteredGrants = append(filteredGrants, GrantInfo{Grant: g})
 			if g.UserID.Valid {
-				if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil {
-					gi.Username = sql.NullString{String: u.Username.String, Valid: true}
-				}
+				userIDs = append(userIDs, g.UserID.Int32)
 			}
-			if g.RoleID.Valid && data.Roles != nil {
-				for _, r := range data.Roles {
-					if r.ID == g.RoleID.Int32 {
-						gi.RoleName = sql.NullString{String: r.Name, Valid: true}
-						break
-					}
-				}
-			}
-			data.Grants = append(data.Grants, gi)
 		}
 	}
+
+	usersMap := make(map[int32]sql.NullString)
+	if len(userIDs) > 0 {
+		if users, err := queries.SystemGetUsersByIDs(r.Context(), userIDs); err == nil {
+			for _, u := range users {
+				usersMap[u.Idusers] = u.Username
+			}
+		}
+	}
+
+	rolesMap := make(map[int32]sql.NullString)
+	if data.Roles != nil {
+		for _, role := range data.Roles {
+			rolesMap[role.ID] = sql.NullString{String: role.Name, Valid: true}
+		}
+	}
+
+	for _, gi := range filteredGrants {
+		if gi.UserID.Valid {
+			if username, ok := usersMap[gi.UserID.Int32]; ok {
+				gi.Username = username
+			}
+		}
+		if gi.RoleID.Valid && data.Roles != nil {
+			if roleName, ok := rolesMap[gi.RoleID.Int32]; ok {
+				gi.RoleName = roleName
+			}
+		}
+		data.Grants = append(data.Grants, gi)
+	}
+
 	_ = ForumAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }
 

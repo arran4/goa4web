@@ -65,7 +65,12 @@ func BenchmarkAdminPage(b *testing.B) {
 			return rows, nil
 		},
 	}
-	q := &MyQuerierStub{QuerierStub: baseQ}
+	q := &MyQuerierStub{}
+	q.AdminListRolesFn = baseQ.AdminListRolesFn
+	q.ListGrantsFn = baseQ.ListGrantsFn
+	q.AdminListGrantsByRoleIDFn = baseQ.AdminListGrantsByRoleIDFn
+	q.SystemGetUserByIDFn = baseQ.SystemGetUserByIDFn
+	q.SystemGetUsersByIDsFn = baseQ.SystemGetUsersByIDsFn
 
 	cd := common.NewCoreData(context.Background(), q, &config.RuntimeConfig{})
 

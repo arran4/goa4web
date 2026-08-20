@@ -26,13 +26,28 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https://example.com/article",
 		},
 		{
-			name:     "URL with mixed functional and utm parameters",
-			input:    "https://example.com/item?id=42&utm_source=newsletter&category=books",
-			expected: "https://example.com/item?category=books&id=42",
+			name:     "URL with tracking param first",
+			input:    "https://example.com/item?utm_source=x&id=1&category=books",
+			expected: "https://example.com/item?category=books&id=1",
 		},
 		{
-			name:     "URL with fbclid, gclid, yclid, click_id",
-			input:    "https://example.com/deal?fbclid=12345&gclid=67890&yclid=abcde&click_id=xyz&product_id=99",
+			name:     "URL with tracking param middle",
+			input:    "https://example.com/item?id=1&utm_source=x&category=books",
+			expected: "https://example.com/item?category=books&id=1",
+		},
+		{
+			name:     "URL with tracking param last",
+			input:    "https://example.com/item?id=1&category=books&utm_source=x",
+			expected: "https://example.com/item?category=books&id=1",
+		},
+		{
+			name:     "URL with multiple tracking params at start",
+			input:    "https://example.com/item?utm_source=x&utm_medium=y&id=1&category=books",
+			expected: "https://example.com/item?category=books&id=1",
+		},
+		{
+			name:     "URL with fbclid, gclid, gbraid, wbraid, mc_cid, mc_eid, igshid, msclkid, twclid, yclid, click_id, clickid, _hsenc, _hsmi, mkt_tok",
+			input:    "https://example.com/deal?fbclid=1&gclid=2&gbraid=3&wbraid=4&mc_cid=5&mc_eid=6&igshid=7&msclkid=8&twclid=9&yclid=10&click_id=11&clickid=12&_hsenc=13&_hsmi=14&mkt_tok=15&product_id=99",
 			expected: "https://example.com/deal?product_id=99",
 		},
 		{

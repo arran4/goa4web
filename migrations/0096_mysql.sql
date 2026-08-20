@@ -1,21 +1,27 @@
 -- +goose Up
-ALTER TABLE external_links MODIFY COLUMN url text NOT NULL;
+-- Step 1: Drop the old 255-byte unique prefix index and modify url column to text.
+-- Dropping the unique index first ensures subsequent canonicalization updates do not collide before duplicate consolidation.
+ALTER TABLE external_links DROP INDEX external_links_url_idx, MODIFY COLUMN url text NOT NULL;
 
--- Clean known tracking parameters from pre-existing URLs
+-- Step 2: Clean known tracking parameters from pre-existing URLs while preserving signed URLs, functional parameters, and query delimiters.
 UPDATE external_links
 SET url = REGEXP_REPLACE(
     REGEXP_REPLACE(
         REGEXP_REPLACE(
-            REGEXP_REPLACE(url, '([?&])(utm_[a-zA-Z0-9_]+|fbclid|gclid|yclid|click_id)=[^&#]*', ''),
-            '\\?&', '?'
+            url,
+            '&(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?',
+            ''
         ),
-        '\\?$', ''
+        '\\?(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?&',
+        '?'
     ),
-    '([^?#&]+)&', '$1?'
+    '\\?(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(#.*)?$',
+    '$3'
 )
-WHERE url REGEXP '([?&])(utm_[a-zA-Z0-9_]+|fbclid|gclid|yclid|click_id)=';
+WHERE url REGEXP '([?&])(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(&|#|$)'
+  AND url NOT REGEXP '([?&])(?i)(x-amz-signature|x-amz-credential|signature|sig|hash|hmac|x-goog-signature|x-ms-signature)(=|&|#|$)';
 
--- Consolidate duplicate pre-existing URLs resulting from tracking cleanup
+-- Step 3: Consolidate duplicate pre-existing URLs resulting from tracking cleanup
 CREATE TEMPORARY TABLE IF NOT EXISTS _merged_links AS
 SELECT 
     MIN(id) AS keep_id,
@@ -39,14 +45,14 @@ UPDATE external_links el
 JOIN _merged_links ml ON el.id = ml.keep_id
 SET 
     el.clicks = ml.total_clicks,
-    el.card_title = COALESCE(el.card_title, ml.card_title),
-    el.card_description = COALESCE(el.card_description, ml.card_description),
-    el.card_image = COALESCE(el.card_image, ml.card_image),
-    el.card_image_cache = COALESCE(el.card_image_cache, ml.card_image_cache),
-    el.favicon_cache = COALESCE(el.favicon_cache, ml.favicon_cache),
-    el.card_duration = COALESCE(el.card_duration, ml.card_duration),
-    el.card_upload_date = COALESCE(el.card_upload_date, ml.card_upload_date),
-    el.card_author = COALESCE(el.card_author, ml.card_author),
+    el.card_title = COALESCE(NULLIF(el.card_title, ''), ml.card_title),
+    el.card_description = COALESCE(NULLIF(el.card_description, ''), ml.card_description),
+    el.card_image = COALESCE(NULLIF(el.card_image, ''), ml.card_image),
+    el.card_image_cache = COALESCE(NULLIF(el.card_image_cache, ''), ml.card_image_cache),
+    el.favicon_cache = COALESCE(NULLIF(el.favicon_cache, ''), ml.favicon_cache),
+    el.card_duration = COALESCE(NULLIF(el.card_duration, ''), ml.card_duration),
+    el.card_upload_date = COALESCE(NULLIF(el.card_upload_date, ''), ml.card_upload_date),
+    el.card_author = COALESCE(NULLIF(el.card_author, ''), ml.card_author),
     el.created_at = ml.created_at,
     el.updated_at = ml.updated_at;
 
@@ -55,10 +61,10 @@ JOIN _merged_links ml ON el.url = ml.url AND el.id != ml.keep_id;
 
 DROP TEMPORARY TABLE IF EXISTS _merged_links;
 
-ALTER TABLE external_links DROP INDEX external_links_url_idx;
-ALTER TABLE external_links ADD COLUMN url_hash binary(32) GENERATED ALWAYS AS (unhex(sha2(url, 256))) STORED NOT NULL;
-ALTER TABLE external_links ADD UNIQUE KEY external_links_url_hash_idx (url_hash);
+-- Step 4: Add generated stored url_hash and full-URL unique index
+ALTER TABLE external_links ADD COLUMN url_hash binary(32) GENERATED ALWAYS AS (unhex(sha2(url, 256))) STORED NOT NULL, ADD UNIQUE KEY external_links_url_hash_idx (url_hash);
 
+-- Step 5: Advance schema version
 UPDATE schema_version SET version = 96;
 
 -- +goose Down

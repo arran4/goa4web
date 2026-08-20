@@ -245,15 +245,49 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("seed schema_version: %v", err)
 	}
 
-	// Seed pre-existing tracking variants
-	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title) VALUES ('https://example.com/article?id=1&utm_source=old', 5, 'Article 1')`); err != nil {
+	// 1. Seed pre-existing tracking variants that will collide under the old prefix index
+	// Row 1 (will be keep_id) has no title/description initially
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title, card_description) VALUES ('https://example.com/article?id=1&utm_source=old', 5, NULL, NULL)`); err != nil {
 		t.Fatalf("seed link 1: %v", err)
 	}
-	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title) VALUES ('https://example.com/article?id=1&utm_medium=twitter', 3, 'Article 1')`); err != nil {
+	// Row 2 has title and description populated
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title, card_description) VALUES ('https://example.com/article?id=1&utm_medium=twitter', 3, 'Article 1 Title', 'Article 1 Description')`); err != nil {
 		t.Fatalf("seed link 2: %v", err)
 	}
-	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title) VALUES ('https://example.com/other', 1, 'Other')`); err != nil {
-		t.Fatalf("seed link 3: %v", err)
+
+	// 2. Seed query-string position cases
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/item1?utm_source=x&id=1&category=books', 1)`); err != nil {
+		t.Fatalf("seed position 1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/item2?id=1&utm_source=x&category=books', 1)`); err != nil {
+		t.Fatalf("seed position 2: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/item3?id=1&category=books&utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed position 3: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/item4?utm_source=x&utm_medium=y&id=1&category=books', 1)`); err != nil {
+		t.Fatalf("seed position 4: %v", err)
+	}
+
+	// 3. Seed all tracking key families
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/track?fbclid=1&gclid=2&gbraid=3&wbraid=4&mc_cid=5&mc_eid=6&igshid=7&msclkid=8&twclid=9&yclid=10&click_id=11&clickid=12&_hsenc=13&_hsmi=14&mkt_tok=15&id=99', 1)`); err != nil {
+		t.Fatalf("seed all tracking keys: %v", err)
+	}
+
+	// 4. Seed signed URLs (must remain unchanged)
+	signedS3 := "https://bucket.s3.amazonaws.com/file?X-Amz-Signature=abc&utm_source=x"
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES (?, 1)`, signedS3); err != nil {
+		t.Fatalf("seed signed S3: %v", err)
+	}
+	signedCloudFront := "https://d111111abcdef8.cloudfront.net/video.mp4?Signature=xyz&utm_medium=y"
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES (?, 1)`, signedCloudFront); err != nil {
+		t.Fatalf("seed signed CloudFront: %v", err)
+	}
+
+	// 5. Seed functional and unknown parameters
+	bloombergURL := "https://www.bloomberg.com/news/sample?accessToken=token123&resource=finance&X-Amz-Security-Token=sec456&custom_param=val&utm_source=email"
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES (?, 1)`, bloombergURL); err != nil {
+		t.Fatalf("seed bloomberg URL: %v", err)
 	}
 
 	contents, err := FS.ReadFile("0096_mysql.sql")
@@ -277,16 +311,59 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		}
 	}
 
-	// Verify consolidation
+	// Verify schema_version is 96
+	var currentVersion int
+	if err := db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&currentVersion); err != nil || currentVersion != 96 {
+		t.Fatalf("expected schema version 96 after Up migration, got %d, err %v", currentVersion, err)
+	}
+
+	// Verify consolidation: click sum and metadata preservation
 	var count int
 	var clicks int
-	var urlStr string
-	err = db.QueryRow(`SELECT COUNT(*), SUM(clicks), url FROM external_links WHERE url = 'https://example.com/article?id=1' GROUP BY url`).Scan(&count, &clicks, &urlStr)
+	var title, description sql.NullString
+	err = db.QueryRow(`SELECT COUNT(*), SUM(clicks), MAX(card_title), MAX(card_description) FROM external_links WHERE url = 'https://example.com/article?id=1' GROUP BY url`).Scan(&count, &clicks, &title, &description)
 	if err != nil {
 		t.Fatalf("query consolidated row: %v", err)
 	}
 	if count != 1 || clicks != 8 {
 		t.Fatalf("expected 1 row with 8 clicks, got count=%d, clicks=%d", count, clicks)
+	}
+	if !title.Valid || title.String != "Article 1 Title" {
+		t.Fatalf("expected preserved title 'Article 1 Title', got %v", title)
+	}
+	if !description.Valid || description.String != "Article 1 Description" {
+		t.Fatalf("expected preserved description 'Article 1 Description', got %v", description)
+	}
+
+	// Verify query positions retained exact 'id=1&category=books' without '?category=books' corruption
+	for i := 1; i <= 4; i++ {
+		expectedURL := fmt.Sprintf("https://example.com/item%d?id=1&category=books", i)
+		var matched int
+		if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = ?`, expectedURL).Scan(&matched); err != nil || matched != 1 {
+			t.Fatalf("expected cleaned URL %q to exist in database, matched=%d, err=%v", expectedURL, matched, err)
+		}
+	}
+
+	// Verify all tracking keys stripped and 'id=99' retained
+	var trackMatched int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = 'https://example.com/track?id=99'`).Scan(&trackMatched); err != nil || trackMatched != 1 {
+		t.Fatalf("expected 'https://example.com/track?id=99', matched=%d, err=%v", trackMatched, err)
+	}
+
+	// Verify signed URLs remained byte-for-byte untouched
+	var s3Matched, cfMatched int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = ?`, signedS3).Scan(&s3Matched); err != nil || s3Matched != 1 {
+		t.Fatalf("expected signed S3 URL to remain untouched, matched=%d, err=%v", s3Matched, err)
+	}
+	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = ?`, signedCloudFront).Scan(&cfMatched); err != nil || cfMatched != 1 {
+		t.Fatalf("expected signed CloudFront URL to remain untouched, matched=%d, err=%v", cfMatched, err)
+	}
+
+	// Verify functional parameters preserved
+	expectedBloomberg := "https://www.bloomberg.com/news/sample?accessToken=token123&resource=finance&X-Amz-Security-Token=sec456&custom_param=val"
+	var bloombergMatched int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = ?`, expectedBloomberg).Scan(&bloombergMatched); err != nil || bloombergMatched != 1 {
+		t.Fatalf("expected Bloomberg URL with functional params %q, matched=%d, err=%v", expectedBloomberg, bloombergMatched, err)
 	}
 
 	// Test two URLs > 255 chars with identical first 255 chars

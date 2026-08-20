@@ -73,12 +73,12 @@ WITH role_ids AS (
     SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT 1 FROM grants g
-WHERE g.section = ?
-  AND (g.item = ? OR g.item IS NULL)
-  AND g.action = ?
+WHERE g.section = sqlc.arg(section)
+  AND (g.item = sqlc.narg(item) OR g.item IS NULL)
+  AND g.action = sqlc.arg(action)
   AND g.active = 1
-  AND (g.item_id = ? OR g.item_id IS NULL)
-  AND (g.user_id = ? OR g.user_id IS NULL)
+  AND (g.item_id = sqlc.narg(item_id) OR g.item_id IS NULL)
+  AND (g.user_id = sqlc.narg(user_id) OR g.user_id IS NULL)
   AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LIMIT 1;
 

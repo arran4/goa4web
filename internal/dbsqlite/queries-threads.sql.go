@@ -11,11 +11,11 @@ import (
 )
 
 const adminDeleteForumThread = `-- name: AdminDeleteForumThread :exec
-DELETE FROM forumthread
+DELETE FROM forumthread WHERE idforumthread = ?
 `
 
-func (q *Queries) AdminDeleteForumThread(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, adminDeleteForumThread)
+func (q *Queries) AdminDeleteForumThread(ctx context.Context, idforumthread int64) error {
+	_, err := q.db.ExecContext(ctx, adminDeleteForumThread, idforumthread)
 	return err
 }
 
@@ -251,12 +251,12 @@ JOIN
 JOIN
     comments c ON t.firstpost = c.idcomments
 ORDER BY t.idforumthread
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListForumThreadsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListForumThreadsRow struct {
@@ -273,7 +273,7 @@ type AdminListForumThreadsRow struct {
 }
 
 func (q *Queries) AdminListForumThreads(ctx context.Context, arg AdminListForumThreadsParams) ([]*AdminListForumThreadsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListForumThreads, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListForumThreads, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -381,8 +381,11 @@ func (q *Queries) GetForumTopicIdByThreadId(ctx context.Context, idforumthread i
 }
 
 const getThreadBySectionThreadIDForReplier = `-- name: GetThreadBySectionThreadIDForReplier :one
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?6
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?6
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -393,44 +396,37 @@ WHERE th.idforumthread = ?1
   AND (
       fc.language_id = 0
       OR fc.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = fc.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(replier_id)
-      )
+      OR fc.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
-    WHERE g.section = ?3
-      AND (g.item = ?4 OR g.item IS NULL)
+    WHERE g.section = ?2
+      AND (g.item = ?3 OR g.item IS NULL)
       AND g.action = 'reply'
       AND g.active = 1
-      AND (g.item_id = ?5 OR g.item_id IS NULL)
-      AND (g.user_id = ?6 OR g.user_id IS NULL)
+      AND (g.item_id = ?4 OR g.item_id IS NULL)
+      AND (g.user_id = ?5 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
 
 type GetThreadBySectionThreadIDForReplierParams struct {
 	ThreadID       int64
-	ReplierID      int64
 	Section        string
 	ItemType       sql.NullString
 	ItemID         sql.NullInt64
 	ReplierMatchID sql.NullInt64
+	ReplierID      int64
 }
 
 func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg GetThreadBySectionThreadIDForReplierParams) (*Forumthread, error) {
 	row := q.db.QueryRowContext(ctx, getThreadBySectionThreadIDForReplier,
 		arg.ThreadID,
-		arg.ReplierID,
 		arg.Section,
 		arg.ItemType,
 		arg.ItemID,
 		arg.ReplierMatchID,
+		arg.ReplierID,
 	)
 	var i Forumthread
 	err := row.Scan(
@@ -449,8 +445,11 @@ func (q *Queries) GetThreadBySectionThreadIDForReplier(ctx context.Context, arg 
 }
 
 const getThreadLastPosterAndPermsForUser = `-- name: GetThreadLastPosterAndPermsForUser :one
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -464,14 +463,7 @@ WHERE th.idforumthread=?1
   AND (
       fc.language_id = 0
       OR fc.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = fc.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR fc.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -480,7 +472,7 @@ WHERE th.idforumthread=?1
       AND g.action='view'
       AND g.active=1
       AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   ) AND (t.handler IS NULL OR t.handler != 'private' OR EXISTS (
     SELECT 1 FROM grants g
@@ -489,7 +481,7 @@ WHERE th.idforumthread=?1
       AND g.action='view'
       AND g.active=1
       AND g.item_id = th.idforumthread
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   ))
 ORDER BY t.lastaddition DESC
@@ -497,8 +489,8 @@ ORDER BY t.lastaddition DESC
 
 type GetThreadLastPosterAndPermsForUserParams struct {
 	ThreadID      int64
-	ViewerID      int64
 	ViewerMatchID sql.NullInt64
+	ViewerID      int64
 }
 
 type GetThreadLastPosterAndPermsForUserRow struct {
@@ -517,7 +509,7 @@ type GetThreadLastPosterAndPermsForUserRow struct {
 }
 
 func (q *Queries) GetThreadLastPosterAndPermsForUser(ctx context.Context, arg GetThreadLastPosterAndPermsForUserParams) (*GetThreadLastPosterAndPermsForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPermsForUser, arg.ThreadID, arg.ViewerID, arg.ViewerMatchID)
+	row := q.db.QueryRowContext(ctx, getThreadLastPosterAndPermsForUser, arg.ThreadID, arg.ViewerMatchID, arg.ViewerID)
 	var i GetThreadLastPosterAndPermsForUserRow
 	err := row.Scan(
 		&i.Idforumthread,

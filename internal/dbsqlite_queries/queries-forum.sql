@@ -3,10 +3,13 @@ UPDATE forumcategory
 SET title = sqlc.arg(title),
     description = sqlc.arg(description),
     forumcategory_idforumcategory = sqlc.arg(parent_id),
-    language_id = sqlc.narg(language_id)
+    language_id = sqlc.arg(language_id)
 WHERE idforumcategory = sqlc.arg(idforumcategory);
 
 -- name: GetAllForumCategoriesWithSubcategoryCount :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT c.*, COUNT(c2.idforumcategory) as SubcategoryCount,
        COUNT(t.idforumtopic)   as TopicCount
 FROM forumcategory c
@@ -15,34 +18,26 @@ LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
     c.language_id = 0
     OR c.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_id = c.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 GROUP BY c.idforumcategory;
 
 -- name: AdminCountForumCategories :one
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT COUNT(*)
 FROM forumcategory c
 WHERE (
     c.language_id = 0
     OR c.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_id = c.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 );
 
 -- name: AdminListForumCategoriesWithCounts :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT c.*, COUNT(c2.idforumcategory) AS SubcategoryCount,
        COUNT(t.idforumtopic) AS TopicCount
 FROM forumcategory c
@@ -51,33 +46,22 @@ LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
     c.language_id = 0
     OR c.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_id = c.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 GROUP BY c.idforumcategory
 ORDER BY c.idforumcategory
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetAllForumTopics :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT t.*
 FROM forumtopic t
 WHERE (
     t.language_id = 0
     OR t.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_id = t.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 GROUP BY t.idforumtopic;
 
@@ -85,7 +69,7 @@ GROUP BY t.idforumtopic;
 SELECT t.*
 FROM forumtopic t
 ORDER BY t.idforumtopic
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminListForumTopicGrantsByTopicID :many
 SELECT
@@ -106,13 +90,20 @@ WHERE
     AND g.item_id = ?;
 
 -- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.narg(topic_language_id) WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.arg(topic_language_id) WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = sqlc.arg(viewer_id)
 )
 SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -121,14 +112,7 @@ WHERE t.forumcategory_idforumcategory = sqlc.arg(category_id)
   AND (
       t.language_id = 0
       OR t.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = t.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -232,10 +216,17 @@ WHERE t.handler <> 'private'
 ORDER BY t.idforumtopic;
 
 -- name: GetForumTopicsForUser :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = sqlc.arg(viewer_id)
 )
 SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -244,14 +235,7 @@ WHERE t.handler <> 'private'
   AND (
     t.language_id = 0
     OR t.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_id = t.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -266,10 +250,17 @@ WHERE t.handler <> 'private'
 ORDER BY t.lastaddition DESC;
 
 -- name: GetForumTopicByIdForUser :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = sqlc.arg(viewer_id)
 )
 SELECT t.*, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -278,14 +269,7 @@ WHERE t.idforumtopic = sqlc.arg(idforumtopic)
   AND (
       t.language_id = 0
       OR t.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = t.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -301,26 +285,23 @@ ORDER BY t.lastaddition DESC;
 
 
 -- name: GetAllForumCategories :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT f.*
 FROM forumcategory f
 WHERE (
     f.language_id = 0
     OR f.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(viewer_id)
-          AND ul.language_id = f.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR f.language_id IN (SELECT language_id FROM user_lang)
+    OR (SELECT COUNT(*) FROM user_lang) = 0
 );
 
 -- name: AdminCreateForumCategory :execlastid
 INSERT INTO forumcategory (forumcategory_idforumcategory, language_id, title, description)
-VALUES (sqlc.arg(parent_id), sqlc.narg(category_language_id), sqlc.arg(title), sqlc.arg(description));
+VALUES (sqlc.arg(parent_id), sqlc.arg(category_language_id), sqlc.arg(title), sqlc.arg(description));
 
-INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler) VALUES (?, sqlc.narg(topic_language_id), ?, ?, ?);
+INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler) VALUES (?, sqlc.arg(topic_language_id), ?, ?, ?);
 
 -- name: CreateForumTopicForPoster :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
@@ -474,35 +455,27 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 ORDER BY t.idforumtopic, th.lastaddition DESC;
 
 -- name: GetForumCategoryById :one
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT * FROM forumcategory
 WHERE idforumcategory = sqlc.arg(idforumcategory)
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   );
 
 -- name: GetForumTopicsByCategoryId :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+)
 SELECT * FROM forumtopic
 WHERE forumcategory_idforumcategory = sqlc.arg(category_id)
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
 ORDER BY lastaddition DESC;
 
@@ -522,7 +495,7 @@ ORDER BY category_path.depth DESC;
 
 -- name: AdminCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
-VALUES (sqlc.arg(forumcategory_id), sqlc.narg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));
+VALUES (sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));
 
 -- name: AdminGetTopicGrants :many
 SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
@@ -554,7 +527,7 @@ WHERE th.forumtopic_idforumtopic = sqlc.arg(topic_id)
         AND thread_grant.action = 'view'
         AND thread_grant.active = 1
         AND thread_grant.item_id = th.idforumthread
-        AND (thread_grant.user_id = sqlc.narg(viewer_match_id) OR thread_grant.user_id IS NULL)
+        AND (thread_grant.user_id = sqlc.arg(viewer_match_id) OR thread_grant.user_id IS NULL)
         AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
   );
 
@@ -564,6 +537,10 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(grantee_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = sqlc.arg(grantee_id)
 )
 SELECT th.idforumthread,
        th.forumtopic_idforumtopic as topic_id,
@@ -608,46 +585,44 @@ WHERE t.handler = 'private'
   AND (
       -- If thread has an unread label (and invert=false), it's unread
       EXISTS (
-          SELECT 1 FROM content_private_labels cpl
-          WHERE cpl.item = 'thread'
-            AND cpl.item_id = th.idforumthread
-            AND cpl.user_id = sqlc.arg(grantee_id)
-            AND cpl.label = 'unread'
-            AND cpl.invert = false
+          SELECT 1 FROM user_cpl
+          WHERE user_cpl.item_id = th.idforumthread
+            AND user_cpl.label = 'unread'
+            AND user_cpl.invert = false
       )
       OR
       (
           -- Otherwise, if it's not marked as 'not unread'
           NOT EXISTS (
-              SELECT 1 FROM content_private_labels cpl
-              WHERE cpl.item = 'thread'
-                AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = sqlc.arg(grantee_id)
-                AND cpl.label = 'unread'
-                AND cpl.invert = true
+              SELECT 1 FROM user_cpl
+              WHERE user_cpl.item_id = th.idforumthread
+                AND user_cpl.label = 'unread'
+                AND user_cpl.invert = true
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
               c.users_idusers != sqlc.arg(grantee_id)
               OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = sqlc.arg(grantee_id)
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = false
               )
           )
       )
   )
 ORDER BY th.lastaddition DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: CountUnreadPrivateThreadsForUser :one
 WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(grantee_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = sqlc.arg(grantee_id)
 )
 SELECT count(*)
 FROM forumthread th
@@ -678,34 +653,28 @@ WHERE t.handler = 'private'
   AND (
       -- If thread has an unread label (and invert=false), it's unread
       EXISTS (
-          SELECT 1 FROM content_private_labels cpl
-          WHERE cpl.item = 'thread'
-            AND cpl.item_id = th.idforumthread
-            AND cpl.user_id = sqlc.arg(grantee_id)
-            AND cpl.label = 'unread'
-            AND cpl.invert = false
+          SELECT 1 FROM user_cpl
+          WHERE user_cpl.item_id = th.idforumthread
+            AND user_cpl.label = 'unread'
+            AND user_cpl.invert = false
       )
       OR
       (
           -- Otherwise, if it's not marked as 'not unread'
           NOT EXISTS (
-              SELECT 1 FROM content_private_labels cpl
-              WHERE cpl.item = 'thread'
-                AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = sqlc.arg(grantee_id)
-                AND cpl.label = 'unread'
-                AND cpl.invert = true
+              SELECT 1 FROM user_cpl
+              WHERE user_cpl.item_id = th.idforumthread
+                AND user_cpl.label = 'unread'
+                AND user_cpl.invert = true
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
               c.users_idusers != sqlc.arg(grantee_id)
               OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = sqlc.arg(grantee_id)
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = false
               )
           )
       )
@@ -715,10 +684,17 @@ WHERE t.handler = 'private'
 -- visibility rules as the normal forum thread and comment lists. Its unread
 -- expression intentionally matches ListUnreadPrivateThreadsForUser.
 -- name: GetReplyThreadsForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = sqlc.arg(viewer_id)
 )
 SELECT t.*,
        c.text as first_post_text,
@@ -730,51 +706,41 @@ SELECT t.*,
        c.written as firstpostwritten,
        CASE WHEN topic.handler = 'private' AND (
            EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = sqlc.arg(viewer_id)
-                 AND cpl.label = 'unread'
-                 AND cpl.invert = 0
+               SELECT 1 FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.label = 'unread'
+                 AND user_cpl.invert = 0
            )
            OR (
                NOT EXISTS (
-                   SELECT 1 FROM content_private_labels cpl
-                   WHERE cpl.item = 'thread'
-                     AND cpl.item_id = t.idforumthread
-                     AND cpl.user_id = sqlc.arg(viewer_id)
-                     AND cpl.label = 'unread'
-                     AND cpl.invert = 1
+                   SELECT 1 FROM user_cpl
+                   WHERE user_cpl.item_id = t.idforumthread
+                     AND user_cpl.label = 'unread'
+                     AND user_cpl.invert = 1
                )
                AND (
                    c.users_idusers != sqlc.arg(viewer_id)
                    OR EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = sqlc.arg(viewer_id)
-                         AND cpl.label = 'new'
-                         AND cpl.invert = 0
+                       SELECT 1 FROM user_cpl
+                       WHERE user_cpl.item_id = t.idforumthread
+                         AND user_cpl.label = 'new'
+                         AND user_cpl.invert = 0
                    )
                )
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN sqlc.arg(viewer_id) != 0 AND (
            (c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = sqlc.arg(viewer_id)
-                 AND cpl.label = 'new'
-                 AND cpl.invert = 1
+               SELECT 1 FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.label = 'new'
+                 AND user_cpl.invert = 1
            ))
            OR EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = sqlc.arg(viewer_id)
-                 AND cpl.label = 'new'
-                 AND cpl.invert = 0
+               SELECT 1 FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.label = 'new'
+                 AND user_cpl.invert = 0
            )
        ) THEN 1 ELSE 0 END AS is_new,
        (
@@ -796,17 +762,15 @@ SELECT t.*,
            ) cls
        ) AS author_labels,
        (
-           SELECT GROUP_CONCAT(cpl.label, char(10))
+           SELECT GROUP_CONCAT(user_cpl.label, char(10))
            FROM (
-               SELECT cpl.label
-               FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = sqlc.arg(viewer_id)
-                 AND cpl.invert = 0
-                 AND cpl.label NOT IN ('new', 'unread')
-               ORDER BY cpl.label
-           ) cpl
+               SELECT user_cpl.label
+               FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.invert = 0
+                 AND user_cpl.label NOT IN ('new', 'unread')
+               ORDER BY user_cpl.label
+           ) user_cpl
        ) AS private_labels
 FROM forumthread t
 JOIN forumtopic topic ON t.forumtopic_idforumtopic = topic.idforumtopic
@@ -817,26 +781,12 @@ WHERE t.reply_to_thread_id = sqlc.arg(reply_to_thread_id)
   AND (
       topic.language_id = 0
       OR topic.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = topic.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR topic.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants topic_grant
@@ -873,22 +823,22 @@ INSERT INTO grants (
 SELECT DISTINCT
     CURRENT_TIMESTAMP, src_grant.user_id, src_grant.role_id,
     'privateforum_thread', 'thread', 'allow',
-    sqlc.arg(dst_thread_id), NULL, src_grant.action, NULL, 1
+    ?, NULL, src_grant.action, NULL, 1
 FROM grants src_grant
 WHERE src_grant.section = 'privateforum_thread'
   AND src_grant.item = 'thread'
   AND src_grant.rule_type = 'allow'
   AND src_grant.active = 1
   AND src_grant.action IN ('view', 'reply')
-  AND src_grant.item_id = sqlc.arg(src_thread_id)
+  AND src_grant.item_id = ?
   AND (src_grant.user_id IS NOT NULL OR src_grant.role_id IS NOT NULL)
   AND NOT EXISTS (
       SELECT 1
       FROM grants dst_grant
-        WHERE dst_grant.section = 'privateforum_thread'
-          AND dst_grant.item = 'thread'
-          AND dst_grant.rule_type = 'allow'
-          AND dst_grant.item_id = sqlc.arg(dst_thread_id)
+      WHERE dst_grant.section = 'privateforum_thread'
+        AND dst_grant.item = 'thread'
+        AND dst_grant.rule_type = 'allow'
+        AND dst_grant.item_id = ?
         AND dst_grant.action = src_grant.action
         AND dst_grant.active = 1
         AND (dst_grant.user_id IS src_grant.user_id)

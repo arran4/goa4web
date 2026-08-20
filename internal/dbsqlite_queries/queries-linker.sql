@@ -162,7 +162,7 @@ LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
 WHERE l.author_id = ?
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow :many
 WITH role_ids AS (
@@ -194,7 +194,7 @@ WHERE (lc.id = sqlc.arg(category_id) OR sqlc.arg(category_id) = 0)
       AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetLinkerItemsByUserDescendingForUser :many
 WITH role_ids AS (
@@ -226,7 +226,7 @@ WHERE l.author_id = sqlc.arg(user_id)
       AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending :one
 SELECT l.id, l.language_id, l.author_id, l.category_id, l.thread_id, l.title, l.url, l.description, l.listed, l.timezone, u.username, lc.title
@@ -328,7 +328,7 @@ LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
 WHERE (lc.id = sqlc.arg(category_id) OR sqlc.arg(category_id) = 0)
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated :many
 WITH role_ids AS (
@@ -358,7 +358,7 @@ WHERE (lc.id = sqlc.arg(category_id) OR sqlc.arg(category_id) = 0)
       AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetAllLinkersForIndex :many
 SELECT id, title, description FROM linker WHERE deleted_at IS NULL AND listed IS NOT NULL;

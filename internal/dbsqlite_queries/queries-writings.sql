@@ -3,7 +3,7 @@ SELECT w.*
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset)
 ;
 
 -- name: SystemListPublicWritingsByAuthor :many
@@ -13,7 +13,7 @@ FROM writing w
 LEFT JOIN users u ON users_idusers = idusers
 WHERE w.private = 0 AND writing.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: SystemGetWritingByID :one
 SELECT forumthread_id
@@ -21,7 +21,10 @@ FROM writing
 WHERE idwriting = ?;
 
 -- name: ListPublicWritingsByUserForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -34,14 +37,7 @@ WHERE w.private = 0 AND writing.users_idusers = sqlc.arg(author_id)
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -54,7 +50,7 @@ WHERE w.private = 0 AND writing.users_idusers = sqlc.arg(author_id)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: SystemListPublicWritingsInCategory :many
 SELECT w.*, u.Username,
@@ -63,10 +59,13 @@ FROM writing w
 LEFT JOIN users u ON w.Users_Idusers = idusers
 WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(category_id)
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListPublicWritingsInCategoryForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -79,14 +78,7 @@ WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -99,7 +91,7 @@ WHERE w.private = 0 AND w.writing_category_id = sqlc.arg(writing_category_id)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset)
 ;
 
 -- name: UpdateWritingForWriter :exec
@@ -107,7 +99,7 @@ UPDATE writing SET title = sqlc.arg(title),
     abstract = sqlc.arg(abstract),
     writing = sqlc.arg(content),
     private = sqlc.arg(private),
-    language_id = sqlc.narg(language_id)
+    language_id = sqlc.arg(language_id)
 WHERE idwriting = sqlc.arg(writing_id)
   AND writing.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -129,7 +121,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: CreateWritingForWriter :execlastid
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, timezone, users_idusers)
-SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.narg(language_id), sqlc.arg(published), sqlc.arg(timezone), sqlc.arg(writer_id)
+SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.arg(language_id), sqlc.arg(published), sqlc.arg(timezone), sqlc.arg(writer_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='writing'
@@ -167,7 +159,10 @@ ORDER BY w.published DESC
 ;
 
 -- name: ListWritingsByIDsForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -179,14 +174,7 @@ WHERE idwriting IN (sqlc.slice(writing_ids))
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -199,7 +187,7 @@ WHERE idwriting IN (sqlc.slice(writing_ids))
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminInsertWritingCategory :exec
 INSERT INTO writing_category (writing_category_id, title, description)
@@ -214,11 +202,11 @@ WHERE idwritingCategory = ?;
 SELECT wc.*
 FROM writing_category wc
 ORDER BY wc.idwritingcategory
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListWritingCategoriesForLister :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(lister_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -231,7 +219,7 @@ WHERE EXISTS (
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = wc.idwritingcategory OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.narg(lister_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(lister_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 );
 
@@ -271,7 +259,10 @@ LEFT JOIN users u ON users_idusers = idusers
 WHERE writing.users_idusers = sqlc.arg(author_id)
 ORDER BY w.published DESC;
 -- name: ListWritersForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -282,14 +273,7 @@ JOIN users u ON users_idusers = idusers
 WHERE (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 AND EXISTS (
     SELECT 1 FROM grants g
@@ -303,10 +287,13 @@ AND EXISTS (
 )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListWritersSearchForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -318,14 +305,7 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = sqlc.arg(lister_id)
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -339,7 +319,7 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
   )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: SystemSetWritingLastIndex :exec
 UPDATE writing SET last_index = CURRENT_TIMESTAMP WHERE idwriting = ?;

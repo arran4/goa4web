@@ -511,7 +511,7 @@ FROM linker l
 LEFT JOIN users u ON l.author_id = idusers
 LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
-WHERE (lc.id = ?3 OR ?3 = 0)
+WHERE (lc.id = ?1 OR ?1 = 0)
   AND EXISTS (
     SELECT 1
     FROM grants_for_viewer g
@@ -521,15 +521,15 @@ WHERE (lc.id = ?3 OR ?3 = 0)
       AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams struct {
+	CategoryID   int64
+	Offset       int64
+	Limit        int64
 	ViewerID     int64
 	ViewerUserID sql.NullInt64
-	CategoryID   int64
-	Limit        int64
-	Offset       int64
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow struct {
@@ -550,11 +550,11 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginated,
+		arg.CategoryID,
+		arg.Offset,
+		arg.Limit,
 		arg.ViewerID,
 		arg.ViewerUserID,
-		arg.CategoryID,
-		arg.Limit,
-		arg.Offset,
 	)
 	if err != nil {
 		return nil, err
@@ -609,7 +609,7 @@ FROM linker l
 LEFT JOIN users u ON l.author_id = idusers
 LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
-WHERE (lc.id = ?3 OR ?3 = 0)
+WHERE (lc.id = ?1 OR ?1 = 0)
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -621,15 +621,15 @@ WHERE (lc.id = ?3 OR ?3 = 0)
       AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams struct {
+	CategoryID   int64
+	Offset       int64
+	Limit        int64
 	ViewerID     int64
 	ViewerUserID sql.NullInt64
-	CategoryID   int64
-	Limit        int64
-	Offset       int64
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow struct {
@@ -650,11 +650,11 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRowRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingForUserPaginatedRow,
+		arg.CategoryID,
+		arg.Offset,
+		arg.Limit,
 		arg.ViewerID,
 		arg.ViewerUserID,
-		arg.CategoryID,
-		arg.Limit,
-		arg.Offset,
 	)
 	if err != nil {
 		return nil, err
@@ -697,15 +697,15 @@ FROM linker l
 LEFT JOIN users u ON l.author_id = idusers
 LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
-WHERE (lc.id = ?3 OR ?3 = 0)
+WHERE (lc.id = ?1 OR ?1 = 0)
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams struct {
 	CategoryID int64
-	Limit      int64
 	Offset     int64
+	Limit      int64
 }
 
 type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow struct {
@@ -725,7 +725,7 @@ type GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescending
 }
 
 func (q *Queries) GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated(ctx context.Context, arg GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedParams) ([]*GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginatedRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated, arg.CategoryID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated, arg.CategoryID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1243,7 +1243,7 @@ LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
 WHERE l.author_id = ?
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetLinkerItemsByUserDescendingParams struct {
@@ -1323,7 +1323,7 @@ FROM linker l
 LEFT JOIN users u ON l.author_id = idusers
 LEFT JOIN linker_category lc ON l.category_id = lc.id
 LEFT JOIN forumthread th ON l.thread_id = th.idforumthread
-WHERE l.author_id = ?3
+WHERE l.author_id = ?1
   AND l.listed IS NOT NULL
   AND l.deleted_at IS NULL
   AND EXISTS (
@@ -1335,15 +1335,15 @@ WHERE l.author_id = ?3
       AND (g.item_id = l.id OR g.item_id IS NULL)
   )
 ORDER BY l.listed DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetLinkerItemsByUserDescendingForUserParams struct {
+	UserID       int64
+	Offset       int64
+	Limit        int64
 	ViewerID     int64
 	ViewerUserID sql.NullInt64
-	UserID       int64
-	Limit        int64
-	Offset       int64
 }
 
 type GetLinkerItemsByUserDescendingForUserRow struct {
@@ -1364,11 +1364,11 @@ type GetLinkerItemsByUserDescendingForUserRow struct {
 
 func (q *Queries) GetLinkerItemsByUserDescendingForUser(ctx context.Context, arg GetLinkerItemsByUserDescendingForUserParams) ([]*GetLinkerItemsByUserDescendingForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getLinkerItemsByUserDescendingForUser,
+		arg.UserID,
+		arg.Offset,
+		arg.Limit,
 		arg.ViewerID,
 		arg.ViewerUserID,
-		arg.UserID,
-		arg.Limit,
-		arg.Offset,
 	)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,6 @@
 -- name: UpdateBlogEntryForWriter :exec
 UPDATE blogs
-SET language_id = sqlc.narg(language_id), blog = sqlc.arg(blog)
+SET language_id = sqlc.arg(language_id), blog = sqlc.arg(blog)
 WHERE idblogs = sqlc.arg(entry_id)
   AND blogs.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -18,7 +18,7 @@ WHERE idblogs = sqlc.arg(entry_id)
 
 -- name: CreateBlogEntryForWriter :execlastid
 INSERT INTO blogs (users_idusers, language_id, blog, written, timezone)
-SELECT sqlc.arg(users_idusers), sqlc.narg(language_id), sqlc.arg(blog), sqlc.arg(written), sqlc.arg(timezone)
+SELECT sqlc.arg(users_idusers), sqlc.arg(language_id), sqlc.arg(blog), sqlc.arg(written), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'blogs'
@@ -43,7 +43,10 @@ FROM blogs
 WHERE idblogs = ?;
 
 -- name: ListBlogEntriesForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -58,11 +61,11 @@ WHERE (
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND (
@@ -79,10 +82,13 @@ AND (
     )
 )
 ORDER BY b.written DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListBlogEntriesByAuthorForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -99,11 +105,11 @@ AND (
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND (
@@ -120,10 +126,13 @@ AND (
     )
 )
 ORDER BY b.written DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListBlogEntriesByIDsForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -136,11 +145,11 @@ WHERE idblogs IN (sqlc.slice(blogIds))
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -154,10 +163,13 @@ WHERE idblogs IN (sqlc.slice(blogIds))
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY b.written DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetBlogEntryForListerByID :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -174,11 +186,11 @@ WHERE idblogs = sqlc.arg(id)
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -194,7 +206,10 @@ WHERE idblogs = sqlc.arg(id)
 LIMIT 1;
 
 -- name: ListBlogIDsBySearchWordFirstForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -209,11 +224,11 @@ WHERE swl.word = ?
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -228,7 +243,10 @@ WHERE swl.word = ?
   );
 
 -- name: ListBlogIDsBySearchWordNextForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -244,11 +262,11 @@ WHERE swl.word = ?
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -265,7 +283,10 @@ WHERE swl.word = ?
 
 
 -- name: ListBloggersForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -278,11 +299,11 @@ WHERE (
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND EXISTS (
@@ -297,10 +318,13 @@ AND EXISTS (
 )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListBloggersSearchForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -314,11 +338,11 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
   )
   AND EXISTS (
@@ -333,7 +357,7 @@ WHERE (LOWER(u.username) LIKE LOWER(sqlc.arg(query)) OR LOWER((SELECT email FROM
   )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 -- name: AdminGetAllBlogEntriesByUser :many
 SELECT idblogs,
        b.forumthread_id,

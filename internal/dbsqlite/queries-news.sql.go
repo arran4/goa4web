@@ -18,12 +18,12 @@ FROM site_news s
 LEFT JOIN users u ON users_idusers = idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 ORDER BY s.occurred DESC
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
@@ -40,7 +40,7 @@ type AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow stru
 }
 
 func (q *Queries) AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -250,8 +250,11 @@ func (q *Queries) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx context.C
 }
 
 const getNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount = `-- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -261,16 +264,10 @@ LEFT JOIN users u ON users_idusers = idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
   AND (
-      NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      (SELECT COUNT(*) FROM user_lang) = 0
       OR s.language_id = 0
       OR s.language_id IS NULL
-      OR s.language_id IN (
-          SELECT ul.language_id
-          FROM user_language ul
-          WHERE ul.users_idusers = ?2
-      )
+      OR language_id IN (SELECT language_id FROM user_lang)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -279,7 +276,7 @@ WHERE s.Idsitenews IN (/*SLICE:newsids*/?)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = idsitenews OR g.item_id IS NULL)
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 ORDER BY s.occurred DESC
@@ -287,8 +284,8 @@ ORDER BY s.occurred DESC
 
 type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountParams struct {
 	Newsids  []int64
-	ViewerID int64
 	UserID   sql.NullInt64
+	ViewerID int64
 }
 
 type GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCountRow struct {
@@ -315,8 +312,8 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 	} else {
 		query = strings.Replace(query, "/*SLICE:newsids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ViewerID)
 	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ViewerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -351,8 +348,11 @@ func (q *Queries) GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount(ctx 
 }
 
 const getNewsPostsWithWriterUsernameAndThreadCommentCountDescending = `-- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -361,14 +361,10 @@ FROM site_news s
 LEFT JOIN users u ON users_idusers = idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE (
-    NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    (SELECT COUNT(*) FROM user_lang) = 0
     OR s.language_id = 0
     OR s.language_id IS NULL
-    OR s.language_id IN (
-        SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
-    )
+    OR language_id IN (SELECT language_id FROM user_lang)
 )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -377,18 +373,18 @@ WHERE (
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = idsitenews OR g.item_id IS NULL)
-      AND (g.user_id = ?4 OR g.user_id IS NULL)
+      AND (g.user_id = ?1 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 ORDER BY s.occurred DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams struct {
-	ViewerID int64
 	UserID   sql.NullInt64
-	Limit    int64
 	Offset   int64
+	Limit    int64
+	ViewerID int64
 }
 
 type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
@@ -406,10 +402,10 @@ type GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow struct {
 
 func (q *Queries) GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending(ctx context.Context, arg GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingParams) ([]*GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
 	rows, err := q.db.QueryContext(ctx, getNewsPostsWithWriterUsernameAndThreadCommentCountDescending,
-		arg.ViewerID,
 		arg.UserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ViewerID,
 	)
 	if err != nil {
 		return nil, err

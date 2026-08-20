@@ -1,6 +1,6 @@
 -- name: CreateNewsPostForWriter :execlastid
 INSERT INTO site_news (news, users_idusers, occurred, timezone, language_id)
-SELECT sqlc.arg(news), sqlc.arg(writer_id), sqlc.arg(occurred), sqlc.arg(timezone), sqlc.narg(language_id)
+SELECT sqlc.arg(news), sqlc.arg(writer_id), sqlc.arg(occurred), sqlc.arg(timezone), sqlc.arg(language_id)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section='news'
@@ -15,7 +15,7 @@ WHERE EXISTS (
 );
 
 -- name: UpdateNewsPostForWriter :exec
-UPDATE site_news SET news = sqlc.arg(news), language_id = sqlc.narg(language_id)
+UPDATE site_news SET news = sqlc.arg(news), language_id = sqlc.arg(language_id)
 WHERE idsitenews = sqlc.arg(post_id)
   AND site_news.users_idusers = sqlc.arg(writer_id)
   AND EXISTS (
@@ -72,7 +72,10 @@ LIMIT 1;
 
 
 -- name: GetNewsPostsByIdsForUserWithWriterIdAndThreadCommentCount :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -83,16 +86,10 @@ LEFT JOIN users u ON users_idusers = idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE s.Idsitenews IN (sqlc.slice(newsIds))
   AND (
-      NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      (SELECT COUNT(*) FROM user_lang) = 0
       OR s.language_id = 0
       OR s.language_id IS NULL
-      OR s.language_id IN (
-          SELECT ul.language_id
-          FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR language_id IN (SELECT language_id FROM user_lang)
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -107,7 +104,10 @@ WHERE s.Idsitenews IN (sqlc.slice(newsIds))
 ORDER BY s.occurred DESC;
 
 -- name: GetNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -117,14 +117,10 @@ FROM site_news s
 LEFT JOIN users u ON users_idusers = idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 WHERE (
-    NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    (SELECT COUNT(*) FROM user_lang) = 0
     OR s.language_id = 0
     OR s.language_id IS NULL
-    OR s.language_id IN (
-        SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR language_id IN (SELECT language_id FROM user_lang)
 )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -137,7 +133,7 @@ WHERE (
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 ORDER BY s.occurred DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 
 -- name: AdminListNewsPostsWithWriterUsernameAndThreadCommentCountDescending :many
@@ -147,7 +143,7 @@ FROM site_news s
 LEFT JOIN users u ON users_idusers = idusers
 LEFT JOIN forumthread th ON s.forumthread_id = th.idforumthread
 ORDER BY s.occurred DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 
 -- name: SystemSetSiteNewsLastIndex :exec

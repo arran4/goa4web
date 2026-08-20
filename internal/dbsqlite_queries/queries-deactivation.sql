@@ -29,7 +29,7 @@ UPDATE comments SET text = ?, deleted_at = CURRENT_TIMESTAMP WHERE idcomments = 
 -- name: AdminListPendingDeactivatedComments :many
 SELECT idcomments, text FROM deactivated_comments
 WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminRestoreComment :exec
 UPDATE comments SET text = ?, deleted_at = NULL WHERE idcomments = ?;
@@ -46,7 +46,7 @@ SELECT EXISTS(
 -- name: AdminListDeactivatedComments :many
 SELECT idcomments, text FROM deactivated_comments
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminArchiveWriting :exec
 INSERT INTO deactivated_writings (idwriting, users_idusers, forumthread_id, language_id, writing_category_id, title, published, timezone, writing, abstract, private, deleted_at)
@@ -58,7 +58,7 @@ UPDATE writing SET title = ?, writing = ?, abstract = ?, deleted_at = CURRENT_TI
 -- name: AdminListPendingDeactivatedWritings :many
 SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminRestoreWriting :exec
 UPDATE writing SET title = ?, writing = ?, abstract = ?, private = ?, deleted_at = NULL WHERE idwriting = ?;
@@ -75,7 +75,7 @@ SELECT EXISTS(
 -- name: AdminListDeactivatedWritings :many
 SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminArchiveBlog :exec
 INSERT INTO deactivated_blogs (idblogs, forumthread_id, users_idusers, language_id, blog, written, timezone, deleted_at)
@@ -86,7 +86,7 @@ UPDATE blogs SET blog = ?, deleted_at = CURRENT_TIMESTAMP WHERE idblogs = ?;
 
 -- name: AdminListPendingDeactivatedBlogs :many
 SELECT idblogs, blog FROM deactivated_blogs WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminRestoreBlog :exec
 UPDATE blogs SET blog = ?, deleted_at = NULL WHERE idblogs = ?;
@@ -103,7 +103,7 @@ SELECT EXISTS(
 -- name: AdminListDeactivatedBlogs :many
 SELECT idblogs, blog FROM deactivated_blogs
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminArchiveImagepost :exec
 INSERT INTO deactivated_imageposts (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, posted, timezone, description, thumbnail, fullimage, file_size, approved, deleted_at)
@@ -114,7 +114,7 @@ UPDATE imagepost SET description = '', thumbnail = '', fullimage = '', deleted_a
 
 -- name: AdminListPendingDeactivatedImageposts :many
 SELECT idimagepost, description, thumbnail, fullimage FROM deactivated_imageposts WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminRestoreImagepost :exec
 UPDATE imagepost SET description = ?, thumbnail = ?, fullimage = ?, deleted_at = NULL WHERE idimagepost = ?;
@@ -131,7 +131,7 @@ SELECT EXISTS(
 -- name: AdminListDeactivatedImageposts :many
 SELECT idimagepost, description, thumbnail, fullimage FROM deactivated_imageposts
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminArchiveLink :exec
 INSERT INTO deactivated_linker (id, language_id, author_id, category_id, thread_id, title, url, description, listed, timezone, deleted_at)
@@ -142,7 +142,7 @@ UPDATE linker SET title = ?, url = '', description = '', deleted_at = CURRENT_TI
 
 -- name: AdminListPendingDeactivatedLinks :many
 SELECT id, title, url, description FROM deactivated_linker WHERE author_id = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminRestoreLink :exec
 UPDATE linker SET title = ?, url = ?, description = ?, deleted_at = NULL WHERE id = ?;
@@ -159,7 +159,7 @@ SELECT EXISTS(
 -- name: AdminListDeactivatedLinks :many
 SELECT id, title, url, description FROM deactivated_linker
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminRestoreUser :exec
 UPDATE users
@@ -190,7 +190,7 @@ SELECT EXISTS(
 -- name: AdminListDeactivatedUsers :many
 SELECT idusers, email, username FROM deactivated_users
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminGetDeactivatedCommentById :one
 SELECT * FROM deactivated_comments

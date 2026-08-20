@@ -35,14 +35,14 @@ WHERE ui.users_idusers = sqlc.arg(user_id)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY uploaded DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminListUploadedImages :many
 -- Admin
 SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
 FROM uploaded_images
 ORDER BY uploaded DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminUpdateUploadedImagePath :exec
 UPDATE uploaded_images

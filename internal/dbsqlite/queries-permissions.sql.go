@@ -715,33 +715,33 @@ WITH role_ids AS (
     SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT 1 FROM grants g
-WHERE g.section = ?
-  AND (g.item = ? OR g.item IS NULL)
-  AND g.action = ?
+WHERE g.section = ?1
+  AND (g.item = ?2 OR g.item IS NULL)
+  AND g.action = ?3
   AND g.active = 1
-  AND (g.item_id = ? OR g.item_id IS NULL)
-  AND (g.user_id = ? OR g.user_id IS NULL)
+  AND (g.item_id = ?4 OR g.item_id IS NULL)
+  AND (g.user_id = ?5 OR g.user_id IS NULL)
   AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LIMIT 1
 `
 
 type SystemCheckGrantParams struct {
-	ViewerID int64
 	Section  string
 	Item     sql.NullString
 	Action   string
 	ItemID   sql.NullInt64
 	UserID   sql.NullInt64
+	ViewerID int64
 }
 
 func (q *Queries) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, systemCheckGrant,
-		arg.ViewerID,
 		arg.Section,
 		arg.Item,
 		arg.Action,
 		arg.ItemID,
 		arg.UserID,
+		arg.ViewerID,
 	)
 	var column_1 int64
 	err := row.Scan(&column_1)

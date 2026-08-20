@@ -75,12 +75,12 @@ SELECT swl.word,
        + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 ORDER BY swl.word
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminWordListWithCountsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminWordListWithCountsRow struct {
@@ -90,7 +90,7 @@ type AdminWordListWithCountsRow struct {
 
 // Show each search word with total usage counts across all search tables.
 func (q *Queries) AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminWordListWithCounts, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminWordListWithCounts, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -121,15 +121,15 @@ SELECT swl.word,
        + (SELECT IFNULL(SUM(ws.word_count),0) FROM writing_search ws WHERE ws.searchwordlist_idsearchwordlist=swl.idsearchwordlist)
        + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
-WHERE swl.word LIKE CONCAT(?3, '%')
+WHERE swl.word LIKE CONCAT(?1, '%')
 ORDER BY swl.word
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type AdminWordListWithCountsByPrefixParams struct {
 	Prefix interface{}
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminWordListWithCountsByPrefixRow struct {
@@ -138,7 +138,7 @@ type AdminWordListWithCountsByPrefixRow struct {
 }
 
 func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminWordListWithCountsByPrefix, arg.Prefix, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminWordListWithCountsByPrefix, arg.Prefix, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +161,11 @@ func (q *Queries) AdminWordListWithCountsByPrefix(ctx context.Context, arg Admin
 }
 
 const linkerSearchFirst = `-- name: LinkerSearchFirst :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -174,14 +177,7 @@ WHERE swl.word = ?1
   AND (
       l.language_id = 0
       OR l.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = l.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR l.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -190,19 +186,19 @@ WHERE swl.word = ?1
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = l.id OR g.item_id IS NULL)
-        AND (g.user_id = ?3 OR g.user_id IS NULL)
+        AND (g.user_id = ?2 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
 
 type LinkerSearchFirstParams struct {
 	Word     sql.NullString
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstParams) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, linkerSearchFirst, arg.Word, arg.ListerID, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, linkerSearchFirst, arg.Word, arg.UserID, arg.ListerID)
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +221,11 @@ func (q *Queries) LinkerSearchFirst(ctx context.Context, arg LinkerSearchFirstPa
 }
 
 const linkerSearchNext = `-- name: LinkerSearchNext :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -239,14 +238,7 @@ WHERE swl.word = ?1
   AND (
       l.language_id = 0
       OR l.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?3
-            AND ul.language_id = l.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR l.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -255,7 +247,7 @@ WHERE swl.word = ?1
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = l.id OR g.item_id IS NULL)
-        AND (g.user_id = ?4 OR g.user_id IS NULL)
+        AND (g.user_id = ?3 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
@@ -263,8 +255,8 @@ WHERE swl.word = ?1
 type LinkerSearchNextParams struct {
 	Word     sql.NullString
 	Ids      []int64
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextParams) ([]int64, error) {
@@ -279,8 +271,8 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ListerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -304,8 +296,11 @@ func (q *Queries) LinkerSearchNext(ctx context.Context, arg LinkerSearchNextPara
 }
 
 const listCommentIDsBySearchWordFirstForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -320,109 +315,7 @@ WHERE swl.word=?1
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?3
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
-        AND (g.item='topic' OR g.item IS NULL)
-        AND g.action='see'
-        AND g.active=1
-        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
-        AND (g.user_id = ?4 OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-  AND (
-      ft.handler IS NULL
-      OR ft.handler != 'private'
-      OR EXISTS (
-          SELECT 1 FROM grants thread_grant
-          WHERE thread_grant.section = 'privateforum_thread'
-            AND thread_grant.item = 'thread'
-            AND thread_grant.action = 'view'
-            AND thread_grant.active = 1
-            AND thread_grant.item_id = fth.idforumthread
-            AND (thread_grant.user_id = ?4 OR thread_grant.user_id IS NULL)
-            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
-      )
-  )
-`
-
-type ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams struct {
-	Word     sql.NullString
-	Ftids    []int64
-	ListerID int64
-	UserID   sql.NullInt64
-}
-
-func (q *Queries) ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams) ([]int64, error) {
-	query := listCommentIDsBySearchWordFirstForListerInRestrictedTopic
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ftids) > 0 {
-		for _, v := range arg.Ftids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ListerID)
-	queryParams = append(queryParams, arg.UserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int64
-	for rows.Next() {
-		var comment_id int64
-		if err := rows.Scan(&comment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, comment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
-    UNION
-    SELECT id FROM roles WHERE name = 'anyone'
-)
-SELECT DISTINCT cs.comment_id
-FROM comments_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?1
-  AND ft.forumcategory_idforumcategory!=0
-  AND (
-      c.language_id = 0
-      OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -450,108 +343,17 @@ WHERE swl.word=?1
   )
 `
 
-type ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams struct {
+type ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams struct {
 	Word     sql.NullString
-	ListerID int64
-	UserID   sql.NullInt64
-}
-
-func (q *Queries) ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic, arg.Word, arg.ListerID, arg.UserID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int64
-	for rows.Next() {
-		var comment_id int64
-		if err := rows.Scan(&comment_id); err != nil {
-			return nil, err
-		}
-		items = append(items, comment_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listCommentIDsBySearchWordNextForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
-    UNION
-    SELECT id FROM roles WHERE name = 'anyone'
-)
-SELECT DISTINCT cs.comment_id
-FROM comments_search cs
-LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
-LEFT JOIN comments c ON c.idcomments=cs.comment_id
-LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
-LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
-WHERE swl.word=?1
-  AND cs.comment_id IN (/*SLICE:ids*/?)
-  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
-  AND (
-      c.language_id = 0
-      OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?4
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants g
-      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
-        AND (g.item='topic' OR g.item IS NULL)
-        AND g.action='see'
-        AND g.active=1
-        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
-        AND (g.user_id = ?5 OR g.user_id IS NULL)
-        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
-  )
-  AND (
-      ft.handler IS NULL
-      OR ft.handler != 'private'
-      OR EXISTS (
-          SELECT 1 FROM grants thread_grant
-          WHERE thread_grant.section = 'privateforum_thread'
-            AND thread_grant.item = 'thread'
-            AND thread_grant.action = 'view'
-            AND thread_grant.active = 1
-            AND thread_grant.item_id = fth.idforumthread
-            AND (thread_grant.user_id = ?5 OR thread_grant.user_id IS NULL)
-            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
-      )
-  )
-`
-
-type ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams struct {
-	Word     sql.NullString
-	Ids      []int64
 	Ftids    []int64
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
-func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int64, error) {
-	query := listCommentIDsBySearchWordNextForListerInRestrictedTopic
+func (q *Queries) ListCommentIDsBySearchWordFirstForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerInRestrictedTopicParams) ([]int64, error) {
+	query := listCommentIDsBySearchWordFirstForListerInRestrictedTopic
 	var queryParams []interface{}
 	queryParams = append(queryParams, arg.Word)
-	if len(arg.Ids) > 0 {
-		for _, v := range arg.Ids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
-	}
 	if len(arg.Ftids) > 0 {
 		for _, v := range arg.Ftids {
 			queryParams = append(queryParams, v)
@@ -560,8 +362,8 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx c
 	} else {
 		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ListerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -584,8 +386,11 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx c
 	return items, nil
 }
 
-const listCommentIDsBySearchWordNextForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
-WITH role_ids AS (
+const listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -597,19 +402,89 @@ LEFT JOIN comments c ON c.idcomments=cs.comment_id
 LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
 LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
 WHERE swl.word=?1
-  AND cs.comment_id IN (/*SLICE:ids*/?)
   AND ft.forumcategory_idforumcategory!=0
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
+        AND (g.item='topic' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
+        AND (g.user_id = ?2 OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      ft.handler IS NULL
+      OR ft.handler != 'private'
       OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?3
-            AND ul.language_id = c.language_id
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = fth.idforumthread
+            AND (thread_grant.user_id = ?2 OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
       )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+  )
+`
+
+type ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams struct {
+	Word     sql.NullString
+	UserID   sql.NullInt64
+	ListerID int64
+}
+
+func (q *Queries) ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopicParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listCommentIDsBySearchWordFirstForListerNotInRestrictedTopic, arg.Word, arg.UserID, arg.ListerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var comment_id int64
+		if err := rows.Scan(&comment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, comment_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentIDsBySearchWordNextForListerInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?5
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
+SELECT DISTINCT cs.comment_id
+FROM comments_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=?1
+  AND cs.comment_id IN (/*SLICE:ids*/?)
+  AND fth.forumtopic_idforumtopic IN (/*SLICE:ftids*/?)
+  AND (
+      c.language_id = 0
+      OR c.language_id IS NULL
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -637,11 +512,112 @@ WHERE swl.word=?1
   )
 `
 
+type ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams struct {
+	Word     sql.NullString
+	Ids      []int64
+	Ftids    []int64
+	UserID   sql.NullInt64
+	ListerID int64
+}
+
+func (q *Queries) ListCommentIDsBySearchWordNextForListerInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerInRestrictedTopicParams) ([]int64, error) {
+	query := listCommentIDsBySearchWordNextForListerInRestrictedTopic
+	var queryParams []interface{}
+	queryParams = append(queryParams, arg.Word)
+	if len(arg.Ids) > 0 {
+		for _, v := range arg.Ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(arg.Ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	if len(arg.Ftids) > 0 {
+		for _, v := range arg.Ftids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ftids*/?", strings.Repeat(",?", len(arg.Ftids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ftids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ListerID)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var comment_id int64
+		if err := rows.Scan(&comment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, comment_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentIDsBySearchWordNextForListerNotInRestrictedTopic = `-- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+)
+SELECT DISTINCT cs.comment_id
+FROM comments_search cs
+LEFT JOIN searchwordlist swl ON swl.idsearchwordlist=cs.searchwordlist_idsearchwordlist
+LEFT JOIN comments c ON c.idcomments=cs.comment_id
+LEFT JOIN forumthread fth ON fth.idforumthread=c.forumthread_id
+LEFT JOIN forumtopic ft ON ft.idforumtopic=fth.forumtopic_idforumtopic
+WHERE swl.word=?1
+  AND cs.comment_id IN (/*SLICE:ids*/?)
+  AND ft.forumcategory_idforumcategory!=0
+  AND (
+      c.language_id = 0
+      OR c.language_id IS NULL
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE ((ft.handler = 'private' AND g.section = 'privateforum') OR (ft.handler <> 'private' AND g.section = 'forum'))
+        AND (g.item='topic' OR g.item IS NULL)
+        AND g.action='see'
+        AND g.active=1
+        AND ((ft.handler = 'private' AND g.item_id = ft.idforumtopic) OR (ft.handler <> 'private' AND (g.item_id = ft.idforumtopic OR g.item_id IS NULL)))
+        AND (g.user_id = ?3 OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
+  )
+  AND (
+      ft.handler IS NULL
+      OR ft.handler != 'private'
+      OR EXISTS (
+          SELECT 1 FROM grants thread_grant
+          WHERE thread_grant.section = 'privateforum_thread'
+            AND thread_grant.item = 'thread'
+            AND thread_grant.action = 'view'
+            AND thread_grant.active = 1
+            AND thread_grant.item_id = fth.idforumthread
+            AND (thread_grant.user_id = ?3 OR thread_grant.user_id IS NULL)
+            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
+      )
+  )
+`
+
 type ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams struct {
 	Word     sql.NullString
 	Ids      []int64
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ctx context.Context, arg ListCommentIDsBySearchWordNextForListerNotInRestrictedTopicParams) ([]int64, error) {
@@ -656,8 +632,8 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ct
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ListerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -681,8 +657,11 @@ func (q *Queries) ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic(ct
 }
 
 const listSiteNewsSearchFirstForLister = `-- name: ListSiteNewsSearchFirstForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -694,14 +673,7 @@ WHERE swl.word = ?1
   AND (
       sn.language_id = 0
       OR sn.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = sn.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR sn.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -710,19 +682,19 @@ WHERE swl.word = ?1
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = sn.idsiteNews OR g.item_id IS NULL)
-        AND (g.user_id = ?3 OR g.user_id IS NULL)
+        AND (g.user_id = ?2 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
 
 type ListSiteNewsSearchFirstForListerParams struct {
 	Word     sql.NullString
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) ListSiteNewsSearchFirstForLister(ctx context.Context, arg ListSiteNewsSearchFirstForListerParams) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, listSiteNewsSearchFirstForLister, arg.Word, arg.ListerID, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, listSiteNewsSearchFirstForLister, arg.Word, arg.UserID, arg.ListerID)
 	if err != nil {
 		return nil, err
 	}
@@ -745,8 +717,11 @@ func (q *Queries) ListSiteNewsSearchFirstForLister(ctx context.Context, arg List
 }
 
 const listSiteNewsSearchNextForLister = `-- name: ListSiteNewsSearchNextForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -759,14 +734,7 @@ WHERE swl.word = ?1
   AND (
       sn.language_id = 0
       OR sn.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?3
-            AND ul.language_id = sn.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR sn.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -775,7 +743,7 @@ WHERE swl.word = ?1
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = sn.idsiteNews OR g.item_id IS NULL)
-        AND (g.user_id = ?4 OR g.user_id IS NULL)
+        AND (g.user_id = ?3 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
@@ -783,8 +751,8 @@ WHERE swl.word = ?1
 type ListSiteNewsSearchNextForListerParams struct {
 	Word     sql.NullString
 	Ids      []int64
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListSiteNewsSearchNextForListerParams) ([]int64, error) {
@@ -799,8 +767,8 @@ func (q *Queries) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListS
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ListerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -824,8 +792,11 @@ func (q *Queries) ListSiteNewsSearchNextForLister(ctx context.Context, arg ListS
 }
 
 const listWritingSearchFirstForLister = `-- name: ListWritingSearchFirstForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -837,14 +808,7 @@ WHERE swl.word = ?1
   AND (
       w.language_id = 0
       OR w.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = w.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -853,19 +817,19 @@ WHERE swl.word = ?1
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = idwriting OR g.item_id IS NULL)
-        AND (g.user_id = ?3 OR g.user_id IS NULL)
+        AND (g.user_id = ?2 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
 
 type ListWritingSearchFirstForListerParams struct {
 	Word     sql.NullString
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) ListWritingSearchFirstForLister(ctx context.Context, arg ListWritingSearchFirstForListerParams) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, listWritingSearchFirstForLister, arg.Word, arg.ListerID, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, listWritingSearchFirstForLister, arg.Word, arg.UserID, arg.ListerID)
 	if err != nil {
 		return nil, err
 	}
@@ -888,8 +852,11 @@ func (q *Queries) ListWritingSearchFirstForLister(ctx context.Context, arg ListW
 }
 
 const listWritingSearchNextForLister = `-- name: ListWritingSearchNextForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -902,14 +869,7 @@ WHERE swl.word = ?1
   AND (
       w.language_id = 0
       OR w.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?3
-            AND ul.language_id = w.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -918,7 +878,7 @@ WHERE swl.word = ?1
         AND g.action='see'
         AND g.active=1
         AND (g.item_id = idwriting OR g.item_id IS NULL)
-        AND (g.user_id = ?4 OR g.user_id IS NULL)
+        AND (g.user_id = ?3 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
@@ -926,8 +886,8 @@ WHERE swl.word = ?1
 type ListWritingSearchNextForListerParams struct {
 	Word     sql.NullString
 	Ids      []int64
-	ListerID int64
 	UserID   sql.NullInt64
+	ListerID int64
 }
 
 func (q *Queries) ListWritingSearchNextForLister(ctx context.Context, arg ListWritingSearchNextForListerParams) ([]int64, error) {
@@ -942,8 +902,8 @@ func (q *Queries) ListWritingSearchNextForLister(ctx context.Context, arg ListWr
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.UserID)
+	queryParams = append(queryParams, arg.ListerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err

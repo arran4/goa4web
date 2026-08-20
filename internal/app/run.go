@@ -169,7 +169,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	if o.Querier != nil {
 		queries = o.Querier
 	} else if o.DB != nil {
-		queries = db.New(o.DB)
+		queries = db.NewForDriver(o.DB, cfg.DBDriver)
 	} else {
 		return nil, fmt.Errorf("NewServer: no db or querier provided")
 	}

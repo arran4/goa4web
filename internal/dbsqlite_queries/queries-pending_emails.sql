@@ -7,7 +7,7 @@ SELECT id, to_user_id, body, error_count, direct_email, created_at
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: SystemMarkPendingEmailSent :exec
 UPDATE pending_emails SET sent_at = CURRENT_TIMESTAMP WHERE id = ?;
@@ -20,18 +20,18 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
-  AND (sqlc.narg(status) IS NULL
-    OR (sqlc.narg(status) = 'pending' AND pe.error_count = 0)
-    OR (sqlc.narg(status) = 'failed' AND pe.error_count > 0))
-  AND (sqlc.narg(provider) IS NULL
-    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
-    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
+  AND (sqlc.arg(status) IS NULL
+    OR (sqlc.arg(status) = 'pending' AND pe.error_count = 0)
+    OR (sqlc.arg(status) = 'failed' AND pe.error_count > 0))
+  AND (sqlc.arg(provider) IS NULL
+    OR (sqlc.arg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.arg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.arg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.arg(created_before) IS NULL OR pe.created_at <= sqlc.arg(created_before))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminCountUnsentPendingEmails :one
 -- admin task
@@ -41,16 +41,16 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
-  AND (sqlc.narg(status) IS NULL
-    OR (sqlc.narg(status) = 'pending' AND pe.error_count = 0)
-    OR (sqlc.narg(status) = 'failed' AND pe.error_count > 0))
-  AND (sqlc.narg(provider) IS NULL
-    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
-    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name));
+  AND (sqlc.arg(status) IS NULL
+    OR (sqlc.arg(status) = 'pending' AND pe.error_count = 0)
+    OR (sqlc.arg(status) = 'failed' AND pe.error_count > 0))
+  AND (sqlc.arg(provider) IS NULL
+    OR (sqlc.arg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.arg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.arg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.arg(created_before) IS NULL OR pe.created_at <= sqlc.arg(created_before))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name));
 
 -- name: AdminGetPendingEmailByID :one
 -- admin task
@@ -76,15 +76,15 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
-  AND (sqlc.narg(provider) IS NULL
-    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
-    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (sqlc.narg(created_before) IS NULL OR pe.sent_at <= sqlc.narg(created_before))
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
+  AND (sqlc.arg(provider) IS NULL
+    OR (sqlc.arg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.arg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.arg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.arg(created_before) IS NULL OR pe.sent_at <= sqlc.arg(created_before))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.sent_at DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminCountSentEmails :one
 -- admin task
@@ -94,13 +94,13 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
-  AND (sqlc.narg(provider) IS NULL
-    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
-    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (sqlc.narg(created_before) IS NULL OR pe.sent_at <= sqlc.narg(created_before))
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name));
+  AND (sqlc.arg(provider) IS NULL
+    OR (sqlc.arg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.arg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.arg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.arg(created_before) IS NULL OR pe.sent_at <= sqlc.arg(created_before))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name));
 
 -- name: AdminListSentEmailIDs :many
 -- admin task
@@ -110,13 +110,13 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
-  AND (sqlc.narg(provider) IS NULL
-    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
-    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (sqlc.narg(created_before) IS NULL OR pe.sent_at <= sqlc.narg(created_before))
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
+  AND (sqlc.arg(provider) IS NULL
+    OR (sqlc.arg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.arg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.arg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.arg(created_before) IS NULL OR pe.sent_at <= sqlc.arg(created_before))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.sent_at DESC;
 
 -- name: AdminListFailedEmails :many
@@ -127,10 +127,10 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminListFailedEmailIDs :many
 -- admin task
@@ -140,11 +140,11 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
-  AND (sqlc.narg(provider) IS NULL
-    OR (sqlc.narg(provider) = 'direct' AND pe.direct_email = 1)
-    OR (sqlc.narg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (sqlc.narg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (sqlc.narg(created_before) IS NULL OR pe.created_at <= sqlc.narg(created_before))
-  AND (sqlc.narg(language_id) IS NULL OR p.language_id = sqlc.narg(language_id))
-  AND (sqlc.narg(role_name) IS NULL OR r.name = sqlc.narg(role_name))
+  AND (sqlc.arg(provider) IS NULL
+    OR (sqlc.arg(provider) = 'direct' AND pe.direct_email = 1)
+    OR (sqlc.arg(provider) = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (sqlc.arg(provider) = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (sqlc.arg(created_before) IS NULL OR pe.created_at <= sqlc.arg(created_before))
+  AND (sqlc.arg(language_id) IS NULL OR p.language_id = sqlc.arg(language_id))
+  AND (sqlc.arg(role_name) IS NULL OR r.name = sqlc.arg(role_name))
 ORDER BY pe.id;

@@ -612,7 +612,10 @@ func (q *Queries) CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQ
 }
 
 const getAllAnsweredFAQWithFAQCategoriesForUser = `-- name: GetAllAnsweredFAQWithFAQCategoriesForUser :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -625,14 +628,7 @@ WHERE c.id IS NOT NULL
   AND (
       f.language_id = 0
       OR f.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = f.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.narg(user_id)
-      )
+      OR f.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -691,7 +687,10 @@ func (q *Queries) GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context,
 }
 
 const getFAQAnsweredQuestions = `-- name: GetFAQAnsweredQuestions :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -703,14 +702,7 @@ WHERE answer IS NOT NULL
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = faq.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.narg(user_id)
-      )
+      OR faq.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -764,7 +756,10 @@ func (q *Queries) GetFAQAnsweredQuestions(ctx context.Context, userID sql.NullIn
 }
 
 const getFAQByID = `-- name: GetFAQByID :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?2
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -776,14 +771,7 @@ WHERE faq.id = ?1
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = faq.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.narg(user_id)
-      )
+      OR faq.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -826,7 +814,10 @@ func (q *Queries) GetFAQByID(ctx context.Context, arg GetFAQByIDParams) (*GetFAQ
 }
 
 const getFAQQuestionsByCategory = `-- name: GetFAQQuestionsByCategory :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?2
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -838,14 +829,7 @@ WHERE faq.category_id = ?1
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = faq.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.narg(user_id)
-      )
+      OR faq.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g

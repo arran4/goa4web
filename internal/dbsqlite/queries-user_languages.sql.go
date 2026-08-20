@@ -10,11 +10,11 @@ import (
 )
 
 const deleteUserLanguagesForUser = `-- name: DeleteUserLanguagesForUser :exec
-DELETE FROM user_language WHERE users_idusers = ?1
+DELETE FROM user_language WHERE users_idusers = ?
 `
 
-func (q *Queries) DeleteUserLanguagesForUser(ctx context.Context, userID int64) error {
-	_, err := q.db.ExecContext(ctx, deleteUserLanguagesForUser, userID)
+func (q *Queries) DeleteUserLanguagesForUser(ctx context.Context, usersIdusers int64) error {
+	_, err := q.db.ExecContext(ctx, deleteUserLanguagesForUser, usersIdusers)
 	return err
 }
 

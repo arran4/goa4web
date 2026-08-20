@@ -23,14 +23,14 @@ SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id)
 ORDER BY id DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListUnreadNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL
 ORDER BY id DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: SetNotificationReadForLister :exec
 UPDATE notifications
@@ -84,7 +84,7 @@ ORDER BY id DESC LIMIT 1;
 -- name: AdminListRecentNotifications :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-ORDER BY id DESC LIMIT ?;
+ORDER BY id DESC LIMIT sqlc.arg(limit);
 
 -- name: AdminDeleteNotificationsByMessage :exec
 DELETE FROM notifications

@@ -404,6 +404,7 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 		t.Fatalf("GET /news returned status %d, expected 200. Body:\n%s", w.Code, w.Body.String())
 	}
 	if !strings.Contains(w.Body.String(), "Goa4Web now supports SQLite") {
+		t.Logf("GET /news response body:\n%s", w.Body.String())
 		t.Errorf("GET /news body missing expected news content")
 	}
 
@@ -430,11 +431,12 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 		t.Fatalf("GET /linker returned status %d, expected 200. Body:\n%s", w.Code, w.Body.String())
 	}
 	if !strings.Contains(w.Body.String(), "Official Go Website") {
+		t.Logf("GET /linker response body:\n%s", w.Body.String())
 		t.Errorf("GET /linker body missing expected linker item")
 	}
 
 	// 7. Test write path: Insert a new comment using queries on SQLite
-	querier := db.New(srv.DB)
+	querier := srv.Queries
 	newCommentID, err := querier.CreateCommentInSectionForCommenter(ctx, db.CreateCommentInSectionForCommenterParams{
 		CommenterID:   sql.NullInt32{Int32: 2, Valid: true},
 		ForumthreadID: 1,
@@ -467,6 +469,40 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 	if !strings.Contains(w.Body.String(), "This is an automated test comment inserted via SQLite!") {
 		t.Errorf("GET /forum/topic/1/thread/1 does not reflect newly inserted comment")
 	}
+
+	// Test dialect-sensitive queries (e.g. API Keys which contain NOW() in MySQL and CURRENT_TIMESTAMP in SQLite)
+	// This proves that srv was constructed with the SQLite-specific sqlc query implementation.
+	keyID, err := srv.Queries.CreateAPIKey(ctx, db.CreateAPIKeyParams{
+		UsersIdusers: 1,
+		Name:         "test-sqlite-api-key",
+		ApiKey:       "hash-12345-test-key",
+		Scopes:       "read,write",
+		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
+	if err != nil {
+		t.Fatalf("failed to create API key in SQLite: %v", err)
+	}
+
+	fetchedKey, err := srv.Queries.GetAPIKeyByHash(ctx, "hash-12345-test-key")
+	if err != nil {
+		t.Fatalf("failed to retrieve API key in SQLite (GetAPIKeyByHash): %v", err)
+	}
+	if fetchedKey.Name != "test-sqlite-api-key" {
+		t.Errorf("expected API key name 'test-sqlite-api-key', got %q", fetchedKey.Name)
+	}
+
+	err = srv.Queries.UpdateAPIKeyLastUsed(ctx, int32(keyID))
+	if err != nil {
+		t.Fatalf("failed to update API key last used in SQLite (UpdateAPIKeyLastUsed): %v", err)
+	}
+
+	err = srv.Queries.RevokeAPIKey(ctx, db.RevokeAPIKeyParams{
+		ID:           int32(keyID),
+		UsersIdusers: 1,
+	})
+	if err != nil {
+		t.Fatalf("failed to revoke API key in SQLite (RevokeAPIKey): %v", err)
+	}
 }
 
 func TestRestoreSQLiteTestingSeed(t *testing.T) {
@@ -489,7 +525,7 @@ func TestRestoreSQLiteTestingSeed(t *testing.T) {
 	}
 
 	// Verify database can be queried with sqlc
-	q := db.New(dbConn)
+	q := db.NewForDriver(dbConn, "sqlite3")
 	cats, err := q.GetAllForumCategories(context.Background(), db.GetAllForumCategoriesParams{})
 	if err != nil {
 		t.Fatalf("failed to query restored database: %v", err)

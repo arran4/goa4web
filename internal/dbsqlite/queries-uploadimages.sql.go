@@ -47,17 +47,17 @@ const adminListUploadedImages = `-- name: AdminListUploadedImages :many
 SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded
 FROM uploaded_images
 ORDER BY uploaded DESC
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListUploadedImagesParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 // Admin
 func (q *Queries) AdminListUploadedImages(ctx context.Context, arg AdminListUploadedImagesParams) ([]*UploadedImage, error) {
-	rows, err := q.db.QueryContext(ctx, adminListUploadedImages, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListUploadedImages, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -208,35 +208,35 @@ WITH role_ids AS (
 )
 SELECT ui.iduploadedimage, ui.users_idusers, ui.path, ui.width, ui.height, ui.file_size, ui.uploaded
 FROM uploaded_images ui
-WHERE ui.users_idusers = ?3
+WHERE ui.users_idusers = ?1
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE g.section='images'
         AND g.item='upload'
         AND g.action='see'
         AND g.active=1
-        AND (g.user_id = ?4 OR g.user_id IS NULL)
+        AND (g.user_id = ?2 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY uploaded DESC
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListUploadedImagesByUserForListerParams struct {
-	ListerID      int64
 	UserID        int64
 	ListerMatchID sql.NullInt64
-	Limit         int64
 	Offset        int64
+	Limit         int64
+	ListerID      int64
 }
 
 func (q *Queries) ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error) {
 	rows, err := q.db.QueryContext(ctx, listUploadedImagesByUserForLister,
-		arg.ListerID,
 		arg.UserID,
 		arg.ListerMatchID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err

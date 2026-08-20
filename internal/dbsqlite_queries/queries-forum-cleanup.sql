@@ -1,5 +1,5 @@
 -- name: DeleteThreadsByTopicID :exec
-DELETE FROM forumthread;
+DELETE FROM forumthread WHERE forumtopic_idforumtopic = ?;
 
 -- name: AdminListOrphanForumThreads :many
 SELECT t.idforumthread

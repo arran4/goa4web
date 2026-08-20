@@ -13,40 +13,36 @@ import (
 
 const createThreadImage = `-- name: CreateThreadImage :exec
 INSERT INTO thread_images (forumthread_id, path, created_at)
-SELECT ?1, ?2, CURRENT_TIMESTAMP
-WHERE NOT EXISTS (
-    SELECT 1 FROM thread_images ti
-    WHERE ti.forumthread_id = sqlc.arg(thread_id)
-      AND ti.path = sqlc.arg(path)
-)
+VALUES (?, ?, CURRENT_TIMESTAMP)
+ON CONFLICT (forumthread_id, path) DO NOTHING
 `
 
 type CreateThreadImageParams struct {
-	ThreadID int64
-	Path     sql.NullString
+	ForumthreadID int64
+	Path          sql.NullString
 }
 
 func (q *Queries) CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error {
-	_, err := q.db.ExecContext(ctx, createThreadImage, arg.ThreadID, arg.Path)
+	_, err := q.db.ExecContext(ctx, createThreadImage, arg.ForumthreadID, arg.Path)
 	return err
 }
 
 const listThreadImagePaths = `-- name: ListThreadImagePaths :many
 SELECT path
 FROM thread_images
-WHERE forumthread_id = ?1
+WHERE forumthread_id = ?
   AND path IN (/*SLICE:paths*/?)
 `
 
 type ListThreadImagePathsParams struct {
-	ThreadID int64
-	Paths    []sql.NullString
+	ForumthreadID int64
+	Paths         []sql.NullString
 }
 
 func (q *Queries) ListThreadImagePaths(ctx context.Context, arg ListThreadImagePathsParams) ([]sql.NullString, error) {
 	query := listThreadImagePaths
 	var queryParams []interface{}
-	queryParams = append(queryParams, arg.ThreadID)
+	queryParams = append(queryParams, arg.ForumthreadID)
 	if len(arg.Paths) > 0 {
 		for _, v := range arg.Paths {
 			queryParams = append(queryParams, v)

@@ -1,5 +1,8 @@
 -- name: GetCommentByIdForUser :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -14,14 +17,7 @@ WHERE c.idcomments = sqlc.arg(id)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -51,7 +47,7 @@ LIMIT 1;
 
 -- name: UpdateCommentForEditor :exec
 UPDATE comments
-SET language_id = sqlc.narg(language_id), text = sqlc.arg(text)
+SET language_id = sqlc.arg(language_id), text = sqlc.arg(text)
 WHERE comments.idcomments = sqlc.arg(comment_id)
   AND comments.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
@@ -77,7 +73,10 @@ WHERE c.Idcomments=?;
 
 
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -96,14 +95,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -134,7 +126,7 @@ ORDER BY c.written DESC
 
 -- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
-SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), sqlc.arg(written), sqlc.arg(timezone)
+SELECT sqlc.arg(language_id), sqlc.arg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), sqlc.arg(written), sqlc.arg(timezone)
 WHERE EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = sqlc.arg(section)
@@ -142,14 +134,17 @@ WHERE EXISTS (
       AND g.action = sqlc.arg(action)
       AND g.active = 1
       AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
-      AND (g.user_id = sqlc.narg(commenter_id) OR g.user_id IS NULL)
+      AND (g.user_id = sqlc.arg(commenter_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.narg(commenter_id)
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
       ))
   );
 
 -- name: GetCommentsByThreadIdForUser :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -165,14 +160,7 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -203,7 +191,10 @@ ORDER BY c.written;
 -- Viewing comments in a section-specific thread requires 'view' on the
 -- section's primary item type since comments inherit their thread's grants.
 -- name: GetCommentsBySectionThreadIdForUser :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -219,14 +210,7 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -289,4 +273,4 @@ LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);

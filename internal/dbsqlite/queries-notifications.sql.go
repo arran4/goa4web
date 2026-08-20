@@ -53,7 +53,7 @@ func (q *Queries) AdminGetNotification(ctx context.Context, id int64) (*Notifica
 const adminListRecentNotifications = `-- name: AdminListRecentNotifications :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-ORDER BY id DESC LIMIT ?
+ORDER BY id DESC LIMIT ?1
 `
 
 func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int64) ([]*Notification, error) {
@@ -191,19 +191,19 @@ func (q *Queries) GetUnreadNotificationCountForLister(ctx context.Context, liste
 const listNotificationsForLister = `-- name: ListNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-WHERE users_idusers = ?3
+WHERE users_idusers = ?1
 ORDER BY id DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type ListNotificationsForListerParams struct {
 	ListerID int64
-	Limit    int64
 	Offset   int64
+	Limit    int64
 }
 
 func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error) {
-	rows, err := q.db.QueryContext(ctx, listNotificationsForLister, arg.ListerID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listNotificationsForLister, arg.ListerID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -235,19 +235,19 @@ func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotifi
 const listUnreadNotificationsForLister = `-- name: ListUnreadNotificationsForLister :many
 SELECT id, users_idusers, link, message, created_at, read_at
 FROM notifications
-WHERE users_idusers = ?3 AND read_at IS NULL
+WHERE users_idusers = ?1 AND read_at IS NULL
 ORDER BY id DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type ListUnreadNotificationsForListerParams struct {
 	ListerID int64
-	Limit    int64
 	Offset   int64
+	Limit    int64
 }
 
 func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error) {
-	rows, err := q.db.QueryContext(ctx, listUnreadNotificationsForLister, arg.ListerID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listUnreadNotificationsForLister, arg.ListerID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

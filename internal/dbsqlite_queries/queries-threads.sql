@@ -68,10 +68,13 @@ JOIN
 JOIN
     comments c ON t.firstpost = c.idcomments
 ORDER BY t.idforumthread
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetThreadLastPosterAndPermsForUser :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -86,14 +89,7 @@ WHERE th.idforumthread=sqlc.arg(thread_id)
   AND (
       fc.language_id = 0
       OR fc.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(viewer_id)
-            AND ul.language_id = fc.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR fc.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -140,7 +136,7 @@ WHERE idforumthread = sqlc.arg(thread_id)
 SELECT forumtopic_idforumtopic FROM forumthread WHERE idforumthread = ?;
 
 -- name: AdminDeleteForumThread :exec
-DELETE FROM forumthread;
+DELETE FROM forumthread WHERE idforumthread = ?;
 
 -- name: AdminListForumThreadGrantsByThreadID :many
 SELECT
@@ -178,7 +174,10 @@ WHERE c.users_idusers = ?
 ORDER BY th.lastaddition DESC;
 
 -- name: GetThreadBySectionThreadIDForReplier :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(replier_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(replier_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -190,14 +189,7 @@ WHERE th.idforumthread = sqlc.arg(thread_id)
   AND (
       fc.language_id = 0
       OR fc.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(replier_id)
-            AND ul.language_id = fc.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(replier_id)
-      )
+      OR fc.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g

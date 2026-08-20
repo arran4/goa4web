@@ -361,16 +361,16 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_
 FROM writing w
 WHERE w.private = 0
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type GetPublicWritingsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 func (q *Queries) GetPublicWritings(ctx context.Context, arg GetPublicWritingsParams) ([]*Writing, error) {
-	rows, err := q.db.QueryContext(ctx, getPublicWritings, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getPublicWritings, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -526,8 +526,11 @@ func (q *Queries) InsertWriting(ctx context.Context, arg InsertWritingParams) (i
 }
 
 const listPublicWritingsByUserForLister = `-- name: ListPublicWritingsByUserForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?5
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -535,18 +538,11 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON users_idusers = idusers
-WHERE w.private = 0 AND writing.users_idusers = ?3
+WHERE w.private = 0 AND writing.users_idusers = ?1
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?4
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -555,19 +551,19 @@ WHERE w.private = 0 AND writing.users_idusers = ?3
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = idwriting OR g.item_id IS NULL)
-      AND (g.user_id = ?5 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListPublicWritingsByUserForListerParams struct {
 	AuthorID int64
-	ListerID int64
 	UserID   sql.NullInt64
-	Limit    int64
 	Offset   int64
+	Limit    int64
+	ListerID int64
 }
 
 type ListPublicWritingsByUserForListerRow struct {
@@ -591,10 +587,10 @@ type ListPublicWritingsByUserForListerRow struct {
 func (q *Queries) ListPublicWritingsByUserForLister(ctx context.Context, arg ListPublicWritingsByUserForListerParams) ([]*ListPublicWritingsByUserForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPublicWritingsByUserForLister,
 		arg.AuthorID,
-		arg.ListerID,
 		arg.UserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -634,8 +630,11 @@ func (q *Queries) ListPublicWritingsByUserForLister(ctx context.Context, arg Lis
 }
 
 const listPublicWritingsInCategoryForLister = `-- name: ListPublicWritingsInCategoryForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?5
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -643,18 +642,11 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers=idusers
-WHERE w.private = 0 AND w.writing_category_id = ?3
+WHERE w.private = 0 AND w.writing_category_id = ?1
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?4
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -663,19 +655,19 @@ WHERE w.private = 0 AND w.writing_category_id = ?3
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = idwriting OR g.item_id IS NULL)
-      AND (g.user_id = ?5 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListPublicWritingsInCategoryForListerParams struct {
 	WritingCategoryID int64
-	ListerID          int64
 	UserID            sql.NullInt64
-	Limit             int64
 	Offset            int64
+	Limit             int64
+	ListerID          int64
 }
 
 type ListPublicWritingsInCategoryForListerRow struct {
@@ -699,10 +691,10 @@ type ListPublicWritingsInCategoryForListerRow struct {
 func (q *Queries) ListPublicWritingsInCategoryForLister(ctx context.Context, arg ListPublicWritingsInCategoryForListerParams) ([]*ListPublicWritingsInCategoryForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPublicWritingsInCategoryForLister,
 		arg.WritingCategoryID,
-		arg.ListerID,
 		arg.UserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -742,8 +734,11 @@ func (q *Queries) ListPublicWritingsInCategoryForLister(ctx context.Context, arg
 }
 
 const listWritersForLister = `-- name: ListWritersForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?4
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -753,14 +748,7 @@ JOIN users u ON users_idusers = idusers
 WHERE (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?3
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 AND EXISTS (
     SELECT 1 FROM grants g
@@ -769,19 +757,19 @@ AND EXISTS (
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = idwriting OR g.item_id IS NULL)
-      AND (g.user_id = ?4 OR g.user_id IS NULL)
+      AND (g.user_id = ?1 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type ListWritersForListerParams struct {
-	ListerID int64
 	UserID   sql.NullInt64
-	Limit    int64
 	Offset   int64
+	Limit    int64
+	ListerID int64
 }
 
 type ListWritersForListerRow struct {
@@ -791,10 +779,10 @@ type ListWritersForListerRow struct {
 
 func (q *Queries) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listWritersForLister,
-		arg.ListerID,
 		arg.UserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -818,26 +806,22 @@ func (q *Queries) ListWritersForLister(ctx context.Context, arg ListWritersForLi
 }
 
 const listWritersSearchForLister = `-- name: ListWritersSearchForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?5
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT u.username, COUNT(idwriting) AS count
 FROM writing w
 JOIN users u ON users_idusers = idusers
-WHERE (LOWER(u.username) LIKE LOWER(?3) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?3))
+WHERE (LOWER(u.username) LIKE LOWER(?1) OR LOWER((SELECT email FROM user_emails ue WHERE ue.user_id = idusers AND ue.verified_at IS NOT NULL ORDER BY ue.notification_priority DESC, ue.id LIMIT 1)) LIKE LOWER(?1))
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?4
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -846,20 +830,20 @@ WHERE (LOWER(u.username) LIKE LOWER(?3) OR LOWER((SELECT email FROM user_emails 
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = idwriting OR g.item_id IS NULL)
-      AND (g.user_id = ?5 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListWritersSearchForListerParams struct {
 	Query    string
-	ListerID int64
 	UserID   sql.NullInt64
-	Limit    int64
 	Offset   int64
+	Limit    int64
+	ListerID int64
 }
 
 type ListWritersSearchForListerRow struct {
@@ -870,10 +854,10 @@ type ListWritersSearchForListerRow struct {
 func (q *Queries) ListWritersSearchForLister(ctx context.Context, arg ListWritersSearchForListerParams) ([]*ListWritersSearchForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listWritersSearchForLister,
 		arg.Query,
-		arg.ListerID,
 		arg.UserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -990,8 +974,11 @@ func (q *Queries) ListWritingcategoryPath(ctx context.Context, categoryID int64)
 const listWritingsByIDsForLister = `-- name: ListWritingsByIDsForLister :many
 ;
 
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?5
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -1002,14 +989,7 @@ WHERE idwriting IN (/*SLICE:writing_ids*/?)
   AND (
     w.language_id = 0
     OR w.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?4
-          AND ul.language_id = w.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-    )
+    OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -1018,19 +998,19 @@ WHERE idwriting IN (/*SLICE:writing_ids*/?)
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = idwriting OR g.item_id IS NULL)
-      AND (g.user_id = ?5 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListWritingsByIDsForListerParams struct {
 	WritingIds    []int64
-	ListerID      int64
 	ListerMatchID sql.NullInt64
-	Limit         int64
 	Offset        int64
+	Limit         int64
+	ListerID      int64
 }
 
 type ListWritingsByIDsForListerRow struct {
@@ -1062,10 +1042,10 @@ func (q *Queries) ListWritingsByIDsForLister(ctx context.Context, arg ListWritin
 	} else {
 		query = strings.Replace(query, "/*SLICE:writing_ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.ListerMatchID)
-	queryParams = append(queryParams, arg.Limit)
 	queryParams = append(queryParams, arg.Offset)
+	queryParams = append(queryParams, arg.Limit)
+	queryParams = append(queryParams, arg.ListerID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -1138,15 +1118,15 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) AS Comments
 FROM writing w
 LEFT JOIN users u ON users_idusers = idusers
-WHERE w.private = 0 AND writing.users_idusers = ?3
+WHERE w.private = 0 AND writing.users_idusers = ?1
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type SystemListPublicWritingsByAuthorParams struct {
 	AuthorID int64
-	Limit    int64
 	Offset   int64
+	Limit    int64
 }
 
 type SystemListPublicWritingsByAuthorRow struct {
@@ -1168,7 +1148,7 @@ type SystemListPublicWritingsByAuthorRow struct {
 }
 
 func (q *Queries) SystemListPublicWritingsByAuthor(ctx context.Context, arg SystemListPublicWritingsByAuthorParams) ([]*SystemListPublicWritingsByAuthorRow, error) {
-	rows, err := q.db.QueryContext(ctx, systemListPublicWritingsByAuthor, arg.AuthorID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, systemListPublicWritingsByAuthor, arg.AuthorID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1211,15 +1191,15 @@ SELECT w.idwriting, w.users_idusers, w.forumthread_id, w.language_id, w.writing_
     (SELECT COUNT(*) FROM comments c WHERE c.forumthread_id=w.forumthread_id AND w.forumthread_id IS NOT NULL) as Comments
 FROM writing w
 LEFT JOIN users u ON w.Users_Idusers = idusers
-WHERE w.private = 0 AND w.writing_category_id = ?3
+WHERE w.private = 0 AND w.writing_category_id = ?1
 ORDER BY w.published DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type SystemListPublicWritingsInCategoryParams struct {
 	CategoryID int64
-	Limit      int64
 	Offset     int64
+	Limit      int64
 }
 
 type SystemListPublicWritingsInCategoryRow struct {
@@ -1241,7 +1221,7 @@ type SystemListPublicWritingsInCategoryRow struct {
 }
 
 func (q *Queries) SystemListPublicWritingsInCategory(ctx context.Context, arg SystemListPublicWritingsInCategoryParams) ([]*SystemListPublicWritingsInCategoryRow, error) {
-	rows, err := q.db.QueryContext(ctx, systemListPublicWritingsInCategory, arg.CategoryID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, systemListPublicWritingsInCategory, arg.CategoryID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1283,16 +1263,16 @@ const systemListWritingCategories = `-- name: SystemListWritingCategories :many
 SELECT wc.idwritingcategory, wc.writing_category_id, wc.title, wc.description
 FROM writing_category wc
 ORDER BY wc.idwritingcategory
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type SystemListWritingCategoriesParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 func (q *Queries) SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error) {
-	rows, err := q.db.QueryContext(ctx, systemListWritingCategories, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, systemListWritingCategories, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

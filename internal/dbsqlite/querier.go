@@ -60,7 +60,7 @@ type Querier interface {
 	AdminDeleteFAQ(ctx context.Context, id int64) error
 	AdminDeleteFAQCategory(ctx context.Context, id int64) error
 	AdminDeleteForumCategory(ctx context.Context, idforumcategory int64) error
-	AdminDeleteForumThread(ctx context.Context) error
+	AdminDeleteForumThread(ctx context.Context, idforumthread int64) error
 	// Removes a forum topic by ID.
 	AdminDeleteForumTopic(ctx context.Context, idforumtopic int64) error
 	AdminDeleteGrant(ctx context.Context, id int64) error
@@ -327,9 +327,9 @@ type Querier interface {
 	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
 	DeleteSubscriptionForSubscriber(ctx context.Context, arg DeleteSubscriptionForSubscriberParams) error
-	DeleteThreadsByTopicID(ctx context.Context) error
+	DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int64) error
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
-	DeleteUserLanguagesForUser(ctx context.Context, userID int64) error
+	DeleteUserLanguagesForUser(ctx context.Context, usersIdusers int64) error
 	EnsureExternalLink(ctx context.Context, url string) (sql.Result, error)
 	GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)

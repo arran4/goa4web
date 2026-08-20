@@ -126,28 +126,31 @@ func (q *Queries) CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEn
 }
 
 const getBlogEntryForListerByID = `-- name: GetBlogEntryForListerByID :one
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT idblogs, b.forumthread_id, users_idusers, b.language_id, b.blog, b.written, b.timezone, u.username, coalesce(th.comments, 0),
-       b.users_idusers = ?1 AS is_owner,
+       b.users_idusers = ?3 AS is_owner,
        SUBSTRING_INDEX(b.blog, '\n', 1) as title
 FROM blogs b
 LEFT JOIN users u ON b.users_idusers=idusers
 LEFT JOIN forumthread th ON b.forumthread_id = th.idforumthread
-WHERE idblogs = ?2
+WHERE idblogs = ?4
   AND (
       b.language_id = 0
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = ?1
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -157,16 +160,18 @@ WHERE idblogs = ?2
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = idblogs OR g.item_id IS NULL)
-        AND (g.user_id = ?3 OR g.user_id IS NULL)
+        AND (g.user_id = ?5 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 LIMIT 1
 `
 
 type GetBlogEntryForListerByIDParams struct {
-	ListerID int64
-	ID       int64
-	UserID   sql.NullInt64
+	UsersIdusers   int64
+	ListerID       int64
+	ID             int64
+	UsersIdusers_2 int64
+	UserID         sql.NullInt64
 }
 
 type GetBlogEntryForListerByIDRow struct {
@@ -184,7 +189,13 @@ type GetBlogEntryForListerByIDRow struct {
 }
 
 func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntryForListerByIDParams) (*GetBlogEntryForListerByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getBlogEntryForListerByID, arg.ListerID, arg.ID, arg.UserID)
+	row := q.db.QueryRowContext(ctx, getBlogEntryForListerByID,
+		arg.UsersIdusers,
+		arg.ListerID,
+		arg.ID,
+		arg.UsersIdusers_2,
+		arg.UserID,
+	)
 	var i GetBlogEntryForListerByIDRow
 	err := row.Scan(
 		&i.Idblogs,
@@ -203,7 +214,10 @@ func (q *Queries) GetBlogEntryForListerByID(ctx context.Context, arg GetBlogEntr
 }
 
 const listBlogEntriesByAuthorForLister = `-- name: ListBlogEntriesByAuthorForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -220,11 +234,11 @@ AND (
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = ?3
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND (
@@ -241,16 +255,18 @@ AND (
     )
 )
 ORDER BY b.written DESC
-LIMIT ? OFFSET ?
+LIMIT ?8 OFFSET ?7
 `
 
 type ListBlogEntriesByAuthorForListerParams struct {
-	ListerID int64
-	AuthorID int64
-	IsAdmin  interface{}
-	UserID   sql.NullInt64
-	Limit    int64
-	Offset   int64
+	UsersIdusers   int64
+	ListerID       int64
+	AuthorID       int64
+	UsersIdusers_2 int64
+	IsAdmin        interface{}
+	UserID         sql.NullInt64
+	Limit          int64
+	Offset         int64
 }
 
 type ListBlogEntriesByAuthorForListerRow struct {
@@ -269,8 +285,10 @@ type ListBlogEntriesByAuthorForListerRow struct {
 
 func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg ListBlogEntriesByAuthorForListerParams) ([]*ListBlogEntriesByAuthorForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listBlogEntriesByAuthorForLister,
+		arg.UsersIdusers,
 		arg.ListerID,
 		arg.AuthorID,
+		arg.UsersIdusers_2,
 		arg.IsAdmin,
 		arg.UserID,
 		arg.Limit,
@@ -310,8 +328,11 @@ func (q *Queries) ListBlogEntriesByAuthorForLister(ctx context.Context, arg List
 }
 
 const listBlogEntriesByIDsForLister = `-- name: ListBlogEntriesByIDsForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?7
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -323,11 +344,11 @@ WHERE idblogs IN (/*SLICE:blogids*/?)
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = ?4
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -337,19 +358,21 @@ WHERE idblogs IN (/*SLICE:blogids*/?)
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = idblogs OR g.item_id IS NULL)
-        AND (g.user_id = ?5 OR g.user_id IS NULL)
+        AND (g.user_id = ?4 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY b.written DESC
-LIMIT ? OFFSET ?
+LIMIT ?6 OFFSET ?5
 `
 
 type ListBlogEntriesByIDsForListerParams struct {
-	Blogids  []int64
-	ListerID int64
-	UserID   sql.NullInt64
-	Limit    int64
-	Offset   int64
+	UsersIdusers   int64
+	ListerID       int64
+	Blogids        []int64
+	UsersIdusers_2 int64
+	UserID         sql.NullInt64
+	Limit          int64
+	Offset         int64
 }
 
 type ListBlogEntriesByIDsForListerRow struct {
@@ -365,6 +388,8 @@ type ListBlogEntriesByIDsForListerRow struct {
 func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlogEntriesByIDsForListerParams) ([]*ListBlogEntriesByIDsForListerRow, error) {
 	query := listBlogEntriesByIDsForLister
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.UsersIdusers)
+	queryParams = append(queryParams, arg.ListerID)
 	if len(arg.Blogids) > 0 {
 		for _, v := range arg.Blogids {
 			queryParams = append(queryParams, v)
@@ -373,7 +398,7 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 	} else {
 		query = strings.Replace(query, "/*SLICE:blogids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UsersIdusers_2)
 	queryParams = append(queryParams, arg.UserID)
 	queryParams = append(queryParams, arg.Limit)
 	queryParams = append(queryParams, arg.Offset)
@@ -408,7 +433,10 @@ func (q *Queries) ListBlogEntriesByIDsForLister(ctx context.Context, arg ListBlo
 }
 
 const listBlogEntriesForLister = `-- name: ListBlogEntriesForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -423,11 +451,11 @@ WHERE (
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = ?3
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND (
@@ -444,15 +472,17 @@ AND (
     )
 )
 ORDER BY b.written DESC
-LIMIT ? OFFSET ?
+LIMIT ?7 OFFSET ?6
 `
 
 type ListBlogEntriesForListerParams struct {
-	ListerID int64
-	IsAdmin  interface{}
-	UserID   sql.NullInt64
-	Limit    int64
-	Offset   int64
+	UsersIdusers   int64
+	ListerID       int64
+	UsersIdusers_2 int64
+	IsAdmin        interface{}
+	UserID         sql.NullInt64
+	Limit          int64
+	Offset         int64
 }
 
 type ListBlogEntriesForListerRow struct {
@@ -470,7 +500,9 @@ type ListBlogEntriesForListerRow struct {
 
 func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntriesForListerParams) ([]*ListBlogEntriesForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listBlogEntriesForLister,
+		arg.UsersIdusers,
 		arg.ListerID,
+		arg.UsersIdusers_2,
 		arg.IsAdmin,
 		arg.UserID,
 		arg.Limit,
@@ -509,8 +541,11 @@ func (q *Queries) ListBlogEntriesForLister(ctx context.Context, arg ListBlogEntr
 }
 
 const listBlogIDsBySearchWordFirstForLister = `-- name: ListBlogIDsBySearchWordFirstForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -524,11 +559,11 @@ WHERE swl.word = ?
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = ?2
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -538,19 +573,27 @@ WHERE swl.word = ?
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = idblogs OR g.item_id IS NULL)
-        AND (g.user_id = ?3 OR g.user_id IS NULL)
+        AND (g.user_id = ?4 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
 
 type ListBlogIDsBySearchWordFirstForListerParams struct {
-	Word     sql.NullString
-	ListerID int64
-	UserID   sql.NullInt64
+	UsersIdusers   int64
+	ListerID       int64
+	Word           sql.NullString
+	UsersIdusers_2 int64
+	UserID         sql.NullInt64
 }
 
 func (q *Queries) ListBlogIDsBySearchWordFirstForLister(ctx context.Context, arg ListBlogIDsBySearchWordFirstForListerParams) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, listBlogIDsBySearchWordFirstForLister, arg.Word, arg.ListerID, arg.UserID)
+	rows, err := q.db.QueryContext(ctx, listBlogIDsBySearchWordFirstForLister,
+		arg.UsersIdusers,
+		arg.ListerID,
+		arg.Word,
+		arg.UsersIdusers_2,
+		arg.UserID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -573,8 +616,11 @@ func (q *Queries) ListBlogIDsBySearchWordFirstForLister(ctx context.Context, arg
 }
 
 const listBlogIDsBySearchWordNextForLister = `-- name: ListBlogIDsBySearchWordNextForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?6
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -589,11 +635,11 @@ WHERE swl.word = ?
       OR b.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.b.users_idusers = ?3
+          WHERE ul.users_idusers = ?
             AND ul.language_id = b.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
       )
   )
   AND EXISTS (
@@ -603,21 +649,25 @@ WHERE swl.word = ?
         AND g.action = 'see'
         AND g.active = 1
         AND (g.item_id = idblogs OR g.item_id IS NULL)
-        AND (g.user_id = ?4 OR g.user_id IS NULL)
+        AND (g.user_id = ?5 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 `
 
 type ListBlogIDsBySearchWordNextForListerParams struct {
-	Word     sql.NullString
-	Ids      []int64
-	ListerID int64
-	UserID   sql.NullInt64
+	UsersIdusers   int64
+	ListerID       int64
+	Word           sql.NullString
+	Ids            []int64
+	UsersIdusers_2 int64
+	UserID         sql.NullInt64
 }
 
 func (q *Queries) ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg ListBlogIDsBySearchWordNextForListerParams) ([]int64, error) {
 	query := listBlogIDsBySearchWordNextForLister
 	var queryParams []interface{}
+	queryParams = append(queryParams, arg.UsersIdusers)
+	queryParams = append(queryParams, arg.ListerID)
 	queryParams = append(queryParams, arg.Word)
 	if len(arg.Ids) > 0 {
 		for _, v := range arg.Ids {
@@ -627,7 +677,7 @@ func (q *Queries) ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg 
 	} else {
 		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
 	}
-	queryParams = append(queryParams, arg.ListerID)
+	queryParams = append(queryParams, arg.UsersIdusers_2)
 	queryParams = append(queryParams, arg.UserID)
 	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -652,8 +702,11 @@ func (q *Queries) ListBlogIDsBySearchWordNextForLister(ctx context.Context, arg 
 }
 
 const listBloggersForLister = `-- name: ListBloggersForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?6
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -665,11 +718,11 @@ WHERE (
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = ?3
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
 )
 AND EXISTS (
@@ -679,19 +732,21 @@ AND EXISTS (
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = idblogs OR g.item_id IS NULL)
-      AND (g.user_id = ?4 OR g.user_id IS NULL)
+      AND (g.user_id = ?3 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?
+LIMIT ?5 OFFSET ?4
 `
 
 type ListBloggersForListerParams struct {
-	ListerID int64
-	UserID   sql.NullInt64
-	Limit    int64
-	Offset   int64
+	UsersIdusers   int64
+	ListerID       int64
+	UsersIdusers_2 int64
+	UserID         sql.NullInt64
+	Limit          int64
+	Offset         int64
 }
 
 type ListBloggersForListerRow struct {
@@ -701,7 +756,9 @@ type ListBloggersForListerRow struct {
 
 func (q *Queries) ListBloggersForLister(ctx context.Context, arg ListBloggersForListerParams) ([]*ListBloggersForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listBloggersForLister,
+		arg.UsersIdusers,
 		arg.ListerID,
+		arg.UsersIdusers_2,
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
@@ -728,8 +785,11 @@ func (q *Queries) ListBloggersForLister(ctx context.Context, arg ListBloggersFor
 }
 
 const listBloggersSearchForLister = `-- name: ListBloggersSearchForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?7
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -742,11 +802,11 @@ WHERE (LOWER(u.username) LIKE LOWER(?3) OR LOWER((SELECT email FROM user_emails 
     OR b.language_id IS NULL
     OR EXISTS (
         SELECT 1 FROM user_language ul
-        WHERE ul.b.users_idusers = ?4
+        WHERE ul.users_idusers = ?
           AND ul.language_id = b.language_id
     )
     OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.b.users_idusers = sqlc.arg(lister_id)
+        SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
     )
   )
   AND EXISTS (
@@ -756,20 +816,22 @@ WHERE (LOWER(u.username) LIKE LOWER(?3) OR LOWER((SELECT email FROM user_emails 
       AND g.action = 'see'
       AND g.active = 1
       AND (g.item_id = idblogs OR g.item_id IS NULL)
-      AND (g.user_id = ?5 OR g.user_id IS NULL)
+      AND (g.user_id = ?4 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 GROUP BY idusers
 ORDER BY u.username
-LIMIT ? OFFSET ?
+LIMIT ?6 OFFSET ?5
 `
 
 type ListBloggersSearchForListerParams struct {
-	Query    string
-	ListerID int64
-	UserID   sql.NullInt64
-	Limit    int64
-	Offset   int64
+	UsersIdusers   int64
+	ListerID       int64
+	Query          string
+	UsersIdusers_2 int64
+	UserID         sql.NullInt64
+	Limit          int64
+	Offset         int64
 }
 
 type ListBloggersSearchForListerRow struct {
@@ -779,8 +841,10 @@ type ListBloggersSearchForListerRow struct {
 
 func (q *Queries) ListBloggersSearchForLister(ctx context.Context, arg ListBloggersSearchForListerParams) ([]*ListBloggersSearchForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listBloggersSearchForLister,
-		arg.Query,
+		arg.UsersIdusers,
 		arg.ListerID,
+		arg.Query,
+		arg.UsersIdusers_2,
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,

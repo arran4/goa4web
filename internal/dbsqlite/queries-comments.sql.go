@@ -84,12 +84,12 @@ LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListAllCommentsWithThreadInfoParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListAllCommentsWithThreadInfoRow struct {
@@ -107,7 +107,7 @@ type AdminListAllCommentsWithThreadInfoRow struct {
 }
 
 func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListAllCommentsWithThreadInfo, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ WHERE EXISTS (
 
 type CreateCommentInSectionForCommenterParams struct {
 	LanguageID    sql.NullInt64
-	CommenterID   sql.NullInt64
+	CommenterID   int64
 	ForumthreadID int64
 	Text          sql.NullString
 	Written       sql.NullTime
@@ -248,7 +248,10 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int64) (*Commen
 }
 
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -263,14 +266,7 @@ WHERE c.idcomments = ?2
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -339,7 +335,10 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 }
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -358,14 +357,7 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -474,7 +466,10 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 }
 
 const getCommentsBySectionThreadIdForUser = `-- name: GetCommentsBySectionThreadIdForUser :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -490,14 +485,7 @@ WHERE c.forumthread_id=?2
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -592,7 +580,10 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 }
 
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -608,14 +599,7 @@ WHERE c.forumthread_id=?2
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g

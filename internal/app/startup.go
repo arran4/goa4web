@@ -76,7 +76,7 @@ func CheckMediaFiles(cfg *config.RuntimeConfig, dbPool *sql.DB) *common.UserErro
 	thresholdPercent := max(cfg.StartupMediaCheckThresholdPercent, 0)
 	maxAllowedMissing := int(float64(sampleSize) * (float64(thresholdPercent) / 100.0))
 
-	q := db.New(dbPool)
+	q := db.NewForDriver(dbPool, cfg.DBDriver)
 	ctx := context.Background()
 
 	var missing []string

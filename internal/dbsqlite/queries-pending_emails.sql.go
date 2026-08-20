@@ -186,17 +186,17 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL AND pe.error_count > 0
-  AND (?3 IS NULL OR p.language_id = ?3)
-  AND (?4 IS NULL OR r.name = ?4)
+  AND (?1 IS NULL OR p.language_id = ?1)
+  AND (?2 IS NULL OR r.name = ?2)
 ORDER BY pe.id
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type AdminListFailedEmailsParams struct {
 	LanguageID interface{}
 	RoleName   interface{}
-	Limit      int64
 	Offset     int64
+	Limit      int64
 }
 
 type AdminListFailedEmailsRow struct {
@@ -213,8 +213,8 @@ func (q *Queries) AdminListFailedEmails(ctx context.Context, arg AdminListFailed
 	rows, err := q.db.QueryContext(ctx, adminListFailedEmails,
 		arg.LanguageID,
 		arg.RoleName,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -304,15 +304,15 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NOT NULL
-  AND (?3 IS NULL
-    OR (?3 = 'direct' AND pe.direct_email = 1)
-    OR (?3 = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (?3 = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (?4 IS NULL OR pe.sent_at <= ?4)
-  AND (?5 IS NULL OR p.language_id = ?5)
-  AND (?6 IS NULL OR r.name = ?6)
+  AND (?1 IS NULL
+    OR (?1 = 'direct' AND pe.direct_email = 1)
+    OR (?1 = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (?1 = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (?2 IS NULL OR pe.sent_at <= ?2)
+  AND (?3 IS NULL OR p.language_id = ?3)
+  AND (?4 IS NULL OR r.name = ?4)
 ORDER BY pe.sent_at DESC
-LIMIT ? OFFSET ?
+LIMIT ?6 OFFSET ?5
 `
 
 type AdminListSentEmailsParams struct {
@@ -320,8 +320,8 @@ type AdminListSentEmailsParams struct {
 	CreatedBefore interface{}
 	LanguageID    interface{}
 	RoleName      interface{}
-	Limit         int64
 	Offset        int64
+	Limit         int64
 }
 
 type AdminListSentEmailsRow struct {
@@ -341,8 +341,8 @@ func (q *Queries) AdminListSentEmails(ctx context.Context, arg AdminListSentEmai
 		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.RoleName,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -380,18 +380,18 @@ LEFT JOIN preferences p ON pe.to_user_id = p.users_idusers
 LEFT JOIN user_roles ur ON pe.to_user_id = ur.users_idusers
 LEFT JOIN roles r ON ur.role_id = r.id
 WHERE pe.sent_at IS NULL
-  AND (?3 IS NULL
-    OR (?3 = 'pending' AND pe.error_count = 0)
-    OR (?3 = 'failed' AND pe.error_count > 0))
-  AND (?4 IS NULL
-    OR (?4 = 'direct' AND pe.direct_email = 1)
-    OR (?4 = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
-    OR (?4 = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
-  AND (?5 IS NULL OR pe.created_at <= ?5)
-  AND (?6 IS NULL OR p.language_id = ?6)
-  AND (?7 IS NULL OR r.name = ?7)
+  AND (?1 IS NULL
+    OR (?1 = 'pending' AND pe.error_count = 0)
+    OR (?1 = 'failed' AND pe.error_count > 0))
+  AND (?2 IS NULL
+    OR (?2 = 'direct' AND pe.direct_email = 1)
+    OR (?2 = 'user' AND pe.direct_email = 0 AND pe.to_user_id IS NOT NULL AND pe.to_user_id <> 0)
+    OR (?2 = 'userless' AND pe.direct_email = 0 AND (pe.to_user_id IS NULL OR pe.to_user_id = 0)))
+  AND (?3 IS NULL OR pe.created_at <= ?3)
+  AND (?4 IS NULL OR p.language_id = ?4)
+  AND (?5 IS NULL OR r.name = ?5)
 ORDER BY pe.id
-LIMIT ? OFFSET ?
+LIMIT ?7 OFFSET ?6
 `
 
 type AdminListUnsentPendingEmailsParams struct {
@@ -400,8 +400,8 @@ type AdminListUnsentPendingEmailsParams struct {
 	CreatedBefore interface{}
 	LanguageID    interface{}
 	RoleName      interface{}
-	Limit         int64
 	Offset        int64
+	Limit         int64
 }
 
 type AdminListUnsentPendingEmailsRow struct {
@@ -421,8 +421,8 @@ func (q *Queries) AdminListUnsentPendingEmails(ctx context.Context, arg AdminLis
 		arg.CreatedBefore,
 		arg.LanguageID,
 		arg.RoleName,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -493,12 +493,12 @@ SELECT id, to_user_id, body, error_count, direct_email, created_at
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type SystemListPendingEmailsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type SystemListPendingEmailsRow struct {
@@ -511,7 +511,7 @@ type SystemListPendingEmailsRow struct {
 }
 
 func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error) {
-	rows, err := q.db.QueryContext(ctx, systemListPendingEmails, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, systemListPendingEmails, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

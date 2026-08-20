@@ -92,7 +92,10 @@ func (q *Queries) AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAn
 }
 
 const getActiveAnnouncementWithNewsForLister = `-- name: GetActiveAnnouncementWithNewsForLister :one
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -102,9 +105,7 @@ FROM site_announcements a
 JOIN site_news n ON n.idsiteNews = a.site_news_id
 WHERE a.active = 1
   AND (
-      NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      (SELECT COUNT(*) FROM user_lang) = 0
       OR n.language_id = 0
       OR n.language_id IS NULL
       OR n.language_id IN (

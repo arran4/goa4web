@@ -11,19 +11,15 @@ import (
 )
 
 const adminCountForumCategories = `-- name: AdminCountForumCategories :one
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+)
 SELECT COUNT(*)
 FROM forumcategory c
 WHERE (
     c.language_id = 0
     OR c.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?1
-          AND ul.language_id = c.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 `
 
@@ -153,6 +149,9 @@ func (q *Queries) AdminGetTopicGrants(ctx context.Context, topicID sql.NullInt64
 }
 
 const adminListForumCategoriesWithCounts = `-- name: AdminListForumCategoriesWithCounts :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+)
 SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, c.deleted_at, COUNT(c2.idforumcategory) AS SubcategoryCount,
        COUNT(t.idforumtopic) AS TopicCount
 FROM forumcategory c
@@ -161,24 +160,17 @@ LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
     c.language_id = 0
     OR c.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?3
-          AND ul.language_id = c.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 GROUP BY c.idforumcategory
 ORDER BY c.idforumcategory
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListForumCategoriesWithCountsParams struct {
-	ViewerID int64
-	Limit    int64
 	Offset   int64
+	Limit    int64
+	ViewerID int64
 }
 
 type AdminListForumCategoriesWithCountsRow struct {
@@ -193,7 +185,7 @@ type AdminListForumCategoriesWithCountsRow struct {
 }
 
 func (q *Queries) AdminListForumCategoriesWithCounts(ctx context.Context, arg AdminListForumCategoriesWithCountsParams) ([]*AdminListForumCategoriesWithCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListForumCategoriesWithCounts, arg.ViewerID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListForumCategoriesWithCounts, arg.Offset, arg.Limit, arg.ViewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -284,16 +276,16 @@ const adminListForumTopics = `-- name: AdminListForumTopics :many
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at
 FROM forumtopic t
 ORDER BY t.idforumtopic
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListForumTopicsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTopicsParams) ([]*Forumtopic, error) {
-	rows, err := q.db.QueryContext(ctx, adminListForumTopics, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListForumTopics, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -501,6 +493,10 @@ WITH role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?4
 )
 SELECT count(*)
 FROM forumthread th
@@ -531,34 +527,28 @@ WHERE t.handler = 'private'
   AND (
       -- If thread has an unread label (and invert=false), it's unread
       EXISTS (
-          SELECT 1 FROM content_private_labels cpl
-          WHERE cpl.item = 'thread'
-            AND cpl.item_id = th.idforumthread
-            AND cpl.user_id = ?4
-            AND cpl.label = 'unread'
-            AND cpl.invert = false
+          SELECT 1 FROM user_cpl
+          WHERE user_cpl.item_id = th.idforumthread
+            AND user_cpl.label = 'unread'
+            AND user_cpl.invert = false
       )
       OR
       (
           -- Otherwise, if it's not marked as 'not unread'
           NOT EXISTS (
-              SELECT 1 FROM content_private_labels cpl
-              WHERE cpl.item = 'thread'
-                AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = sqlc.arg(grantee_id)
-                AND cpl.label = 'unread'
-                AND cpl.invert = true
+              SELECT 1 FROM user_cpl
+              WHERE user_cpl.item_id = th.idforumthread
+                AND user_cpl.label = 'unread'
+                AND user_cpl.invert = true
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
               c.users_idusers != ?4
               OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = ?4
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = false
               )
           )
       )
@@ -632,19 +622,16 @@ func (q *Queries) CreateForumTopicForPoster(ctx context.Context, arg CreateForum
 }
 
 const getAllForumCategories = `-- name: GetAllForumCategories :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+)
 SELECT f.idforumcategory, f.forumcategory_idforumcategory, f.language_id, f.title, f.description, f.deleted_at
 FROM forumcategory f
 WHERE (
     f.language_id = 0
     OR f.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?1
-          AND ul.language_id = f.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR f.language_id IN (SELECT language_id FROM user_lang)
+    OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 `
 
@@ -679,6 +666,9 @@ func (q *Queries) GetAllForumCategories(ctx context.Context, viewerID int64) ([]
 }
 
 const getAllForumCategoriesWithSubcategoryCount = `-- name: GetAllForumCategoriesWithSubcategoryCount :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+)
 SELECT c.idforumcategory, c.forumcategory_idforumcategory, c.language_id, c.title, c.description, c.deleted_at, COUNT(c2.idforumcategory) as SubcategoryCount,
        COUNT(t.idforumtopic)   as TopicCount
 FROM forumcategory c
@@ -687,14 +677,7 @@ LEFT JOIN forumtopic t ON c.idforumcategory = t.forumcategory_idforumcategory
 WHERE (
     c.language_id = 0
     OR c.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?1
-          AND ul.language_id = c.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 GROUP BY c.idforumcategory
 `
@@ -799,19 +782,15 @@ func (q *Queries) GetAllForumThreadsWithTopic(ctx context.Context) ([]*GetAllFor
 }
 
 const getAllForumTopics = `-- name: GetAllForumTopics :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+)
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at
 FROM forumtopic t
 WHERE (
     t.language_id = 0
     OR t.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?1
-          AND ul.language_id = t.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
 GROUP BY t.idforumtopic
 `
@@ -852,10 +831,17 @@ func (q *Queries) GetAllForumTopics(ctx context.Context, viewerID int64) ([]*For
 }
 
 const getAllForumTopicsByCategoryIdForUserWithLastPosterName = `-- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?3
 )
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -864,14 +850,7 @@ WHERE t.forumcategory_idforumcategory = ?1
   AND (
       t.language_id = 0
       OR t.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = t.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -880,7 +859,7 @@ WHERE t.forumcategory_idforumcategory = ?1
       AND g.action='see'
       AND g.active=1
       AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY t.lastaddition DESC
@@ -888,8 +867,8 @@ ORDER BY t.lastaddition DESC
 
 type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams struct {
 	CategoryID    int64
-	ViewerID      int64
 	ViewerMatchID sql.NullInt64
+	ViewerID      int64
 }
 
 type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
@@ -908,7 +887,7 @@ type GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow struct {
 }
 
 func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx context.Context, arg GetAllForumTopicsByCategoryIdForUserWithLastPosterNameParams) ([]*GetAllForumTopicsByCategoryIdForUserWithLastPosterNameRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllForumTopicsByCategoryIdForUserWithLastPosterName, arg.CategoryID, arg.ViewerID, arg.ViewerMatchID)
+	rows, err := q.db.QueryContext(ctx, getAllForumTopicsByCategoryIdForUserWithLastPosterName, arg.CategoryID, arg.ViewerMatchID, arg.ViewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -944,19 +923,15 @@ func (q *Queries) GetAllForumTopicsByCategoryIdForUserWithLastPosterName(ctx con
 }
 
 const getForumCategoryById = `-- name: GetForumCategoryById :one
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?2
+)
 SELECT idforumcategory, forumcategory_idforumcategory, language_id, title, description, deleted_at FROM forumcategory
 WHERE idforumcategory = ?1
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
 `
 
@@ -1110,10 +1085,17 @@ func (q *Queries) GetForumTopicById(ctx context.Context, idforumtopic int64) (*F
 }
 
 const getForumTopicByIdForUser = `-- name: GetForumTopicByIdForUser :one
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?3
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?3
 )
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -1122,14 +1104,7 @@ WHERE t.idforumtopic = ?1
   AND (
       t.language_id = 0
       OR t.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = t.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -1138,7 +1113,7 @@ WHERE t.idforumtopic = ?1
       AND g.action='view'
       AND g.active=1
       AND ((t.handler = 'private' AND g.item_id = t.idforumtopic) OR (t.handler <> 'private' AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)))
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY t.lastaddition DESC
@@ -1146,8 +1121,8 @@ ORDER BY t.lastaddition DESC
 
 type GetForumTopicByIdForUserParams struct {
 	Idforumtopic  int64
-	ViewerID      int64
 	ViewerMatchID sql.NullInt64
+	ViewerID      int64
 }
 
 type GetForumTopicByIdForUserRow struct {
@@ -1166,7 +1141,7 @@ type GetForumTopicByIdForUserRow struct {
 }
 
 func (q *Queries) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopicByIdForUserParams) (*GetForumTopicByIdForUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getForumTopicByIdForUser, arg.Idforumtopic, arg.ViewerID, arg.ViewerMatchID)
+	row := q.db.QueryRowContext(ctx, getForumTopicByIdForUser, arg.Idforumtopic, arg.ViewerMatchID, arg.ViewerID)
 	var i GetForumTopicByIdForUserRow
 	err := row.Scan(
 		&i.Idforumtopic,
@@ -1186,19 +1161,15 @@ func (q *Queries) GetForumTopicByIdForUser(ctx context.Context, arg GetForumTopi
 }
 
 const getForumTopicsByCategoryId = `-- name: GetForumTopicsByCategoryId :many
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?2
+)
 SELECT idforumtopic, lastposter, forumcategory_idforumcategory, language_id, title, description, threads, comments, lastaddition, handler, deleted_at FROM forumtopic
 WHERE forumcategory_idforumcategory = ?1
   AND (
       language_id = 0
       OR language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?2
-            AND ul.language_id = language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
 ORDER BY lastaddition DESC
 `
@@ -1244,10 +1215,17 @@ func (q *Queries) GetForumTopicsByCategoryId(ctx context.Context, arg GetForumTo
 }
 
 const getForumTopicsForUser = `-- name: GetForumTopicsForUser :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?2
+),
+role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?2
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?2
 )
 SELECT t.idforumtopic, t.lastposter, t.forumcategory_idforumcategory, t.language_id, t.title, t.description, t.threads, t.comments, t.lastaddition, t.handler, t.deleted_at, lu.username AS LastPosterUsername
 FROM forumtopic t
@@ -1256,14 +1234,7 @@ WHERE t.handler <> 'private'
   AND (
     t.language_id = 0
     OR t.language_id IS NULL
-    OR EXISTS (
-        SELECT 1 FROM user_language ul
-        WHERE ul.users_idusers = ?1
-          AND ul.language_id = t.language_id
-    )
-    OR NOT EXISTS (
-        SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-    )
+    OR t.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
 )
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -1272,15 +1243,15 @@ WHERE t.handler <> 'private'
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = t.idforumtopic OR g.item_id IS NULL)
-      AND (g.user_id = ?2 OR g.user_id IS NULL)
+      AND (g.user_id = ?1 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY t.lastaddition DESC
 `
 
 type GetForumTopicsForUserParams struct {
-	ViewerID      int64
 	ViewerMatchID sql.NullInt64
+	ViewerID      int64
 }
 
 type GetForumTopicsForUserRow struct {
@@ -1299,7 +1270,7 @@ type GetForumTopicsForUserRow struct {
 }
 
 func (q *Queries) GetForumTopicsForUser(ctx context.Context, arg GetForumTopicsForUserParams) ([]*GetForumTopicsForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getForumTopicsForUser, arg.ViewerID, arg.ViewerMatchID)
+	rows, err := q.db.QueryContext(ctx, getForumTopicsForUser, arg.ViewerMatchID, arg.ViewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -1402,10 +1373,17 @@ func (q *Queries) GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, ar
 }
 
 const getReplyThreadsForLister = `-- name: GetReplyThreadsForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = ?1
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?1
 )
 SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.comments, t.lastaddition, t.locked, t.deleted_at, t.reply_to_comment_id, t.reply_to_thread_id,
        c.text as first_post_text,
@@ -1417,51 +1395,41 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
        c.written as firstpostwritten,
        CASE WHEN topic.handler = 'private' AND (
            EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = ?1
-                 AND cpl.label = 'unread'
-                 AND cpl.invert = 0
+               SELECT 1 FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.label = 'unread'
+                 AND user_cpl.invert = 0
            )
            OR (
                NOT EXISTS (
-                   SELECT 1 FROM content_private_labels cpl
-                   WHERE cpl.item = 'thread'
-                     AND cpl.item_id = t.idforumthread
-                     AND cpl.user_id = sqlc.arg(viewer_id)
-                     AND cpl.label = 'unread'
-                     AND cpl.invert = 1
+                   SELECT 1 FROM user_cpl
+                   WHERE user_cpl.item_id = t.idforumthread
+                     AND user_cpl.label = 'unread'
+                     AND user_cpl.invert = 1
                )
                AND (
                    c.users_idusers != ?1
                    OR EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = ?1
-                         AND cpl.label = 'new'
-                         AND cpl.invert = 0
+                       SELECT 1 FROM user_cpl
+                       WHERE user_cpl.item_id = t.idforumthread
+                         AND user_cpl.label = 'new'
+                         AND user_cpl.invert = 0
                    )
                )
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN ?1 != 0 AND (
            (c.users_idusers != ?1 AND NOT EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = sqlc.arg(viewer_id)
-                 AND cpl.label = 'new'
-                 AND cpl.invert = 1
+               SELECT 1 FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.label = 'new'
+                 AND user_cpl.invert = 1
            ))
            OR EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = ?1
-                 AND cpl.label = 'new'
-                 AND cpl.invert = 0
+               SELECT 1 FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.label = 'new'
+                 AND user_cpl.invert = 0
            )
        ) THEN 1 ELSE 0 END AS is_new,
        (
@@ -1483,17 +1451,15 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
            ) cls
        ) AS author_labels,
        (
-           SELECT GROUP_CONCAT(cpl.label, char(10))
+           SELECT GROUP_CONCAT(user_cpl.label, char(10))
            FROM (
-               SELECT cpl.label
-               FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = ?1
-                 AND cpl.invert = 0
-                 AND cpl.label NOT IN ('new', 'unread')
-               ORDER BY cpl.label
-           ) cpl
+               SELECT user_cpl.label
+               FROM user_cpl
+               WHERE user_cpl.item_id = t.idforumthread
+                 AND user_cpl.invert = 0
+                 AND user_cpl.label NOT IN ('new', 'unread')
+               ORDER BY user_cpl.label
+           ) user_cpl
        ) AS private_labels
 FROM forumthread t
 JOIN forumtopic topic ON t.forumtopic_idforumtopic = topic.idforumtopic
@@ -1504,26 +1470,12 @@ WHERE t.reply_to_thread_id = ?2
   AND (
       topic.language_id = 0
       OR topic.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = topic.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR topic.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?1
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants topic_grant
@@ -1805,9 +1757,13 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 
 const listUnreadPrivateThreadsForUser = `-- name: ListUnreadPrivateThreadsForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?6
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
+),
+user_cpl AS (
+    SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?4
 )
 SELECT th.idforumthread,
        th.forumtopic_idforumtopic as topic_id,
@@ -1828,7 +1784,7 @@ LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
-  AND (?3 IS NULL OR th.forumtopic_idforumtopic = ?4)
+  AND (?1 IS NULL OR th.forumtopic_idforumtopic = ?2)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -1836,7 +1792,7 @@ WHERE t.handler = 'private'
       AND g.action = 'see'
       AND g.active = 1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ?5 OR g.user_id IS NULL)
+      AND (g.user_id = ?3 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
   AND EXISTS (
@@ -1846,46 +1802,40 @@ WHERE t.handler = 'private'
         AND thread_grant.action = 'view'
         AND thread_grant.active = 1
         AND thread_grant.item_id = th.idforumthread
-        AND (thread_grant.user_id = ?5 OR thread_grant.user_id IS NULL)
+        AND (thread_grant.user_id = ?3 OR thread_grant.user_id IS NULL)
         AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
   )
   AND (
       -- If thread has an unread label (and invert=false), it's unread
       EXISTS (
-          SELECT 1 FROM content_private_labels cpl
-          WHERE cpl.item = 'thread'
-            AND cpl.item_id = th.idforumthread
-            AND cpl.user_id = ?6
-            AND cpl.label = 'unread'
-            AND cpl.invert = false
+          SELECT 1 FROM user_cpl
+          WHERE user_cpl.item_id = th.idforumthread
+            AND user_cpl.label = 'unread'
+            AND user_cpl.invert = false
       )
       OR
       (
           -- Otherwise, if it's not marked as 'not unread'
           NOT EXISTS (
-              SELECT 1 FROM content_private_labels cpl
-              WHERE cpl.item = 'thread'
-                AND cpl.item_id = th.idforumthread
-                AND cpl.user_id = sqlc.arg(grantee_id)
-                AND cpl.label = 'unread'
-                AND cpl.invert = true
+              SELECT 1 FROM user_cpl
+              WHERE user_cpl.item_id = th.idforumthread
+                AND user_cpl.label = 'unread'
+                AND user_cpl.invert = true
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?6
+              c.users_idusers != ?4
               OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = ?6
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = false
               )
           )
       )
   )
 ORDER BY th.lastaddition DESC
-LIMIT ? OFFSET ?
+LIMIT ?6 OFFSET ?5
 `
 
 type ListUnreadPrivateThreadsForUserParams struct {
@@ -1893,8 +1843,8 @@ type ListUnreadPrivateThreadsForUserParams struct {
 	TopicIDVal  int64
 	GrantUserID sql.NullInt64
 	GranteeID   int64
-	Limit       int64
 	Offset      int64
+	Limit       int64
 }
 
 type ListUnreadPrivateThreadsForUserRow struct {
@@ -1918,8 +1868,8 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 		arg.TopicIDVal,
 		arg.GrantUserID,
 		arg.GranteeID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
@@ -1963,22 +1913,22 @@ INSERT INTO grants (
 SELECT DISTINCT
     CURRENT_TIMESTAMP, src_grant.user_id, src_grant.role_id,
     'privateforum_thread', 'thread', 'allow',
-    ?1, NULL, src_grant.action, NULL, 1
+    ?, NULL, src_grant.action, NULL, 1
 FROM grants src_grant
 WHERE src_grant.section = 'privateforum_thread'
   AND src_grant.item = 'thread'
   AND src_grant.rule_type = 'allow'
   AND src_grant.active = 1
   AND src_grant.action IN ('view', 'reply')
-  AND src_grant.item_id = ?2
+  AND src_grant.item_id = ?
   AND (src_grant.user_id IS NOT NULL OR src_grant.role_id IS NOT NULL)
   AND NOT EXISTS (
       SELECT 1
       FROM grants dst_grant
-        WHERE dst_grant.section = 'privateforum_thread'
-          AND dst_grant.item = 'thread'
-          AND dst_grant.rule_type = 'allow'
-          AND dst_grant.item_id = sqlc.arg(dst_thread_id)
+      WHERE dst_grant.section = 'privateforum_thread'
+        AND dst_grant.item = 'thread'
+        AND dst_grant.rule_type = 'allow'
+        AND dst_grant.item_id = ?
         AND dst_grant.action = src_grant.action
         AND dst_grant.active = 1
         AND (dst_grant.user_id IS src_grant.user_id)
@@ -1987,12 +1937,12 @@ WHERE src_grant.section = 'privateforum_thread'
 `
 
 type SystemCopyPrivateThreadGrantsToThreadParams struct {
-	DstThreadID sql.NullInt64
-	SrcThreadID sql.NullInt64
+	ItemID   sql.NullInt64
+	ItemID_2 sql.NullInt64
 }
 
 func (q *Queries) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
-	_, err := q.db.ExecContext(ctx, systemCopyPrivateThreadGrantsToThread, arg.DstThreadID, arg.SrcThreadID)
+	_, err := q.db.ExecContext(ctx, systemCopyPrivateThreadGrantsToThread, arg.ItemID, arg.ItemID_2)
 	return err
 }
 

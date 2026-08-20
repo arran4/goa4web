@@ -70,10 +70,10 @@ func (q *Queries) AdminListOrphanForumThreads(ctx context.Context) ([]int64, err
 }
 
 const deleteThreadsByTopicID = `-- name: DeleteThreadsByTopicID :exec
-DELETE FROM forumthread
+DELETE FROM forumthread WHERE forumtopic_idforumtopic = ?
 `
 
-func (q *Queries) DeleteThreadsByTopicID(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteThreadsByTopicID)
+func (q *Queries) DeleteThreadsByTopicID(ctx context.Context, forumtopicIdforumtopic int64) error {
+	_, err := q.db.ExecContext(ctx, deleteThreadsByTopicID, forumtopicIdforumtopic)
 	return err
 }

@@ -299,12 +299,12 @@ func (q *Queries) AdminIsWritingDeactivated(ctx context.Context, idwriting int64
 const adminListDeactivatedBlogs = `-- name: AdminListDeactivatedBlogs :many
 SELECT idblogs, blog FROM deactivated_blogs
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListDeactivatedBlogsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListDeactivatedBlogsRow struct {
@@ -313,7 +313,7 @@ type AdminListDeactivatedBlogsRow struct {
 }
 
 func (q *Queries) AdminListDeactivatedBlogs(ctx context.Context, arg AdminListDeactivatedBlogsParams) ([]*AdminListDeactivatedBlogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListDeactivatedBlogs, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedBlogs, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -338,12 +338,12 @@ func (q *Queries) AdminListDeactivatedBlogs(ctx context.Context, arg AdminListDe
 const adminListDeactivatedComments = `-- name: AdminListDeactivatedComments :many
 SELECT idcomments, text FROM deactivated_comments
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListDeactivatedCommentsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListDeactivatedCommentsRow struct {
@@ -352,7 +352,7 @@ type AdminListDeactivatedCommentsRow struct {
 }
 
 func (q *Queries) AdminListDeactivatedComments(ctx context.Context, arg AdminListDeactivatedCommentsParams) ([]*AdminListDeactivatedCommentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListDeactivatedComments, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedComments, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -377,12 +377,12 @@ func (q *Queries) AdminListDeactivatedComments(ctx context.Context, arg AdminLis
 const adminListDeactivatedImageposts = `-- name: AdminListDeactivatedImageposts :many
 SELECT idimagepost, description, thumbnail, fullimage FROM deactivated_imageposts
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListDeactivatedImagepostsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListDeactivatedImagepostsRow struct {
@@ -393,7 +393,7 @@ type AdminListDeactivatedImagepostsRow struct {
 }
 
 func (q *Queries) AdminListDeactivatedImageposts(ctx context.Context, arg AdminListDeactivatedImagepostsParams) ([]*AdminListDeactivatedImagepostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListDeactivatedImageposts, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedImageposts, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -423,12 +423,12 @@ func (q *Queries) AdminListDeactivatedImageposts(ctx context.Context, arg AdminL
 const adminListDeactivatedLinks = `-- name: AdminListDeactivatedLinks :many
 SELECT id, title, url, description FROM deactivated_linker
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListDeactivatedLinksParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListDeactivatedLinksRow struct {
@@ -439,7 +439,7 @@ type AdminListDeactivatedLinksRow struct {
 }
 
 func (q *Queries) AdminListDeactivatedLinks(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListDeactivatedLinks, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedLinks, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -469,12 +469,12 @@ func (q *Queries) AdminListDeactivatedLinks(ctx context.Context, arg AdminListDe
 const adminListDeactivatedUsers = `-- name: AdminListDeactivatedUsers :many
 SELECT idusers, email, username FROM deactivated_users
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListDeactivatedUsersParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListDeactivatedUsersRow struct {
@@ -484,7 +484,7 @@ type AdminListDeactivatedUsersRow struct {
 }
 
 func (q *Queries) AdminListDeactivatedUsers(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListDeactivatedUsers, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedUsers, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -509,12 +509,12 @@ func (q *Queries) AdminListDeactivatedUsers(ctx context.Context, arg AdminListDe
 const adminListDeactivatedWritings = `-- name: AdminListDeactivatedWritings :many
 SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListDeactivatedWritingsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListDeactivatedWritingsRow struct {
@@ -526,7 +526,7 @@ type AdminListDeactivatedWritingsRow struct {
 }
 
 func (q *Queries) AdminListDeactivatedWritings(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListDeactivatedWritings, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListDeactivatedWritings, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -556,7 +556,7 @@ func (q *Queries) AdminListDeactivatedWritings(ctx context.Context, arg AdminLis
 
 const adminListPendingDeactivatedBlogs = `-- name: AdminListPendingDeactivatedBlogs :many
 SELECT idblogs, blog FROM deactivated_blogs WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type AdminListPendingDeactivatedBlogsParams struct {
@@ -596,7 +596,7 @@ func (q *Queries) AdminListPendingDeactivatedBlogs(ctx context.Context, arg Admi
 const adminListPendingDeactivatedComments = `-- name: AdminListPendingDeactivatedComments :many
 SELECT idcomments, text FROM deactivated_comments
 WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type AdminListPendingDeactivatedCommentsParams struct {
@@ -635,7 +635,7 @@ func (q *Queries) AdminListPendingDeactivatedComments(ctx context.Context, arg A
 
 const adminListPendingDeactivatedImageposts = `-- name: AdminListPendingDeactivatedImageposts :many
 SELECT idimagepost, description, thumbnail, fullimage FROM deactivated_imageposts WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type AdminListPendingDeactivatedImagepostsParams struct {
@@ -681,7 +681,7 @@ func (q *Queries) AdminListPendingDeactivatedImageposts(ctx context.Context, arg
 
 const adminListPendingDeactivatedLinks = `-- name: AdminListPendingDeactivatedLinks :many
 SELECT id, title, url, description FROM deactivated_linker WHERE author_id = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type AdminListPendingDeactivatedLinksParams struct {
@@ -728,7 +728,7 @@ func (q *Queries) AdminListPendingDeactivatedLinks(ctx context.Context, arg Admi
 const adminListPendingDeactivatedWritings = `-- name: AdminListPendingDeactivatedWritings :many
 SELECT idwriting, title, writing, abstract, private FROM deactivated_writings
 WHERE users_idusers = ? AND restored_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type AdminListPendingDeactivatedWritingsParams struct {

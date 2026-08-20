@@ -126,12 +126,12 @@ LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN imageboard b ON i.imageboard_idimageboard = b.idimageboard
 WHERE i.deleted_at IS NULL
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListAllImagePostsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 type AdminListAllImagePostsRow struct {
@@ -146,7 +146,7 @@ type AdminListAllImagePostsRow struct {
 }
 
 func (q *Queries) AdminListAllImagePosts(ctx context.Context, arg AdminListAllImagePostsParams) ([]*AdminListAllImagePostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, adminListAllImagePosts, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListAllImagePosts, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -180,16 +180,16 @@ func (q *Queries) AdminListAllImagePosts(ctx context.Context, arg AdminListAllIm
 const adminListBoards = `-- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-LIMIT ? OFFSET ?
+LIMIT ?2 OFFSET ?1
 `
 
 type AdminListBoardsParams struct {
-	Limit  int64
 	Offset int64
+	Limit  int64
 }
 
 func (q *Queries) AdminListBoards(ctx context.Context, arg AdminListBoardsParams) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, adminListBoards, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, adminListBoards, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +492,7 @@ LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetImagePostsByUserDescendingParams struct {
@@ -565,7 +565,7 @@ LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ? AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type GetImagePostsByUserDescendingAllParams struct {
@@ -639,7 +639,7 @@ WITH role_ids AS (
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-WHERE (b.imageboard_idimageboard = ?3 OR (b.imageboard_idimageboard IS NULL AND ?3 IS NULL))
+WHERE (b.imageboard_idimageboard = ?1 OR (b.imageboard_idimageboard IS NULL AND ?1 IS NULL))
   AND b.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -648,27 +648,27 @@ WHERE (b.imageboard_idimageboard = ?3 OR (b.imageboard_idimageboard IS NULL AND 
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = ?4 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListBoardsByParentIDForListerParams struct {
-	ListerID     int64
 	ParentID     sql.NullInt64
 	ListerUserID sql.NullInt64
-	Limit        int64
 	Offset       int64
+	Limit        int64
+	ListerID     int64
 }
 
 func (q *Queries) ListBoardsByParentIDForLister(ctx context.Context, arg ListBoardsByParentIDForListerParams) ([]*Imageboard, error) {
 	rows, err := q.db.QueryContext(ctx, listBoardsByParentIDForLister,
-		arg.ListerID,
 		arg.ParentID,
 		arg.ListerUserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -713,25 +713,25 @@ WHERE b.deleted_at IS NULL AND EXISTS (
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = b.idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?1 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type ListBoardsForListerParams struct {
-	ListerID     int64
 	ListerUserID sql.NullInt64
-	Limit        int64
 	Offset       int64
+	Limit        int64
+	ListerID     int64
 }
 
 func (q *Queries) ListBoardsForLister(ctx context.Context, arg ListBoardsForListerParams) ([]*Imageboard, error) {
 	rows, err := q.db.QueryContext(ctx, listBoardsForLister,
-		arg.ListerID,
 		arg.ListerUserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -771,7 +771,7 @@ SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboa
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.imageboard_idimageboard = ?3
+WHERE i.imageboard_idimageboard = ?1
   AND i.approved = 1
   AND i.deleted_at IS NULL
   AND EXISTS (
@@ -781,18 +781,18 @@ WHERE i.imageboard_idimageboard = ?3
       AND g.action='view'
       AND g.active=1
       AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = ?4 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListImagePostsByBoardForListerParams struct {
-	ListerID     int64
 	BoardID      sql.NullInt64
 	ListerUserID sql.NullInt64
-	Limit        int64
 	Offset       int64
+	Limit        int64
+	ListerID     int64
 }
 
 type ListImagePostsByBoardForListerRow struct {
@@ -815,11 +815,11 @@ type ListImagePostsByBoardForListerRow struct {
 
 func (q *Queries) ListImagePostsByBoardForLister(ctx context.Context, arg ListImagePostsByBoardForListerParams) ([]*ListImagePostsByBoardForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listImagePostsByBoardForLister,
-		arg.ListerID,
 		arg.BoardID,
 		arg.ListerUserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -868,7 +868,7 @@ SELECT i.idimagepost, i.forumthread_id, i.users_idusers, i.imageboard_idimageboa
 FROM imagepost i
 LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
-WHERE i.users_idusers = ?3
+WHERE i.users_idusers = ?1
   AND i.approved = 1
   AND i.deleted_at IS NULL
   AND EXISTS (
@@ -878,19 +878,19 @@ WHERE i.users_idusers = ?3
       AND g.action='see'
       AND g.active=1
       AND (g.item_id = i.imageboard_idimageboard OR g.item_id IS NULL)
-      AND (g.user_id = ?4 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?
+LIMIT ?4 OFFSET ?3
 `
 
 type ListImagePostsByPosterForListerParams struct {
-	ListerID     int64
 	PosterID     int64
 	ListerUserID sql.NullInt64
-	Limit        int64
 	Offset       int64
+	Limit        int64
+	ListerID     int64
 }
 
 type ListImagePostsByPosterForListerRow struct {
@@ -913,11 +913,11 @@ type ListImagePostsByPosterForListerRow struct {
 
 func (q *Queries) ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, listImagePostsByPosterForLister,
-		arg.ListerID,
 		arg.PosterID,
 		arg.ListerUserID,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
 	)
 	if err != nil {
 		return nil, err
@@ -1016,19 +1016,19 @@ func (q *Queries) SystemAssignImagePostThreadID(ctx context.Context, arg SystemA
 const systemListBoardsByParentID = `-- name: SystemListBoardsByParentID :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-WHERE (b.imageboard_idimageboard = ?3 OR (b.imageboard_idimageboard IS NULL AND ?3 IS NULL))
+WHERE (b.imageboard_idimageboard = ?1 OR (b.imageboard_idimageboard IS NULL AND ?1 IS NULL))
   AND b.deleted_at IS NULL
-LIMIT ? OFFSET ?
+LIMIT ?3 OFFSET ?2
 `
 
 type SystemListBoardsByParentIDParams struct {
 	ParentID sql.NullInt64
-	Limit    int64
 	Offset   int64
+	Limit    int64
 }
 
 func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error) {
-	rows, err := q.db.QueryContext(ctx, systemListBoardsByParentID, arg.ParentID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, systemListBoardsByParentID, arg.ParentID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

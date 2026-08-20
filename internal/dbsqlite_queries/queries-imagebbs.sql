@@ -7,9 +7,9 @@ UPDATE imageboard SET title = ?, description = ?, imageboard_idimageboard = ?, a
 -- name: SystemListBoardsByParentID :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
+WHERE (b.imageboard_idimageboard = sqlc.arg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.arg(parent_id) IS NULL))
   AND b.deleted_at IS NULL
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 
 -- name: CreateImagePostForPoster :execlastid
@@ -48,7 +48,7 @@ LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ? AND i.approved = 1 AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetImagePostsByUserDescendingAll :many
 SELECT i.*, u.username, th.comments
@@ -57,12 +57,12 @@ LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN forumthread th ON i.forumthread_id = th.idforumthread
 WHERE i.users_idusers = ? AND i.deleted_at IS NULL
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminListBoards :many
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetImageBoardById :one
 SELECT * FROM imageboard WHERE idimageboard = ? AND deleted_at IS NULL;
@@ -99,7 +99,7 @@ WITH role_ids AS (
 )
 SELECT b.idimageboard, b.imageboard_idimageboard, b.title, b.description, b.approval_required, b.deleted_at
 FROM imageboard b
-WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.narg(parent_id) IS NULL))
+WHERE (b.imageboard_idimageboard = sqlc.arg(parent_id) OR (b.imageboard_idimageboard IS NULL AND sqlc.arg(parent_id) IS NULL))
   AND b.deleted_at IS NULL
   AND EXISTS (
     SELECT 1 FROM grants g
@@ -111,7 +111,7 @@ WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimage
       AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListBoardsForLister :many
 WITH role_ids AS (
@@ -131,7 +131,7 @@ WHERE b.deleted_at IS NULL AND EXISTS (
       AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListImagePostsByPosterForLister :many
 WITH role_ids AS (
@@ -157,7 +157,7 @@ WHERE i.users_idusers = sqlc.arg(poster_id)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListImagePostsByBoardForLister :many
 WITH role_ids AS (
@@ -182,7 +182,7 @@ WHERE i.imageboard_idimageboard = sqlc.arg(board_id)
       AND (g.user_id = sqlc.arg(lister_user_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: GetImagePostByIDForLister :one
 WITH role_ids AS (
@@ -246,7 +246,7 @@ LEFT JOIN users u ON i.users_idusers = idusers
 LEFT JOIN imageboard b ON i.imageboard_idimageboard = b.idimageboard
 WHERE i.deleted_at IS NULL
 ORDER BY i.posted DESC
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminCountAllImagePosts :one
 SELECT COUNT(*) FROM imagepost WHERE deleted_at IS NULL;

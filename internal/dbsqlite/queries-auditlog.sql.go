@@ -70,13 +70,13 @@ const adminListAuditLogs = `-- name: AdminListAuditLogs :many
 SELECT a.id, a.users_idusers, a.action, a.path, a.details, a.data, a.created_at, u.username
 FROM audit_log a
 LEFT JOIN users u ON a.users_idusers = idusers
-WHERE u.username LIKE ?3
-  AND a.action LIKE ?4
-  AND a.path LIKE ?5
-  AND (?6 IS NULL OR a.created_at >= ?6)
-  AND (?7 IS NULL OR a.created_at <= ?7)
+WHERE u.username LIKE ?1
+  AND a.action LIKE ?2
+  AND a.path LIKE ?3
+  AND (?4 IS NULL OR a.created_at >= ?4)
+  AND (?5 IS NULL OR a.created_at <= ?5)
 ORDER BY a.id DESC
-LIMIT ? OFFSET ?
+LIMIT ?7 OFFSET ?6
 `
 
 type AdminListAuditLogsParams struct {
@@ -85,8 +85,8 @@ type AdminListAuditLogsParams struct {
 	Section   string
 	StartTime interface{}
 	EndTime   interface{}
-	Limit     int64
 	Offset    int64
+	Limit     int64
 }
 
 type AdminListAuditLogsRow struct {
@@ -107,8 +107,8 @@ func (q *Queries) AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogs
 		arg.Section,
 		arg.StartTime,
 		arg.EndTime,
-		arg.Limit,
 		arg.Offset,
+		arg.Limit,
 	)
 	if err != nil {
 		return nil, err

@@ -14,7 +14,7 @@ SELECT swl.word,
        + (SELECT IFNULL(SUM(ips.word_count),0) FROM imagepost_search ips WHERE ips.searchwordlist_idsearchwordlist=swl.idsearchwordlist) AS count
 FROM searchwordlist swl
 ORDER BY swl.word
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AdminCountWordList :one
 SELECT COUNT(*)
@@ -36,7 +36,7 @@ SELECT swl.word,
 FROM searchwordlist swl
 WHERE swl.word LIKE CONCAT(sqlc.arg(prefix), '%')
 ORDER BY swl.word
-LIMIT ? OFFSET ?;
+LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 
 
@@ -86,7 +86,10 @@ ON CONFLICT DO UPDATE SET word_count=excluded.word_count;
 
 
 -- name: ListCommentIDsBySearchWordFirstForListerNotInRestrictedTopic :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -102,14 +105,7 @@ WHERE swl.word=sqlc.arg(word)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -137,7 +133,10 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordNextForListerNotInRestrictedTopic :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -154,14 +153,7 @@ WHERE swl.word=sqlc.arg(word)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -189,7 +181,10 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordFirstForListerInRestrictedTopic :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -205,14 +200,7 @@ WHERE swl.word=sqlc.arg(word)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -240,7 +228,10 @@ WHERE swl.word=sqlc.arg(word)
   );
 
 -- name: ListCommentIDsBySearchWordNextForListerInRestrictedTopic :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -257,14 +248,7 @@ WHERE swl.word=sqlc.arg(word)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR c.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -319,7 +303,10 @@ ON CONFLICT DO UPDATE SET word_count=excluded.word_count;
 DELETE FROM writing_search
 WHERE writing_id = sqlc.arg(writing_id);
 -- name: ListWritingSearchFirstForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -332,14 +319,7 @@ WHERE swl.word = sqlc.arg(word)
   AND (
       w.language_id = 0
       OR w.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = w.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -353,7 +333,10 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: ListWritingSearchNextForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -367,14 +350,7 @@ WHERE swl.word = sqlc.arg(word)
   AND (
       w.language_id = 0
       OR w.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = w.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR w.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -388,7 +364,10 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: ListSiteNewsSearchFirstForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -401,14 +380,7 @@ WHERE swl.word = sqlc.arg(word)
   AND (
       sn.language_id = 0
       OR sn.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = sn.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR sn.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -422,7 +394,10 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: ListSiteNewsSearchNextForLister :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -436,14 +411,7 @@ WHERE swl.word = sqlc.arg(word)
   AND (
       sn.language_id = 0
       OR sn.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = sn.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR sn.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -459,7 +427,10 @@ WHERE swl.word = sqlc.arg(word)
 
 
 -- name: LinkerSearchFirst :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -472,14 +443,7 @@ WHERE swl.word = sqlc.arg(word)
   AND (
       l.language_id = 0
       OR l.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = l.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR l.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g
@@ -493,7 +457,10 @@ WHERE swl.word = sqlc.arg(word)
   );
 
 -- name: LinkerSearchNext :many
-WITH role_ids AS (
+WITH user_lang AS (
+    SELECT ul.language_id FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
+),
+role_ids AS (
     SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(lister_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
@@ -507,14 +474,7 @@ WHERE swl.word = sqlc.arg(word)
   AND (
       l.language_id = 0
       OR l.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = sqlc.arg(lister_id)
-            AND ul.language_id = l.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(lister_id)
-      )
+      OR l.language_id IN (SELECT language_id FROM user_lang) OR (SELECT COUNT(*) FROM user_lang) = 0
   )
   AND EXISTS (
       SELECT 1 FROM grants g

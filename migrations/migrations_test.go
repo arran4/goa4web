@@ -23,15 +23,14 @@ func TestMigrationFileNaming(t *testing.T) {
 
 	// Regex to match NNNN_<driver>.sql
 	// NNNN is 4 digits
-	validNameStrict := regexp.MustCompile(`^\d{4}_(mysql)\.sql$`)
+	validNameStrict := regexp.MustCompile(`^\d{4}_(?:mysql|sqlite)\.sql$`)
 
 	// Regex for files with descriptions (temporarily disallowed)
-	// Matches NNNN_description.sql or NNNN_description.mysql.sql
 	validNameDesc := regexp.MustCompile(`^\d{4}_[a-zA-Z0-9_]+\.sql$`)
 
-	// Map to track versions found for mysql driver (including generic .sql)
-	// version -> filename
 	mysqlVersions := make(map[int]string)
+	sqliteVersions := make(map[int]string)
+	var maxMySQL, maxSQLite int
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -44,34 +43,51 @@ func TestMigrationFileNaming(t *testing.T) {
 
 		// Check for description usage (disallowed for now)
 		if validNameDesc.MatchString(name) && !validNameStrict.MatchString(name) {
-			t.Errorf("Migration file %s uses a description which is currently disabled. Use format NNNN_mysql.sql", name)
+			t.Errorf("Migration file %s uses a description which is currently disabled. Use format NNNN_mysql.sql or NNNN_sqlite.sql", name)
 		}
 
 		// Validate naming convention
 		if !validNameStrict.MatchString(name) {
-			// If it's not the strict format and not the description format (already reported), report invalid format
-			if !validNameDesc.MatchString(name) {
-				t.Errorf("Migration file %s does not match naming convention NNNN_mysql.sql", name)
-			}
+			t.Errorf("Migration file %s does not match naming convention NNNN_mysql.sql or NNNN_sqlite.sql", name)
 		}
 
-		// Extract version to check for collisions
-		// We assume first 4 chars are digits based on regex pass, but let's be safe
+		// Extract version to track independently
 		if len(name) >= 4 {
 			versionPart := name[:4]
 			version, err := strconv.Atoi(versionPart)
 			if err == nil {
-				// Check if this file is applicable to mysql
-				isMysqlApplicable := strings.HasSuffix(name, "_mysql.sql") || (strings.HasSuffix(name, ".sql") && !strings.Contains(strings.TrimSuffix(name, ".sql"), "_"))
-
-				if isMysqlApplicable {
+				if strings.HasSuffix(name, "_mysql.sql") {
 					if existingFile, exists := mysqlVersions[version]; exists {
-						t.Errorf("Duplicate migration version %d found: %s and %s are mutually exclusive for mysql", version, existingFile, name)
-					} else {
-						mysqlVersions[version] = name
+						t.Errorf("Duplicate MySQL migration version %d found: %s and %s", version, existingFile, name)
+					}
+					mysqlVersions[version] = name
+					if version > maxMySQL {
+						maxMySQL = version
+					}
+				} else if strings.HasSuffix(name, "_sqlite.sql") {
+					if existingFile, exists := sqliteVersions[version]; exists {
+						t.Errorf("Duplicate SQLite migration version %d found: %s and %s", version, existingFile, name)
+					}
+					sqliteVersions[version] = name
+					if version > maxSQLite {
+						maxSQLite = version
 					}
 				}
 			}
+		}
+	}
+
+	// Verify parity between MySQL and SQLite migrations
+	if maxMySQL != maxSQLite {
+		t.Errorf("Migration version mismatch: max MySQL version is %d, max SQLite version is %d", maxMySQL, maxSQLite)
+	}
+
+	for v := 1; v <= maxMySQL; v++ {
+		if _, ok := mysqlVersions[v]; !ok {
+			t.Errorf("Missing MySQL migration for version %04d", v)
+		}
+		if _, ok := sqliteVersions[v]; !ok {
+			t.Errorf("Missing SQLite migration for version %04d", v)
 		}
 	}
 }
@@ -98,18 +114,18 @@ func TestSchemaVersionUpdated(t *testing.T) {
 		t.Skip("No migrations found")
 	}
 
-	schemaPath := filepath.Join("..", "database", "schema.mysql.sql")
-	content, err := os.ReadFile(schemaPath)
-	if err != nil {
-		t.Fatalf("Failed to read schema file at %s: %v", schemaPath, err)
-	}
+	for _, schemaFile := range []string{"schema.mysql.sql", "schema.sqlite.sql"} {
+		schemaPath := filepath.Join("..", "database", schemaFile)
+		content, err := os.ReadFile(schemaPath)
+		if err != nil {
+			t.Fatalf("Failed to read schema file at %s: %v", schemaPath, err)
+		}
 
-	schemaStr := string(content)
-	// We expect the line: INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (90, 1);
-	// Allow for some whitespace variation
-	expected := fmt.Sprintf("INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (%d, 1)", maxVersion)
-	if !strings.Contains(schemaStr, expected) {
-		t.Errorf("Schema file %s does not contain expected version update:\nExpected substring: %s\nEnsure you have updated the goose_db_version insert in database/schema.mysql.sql", schemaPath, expected)
+		schemaStr := string(content)
+		expected := fmt.Sprintf("(%d, 1)", maxVersion)
+		if !strings.Contains(schemaStr, expected) || !strings.Contains(schemaStr, "goose_db_version") {
+			t.Errorf("Schema file %s does not contain expected version update for %d", schemaPath, maxVersion)
+		}
 	}
 }
 

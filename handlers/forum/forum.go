@@ -21,6 +21,9 @@ type ForumtopicPlus struct {
 	Lastposterusername sql.NullString
 	Edit               bool
 	Labels             []templates.TopicLabel
+	Participants       []string
+	ParticipantsString string
+	TotalParticipants  int
 }
 
 type ForumcategoryPlus struct {

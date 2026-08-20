@@ -117,8 +117,8 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				if subscribedToTopic(cd, int32(tid)) {
 					items = append(items,
 						common.IndexItem{
-							Name:   "Unsubscribe From Topic",
-							Link:   fmt.Sprintf("%s/topic/%s/unsubscribe", base, topicID),
+							Name:    "Unsubscribe From Topic",
+							Link:    fmt.Sprintf("%s/topic/%s/unsubscribe", base, topicID),
 							GroupID: "danger",
 						},
 					)

@@ -130,7 +130,7 @@ func (r *rootCmd) Querier() (db.Querier, error) {
 	if err != nil {
 		return nil, fmt.Errorf("rootCmd.Querier: %w", err)
 	}
-	return db.New(conn), nil
+	return db.NewForDriver(conn, r.cfg.DBDriver), nil
 }
 
 func (r *rootCmd) InitDB(cfg *config.RuntimeConfig) (*sql.DB, error) {

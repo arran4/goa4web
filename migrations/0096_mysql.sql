@@ -9,17 +9,17 @@ SET url = REGEXP_REPLACE(
     REGEXP_REPLACE(
         REGEXP_REPLACE(
             url,
-            '&(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?',
+            '&(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?',
             ''
         ),
-        '\\?(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?&',
+        '\\?(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?&',
         '?'
     ),
-    '\\?(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(#.*)?$',
+    '\\?(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(#.*)?$',
     '$3'
 )
 WHERE url REGEXP '^(?i)https?://'
-  AND url REGEXP '([?&])(?i)(utm_[a-zA-Z0-9_]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(&|#|$)'
+  AND url REGEXP '([?&])(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(&|#|$)'
   AND url NOT REGEXP '([?&])(?i)(x-amz-signature|x-amz-credential|signature|sig|hash|hmac|x-goog-signature|x-ms-signature)(=|&|#|$)';
 
 -- Step 3: Consolidate duplicate pre-existing URLs resulting from tracking cleanup

@@ -333,6 +333,20 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("seed complex url: %v", err)
 	}
 
+	// 8. Seed UTM prefix cases with non-alphanumeric characters and non-UTM keys
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/utm1?utm_campaign-name=x&id=1', 1)`); err != nil {
+		t.Fatalf("seed utm hyphen: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/utm2?utm_custom.value=x&id=1', 1)`); err != nil {
+		t.Fatalf("seed utm dot: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/utm3?UTM_custom-value=x&id=1', 1)`); err != nil {
+		t.Fatalf("seed utm upper: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/utm4?utm.foo=x&id=1', 1)`); err != nil {
+		t.Fatalf("seed non-utm dot: %v", err)
+	}
+
 	contents, err := FS.ReadFile("0096_mysql.sql")
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
@@ -424,6 +438,10 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		"ftp://example.com/file?utm_source=x":                                 "ftp untouched",
 		"//example.com/file?utm_source=x":                                     "scheme-relative untouched",
 		"https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42#section-1": "complex url preserved",
+		"https://example.com/utm1?id=1":                                       "utm hyphen stripped",
+		"https://example.com/utm2?id=1":                                       "utm dot stripped",
+		"https://example.com/utm3?id=1":                                       "utm upper hyphen stripped",
+		"https://example.com/utm4?utm.foo=x&id=1":                             "non-utm dot preserved",
 	}
 	for expURL, desc := range expectedCases {
 		var matched int

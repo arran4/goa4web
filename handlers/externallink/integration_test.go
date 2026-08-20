@@ -182,6 +182,49 @@ func TestExternalLinkPreservesBloombergAccessTokenEndToEnd(t *testing.T) {
 	assert.Equal(t, canonicalURL, rec.Header().Get("Location"), "redirect destination must preserve accessToken")
 }
 
+func TestExternalLinkUppercaseSchemeRendererEndToEnd(t *testing.T) {
+	key := "test-secret-key"
+	dbLinks := make(map[string]*db.ExternalLink)
+
+	rawTrackedURL := "HTTPS://example.com/article?id=1&utm_source=x"
+	canonicalURL := "HTTPS://example.com/article?id=1"
+
+	dbLinks[canonicalURL] = &db.ExternalLink{
+		ID:              400,
+		Url:             canonicalURL,
+		CardTitle:       sql.NullString{String: "Uppercase Scheme Article", Valid: true},
+		CardDescription: sql.NullString{String: "Preserves uppercase scheme", Valid: true},
+	}
+
+	qs := testhelpers.NewQuerierStub()
+	qs.GetExternalLinkFn = func(ctx context.Context, url string) (*db.ExternalLink, error) {
+		if l, ok := dbLinks[url]; ok {
+			return l, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+
+	cfg := &config.RuntimeConfig{
+		BaseURL: "http://example.org",
+	}
+
+	cd := common.NewCoreData(context.Background(), qs, cfg, common.WithLinkSignKey(key))
+	provider := common.NewGoa4WebLinkProvider(cd, context.Background())
+
+	// 1. Verify canonical URL preserves uppercase scheme
+	assert.Equal(t, canonicalURL, common.CanonicalizeExternalURL(rawTrackedURL))
+
+	// 2. Render link as card
+	open, close, _ := provider.RenderLink(rawTrackedURL, true, true)
+	rendered := open + close
+
+	// Assert rendered output routes through /goto with canonical uppercase URL and signature
+	assert.Contains(t, rendered, "http://example.org/goto?u=HTTPS%3A%2F%2Fexample.com%2Farticle%3Fid%3D1&sig=")
+	assert.NotContains(t, rendered, "utm_source", "rendered link must not expose tracking parameters")
+	assert.Contains(t, rendered, "Uppercase Scheme Article")
+	assert.Contains(t, rendered, "HTTPS://example.com/article?id=1", "must contain uppercase canonical URL in card footer/title")
+}
+
 func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
 	key := "test-secret-key"
 
@@ -200,6 +243,38 @@ func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
 			id:                300,
 			title:             "Item 1",
 			desc:              "Item Description",
+		},
+		{
+			name:              "UTM prefix with hyphen removed",
+			rawTrackedURL:     "https://example.com/utm1?utm_campaign-name=x&id=1",
+			migratedStoredURL: "https://example.com/utm1?id=1",
+			id:                312,
+			title:             "UTM Hyphen",
+			desc:              "UTM Hyphen Description",
+		},
+		{
+			name:              "UTM prefix with dot removed",
+			rawTrackedURL:     "https://example.com/utm2?utm_custom.value=x&id=1",
+			migratedStoredURL: "https://example.com/utm2?id=1",
+			id:                313,
+			title:             "UTM Dot",
+			desc:              "UTM Dot Description",
+		},
+		{
+			name:              "UTM uppercase prefix with hyphen removed",
+			rawTrackedURL:     "https://example.com/utm3?UTM_custom-value=x&id=1",
+			migratedStoredURL: "https://example.com/utm3?id=1",
+			id:                314,
+			title:             "UTM Upper Hyphen",
+			desc:              "UTM Upper Hyphen Description",
+		},
+		{
+			name:              "Non-UTM prefix key utm.foo preserved",
+			rawTrackedURL:     "https://example.com/utm4?utm.foo=x&id=1",
+			migratedStoredURL: "https://example.com/utm4?utm.foo=x&id=1",
+			id:                315,
+			title:             "Non-UTM Key",
+			desc:              "Non-UTM Key Description",
 		},
 		{
 			name:              "Empty query components between params preserved",

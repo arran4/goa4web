@@ -86,6 +86,26 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https://example.com/search?%75tm_source=x&id=1",
 		},
 		{
+			name:     "UTM prefix matching with hyphen in key",
+			input:    "https://example.com/item?utm_campaign-name=x&id=1",
+			expected: "https://example.com/item?id=1",
+		},
+		{
+			name:     "UTM prefix matching with dot in key",
+			input:    "https://example.com/item?utm_custom.value=x&id=1",
+			expected: "https://example.com/item?id=1",
+		},
+		{
+			name:     "UTM uppercase prefix matching with hyphen in key",
+			input:    "https://example.com/item?UTM_custom-value=x&id=1",
+			expected: "https://example.com/item?id=1",
+		},
+		{
+			name:     "Non-UTM prefix key utm.foo preserved",
+			input:    "https://example.com/item?utm.foo=x&id=1",
+			expected: "https://example.com/item?utm.foo=x&id=1",
+		},
+		{
 			name:     "Representation: blank value empty= preserved",
 			input:    "https://example.com/search?empty=&utm_source=x",
 			expected: "https://example.com/search?empty=",

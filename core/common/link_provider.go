@@ -94,7 +94,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 	}
 
 	targetURL := safe
-	if strings.HasPrefix(canonicalURL, "http://") || strings.HasPrefix(canonicalURL, "https://") {
+	if IsHTTPURL(canonicalURL) {
 		targetURL = p.cd.SignLinkURL(canonicalURL)
 	}
 

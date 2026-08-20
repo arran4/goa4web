@@ -185,7 +185,7 @@ func (cd *CoreData) MapLinkURL(tag, val string) string {
 	}
 
 	// Only sign external links (http:// or https://)
-	if !strings.HasPrefix(val, "http://") && !strings.HasPrefix(val, "https://") {
+	if !IsHTTPURL(val) {
 		return val
 	}
 

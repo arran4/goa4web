@@ -64,14 +64,23 @@ func isSignatureParam(key string) bool {
 	return false
 }
 
+// IsHTTPURL checks case-insensitively whether a URL string begins with an http:// or https:// scheme.
+func IsHTTPURL(raw string) bool {
+	lower := strings.ToLower(raw)
+	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
+}
+
 // CanonicalizeExternalURL removes known tracking parameters while preserving functional ones,
 // original parameter order and escaping, repeated parameters, blank values, and cryptographically signed URLs.
 func CanonicalizeExternalURL(raw string) string {
 	if raw == "" {
 		return ""
 	}
+	if !IsHTTPURL(raw) {
+		return raw
+	}
 	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" || (strings.ToLower(u.Scheme) != "http" && strings.ToLower(u.Scheme) != "https") {
+	if err != nil || u.Host == "" {
 		return raw
 	}
 

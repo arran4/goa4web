@@ -442,8 +442,7 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 
 	if srv.DB != nil {
 		queries := db.NewForDriver(srv.DB, srv.Config.DBDriver)
-		var q db.Querier = queries
-		customQueries, _ := q.(db.CustomQueries)
+		customQueries, _ := queries.(db.CustomQueries)
 		usageTimeout := 5 * time.Minute
 		ctx, cancel := context.WithTimeout(context.Background(), usageTimeout)
 		defer cancel()

@@ -69,80 +69,92 @@ func main() {
 
 func parsePackage(dir string) (map[string]StructInfo, map[string]MethodInfo, map[string]string, error) {
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, dir, func(fi os.FileInfo) bool {
-		name := fi.Name()
-		return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") && !strings.HasSuffix(name, "_gen.go") && !strings.HasSuffix(name, "sqlite_adapter.go") && !strings.HasSuffix(name, "sqlite_adapter_gen.go") && !strings.HasSuffix(name, "factory.go") && !strings.HasSuffix(name, "factory_sqlite.go") && !strings.HasSuffix(name, "factory_stub.go")
-	}, 0)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	var files []*ast.File
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") || strings.HasSuffix(name, "_gen.go") || strings.HasSuffix(name, "sqlite_adapter.go") || strings.HasSuffix(name, "sqlite_adapter_gen.go") || strings.HasSuffix(name, "factory.go") || strings.HasSuffix(name, "factory_sqlite.go") || strings.HasSuffix(name, "factory_stub.go") {
+			continue
+		}
+		filePath := filepath.Join(dir, name)
+		file, err := parser.ParseFile(fset, filePath, nil, 0)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		files = append(files, file)
 	}
 
 	structs := make(map[string]StructInfo)
 	methods := make(map[string]MethodInfo)
 	aliases := make(map[string]string)
 
-	for _, pkg := range pkgs {
-		for _, file := range pkg.Files {
-			ast.Inspect(file, func(n ast.Node) bool {
-				ts, ok := n.(*ast.TypeSpec)
-				if !ok {
-					return true
-				}
-				if st, ok := ts.Type.(*ast.StructType); ok {
-					var fields []FieldInfo
-					for _, f := range st.Fields.List {
-						typeStr := exprToString(f.Type)
-						if len(f.Names) == 0 {
-							fields = append(fields, FieldInfo{Name: typeStr, Type: typeStr})
-						} else {
-							for _, name := range f.Names {
-								fields = append(fields, FieldInfo{Name: name.Name, Type: typeStr})
-							}
-						}
-					}
-					structs[ts.Name.Name] = StructInfo{
-						Name:   ts.Name.Name,
-						Fields: fields,
-					}
-				} else if it, ok := ts.Type.(*ast.InterfaceType); ok && ts.Name.Name == "Querier" {
-					for _, m := range it.Methods.List {
-						if len(m.Names) == 0 {
-							continue
-						}
-						mName := m.Names[0].Name
-						ft, ok := m.Type.(*ast.FuncType)
-						if !ok {
-							continue
-						}
-						var params []ParamInfo
-						for _, p := range ft.Params.List {
-							typeStr := exprToString(p.Type)
-							if len(p.Names) == 0 {
-								params = append(params, ParamInfo{Name: "", Type: typeStr})
-							} else {
-								for _, name := range p.Names {
-									params = append(params, ParamInfo{Name: name.Name, Type: typeStr})
-								}
-							}
-						}
-						var retList []string
-						if ft.Results != nil {
-							for _, r := range ft.Results.List {
-								retList = append(retList, exprToString(r.Type))
-							}
-						}
-						methods[mName] = MethodInfo{
-							Name:       mName,
-							Params:     params,
-							ReturnList: retList,
-						}
-					}
-				} else {
-					aliases[ts.Name.Name] = exprToString(ts.Type)
-				}
+	for _, file := range files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			ts, ok := n.(*ast.TypeSpec)
+			if !ok {
 				return true
-			})
-		}
+			}
+			if st, ok := ts.Type.(*ast.StructType); ok {
+				var fields []FieldInfo
+				for _, f := range st.Fields.List {
+					typeStr := exprToString(f.Type)
+					if len(f.Names) == 0 {
+						fields = append(fields, FieldInfo{Name: typeStr, Type: typeStr})
+					} else {
+						for _, name := range f.Names {
+							fields = append(fields, FieldInfo{Name: name.Name, Type: typeStr})
+						}
+					}
+				}
+				structs[ts.Name.Name] = StructInfo{
+					Name:   ts.Name.Name,
+					Fields: fields,
+				}
+			} else if it, ok := ts.Type.(*ast.InterfaceType); ok && ts.Name.Name == "Querier" {
+				for _, m := range it.Methods.List {
+					if len(m.Names) == 0 {
+						continue
+					}
+					mName := m.Names[0].Name
+					ft, ok := m.Type.(*ast.FuncType)
+					if !ok {
+						continue
+					}
+					var params []ParamInfo
+					for _, p := range ft.Params.List {
+						typeStr := exprToString(p.Type)
+						if len(p.Names) == 0 {
+							params = append(params, ParamInfo{Name: "", Type: typeStr})
+						} else {
+							for _, name := range p.Names {
+								params = append(params, ParamInfo{Name: name.Name, Type: typeStr})
+							}
+						}
+					}
+					var retList []string
+					if ft.Results != nil {
+						for _, r := range ft.Results.List {
+							retList = append(retList, exprToString(r.Type))
+						}
+					}
+					methods[mName] = MethodInfo{
+						Name:       mName,
+						Params:     params,
+						ReturnList: retList,
+					}
+				}
+			} else {
+				aliases[ts.Name.Name] = exprToString(ts.Type)
+			}
+			return true
+		})
 	}
 
 	return structs, methods, aliases, nil
@@ -292,7 +304,7 @@ func genMethod(
 	dbAliases map[string]string,
 	liteAliases map[string]string,
 ) {
-	buf.WriteString(fmt.Sprintf("func (s *sqliteQuerier) %s(", dbM.Name))
+	fmt.Fprintf(buf, "func (s *sqliteQuerier) %s(", dbM.Name)
 	for i, p := range dbM.Params {
 		if i > 0 {
 			buf.WriteString(", ")
@@ -301,15 +313,15 @@ func genMethod(
 		if pName == "" {
 			pName = fmt.Sprintf("arg%d", i)
 		}
-		buf.WriteString(fmt.Sprintf("%s %s", pName, p.Type))
+		fmt.Fprintf(buf, "%s %s", pName, p.Type)
 	}
 	buf.WriteString(") ")
 	if len(dbM.ReturnList) == 0 {
 		buf.WriteString("{\n")
 	} else if len(dbM.ReturnList) == 1 {
-		buf.WriteString(fmt.Sprintf("%s {\n", dbM.ReturnList[0]))
+		fmt.Fprintf(buf, "%s {\n", dbM.ReturnList[0])
 	} else {
-		buf.WriteString(fmt.Sprintf("(%s) {\n", strings.Join(dbM.ReturnList, ", ")))
+		fmt.Fprintf(buf, "(%s) {\n", strings.Join(dbM.ReturnList, ", "))
 	}
 
 	var callArgs []string
@@ -331,25 +343,25 @@ func genMethod(
 	callStr := fmt.Sprintf("s.q.%s(%s)", dbM.Name, strings.Join(callArgs, ", "))
 
 	if len(dbM.ReturnList) == 0 {
-		buf.WriteString(fmt.Sprintf("	%s\n", callStr))
+		fmt.Fprintf(buf, "\t%s\n", callStr)
 		buf.WriteString("}\n\n")
 		return
 	}
 
 	if len(dbM.ReturnList) == 1 && dbM.ReturnList[0] == "error" {
-		buf.WriteString(fmt.Sprintf("	return %s\n", callStr))
+		fmt.Fprintf(buf, "\treturn %s\n", callStr)
 		buf.WriteString("}\n\n")
 		return
 	}
 
-	buf.WriteString(fmt.Sprintf("	res, err := %s\n", callStr))
-	buf.WriteString("	if err != nil {\n")
+	fmt.Fprintf(buf, "\tres, err := %s\n", callStr)
+	buf.WriteString("\tif err != nil {\n")
 	zeroVal := zeroValueOf(dbM.ReturnList[0])
-	buf.WriteString(fmt.Sprintf("		return %s, err\n", zeroVal))
-	buf.WriteString("	}\n")
+	fmt.Fprintf(buf, "\t\treturn %s, err\n", zeroVal)
+	buf.WriteString("\t}\n")
 
 	retExpr := convertFromLiteExpr("res", dbM.ReturnList[0], liteM.ReturnList[0], dbStructs, liteStructs, dbAliases, liteAliases)
-	buf.WriteString(fmt.Sprintf("	return %s, nil\n", retExpr))
+	fmt.Fprintf(buf, "\treturn %s, nil\n", retExpr)
 	buf.WriteString("}\n\n")
 }
 

@@ -136,14 +136,59 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https://api.example.com/download?file=data.zip&sig=d8e8fca2dc0f896fd7cb4cb0031ba249&utm_campaign=dl",
 		},
 		{
+			name:     "Representation: uppercase scheme case preserved",
+			input:    "HTTPS://example.com/item?id=1&utm_source=x",
+			expected: "HTTPS://example.com/item?id=1",
+		},
+		{
+			name:     "Representation: uppercase scheme with only tracking params",
+			input:    "HTTPS://example.com/item?utm_source=x",
+			expected: "HTTPS://example.com/item",
+		},
+		{
+			name:     "Representation: leading empty component left as bare question mark",
+			input:    "https://example.com/search?&utm_source=x",
+			expected: "https://example.com/search?",
+		},
+		{
+			name:     "Representation: trailing empty component left as bare question mark",
+			input:    "https://example.com/search?utm_source=x&",
+			expected: "https://example.com/search?",
+		},
+		{
+			name:     "Representation: leading and trailing empty components left as ?&",
+			input:    "https://example.com/search?&utm_source=x&",
+			expected: "https://example.com/search?&",
+		},
+		{
+			name:     "Representation: multiple trailing empty components left as ?&",
+			input:    "https://example.com/search?utm_source=x&&",
+			expected: "https://example.com/search?&",
+		},
+		{
+			name:     "Representation: unusual host, userinfo, port, path escaping, and fragment preserved",
+			input:    "https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42&utm_source=x#section-1",
+			expected: "https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42#section-1",
+		},
+		{
 			name:     "Empty string",
 			input:    "",
 			expected: "",
 		},
 		{
-			name:     "Invalid or non-http URL",
-			input:    "mailto:test@example.com?subject=Hello",
-			expected: "mailto:test@example.com?subject=Hello",
+			name:     "Non-http scheme: mailto left untouched",
+			input:    "mailto:user@example.com?utm_source=x",
+			expected: "mailto:user@example.com?utm_source=x",
+		},
+		{
+			name:     "Non-http scheme: ftp left untouched",
+			input:    "ftp://example.com/file?utm_source=x",
+			expected: "ftp://example.com/file?utm_source=x",
+		},
+		{
+			name:     "Scheme-relative URL left untouched",
+			input:    "//example.com/file?utm_source=x",
+			expected: "//example.com/file?utm_source=x",
 		},
 	}
 

@@ -203,43 +203,91 @@ func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
 		},
 		{
 			name:              "Empty query components between params preserved",
-			rawTrackedURL:     "https://example.com/search?a=1&&utm_source=x&b=2",
-			migratedStoredURL: "https://example.com/search?a=1&&b=2",
+			rawTrackedURL:     "https://example.com/search1?a=1&&utm_source=x&b=2",
+			migratedStoredURL: "https://example.com/search1?a=1&&b=2",
 			id:                301,
 			title:             "Search 1",
 			desc:              "Search Description 1",
 		},
 		{
 			name:              "Leading empty query component preserved",
-			rawTrackedURL:     "https://example.com/search?&a=1&utm_source=x",
-			migratedStoredURL: "https://example.com/search?&a=1",
+			rawTrackedURL:     "https://example.com/search2?&a=1&utm_source=x",
+			migratedStoredURL: "https://example.com/search2?&a=1",
 			id:                302,
 			title:             "Search 2",
 			desc:              "Search Description 2",
 		},
 		{
 			name:              "Trailing empty query component preserved",
-			rawTrackedURL:     "https://example.com/search?a=1&utm_source=x&",
-			migratedStoredURL: "https://example.com/search?a=1&",
+			rawTrackedURL:     "https://example.com/search3?a=1&utm_source=x&",
+			migratedStoredURL: "https://example.com/search3?a=1&",
 			id:                303,
 			title:             "Search 3",
 			desc:              "Search Description 3",
 		},
 		{
 			name:              "Multiple empty query components preserved",
-			rawTrackedURL:     "https://example.com/search?a=1&&utm_source=x&&b=2",
-			migratedStoredURL: "https://example.com/search?a=1&&&b=2",
+			rawTrackedURL:     "https://example.com/search4?a=1&&utm_source=x&&b=2",
+			migratedStoredURL: "https://example.com/search4?a=1&&&b=2",
 			id:                304,
 			title:             "Search 4",
 			desc:              "Search Description 4",
 		},
 		{
 			name:              "Percent-encoded key treated conservatively as non-tracking in migration and runtime",
-			rawTrackedURL:     "https://example.com/search?%75tm_source=x&id=1",
-			migratedStoredURL: "https://example.com/search?%75tm_source=x&id=1",
+			rawTrackedURL:     "https://example.com/search5?%75tm_source=x&id=1",
+			migratedStoredURL: "https://example.com/search5?%75tm_source=x&id=1",
 			id:                305,
 			title:             "Search 5",
 			desc:              "Search Description 5",
+		},
+		{
+			name:              "Uppercase scheme case preserved",
+			rawTrackedURL:     "HTTPS://example.com/upper?id=1&utm_source=x",
+			migratedStoredURL: "HTTPS://example.com/upper?id=1",
+			id:                306,
+			title:             "Item Upper",
+			desc:              "Uppercase Scheme Description",
+		},
+		{
+			name:              "Leading empty component preserved as bare question mark",
+			rawTrackedURL:     "https://example.com/bare1?&utm_source=x",
+			migratedStoredURL: "https://example.com/bare1?",
+			id:                307,
+			title:             "Search Bare Q",
+			desc:              "Bare Question Mark",
+		},
+		{
+			name:              "Trailing empty component preserved as bare question mark",
+			rawTrackedURL:     "https://example.com/bare2?utm_source=x&",
+			migratedStoredURL: "https://example.com/bare2?",
+			id:                308,
+			title:             "Search Bare Q Trailing",
+			desc:              "Bare Question Mark Trailing",
+		},
+		{
+			name:              "Leading and trailing empty components preserved as ?&",
+			rawTrackedURL:     "https://example.com/bare3?&utm_source=x&",
+			migratedStoredURL: "https://example.com/bare3?&",
+			id:                309,
+			title:             "Search Amp",
+			desc:              "Ampersand remaining",
+		},
+		{
+			name:              "Non-http schemes preserved untouched in migration and runtime",
+			rawTrackedURL:     "mailto:user@example.com?utm_source=x",
+			migratedStoredURL: "mailto:user@example.com?utm_source=x",
+			id:                310,
+			title:             "Mailto",
+			desc:              "Mailto Description",
+		},
+		{
+			name:              "Unusual host, userinfo, port, path escaping, and fragment preserved",
+			rawTrackedURL:     "https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42&utm_source=x#section-1",
+			migratedStoredURL: "https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42#section-1",
+			id:                311,
+			title:             "Unusual URL",
+			desc:              "Unusual URL Description",
 		},
 	}
 
@@ -289,12 +337,14 @@ func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
 			assert.Equal(t, int32(15), link.Clicks)
 			assert.Equal(t, tc.title, link.CardTitle.String)
 
-			// 3. Renderer renders using the existing metadata rather than fallback
-			provider := common.NewGoa4WebLinkProvider(cd, context.Background())
-			open, close, _ := provider.RenderLink(tc.rawTrackedURL, true, true)
-			rendered := open + close
-			assert.Contains(t, rendered, tc.title, "must render migrated card title")
-			assert.Contains(t, rendered, tc.desc, "must render migrated card description")
+			// 3. Renderer renders using the existing metadata for http/https URLs
+			if strings.HasPrefix(strings.ToLower(tc.rawTrackedURL), "http://") || strings.HasPrefix(strings.ToLower(tc.rawTrackedURL), "https://") {
+				provider := common.NewGoa4WebLinkProvider(cd, context.Background())
+				open, close, _ := provider.RenderLink(tc.rawTrackedURL, true, true)
+				rendered := open + close
+				assert.Contains(t, rendered, tc.title, "must render migrated card title")
+				assert.Contains(t, rendered, tc.desc, "must render migrated card description")
+			}
 		})
 	}
 }

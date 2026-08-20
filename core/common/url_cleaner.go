@@ -71,16 +71,28 @@ func CanonicalizeExternalURL(raw string) string {
 		return ""
 	}
 	u, err := url.Parse(raw)
-	if err != nil || u.Scheme == "" || (u.Scheme != "http" && u.Scheme != "https") {
+	if err != nil || u.Host == "" || (strings.ToLower(u.Scheme) != "http" && strings.ToLower(u.Scheme) != "https") {
 		return raw
 	}
 
-	if u.RawQuery == "" {
+	hashIdx := strings.IndexByte(raw, '#')
+	searchStr := raw
+	rawFragment := ""
+	if hashIdx != -1 {
+		searchStr = raw[:hashIdx]
+		rawFragment = raw[hashIdx:]
+	}
+
+	qIdx := strings.IndexByte(searchStr, '?')
+	if qIdx == -1 {
 		return raw
 	}
+
+	rawPrefix := raw[:qIdx]
+	rawQuery := searchStr[qIdx+1:]
 
 	// Split RawQuery into components preserving exact original order and encoding
-	parts := strings.Split(u.RawQuery, "&")
+	parts := strings.Split(rawQuery, "&")
 	var retained []string
 	modified := false
 
@@ -121,9 +133,7 @@ func CanonicalizeExternalURL(raw string) string {
 	}
 
 	if len(retained) == 0 {
-		u.RawQuery = ""
-	} else {
-		u.RawQuery = strings.Join(retained, "&")
+		return rawPrefix + rawFragment
 	}
-	return u.String()
+	return rawPrefix + "?" + strings.Join(retained, "&") + rawFragment
 }

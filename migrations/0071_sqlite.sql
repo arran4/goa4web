@@ -1,2 +1,3 @@
 -- +goose Up
-ALTER TABLE imageboard ADD COLUMN deleted_at DATETIME DEFAULT NULL;
+-- imageboard.deleted_at already added in 0010
+UPDATE schema_version SET version = 71;

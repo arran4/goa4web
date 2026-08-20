@@ -38,7 +38,7 @@ func (q *Queries) CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int
 }
 
 const getAPIKeyByHash = `-- name: GetAPIKeyByHash :one
-SELECT id, users_idusers, api_key, name, scopes, expires_at, last_used_at, created_at, revoked_at FROM api_keys WHERE api_key = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+SELECT id, users_idusers, api_key, name, scopes, expires_at, last_used_at, created_at, revoked_at FROM api_keys WHERE api_key = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
 `
 
 func (q *Queries) GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
@@ -96,7 +96,7 @@ func (q *Queries) ListAPIKeysByUser(ctx context.Context, usersIdusers int64) ([]
 }
 
 const revokeAPIKey = `-- name: RevokeAPIKey :exec
-UPDATE api_keys SET revoked_at = NOW() WHERE id = ? AND users_idusers = ?
+UPDATE api_keys SET revoked_at = CURRENT_TIMESTAMP WHERE id = ? AND users_idusers = ?
 `
 
 type RevokeAPIKeyParams struct {
@@ -110,7 +110,7 @@ func (q *Queries) RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams) erro
 }
 
 const updateAPIKeyLastUsed = `-- name: UpdateAPIKeyLastUsed :exec
-UPDATE api_keys SET last_used_at = NOW() WHERE id = ?
+UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 func (q *Queries) UpdateAPIKeyLastUsed(ctx context.Context, id int64) error {

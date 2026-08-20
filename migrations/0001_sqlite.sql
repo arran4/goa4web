@@ -1,10 +1,10 @@
 -- +goose Up
-CREATE TABLE 1_old_forumthread (
+CREATE TABLE `1_old_forumthread` (
 idforumthread INTEGER PRIMARY KEY AUTOINCREMENT,
 forumtopic_idforumtopic INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE 1_old_forumtopic (
+CREATE TABLE `1_old_forumtopic` (
 idforumtopic INTEGER PRIMARY KEY AUTOINCREMENT,
 forumcategory_idforumcategory INTEGER NOT NULL DEFAULT 0,
 title TEXT DEFAULT NULL,
@@ -93,8 +93,7 @@ CREATE TABLE imageboard (
 idimageboard INTEGER PRIMARY KEY AUTOINCREMENT,
 imageboard_idimageboard INTEGER NOT NULL DEFAULT 0,
 title TEXT DEFAULT NULL,
-description TEXT DEFAULT NULL,
-approval_required INTEGER NOT NULL DEFAULT 0
+description TEXT DEFAULT NULL
 );
 
 CREATE TABLE imagepost (
@@ -105,9 +104,7 @@ imageboard_idimageboard INTEGER NOT NULL DEFAULT 0,
 posted DATETIME DEFAULT NULL,
 description TEXT DEFAULT NULL,
 thumbnail TEXT DEFAULT NULL,
-fullimage TEXT DEFAULT NULL,
-file_size INTEGER NOT NULL DEFAULT 0,
-approved INTEGER NOT NULL DEFAULT 0
+fullimage TEXT DEFAULT NULL
 );
 
 CREATE TABLE imagepostSearch (
@@ -135,9 +132,7 @@ listed DATETIME DEFAULT NULL
 
 CREATE TABLE linkerCategory (
 idlinkerCategory INTEGER PRIMARY KEY AUTOINCREMENT,
-position INTEGER NOT NULL DEFAULT 0,
-title TEXT DEFAULT NULL,
-sortorder INTEGER NOT NULL DEFAULT 0
+title TEXT DEFAULT NULL
 );
 
 CREATE TABLE linkerQueue (
@@ -167,8 +162,7 @@ CREATE TABLE preferences (
 idpreferences INTEGER PRIMARY KEY AUTOINCREMENT,
 language_idlanguage INTEGER NOT NULL DEFAULT 0,
 users_idusers INTEGER NOT NULL DEFAULT 0,
-emailforumupdates INTEGER DEFAULT 0,
-page_size INTEGER NOT NULL DEFAULT 15
+emailforumupdates INTEGER DEFAULT 0
 );
 
 CREATE TABLE searchwordlist (
@@ -219,7 +213,6 @@ CREATE TABLE users (
 idusers INTEGER PRIMARY KEY AUTOINCREMENT,
 email TEXT DEFAULT NULL,
 passwd TEXT DEFAULT NULL,
-passwd_algorithm TEXT DEFAULT NULL,
 username TEXT DEFAULT NULL
 );
 
@@ -228,7 +221,6 @@ users_idusers INTEGER NOT NULL DEFAULT 0,
 forumtopic_idforumtopic INTEGER NOT NULL DEFAULT 0,
 level INTEGER DEFAULT NULL,
 invitemax INTEGER DEFAULT NULL,
-expires_at DATETIME DEFAULT NULL,
 PRIMARY KEY (users_idusers,forumtopic_idforumtopic)
 );
 
@@ -269,6 +261,8 @@ PRIMARY KEY (writing_idwriting,users_idusers)
 CREATE TABLE IF NOT EXISTS schema_version (
 version int NOT NULL
 );
+
+INSERT INTO schema_version (version) VALUES (1);
 
 CREATE TABLE IF NOT EXISTS subscriptions (
 id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -58,7 +58,7 @@ func (q *Queries) AdminCreateFAQCategory(ctx context.Context, arg AdminCreateFAQ
 }
 
 const adminDeleteFAQ = `-- name: AdminDeleteFAQ :exec
-UPDATE faq SET deleted_at = NOW(), updated_at = NOW()
+UPDATE faq SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -68,7 +68,7 @@ func (q *Queries) AdminDeleteFAQ(ctx context.Context, id int64) error {
 }
 
 const adminDeleteFAQCategory = `-- name: AdminDeleteFAQCategory :exec
-UPDATE faq_categories SET deleted_at = NOW(), updated_at = NOW()
+UPDATE faq_categories SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -444,7 +444,7 @@ func (q *Queries) AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, e
 }
 
 const adminMoveFAQChildren = `-- name: AdminMoveFAQChildren :exec
-UPDATE faq_categories SET parent_category_id = ?1, updated_at = NOW() WHERE parent_category_id = ?2
+UPDATE faq_categories SET parent_category_id = ?1, updated_at = CURRENT_TIMESTAMP WHERE parent_category_id = ?2
 `
 
 type AdminMoveFAQChildrenParams struct {
@@ -458,7 +458,7 @@ func (q *Queries) AdminMoveFAQChildren(ctx context.Context, arg AdminMoveFAQChil
 }
 
 const adminMoveFAQContent = `-- name: AdminMoveFAQContent :exec
-UPDATE faq SET category_id = ?1, updated_at = NOW() WHERE category_id = ?2
+UPDATE faq SET category_id = ?1, updated_at = CURRENT_TIMESTAMP WHERE category_id = ?2
 `
 
 type AdminMoveFAQContentParams struct {
@@ -473,7 +473,7 @@ func (q *Queries) AdminMoveFAQContent(ctx context.Context, arg AdminMoveFAQConte
 
 const adminRenameFAQCategory = `-- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
-SET name = ?, updated_at = NOW()
+SET name = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -489,7 +489,7 @@ func (q *Queries) AdminRenameFAQCategory(ctx context.Context, arg AdminRenameFAQ
 
 const adminUpdateFAQ = `-- name: AdminUpdateFAQ :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -516,7 +516,7 @@ func (q *Queries) AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) 
 
 const adminUpdateFAQCategory = `-- name: AdminUpdateFAQCategory :exec
 UPDATE faq_categories
-SET name = ?, parent_category_id = ?, language_id = ?, priority = ?, updated_at = NOW()
+SET name = ?, parent_category_id = ?, language_id = ?, priority = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -540,7 +540,7 @@ func (q *Queries) AdminUpdateFAQCategory(ctx context.Context, arg AdminUpdateFAQ
 }
 
 const adminUpdateFAQPriority = `-- name: AdminUpdateFAQPriority :exec
-UPDATE faq SET priority = ?, updated_at = NOW() WHERE id = ?
+UPDATE faq SET priority = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 type AdminUpdateFAQPriorityParams struct {
@@ -555,7 +555,7 @@ func (q *Queries) AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQ
 
 const adminUpdateFAQQuestionAnswer = `-- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 

@@ -21,3 +21,4 @@ last_attempt_at DATETIME DEFAULT NULL,
 next_attempt_at DATETIME DEFAULT NULL,
 PRIMARY KEY (id)
 );
+UPDATE schema_version SET version = 85;

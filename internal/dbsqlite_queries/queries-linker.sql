@@ -317,7 +317,7 @@ SELECT COUNT(*) FROM linker WHERE category_id = ?;
 
 
 -- name: SystemSetLinkerLastIndex :exec
-UPDATE linker SET last_index = NOW() WHERE id = ?;
+UPDATE linker SET last_index = CURRENT_TIMESTAMP WHERE id = ?;
 
 
 -- name: GetAllLinkerItemsByCategoryIdWitherPosterUsernameAndCategoryTitleDescendingPaginated :many

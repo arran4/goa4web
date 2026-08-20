@@ -1458,7 +1458,7 @@ func (q *Queries) SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssi
 }
 
 const systemSetLinkerLastIndex = `-- name: SystemSetLinkerLastIndex :exec
-UPDATE linker SET last_index = NOW() WHERE id = ?
+UPDATE linker SET last_index = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 func (q *Queries) SystemSetLinkerLastIndex(ctx context.Context, id int64) error {

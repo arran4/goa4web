@@ -32,7 +32,7 @@ WHERE idsitenews = sqlc.arg(post_id)
   );
 
 -- name: DeactivateNewsPost :exec
-UPDATE site_news SET deleted_at = NOW() WHERE idsiteNews = ?;
+UPDATE site_news SET deleted_at = CURRENT_TIMESTAMP WHERE idsiteNews = ?;
 
 -- name: GetForumThreadIdByNewsPostId :one
 SELECT s.forumthread_id, idusers
@@ -151,7 +151,7 @@ LIMIT ? OFFSET ?;
 
 
 -- name: SystemSetSiteNewsLastIndex :exec
-UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?;
+UPDATE site_news SET last_index = CURRENT_TIMESTAMP WHERE idsiteNews = ?;
 
 
 -- name: GetAllSiteNewsForIndex :many

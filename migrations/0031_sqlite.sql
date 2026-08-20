@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 name TEXT NOT NULL,
 UNIQUE (name)
@@ -8,12 +8,10 @@ UNIQUE (name)
 ALTER TABLE permissions ADD COLUMN role_id INT;
 
 INSERT INTO roles (name)
-SELECT DISTINCT role FROM permissions;
+SELECT DISTINCT role FROM permissions WHERE role IS NOT NULL;
 
-UPDATE permissions p
-JOIN roles r ON p.role = r.name
-SET p.role_id = r.id;
+UPDATE permissions
+SET role_id = (SELECT id FROM roles WHERE roles.name = permissions.role);
 
--- ALTER TABLE permissions DROP COLUMN role;
-
-RENAME TABLE permissions TO user_roles;
+ALTER TABLE permissions RENAME TO user_roles;
+UPDATE schema_version SET version = 31;

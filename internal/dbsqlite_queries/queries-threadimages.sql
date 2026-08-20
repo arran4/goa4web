@@ -6,7 +6,7 @@ WHERE forumthread_id = sqlc.arg(thread_id)
 
 -- name: CreateThreadImage :exec
 INSERT INTO thread_images (forumthread_id, path, created_at)
-SELECT sqlc.arg(thread_id), sqlc.arg(path), NOW()
+SELECT sqlc.arg(thread_id), sqlc.arg(path), CURRENT_TIMESTAMP
 WHERE NOT EXISTS (
     SELECT 1 FROM thread_images ti
     WHERE ti.forumthread_id = sqlc.arg(thread_id)

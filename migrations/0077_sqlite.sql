@@ -5,3 +5,4 @@ forumthread_id INT NOT NULL,
 path TEXT,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+UPDATE schema_version SET version = 77;

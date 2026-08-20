@@ -130,7 +130,7 @@ func (q *Queries) CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPos
 }
 
 const deactivateNewsPost = `-- name: DeactivateNewsPost :exec
-UPDATE site_news SET deleted_at = NOW() WHERE idsiteNews = ?
+UPDATE site_news SET deleted_at = CURRENT_TIMESTAMP WHERE idsiteNews = ?
 `
 
 func (q *Queries) DeactivateNewsPost(ctx context.Context, idsitenews int64) error {
@@ -471,7 +471,7 @@ func (q *Queries) SystemGetNewsPostByID(ctx context.Context, idsitenews int64) (
 }
 
 const systemSetSiteNewsLastIndex = `-- name: SystemSetSiteNewsLastIndex :exec
-UPDATE site_news SET last_index = NOW() WHERE idsiteNews = ?
+UPDATE site_news SET last_index = CURRENT_TIMESTAMP WHERE idsiteNews = ?
 `
 
 func (q *Queries) SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int64) error {

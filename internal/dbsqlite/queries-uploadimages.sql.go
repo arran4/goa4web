@@ -107,7 +107,7 @@ const createUploadedImageForUploader = `-- name: CreateUploadedImageForUploader 
 INSERT INTO uploaded_images (
     users_idusers, path, width, height, file_size, uploaded
 )
-VALUES (?1, ?2, ?3, ?4, ?5, NOW())
+VALUES (?1, ?2, ?3, ?4, ?5, CURRENT_TIMESTAMP)
 `
 
 type CreateUploadedImageForUploaderParams struct {

@@ -1,39 +1,33 @@
 -- +goose Up
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'search', NULL, 'allow', 'search', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'search', NULL, 'allow', 'search', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'news', NULL, 'allow', 'search', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'news', NULL, 'allow', 'search', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'forum', NULL, 'allow', 'search', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'forum', NULL, 'allow', 'search', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'linker', NULL, 'allow', 'search', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'linker', NULL, 'allow', 'search', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'blogs', NULL, 'allow', 'search', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'blogs', NULL, 'allow', 'search', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'writing', NULL, 'allow', 'search', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'writing', NULL, 'allow', 'search', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 CREATE TABLE IF NOT EXISTS external_links (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,3 +43,4 @@ card_image_cache TEXT,
 favicon_cache TEXT,
 UNIQUE (url)
 );
+UPDATE schema_version SET version = 51;

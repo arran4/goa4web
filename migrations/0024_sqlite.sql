@@ -1,22 +1,13 @@
 -- +goose Up
-RENAME TABLE siteNews TO site_news;
-
-RENAME TABLE siteNewsSearch TO site_news_search;
-
-RENAME TABLE blogsSearch TO blogs_search;
-
-RENAME TABLE commentsSearch TO comments_search;
-
-RENAME TABLE imagepostSearch TO imagepost_search;
-
-RENAME TABLE linkerCategory TO linker_category;
-
-RENAME TABLE linkerQueue TO linker_queue;
-
-RENAME TABLE linkerSearch TO linker_search;
-
-RENAME TABLE writingSearch TO writing_search;
-
-RENAME TABLE writingApprovedUsers TO writing_approved_users;
-
-RENAME TABLE faqCategories TO faq_categories;
+ALTER TABLE siteNews RENAME TO site_news;
+ALTER TABLE siteNewsSearch RENAME TO site_news_search;
+ALTER TABLE blogsSearch RENAME TO blogs_search;
+ALTER TABLE commentsSearch RENAME TO comments_search;
+ALTER TABLE imagepostSearch RENAME TO imagepost_search;
+ALTER TABLE linkerCategory RENAME TO linker_category;
+ALTER TABLE linkerQueue RENAME TO linker_queue;
+ALTER TABLE linkerSearch RENAME TO linker_search;
+ALTER TABLE writingSearch RENAME TO writing_search;
+ALTER TABLE writingApprovedUsers RENAME TO writing_approved_users;
+ALTER TABLE faqCategories RENAME TO faq_categories;
+UPDATE schema_version SET version = 24;

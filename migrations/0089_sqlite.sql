@@ -11,3 +11,4 @@ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 revoked_at DATETIME DEFAULT NULL,
 UNIQUE (api_key)
 );
+UPDATE schema_version SET version = 89;

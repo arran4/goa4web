@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE grants (
+CREATE TABLE IF NOT EXISTS grants (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 created_at DATETIME NULL,
 updated_at DATETIME NULL,
@@ -14,3 +14,4 @@ action TEXT NOT NULL,
 extra TEXT NULL,
 active INTEGER NOT NULL DEFAULT 1
 );
+UPDATE schema_version SET version = 37;

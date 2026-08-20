@@ -1320,7 +1320,7 @@ func (q *Queries) SystemListWritingCategories(ctx context.Context, arg SystemLis
 }
 
 const systemSetWritingLastIndex = `-- name: SystemSetWritingLastIndex :exec
-UPDATE writing SET last_index = NOW() WHERE idwriting = ?
+UPDATE writing SET last_index = CURRENT_TIMESTAMP WHERE idwriting = ?
 `
 
 func (q *Queries) SystemSetWritingLastIndex(ctx context.Context, idwriting int64) error {

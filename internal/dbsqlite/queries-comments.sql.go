@@ -76,13 +76,13 @@ func (q *Queries) AdminGetAllCommentsByUser(ctx context.Context, userID int64) (
 }
 
 const adminListAllCommentsWithThreadInfo = `-- name: AdminListAllCommentsWithThreadInfo :many
-SELECT idcomments, c.written, c.text, c.deleted_at, c.timezone,
+SELECT c.idcomments, c.written, c.text, c.deleted_at, c.timezone,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, t.handler AS topic_handler,
-       idusers, u.username AS posterusername
+       u.idusers, u.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN users u ON idusers = users_idusers
+LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?
 `
@@ -249,7 +249,7 @@ func (q *Queries) GetCommentById(ctx context.Context, idcomments int64) (*Commen
 
 const getCommentByIdForUser = `-- name: GetCommentByIdForUser :one
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.c.users_idusers = ?1
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -258,18 +258,18 @@ SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
-WHERE idcomments = ?2
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.idcomments = ?2
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = ?1
+          WHERE ul.users_idusers = ?1
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -340,7 +340,7 @@ func (q *Queries) GetCommentByIdForUser(ctx context.Context, arg GetCommentByIdF
 
 const getCommentsByIdsForUserWithThreadInfo = `-- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.c.users_idusers = ?1
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -352,7 +352,7 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN comments fp ON th.firstpost = fp.idcomments
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (/*SLICE:ids*/?)
   AND (
@@ -360,11 +360,11 @@ WHERE c.Idcomments IN (/*SLICE:ids*/?)
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = ?1
+          WHERE ul.users_idusers = ?1
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -474,15 +474,17 @@ func (q *Queries) GetCommentsByIdsForUserWithThreadInfo(ctx context.Context, arg
 }
 
 const getCommentsBySectionThreadIdForUser = `-- name: GetCommentsBySectionThreadIdForUser :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.c.users_idusers = ?1
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
        c.users_idusers = ?1 AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?2
   AND c.forumthread_id IS NOT NULL
   AND (
@@ -490,11 +492,11 @@ WHERE c.forumthread_id=?2
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = ?1
+          WHERE ul.users_idusers = ?1
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -591,7 +593,7 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 
 const getCommentsByThreadIdForUser = `-- name: GetCommentsByThreadIdForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.c.users_idusers = ?1
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?1
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -600,7 +602,7 @@ SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=?2
   AND c.forumthread_id IS NOT NULL
   AND (
@@ -608,11 +610,11 @@ WHERE c.forumthread_id=?2
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = ?1
+          WHERE ul.users_idusers = ?1
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -698,10 +700,10 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 }
 
 const systemListCommentsByThreadID = `-- name: SystemListCommentsByThreadID :many
-SELECT idcomments, c.text
+SELECT c.idcomments, c.text
 FROM comments c
 WHERE c.forumthread_id = ?
-ORDER BY idcomments
+ORDER BY c.idcomments
 `
 
 type SystemListCommentsByThreadIDRow struct {
@@ -733,7 +735,7 @@ func (q *Queries) SystemListCommentsByThreadID(ctx context.Context, forumthreadI
 }
 
 const systemSetCommentLastIndex = `-- name: SystemSetCommentLastIndex :exec
-UPDATE comments SET last_index = NOW() WHERE idcomments = ?
+UPDATE comments SET last_index = CURRENT_TIMESTAMP WHERE idcomments = ?
 `
 
 func (q *Queries) SystemSetCommentLastIndex(ctx context.Context, idcomments int64) error {
@@ -744,21 +746,21 @@ func (q *Queries) SystemSetCommentLastIndex(ctx context.Context, idcomments int6
 const updateCommentForEditor = `-- name: UpdateCommentForEditor :exec
 UPDATE comments
 SET language_id = ?1, text = ?2
-WHERE idcomments = ?3
+WHERE comments.idcomments = ?3
   AND comments.users_idusers = ?4
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE (g.section='forum' OR g.section='privateforum')
         AND (
             g.item IS NULL OR
-            (g.item='thread' AND (g.item_id = c.forumthread_id OR g.item_id IS NULL)) OR
-            (g.item='comment' AND (g.item_id = idcomments OR g.item_id IS NULL))
+            (g.item='thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL)) OR
+            (g.item='comment' AND (g.item_id = comments.idcomments OR g.item_id IS NULL))
         )
         AND g.action='edit'
         AND g.active=1
         AND (g.user_id = ?5 OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
-            SELECT ur.role_id FROM user_roles ur WHERE ur.comments.users_idusers = ?4
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?4
         ))
   )
 `

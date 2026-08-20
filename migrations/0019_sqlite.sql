@@ -8,6 +8,6 @@ file_size INT NOT NULL,
 uploaded DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- ALTER TABLE blogsSearch CHANGE COLUMN blogs_idblogs blog_id int(10) NOT NULL DEFAULT 0;
-
--- ALTER TABLE siteNewsSearch CHANGE COLUMN siteNews_idsiteNews site_news_id int(10) NOT NULL DEFAULT 0;
+ALTER TABLE blogsSearch RENAME COLUMN blogs_idblogs TO blog_id;
+ALTER TABLE siteNewsSearch RENAME COLUMN siteNews_idsiteNews TO site_news_id;
+UPDATE schema_version SET version = 19;

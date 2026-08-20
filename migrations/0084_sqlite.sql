@@ -1,2 +1,3 @@
 -- +goose Up
-ALTER TABLE faq ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE faq ADD COLUMN description TEXT DEFAULT '';
+UPDATE schema_version SET version = 84;

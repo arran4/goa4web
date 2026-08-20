@@ -1,22 +1,20 @@
 -- +goose Up
-RENAME TABLE topicrestrictions TO topic_permissions;
+ALTER TABLE topicrestrictions RENAME TO topic_permissions;
+ALTER TABLE userstopiclevel RENAME TO user_topic_permissions;
+ALTER TABLE writing_approved_users RENAME TO writing_user_permissions;
 
-RENAME TABLE userstopiclevel TO user_topic_permissions;
+ALTER TABLE user_topic_permissions RENAME COLUMN level TO role_id;
 
-RENAME TABLE writing_approved_users TO writing_user_permissions;
+ALTER TABLE topic_permissions RENAME COLUMN viewlevel TO view_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN replylevel TO reply_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN newthreadlevel TO newthread_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN seelevel TO see_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN invitelevel TO invite_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN readlevel TO read_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN modlevel TO mod_role_id;
+ALTER TABLE topic_permissions RENAME COLUMN adminlevel TO admin_role_id;
 
--- ALTER TABLE user_topic_permissions CHANGE COLUMN level role_id INT NULL;
+ALTER TABLE writing_user_permissions RENAME COLUMN readdoc TO can_read;
+ALTER TABLE writing_user_permissions RENAME COLUMN editdoc TO can_edit;
 
--- ALTER TABLE topic_permissions
-  CHANGE COLUMN viewlevel view_role_id INT NULL,
-  CHANGE COLUMN replylevel reply_role_id INT NULL,
-  CHANGE COLUMN newthreadlevel newthread_role_id INT NULL,
-  CHANGE COLUMN seelevel see_role_id INT NULL,
-  CHANGE COLUMN invitelevel invite_role_id INT NULL,
-  CHANGE COLUMN readlevel read_role_id INT NULL,
-  CHANGE COLUMN modlevel mod_role_id INT NULL,
-  CHANGE COLUMN adminlevel admin_role_id INT NULL;
-
--- ALTER TABLE writing_user_permissions
-  CHANGE COLUMN readdoc can_read TINYINT(1) NULL,
-  CHANGE COLUMN editdoc can_edit TINYINT(1) NULL;
+UPDATE schema_version SET version = 36;

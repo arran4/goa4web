@@ -1,13 +1,12 @@
 -- +goose Up
 ALTER TABLE forumtopic ADD COLUMN handler TEXT NOT NULL DEFAULT '';
 
-UPDATE forumtopic t
-JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
-SET t.handler='private', t.forumcategory_idforumcategory = 0
-WHERE fc.title='Private discussion';
+UPDATE forumtopic
+SET handler='private', forumcategory_idforumcategory = 0
+WHERE forumcategory_idforumcategory IN (SELECT idforumcategory FROM forumcategory WHERE title='Private discussion');
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'see', 1
+SELECT CURRENT_TIMESTAMP, g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'see', 1
 FROM grants g
 JOIN forumtopic t ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'see'
@@ -16,7 +15,7 @@ WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.a
   );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'view', 1
+SELECT CURRENT_TIMESTAMP, g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'view', 1
 FROM grants g
 JOIN forumtopic t ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'view'
@@ -25,7 +24,7 @@ WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.a
   );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'post', 1
+SELECT CURRENT_TIMESTAMP, g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'post', 1
 FROM grants g
 JOIN forumtopic t ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'post'
@@ -34,7 +33,7 @@ WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.a
     );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'reply', 1
+SELECT CURRENT_TIMESTAMP, g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'reply', 1
 FROM grants g
 JOIN forumtopic t ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.action = 'reply'
@@ -43,7 +42,7 @@ WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic' AND g.a
     );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, item_id, action, active)
-SELECT NOW(), g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'edit', 1
+SELECT CURRENT_TIMESTAMP, g.user_id, 'privateforum', 'topic', 'allow', g.item_id, 'edit', 1
 FROM grants g
 JOIN forumtopic t ON g.item_id = t.idforumtopic
 WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic'
@@ -52,53 +51,48 @@ WHERE t.handler = 'private' AND g.section = 'forum' AND g.item = 'topic'
     );
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, action, active)
-SELECT NOW(), u.idusers, 'privateforum', 'topic', 'allow', 'see', 1
+SELECT CURRENT_TIMESTAMP, u.idusers, 'privateforum', 'topic', 'allow', 'see', 1
 FROM users u
 JOIN passwords p ON p.users_idusers = u.idusers
 WHERE u.deleted_at IS NULL
 GROUP BY u.idusers;
 
 INSERT INTO grants (created_at, user_id, section, item, rule_type, action, active)
-SELECT NOW(), u.idusers, 'privateforum', 'topic', 'allow', 'create', 1
+SELECT CURRENT_TIMESTAMP, u.idusers, 'privateforum', 'topic', 'allow', 'create', 1
 FROM users u
 JOIN passwords p ON p.users_idusers = u.idusers
 WHERE u.deleted_at IS NULL
 GROUP BY u.idusers;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'see', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'privateforum', 'topic', 'allow', 'see', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'view', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'privateforum', 'topic', 'allow', 'view', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'reply', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'privateforum', 'topic', 'allow', 'reply', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'post', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'privateforum', 'topic', 'allow', 'post', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'edit', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'privateforum', 'topic', 'allow', 'edit', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
-SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'create', 1
+SELECT CURRENT_TIMESTAMP, r.id, 'privateforum', 'topic', 'allow', 'create', 1
 FROM roles r
-WHERE r.can_login = 1
-ON DUPLICATE KEY UPDATE action=VALUES(action);
+WHERE r.can_login = 1;
 
 DELETE FROM forumcategory WHERE title='Private discussion';
+UPDATE schema_version SET version = 55;

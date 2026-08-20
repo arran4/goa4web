@@ -1,9 +1,6 @@
 -- +goose Up
-ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE comments
-    ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
+ALTER TABLE users ADD COLUMN deleted_at DATETIME DEFAULT NULL;
+ALTER TABLE comments ADD COLUMN deleted_at DATETIME DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS deactivated_users (
 idusers INT NOT NULL,
@@ -27,3 +24,4 @@ deleted_at DATETIME DEFAULT NULL,
 restored_at DATETIME DEFAULT NULL,
 PRIMARY KEY (idcomments)
 );
+UPDATE schema_version SET version = 8;

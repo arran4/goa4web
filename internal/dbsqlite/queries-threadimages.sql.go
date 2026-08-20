@@ -13,7 +13,7 @@ import (
 
 const createThreadImage = `-- name: CreateThreadImage :exec
 INSERT INTO thread_images (forumthread_id, path, created_at)
-SELECT ?1, ?2, NOW()
+SELECT ?1, ?2, CURRENT_TIMESTAMP
 WHERE NOT EXISTS (
     SELECT 1 FROM thread_images ti
     WHERE ti.forumthread_id = sqlc.arg(thread_id)

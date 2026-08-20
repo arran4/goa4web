@@ -778,17 +778,17 @@ SELECT t.*,
            )
        ) THEN 1 ELSE 0 END AS is_new,
        (
-           SELECT GROUP_CONCAT(cpl.label ORDER BY cpl.label SEPARATOR '\n')
+           SELECT GROUP_CONCAT(cpl.label)
            FROM content_public_labels cpl
            WHERE cpl.item = 'thread' AND cpl.item_id = t.idforumthread
        ) AS public_labels,
        (
-           SELECT GROUP_CONCAT(cls.label ORDER BY cls.label SEPARATOR '\n')
+           SELECT GROUP_CONCAT(cls.label)
            FROM content_label_status cls
            WHERE cls.item = 'thread' AND cls.item_id = t.idforumthread
        ) AS author_labels,
        (
-           SELECT GROUP_CONCAT(cpl.label ORDER BY cpl.label SEPARATOR '\n')
+           SELECT GROUP_CONCAT(cpl.label)
            FROM content_private_labels cpl
            WHERE cpl.item = 'thread'
              AND cpl.item_id = t.idforumthread

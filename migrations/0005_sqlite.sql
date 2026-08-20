@@ -1,3 +1,3 @@
 -- +goose Up
-ALTER TABLE userstopiclevel
-    ADD COLUMN IF NOT EXISTS expires_at DATETIME DEFAULT NULL;
+ALTER TABLE userstopiclevel ADD COLUMN expires_at DATETIME DEFAULT NULL;
+UPDATE schema_version SET version = 5;

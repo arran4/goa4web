@@ -1,2 +1,3 @@
 -- +goose Up
--- ALTER TABLE user_roles CHANGE COLUMN idpermissions iduser_roles INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE user_roles RENAME COLUMN idpermissions TO iduser_roles;
+UPDATE schema_version SET version = 35;

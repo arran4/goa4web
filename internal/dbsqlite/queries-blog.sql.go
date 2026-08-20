@@ -873,7 +873,7 @@ func (q *Queries) SystemGetBlogEntryByID(ctx context.Context, idblogs int64) (*S
 }
 
 const systemSetBlogLastIndex = `-- name: SystemSetBlogLastIndex :exec
-UPDATE blogs SET last_index = NOW() WHERE idblogs = ?1
+UPDATE blogs SET last_index = CURRENT_TIMESTAMP WHERE idblogs = ?1
 `
 
 func (q *Queries) SystemSetBlogLastIndex(ctx context.Context, id int64) error {

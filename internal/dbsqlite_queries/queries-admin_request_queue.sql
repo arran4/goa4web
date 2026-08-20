@@ -26,7 +26,7 @@ WHERE id = ?;
 
 -- name: AdminUpdateRequestStatus :exec
 UPDATE admin_request_queue
-SET status = ?, acted_at = NOW()
+SET status = ?, acted_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminListRequestsByUserID :many
@@ -37,7 +37,7 @@ ORDER BY created_at DESC;
 
 -- name: AdminUpdateRequestStatusByTableAndRow :exec
 UPDATE admin_request_queue
-SET status = ?, acted_at = NOW()
+SET status = ?, acted_at = CURRENT_TIMESTAMP
 WHERE change_table = ? AND change_row_id = ? AND status = 'pending';
 
 -- name: AdminListPendingRequests :many

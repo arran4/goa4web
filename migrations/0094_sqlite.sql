@@ -14,7 +14,7 @@ INSERT INTO grants (
     item_id, item_rule, action, extra, active
 )
 SELECT DISTINCT
-    NOW(), topic_grant.user_id, topic_grant.role_id,
+    CURRENT_TIMESTAMP, topic_grant.user_id, topic_grant.role_id,
     'privateforum_thread', 'thread', 'allow',
     thread_row.idforumthread, NULL, topic_grant.action, NULL, 1
 FROM grants topic_grant
@@ -38,8 +38,8 @@ WHERE topic_grant.section = 'privateforum'
           AND thread_grant.item_id = thread_row.idforumthread
         AND thread_grant.action = topic_grant.action
         AND thread_grant.active = 1
-        AND (thread_grant.user_id <=> topic_grant.user_id)
-        AND (thread_grant.role_id <=> topic_grant.role_id)
+        AND (thread_grant.user_id IS topic_grant.user_id)
+        AND (thread_grant.role_id IS topic_grant.role_id)
   );
 
 UPDATE schema_version SET version = 94;

@@ -290,7 +290,7 @@ func (q *Queries) AdminListRequestsByUserID(ctx context.Context, usersIdusers in
 
 const adminUpdateRequestStatus = `-- name: AdminUpdateRequestStatus :exec
 UPDATE admin_request_queue
-SET status = ?, acted_at = NOW()
+SET status = ?, acted_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
 
@@ -306,7 +306,7 @@ func (q *Queries) AdminUpdateRequestStatus(ctx context.Context, arg AdminUpdateR
 
 const adminUpdateRequestStatusByTableAndRow = `-- name: AdminUpdateRequestStatusByTableAndRow :exec
 UPDATE admin_request_queue
-SET status = ?, acted_at = NOW()
+SET status = ?, acted_at = CURRENT_TIMESTAMP
 WHERE change_table = ? AND change_row_id = ? AND status = 'pending'
 `
 

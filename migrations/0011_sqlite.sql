@@ -1,7 +1,6 @@
 -- +goose Up
-ALTER TABLE subscriptions
-    ADD COLUMN IF NOT EXISTS method TEXT NOT NULL DEFAULT 'internal',
-    ADD COLUMN IF NOT EXISTS pattern TEXT NOT NULL DEFAULT '';
+ALTER TABLE subscriptions ADD COLUMN method TEXT NOT NULL DEFAULT 'internal';
+ALTER TABLE subscriptions ADD COLUMN pattern TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS worker_errors (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -9,4 +8,5 @@ message TEXT NOT NULL,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE pending_emails ADD COLUMN IF NOT EXISTS html_body TEXT;
+ALTER TABLE pending_emails ADD COLUMN html_body TEXT;
+UPDATE schema_version SET version = 11;

@@ -342,7 +342,7 @@ ORDER BY u.username
 LIMIT ? OFFSET ?;
 
 -- name: SystemSetWritingLastIndex :exec
-UPDATE writing SET last_index = NOW() WHERE idwriting = ?;
+UPDATE writing SET last_index = CURRENT_TIMESTAMP WHERE idwriting = ?;
 
 
 -- name: GetAllWritingsForIndex :many

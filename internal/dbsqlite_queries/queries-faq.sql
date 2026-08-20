@@ -47,16 +47,16 @@ FROM faq;
 
 -- name: AdminRenameFAQCategory :exec
 UPDATE faq_categories
-SET name = ?, updated_at = NOW()
+SET name = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminUpdateFAQCategory :exec
 UPDATE faq_categories
-SET name = ?, parent_category_id = ?, language_id = ?, priority = ?, updated_at = NOW()
+SET name = ?, parent_category_id = ?, language_id = ?, priority = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminDeleteFAQCategory :exec
-UPDATE faq_categories SET deleted_at = NOW(), updated_at = NOW()
+UPDATE faq_categories SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminCreateFAQCategory :execresult
@@ -94,11 +94,11 @@ WHERE EXISTS (
 
 -- name: AdminUpdateFAQQuestionAnswer :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, description = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminDeleteFAQ :exec
-UPDATE faq SET deleted_at = NOW(), updated_at = NOW()
+UPDATE faq SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminGetFAQCategories :many
@@ -257,11 +257,11 @@ WHERE faq.category_id = sqlc.arg(category_id)
   );
 
 -- name: AdminUpdateFAQPriority :exec
-UPDATE faq SET priority = ?, updated_at = NOW() WHERE id = ?;
+UPDATE faq SET priority = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: AdminUpdateFAQ :exec
 UPDATE faq
-SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, updated_at = NOW()
+SET answer = ?, question = ?, category_id = ?, priority = ?, description = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: AdminCreateFAQ :execresult
@@ -269,10 +269,10 @@ INSERT INTO faq (question, answer, category_id, author_id, language_id, priority
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: AdminMoveFAQContent :exec
-UPDATE faq SET category_id = sqlc.arg(new_category_id), updated_at = NOW() WHERE category_id = sqlc.arg(old_category_id);
+UPDATE faq SET category_id = sqlc.arg(new_category_id), updated_at = CURRENT_TIMESTAMP WHERE category_id = sqlc.arg(old_category_id);
 
 -- name: AdminMoveFAQChildren :exec
-UPDATE faq_categories SET parent_category_id = sqlc.arg(new_parent_id), updated_at = NOW() WHERE parent_category_id = sqlc.arg(old_parent_id);
+UPDATE faq_categories SET parent_category_id = sqlc.arg(new_parent_id), updated_at = CURRENT_TIMESTAMP WHERE parent_category_id = sqlc.arg(old_parent_id);
 
 -- name: AdminGetFAQActiveQuestions :many
 SELECT *

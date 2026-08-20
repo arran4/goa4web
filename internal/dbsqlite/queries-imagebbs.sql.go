@@ -52,7 +52,7 @@ func (q *Queries) AdminCreateImageBoard(ctx context.Context, arg AdminCreateImag
 }
 
 const adminDeleteImageBoard = `-- name: AdminDeleteImageBoard :exec
-UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?
+UPDATE imageboard SET deleted_at = CURRENT_TIMESTAMP WHERE idimageboard = ?
 `
 
 func (q *Queries) AdminDeleteImageBoard(ctx context.Context, idimageboard int64) error {
@@ -61,7 +61,7 @@ func (q *Queries) AdminDeleteImageBoard(ctx context.Context, idimageboard int64)
 }
 
 const adminDeleteImagePost = `-- name: AdminDeleteImagePost :exec
-UPDATE imagepost SET deleted_at = NOW() WHERE idimagepost = ?
+UPDATE imagepost SET deleted_at = CURRENT_TIMESTAMP WHERE idimagepost = ?
 `
 
 func (q *Queries) AdminDeleteImagePost(ctx context.Context, idimagepost int64) error {
@@ -1058,7 +1058,7 @@ func (q *Queries) SystemListBoardsByParentID(ctx context.Context, arg SystemList
 }
 
 const systemSetImagePostLastIndex = `-- name: SystemSetImagePostLastIndex :exec
-UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?
+UPDATE imagepost SET last_index = CURRENT_TIMESTAMP WHERE idimagepost = ?
 `
 
 func (q *Queries) SystemSetImagePostLastIndex(ctx context.Context, idimagepost int64) error {

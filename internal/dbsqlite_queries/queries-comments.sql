@@ -1,6 +1,6 @@
 -- name: GetCommentByIdForUser :one
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.c.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -9,18 +9,18 @@ SELECT c.*, pu.Username,
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
-WHERE idcomments = sqlc.arg(id)
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
+WHERE c.idcomments = sqlc.arg(id)
   AND (
       c.language_id = 0
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -52,21 +52,21 @@ LIMIT 1;
 -- name: UpdateCommentForEditor :exec
 UPDATE comments
 SET language_id = sqlc.narg(language_id), text = sqlc.arg(text)
-WHERE idcomments = sqlc.arg(comment_id)
+WHERE comments.idcomments = sqlc.arg(comment_id)
   AND comments.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
       SELECT 1 FROM grants g
       WHERE (g.section='forum' OR g.section='privateforum')
         AND (
             g.item IS NULL OR
-            (g.item='thread' AND (g.item_id = c.forumthread_id OR g.item_id IS NULL)) OR
-            (g.item='comment' AND (g.item_id = idcomments OR g.item_id IS NULL))
+            (g.item='thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL)) OR
+            (g.item='comment' AND (g.item_id = comments.idcomments OR g.item_id IS NULL))
         )
         AND g.action='edit'
         AND g.active=1
         AND (g.user_id = sqlc.arg(editor_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
-            SELECT ur.role_id FROM user_roles ur WHERE ur.comments.users_idusers = sqlc.arg(commenter_id)
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
         ))
   );
 
@@ -78,7 +78,7 @@ WHERE c.Idcomments=?;
 
 -- name: GetCommentsByIdsForUserWithThreadInfo :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.c.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -90,7 +90,7 @@ FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN comments fp ON th.firstpost = fp.idcomments
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
 LEFT JOIN forumcategory fc ON t.forumcategory_idforumcategory = fc.idforumcategory
 WHERE c.Idcomments IN (sqlc.slice('ids'))
   AND (
@@ -98,11 +98,11 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -150,7 +150,7 @@ WHERE EXISTS (
 
 -- name: GetCommentsByThreadIdForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.c.users_idusers = sqlc.arg(viewer_id)
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
@@ -159,7 +159,7 @@ SELECT c.*, pu.username AS posterusername,
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id IS NOT NULL
   AND (
@@ -167,11 +167,11 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -203,15 +203,17 @@ ORDER BY c.written;
 -- Viewing comments in a section-specific thread requires 'view' on the
 -- section's primary item type since comments inherit their thread's grants.
 -- name: GetCommentsBySectionThreadIdForUser :many
-WITH role_ids(id) AS (
-    SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.c.users_idusers = sqlc.arg(viewer_id)
+WITH role_ids AS (
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.*, pu.username AS posterusername,
        c.users_idusers = sqlc.arg(viewer_id) AS is_owner
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
-LEFT JOIN users pu ON pidusers = users_idusers
+LEFT JOIN users pu ON pu.idusers = c.users_idusers
 WHERE c.forumthread_id=sqlc.arg(thread_id)
   AND c.forumthread_id IS NOT NULL
   AND (
@@ -219,11 +221,11 @@ WHERE c.forumthread_id=sqlc.arg(thread_id)
       OR c.language_id IS NULL
       OR EXISTS (
           SELECT 1 FROM user_language ul
-          WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          WHERE ul.users_idusers = sqlc.arg(viewer_id)
             AND ul.language_id = c.language_id
       )
       OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.c.users_idusers = sqlc.arg(viewer_id)
+          SELECT 1 FROM user_language ul WHERE ul.users_idusers = sqlc.arg(viewer_id)
       )
   )
   AND EXISTS (
@@ -266,25 +268,25 @@ WHERE c.users_idusers = sqlc.arg('user_id')
 ORDER BY c.written;
 
 -- name: SystemSetCommentLastIndex :exec
-UPDATE comments SET last_index = NOW() WHERE idcomments = ?;
+UPDATE comments SET last_index = CURRENT_TIMESTAMP WHERE idcomments = ?;
 
 -- name: SystemListCommentsByThreadID :many
-SELECT idcomments, c.text
+SELECT c.idcomments, c.text
 FROM comments c
 WHERE c.forumthread_id = ?
-ORDER BY idcomments;
+ORDER BY c.idcomments;
 
 
 -- name: GetAllCommentsForIndex :many
 SELECT idcomments, text FROM comments WHERE deleted_at IS NULL;
 
 -- name: AdminListAllCommentsWithThreadInfo :many
-SELECT idcomments, c.written, c.text, c.deleted_at, c.timezone,
+SELECT c.idcomments, c.written, c.text, c.deleted_at, c.timezone,
        th.idforumthread, t.idforumtopic, t.title AS forumtopic_title, t.handler AS topic_handler,
-       idusers, u.username AS posterusername
+       u.idusers, u.username AS posterusername
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id = th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
-LEFT JOIN users u ON idusers = users_idusers
+LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT ? OFFSET ?;

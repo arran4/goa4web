@@ -87,7 +87,7 @@ func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int64)
 }
 
 const adminMarkNotificationRead = `-- name: AdminMarkNotificationRead :exec
-UPDATE notifications SET read_at = NOW() WHERE id = ?1
+UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE id = ?1
 `
 
 func (q *Queries) AdminMarkNotificationRead(ctx context.Context, id int64) error {
@@ -278,7 +278,7 @@ func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg List
 
 const setNotificationReadForLister = `-- name: SetNotificationReadForLister :exec
 UPDATE notifications
-SET read_at = NOW()
+SET read_at = CURRENT_TIMESTAMP
 WHERE id = ?1 AND users_idusers = ?2
 `
 
@@ -310,7 +310,7 @@ func (q *Queries) SetNotificationUnreadForLister(ctx context.Context, arg SetNot
 
 const setNotificationsReadForListerBatch = `-- name: SetNotificationsReadForListerBatch :exec
 UPDATE notifications
-SET read_at = NOW()
+SET read_at = CURRENT_TIMESTAMP
 WHERE users_idusers = ?1
   AND id IN (/*SLICE:ids*/?)
 `

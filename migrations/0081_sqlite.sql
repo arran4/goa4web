@@ -1,26 +1,10 @@
 -- +goose Up
-ALTER TABLE external_links ADD COLUMN IF NOT EXISTS card_duration TEXT;
+ALTER TABLE external_links ADD COLUMN card_duration TEXT;
+ALTER TABLE external_links ADD COLUMN card_upload_date TEXT;
+ALTER TABLE external_links ADD COLUMN card_author TEXT;
 
-ALTER TABLE external_links ADD COLUMN IF NOT EXISTS card_upload_date TEXT;
+UPDATE uploaded_images SET path = ltrim(path, '/');
+UPDATE uploaded_images SET path = ltrim(path, 'uploads');
+UPDATE uploaded_images SET path = ltrim(path, '/');
 
-ALTER TABLE external_links ADD COLUMN IF NOT EXISTS card_author TEXT;
-
-ALTER TABLE faq_categories ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE faq ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE forumcategory ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE site_news ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE forumtopic ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE forumthread ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-ALTER TABLE imageboard ADD COLUMN IF NOT EXISTS deleted_at DATETIME DEFAULT NULL;
-
-UPDATE uploaded_images SET path = TRIM(LEADING '/' FROM path);
-
-UPDATE uploaded_images SET path = TRIM(LEADING 'uploads' FROM path);
-
-UPDATE uploaded_images SET path = TRIM(LEADING '/' FROM path);
+UPDATE schema_version SET version = 81;

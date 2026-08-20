@@ -68,7 +68,7 @@ LIMIT ? OFFSET ?;
 SELECT * FROM imageboard WHERE idimageboard = ? AND deleted_at IS NULL;
 
 -- name: AdminDeleteImageBoard :exec
-UPDATE imageboard SET deleted_at = NOW() WHERE idimageboard = ?;
+UPDATE imageboard SET deleted_at = CURRENT_TIMESTAMP WHERE idimageboard = ?;
 
 -- name: AdminApproveImagePost :exec
 UPDATE imagepost SET approved = 1 WHERE idimagepost = ?;
@@ -88,7 +88,7 @@ SET imageboard_idimageboard = ?, description = ?, approved = ?
 WHERE idimagepost = ?;
 
 -- name: AdminDeleteImagePost :exec
-UPDATE imagepost SET deleted_at = NOW() WHERE idimagepost = ?;
+UPDATE imagepost SET deleted_at = CURRENT_TIMESTAMP WHERE idimagepost = ?;
 
 
 -- name: ListBoardsByParentIDForLister :many
@@ -210,7 +210,7 @@ WHERE i.idimagepost = sqlc.arg(id)
 LIMIT 1;
 
 -- name: SystemSetImagePostLastIndex :exec
-UPDATE imagepost SET last_index = NOW() WHERE idimagepost = ?;
+UPDATE imagepost SET last_index = CURRENT_TIMESTAMP WHERE idimagepost = ?;
 
 
 -- name: GetAllImagePostsForIndex :many

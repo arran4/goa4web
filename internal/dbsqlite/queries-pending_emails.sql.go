@@ -541,7 +541,7 @@ func (q *Queries) SystemListPendingEmails(ctx context.Context, arg SystemListPen
 }
 
 const systemMarkPendingEmailSent = `-- name: SystemMarkPendingEmailSent :exec
-UPDATE pending_emails SET sent_at = NOW() WHERE id = ?
+UPDATE pending_emails SET sent_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 func (q *Queries) SystemMarkPendingEmailSent(ctx context.Context, id int64) error {

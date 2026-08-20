@@ -1,20 +1,18 @@
 -- +goose Up
--- ALTER TABLE linker
-    CHANGE COLUMN idlinker id INT NOT NULL AUTO_INCREMENT,
-    CHANGE COLUMN users_idusers author_id INT NOT NULL DEFAULT 0,
-    CHANGE COLUMN linker_category_id category_id INT DEFAULT NULL,
-    CHANGE COLUMN forumthread_id thread_id INT NOT NULL DEFAULT 0;
+ALTER TABLE linker RENAME COLUMN idlinker TO id;
+ALTER TABLE linker RENAME COLUMN users_idusers TO author_id;
+ALTER TABLE linker RENAME COLUMN linker_category_id TO category_id;
+ALTER TABLE linker RENAME COLUMN forumthread_id TO thread_id;
 
--- ALTER TABLE linker_category
-    CHANGE COLUMN idlinkerCategory id INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE linker_category RENAME COLUMN idlinkerCategory TO id;
 
--- ALTER TABLE linker_queue
-    CHANGE COLUMN idlinkerQueue id INT NOT NULL AUTO_INCREMENT,
-    CHANGE COLUMN users_idusers submitter_id INT NOT NULL DEFAULT 0,
-    CHANGE COLUMN linker_category_id category_id INT DEFAULT NULL;
+ALTER TABLE linker_queue RENAME COLUMN idlinkerQueue TO id;
+ALTER TABLE linker_queue RENAME COLUMN users_idusers TO submitter_id;
+ALTER TABLE linker_queue RENAME COLUMN linker_category_id TO category_id;
 
--- ALTER TABLE deactivated_linker
-    CHANGE COLUMN idlinker id INT NOT NULL,
-    CHANGE COLUMN users_idusers author_id INT NOT NULL,
-    CHANGE COLUMN linker_category_id category_id INT NULL DEFAULT NULL,
-    CHANGE COLUMN forumthread_id thread_id INT NOT NULL;
+ALTER TABLE deactivated_linker RENAME COLUMN idlinker TO id;
+ALTER TABLE deactivated_linker RENAME COLUMN users_idusers TO author_id;
+ALTER TABLE deactivated_linker RENAME COLUMN linker_category_id TO category_id;
+ALTER TABLE deactivated_linker RENAME COLUMN forumthread_id TO thread_id;
+
+UPDATE schema_version SET version = 67;

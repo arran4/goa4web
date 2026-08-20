@@ -355,7 +355,7 @@ WHERE users_idusers = sqlc.arg(author_id)
 ORDER BY b.written DESC;
 
 -- name: SystemSetBlogLastIndex :exec
-UPDATE blogs SET last_index = NOW() WHERE idblogs = sqlc.arg(id);
+UPDATE blogs SET last_index = CURRENT_TIMESTAMP WHERE idblogs = sqlc.arg(id);
 
 -- name: SystemGetAllBlogsForIndex :many
 SELECT idblogs, blog FROM blogs WHERE deleted_at IS NULL;

@@ -2,7 +2,7 @@
 INSERT INTO uploaded_images (
     users_idusers, path, width, height, file_size, uploaded
 )
-VALUES (sqlc.arg(uploader_id), sqlc.arg(path), sqlc.arg(width), sqlc.arg(height), sqlc.arg(file_size), NOW());
+VALUES (sqlc.arg(uploader_id), sqlc.arg(path), sqlc.arg(width), sqlc.arg(height), sqlc.arg(file_size), CURRENT_TIMESTAMP);
 
 -- name: GetUploadedImageByPath :one
 SELECT iduploadedimage, users_idusers, path, width, height, file_size, uploaded

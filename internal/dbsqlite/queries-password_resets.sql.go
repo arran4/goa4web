@@ -255,7 +255,7 @@ func (q *Queries) SystemDeletePasswordResetsByUser(ctx context.Context, userID i
 }
 
 const systemMarkPasswordResetVerified = `-- name: SystemMarkPasswordResetVerified :exec
-UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?
+UPDATE pending_passwords SET verified_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 func (q *Queries) SystemMarkPasswordResetVerified(ctx context.Context, id int64) error {

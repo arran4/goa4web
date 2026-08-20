@@ -1,8 +1,5 @@
 -- +goose Up
-ALTER TABLE users
-    ADD UNIQUE INDEX users_username_idx (username(255)),
-    ADD UNIQUE INDEX users_email_idx (email(255));
-
-ALTER TABLE topicrestrictions
-    DROP INDEX threadrestrictions_FKIndex1,
-    ADD PRIMARY KEY (forumtopic_idforumtopic);
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_idx ON users (username);
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email);
+CREATE UNIQUE INDEX IF NOT EXISTS topicrestrictions_topic_idx ON topicrestrictions (forumtopic_idforumtopic);
+UPDATE schema_version SET version = 21;

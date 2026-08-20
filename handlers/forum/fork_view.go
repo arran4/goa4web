@@ -113,8 +113,8 @@ func loadForksForViewer(ctx context.Context, cd *common.CoreData, sourceThreadID
 			if !labels.Valid || labels.String == "" {
 				return
 			}
-			for _, label := range strings.Split(labels.String, "\n") {
-				preview.Labels = append(preview.Labels, templates.TopicLabel{Name: label, Type: labelType})
+			for _, label := range strings.FieldsFunc(labels.String, func(r rune) bool { return r == '\n' || r == ',' }) {
+				preview.Labels = append(preview.Labels, templates.TopicLabel{Name: strings.TrimSpace(label), Type: labelType})
 			}
 		}
 		appendForkLabels(row.PublicLabels, "public")

@@ -51,7 +51,7 @@ func (q *Queries) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBanned
 }
 
 const listActiveBans = `-- name: ListActiveBans :many
-SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE canceled_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())
+SELECT id, ip_net, reason, created_at, expires_at, canceled_at FROM banned_ips WHERE canceled_at IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
 `
 
 func (q *Queries) ListActiveBans(ctx context.Context) ([]*BannedIp, error) {

@@ -1,9 +1,4 @@
 -- +goose Up
--- ALTER TABLE permissions
-    CHANGE COLUMN level role tinyblob DEFAULT NULL;
-
--- ALTER TABLE blogs
-    MODIFY COLUMN forumthread_id int(10) DEFAULT NULL;
-
-ALTER TABLE topicrestrictions
-    ADD UNIQUE INDEX topicrestrictions_forumtopic_idx (forumtopic_idforumtopic);
+ALTER TABLE permissions RENAME COLUMN level TO role;
+CREATE UNIQUE INDEX IF NOT EXISTS topicrestrictions_forumtopic_idx ON topicrestrictions (forumtopic_idforumtopic);
+UPDATE schema_version SET version = 30;

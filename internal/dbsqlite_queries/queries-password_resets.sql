@@ -15,7 +15,7 @@ FROM pending_passwords
 WHERE verification_code = ? AND verified_at IS NULL AND created_at > ?;
 
 -- name: SystemMarkPasswordResetVerified :exec
-UPDATE pending_passwords SET verified_at = NOW() WHERE id = ?;
+UPDATE pending_passwords SET verified_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: SystemDeletePasswordReset :exec
 DELETE FROM pending_passwords WHERE id = ?;

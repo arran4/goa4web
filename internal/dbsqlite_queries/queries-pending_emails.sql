@@ -10,7 +10,7 @@ ORDER BY id
 LIMIT ? OFFSET ?;
 
 -- name: SystemMarkPendingEmailSent :exec
-UPDATE pending_emails SET sent_at = NOW() WHERE id = ?;
+UPDATE pending_emails SET sent_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: AdminListUnsentPendingEmails :many
 -- admin task

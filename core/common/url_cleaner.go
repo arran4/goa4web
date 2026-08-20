@@ -94,11 +94,7 @@ func CanonicalizeExternalURL(raw string) string {
 		if idx := strings.IndexByte(part, '='); idx != -1 {
 			key = part[:idx]
 		}
-		unescapedKey, err := url.QueryUnescape(key)
-		if err != nil {
-			unescapedKey = key
-		}
-		if isSignatureParam(unescapedKey) {
+		if isSignatureParam(key) {
 			return raw
 		}
 	}
@@ -106,17 +102,14 @@ func CanonicalizeExternalURL(raw string) string {
 	// Filter out tracking parameters while keeping everything else exactly intact
 	for _, part := range parts {
 		if part == "" {
+			retained = append(retained, part)
 			continue
 		}
 		key := part
 		if idx := strings.IndexByte(part, '='); idx != -1 {
 			key = part[:idx]
 		}
-		unescapedKey, err := url.QueryUnescape(key)
-		if err != nil {
-			unescapedKey = key
-		}
-		if isTrackingParam(unescapedKey) {
+		if isTrackingParam(key) {
 			modified = true
 		} else {
 			retained = append(retained, part)

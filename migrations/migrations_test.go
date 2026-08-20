@@ -290,6 +290,23 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("seed bloomberg URL: %v", err)
 	}
 
+	// 6. Seed empty query components and percent-encoded keys
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/empty1?a=1&&utm_source=x&b=2', 1)`); err != nil {
+		t.Fatalf("seed empty components 1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/empty2?&a=1&utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed empty components 2: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/empty3?a=1&utm_source=x&', 1)`); err != nil {
+		t.Fatalf("seed empty components 3: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/empty4?a=1&&utm_source=x&&b=2', 1)`); err != nil {
+		t.Fatalf("seed empty components 4: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/encoded?%75tm_source=x&id=1', 1)`); err != nil {
+		t.Fatalf("seed encoded key: %v", err)
+	}
+
 	contents, err := FS.ReadFile("0096_mysql.sql")
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
@@ -364,6 +381,21 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 	var bloombergMatched int
 	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = ?`, expectedBloomberg).Scan(&bloombergMatched); err != nil || bloombergMatched != 1 {
 		t.Fatalf("expected Bloomberg URL with functional params %q, matched=%d, err=%v", expectedBloomberg, bloombergMatched, err)
+	}
+
+	// Verify empty query components and percent-encoded keys
+	expectedEmptyCases := map[string]string{
+		"https://example.com/empty1?a=1&&b=2":             "empty components between params",
+		"https://example.com/empty2?&a=1":                 "leading empty component",
+		"https://example.com/empty3?a=1&":                 "trailing empty component",
+		"https://example.com/empty4?a=1&&&b=2":            "multiple empty components",
+		"https://example.com/encoded?%75tm_source=x&id=1": "percent-encoded key untreated",
+	}
+	for expURL, desc := range expectedEmptyCases {
+		var matched int
+		if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url = ?`, expURL).Scan(&matched); err != nil || matched != 1 {
+			t.Fatalf("expected %s URL %q to exist in database, matched=%d, err=%v", desc, expURL, matched, err)
+		}
 	}
 
 	// Test two URLs > 255 chars with identical first 255 chars

@@ -184,7 +184,75 @@ func TestExternalLinkPreservesBloombergAccessTokenEndToEnd(t *testing.T) {
 
 func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
 	key := "test-secret-key"
+
+	cases := []struct {
+		name              string
+		rawTrackedURL     string
+		migratedStoredURL string
+		id                int32
+		title             string
+		desc              string
+	}{
+		{
+			name:              "Standard tracking parameter removal",
+			rawTrackedURL:     "https://example.com/item?id=1&utm_source=x&category=books",
+			migratedStoredURL: "https://example.com/item?id=1&category=books",
+			id:                300,
+			title:             "Item 1",
+			desc:              "Item Description",
+		},
+		{
+			name:              "Empty query components between params preserved",
+			rawTrackedURL:     "https://example.com/search?a=1&&utm_source=x&b=2",
+			migratedStoredURL: "https://example.com/search?a=1&&b=2",
+			id:                301,
+			title:             "Search 1",
+			desc:              "Search Description 1",
+		},
+		{
+			name:              "Leading empty query component preserved",
+			rawTrackedURL:     "https://example.com/search?&a=1&utm_source=x",
+			migratedStoredURL: "https://example.com/search?&a=1",
+			id:                302,
+			title:             "Search 2",
+			desc:              "Search Description 2",
+		},
+		{
+			name:              "Trailing empty query component preserved",
+			rawTrackedURL:     "https://example.com/search?a=1&utm_source=x&",
+			migratedStoredURL: "https://example.com/search?a=1&",
+			id:                303,
+			title:             "Search 3",
+			desc:              "Search Description 3",
+		},
+		{
+			name:              "Multiple empty query components preserved",
+			rawTrackedURL:     "https://example.com/search?a=1&&utm_source=x&&b=2",
+			migratedStoredURL: "https://example.com/search?a=1&&&b=2",
+			id:                304,
+			title:             "Search 4",
+			desc:              "Search Description 4",
+		},
+		{
+			name:              "Percent-encoded key treated conservatively as non-tracking in migration and runtime",
+			rawTrackedURL:     "https://example.com/search?%75tm_source=x&id=1",
+			migratedStoredURL: "https://example.com/search?%75tm_source=x&id=1",
+			id:                305,
+			title:             "Search 5",
+			desc:              "Search Description 5",
+		},
+	}
+
 	dbLinks := make(map[string]*db.ExternalLink)
+	for _, tc := range cases {
+		dbLinks[tc.migratedStoredURL] = &db.ExternalLink{
+			ID:              tc.id,
+			Url:             tc.migratedStoredURL,
+			Clicks:          15,
+			CardTitle:       sql.NullString{String: tc.title, Valid: true},
+			CardDescription: sql.NullString{String: tc.desc, Valid: true},
+		}
+	}
 
 	qs := testhelpers.NewQuerierStub()
 	qs.GetExternalLinkFn = func(ctx context.Context, url string) (*db.ExternalLink, error) {
@@ -205,42 +273,30 @@ func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
 		BaseURL: "http://example.org",
 	}
 
-	// Simulated row cleaned by migration 0096
-	// Original raw tracked URL was: "https://example.com/item?id=1&utm_source=x&category=books"
-	// Migration 0096 left: "https://example.com/item?id=1&category=books"
-	migratedStoredURL := "https://example.com/item?id=1&category=books"
-	dbLinks[migratedStoredURL] = &db.ExternalLink{
-		ID:              300,
-		Url:             migratedStoredURL,
-		Clicks:          15,
-		CardTitle:       sql.NullString{String: "Item 1", Valid: true},
-		CardDescription: sql.NullString{String: "Item Description", Valid: true},
-	}
-
 	cd := common.NewCoreData(context.Background(), qs, cfg, common.WithLinkSignKey(key))
 
-	// Application runtime receives the tracked URL in content
-	rawTrackedURL := "https://example.com/item?id=1&utm_source=x&category=books"
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// 1. Runtime canonicalization matches migrated stored URL exactly
+			runtimeCanonical := common.CanonicalizeExternalURL(tc.rawTrackedURL)
+			assert.Equal(t, tc.migratedStoredURL, runtimeCanonical, "runtime canonical URL must exactly match migrated URL")
 
-	// 1. Runtime canonicalization matches migrated stored URL exactly
-	runtimeCanonical := common.CanonicalizeExternalURL(rawTrackedURL)
-	assert.Equal(t, migratedStoredURL, runtimeCanonical, "runtime canonical URL must exactly match migrated URL")
+			// 2. cd.GetExternalLink finds the pre-existing migrated record
+			link, err := cd.GetExternalLink(context.Background(), tc.rawTrackedURL)
+			assert.NoError(t, err)
+			assert.NotNil(t, link)
+			assert.Equal(t, tc.id, link.ID)
+			assert.Equal(t, int32(15), link.Clicks)
+			assert.Equal(t, tc.title, link.CardTitle.String)
 
-	// 2. cd.GetExternalLink finds the pre-existing migrated record
-	link, err := cd.GetExternalLink(context.Background(), rawTrackedURL)
-	assert.NoError(t, err)
-	assert.NotNil(t, link)
-	assert.Equal(t, int32(300), link.ID)
-	assert.Equal(t, int32(15), link.Clicks)
-	assert.Equal(t, "Item 1", link.CardTitle.String)
-
-	// 3. Renderer renders using the existing metadata rather than fallback
-	provider := common.NewGoa4WebLinkProvider(cd, context.Background())
-	open, close, _ := provider.RenderLink(rawTrackedURL, true, true)
-	rendered := open + close
-	assert.Contains(t, rendered, "Item 1", "must render migrated card title")
-	assert.Contains(t, rendered, "Item Description", "must render migrated card description")
-	assert.Contains(t, rendered, "http://example.org/goto?u=https%3A%2F%2Fexample.com%2Fitem%3Fid%3D1%26category%3Dbooks&sig=")
+			// 3. Renderer renders using the existing metadata rather than fallback
+			provider := common.NewGoa4WebLinkProvider(cd, context.Background())
+			open, close, _ := provider.RenderLink(tc.rawTrackedURL, true, true)
+			rendered := open + close
+			assert.Contains(t, rendered, tc.title, "must render migrated card title")
+			assert.Contains(t, rendered, tc.desc, "must render migrated card description")
+		})
+	}
 }
 
 // Compile-time check that a4code is imported and reachable

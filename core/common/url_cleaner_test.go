@@ -61,6 +61,31 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https://example.com/search?a=1&a=2",
 		},
 		{
+			name:     "Representation: empty raw query components preserved between params",
+			input:    "https://example.com/search?a=1&&utm_source=x&b=2",
+			expected: "https://example.com/search?a=1&&b=2",
+		},
+		{
+			name:     "Representation: leading empty raw query component preserved",
+			input:    "https://example.com/search?&a=1&utm_source=x",
+			expected: "https://example.com/search?&a=1",
+		},
+		{
+			name:     "Representation: trailing empty raw query component preserved",
+			input:    "https://example.com/search?a=1&utm_source=x&",
+			expected: "https://example.com/search?a=1&",
+		},
+		{
+			name:     "Representation: multiple consecutive empty raw query components preserved",
+			input:    "https://example.com/search?a=1&&utm_source=x&&b=2",
+			expected: "https://example.com/search?a=1&&&b=2",
+		},
+		{
+			name:     "Representation: percent-encoded key not treated as tracking key (conservative raw matching)",
+			input:    "https://example.com/search?%75tm_source=x&id=1",
+			expected: "https://example.com/search?%75tm_source=x&id=1",
+		},
+		{
 			name:     "Representation: blank value empty= preserved",
 			input:    "https://example.com/search?empty=&utm_source=x",
 			expected: "https://example.com/search?empty=",

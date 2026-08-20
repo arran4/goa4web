@@ -32,7 +32,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.Handle("", EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(handlers.TaskHandler(privateTopicCreateTask)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(privateTopicCreateTask.Matcher())
 	pr.HandleFunc("/private_forum.js", handlers.PrivateForumJS(cfg)).Methods(http.MethodGet)
 	pr.HandleFunc("/topic_labels.js", handlers.TopicLabelsJS(cfg)).Methods(http.MethodGet)
-	pr.HandleFunc("/topic/{topic}", TopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}", RequirePrivateTopicAccess(http.HandlerFunc(TopicPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/api/user-exists", UserExistsAPI).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 
 	// API routes for private forum

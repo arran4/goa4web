@@ -47,11 +47,20 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 		if arg.ViewerID != 1 {
 			return nil, sql.ErrNoRows
 		}
-		// Topic 1 has exact view access
+		// Topic 1 has exact view access and is a private topic
 		if arg.Idforumtopic == 1 {
 			return &db.GetForumTopicByIdForUserRow{
 				Idforumtopic: 1,
 				Title:        sql.NullString{String: "Private Topic 1", Valid: true},
+				Handler:      "private",
+			}, nil
+		}
+		// Topic 3 is a public topic (valid view access, but Handler is "forum")
+		if arg.Idforumtopic == 3 {
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: 3,
+				Title:        sql.NullString{String: "Public Topic 3", Valid: true},
+				Handler:      "forum",
 			}, nil
 		}
 		// Topic 2 has NO view access
@@ -73,7 +82,7 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), q, cfg, common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 
-	// Test Topic 1 (Access Granted - positive counterpart)
+	// Test Topic 1 (Private Topic + View => Access Granted)
 	countUnreadCalls = 0
 	req1 := httptest.NewRequest("GET", "/private/topic/1/thread/1", nil)
 	req1 = mux.SetURLVars(req1, map[string]string{"topic": "1", "thread": "1"})
@@ -101,7 +110,7 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 		t.Errorf("expected 1 call to CountUnreadPrivateThreadsForUser for topic 1, got %d", countUnreadCalls)
 	}
 
-	// Test Topic 2 (Access Denied: exact see grant without exact view membership)
+	// Test Topic 2 (Private Topic + See but No View => Access Denied)
 	countUnreadCalls = 0
 	cd.CustomIndexItems = nil
 	req2 := httptest.NewRequest("GET", "/private/topic/2/thread/1", nil)
@@ -138,6 +147,33 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 	for _, item := range cd.CustomIndexItems {
 		if strings.HasPrefix(item.Name, "Unread in Topic") {
 			t.Errorf("unexpected unread item %q for inaccessible topic 2", item.Name)
+		}
+	}
+
+	// Test Topic 3 (Public Topic + View => Access Denied from /private namespace)
+	countUnreadCalls = 0
+	cd.CustomIndexItems = nil
+	req3 := httptest.NewRequest("GET", "/private/topic/3/thread/1", nil)
+	req3 = mux.SetURLVars(req3, map[string]string{"topic": "3", "thread": "1"})
+
+	ctx3 := context.WithValue(req3.Context(), consts.KeyCoreData, cd)
+	req3 = req3.WithContext(ctx3)
+
+	CustomIndex(cd, req3)
+
+	if countUnreadCalls != 0 {
+		t.Errorf("expected 0 calls to CountUnreadPrivateThreadsForUser for public topic 3 in private namespace, got %d", countUnreadCalls)
+	}
+
+	for _, item := range forbiddenItems {
+		if common.ContainsItem(cd.CustomIndexItems, item) {
+			t.Errorf("unexpected item %q for public topic 3 in private namespace", item)
+		}
+	}
+
+	for _, item := range cd.CustomIndexItems {
+		if strings.HasPrefix(item.Name, "Unread in Topic") {
+			t.Errorf("unexpected unread item %q for public topic 3 in private namespace", item.Name)
 		}
 	}
 }

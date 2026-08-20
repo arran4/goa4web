@@ -48,7 +48,11 @@ func TestRequirePrivateTopicAccess(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
 		if arg.Idforumtopic == 1 {
-			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1}, nil
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "private"}, nil
+		}
+		if arg.Idforumtopic == 3 {
+			// Public topic (valid view access, but Handler is "forum", not "private")
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 3, Handler: "forum"}, nil
 		}
 		return nil, sql.ErrNoRows
 	}
@@ -58,10 +62,10 @@ func TestRequirePrivateTopicAccess(t *testing.T) {
 
 	handler := RequirePrivateTopicAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Access Granted"))
+		_, _ = w.Write([]byte("Access Granted"))
 	}))
 
-	// Test access to Topic 1 (Granted)
+	// Test access to Topic 1 (Private + View => Granted)
 	req1 := httptest.NewRequest("GET", "/topic/1", nil)
 	req1 = mux.SetURLVars(req1, map[string]string{"topic": "1"})
 	req1 = req1.WithContext(context.WithValue(req1.Context(), consts.KeyCoreData, cd))
@@ -71,7 +75,7 @@ func TestRequirePrivateTopicAccess(t *testing.T) {
 		t.Errorf("Expected 200 OK for Topic 1, got %d", rec1.Code)
 	}
 
-	// Test access to Topic 2 (Denied - NotFoundOrLogin)
+	// Test access to Topic 2 (Private + See but No View => Denied)
 	req2 := httptest.NewRequest("GET", "/topic/2", nil)
 	req2 = mux.SetURLVars(req2, map[string]string{"topic": "2"})
 	req2 = req2.WithContext(context.WithValue(req2.Context(), consts.KeyCoreData, cd))
@@ -79,5 +83,15 @@ func TestRequirePrivateTopicAccess(t *testing.T) {
 	handler.ServeHTTP(rec2, req2)
 	if rec2.Code != http.StatusNotFound {
 		t.Errorf("Expected 404 Not Found for Topic 2, got %d", rec2.Code)
+	}
+
+	// Test access to Topic 3 (Public Forum Topic => Denied from /private namespace)
+	req3 := httptest.NewRequest("GET", "/topic/3", nil)
+	req3 = mux.SetURLVars(req3, map[string]string{"topic": "3"})
+	req3 = req3.WithContext(context.WithValue(req3.Context(), consts.KeyCoreData, cd))
+	rec3 := httptest.NewRecorder()
+	handler.ServeHTTP(rec3, req3)
+	if rec3.Code != http.StatusNotFound {
+		t.Errorf("Expected 404 Not Found for Topic 3, got %d", rec3.Code)
 	}
 }

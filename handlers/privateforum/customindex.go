@@ -29,7 +29,7 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 		}
 
 		top, err := cd.ForumTopicByID(int32(tid))
-		if err != nil || top == nil {
+		if err != nil || top == nil || top.Handler != "private" {
 			return
 		}
 

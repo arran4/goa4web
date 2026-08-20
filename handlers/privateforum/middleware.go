@@ -39,7 +39,7 @@ func RequirePrivateTopicAccess(next http.Handler) http.Handler {
 			return
 		}
 		top, err := cd.ForumTopicByID(int32(topicID))
-		if err != nil || top == nil {
+		if err != nil || top == nil || top.Handler != "private" {
 			handlers.RenderNotFoundOrLogin(w, r)
 			return
 		}

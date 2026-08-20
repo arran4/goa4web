@@ -223,7 +223,11 @@ func TestCustomForumIndexPrivateTopicAccess(t *testing.T) {
 			return nil, sql.ErrNoRows
 		}
 		if arg.Idforumtopic == 1 {
-			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1}, nil
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "private"}, nil
+		}
+		if arg.Idforumtopic == 3 {
+			// Topic 3 is public
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 3, Handler: "forum"}, nil
 		}
 		return nil, sql.ErrNoRows
 	}
@@ -231,11 +235,10 @@ func TestCustomForumIndexPrivateTopicAccess(t *testing.T) {
 	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 1
 
-	// Test Topic 1 (Access Granted)
+	// Test Topic 1 (Private Topic + View => Access Granted)
 	req1 := httptest.NewRequest("GET", "/private/topic/1", nil)
 	req1 = mux.SetURLVars(req1, map[string]string{"topic": "1", "category": "1"})
 
-	// Add WithCoreData
 	ctx1 := context.WithValue(req1.Context(), consts.KeyCoreData, cd)
 	req1 = req1.WithContext(ctx1)
 
@@ -244,11 +247,13 @@ func TestCustomForumIndexPrivateTopicAccess(t *testing.T) {
 		t.Errorf("expected subscribe item for topic 1")
 	}
 
-	// Test Topic 2 (Access Denied)
+	// Test Topic 2 (Private Topic + See but No View => Access Denied)
 	req2 := httptest.NewRequest("GET", "/private/topic/2", nil)
 	req2 = mux.SetURLVars(req2, map[string]string{"topic": "2", "category": "1"})
+	ctx2 := context.WithValue(req2.Context(), consts.KeyCoreData, cd)
+	req2 = req2.WithContext(ctx2)
 	cd.CustomIndexItems = nil
-	CustomForumIndex(cd, req2.WithContext(context.Background()))
+	CustomForumIndex(cd, req2)
 	if common.ContainsItem(cd.CustomIndexItems, "Subscribe To Topic") {
 		t.Errorf("unexpected subscribe item for topic 2")
 	}
@@ -257,5 +262,31 @@ func TestCustomForumIndexPrivateTopicAccess(t *testing.T) {
 	}
 	if common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
 		t.Errorf("unexpected write reply item for topic 2")
+	}
+
+	// Test Topic 3 (Public Topic + View => Access Denied from /private namespace)
+	req3 := httptest.NewRequest("GET", "/private/topic/3", nil)
+	req3 = mux.SetURLVars(req3, map[string]string{"topic": "3", "category": "1"})
+	ctx3 := context.WithValue(req3.Context(), consts.KeyCoreData, cd)
+	req3 = req3.WithContext(ctx3)
+	cd.CustomIndexItems = nil
+	CustomForumIndex(cd, req3)
+	if common.ContainsItem(cd.CustomIndexItems, "Subscribe To Topic") {
+		t.Errorf("unexpected subscribe item for public topic 3 in private namespace")
+	}
+	if common.ContainsItem(cd.CustomIndexItems, "Unsubscribe From Topic") {
+		t.Errorf("unexpected unsubscribe item for public topic 3 in private namespace")
+	}
+	if common.ContainsItem(cd.CustomIndexItems, "Write Reply") {
+		t.Errorf("unexpected write reply item for public topic 3 in private namespace")
+	}
+	if common.ContainsItem(cd.CustomIndexItems, "New Thread") {
+		t.Errorf("unexpected New Thread item for public topic 3 in private namespace")
+	}
+	if common.ContainsItem(cd.CustomIndexItems, "Topic Atom Feed") {
+		t.Errorf("unexpected Topic Atom Feed item for public topic 3 in private namespace")
+	}
+	if common.ContainsItem(cd.CustomIndexItems, "Topic RSS Feed") {
+		t.Errorf("unexpected Topic RSS Feed item for public topic 3 in private namespace")
 	}
 }

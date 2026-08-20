@@ -38,6 +38,7 @@ func TestUnreadPrivateThreadsFiltering(t *testing.T) {
 			return &db.GetForumTopicByIdForUserRow{
 				Idforumtopic: 1,
 				Title:        sql.NullString{String: "Private Topic 1", Valid: true},
+				Handler:      "private",
 			}, nil
 		}
 		return nil, sql.ErrNoRows
@@ -171,5 +172,52 @@ func TestUnreadPrivateThreadsInaccessibleTopicDenied(t *testing.T) {
 
 	if listCalls != 0 {
 		t.Errorf("Expected 0 calls to ListUnreadPrivateThreadsForUser on access denial, got %d", listCalls)
+	}
+}
+
+func TestUnreadPrivateThreadsPublicTopicDenied(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	var listCalls int
+
+	q.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
+		if p.ViewerID == 1 && p.Section == "privateforum" && p.Item.String == "topic" && p.Action == "see" {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
+	}
+
+	q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		if arg.Idforumtopic == 3 {
+			// Topic 3 is a public topic with view permission, but Handler is "forum", not "private"
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: 3,
+				Title:        sql.NullString{String: "Public Topic 3", Valid: true},
+				Handler:      "forum",
+			}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+
+	q.ListUnreadPrivateThreadsForUserFn = func(ctx context.Context, arg db.ListUnreadPrivateThreadsForUserParams) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
+		listCalls++
+		return nil, nil
+	}
+
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.UserID = 1
+
+	req := httptest.NewRequest("GET", "/private/topic/3/unread", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "3"})
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	rec := httptest.NewRecorder()
+	UnreadThreadsPage(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("Expected 404 Not Found for public topic requested under private unread, got %d", rec.Code)
+	}
+
+	if listCalls != 0 {
+		t.Errorf("Expected 0 calls to ListUnreadPrivateThreadsForUser on public topic denial, got %d", listCalls)
 	}
 }

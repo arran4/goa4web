@@ -30,10 +30,13 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	topicID := vars["topic"]
 
 	if section == "privateforum" && topicID != "" {
-		if tid, err := strconv.Atoi(topicID); err == nil {
-			if _, err := cd.ForumTopicByID(int32(tid)); err != nil {
-				return nil
-			}
+		tid, err := strconv.Atoi(topicID)
+		if err != nil {
+			return nil
+		}
+		top, err := cd.ForumTopicByID(int32(tid))
+		if err != nil || top == nil || top.Handler != "private" {
+			return nil
 		}
 	}
 

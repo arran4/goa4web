@@ -36,7 +36,9 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 }
 
 func TestGenerateURLHash(t *testing.T) {
-	if GenerateURLHash("http://example.com") != GenerateURLHash("http://example.com") {
+	hash1 := GenerateURLHash("http://example.com")
+	hash2 := GenerateURLHash("http://example.com")
+	if hash1 != hash2 {
 		t.Errorf("Hashes must be deterministic")
 	}
 }

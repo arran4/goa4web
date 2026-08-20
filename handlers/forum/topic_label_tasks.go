@@ -35,6 +35,15 @@ var (
 	_ tasks.Task = (*SetTopicLabelsTask)(nil)
 )
 
+// topicLabelPermissionSection returns consts.PermissionSectionPrivateForum when under /private,
+// or consts.PermissionSectionForum otherwise.
+func topicLabelPermissionSection(cd *common.CoreData, r *http.Request) consts.PermissionSection {
+	if strings.HasPrefix(forumBasePath(cd, r), "/private") {
+		return consts.PermissionSectionPrivateForum
+	}
+	return consts.PermissionSectionForum
+}
+
 func (AddTopicPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
@@ -47,7 +56,8 @@ func (AddTopicPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) an
 	}
 
 	if !cd.IsAdmin() {
-		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), "forum", int32(topicID), int32(cd.UserID))
+		section := topicLabelPermissionSection(cd, r)
+		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
 		if err != nil {
 			log.Printf("UserCanLabelTopic error: %v", err)
 			return fmt.Errorf("check permission fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -79,7 +89,8 @@ func (RemoveTopicPublicLabelTask) Action(w http.ResponseWriter, r *http.Request)
 	}
 
 	if !cd.IsAdmin() {
-		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), "forum", int32(topicID), int32(cd.UserID))
+		section := topicLabelPermissionSection(cd, r)
+		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
 		if err != nil {
 			log.Printf("UserCanLabelTopic error: %v", err)
 			return fmt.Errorf("check permission fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -111,7 +122,8 @@ func (SetTopicLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if !cd.IsAdmin() {
-		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), "forum", int32(topicID), int32(cd.UserID))
+		section := topicLabelPermissionSection(cd, r)
+		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
 		if err != nil {
 			log.Printf("UserCanLabelTopic error: %v", err)
 			return fmt.Errorf("check permission fail %w", handlers.ErrRedirectOnSamePageHandler(err))

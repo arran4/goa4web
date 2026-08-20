@@ -1,10 +1,10 @@
 -- name: SystemRegisterExternalLinkClick :exec
-INSERT INTO external_links (url, clicks)
-VALUES (?, 1)
+INSERT INTO external_links (url, url_hash, clicks)
+VALUES (?, ?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1;
 
 -- name: GetExternalLink :one
-SELECT * FROM external_links WHERE url_hash = UNHEX(SHA2(sqlc.arg(url), 256)) LIMIT 1;
+SELECT * FROM external_links WHERE url_hash = ? LIMIT 1;
 
 -- name: GetExternalLinkByID :one
 SELECT * FROM external_links WHERE id = ? LIMIT 1;
@@ -22,7 +22,7 @@ DELETE FROM external_links WHERE id = ?;
 UPDATE external_links SET card_image_cache = NULL, favicon_cache = NULL, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?;
 
 -- name: AdminDeleteExternalLinkByURL :exec
-DELETE FROM external_links WHERE url_hash = UNHEX(SHA2(sqlc.arg(url), 256));
+DELETE FROM external_links WHERE url = ?;
 
 -- name: UpdateExternalLinkMetadata :exec
 UPDATE external_links
@@ -35,12 +35,12 @@ SET card_image_cache = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 
 -- name: CreateExternalLink :execresult
-INSERT INTO external_links (url, clicks)
-VALUES (?, 0);
+INSERT INTO external_links (url, url_hash, clicks)
+VALUES (?, ?, 0);
 
 -- name: EnsureExternalLink :execresult
-INSERT INTO external_links (url, clicks)
-VALUES (?, 0)
+INSERT INTO external_links (url, url_hash, clicks)
+VALUES (?, ?, 0)
 ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id);
 
 -- name: AdminGetExternalLinkByCacheID :one

@@ -1922,8 +1922,7 @@ func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {
 		return
 	}
-	canonicalURL := CanonicalizeExternalURL(url)
-	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, canonicalURL); err != nil {
+	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, db.SystemRegisterExternalLinkClickParams{Url: url, UrlHash: GenerateURLHash(url)}); err != nil {
 		log.Printf("record external link click: %v", err)
 	}
 }
@@ -2423,20 +2422,12 @@ func (cd *CoreData) SelectedExternalLink() *db.ExternalLink {
 
 // EnsureExternalLink safely inserts or retrieves an external link ID.
 func (cd *CoreData) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
-	if cd.queries == nil {
-		return nil, fmt.Errorf("no queries")
-	}
-	canonicalURL := CanonicalizeExternalURL(url)
-	return cd.queries.EnsureExternalLink(ctx, canonicalURL)
+	return cd.queries.EnsureExternalLink(ctx, db.EnsureExternalLinkParams{Url: url, UrlHash: GenerateURLHash(url)})
 }
 
 // GetExternalLink fetches an external link by URL.
 func (cd *CoreData) GetExternalLink(ctx context.Context, url string) (*db.ExternalLink, error) {
-	if cd.queries == nil {
-		return nil, sql.ErrNoRows
-	}
-	canonicalURL := CanonicalizeExternalURL(url)
-	return cd.queries.GetExternalLink(ctx, canonicalURL)
+	return cd.queries.GetExternalLink(ctx, GenerateURLHash(url))
 }
 
 // UpdateExternalLinkMetadata saves fetched open graph metadata to the database and invalidates the cache.

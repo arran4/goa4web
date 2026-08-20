@@ -70,11 +70,7 @@ func (t *DBSeedTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if t.DBPool == nil {
 		return fmt.Errorf("database not available")
 	}
-	driver := ""
-	if cd != nil && cd.Config != nil {
-		driver = cd.Config.DBDriver
-	}
-	if err := runSQLStatements(r.Context(), t.DBPool, strings.NewReader(string(database.SeedSQLForDriver(driver)))); err != nil {
+	if err := runSQLStatements(r.Context(), t.DBPool, strings.NewReader(string(database.SeedSQL))); err != nil {
 		data.Errors = []string{fmt.Sprintf("Failed to apply seed data: %v", err)}
 		return handlers.TemplateWithDataHandler(handlers.TemplateRunTaskPage, data)
 	}

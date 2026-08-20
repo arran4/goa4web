@@ -765,7 +765,7 @@ func (q *Queries) GetAllForumCategoriesWithSubcategoryCount(ctx context.Context,
 }
 
 const getAllForumThreadsWithTopic = `-- name: GetAllForumThreadsWithTopic :many
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.reply_to_comment_id, th.reply_to_thread_id, th.deleted_at, t.title AS topic_title
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, t.title AS topic_title
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 ORDER BY t.idforumtopic, th.lastaddition DESC
@@ -779,8 +779,6 @@ type GetAllForumThreadsWithTopicRow struct {
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
-	ReplyToCommentID       sql.NullInt32
-	ReplyToThreadID        sql.NullInt32
 	DeletedAt              sql.NullTime
 	TopicTitle             sql.NullString
 }
@@ -802,8 +800,6 @@ func (q *Queries) GetAllForumThreadsWithTopic(ctx context.Context) ([]*GetAllFor
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Locked,
-			&i.ReplyToCommentID,
-			&i.ReplyToThreadID,
 			&i.DeletedAt,
 			&i.TopicTitle,
 		); err != nil {
@@ -1017,7 +1013,7 @@ WITH role_ids AS (
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 )
-SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.reply_to_comment_id, th.reply_to_thread_id, th.deleted_at, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
+SELECT th.idforumthread, th.firstpost, th.lastposter, th.forumtopic_idforumtopic, th.comments, th.lastaddition, th.locked, th.deleted_at, lu.username AS lastposterusername, lu.idusers AS lastposterid, fcu.username as firstpostusername, fcu.idusers as firstpostuserid, fc.written as firstpostwritten, fc.text as firstposttext
 FROM forumthread th
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
 LEFT JOIN users lu ON lu.idusers = th.lastposter
@@ -1065,8 +1061,6 @@ type GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextR
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
-	ReplyToCommentID       sql.NullInt32
-	ReplyToThreadID        sql.NullInt32
 	DeletedAt              sql.NullTime
 	Lastposterusername     sql.NullString
 	Lastposterid           sql.NullInt32
@@ -1098,8 +1092,6 @@ func (q *Queries) GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndF
 			&i.Comments,
 			&i.Lastaddition,
 			&i.Locked,
-			&i.ReplyToCommentID,
-			&i.ReplyToThreadID,
 			&i.DeletedAt,
 			&i.Lastposterusername,
 			&i.Lastposterid,
@@ -1454,244 +1446,6 @@ func (q *Queries) GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context, ar
 	return items, nil
 }
 
-const getReplyThreadsForLister = `-- name: GetReplyThreadsForLister :many
-WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?
-    UNION
-    SELECT id FROM roles WHERE name = 'anyone'
-)
-SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.comments, t.lastaddition, t.locked, t.reply_to_comment_id, t.reply_to_thread_id, t.deleted_at,
-       c.text as first_post_text,
-       t.comments as total_comments,
-       t.idforumthread,
-       u.username as last_poster_name,
-       cu.username as firstpostusername,
-       cu.idusers as firstpostuserid,
-       c.written as firstpostwritten,
-       CASE WHEN topic.handler = 'private' AND (
-           EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = ?
-                 AND cpl.label = 'unread'
-                 AND cpl.invert = false
-           )
-           OR (
-               NOT EXISTS (
-                   SELECT 1 FROM content_private_labels cpl
-                   WHERE cpl.item = 'thread'
-                     AND cpl.item_id = t.idforumthread
-                     AND cpl.user_id = ?
-                     AND cpl.label = 'unread'
-                     AND cpl.invert = true
-               )
-               AND (
-                   c.users_idusers != ?
-                   OR EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = ?
-                         AND cpl.label = 'new'
-                         AND cpl.invert = false
-                   )
-               )
-           )
-       ) THEN 1 ELSE 0 END AS is_unread,
-       CASE WHEN ? != 0 AND (
-           (c.users_idusers != ? AND NOT EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = ?
-                 AND cpl.label = 'new'
-                 AND cpl.invert = true
-           ))
-           OR EXISTS (
-               SELECT 1 FROM content_private_labels cpl
-               WHERE cpl.item = 'thread'
-                 AND cpl.item_id = t.idforumthread
-                 AND cpl.user_id = ?
-                 AND cpl.label = 'new'
-                 AND cpl.invert = false
-           )
-       ) THEN 1 ELSE 0 END AS is_new,
-       (
-           SELECT GROUP_CONCAT(cpl.label)
-           FROM content_public_labels cpl
-           WHERE cpl.item = 'thread' AND cpl.item_id = t.idforumthread
-       ) AS public_labels,
-       (
-           SELECT GROUP_CONCAT(cls.label)
-           FROM content_label_status cls
-           WHERE cls.item = 'thread' AND cls.item_id = t.idforumthread
-       ) AS author_labels,
-       (
-           SELECT GROUP_CONCAT(cpl.label)
-           FROM content_private_labels cpl
-           WHERE cpl.item = 'thread'
-             AND cpl.item_id = t.idforumthread
-             AND cpl.user_id = ?
-             AND cpl.invert = false
-             AND cpl.label NOT IN ('new', 'unread')
-       ) AS private_labels
-FROM forumthread t
-JOIN forumtopic topic ON t.forumtopic_idforumtopic = topic.idforumtopic
-JOIN comments c ON t.firstpost = c.idcomments
-LEFT JOIN users u ON t.lastposter = u.idusers
-LEFT JOIN users cu ON c.users_idusers = cu.idusers
-WHERE t.reply_to_thread_id = ?
-  AND (
-      topic.language_id = 0
-      OR topic.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_id = topic.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND (
-      c.language_id = 0
-      OR c.language_id IS NULL
-      OR EXISTS (
-          SELECT 1 FROM user_language ul
-          WHERE ul.users_idusers = ?
-            AND ul.language_id = c.language_id
-      )
-      OR NOT EXISTS (
-          SELECT 1 FROM user_language ul WHERE ul.users_idusers = ?
-      )
-  )
-  AND EXISTS (
-      SELECT 1 FROM grants topic_grant
-      WHERE ((topic.handler = 'private' AND topic_grant.section = 'privateforum')
-             OR (topic.handler <> 'private' AND topic_grant.section = 'forum'))
-        AND (topic_grant.item = 'topic' OR topic_grant.item IS NULL)
-        AND topic_grant.action = 'view'
-        AND topic_grant.active = 1
-        AND ((topic.handler = 'private' AND topic_grant.item_id = topic.idforumtopic)
-             OR (topic.handler <> 'private' AND (topic_grant.item_id = topic.idforumtopic OR topic_grant.item_id IS NULL)))
-        AND (topic_grant.user_id = ? OR topic_grant.user_id IS NULL)
-        AND (topic_grant.role_id IS NULL OR topic_grant.role_id IN (SELECT id FROM role_ids))
-  )
-  AND (
-      topic.handler <> 'private'
-      OR EXISTS (
-          SELECT 1 FROM grants thread_grant
-          WHERE thread_grant.section = 'privateforum_thread'
-            AND thread_grant.item = 'thread'
-            AND thread_grant.action = 'view'
-            AND thread_grant.active = 1
-            AND thread_grant.item_id = t.idforumthread
-            AND (thread_grant.user_id = ? OR thread_grant.user_id IS NULL)
-            AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
-      )
-  )
-ORDER BY is_unread DESC, t.lastaddition DESC
-`
-
-type GetReplyThreadsForListerParams struct {
-	ViewerID        int32
-	ReplyToThreadID sql.NullInt32
-	ViewerMatchID   sql.NullInt32
-}
-
-type GetReplyThreadsForListerRow struct {
-	Idforumthread          int32
-	Firstpost              int32
-	Lastposter             int32
-	ForumtopicIdforumtopic int32
-	Comments               sql.NullInt32
-	Lastaddition           sql.NullTime
-	Locked                 sql.NullBool
-	ReplyToCommentID       sql.NullInt32
-	ReplyToThreadID        sql.NullInt32
-	DeletedAt              sql.NullTime
-	FirstPostText          sql.NullString
-	TotalComments          sql.NullInt32
-	Idforumthread_2        int32
-	LastPosterName         sql.NullString
-	Firstpostusername      sql.NullString
-	Firstpostuserid        sql.NullInt32
-	Firstpostwritten       sql.NullTime
-	IsUnread               int32
-	IsNew                  int32
-	PublicLabels           sql.NullString
-	AuthorLabels           sql.NullString
-	PrivateLabels          sql.NullString
-}
-
-// GetReplyThreadsForLister uses the same topic, thread, role, and language
-// visibility rules as the normal forum thread and comment lists. Its unread
-// expression intentionally matches ListUnreadPrivateThreadsForUser.
-func (q *Queries) GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error) {
-	rows, err := q.db.QueryContext(ctx, getReplyThreadsForLister,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ReplyToThreadID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerMatchID,
-		arg.ViewerMatchID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*GetReplyThreadsForListerRow
-	for rows.Next() {
-		var i GetReplyThreadsForListerRow
-		if err := rows.Scan(
-			&i.Idforumthread,
-			&i.Firstpost,
-			&i.Lastposter,
-			&i.ForumtopicIdforumtopic,
-			&i.Comments,
-			&i.Lastaddition,
-			&i.Locked,
-			&i.ReplyToCommentID,
-			&i.ReplyToThreadID,
-			&i.DeletedAt,
-			&i.FirstPostText,
-			&i.TotalComments,
-			&i.Idforumthread_2,
-			&i.LastPosterName,
-			&i.Firstpostusername,
-			&i.Firstpostuserid,
-			&i.Firstpostwritten,
-			&i.IsUnread,
-			&i.IsNew,
-			&i.PublicLabels,
-			&i.AuthorLabels,
-			&i.PrivateLabels,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listForumcategoryPath = `-- name: ListForumcategoryPath :many
 WITH RECURSIVE category_path AS (
     SELECT f.idforumcategory, f.forumcategory_idforumcategory AS parent_id, f.title, 0 AS depth
@@ -2017,47 +1771,6 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 		return nil, err
 	}
 	return items, nil
-}
-
-const systemCopyPrivateThreadGrantsToThread = `-- name: SystemCopyPrivateThreadGrantsToThread :exec
-INSERT INTO grants (
-    created_at, user_id, role_id, section, item, rule_type,
-    item_id, item_rule, action, extra, active
-)
-SELECT DISTINCT
-    NOW(), src_grant.user_id, src_grant.role_id,
-    'privateforum_thread', 'thread', 'allow',
-    ?, NULL, src_grant.action, NULL, 1
-FROM grants src_grant
-WHERE src_grant.section = 'privateforum_thread'
-  AND src_grant.item = 'thread'
-  AND src_grant.rule_type = 'allow'
-  AND src_grant.active = 1
-  AND src_grant.action IN ('view', 'reply')
-  AND src_grant.item_id = ?
-  AND (src_grant.user_id IS NOT NULL OR src_grant.role_id IS NOT NULL)
-  AND NOT EXISTS (
-      SELECT 1
-      FROM grants dst_grant
-        WHERE dst_grant.section = 'privateforum_thread'
-          AND dst_grant.item = 'thread'
-          AND dst_grant.rule_type = 'allow'
-          AND dst_grant.item_id = ?
-        AND dst_grant.action = src_grant.action
-        AND dst_grant.active = 1
-        AND (dst_grant.user_id <=> src_grant.user_id)
-        AND (dst_grant.role_id <=> src_grant.role_id)
-  )
-`
-
-type SystemCopyPrivateThreadGrantsToThreadParams struct {
-	DstThreadID sql.NullInt32
-	SrcThreadID sql.NullInt32
-}
-
-func (q *Queries) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
-	_, err := q.db.ExecContext(ctx, systemCopyPrivateThreadGrantsToThread, arg.DstThreadID, arg.SrcThreadID, arg.DstThreadID)
-	return err
 }
 
 const systemCopyPrivateTopicGrantsToThread = `-- name: SystemCopyPrivateTopicGrantsToThread :exec

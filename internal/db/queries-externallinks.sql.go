@@ -34,7 +34,7 @@ func (q *Queries) AdminDeleteExternalLink(ctx context.Context, id int32) error {
 }
 
 const adminDeleteExternalLinkByURL = `-- name: AdminDeleteExternalLinkByURL :exec
-DELETE FROM external_links WHERE url_hash = UNHEX(SHA2(?, 256))
+DELETE FROM external_links WHERE url = ?
 `
 
 func (q *Queries) AdminDeleteExternalLinkByURL(ctx context.Context, url string) error {
@@ -125,30 +125,40 @@ func (q *Queries) AdminListExternalLinks(ctx context.Context, arg AdminListExter
 }
 
 const createExternalLink = `-- name: CreateExternalLink :execresult
-INSERT INTO external_links (url, clicks)
-VALUES (?, 0)
+INSERT INTO external_links (url, url_hash, clicks)
+VALUES (?, ?, 0)
 `
 
-func (q *Queries) CreateExternalLink(ctx context.Context, url string) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createExternalLink, url)
+type CreateExternalLinkParams struct {
+	Url     string
+	UrlHash string
+}
+
+func (q *Queries) CreateExternalLink(ctx context.Context, arg CreateExternalLinkParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createExternalLink, arg.Url, arg.UrlHash)
 }
 
 const ensureExternalLink = `-- name: EnsureExternalLink :execresult
-INSERT INTO external_links (url, clicks)
-VALUES (?, 0)
+INSERT INTO external_links (url, url_hash, clicks)
+VALUES (?, ?, 0)
 ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
 `
 
-func (q *Queries) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
-	return q.db.ExecContext(ctx, ensureExternalLink, url)
+type EnsureExternalLinkParams struct {
+	Url     string
+	UrlHash string
+}
+
+func (q *Queries) EnsureExternalLink(ctx context.Context, arg EnsureExternalLinkParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, ensureExternalLink, arg.Url, arg.UrlHash)
 }
 
 const getExternalLink = `-- name: GetExternalLink :one
-SELECT id, url, url_hash, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE url_hash = UNHEX(SHA2(?, 256)) LIMIT 1
+SELECT id, url, url_hash, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE url_hash = ? LIMIT 1
 `
 
-func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
-	row := q.db.QueryRowContext(ctx, getExternalLink, url)
+func (q *Queries) GetExternalLink(ctx context.Context, urlHash string) (*ExternalLink, error) {
+	row := q.db.QueryRowContext(ctx, getExternalLink, urlHash)
 	var i ExternalLink
 	err := row.Scan(
 		&i.ID,
@@ -198,13 +208,18 @@ func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalL
 }
 
 const systemRegisterExternalLinkClick = `-- name: SystemRegisterExternalLinkClick :exec
-INSERT INTO external_links (url, clicks)
-VALUES (?, 1)
+INSERT INTO external_links (url, url_hash, clicks)
+VALUES (?, ?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1
 `
 
-func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
-	_, err := q.db.ExecContext(ctx, systemRegisterExternalLinkClick, url)
+type SystemRegisterExternalLinkClickParams struct {
+	Url     string
+	UrlHash string
+}
+
+func (q *Queries) SystemRegisterExternalLinkClick(ctx context.Context, arg SystemRegisterExternalLinkClickParams) error {
+	_, err := q.db.ExecContext(ctx, systemRegisterExternalLinkClick, arg.Url, arg.UrlHash)
 	return err
 }
 

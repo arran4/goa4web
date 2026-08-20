@@ -24,7 +24,8 @@ func TestReloadExternalLinkTask(t *testing.T) {
 	t.Run("Happy Path", func(t *testing.T) {
 		t.Run("Action with URL", func(t *testing.T) {
 			qs := testhelpers.NewQuerierStub()
-			qs.CreateExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+			qs.CreateExternalLinkFn = func(ctx context.Context, arg db.CreateExternalLinkParams) (sql.Result, error) {
+// _ = arg.Url
 				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
 			}
 			qs.UpdateExternalLinkMetadataFn = func(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
@@ -78,7 +79,8 @@ func TestReloadExternalLinkTask(t *testing.T) {
 			qs.GetExternalLinkByIDFn = func(ctx context.Context, id int32) (*db.ExternalLink, error) {
 				return &db.ExternalLink{ID: 123, Url: link}, nil
 			}
-			qs.CreateExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+			qs.CreateExternalLinkFn = func(ctx context.Context, arg db.CreateExternalLinkParams) (sql.Result, error) {
+// _ = arg.Url
 				// Should find existing or just update
 				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
 			}

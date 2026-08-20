@@ -58,11 +58,3 @@ func main() {
     fmt.Println("Hello")
 }
 ]
--- code_inline.txt --
-Text [code func]
--- code_inline.expect.txt --
-Text [code func]
--- codein_inline.txt --
-Text [codein "go" func]
--- codein_inline.expect.txt --
-Text [codein "go" func]

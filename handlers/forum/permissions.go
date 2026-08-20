@@ -30,31 +30,6 @@ func UserCanCreateThread(ctx context.Context, q db.Querier, section consts.Permi
 	return false, err
 }
 
-func canForkThread(ctx context.Context, q db.Querier, section consts.PermissionSection, topicID, uid int32, sourceReplyable bool) (bool, error) {
-	if !sourceReplyable {
-		return false, nil
-	}
-	return UserCanCreateThread(ctx, q, section, topicID, uid)
-}
-
-func userCanReplyToThread(ctx context.Context, q db.Querier, section consts.PermissionSection, itemType consts.PermissionItem, itemID, threadID, uid int32) (bool, error) {
-	thread, err := q.GetThreadBySectionThreadIDForReplier(ctx, db.GetThreadBySectionThreadIDForReplierParams{
-		ReplierID:      uid,
-		ThreadID:       threadID,
-		Section:        section.String(),
-		ItemType:       sql.NullString{String: itemType.String(), Valid: true},
-		ItemID:         sql.NullInt32{Int32: itemID, Valid: itemID != 0},
-		ReplierMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, err
-	}
-	return thread != nil && (!thread.Locked.Valid || !thread.Locked.Bool), nil
-}
-
 // UserCanCreateTopic reports whether uid may create a topic in the category.
 func UserCanCreateTopic(ctx context.Context, q db.Querier, section consts.PermissionSection, categoryID, uid int32) (bool, error) {
 	_, err := q.SystemCheckGrant(ctx, db.SystemCheckGrantParams{

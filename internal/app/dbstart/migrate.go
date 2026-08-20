@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"log"
 
-	"github.com/arran4/goa4web/migrations"
 	"github.com/pressly/goose/v3"
 )
 
@@ -52,12 +51,8 @@ func transitionToGoose(ctx context.Context, db *sql.DB) error {
 
 // Apply runs the migrations using Goose.
 func Apply(ctx context.Context, db *sql.DB, f fs.FS, verbose bool, driver string) error {
-	goose.SetBaseFS(migrations.FilterFS(f, driver))
-	dialect := driver
-	if dialect == "sqlite" {
-		dialect = "sqlite3"
-	}
-	if err := goose.SetDialect(dialect); err != nil {
+	goose.SetBaseFS(f)
+	if err := goose.SetDialect(driver); err != nil {
 		return fmt.Errorf("set goose dialect: %w", err)
 	}
 	if _, err := goose.EnsureDBVersion(db); err != nil {

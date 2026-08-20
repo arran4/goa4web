@@ -56,11 +56,3 @@ Text
 ```go
 func
 ```
--- code_inline.txt --
-Text [code func]
--- code_inline.expect.txt --
-Text `func`
--- codein_inline.txt --
-Text [codein "go" func]
--- codein_inline.expect.txt --
-Text `func`

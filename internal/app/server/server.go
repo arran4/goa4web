@@ -291,7 +291,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
 			return nil, nil
 		}
-		queries = db.NewForDriver(s.DB, s.Config.DBDriver)
+		queries = db.New(s.DB)
 	}
 
 	sm := s.SessionManager
@@ -398,7 +398,7 @@ func (s *Server) startWorkers(ctx context.Context) {
 	if s.Queries != nil {
 		q = s.Queries
 	} else if s.DB != nil {
-		q = db.NewForDriver(s.DB, s.Config.DBDriver)
+		q = db.New(s.DB)
 	} else {
 		log.Printf("startWorkers: no db or querier available")
 		return
@@ -441,8 +441,9 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 	}
 
 	if srv.DB != nil {
-		queries := db.NewForDriver(srv.DB, srv.Config.DBDriver)
-		customQueries, _ := queries.(db.CustomQueries)
+		queries := db.New(srv.DB)
+		var q db.Querier = queries
+		customQueries, _ := q.(db.CustomQueries)
 		usageTimeout := 5 * time.Minute
 		ctx, cancel := context.WithTimeout(context.Background(), usageTimeout)
 		defer cancel()

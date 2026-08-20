@@ -57,7 +57,7 @@ func (c *dbSeedCmd) Run() error {
 	}
 
 	log.Println("Applying seed data...")
-	if err := sqlutil.RunStatements(context.Background(), sdb, strings.NewReader(string(database.SeedSQLForDriver(cfg.DBDriver)))); err != nil {
+	if err := sqlutil.RunStatements(context.Background(), sdb, strings.NewReader(string(database.SeedSQL))); err != nil {
 		return fmt.Errorf("failed to apply seed data: %w", err)
 	}
 

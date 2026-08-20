@@ -21,25 +21,21 @@ import (
 
 func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath string) {
 	type Data struct {
-		ForksByComment    map[int32]*ForkPreviewGroup
-		TotalReplyThreads int
-		SourceReference   *AuthorizedSourceReference
-		Category          *ForumcategoryPlus
-		Topic             *ForumtopicPlus
-		Thread            *db.GetThreadLastPosterAndPermsForUserRow
-		Comments          []*db.GetCommentsByThreadIdForUserRow
-		IsReplyable       bool
-		CanFork           bool
-		Text              string
-		CanEditComment    func(*db.GetCommentsByThreadIdForUserRow) bool
-		EditURL           func(*db.GetCommentsByThreadIdForUserRow) string
-		EditSaveURL       func(*db.GetCommentsByThreadIdForUserRow) string
-		Editing           func(*db.GetCommentsByThreadIdForUserRow) bool
-		AdminURL          func(*db.GetCommentsByThreadIdForUserRow) string
-		CanReply          bool
-		BasePath          string
-		Labels            []templates.TopicLabel
-		BackURL           string
+		Category       *ForumcategoryPlus
+		Topic          *ForumtopicPlus
+		Thread         *db.GetThreadLastPosterAndPermsForUserRow
+		Comments       []*db.GetCommentsByThreadIdForUserRow
+		IsReplyable    bool
+		Text           string
+		CanEditComment func(*db.GetCommentsByThreadIdForUserRow) bool
+		EditURL        func(*db.GetCommentsByThreadIdForUserRow) string
+		EditSaveURL    func(*db.GetCommentsByThreadIdForUserRow) string
+		Editing        func(*db.GetCommentsByThreadIdForUserRow) bool
+		AdminURL       func(*db.GetCommentsByThreadIdForUserRow) string
+		CanReply       bool
+		BasePath       string
+		Labels         []templates.TopicLabel
+		BackURL        string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -96,31 +92,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	}
 	cd.PageTitle = strings.Join(titleParts, " - ")
 
-	canFork := false
-	uid := cd.UserID
-	section := consts.PermissionSectionForum
-	if basePath == "/private" {
-		section = consts.PermissionSectionPrivateForum
-	}
-	replySection := consts.PermissionSectionForum
-	replyItem := consts.PermissionItemTopic
-	replyItemID := topicRow.Idforumtopic
-	if basePath == "/private" {
-		replySection = consts.PermissionSectionPrivateForumThread
-		replyItem = consts.PermissionItemThread
-		replyItemID = threadRow.Idforumthread
-	}
-	sourceReplyable, replyErr := userCanReplyToThread(r.Context(), cd.Queries(), replySection, replyItem, replyItemID, threadRow.Idforumthread, uid)
-	if replyErr != nil {
-		log.Printf("check source fork reply permission: %v", replyErr)
-	}
-	if allowed, err := canForkThread(r.Context(), cd.Queries(), section, topicRow.Idforumtopic, uid, sourceReplyable); err != nil {
-		log.Printf("check fork thread creation permission: %v", err)
-	} else if allowed {
-		canFork = true
-	}
-	data.CanFork = canFork
-
 	imageURL, _ := share.MakeImageURL(cd.AbsoluteURL(), displayTitle, "A discussion on our forum.", cd.ShareSignKey, false)
 	cd.OpenGraph = &common.OpenGraph{
 		Title:       displayTitle,
@@ -146,14 +117,6 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 
 	commentId := cd.SelectedCommentID()
 	data.Comments = commentRows
-	data.ForksByComment, data.TotalReplyThreads, err = loadForksForViewer(r.Context(), cd, threadRow.Idforumthread, 5)
-	if err != nil {
-		log.Printf("load visible forked threads: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
-		return
-	}
-	data.SourceReference = authorizedSourceReference(cd, threadRow)
 
 	if r.Method == http.MethodPost {
 		_ = r.ParseForm()

@@ -55,7 +55,7 @@ func InitDB(cfg *config.RuntimeConfig, reg *dbdrivers.Registry) (*sql.DB, *commo
 		_ = dbPool.Close()
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to communicate with database"}
 	}
-	if err := EnsureSchemaWithDriver(context.Background(), dbPool, cfg.DBDriver); err != nil {
+	if err := EnsureSchema(context.Background(), dbPool); err != nil {
 		_ = dbPool.Close()
 		return nil, &common.UserError{Err: err, ErrorMessage: "failed to verify schema"}
 	}
@@ -128,14 +128,9 @@ func CheckUploadDir(cfg *config.RuntimeConfig) *common.UserError {
 	return nil
 }
 
-// EnsureSchema creates core tables if they do not exist and inserts a version row using the default mysql driver.
+// EnsureSchema creates core tables if they do not exist and inserts a version row.
 func EnsureSchema(ctx context.Context, db *sql.DB) error {
-	return EnsureSchemaWithDriver(ctx, db, "mysql")
-}
-
-// EnsureSchemaWithDriver verifies the schema version for the specified database driver.
-func EnsureSchemaWithDriver(ctx context.Context, db *sql.DB, driver string) error {
-	version, err := SchemaVersionWithDriver(ctx, db, driver)
+	version, err := SchemaVersion(ctx, db)
 	if err != nil {
 		return err
 	}

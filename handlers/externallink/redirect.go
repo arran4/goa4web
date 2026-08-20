@@ -26,17 +26,15 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	canonicalURL := common.CanonicalizeExternalURL(rawURL)
-
 	if r.URL.Query().Get("go") != "" {
-		cd.RegisterExternalLinkClick(canonicalURL)
-		http.Redirect(w, r, canonicalURL, http.StatusTemporaryRedirect)
+		cd.RegisterExternalLinkClick(rawURL)
+		http.Redirect(w, r, rawURL, http.StatusTemporaryRedirect)
 		return
 	}
 
 	// Check if the URL is internal to avoid self-fetching
 	isInternal := false
-	if u, err := url.Parse(canonicalURL); err == nil {
+	if u, err := url.Parse(rawURL); err == nil {
 		if u.Hostname() == r.Host {
 			isInternal = true
 		}
@@ -57,21 +55,16 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 		needFetch = true
 	}
 
-	if needFetch && canonicalURL != "" && !isInternal {
-		info, err := opengraph.Fetch(canonicalURL, cd.HTTPClient())
+	if needFetch && rawURL != "" && !isInternal {
+		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
 		if err == nil {
 			if linkID == 0 {
-				res, err := cd.EnsureExternalLink(r.Context(), canonicalURL)
+				res, err := cd.EnsureExternalLink(r.Context(), common.CanonicalizeExternalURL(rawURL))
 				if err == nil {
 					id, _ := res.LastInsertId()
 					linkID = int32(id)
 				} else {
 					log.Printf("EnsureExternalLink error: %v", err)
-				}
-				if linkID == 0 {
-					if l, err := cd.GetExternalLink(r.Context(), canonicalURL); err == nil && l != nil {
-						linkID = l.ID
-					}
 				}
 			}
 			if linkID != 0 {

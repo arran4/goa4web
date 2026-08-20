@@ -99,15 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return walk();
     }
 
-    function evaluateAST(node, labels, participants, posters, topics) {
+    function evaluateAST(node, labels, participants) {
         if (!node) return true; // empty matches everything
 
         if (node.type === 'LogicalExpression') {
             if (node.operator === 'OR') {
-                return evaluateAST(node.left, labels, participants, posters, topics) || evaluateAST(node.right, labels, participants, posters, topics);
+                return evaluateAST(node.left, labels, participants) || evaluateAST(node.right, labels, participants);
             }
             if (node.operator === 'AND') {
-                return evaluateAST(node.left, labels, participants, posters, topics) && evaluateAST(node.right, labels, participants, posters, topics);
+                return evaluateAST(node.left, labels, participants) && evaluateAST(node.right, labels, participants);
             }
         }
 
@@ -126,18 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     inner = inner.substring(1, inner.length - 1);
                 }
                 termVal = 'participant:' + inner;
-            } else if (termVal.startsWith('poster:')) {
-                let inner = termVal.substring(7);
-                if (inner.startsWith('"') && inner.endsWith('"')) {
-                    inner = inner.substring(1, inner.length - 1);
-                }
-                termVal = 'poster:' + inner;
-            } else if (termVal.startsWith('topic:')) {
-                let inner = termVal.substring(6);
-                if (inner.startsWith('"') && inner.endsWith('"')) {
-                    inner = inner.substring(1, inner.length - 1);
-                }
-                termVal = 'topic:' + inner;
             } else {
                 if (termVal.startsWith('"') && termVal.endsWith('"')) {
                     termVal = termVal.substring(1, termVal.length - 1);
@@ -151,14 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (termLower.startsWith('participant:')) {
                 const val = termLower.substring(12);
                 return participants.some(p => p.includes(val));
-            } else if (termLower.startsWith('poster:')) {
-                const val = termLower.substring(7);
-                return posters.some(p => p.includes(val));
-            } else if (termLower.startsWith('topic:')) {
-                const val = termLower.substring(6);
-                return topics.some(t => t.includes(val));
             } else {
-                return labels.some(l => l.includes(termLower)) || participants.some(p => p.includes(termLower)) || posters.some(p => p.includes(termLower)) || topics.some(t => t.includes(termLower));
+                return labels.some(l => l.includes(termLower)) || participants.some(p => p.includes(termLower));
             }
         }
 
@@ -183,10 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
             items.forEach(item => {
                 const labels = Array.from(item.querySelectorAll('.label')).map(el => el.textContent.toLowerCase());
                 const participants = Array.from(item.querySelectorAll('.participant')).map(el => el.textContent.toLowerCase());
-                const posters = Array.from(item.querySelectorAll('.poster-name')).map(el => el.textContent.toLowerCase());
-                const topics = Array.from(item.querySelectorAll('.topic-name-filter')).map(el => el.textContent.toLowerCase());
 
-                if (evaluateAST(ast, labels, participants, posters, topics)) {
+                if (evaluateAST(ast, labels, participants)) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
@@ -196,15 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Allow clicking on labels/participants to add them to the filter
         document.addEventListener('click', (e) => {
-            const targetEl = e.target.closest('.label, .participant, .poster-name, .topic-name-filter');
+            const targetEl = e.target.closest('.label, .participant');
             if (targetEl) {
                 const text = targetEl.textContent.trim();
-
-                let prefix = '';
-                if (targetEl.matches('.label')) prefix = 'label:';
-                else if (targetEl.matches('.participant')) prefix = 'participant:';
-                else if (targetEl.matches('.poster-name')) prefix = 'poster:';
-                else if (targetEl.matches('.topic-name-filter')) prefix = 'topic:';
+                const prefix = targetEl.matches('.label') ? 'label:' : 'participant:';
 
                 const hasSpaces = /\s/.test(text);
                 const safeText = hasSpaces ? `"${text}"` : text;

@@ -1,148 +1,35 @@
 package common
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/url"
 	"strings"
 )
 
-// signatureKeys defines query parameter names indicating a cryptographic signature
-// or signed URL that would be broken if query parameters are removed or reordered.
-var signatureKeys = []string{
-	"x-amz-signature",
-	"x-amz-credential",
-	"signature",
-	"sig",
-	"hash",
-	"hmac",
-	"x-goog-signature",
-	"x-ms-signature",
+func GenerateURLHash(url string) string {
+	hash := sha256.Sum256([]byte(url))
+	return hex.EncodeToString(hash[:])
 }
 
-// knownTrackingPrefixes defines prefixes of query parameters used strictly for tracking/analytics.
-var knownTrackingPrefixes = []string{
-	"utm_",
-}
-
-// knownTrackingExactKeys defines exact parameter names used strictly for tracking/analytics.
-var knownTrackingExactKeys = map[string]bool{
-	"fbclid":   true,
-	"gclid":    true,
-	"gbraid":   true,
-	"wbraid":   true,
-	"mc_cid":   true,
-	"mc_eid":   true,
-	"igshid":   true,
-	"msclkid":  true,
-	"twclid":   true,
-	"yclid":    true,
-	"click_id": true,
-	"clickid":  true,
-	"_hsenc":   true,
-	"_hsmi":    true,
-	"mkt_tok":  true,
-}
-
-// isTrackingParam checks if a query parameter key is a known tracking parameter.
-func isTrackingParam(key string) bool {
-	lower := strings.ToLower(key)
-	for _, prefix := range knownTrackingPrefixes {
-		if strings.HasPrefix(lower, prefix) {
-			return true
-		}
-	}
-	return knownTrackingExactKeys[lower]
-}
-
-// isSignatureParam checks if a query parameter key indicates a cryptographic signature.
-func isSignatureParam(key string) bool {
-	lower := strings.ToLower(key)
-	for _, sigKey := range signatureKeys {
-		if lower == sigKey {
-			return true
-		}
-	}
-	return false
-}
-
-// IsHTTPURL checks case-insensitively whether a URL string begins with an http:// or https:// scheme.
-func IsHTTPURL(raw string) bool {
-	lower := strings.ToLower(raw)
-	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
-}
-
-// CanonicalizeExternalURL removes known tracking parameters while preserving functional ones,
-// original parameter order and escaping, repeated parameters, blank values, and cryptographically signed URLs.
+// CanonicalizeExternalURL removes known tracking parameters while preserving functional ones.
 func CanonicalizeExternalURL(raw string) string {
-	if raw == "" {
-		return ""
-	}
-	if !IsHTTPURL(raw) {
-		return raw
-	}
 	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" {
+	if err != nil || u.Scheme == "" {
 		return raw
 	}
 
-	hashIdx := strings.IndexByte(raw, '#')
-	searchStr := raw
-	rawFragment := ""
-	if hashIdx != -1 {
-		searchStr = raw[:hashIdx]
-		rawFragment = raw[hashIdx:]
-	}
-
-	qIdx := strings.IndexByte(searchStr, '?')
-	if qIdx == -1 {
-		return raw
-	}
-
-	rawPrefix := raw[:qIdx]
-	rawQuery := searchStr[qIdx+1:]
-
-	// Split RawQuery into components preserving exact original order and encoding
-	parts := strings.Split(rawQuery, "&")
-	var retained []string
+	q := u.Query()
 	modified := false
-
-	// First check if any query parameter is a signature indicator.
-	// If so, preserve the URL completely byte-for-byte to avoid invalidating the signature.
-	for _, part := range parts {
-		if part == "" {
-			continue
-		}
-		key := part
-		if idx := strings.IndexByte(part, '='); idx != -1 {
-			key = part[:idx]
-		}
-		if isSignatureParam(key) {
-			return raw
-		}
-	}
-
-	// Filter out tracking parameters while keeping everything else exactly intact
-	for _, part := range parts {
-		if part == "" {
-			retained = append(retained, part)
-			continue
-		}
-		key := part
-		if idx := strings.IndexByte(part, '='); idx != -1 {
-			key = part[:idx]
-		}
-		if isTrackingParam(key) {
+	for k := range q {
+		lowerK := strings.ToLower(k)
+		if strings.HasPrefix(lowerK, "utm_") || lowerK == "click_id" || lowerK == "yclid" || lowerK == "fbclid" || lowerK == "gclid" {
+			q.Del(k)
 			modified = true
-		} else {
-			retained = append(retained, part)
 		}
 	}
-
-	if !modified {
-		return raw
+	if modified {
+		u.RawQuery = q.Encode()
 	}
-
-	if len(retained) == 0 {
-		return rawPrefix + rawFragment
-	}
-	return rawPrefix + "?" + strings.Join(retained, "&") + rawFragment
+	return u.String()
 }

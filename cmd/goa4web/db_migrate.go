@@ -88,7 +88,7 @@ func (c *dbMigrateCmd) Run() error {
 	if err := dbstart.Apply(ctx, db, fsys, c.Verbosity >= 0, c.cfg.DBDriver); err != nil {
 		return err
 	}
-	version, err := dbstart.SchemaVersionWithDriver(ctx, db, c.cfg.DBDriver)
+	version, err := dbstart.SchemaVersion(ctx, db)
 	if err != nil {
 		return fmt.Errorf("read schema version: %w", err)
 	}

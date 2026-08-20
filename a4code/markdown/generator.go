@@ -127,15 +127,6 @@ func (g *Generator) Image(w io.Writer, n *ast.Image) error {
 }
 
 func (g *Generator) Code(w io.Writer, n *ast.Code) error {
-	if !ast.IsBlockNode(n) {
-		if err := writeString(w, "`"); err != nil {
-			return err
-		}
-		if err := writeString(w, n.Value); err != nil {
-			return err
-		}
-		return writeString(w, "`")
-	}
 	if err := writeString(w, "\n```\n"); err != nil {
 		return err
 	}
@@ -146,15 +137,6 @@ func (g *Generator) Code(w io.Writer, n *ast.Code) error {
 }
 
 func (g *Generator) CodeIn(w io.Writer, n *ast.CodeIn) error {
-	if !ast.IsBlockNode(n) {
-		if err := writeString(w, "`"); err != nil {
-			return err
-		}
-		if err := writeString(w, n.Value); err != nil {
-			return err
-		}
-		return writeString(w, "`")
-	}
 	if err := writeString(w, "\n```"); err != nil {
 		return err
 	}

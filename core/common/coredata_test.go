@@ -443,8 +443,8 @@ func TestSelectedThreadCanReply(t *testing.T) {
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
 	rows := sqlmock.NewRows([]string{
-		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "reply_to_comment_id", "reply_to_thread_id", "deleted_at",
-	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil, nil, nil, nil)
+		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "deleted_at",
+	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil, nil)
 	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
 		int32(1),
 		threadID,
@@ -481,8 +481,8 @@ func TestSelectedThreadCanReplyPrivateForum(t *testing.T) {
 	cd.SetCurrentThreadAndTopic(threadID, topicID)
 
 	rows := sqlmock.NewRows([]string{
-		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "reply_to_comment_id", "reply_to_thread_id", "deleted_at",
-	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil, nil, nil, nil)
+		"idforumthread", "firstpost", "lastposter", "forumtopic_idforumtopic", "comments", "lastaddition", "locked", "deleted_at",
+	}).AddRow(threadID, 0, 0, topicID, nil, time.Now(), nil, nil)
 	mock.ExpectQuery("SELECT th.idforumthread").WithArgs(
 		int32(1),
 		threadID,

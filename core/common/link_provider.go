@@ -88,21 +88,22 @@ func buildTooltip(title, description string) string {
 
 func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediateClose bool) (string, string, bool) {
 	canonicalURL := CanonicalizeExternalURL(rawURL)
-	safe, ok := a4code2html.SanitizeURL(canonicalURL)
+
+	safe, ok := a4code2html.SanitizeURL(rawURL)
 	if !ok {
 		return html.EscapeString(rawURL), "", false
 	}
 
 	targetURL := safe
-	if IsHTTPURL(canonicalURL) {
-		targetURL = p.cd.SignLinkURL(canonicalURL)
+	if strings.HasPrefix(rawURL, "http://") || strings.HasPrefix(rawURL, "https://") {
+		targetURL = p.cd.SignLinkURL(rawURL)
 	}
 
 	var title, description, imageURL, faviconURL, duration string
 	var hasData bool
 
 	if p.cd.Queries() != nil {
-		link, err := p.cd.Queries().GetExternalLink(p.ctx, canonicalURL)
+		link, err := p.cd.Queries().GetExternalLink(p.ctx, GenerateURLHash(canonicalURL))
 		if err == nil {
 			hasData = true
 			title = link.CardTitle.String
@@ -122,12 +123,12 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 	if hasData {
 		meta := buildTooltip(title, description)
 		if meta != "" {
-			tooltip = canonicalURL + " - " + meta
+			tooltip = rawURL + " - " + meta
 		} else {
-			tooltip = canonicalURL
+			tooltip = rawURL
 		}
 	} else {
-		tooltip = canonicalURL
+		tooltip = rawURL
 	}
 
 	hasUserTitle := !isImmediateClose
@@ -148,7 +149,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 			return linkOpen + faviconHTML, "</a>", false
 		} else {
 			// [link url] -> [link]url[/link] logic in immediate close
-			linkText := html.EscapeString(canonicalURL)
+			linkText := html.EscapeString(rawURL)
 			if hasData {
 				displayText := title
 				if displayText == "" {
@@ -175,7 +176,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 
 	// Online + No Title (Card or Text)
 	if !hasData {
-		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, targetURL, html.EscapeString(tooltip), html.EscapeString(canonicalURL)), "", true
+		return fmt.Sprintf(`<a href="%s" target="_blank" rel="noopener noreferrer" title="%s">%s</a>`, targetURL, html.EscapeString(tooltip), html.EscapeString(rawURL)), "", true
 	}
 
 	// Card
@@ -198,12 +199,12 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 
 	displayTitle := title
 	if displayTitle == "" {
-		displayTitle = canonicalURL
+		displayTitle = rawURL
 	}
 
 	htmlStr := fmt.Sprintf(
 		`<div class="external-link-card"><a href="%s" target="_blank" rel="noopener noreferrer" class="external-link-card-inner" title="%s">%s<div class="external-link-content"><div class="external-link-title">%s</div><div class="external-link-description">%s</div><div class="external-link-footer">%s</div></div></a></div>`,
-		targetURL, html.EscapeString(tooltip), imageHTML, html.EscapeString(displayTitle), html.EscapeString(description), html.EscapeString(canonicalURL))
+		targetURL, html.EscapeString(tooltip), imageHTML, html.EscapeString(displayTitle), html.EscapeString(description), html.EscapeString(rawURL))
 
 	return htmlStr, "", true
 }

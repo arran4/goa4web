@@ -116,9 +116,6 @@ CREATE TABLE `forumthread` (
   `comments` int(10) DEFAULT NULL,
   `lastaddition` datetime DEFAULT NULL,
   `locked` tinyint(1) DEFAULT NULL,
-  `reply_to_comment_id` int(10) DEFAULT NULL,
-  `reply_to_thread_id` int(10) DEFAULT NULL,
-  KEY `forumthread_reply_to_thread_id` (`reply_to_thread_id`, `reply_to_comment_id`),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idforumthread`),
   KEY `forumdiscussions_FKIndex1` (`forumtopic_idforumtopic`),
@@ -713,8 +710,8 @@ CREATE TABLE IF NOT EXISTS `admin_request_comments` (
 
 CREATE TABLE IF NOT EXISTS `external_links` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `url` text NOT NULL,
-  `url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED NOT NULL,
+  `url` TEXT NOT NULL,
+  `url_hash` VARCHAR(64) NOT NULL,
   `clicks` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -820,8 +817,6 @@ CREATE TABLE IF NOT EXISTS image_cache_entries (
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (92, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (93, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (94, 1);
-INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (95, 1);
-INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (96, 1);
 
 
 
@@ -844,3 +839,4 @@ CREATE TABLE user_passkeys (
     KEY user_passkeys_user_idx (user_id),
     UNIQUE KEY user_passkeys_cred_idx (credential_id(255))
 );
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (96, 1);

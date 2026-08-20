@@ -233,28 +233,13 @@ type QuerierStub struct {
 	SystemCreateNotificationErr   error
 	SystemCreateNotificationCalls []SystemCreateNotificationParams
 
-	SystemCreateThreadCalls                    []int32
-	SystemCreateThreadReturns                  int64
-	SystemCreateThreadErr                      error
-	SystemCreateThreadFn                       func(context.Context, int32) (int64, error)
-	SystemCreateReplyThreadCalls               []SystemCreateReplyThreadParams
-	SystemCreateReplyThreadReturns             int64
-	SystemCreateReplyThreadErr                 error
-	SystemCreateReplyThreadFn                  func(context.Context, SystemCreateReplyThreadParams) (int64, error)
-	SystemDeleteUninitializedThreadCalls       []int32
-	SystemDeleteUninitializedThreadErr         error
-	SystemDeleteUninitializedThreadFn          func(context.Context, int32) error
-	SystemCopyPrivateTopicGrantsToThreadCalls  []SystemCopyPrivateTopicGrantsToThreadParams
-	SystemCopyPrivateTopicGrantsToThreadErr    error
-	SystemCopyPrivateTopicGrantsToThreadFn     func(context.Context, SystemCopyPrivateTopicGrantsToThreadParams) error
-	SystemCopyPrivateThreadGrantsToThreadCalls []SystemCopyPrivateThreadGrantsToThreadParams
-	SystemCopyPrivateThreadGrantsToThreadErr   error
-	SystemCopyPrivateThreadGrantsToThreadFn    func(context.Context, SystemCopyPrivateThreadGrantsToThreadParams) error
-
-	GetReplyThreadsForListerCalls   []GetReplyThreadsForListerParams
-	GetReplyThreadsForListerReturns []*GetReplyThreadsForListerRow
-	GetReplyThreadsForListerErr     error
-	GetReplyThreadsForListerFn      func(context.Context, GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error)
+	SystemCreateThreadCalls                   []int32
+	SystemCreateThreadReturns                 int64
+	SystemCreateThreadErr                     error
+	SystemCreateThreadFn                      func(context.Context, int32) (int64, error)
+	SystemCopyPrivateTopicGrantsToThreadCalls []SystemCopyPrivateTopicGrantsToThreadParams
+	SystemCopyPrivateTopicGrantsToThreadErr   error
+	SystemCopyPrivateTopicGrantsToThreadFn    func(context.Context, SystemCopyPrivateTopicGrantsToThreadParams) error
 
 	SystemGetForumTopicByTitleCalls   []sql.NullString
 	SystemGetForumTopicByTitleReturns *Forumtopic
@@ -429,10 +414,10 @@ type QuerierStub struct {
 	UpdateExternalLinkMetadataErr   error
 	UpdateExternalLinkMetadataFn    func(context.Context, UpdateExternalLinkMetadataParams) error
 
-	CreateExternalLinkCalls   []string
+	CreateExternalLinkCalls   []CreateExternalLinkParams
 	CreateExternalLinkReturns sql.Result
 	CreateExternalLinkErr     error
-	CreateExternalLinkFn      func(context.Context, string) (sql.Result, error)
+	CreateExternalLinkFn      func(context.Context, CreateExternalLinkParams) (sql.Result, error)
 
 	GetExternalLinkCalls   []string
 	GetExternalLinkReturns *ExternalLink
@@ -444,9 +429,9 @@ type QuerierStub struct {
 	GetExternalLinkByIDErr     error
 	GetExternalLinkByIDFn      func(context.Context, int32) (*ExternalLink, error)
 
-	SystemRegisterExternalLinkClickCalls []string
+	SystemRegisterExternalLinkClickCalls []SystemRegisterExternalLinkClickParams
 	SystemRegisterExternalLinkClickErr   error
-	SystemRegisterExternalLinkClickFn    func(context.Context, string) error
+	SystemRegisterExternalLinkClickFn    func(context.Context, SystemRegisterExternalLinkClickParams) error
 
 	UpdateExternalLinkImageCacheCalls []UpdateExternalLinkImageCacheParams
 	UpdateExternalLinkImageCacheErr   error
@@ -998,10 +983,10 @@ type QuerierStub struct {
 	UpdateTimezoneForListerErr   error
 	UpdateTimezoneForListerFn    func(context.Context, UpdateTimezoneForListerParams) error
 
-	EnsureExternalLinkCalls   []string
+	EnsureExternalLinkCalls   []EnsureExternalLinkParams
 	EnsureExternalLinkReturns sql.Result
 	EnsureExternalLinkErr     error
-	EnsureExternalLinkFn      func(context.Context, string) (sql.Result, error)
+	EnsureExternalLinkFn      func(context.Context, EnsureExternalLinkParams) (sql.Result, error)
 
 	ListForumcategoryPathCalls   []int32
 	ListForumcategoryPathReturns []*ListForumcategoryPathRow
@@ -2565,31 +2550,6 @@ func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumt
 	return ret, err
 }
 
-func (s *QuerierStub) SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error) {
-	s.mu.Lock()
-	s.SystemCreateReplyThreadCalls = append(s.SystemCreateReplyThreadCalls, arg)
-	fn := s.SystemCreateReplyThreadFn
-	ret := s.SystemCreateReplyThreadReturns
-	err := s.SystemCreateReplyThreadErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) SystemDeleteUninitializedThread(ctx context.Context, threadID int32) error {
-	s.mu.Lock()
-	s.SystemDeleteUninitializedThreadCalls = append(s.SystemDeleteUninitializedThreadCalls, threadID)
-	fn := s.SystemDeleteUninitializedThreadFn
-	err := s.SystemDeleteUninitializedThreadErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, threadID)
-	}
-	return err
-}
-
 // SystemCopyPrivateTopicGrantsToThread records the call and returns the configured response.
 func (s *QuerierStub) SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error {
 	s.mu.Lock()
@@ -2803,15 +2763,15 @@ func (s *QuerierStub) ListSubscribersForPatterns(ctx context.Context, arg ListSu
 	return ret, nil
 }
 
-func (s *QuerierStub) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
+func (s *QuerierStub) EnsureExternalLink(ctx context.Context, arg EnsureExternalLinkParams) (sql.Result, error) {
 	s.mu.Lock()
-	s.EnsureExternalLinkCalls = append(s.EnsureExternalLinkCalls, url)
+	s.EnsureExternalLinkCalls = append(s.EnsureExternalLinkCalls, arg)
 	fn := s.EnsureExternalLinkFn
 	ret := s.EnsureExternalLinkReturns
 	err := s.EnsureExternalLinkErr
 	s.mu.Unlock()
 	if fn != nil {
-		return fn(ctx, url)
+		return fn(ctx, arg)
 	}
 	if err != nil {
 		return nil, err
@@ -3131,15 +3091,15 @@ func (s *QuerierStub) GetPrivateTopicThreadsAndLabelsForUser(ctx context.Context
 	return ret, err
 }
 
-func (s *QuerierStub) CreateExternalLink(ctx context.Context, url string) (sql.Result, error) {
+func (s *QuerierStub) CreateExternalLink(ctx context.Context, arg CreateExternalLinkParams) (sql.Result, error) {
 	s.mu.Lock()
-	s.CreateExternalLinkCalls = append(s.CreateExternalLinkCalls, url)
+	s.CreateExternalLinkCalls = append(s.CreateExternalLinkCalls, arg)
 	fn := s.CreateExternalLinkFn
 	ret := s.CreateExternalLinkReturns
 	err := s.CreateExternalLinkErr
 	s.mu.Unlock()
 	if fn != nil {
-		return fn(ctx, url)
+		return fn(ctx, arg)
 	}
 	if err != nil {
 		return nil, err
@@ -3150,15 +3110,15 @@ func (s *QuerierStub) CreateExternalLink(ctx context.Context, url string) (sql.R
 	return ret, nil
 }
 
-func (s *QuerierStub) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
+func (s *QuerierStub) GetExternalLink(ctx context.Context, urlHash string) (*ExternalLink, error) {
 	s.mu.Lock()
-	s.GetExternalLinkCalls = append(s.GetExternalLinkCalls, url)
+	s.GetExternalLinkCalls = append(s.GetExternalLinkCalls, urlHash)
 	fn := s.GetExternalLinkFn
 	ret := s.GetExternalLinkReturns
 	err := s.GetExternalLinkErr
 	s.mu.Unlock()
 	if fn != nil {
-		return fn(ctx, url)
+		return fn(ctx, urlHash)
 	}
 	if err != nil {
 		return nil, err
@@ -3190,14 +3150,14 @@ func (s *QuerierStub) GetExternalLinkByID(ctx context.Context, id int32) (*Exter
 	return ret, nil
 }
 
-func (s *QuerierStub) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
+func (s *QuerierStub) SystemRegisterExternalLinkClick(ctx context.Context, arg SystemRegisterExternalLinkClickParams) error {
 	s.mu.Lock()
-	s.SystemRegisterExternalLinkClickCalls = append(s.SystemRegisterExternalLinkClickCalls, url)
+	s.SystemRegisterExternalLinkClickCalls = append(s.SystemRegisterExternalLinkClickCalls, arg)
 	fn := s.SystemRegisterExternalLinkClickFn
 	err := s.SystemRegisterExternalLinkClickErr
 	s.mu.Unlock()
 	if fn != nil {
-		return fn(ctx, url)
+		return fn(ctx, arg)
 	}
 	return err
 }
@@ -3361,29 +3321,4 @@ func (q *QuerierStub) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePas
 
 func (q *QuerierStub) DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error {
 	return nil
-}
-
-func (s *QuerierStub) GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error) {
-	s.mu.Lock()
-	s.GetReplyThreadsForListerCalls = append(s.GetReplyThreadsForListerCalls, arg)
-	fn := s.GetReplyThreadsForListerFn
-	rows := s.GetReplyThreadsForListerReturns
-	err := s.GetReplyThreadsForListerErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return rows, err
-}
-
-func (s *QuerierStub) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
-	s.mu.Lock()
-	s.SystemCopyPrivateThreadGrantsToThreadCalls = append(s.SystemCopyPrivateThreadGrantsToThreadCalls, arg)
-	fn := s.SystemCopyPrivateThreadGrantsToThreadFn
-	err := s.SystemCopyPrivateThreadGrantsToThreadErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return err
 }

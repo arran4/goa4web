@@ -36,8 +36,8 @@ func TestRedirectHandler(t *testing.T) {
 		t.Run("Redirect with go param", func(t *testing.T) {
 			qs := testhelpers.NewQuerierStub()
 			var registeredURL string
-			qs.SystemRegisterExternalLinkClickFn = func(ctx context.Context, url string) error {
-				registeredURL = url
+			qs.SystemRegisterExternalLinkClickFn = func(ctx context.Context, arg db.SystemRegisterExternalLinkClickParams) error {
+				registeredURL = arg.Url
 				return nil
 			}
 
@@ -69,68 +69,6 @@ func TestRedirectHandler(t *testing.T) {
 			}
 		})
 
-		t.Run("Redirect strips tracking parameter and registers canonical url", func(t *testing.T) {
-			qs := testhelpers.NewQuerierStub()
-			var registeredURL string
-			qs.SystemRegisterExternalLinkClickFn = func(ctx context.Context, url string) error {
-				registeredURL = url
-				return nil
-			}
-
-			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key))
-
-			rawURL := "https://example.com/article?id=123&utm_source=twitter&utm_medium=social"
-			canonicalURL := "https://example.com/article?id=123"
-			signedPath := cd.SignLinkURL(rawURL) + "&go=1"
-
-			req := httptest.NewRequest("GET", signedPath, nil)
-			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-			rec := httptest.NewRecorder()
-
-			RedirectHandler(rec, req)
-
-			if rec.Code != http.StatusTemporaryRedirect {
-				t.Errorf("expected status %d, got %d", http.StatusTemporaryRedirect, rec.Code)
-			}
-			if loc := rec.Header().Get("Location"); loc != canonicalURL {
-				t.Errorf("expected location %s, got %s", canonicalURL, loc)
-			}
-			if registeredURL != canonicalURL {
-				t.Errorf("expected registered url %s, got %s", canonicalURL, registeredURL)
-			}
-		})
-
-		t.Run("Redirect preserves Bloomberg accessToken", func(t *testing.T) {
-			qs := testhelpers.NewQuerierStub()
-			var registeredURL string
-			qs.SystemRegisterExternalLinkClickFn = func(ctx context.Context, url string) error {
-				registeredURL = url
-				return nil
-			}
-
-			cd := common.NewCoreData(context.Background(), qs, nil, common.WithLinkSignKey(key))
-
-			rawURL := "https://www.bloomberg.com/news/sample?accessToken=token123&utm_source=email"
-			canonicalURL := "https://www.bloomberg.com/news/sample?accessToken=token123"
-			signedPath := cd.SignLinkURL(rawURL) + "&go=1"
-
-			req := httptest.NewRequest("GET", signedPath, nil)
-			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-			rec := httptest.NewRecorder()
-
-			RedirectHandler(rec, req)
-
-			if rec.Code != http.StatusTemporaryRedirect {
-				t.Errorf("expected status %d, got %d", http.StatusTemporaryRedirect, rec.Code)
-			}
-			if loc := rec.Header().Get("Location"); loc != canonicalURL {
-				t.Errorf("expected location %s, got %s", canonicalURL, loc)
-			}
-			if registeredURL != canonicalURL {
-				t.Errorf("expected registered url %s, got %s", canonicalURL, registeredURL)
-			}
-		})
-
 		t.Run("Render confirmation page and fetch metadata", func(t *testing.T) {
 			qs := testhelpers.NewQuerierStub()
 			// Mock GetExternalLink - return not found initially to trigger fetch
@@ -138,7 +76,8 @@ func TestRedirectHandler(t *testing.T) {
 				return nil, sql.ErrNoRows
 			}
 			// Mock EnsureExternalLink
-			qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+			qs.EnsureExternalLinkFn = func(ctx context.Context, arg db.EnsureExternalLinkParams) (sql.Result, error) {
+// _ = arg.Url
 				return db.FakeSQLResult{LastInsertIDValue: 123}, nil
 			}
 			// Mock UpdateExternalLinkMetadata

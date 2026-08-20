@@ -45,7 +45,7 @@ func TestPrivateRoute(t *testing.T) {
 			path:          "/private",
 			userID:        1,
 			username:      "user",
-			grantReturns:  0,                   // No grant
+			grantReturns:  0, // No grant
 			expectedCode:  http.StatusNotFound, // Authenticated users without grant receive 404
 			expectMatched: true,
 		},
@@ -110,7 +110,7 @@ func TestPrivateRoute(t *testing.T) {
 			}
 
 			if tt.expectedCode == http.StatusNotFound && rr.Code != http.StatusNotFound {
-				t.Errorf("Expected 404 Not Found, got %d", rr.Code)
+			    t.Errorf("Expected 404 Not Found, got %d", rr.Code)
 			}
 
 			// For the success case, we might get 500 or panic depending on template state.

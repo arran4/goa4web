@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -76,10 +77,10 @@ func setupTestSQLiteDB(t *testing.T, dir string) string {
 	// Insert representative data
 	dataStatements := []string{
 		`INSERT INTO language (id, nameof) VALUES (1, 'English');`,
-		`INSERT INTO users (idusers, email, username) VALUES
-			(1, 'admin@example.com', 'admin'),
-			(2, 'user@example.com', 'testuser'),
-			(3, 'writer@example.com', 'writer');`,
+		`INSERT INTO users (idusers, username) VALUES
+			(1, 'admin'),
+			(2, 'testuser'),
+			(3, 'writer');`,
 		`INSERT INTO passwords (id, users_idusers, passwd, passwd_algorithm, created_at) VALUES
 			(1, 1, 'password123', 'plaintext', CURRENT_TIMESTAMP),
 			(2, 2, 'password123', 'plaintext', CURRENT_TIMESTAMP),
@@ -156,6 +157,14 @@ func setupTestSQLiteDB(t *testing.T, dir string) string {
 	for _, stmt := range dataStatements {
 		if _, err := dbConn.ExecContext(ctx, stmt); err != nil {
 			t.Fatalf("failed to insert seed statement: %v\nSQL: %s", err, stmt)
+		}
+	}
+
+	if os.Getenv("UPDATE_SQLITE_SEED_DUMP") == "1" {
+		dumpOut, err := exec.Command("sqlite3", dbPath, ".dump").Output()
+		if err == nil && len(dumpOut) > 0 {
+			dumpPath := filepath.Join("..", "..", "testdata", "schema", "testing_seed.sqlite.sql")
+			_ = os.WriteFile(dumpPath, dumpOut, 0644)
 		}
 	}
 
@@ -457,5 +466,35 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 	}
 	if !strings.Contains(w.Body.String(), "This is an automated test comment inserted via SQLite!") {
 		t.Errorf("GET /forum/topic/1/thread/1 does not reflect newly inserted comment")
+	}
+}
+
+func TestRestoreSQLiteTestingSeed(t *testing.T) {
+	tempDir := t.TempDir()
+	dumpPath := filepath.Join("..", "..", "testdata", "schema", "testing_seed.sqlite.sql")
+	dumpSQL, err := os.ReadFile(dumpPath)
+	if err != nil {
+		t.Fatalf("failed to read testing_seed.sqlite.sql: %v", err)
+	}
+
+	dbPath := filepath.Join(tempDir, "restored.db")
+	dbConn, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("failed to open restored sqlite database: %v", err)
+	}
+	defer dbConn.Close()
+
+	if err := sqlutil.RunStatements(context.Background(), dbConn, strings.NewReader(string(dumpSQL))); err != nil {
+		t.Fatalf("failed to execute restored dump SQL: %v", err)
+	}
+
+	// Verify database can be queried with sqlc
+	q := db.New(dbConn)
+	cats, err := q.GetAllForumCategories(context.Background(), db.GetAllForumCategoriesParams{})
+	if err != nil {
+		t.Fatalf("failed to query restored database: %v", err)
+	}
+	if len(cats) == 0 {
+		t.Errorf("restored database contains 0 forum categories, expected >0")
 	}
 }

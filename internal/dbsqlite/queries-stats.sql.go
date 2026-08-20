@@ -248,7 +248,7 @@ func (q *Queries) AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRo
 
 const adminGetRecentAuditLogs = `-- name: AdminGetRecentAuditLogs :many
 SELECT a.id, a.users_idusers, u.username, a.action, a.path, a.details, a.data, a.created_at
-FROM audit_log a LEFT JOIN users u ON a.users_idusers = idusers
+FROM audit_log a LEFT JOIN users u ON a.users_idusers = u.idusers
 ORDER BY a.id DESC LIMIT ?
 `
 
@@ -529,21 +529,21 @@ func (q *Queries) SystemGetTemplateOverride(ctx context.Context, name string) (s
 }
 
 const systemListUserInfo = `-- name: SystemListUserInfo :many
-SELECT idusers, u.username,
-       IF(r.id IS NULL, 0, 1) AS admin,
+SELECT u.idusers, u.username,
+       CASE WHEN r.id IS NULL THEN 0 ELSE 1 END AS admin,
        MIN(s.created_at) AS created_at
 FROM users u
-LEFT JOIN user_roles ur ON ur.users_idusers = idusers
+LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
 LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
-LEFT JOIN sessions s ON s.users_idusers = idusers
-GROUP BY idusers
-ORDER BY idusers
+LEFT JOIN sessions s ON s.users_idusers = u.idusers
+GROUP BY u.idusers
+ORDER BY u.idusers
 `
 
 type SystemListUserInfoRow struct {
 	Idusers   int64
 	Username  sql.NullString
-	Admin     interface{}
+	Admin     int64
 	CreatedAt interface{}
 }
 

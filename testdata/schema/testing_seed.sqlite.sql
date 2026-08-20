@@ -6,102 +6,102 @@ CREATE TABLE goose_db_version (
 		is_applied INTEGER NOT NULL,
 		tstamp TIMESTAMP DEFAULT (datetime('now'))
 	);
-INSERT INTO goose_db_version VALUES(1,0,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(2,1,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(3,2,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(4,3,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(5,4,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(6,5,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(7,6,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(8,7,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(9,8,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(10,9,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(11,10,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(12,11,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(13,12,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(14,13,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(15,14,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(16,15,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(17,16,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(18,17,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(19,18,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(20,19,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(21,20,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(22,21,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(23,22,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(24,23,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(25,24,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(26,25,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(27,26,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(28,27,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(29,28,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(30,29,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(31,30,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(32,31,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(33,32,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(34,33,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(35,34,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(36,35,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(37,36,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(38,37,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(39,38,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(40,39,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(41,40,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(42,41,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(43,42,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(44,43,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(45,44,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(46,45,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(47,46,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(48,47,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(49,48,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(50,49,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(51,50,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(52,51,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(53,52,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(54,53,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(55,54,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(56,55,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(57,56,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(58,57,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(59,58,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(60,59,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(61,60,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(62,61,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(63,62,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(64,63,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(65,64,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(66,65,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(67,66,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(68,67,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(69,68,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(70,69,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(71,70,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(72,71,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(73,72,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(74,73,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(75,74,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(76,75,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(77,76,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(78,77,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(79,78,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(80,79,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(81,80,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(82,81,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(83,82,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(84,83,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(85,84,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(86,85,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(87,86,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(88,87,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(89,88,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(90,89,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(91,90,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(92,91,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(93,92,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(94,93,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(95,94,1,'2026-08-19 13:40:45');
-INSERT INTO goose_db_version VALUES(96,95,1,'2026-08-19 13:40:45');
+INSERT INTO goose_db_version VALUES(1,0,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(2,1,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(3,2,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(4,3,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(5,4,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(6,5,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(7,6,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(8,7,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(9,8,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(10,9,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(11,10,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(12,11,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(13,12,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(14,13,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(15,14,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(16,15,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(17,16,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(18,17,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(19,18,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(20,19,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(21,20,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(22,21,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(23,22,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(24,23,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(25,24,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(26,25,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(27,26,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(28,27,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(29,28,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(30,29,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(31,30,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(32,31,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(33,32,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(34,33,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(35,34,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(36,35,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(37,36,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(38,37,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(39,38,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(40,39,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(41,40,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(42,41,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(43,42,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(44,43,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(45,44,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(46,45,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(47,46,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(48,47,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(49,48,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(50,49,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(51,50,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(52,51,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(53,52,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(54,53,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(55,54,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(56,55,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(57,56,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(58,57,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(59,58,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(60,59,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(61,60,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(62,61,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(63,62,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(64,63,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(65,64,1,'2026-08-20 02:00:27');
+INSERT INTO goose_db_version VALUES(66,65,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(67,66,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(68,67,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(69,68,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(70,69,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(71,70,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(72,71,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(73,72,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(74,73,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(75,74,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(76,75,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(77,76,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(78,77,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(79,78,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(80,79,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(81,80,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(82,81,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(83,82,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(84,83,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(85,84,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(86,85,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(87,86,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(88,87,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(89,88,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(90,89,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(91,90,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(92,91,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(93,92,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(94,93,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(95,94,1,'2026-08-20 02:00:28');
+INSERT INTO goose_db_version VALUES(96,95,1,'2026-08-20 02:00:28');
 CREATE TABLE `1_old_forumthread` (
 idforumthread INTEGER PRIMARY KEY AUTOINCREMENT,
 forumtopic_idforumtopic INTEGER NOT NULL DEFAULT 0
@@ -120,7 +120,7 @@ language_id INTEGER NOT NULL DEFAULT 0,
 blog TEXT DEFAULT NULL,
 written DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 , deleted_at DATETIME DEFAULT NULL, last_index datetime DEFAULT NULL, timezone TEXT DEFAULT NULL);
-INSERT INTO blogs VALUES(1,0,1,1,'Welcome to the official developer blog for Goa4Web.','2026-08-19 13:40:45',NULL,NULL,NULL);
+INSERT INTO blogs VALUES(1,0,1,1,'Welcome to the official developer blog for Goa4Web.','2026-08-20 02:00:28',NULL,NULL,NULL);
 CREATE TABLE IF NOT EXISTS "blogs_search" (
 blog_id INTEGER NOT NULL DEFAULT 0,
 searchwordlist_idsearchwordlist INTEGER NOT NULL DEFAULT 0, word_count INT NOT NULL DEFAULT 1,
@@ -140,10 +140,10 @@ language_id INTEGER NOT NULL DEFAULT 0,
 written DATETIME DEFAULT NULL,
 TEXT TEXT DEFAULT NULL
 , deleted_at DATETIME DEFAULT NULL, last_index datetime DEFAULT NULL, timezone TEXT DEFAULT NULL);
-INSERT INTO comments VALUES(1,1,1,1,'2026-08-19 13:40:45','Welcome to the Goa4Web community platform!',NULL,NULL,NULL);
-INSERT INTO comments VALUES(2,1,2,1,'2026-08-19 13:40:45','Thanks! Excited to be part of the community.',NULL,NULL,NULL);
-INSERT INTO comments VALUES(3,2,2,1,'2026-08-19 13:40:45','How do I run Goa4Web with the SQLite backend?',NULL,NULL,NULL);
-INSERT INTO comments VALUES(4,3,1,1,'2026-08-19 13:40:45','Confidential staff notes for internal review.',NULL,NULL,NULL);
+INSERT INTO comments VALUES(1,1,1,1,'2026-08-20 02:00:28','Welcome to the Goa4Web community platform!',NULL,NULL,NULL);
+INSERT INTO comments VALUES(2,1,2,1,'2026-08-20 02:00:28','Thanks! Excited to be part of the community.',NULL,NULL,NULL);
+INSERT INTO comments VALUES(3,2,2,1,'2026-08-20 02:00:28','How do I run Goa4Web with the SQLite backend?',NULL,NULL,NULL);
+INSERT INTO comments VALUES(4,3,1,1,'2026-08-20 02:00:28','Confidential staff notes for internal review.',NULL,NULL,NULL);
 CREATE TABLE IF NOT EXISTS "comments_search" (
 searchwordlist_idsearchwordlist INTEGER NOT NULL DEFAULT 0,
 comment_id INTEGER NOT NULL DEFAULT 0, word_count INT NOT NULL DEFAULT 1,
@@ -180,9 +180,9 @@ comments INTEGER DEFAULT NULL,
 lastaddition DATETIME DEFAULT NULL,
 locked INTEGER DEFAULT NULL
 , deleted_at DATETIME DEFAULT NULL, reply_to_comment_id INTEGER DEFAULT NULL, reply_to_thread_id INTEGER DEFAULT NULL);
-INSERT INTO forumthread VALUES(1,1,2,1,2,'2026-08-19 13:40:45',0,NULL,NULL,NULL);
-INSERT INTO forumthread VALUES(2,3,2,3,1,'2026-08-19 13:40:45',0,NULL,NULL,NULL);
-INSERT INTO forumthread VALUES(3,4,1,4,1,'2026-08-19 13:40:45',0,NULL,NULL,NULL);
+INSERT INTO forumthread VALUES(1,1,2,1,2,'2026-08-20 02:00:28',0,NULL,NULL,NULL);
+INSERT INTO forumthread VALUES(2,3,2,3,1,'2026-08-20 02:00:28',0,NULL,NULL,NULL);
+INSERT INTO forumthread VALUES(3,4,1,4,1,'2026-08-20 02:00:28',0,NULL,NULL,NULL);
 CREATE TABLE forumtopic (
 idforumtopic INTEGER PRIMARY KEY AUTOINCREMENT,
 lastposter INTEGER NOT NULL DEFAULT 0,
@@ -234,7 +234,7 @@ url TEXT DEFAULT NULL,
 description TEXT DEFAULT NULL,
 listed DATETIME DEFAULT NULL
 , deleted_at DATETIME DEFAULT NULL, last_index datetime DEFAULT NULL, timezone TEXT DEFAULT NULL);
-INSERT INTO linker VALUES(1,1,1,1,0,'Official Go Website','https://go.dev','The home of the Go programming language.','2026-08-19 13:40:45',NULL,NULL,NULL);
+INSERT INTO linker VALUES(1,1,1,1,0,'Official Go Website','https://go.dev','The home of the Go programming language.','2026-08-20 02:00:28',NULL,NULL,NULL);
 CREATE TABLE IF NOT EXISTS "linker_category" (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 title TEXT DEFAULT NULL
@@ -289,7 +289,7 @@ users_idusers INTEGER NOT NULL DEFAULT 0,
 news TEXT DEFAULT NULL,
 occurred DATETIME DEFAULT NULL
 , deleted_at DATETIME DEFAULT NULL, last_index datetime DEFAULT NULL, timezone TEXT DEFAULT NULL);
-INSERT INTO site_news VALUES(1,0,1,1,'Goa4Web now supports SQLite backend out of the box!','2026-08-19 13:40:45',NULL,NULL,NULL);
+INSERT INTO site_news VALUES(1,0,1,1,'Goa4Web now supports SQLite backend out of the box!','2026-08-20 02:00:28',NULL,NULL,NULL);
 CREATE TABLE IF NOT EXISTS "site_news_search" (
 site_news_id INTEGER NOT NULL DEFAULT 0,
 searchwordlist_idsearchwordlist INTEGER NOT NULL DEFAULT 0, word_count INT NOT NULL DEFAULT 1,
@@ -320,9 +320,9 @@ email TEXT DEFAULT NULL,
 passwd TEXT DEFAULT NULL,
 username TEXT DEFAULT NULL
 , passwd_algorithm TEXT DEFAULT NULL, deleted_at DATETIME DEFAULT NULL, public_profile_enabled_at DATETIME DEFAULT NULL);
-INSERT INTO users VALUES(1,'admin@example.com',NULL,'admin',NULL,NULL,NULL);
-INSERT INTO users VALUES(2,'user@example.com',NULL,'testuser',NULL,NULL,NULL);
-INSERT INTO users VALUES(3,'writer@example.com',NULL,'writer',NULL,NULL,NULL);
+INSERT INTO users VALUES(1,NULL,NULL,'admin',NULL,NULL,NULL);
+INSERT INTO users VALUES(2,NULL,NULL,'testuser',NULL,NULL,NULL);
+INSERT INTO users VALUES(3,NULL,NULL,'writer',NULL,NULL,NULL);
 CREATE TABLE IF NOT EXISTS "user_topic_permissions" (
 users_idusers INTEGER NOT NULL DEFAULT 0,
 forumtopic_idforumtopic INTEGER NOT NULL DEFAULT 0,
@@ -507,9 +507,9 @@ passwd TEXT NOT NULL,
 passwd_algorithm TEXT,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-INSERT INTO passwords VALUES(1,1,'password123','plaintext','2026-08-19 13:40:45');
-INSERT INTO passwords VALUES(2,2,'password123','plaintext','2026-08-19 13:40:45');
-INSERT INTO passwords VALUES(3,3,'password123','plaintext','2026-08-19 13:40:45');
+INSERT INTO passwords VALUES(1,1,'password123','plaintext','2026-08-20 02:00:28');
+INSERT INTO passwords VALUES(2,2,'password123','plaintext','2026-08-20 02:00:28');
+INSERT INTO passwords VALUES(3,3,'password123','plaintext','2026-08-20 02:00:28');
 CREATE TABLE uploaded_images (
 iduploadedimage INTEGER PRIMARY KEY AUTOINCREMENT,
 users_idusers INT NOT NULL,
@@ -526,9 +526,9 @@ verified INTEGER NOT NULL DEFAULT 0,
 last_verification_code TEXT DEFAULT NULL, verified_at datetime DEFAULT NULL, notification_priority int NOT NULL DEFAULT 0, verification_expires_at datetime DEFAULT NULL,
 UNIQUE (user_id, email)
 );
-INSERT INTO user_emails VALUES(1,1,'admin@example.com',0,NULL,'2026-08-19 13:40:45',100,NULL);
-INSERT INTO user_emails VALUES(2,2,'user@example.com',0,NULL,'2026-08-19 13:40:45',100,NULL);
-INSERT INTO user_emails VALUES(3,3,'writer@example.com',0,NULL,'2026-08-19 13:40:45',100,NULL);
+INSERT INTO user_emails VALUES(1,1,'admin@example.com',0,NULL,'2026-08-20 02:00:28',100,NULL);
+INSERT INTO user_emails VALUES(2,2,'user@example.com',0,NULL,'2026-08-20 02:00:28',100,NULL);
+INSERT INTO user_emails VALUES(3,3,'writer@example.com',0,NULL,'2026-08-20 02:00:28',100,NULL);
 CREATE TABLE pending_passwords (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 user_id int NOT NULL,
@@ -544,7 +544,7 @@ id INTEGER PRIMARY KEY AUTOINCREMENT,
 name TEXT NOT NULL, can_login TINYINT(1) NOT NULL DEFAULT 0, is_admin TINYINT(1) NOT NULL DEFAULT 0, public_profile_allowed_at DATETIME DEFAULT NULL, private_labels TINYINT(1) NOT NULL DEFAULT 1,
 UNIQUE (name)
 );
-INSERT INTO roles VALUES(1,'content writer',1,0,'2026-08-19 13:40:45',1);
+INSERT INTO roles VALUES(1,'content writer',1,0,'2026-08-20 02:00:28',1);
 INSERT INTO roles VALUES(2,'rejected',0,0,NULL,0);
 INSERT INTO roles VALUES(3,'anyone',0,0,NULL,0);
 INSERT INTO roles VALUES(4,'user',1,0,NULL,1);
@@ -564,47 +564,62 @@ action TEXT NOT NULL,
 extra TEXT NULL,
 active INTEGER NOT NULL DEFAULT 1
 );
-INSERT INTO grants VALUES(1,'2026-08-19 13:40:45',NULL,NULL,1,'news','post','allow',NULL,NULL,'post',NULL,1);
-INSERT INTO grants VALUES(2,'2026-08-19 13:40:45',NULL,NULL,1,'linker','link','allow',NULL,NULL,'post',NULL,1);
-INSERT INTO grants VALUES(3,'2026-08-19 13:40:45',NULL,NULL,1,'search',NULL,'allow',NULL,NULL,'search',NULL,1);
-INSERT INTO grants VALUES(4,'2026-08-19 13:40:45',NULL,NULL,1,'news',NULL,'allow',NULL,NULL,'search',NULL,1);
-INSERT INTO grants VALUES(5,'2026-08-19 13:40:45',NULL,NULL,1,'forum',NULL,'allow',NULL,NULL,'search',NULL,1);
-INSERT INTO grants VALUES(6,'2026-08-19 13:40:45',NULL,NULL,1,'linker',NULL,'allow',NULL,NULL,'search',NULL,1);
-INSERT INTO grants VALUES(7,'2026-08-19 13:40:45',NULL,NULL,1,'blogs',NULL,'allow',NULL,NULL,'search',NULL,1);
-INSERT INTO grants VALUES(8,'2026-08-19 13:40:45',NULL,NULL,1,'writing',NULL,'allow',NULL,NULL,'search',NULL,1);
-INSERT INTO grants VALUES(9,'2026-08-19 13:40:45',NULL,NULL,1,'images','upload','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(10,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(11,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(12,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'reply',NULL,1);
-INSERT INTO grants VALUES(13,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'post',NULL,1);
-INSERT INTO grants VALUES(14,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'edit',NULL,1);
-INSERT INTO grants VALUES(15,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'create',NULL,1);
-INSERT INTO grants VALUES(16,'2026-08-19 13:40:45',NULL,NULL,NULL,'blogs','entry','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(17,'2026-08-19 13:40:45',NULL,NULL,NULL,'blogs','entry','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(18,'2026-08-19 13:40:45',NULL,NULL,NULL,'writing','category','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(19,'2026-08-19 13:40:45',NULL,NULL,NULL,'writing','category','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(20,'2026-08-19 13:40:45',NULL,NULL,NULL,'writing','article','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(21,'2026-08-19 13:40:45',NULL,NULL,NULL,'writing','article','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(22,'2026-08-19 13:40:45',NULL,NULL,NULL,'news','post','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(23,'2026-08-19 13:40:45',NULL,NULL,NULL,'news','post','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(24,'2026-08-19 13:40:45',NULL,NULL,NULL,'faq','category','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(25,'2026-08-19 13:40:45',NULL,NULL,NULL,'faq','category','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(26,'2026-08-19 13:40:45',NULL,NULL,NULL,'faq','question/answer','allow',NULL,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(27,'2026-08-19 13:40:45',NULL,NULL,NULL,'faq','question/answer','allow',NULL,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(28,'2026-08-19 13:40:45',NULL,NULL,1,'images',NULL,'allow',NULL,NULL,'label',NULL,1);
-INSERT INTO grants VALUES(29,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
-INSERT INTO grants VALUES(30,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
-INSERT INTO grants VALUES(31,'2026-08-19 13:40:45',NULL,NULL,1,'images',NULL,'allow',NULL,NULL,'label',NULL,1);
-INSERT INTO grants VALUES(32,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
-INSERT INTO grants VALUES(33,'2026-08-19 13:40:45',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
-INSERT INTO grants VALUES(34,'2026-08-19 13:40:45',NULL,NULL,6,'role',NULL,'allow',NULL,NULL,'moderator',NULL,1);
-INSERT INTO grants VALUES(35,'2026-08-19 13:40:45',NULL,NULL,6,'role',NULL,'allow',NULL,NULL,'content writer',NULL,1);
-INSERT INTO grants VALUES(36,'2026-08-19 13:40:45',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'see',NULL,1);
-INSERT INTO grants VALUES(37,'2026-08-19 13:40:45',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(38,'2026-08-19 13:40:45',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'post',NULL,1);
-INSERT INTO grants VALUES(39,'2026-08-19 13:40:45',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'reply',NULL,1);
-INSERT INTO grants VALUES(40,'2026-08-19 13:40:45',NULL,1,NULL,'privateforum_thread','thread','allow',3,NULL,'view',NULL,1);
-INSERT INTO grants VALUES(41,'2026-08-19 13:40:45',NULL,1,NULL,'privateforum_thread','thread','allow',3,NULL,'reply',NULL,1);
+INSERT INTO grants VALUES(1,'2026-08-20 02:00:27',NULL,NULL,1,'news','post','allow',NULL,NULL,'post',NULL,1);
+INSERT INTO grants VALUES(2,'2026-08-20 02:00:27',NULL,NULL,1,'linker','link','allow',NULL,NULL,'post',NULL,1);
+INSERT INTO grants VALUES(3,'2026-08-20 02:00:27',NULL,NULL,1,'search',NULL,'allow',NULL,NULL,'search',NULL,1);
+INSERT INTO grants VALUES(4,'2026-08-20 02:00:27',NULL,NULL,1,'news',NULL,'allow',NULL,NULL,'search',NULL,1);
+INSERT INTO grants VALUES(5,'2026-08-20 02:00:27',NULL,NULL,1,'forum',NULL,'allow',NULL,NULL,'search',NULL,1);
+INSERT INTO grants VALUES(6,'2026-08-20 02:00:27',NULL,NULL,1,'linker',NULL,'allow',NULL,NULL,'search',NULL,1);
+INSERT INTO grants VALUES(7,'2026-08-20 02:00:27',NULL,NULL,1,'blogs',NULL,'allow',NULL,NULL,'search',NULL,1);
+INSERT INTO grants VALUES(8,'2026-08-20 02:00:27',NULL,NULL,1,'writing',NULL,'allow',NULL,NULL,'search',NULL,1);
+INSERT INTO grants VALUES(9,'2026-08-20 02:00:27',NULL,NULL,1,'images','upload','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(10,'2026-08-20 02:00:27',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(11,'2026-08-20 02:00:27',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(12,'2026-08-20 02:00:27',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'reply',NULL,1);
+INSERT INTO grants VALUES(13,'2026-08-20 02:00:27',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'post',NULL,1);
+INSERT INTO grants VALUES(14,'2026-08-20 02:00:27',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'edit',NULL,1);
+INSERT INTO grants VALUES(15,'2026-08-20 02:00:27',NULL,NULL,1,'privateforum','topic','allow',NULL,NULL,'create',NULL,1);
+INSERT INTO grants VALUES(16,'2026-08-20 02:00:27',NULL,NULL,NULL,'blogs','entry','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(17,'2026-08-20 02:00:27',NULL,NULL,NULL,'blogs','entry','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(18,'2026-08-20 02:00:27',NULL,NULL,NULL,'writing','category','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(19,'2026-08-20 02:00:27',NULL,NULL,NULL,'writing','category','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(20,'2026-08-20 02:00:27',NULL,NULL,NULL,'writing','article','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(21,'2026-08-20 02:00:27',NULL,NULL,NULL,'writing','article','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(22,'2026-08-20 02:00:27',NULL,NULL,NULL,'news','post','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(23,'2026-08-20 02:00:27',NULL,NULL,NULL,'news','post','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(24,'2026-08-20 02:00:27',NULL,NULL,NULL,'faq','category','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(25,'2026-08-20 02:00:27',NULL,NULL,NULL,'faq','category','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(26,'2026-08-20 02:00:27',NULL,NULL,NULL,'faq','question/answer','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(27,'2026-08-20 02:00:27',NULL,NULL,NULL,'faq','question/answer','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(28,'2026-08-20 02:00:28',NULL,NULL,1,'images',NULL,'allow',NULL,NULL,'label',NULL,1);
+INSERT INTO grants VALUES(29,'2026-08-20 02:00:28',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
+INSERT INTO grants VALUES(30,'2026-08-20 02:00:28',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
+INSERT INTO grants VALUES(31,'2026-08-20 02:00:28',NULL,NULL,1,'images',NULL,'allow',NULL,NULL,'label',NULL,1);
+INSERT INTO grants VALUES(32,'2026-08-20 02:00:28',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
+INSERT INTO grants VALUES(33,'2026-08-20 02:00:28',NULL,NULL,1,'privateforum',NULL,'allow',NULL,NULL,'label',NULL,1);
+INSERT INTO grants VALUES(34,'2026-08-20 02:00:28',NULL,NULL,6,'role',NULL,'allow',NULL,NULL,'moderator',NULL,1);
+INSERT INTO grants VALUES(35,'2026-08-20 02:00:28',NULL,NULL,6,'role',NULL,'allow',NULL,NULL,'content writer',NULL,1);
+INSERT INTO grants VALUES(36,'2026-08-20 02:00:28',NULL,NULL,3,'forum','topic','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(37,'2026-08-20 02:00:28',NULL,NULL,3,'forum','topic','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(38,'2026-08-20 02:00:28',NULL,NULL,3,'forum','thread','allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(39,'2026-08-20 02:00:28',NULL,NULL,3,'forum','thread','allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(40,'2026-08-20 02:00:28',NULL,NULL,4,'forum','topic','allow',NULL,NULL,'post',NULL,1);
+INSERT INTO grants VALUES(41,'2026-08-20 02:00:28',NULL,NULL,4,'forum','topic','allow',NULL,NULL,'reply',NULL,1);
+INSERT INTO grants VALUES(42,'2026-08-20 02:00:28',NULL,NULL,4,'forum','thread','allow',NULL,NULL,'reply',NULL,1);
+INSERT INTO grants VALUES(43,'2026-08-20 02:00:28',NULL,NULL,3,'news',NULL,'allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(44,'2026-08-20 02:00:28',NULL,NULL,3,'news',NULL,'allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(45,'2026-08-20 02:00:28',NULL,NULL,3,'faq',NULL,'allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(46,'2026-08-20 02:00:28',NULL,NULL,3,'faq',NULL,'allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(47,'2026-08-20 02:00:28',NULL,NULL,3,'linker',NULL,'allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(48,'2026-08-20 02:00:28',NULL,NULL,3,'linker',NULL,'allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(49,'2026-08-20 02:00:28',NULL,NULL,3,'blogs',NULL,'allow',NULL,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(50,'2026-08-20 02:00:28',NULL,NULL,3,'blogs',NULL,'allow',NULL,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(51,'2026-08-20 02:00:28',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'see',NULL,1);
+INSERT INTO grants VALUES(52,'2026-08-20 02:00:28',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(53,'2026-08-20 02:00:28',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'post',NULL,1);
+INSERT INTO grants VALUES(54,'2026-08-20 02:00:28',NULL,1,NULL,'privateforum','topic','allow',4,NULL,'reply',NULL,1);
+INSERT INTO grants VALUES(55,'2026-08-20 02:00:28',NULL,1,NULL,'privateforum_thread','thread','allow',3,NULL,'view',NULL,1);
+INSERT INTO grants VALUES(56,'2026-08-20 02:00:28',NULL,1,NULL,'privateforum_thread','thread','allow',3,NULL,'reply',NULL,1);
 CREATE TABLE admin_user_comments (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 users_idusers INT NOT NULL,
@@ -752,7 +767,7 @@ DELETE FROM sqlite_sequence;
 INSERT INTO sqlite_sequence VALUES('goose_db_version',96);
 INSERT INTO sqlite_sequence VALUES('user_emails',3);
 INSERT INTO sqlite_sequence VALUES('roles',6);
-INSERT INTO sqlite_sequence VALUES('grants',41);
+INSERT INTO sqlite_sequence VALUES('grants',56);
 INSERT INTO sqlite_sequence VALUES('user_roles',3);
 INSERT INTO sqlite_sequence VALUES('language',1);
 INSERT INTO sqlite_sequence VALUES('users',3);

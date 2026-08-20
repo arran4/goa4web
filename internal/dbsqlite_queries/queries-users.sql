@@ -45,16 +45,16 @@ INSERT INTO users (username)
 VALUES (?);
 
 -- name: SystemListAllUsers :many
-SELECT idusers, u.username,
-       IF(r.id IS NULL, 0, 1) AS admin,
+SELECT u.idusers, u.username,
+       CASE WHEN r.id IS NULL THEN 0 ELSE 1 END AS admin,
        MIN(s.created_at) AS created_at,
        u.deleted_at
 FROM users u
-LEFT JOIN user_roles ur ON ur.users_idusers = idusers
+LEFT JOIN user_roles ur ON ur.users_idusers = u.idusers
 LEFT JOIN roles r ON ur.role_id = r.id AND r.is_admin = 1
-LEFT JOIN sessions s ON s.users_idusers = idusers
-GROUP BY idusers
-ORDER BY idusers;
+LEFT JOIN sessions s ON s.users_idusers = u.idusers
+GROUP BY u.idusers
+ORDER BY u.idusers;
 
 -- name: AdminListAdministratorEmails :many
 SELECT ue.email

@@ -373,6 +373,22 @@ jobs:
       - name: Test
         run: go test -tags '${{ matrix.tags }}' ./... -v
 
+  go-test-sqlite:
+    name: Go test SQLite (ubuntu-latest)
+    needs: [route, discover, golangci, go-vet]
+    if: ${{ needs.discover.outputs.has_go == 'true' && needs.route.outputs.run_code_checks == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Vet SQLite
+        run: go vet -tags sqlite ./...
+      - name: Test SQLite
+        run: go test -tags sqlite ./... -v
+
   go-fmt-pr:
     name: go fmt -> PR (manual dispatch)
     needs: [route, discover]

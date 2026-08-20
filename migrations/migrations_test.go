@@ -211,6 +211,153 @@ func TestMigration0095ExecutesSuccessfully(t *testing.T) {
 	}
 }
 
+func TestMigration0096ExecutesSuccessfully(t *testing.T) {
+	dsn := os.Getenv("GOA4WEB_TEST_MYSQL_DSN")
+	if dsn == "" {
+		t.Skip("set GOA4WEB_TEST_MYSQL_DSN to run MySQL migration execution tests")
+	}
+	db := openTemporaryMySQLDatabase(t, dsn)
+	pre0096Table := `CREATE TABLE external_links (
+		id INT NOT NULL AUTO_INCREMENT,
+		url TINYTEXT NOT NULL,
+		clicks INT NOT NULL DEFAULT 0,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		updated_by INT DEFAULT NULL,
+		card_title TINYTEXT,
+		card_description TEXT,
+		card_image TINYTEXT,
+		card_image_cache TINYTEXT,
+		favicon_cache TINYTEXT,
+		card_duration TINYTEXT,
+		card_upload_date TINYTEXT,
+		card_author TINYTEXT,
+		PRIMARY KEY (id),
+		UNIQUE KEY external_links_url_idx (url(255))
+	)`
+	if _, err := db.Exec(pre0096Table); err != nil {
+		t.Fatalf("create pre-0096 external_links: %v", err)
+	}
+	if _, err := db.Exec(`CREATE TABLE schema_version (version INT NOT NULL)`); err != nil {
+		t.Fatalf("create schema_version: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO schema_version (version) VALUES (95)`); err != nil {
+		t.Fatalf("seed schema_version: %v", err)
+	}
+
+	// Seed pre-existing tracking variants
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title) VALUES ('https://example.com/article?id=1&utm_source=old', 5, 'Article 1')`); err != nil {
+		t.Fatalf("seed link 1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title) VALUES ('https://example.com/article?id=1&utm_medium=twitter', 3, 'Article 1')`); err != nil {
+		t.Fatalf("seed link 2: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks, card_title) VALUES ('https://example.com/other', 1, 'Other')`); err != nil {
+		t.Fatalf("seed link 3: %v", err)
+	}
+
+	contents, err := FS.ReadFile("0096_mysql.sql")
+	if err != nil {
+		t.Fatalf("read migration: %v", err)
+	}
+
+	rawSQL := string(contents)
+	upSection := rawSQL
+	if idx := strings.Index(rawSQL, "-- +goose Down"); idx != -1 {
+		upSection = rawSQL[:idx]
+	}
+
+	for _, statement := range strings.Split(upSection, ";") {
+		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Up", ""))
+		if statement == "" {
+			continue
+		}
+		if _, err := db.Exec(statement); err != nil {
+			t.Fatalf("execute Up statement %q: %v", statement, err)
+		}
+	}
+
+	// Verify consolidation
+	var count int
+	var clicks int
+	var urlStr string
+	err = db.QueryRow(`SELECT COUNT(*), SUM(clicks), url FROM external_links WHERE url = 'https://example.com/article?id=1' GROUP BY url`).Scan(&count, &clicks, &urlStr)
+	if err != nil {
+		t.Fatalf("query consolidated row: %v", err)
+	}
+	if count != 1 || clicks != 8 {
+		t.Fatalf("expected 1 row with 8 clicks, got count=%d, clicks=%d", count, clicks)
+	}
+
+	// Test two URLs > 255 chars with identical first 255 chars
+	prefix := "https://example.com/very/long/path/" + strings.Repeat("a", 230) + "?common=true&suffix="
+	url1 := prefix + "one"
+	url2 := prefix + "two"
+
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES (?, 10)`, url1); err != nil {
+		t.Fatalf("insert long url 1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES (?, 20)`, url2); err != nil {
+		t.Fatalf("insert long url 2: %v", err)
+	}
+
+	var id1, id2, clicks1, clicks2 int
+	if err := db.QueryRow(`SELECT id, clicks FROM external_links WHERE url_hash = UNHEX(SHA2(?, 256))`, url1).Scan(&id1, &clicks1); err != nil {
+		t.Fatalf("query long url 1: %v", err)
+	}
+	if err := db.QueryRow(`SELECT id, clicks FROM external_links WHERE url_hash = UNHEX(SHA2(?, 256))`, url2).Scan(&id2, &clicks2); err != nil {
+		t.Fatalf("query long url 2: %v", err)
+	}
+	if id1 == id2 || clicks1 != 10 || clicks2 != 20 {
+		t.Fatalf("long urls collided: id1=%d, id2=%d, clicks1=%d, clicks2=%d", id1, id2, clicks1, clicks2)
+	}
+
+	// Test guarded Down rollback with >255-byte URLs
+	downSection := rawSQL[strings.Index(rawSQL, "-- +goose Down"):]
+	guardStmt := ""
+	for _, stmt := range strings.Split(downSection, ";") {
+		stmt = strings.TrimSpace(strings.ReplaceAll(stmt, "-- +goose Down", ""))
+		if strings.Contains(stmt, "@guard") {
+			guardStmt = stmt
+			break
+		}
+	}
+	if guardStmt == "" {
+		t.Fatal("missing guard statement in Down section")
+	}
+
+	// Guard must fail because long URLs exist
+	if _, err := db.Exec(guardStmt); err == nil {
+		t.Fatal("expected Down guard statement to fail when URLs > 255 bytes exist")
+	}
+
+	// Verify long URLs were not truncated or deleted
+	var fullURL string
+	if err := db.QueryRow(`SELECT url FROM external_links WHERE id = ?`, id1).Scan(&fullURL); err != nil || fullURL != url1 {
+		t.Fatalf("long URL was damaged after guard failure: %v, got %s", err, fullURL)
+	}
+
+	// Delete long URLs and verify rollback succeeds
+	if _, err := db.Exec(`DELETE FROM external_links WHERE LENGTH(url) > 255`); err != nil {
+		t.Fatalf("delete long urls: %v", err)
+	}
+
+	for _, statement := range strings.Split(downSection, ";") {
+		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Down", ""))
+		if statement == "" {
+			continue
+		}
+		if _, err := db.Exec(statement); err != nil {
+			t.Fatalf("execute Down statement %q: %v", statement, err)
+		}
+	}
+
+	var version int
+	if err := db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&version); err != nil || version != 95 {
+		t.Fatalf("expected rolled back schema version 95, got %d, err %v", version, err)
+	}
+}
+
 func openTemporaryMySQLDatabase(t *testing.T, dsn string) *sql.DB {
 	t.Helper()
 	cfg, err := mysql.ParseDSN(dsn)

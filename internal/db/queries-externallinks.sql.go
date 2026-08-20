@@ -34,7 +34,7 @@ func (q *Queries) AdminDeleteExternalLink(ctx context.Context, id int32) error {
 }
 
 const adminDeleteExternalLinkByURL = `-- name: AdminDeleteExternalLinkByURL :exec
-DELETE FROM external_links WHERE url = ?
+DELETE FROM external_links WHERE url_hash = UNHEX(SHA2(?, 256))
 `
 
 func (q *Queries) AdminDeleteExternalLinkByURL(ctx context.Context, url string) error {
@@ -43,7 +43,7 @@ func (q *Queries) AdminDeleteExternalLinkByURL(ctx context.Context, url string) 
 }
 
 const adminGetExternalLinkByCacheID = `-- name: AdminGetExternalLinkByCacheID :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE card_image_cache = ? OR favicon_cache = ? LIMIT 1
+SELECT id, url, url_hash, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE card_image_cache = ? OR favicon_cache = ? LIMIT 1
 `
 
 type AdminGetExternalLinkByCacheIDParams struct {
@@ -57,6 +57,7 @@ func (q *Queries) AdminGetExternalLinkByCacheID(ctx context.Context, arg AdminGe
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
+		&i.UrlHash,
 		&i.Clicks,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -74,7 +75,7 @@ func (q *Queries) AdminGetExternalLinkByCacheID(ctx context.Context, arg AdminGe
 }
 
 const adminListExternalLinks = `-- name: AdminListExternalLinks :many
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links
+SELECT id, url, url_hash, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
@@ -96,6 +97,7 @@ func (q *Queries) AdminListExternalLinks(ctx context.Context, arg AdminListExter
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,
+			&i.UrlHash,
 			&i.Clicks,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -142,7 +144,7 @@ func (q *Queries) EnsureExternalLink(ctx context.Context, url string) (sql.Resul
 }
 
 const getExternalLink = `-- name: GetExternalLink :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE url = ? LIMIT 1
+SELECT id, url, url_hash, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE url_hash = UNHEX(SHA2(?, 256)) LIMIT 1
 `
 
 func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
@@ -151,6 +153,7 @@ func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLin
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
+		&i.UrlHash,
 		&i.Clicks,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -168,7 +171,7 @@ func (q *Queries) GetExternalLink(ctx context.Context, url string) (*ExternalLin
 }
 
 const getExternalLinkByID = `-- name: GetExternalLinkByID :one
-SELECT id, url, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE id = ? LIMIT 1
+SELECT id, url, url_hash, clicks, created_at, updated_at, updated_by, card_title, card_description, card_image, card_image_cache, favicon_cache, card_duration, card_upload_date, card_author FROM external_links WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalLink, error) {
@@ -177,6 +180,7 @@ func (q *Queries) GetExternalLinkByID(ctx context.Context, id int32) (*ExternalL
 	err := row.Scan(
 		&i.ID,
 		&i.Url,
+		&i.UrlHash,
 		&i.Clicks,
 		&i.CreatedAt,
 		&i.UpdatedAt,

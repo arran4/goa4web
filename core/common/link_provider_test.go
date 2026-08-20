@@ -30,7 +30,13 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 				Url:             "http://example.com/card",
 				CardTitle:       sql.NullString{String: "Card Title", Valid: true},
 				CardDescription: sql.NullString{String: "Card Desc", Valid: true},
-				CardImage:       sql.NullString{String: "http://example.com/image.jpg", Valid: true},
+				CardImage:       sql.NullString{String: "http://example.com/image.jpg?sig=asset_sig_123", Valid: true},
+				FaviconCache:    sql.NullString{String: "favicon.ico", Valid: true},
+			},
+			"https://www.bloomberg.com/news/sample?accessToken=token123": {
+				Url:             "https://www.bloomberg.com/news/sample?accessToken=token123",
+				CardTitle:       sql.NullString{String: "Bloomberg Article", Valid: true},
+				CardDescription: sql.NullString{String: "Market Analysis", Valid: true},
 			},
 		},
 	}
@@ -38,7 +44,6 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 	cd := NewCoreData(context.Background(), mockDB, &config.RuntimeConfig{
 		BaseURL: "http://site.local",
 	})
-	// CoreData requires LinkSignKey for signing
 	WithLinkSignKey("test-key")(cd)
 
 	provider := NewGoa4WebLinkProvider(cd, context.Background())
@@ -47,7 +52,7 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 		name             string
 		rawURL           string
 		isBlock          bool
-		isImmediateClose bool // true if NO title provided (e.g. [url])
+		isImmediateClose bool
 		wantContains     string
 		wantNotContains  string
 	}{
@@ -78,6 +83,29 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 			isBlock:          true,
 			isImmediateClose: true,
 			wantContains:     "http://site.local/goto?u=http%3A%2F%2Fexample.com%2Fcard&sig=",
+		},
+		{
+			name:             "Card link with tracking param strips tracking from goto, tooltip, and matches canonical in db",
+			rawURL:           "http://example.com/card?utm_source=twitter&utm_medium=social",
+			isBlock:          true,
+			isImmediateClose: true,
+			wantContains:     "http://site.local/goto?u=http%3A%2F%2Fexample.com%2Fcard&sig=",
+			wantNotContains:  "utm_source",
+		},
+		{
+			name:             "Bloomberg accessToken retained in goto, tooltip, and db lookup",
+			rawURL:           "https://www.bloomberg.com/news/sample?accessToken=token123&utm_source=email",
+			isBlock:          true,
+			isImmediateClose: true,
+			wantContains:     "accessToken=token123",
+			wantNotContains:  "utm_source",
+		},
+		{
+			name:             "AWS Presigned URL with X-Amz-Signature is not stripped or rewritten",
+			rawURL:           "https://s3.amazonaws.com/bucket/doc.pdf?X-Amz-Signature=sig123&utm_source=tracked",
+			isBlock:          false,
+			isImmediateClose: true,
+			wantContains:     "X-Amz-Signature=sig123",
 		},
 	}
 

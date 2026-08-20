@@ -4,7 +4,7 @@ VALUES (?, 1)
 ON DUPLICATE KEY UPDATE clicks = clicks + 1;
 
 -- name: GetExternalLink :one
-SELECT * FROM external_links WHERE url = ? LIMIT 1;
+SELECT * FROM external_links WHERE url_hash = UNHEX(SHA2(sqlc.arg(url), 256)) LIMIT 1;
 
 -- name: GetExternalLinkByID :one
 SELECT * FROM external_links WHERE id = ? LIMIT 1;
@@ -22,7 +22,7 @@ DELETE FROM external_links WHERE id = ?;
 UPDATE external_links SET card_image_cache = NULL, favicon_cache = NULL, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE id = ?;
 
 -- name: AdminDeleteExternalLinkByURL :exec
-DELETE FROM external_links WHERE url = ?;
+DELETE FROM external_links WHERE url_hash = UNHEX(SHA2(sqlc.arg(url), 256));
 
 -- name: UpdateExternalLinkMetadata :exec
 UPDATE external_links

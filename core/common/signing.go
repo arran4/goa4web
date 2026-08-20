@@ -66,11 +66,17 @@ func (cd *CoreData) SignCacheURL(cacheRef string, ttl time.Duration) string {
 
 // SignLinkURL signs an external link redirect URL.
 func (cd *CoreData) SignLinkURL(externalURL string) string {
-	data := "link:" + externalURL
+	canonicalURL := CanonicalizeExternalURL(externalURL)
+	data := "link:" + canonicalURL
 	sig := sign.Sign(data, cd.LinkSignKey, sign.WithOutNonce())
 
+	baseURL := ""
+	if cd.Config != nil {
+		baseURL = strings.TrimSuffix(cd.Config.BaseURL, "/")
+	}
+
 	// Return /goto?u={url}&sig={sig}
-	return strings.TrimSuffix(cd.Config.BaseURL, "/") + "/goto?u=" + url.QueryEscape(externalURL) + "&sig=" + sig
+	return baseURL + "/goto?u=" + url.QueryEscape(canonicalURL) + "&sig=" + sig
 }
 
 // SignFeedURL signs a feed URL for authenticated access.

@@ -230,6 +230,7 @@ type DeadLetter struct {
 type ExternalLink struct {
 	ID              int32
 	Url             string
+	UrlHash         []byte
 	Clicks          int32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

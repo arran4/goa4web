@@ -385,9 +385,13 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Vet SQLite
-        run: go vet -tags sqlite ./...
+        run: |
+          go vet -tags sqlite ./...
+          go vet -tags sqlite3 ./...
       - name: Test SQLite
-        run: go test -tags sqlite ./... -v
+        run: |
+          go test -tags sqlite ./... -v
+          go test -tags sqlite3 ./... -v
 
   go-fmt-pr:
     name: go fmt -> PR (manual dispatch)
@@ -444,7 +448,9 @@ jobs:
       - name: Install sqlc
         run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
       - name: Generate code
-        run: sqlc generate
+        run: |
+          sqlc generate
+          go run ./cmd/gen-sqlite-adapter
       - name: Check for changes
         id: diff
         run: |

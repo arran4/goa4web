@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/arran4/goa4web/internal/dbsqlite"
@@ -14,57 +15,73 @@ import (
 
 func toInt64(v any) int64 {
 	switch val := v.(type) {
+	case nil:
+		return 0
 	case int64:
 		return val
 	case int32:
 		return int64(val)
 	case int:
 		return int64(val)
+	case uint64:
+		return int64(val)
+	case uint32:
+		return int64(val)
+	case uint:
+		return int64(val)
 	case float64:
 		return int64(val)
 	case []byte:
-		var n int64
-		for _, b := range val {
-			if b >= 0 && b <= 9 {
-				n = n*10 + int64(b-0)
-			}
+		if len(val) == 0 {
+			return 0
+		}
+		n, err := strconv.ParseInt(string(val), 10, 64)
+		if err != nil {
+			panic(fmt.Sprintf("toInt64: cannot parse %q as int64: %v", string(val), err))
 		}
 		return n
 	case string:
-		var n int64
-		for _, b := range []byte(val) {
-			if b >= 0 && b <= 9 {
-				n = n*10 + int64(b-0)
-			}
+		if len(val) == 0 {
+			return 0
+		}
+		n, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			panic(fmt.Sprintf("toInt64: cannot parse %q as int64: %v", val, err))
 		}
 		return n
 	default:
-		return 0
+		panic(fmt.Sprintf("toInt64: unexpected type %T (value %v)", v, v))
 	}
 }
 
 func toString(v any) string {
 	switch val := v.(type) {
+	case nil:
+		return ""
 	case string:
 		return val
 	case []byte:
 		return string(val)
-	case nil:
-		return ""
 	default:
-		return fmt.Sprintf("%v", val)
+		panic(fmt.Sprintf("toString: unexpected type %T (value %v)", v, v))
 	}
 }
 
 func toNullTime(v any) sql.NullTime {
 	switch val := v.(type) {
+	case nil:
+		return sql.NullTime{}
 	case time.Time:
 		return sql.NullTime{Time: val, Valid: true}
 	case *time.Time:
 		if val != nil {
 			return sql.NullTime{Time: *val, Valid: true}
 		}
+		return sql.NullTime{}
 	case string:
+		if val == "" {
+			return sql.NullTime{}
+		}
 		t, err := time.Parse(time.RFC3339, val)
 		if err == nil {
 			return sql.NullTime{Time: t, Valid: true}
@@ -73,8 +90,23 @@ func toNullTime(v any) sql.NullTime {
 		if err == nil {
 			return sql.NullTime{Time: t, Valid: true}
 		}
+		t, err = time.Parse("2006-01-02 15:04:05.999999999-07:00", val)
+		if err == nil {
+			return sql.NullTime{Time: t, Valid: true}
+		}
+		t, err = time.Parse("2006-01-02 15:04:05-07:00", val)
+		if err == nil {
+			return sql.NullTime{Time: t, Valid: true}
+		}
+		panic(fmt.Sprintf("toNullTime: cannot parse string %q as time: %v", val, err))
+	case []byte:
+		if len(val) == 0 {
+			return sql.NullTime{}
+		}
+		return toNullTime(string(val))
+	default:
+		panic(fmt.Sprintf("toNullTime: unexpected type %T (value %v)", v, v))
 	}
-	return sql.NullTime{}
 }
 
 type sqliteQuerier struct {
@@ -223,11 +255,11 @@ func (s *sqliteQuerier) AdminArchiveWriting(ctx context.Context, arg AdminArchiv
 
 func (s *sqliteQuerier) AdminAuditLogActionSummary(ctx context.Context, arg AdminAuditLogActionSummaryParams) ([]*AdminAuditLogActionSummaryRow, error) {
 	res, err := s.q.AdminAuditLogActionSummary(ctx, dbsqlite.AdminAuditLogActionSummaryParams{
-		Username: arg.Username,
-		Action:   arg.Action,
-		Section:  arg.Section,
-		StartTime:/* unhandled convertToLite: arg.StartTime (sql.NullTime -> interface{}) */ arg.StartTime,
-		EndTime:/* unhandled convertToLite: arg.EndTime (sql.NullTime -> interface{}) */ arg.EndTime,
+		Username:  arg.Username,
+		Action:    arg.Action,
+		Section:   arg.Section,
+		StartTime: arg.StartTime,
+		EndTime:   arg.EndTime,
 	})
 	if err != nil {
 		return nil, err
@@ -266,7 +298,7 @@ func (s *sqliteQuerier) AdminCompleteWordList(ctx context.Context) ([]sql.NullSt
 	if err != nil {
 		return nil, err
 	}
-	return /* unhandled convertFromLite: res ([]sql.NullString <- []sql.NullString) */ res, nil
+	return res, nil
 }
 
 func (s *sqliteQuerier) AdminCountAllImagePosts(ctx context.Context) (int64, error) {
@@ -311,9 +343,9 @@ func (s *sqliteQuerier) AdminCountLinksByCategory(ctx context.Context, categoryI
 
 func (s *sqliteQuerier) AdminCountPasswordResets(ctx context.Context, arg AdminCountPasswordResetsParams) (int64, error) {
 	res, err := s.q.AdminCountPasswordResets(ctx, dbsqlite.AdminCountPasswordResetsParams{
-		Status: arg.Status,
-		UserID:/* unhandled convertToLite: arg.UserID (sql.NullInt32 -> interface{}) */ arg.UserID,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
+		Status:        arg.Status,
+		UserID:        arg.UserID,
+		CreatedBefore: arg.CreatedBefore,
 	})
 	if err != nil {
 		return 0, err
@@ -346,10 +378,10 @@ func (s *sqliteQuerier) AdminCountPendingPasswordResetsByUser(ctx context.Contex
 
 func (s *sqliteQuerier) AdminCountSentEmails(ctx context.Context, arg AdminCountSentEmailsParams) (int64, error) {
 	res, err := s.q.AdminCountSentEmails(ctx, dbsqlite.AdminCountSentEmailsParams{
-		Provider: arg.Provider,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
+		Provider:      arg.Provider,
+		CreatedBefore: arg.CreatedBefore,
+		LanguageID:    arg.LanguageID,
+		RoleName:      arg.RoleName,
 	})
 	if err != nil {
 		return 0, err
@@ -367,11 +399,11 @@ func (s *sqliteQuerier) AdminCountThreadsByBoard(ctx context.Context, imageboard
 
 func (s *sqliteQuerier) AdminCountUnsentPendingEmails(ctx context.Context, arg AdminCountUnsentPendingEmailsParams) (int64, error) {
 	res, err := s.q.AdminCountUnsentPendingEmails(ctx, dbsqlite.AdminCountUnsentPendingEmailsParams{
-		Status:   arg.Status,
-		Provider: arg.Provider,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
+		Status:        arg.Status,
+		Provider:      arg.Provider,
+		CreatedBefore: arg.CreatedBefore,
+		LanguageID:    arg.LanguageID,
+		RoleName:      arg.RoleName,
 	})
 	if err != nil {
 		return 0, err
@@ -1659,7 +1691,7 @@ func (s *sqliteQuerier) AdminListAdministratorEmails(ctx context.Context) ([]str
 	if err != nil {
 		return nil, err
 	}
-	return /* unhandled convertFromLite: res ([]string <- []string) */ res, nil
+	return res, nil
 }
 
 func (s *sqliteQuerier) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg AdminListAllCommentsWithThreadInfoParams) ([]*AdminListAllCommentsWithThreadInfoRow, error) {
@@ -1939,13 +1971,13 @@ func (s *sqliteQuerier) AdminListArchivedRequests(ctx context.Context) ([]*Admin
 
 func (s *sqliteQuerier) AdminListAuditLogs(ctx context.Context, arg AdminListAuditLogsParams) ([]*AdminListAuditLogsRow, error) {
 	res, err := s.q.AdminListAuditLogs(ctx, dbsqlite.AdminListAuditLogsParams{
-		Username: arg.Username,
-		Action:   arg.Action,
-		Section:  arg.Section,
-		StartTime:/* unhandled convertToLite: arg.StartTime (sql.NullTime -> interface{}) */ arg.StartTime,
-		EndTime:/* unhandled convertToLite: arg.EndTime (sql.NullTime -> interface{}) */ arg.EndTime,
-		Offset: int64(arg.Offset),
-		Limit:  int64(arg.Limit),
+		Username:  arg.Username,
+		Action:    arg.Action,
+		Section:   arg.Section,
+		StartTime: arg.StartTime,
+		EndTime:   arg.EndTime,
+		Offset:    int64(arg.Offset),
+		Limit:     int64(arg.Limit),
 	})
 	if err != nil {
 		return nil, err
@@ -2266,10 +2298,10 @@ func (s *sqliteQuerier) AdminListFAQCategories(ctx context.Context) ([]*FaqCateg
 
 func (s *sqliteQuerier) AdminListFailedEmailIDs(ctx context.Context, arg AdminListFailedEmailIDsParams) ([]int32, error) {
 	res, err := s.q.AdminListFailedEmailIDs(ctx, dbsqlite.AdminListFailedEmailIDsParams{
-		Provider: arg.Provider,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
+		Provider:      arg.Provider,
+		CreatedBefore: arg.CreatedBefore,
+		LanguageID:    arg.LanguageID,
+		RoleName:      arg.RoleName,
 	})
 	if err != nil {
 		return nil, err
@@ -2288,10 +2320,10 @@ func (s *sqliteQuerier) AdminListFailedEmailIDs(ctx context.Context, arg AdminLi
 
 func (s *sqliteQuerier) AdminListFailedEmails(ctx context.Context, arg AdminListFailedEmailsParams) ([]*AdminListFailedEmailsRow, error) {
 	res, err := s.q.AdminListFailedEmails(ctx, dbsqlite.AdminListFailedEmailsParams{
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
-		Offset: int64(arg.Offset),
-		Limit:  int64(arg.Limit),
+		LanguageID: arg.LanguageID,
+		RoleName:   arg.RoleName,
+		Offset:     int64(arg.Offset),
+		Limit:      int64(arg.Limit),
 	})
 	if err != nil {
 		return nil, err
@@ -2653,11 +2685,11 @@ func (s *sqliteQuerier) AdminListOrphanForumThreads(ctx context.Context) ([]int3
 
 func (s *sqliteQuerier) AdminListPasswordResets(ctx context.Context, arg AdminListPasswordResetsParams) ([]*AdminListPasswordResetsRow, error) {
 	res, err := s.q.AdminListPasswordResets(ctx, dbsqlite.AdminListPasswordResetsParams{
-		Status: arg.Status,
-		UserID:/* unhandled convertToLite: arg.UserID (sql.NullInt32 -> interface{}) */ arg.UserID,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		Limit:  int64(arg.Limit),
-		Offset: int64(arg.Offset),
+		Status:        arg.Status,
+		UserID:        arg.UserID,
+		CreatedBefore: arg.CreatedBefore,
+		Limit:         int64(arg.Limit),
+		Offset:        int64(arg.Offset),
 	})
 	if err != nil {
 		return nil, err
@@ -3215,10 +3247,10 @@ func (s *sqliteQuerier) AdminListRolesWithUsers(ctx context.Context) ([]*AdminLi
 
 func (s *sqliteQuerier) AdminListSentEmailIDs(ctx context.Context, arg AdminListSentEmailIDsParams) ([]int32, error) {
 	res, err := s.q.AdminListSentEmailIDs(ctx, dbsqlite.AdminListSentEmailIDsParams{
-		Provider: arg.Provider,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
+		Provider:      arg.Provider,
+		CreatedBefore: arg.CreatedBefore,
+		LanguageID:    arg.LanguageID,
+		RoleName:      arg.RoleName,
 	})
 	if err != nil {
 		return nil, err
@@ -3237,12 +3269,12 @@ func (s *sqliteQuerier) AdminListSentEmailIDs(ctx context.Context, arg AdminList
 
 func (s *sqliteQuerier) AdminListSentEmails(ctx context.Context, arg AdminListSentEmailsParams) ([]*AdminListSentEmailsRow, error) {
 	res, err := s.q.AdminListSentEmails(ctx, dbsqlite.AdminListSentEmailsParams{
-		Provider: arg.Provider,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
-		Offset: int64(arg.Offset),
-		Limit:  int64(arg.Limit),
+		Provider:      arg.Provider,
+		CreatedBefore: arg.CreatedBefore,
+		LanguageID:    arg.LanguageID,
+		RoleName:      arg.RoleName,
+		Offset:        int64(arg.Offset),
+		Limit:         int64(arg.Limit),
 	})
 	if err != nil {
 		return nil, err
@@ -3319,13 +3351,13 @@ func (s *sqliteQuerier) AdminListTopicsWithUserGrantsNoRoles(ctx context.Context
 
 func (s *sqliteQuerier) AdminListUnsentPendingEmails(ctx context.Context, arg AdminListUnsentPendingEmailsParams) ([]*AdminListUnsentPendingEmailsRow, error) {
 	res, err := s.q.AdminListUnsentPendingEmails(ctx, dbsqlite.AdminListUnsentPendingEmailsParams{
-		Status:   arg.Status,
-		Provider: arg.Provider,
-		CreatedBefore:/* unhandled convertToLite: arg.CreatedBefore (sql.NullTime -> interface{}) */ arg.CreatedBefore,
-		LanguageID:/* unhandled convertToLite: arg.LanguageID (sql.NullInt32 -> interface{}) */ arg.LanguageID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
-		Offset: int64(arg.Offset),
-		Limit:  int64(arg.Limit),
+		Status:        arg.Status,
+		Provider:      arg.Provider,
+		CreatedBefore: arg.CreatedBefore,
+		LanguageID:    arg.LanguageID,
+		RoleName:      arg.RoleName,
+		Offset:        int64(arg.Offset),
+		Limit:         int64(arg.Limit),
 	})
 	if err != nil {
 		return nil, err
@@ -5370,7 +5402,7 @@ func (s *sqliteQuerier) GetDigestTimezones(ctx context.Context) ([]sql.NullStrin
 	if err != nil {
 		return nil, err
 	}
-	return /* unhandled convertFromLite: res ([]sql.NullString <- []sql.NullString) */ res, nil
+	return res, nil
 }
 
 func (s *sqliteQuerier) GetExternalLink(ctx context.Context, url string) (*ExternalLink, error) {
@@ -6647,7 +6679,7 @@ func (s *sqliteQuerier) GetPermissionsByUserID(ctx context.Context, usersIdusers
 }
 
 func (s *sqliteQuerier) GetPermissionsWithUsers(ctx context.Context, arg GetPermissionsWithUsersParams) ([]*GetPermissionsWithUsersRow, error) {
-	res, err := s.q.GetPermissionsWithUsers(ctx /* unhandled convertToLite: arg.Username (sql.NullString -> interface{}) */, arg.Username)
+	res, err := s.q.GetPermissionsWithUsers(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -8425,10 +8457,10 @@ func (s *sqliteQuerier) ListGrantsByUserID(ctx context.Context, userID sql.NullI
 
 func (s *sqliteQuerier) ListGrantsExtended(ctx context.Context, arg ListGrantsExtendedParams) ([]*ListGrantsExtendedRow, error) {
 	res, err := s.q.ListGrantsExtended(ctx, dbsqlite.ListGrantsExtendedParams{
-		UserID:/* unhandled convertToLite: arg.UserID (sql.NullInt32 -> interface{}) */ arg.UserID,
-		Username:/* unhandled convertToLite: arg.Username (sql.NullString -> interface{}) */ arg.Username,
-		RoleID:/* unhandled convertToLite: arg.RoleID (sql.NullInt32 -> interface{}) */ arg.RoleID,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
+		UserID:    arg.UserID,
+		Username:  arg.Username,
+		RoleID:    arg.RoleID,
+		RoleName:  arg.RoleName,
 		OnlyRoles: arg.OnlyRoles,
 		OnlyUsers: arg.OnlyUsers,
 	})
@@ -8884,8 +8916,8 @@ func (s *sqliteQuerier) ListSubscribersForPattern(ctx context.Context, arg ListS
 
 func (s *sqliteQuerier) ListSubscribersForPatterns(ctx context.Context, arg ListSubscribersForPatternsParams) ([]int32, error) {
 	res, err := s.q.ListSubscribersForPatterns(ctx, dbsqlite.ListSubscribersForPatternsParams{
-		Patterns:/* unhandled convertToLite: arg.Patterns ([]string -> []string) */ arg.Patterns,
-		Method: arg.Method,
+		Patterns: arg.Patterns,
+		Method:   arg.Method,
 	})
 	if err != nil {
 		return nil, err
@@ -8955,12 +8987,12 @@ func (s *sqliteQuerier) ListSubscriptionsByUser(ctx context.Context, usersIduser
 
 func (s *sqliteQuerier) ListThreadImagePaths(ctx context.Context, arg ListThreadImagePathsParams) ([]sql.NullString, error) {
 	res, err := s.q.ListThreadImagePaths(ctx, dbsqlite.ListThreadImagePathsParams{
-		Paths: /* unhandled convertToLite: arg.Paths ([]sql.NullString -> []sql.NullString) */ arg.Paths,
+		Paths: arg.Paths,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return /* unhandled convertFromLite: res ([]sql.NullString <- []sql.NullString) */ res, nil
+	return res, nil
 }
 
 func (s *sqliteQuerier) ListThreadSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListThreadSubscriptionsByUserRow, error) {
@@ -9061,12 +9093,12 @@ func (s *sqliteQuerier) ListUnreadPrivateThreadsForUser(ctx context.Context, arg
 func (s *sqliteQuerier) ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
 	res, err := s.q.ListUploadedImagePathsByUser(ctx, dbsqlite.ListUploadedImagePathsByUserParams{
 		UserID: int64(arg.UserID),
-		Paths:/* unhandled convertToLite: arg.Paths ([]sql.NullString -> []sql.NullString) */ arg.Paths,
+		Paths:  arg.Paths,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return /* unhandled convertFromLite: res ([]sql.NullString <- []sql.NullString) */ res, nil
+	return res, nil
 }
 
 func (s *sqliteQuerier) ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error) {
@@ -9411,12 +9443,12 @@ func (s *sqliteQuerier) RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams
 
 func (s *sqliteQuerier) SearchGrants(ctx context.Context, arg SearchGrantsParams) ([]*SearchGrantsRow, error) {
 	res, err := s.q.SearchGrants(ctx, dbsqlite.SearchGrantsParams{
-		Section:/* unhandled convertToLite: arg.Section (sql.NullString -> interface{}) */ arg.Section,
-		Item:/* unhandled convertToLite: arg.Item (sql.NullString -> interface{}) */ arg.Item,
-		ItemID:/* unhandled convertToLite: arg.ItemID (sql.NullInt32 -> interface{}) */ arg.ItemID,
-		Active:/* unhandled convertToLite: arg.Active (sql.NullBool -> interface{}) */ arg.Active,
-		Username:/* unhandled convertToLite: arg.Username (sql.NullString -> interface{}) */ arg.Username,
-		RoleName:/* unhandled convertToLite: arg.RoleName (sql.NullString -> interface{}) */ arg.RoleName,
+		Section:  arg.Section,
+		Item:     arg.Item,
+		ItemID:   arg.ItemID,
+		Active:   arg.Active,
+		Username: arg.Username,
+		RoleName: arg.RoleName,
 	})
 	if err != nil {
 		return nil, err
@@ -9701,7 +9733,7 @@ func (s *sqliteQuerier) SystemCreateReplyThread(ctx context.Context, arg SystemC
 }
 
 func (s *sqliteQuerier) SystemCreateSearchWord(ctx context.Context, word string) (int64, error) {
-	res, err := s.q.SystemCreateSearchWord(ctx /* unhandled convertToLite: word (string -> interface{}) */, word)
+	res, err := s.q.SystemCreateSearchWord(ctx, word)
 	if err != nil {
 		return 0, err
 	}
@@ -9967,7 +9999,7 @@ func (s *sqliteQuerier) SystemGetNewsPostByID(ctx context.Context, idsitenews in
 }
 
 func (s *sqliteQuerier) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {
-	res, err := s.q.SystemGetSearchWordByWordLowercased(ctx /* unhandled convertToLite: lcase (string -> interface{}) */, lcase)
+	res, err := s.q.SystemGetSearchWordByWordLowercased(ctx, lcase)
 	if err != nil {
 		return nil, err
 	}
@@ -10189,9 +10221,9 @@ func (s *sqliteQuerier) SystemListAllUsers(ctx context.Context) ([]*SystemListAl
 				continue
 			}
 			out[i] = &SystemListAllUsersRow{
-				Idusers:  int32(item.Idusers),
-				Username: item.Username,
-				Admin:/* unhandled convertFromLite: item.Admin (interface{} <- int64) */ item.Admin,
+				Idusers:   int32(item.Idusers),
+				Username:  item.Username,
+				Admin:     item.Admin,
 				CreatedAt: item.CreatedAt,
 				DeletedAt: item.DeletedAt,
 			}
@@ -10482,9 +10514,9 @@ func (s *sqliteQuerier) SystemListUserInfo(ctx context.Context) ([]*SystemListUs
 				continue
 			}
 			out[i] = &SystemListUserInfoRow{
-				Idusers:  int32(item.Idusers),
-				Username: item.Username,
-				Admin:/* unhandled convertFromLite: item.Admin (interface{} <- int64) */ item.Admin,
+				Idusers:   int32(item.Idusers),
+				Username:  item.Username,
+				Admin:     item.Admin,
 				CreatedAt: item.CreatedAt,
 			}
 		}

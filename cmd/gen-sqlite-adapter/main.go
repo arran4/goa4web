@@ -196,6 +196,7 @@ func generateAdapter(
 	buf.WriteString("	\"context\"\n")
 	buf.WriteString("	\"database/sql\"\n")
 	buf.WriteString("	\"fmt\"\n")
+	buf.WriteString("	\"strconv\"\n")
 	buf.WriteString("	\"time\"\n\n")
 	buf.WriteString("	\"github.com/arran4/goa4web/internal/dbsqlite\"\n")
 	buf.WriteString(")\n\n")
@@ -203,57 +204,73 @@ func generateAdapter(
 	buf.WriteString(`
 func toInt64(v any) int64 {
 	switch val := v.(type) {
+	case nil:
+		return 0
 	case int64:
 		return val
 	case int32:
 		return int64(val)
 	case int:
 		return int64(val)
+	case uint64:
+		return int64(val)
+	case uint32:
+		return int64(val)
+	case uint:
+		return int64(val)
 	case float64:
 		return int64(val)
 	case []byte:
-		var n int64
-		for _, b := range val {
-			if b >= 0 && b <= 9 {
-				n = n*10 + int64(b-0)
-			}
+		if len(val) == 0 {
+			return 0
+		}
+		n, err := strconv.ParseInt(string(val), 10, 64)
+		if err != nil {
+			panic(fmt.Sprintf("toInt64: cannot parse %q as int64: %v", string(val), err))
 		}
 		return n
 	case string:
-		var n int64
-		for _, b := range []byte(val) {
-			if b >= 0 && b <= 9 {
-				n = n*10 + int64(b-0)
-			}
+		if len(val) == 0 {
+			return 0
+		}
+		n, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			panic(fmt.Sprintf("toInt64: cannot parse %q as int64: %v", val, err))
 		}
 		return n
 	default:
-		return 0
+		panic(fmt.Sprintf("toInt64: unexpected type %T (value %v)", v, v))
 	}
 }
 
 func toString(v any) string {
 	switch val := v.(type) {
+	case nil:
+		return ""
 	case string:
 		return val
 	case []byte:
 		return string(val)
-	case nil:
-		return ""
 	default:
-		return fmt.Sprintf("%v", val)
+		panic(fmt.Sprintf("toString: unexpected type %T (value %v)", v, v))
 	}
 }
 
 func toNullTime(v any) sql.NullTime {
 	switch val := v.(type) {
+	case nil:
+		return sql.NullTime{}
 	case time.Time:
 		return sql.NullTime{Time: val, Valid: true}
 	case *time.Time:
 		if val != nil {
 			return sql.NullTime{Time: *val, Valid: true}
 		}
+		return sql.NullTime{}
 	case string:
+		if val == "" {
+			return sql.NullTime{}
+		}
 		t, err := time.Parse(time.RFC3339, val)
 		if err == nil {
 			return sql.NullTime{Time: t, Valid: true}
@@ -262,8 +279,23 @@ func toNullTime(v any) sql.NullTime {
 		if err == nil {
 			return sql.NullTime{Time: t, Valid: true}
 		}
+		t, err = time.Parse("2006-01-02 15:04:05.999999999-07:00", val)
+		if err == nil {
+			return sql.NullTime{Time: t, Valid: true}
+		}
+		t, err = time.Parse("2006-01-02 15:04:05-07:00", val)
+		if err == nil {
+			return sql.NullTime{Time: t, Valid: true}
+		}
+		panic(fmt.Sprintf("toNullTime: cannot parse string %q as time: %v", val, err))
+	case []byte:
+		if len(val) == 0 {
+			return sql.NullTime{}
+		}
+		return toNullTime(string(val))
+	default:
+		panic(fmt.Sprintf("toNullTime: unexpected type %T (value %v)", v, v))
 	}
-	return sql.NullTime{}
 }
 `)
 
@@ -289,7 +321,9 @@ func toNullTime(v any) sql.NullTime {
 			return nil, fmt.Errorf("method %s not found in dbsqlite.Querier", name)
 		}
 
-		genMethod(&buf, dbM, liteM, dbStructs, liteStructs, dbAliases, liteAliases)
+		if err := genMethod(&buf, dbM, liteM, dbStructs, liteStructs, dbAliases, liteAliases); err != nil {
+			return nil, fmt.Errorf("failed to generate method %s: %w", name, err)
+		}
 	}
 
 	return buf.Bytes(), nil
@@ -303,7 +337,11 @@ func genMethod(
 	liteStructs map[string]StructInfo,
 	dbAliases map[string]string,
 	liteAliases map[string]string,
-) {
+) error {
+	if len(dbM.Params) != len(liteM.Params) {
+		return fmt.Errorf("parameter count mismatch for %s: db has %d, lite has %d", dbM.Name, len(dbM.Params), len(liteM.Params))
+	}
+
 	fmt.Fprintf(buf, "func (s *sqliteQuerier) %s(", dbM.Name)
 	for i, p := range dbM.Params {
 		if i > 0 {
@@ -336,7 +374,10 @@ func genMethod(
 		}
 
 		liteP := liteM.Params[i]
-		argConv := convertToLiteExpr(pName, p.Type, liteP.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+		argConv, err := convertToLiteExpr(pName, p.Type, liteP.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+		if err != nil {
+			return fmt.Errorf("param %d (%s): %w", i, pName, err)
+		}
 		callArgs = append(callArgs, argConv)
 	}
 
@@ -345,13 +386,13 @@ func genMethod(
 	if len(dbM.ReturnList) == 0 {
 		fmt.Fprintf(buf, "\t%s\n", callStr)
 		buf.WriteString("}\n\n")
-		return
+		return nil
 	}
 
 	if len(dbM.ReturnList) == 1 && dbM.ReturnList[0] == "error" {
 		fmt.Fprintf(buf, "\treturn %s\n", callStr)
 		buf.WriteString("}\n\n")
-		return
+		return nil
 	}
 
 	fmt.Fprintf(buf, "\tres, err := %s\n", callStr)
@@ -360,9 +401,13 @@ func genMethod(
 	fmt.Fprintf(buf, "\t\treturn %s, err\n", zeroVal)
 	buf.WriteString("\t}\n")
 
-	retExpr := convertFromLiteExpr("res", dbM.ReturnList[0], liteM.ReturnList[0], dbStructs, liteStructs, dbAliases, liteAliases)
+	retExpr, err := convertFromLiteExpr("res", dbM.ReturnList[0], liteM.ReturnList[0], dbStructs, liteStructs, dbAliases, liteAliases)
+	if err != nil {
+		return fmt.Errorf("return value: %w", err)
+	}
 	fmt.Fprintf(buf, "\treturn %s, nil\n", retExpr)
 	buf.WriteString("}\n\n")
+	return nil
 }
 
 func zeroValueOf(typ string) string {
@@ -385,9 +430,14 @@ func zeroValueOf(typ string) string {
 
 func isStdOrPrimitive(t string) bool {
 	switch t {
-	case "int", "int32", "int64", "uint", "uint32", "uint64", "float32", "float64", "bool", "string", "[]byte",
-		"time.Time", "sql.NullTime", "sql.NullString", "sql.NullInt32", "sql.NullInt64", "sql.NullBool", "sql.NullFloat64",
-		"sql.Result", "interface{}", "error", "context.Context":
+	case "int", "int8", "int16", "int32", "int64",
+		"uint", "uint8", "uint16", "uint32", "uint64",
+		"float32", "float64", "bool", "string", "[]byte",
+		"[]string", "[]int", "[]int32", "[]int64",
+		"time.Time", "sql.NullTime", "sql.NullString",
+		"sql.NullInt32", "sql.NullInt64", "sql.NullBool", "sql.NullFloat64",
+		"[]sql.NullString", "[]sql.NullInt32", "[]sql.NullInt64",
+		"sql.Result", "interface{}", "any", "error", "context.Context":
 		return true
 	}
 	return false
@@ -401,56 +451,65 @@ func convertToLiteExpr(
 	liteStructs map[string]StructInfo,
 	dbAliases map[string]string,
 	liteAliases map[string]string,
-) string {
+) (string, error) {
 	if dbType == liteType && isStdOrPrimitive(dbType) {
-		return valName
+		return valName, nil
+	}
+	if liteType == "interface{}" || liteType == "any" {
+		return valName, nil
 	}
 	if dbType == "int32" && liteType == "int64" {
-		return fmt.Sprintf("int64(%s)", valName)
+		return fmt.Sprintf("int64(%s)", valName), nil
 	}
 	if dbType == "int64" && liteType == "int32" {
-		return fmt.Sprintf("int32(%s)", valName)
+		return fmt.Sprintf("int32(%s)", valName), nil
 	}
 	if dbType == "sql.NullInt32" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("sql.NullInt64{Int64: int64(%s.Int32), Valid: %s.Valid}", valName, valName)
-	}
-	if dbType == "sql.NullInt32" && liteType == "int64" {
-		return fmt.Sprintf("int64(%s.Int32)", valName)
-	}
-	if dbType == "sql.NullInt64" && liteType == "int64" {
-		return fmt.Sprintf("%s.Int64", valName)
-	}
-	if dbType == "int32" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("sql.NullInt64{Int64: int64(%s), Valid: true}", valName)
-	}
-	if dbType == "int64" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("sql.NullInt64{Int64: %s, Valid: true}", valName)
+		return fmt.Sprintf("sql.NullInt64{Int64: int64(%s.Int32), Valid: %s.Valid}", valName, valName), nil
 	}
 	if dbType == "sql.NullInt64" && liteType == "sql.NullInt32" {
-		return fmt.Sprintf("sql.NullInt32{Int32: int32(%s.Int64), Valid: %s.Valid}", valName, valName)
+		return fmt.Sprintf("sql.NullInt32{Int32: int32(%s.Int64), Valid: %s.Valid}", valName, valName), nil
+	}
+	if dbType == "sql.NullInt32" && liteType == "int64" {
+		return fmt.Sprintf("int64(%s.Int32)", valName), nil
+	}
+	if dbType == "sql.NullInt64" && liteType == "int64" {
+		return fmt.Sprintf("%s.Int64", valName), nil
+	}
+	if dbType == "int32" && liteType == "sql.NullInt64" {
+		return fmt.Sprintf("sql.NullInt64{Int64: int64(%s), Valid: true}", valName), nil
+	}
+	if dbType == "int64" && liteType == "sql.NullInt64" {
+		return fmt.Sprintf("sql.NullInt64{Int64: %s, Valid: true}", valName), nil
 	}
 	if dbType == "bool" && liteType == "int64" {
-		return fmt.Sprintf("func(b bool) int64 { if b { return 1 }; return 0 }(%s)", valName)
+		return fmt.Sprintf("func(b bool) int64 { if b { return 1 }; return 0 }(%s)", valName), nil
 	}
 	if dbType == "sql.NullBool" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("func(b sql.NullBool) sql.NullInt64 { if !b.Valid { return sql.NullInt64{} }; if b.Bool { return sql.NullInt64{Int64: 1, Valid: true} }; return sql.NullInt64{Int64: 0, Valid: true} }(%s)", valName)
+		return fmt.Sprintf("func(b sql.NullBool) sql.NullInt64 { if !b.Valid { return sql.NullInt64{} }; if b.Bool { return sql.NullInt64{Int64: 1, Valid: true} }; return sql.NullInt64{Int64: 0, Valid: true} }(%s)", valName), nil
 	}
 	if dbType == "sql.NullString" && liteType == "[]byte" {
-		return fmt.Sprintf("func(s sql.NullString) []byte { if s.Valid { return []byte(s.String) }; return nil }(%s)", valName)
+		return fmt.Sprintf("func(s sql.NullString) []byte { if s.Valid { return []byte(s.String) }; return nil }(%s)", valName), nil
 	}
 	if dbType == "string" && liteType == "sql.NullString" {
-		return fmt.Sprintf("sql.NullString{String: %s, Valid: %s != \"\"}", valName, valName)
+		return fmt.Sprintf("sql.NullString{String: %s, Valid: %s != \"\"}", valName, valName), nil
 	}
 	if dbType == "sql.NullString" && liteType == "string" {
-		return fmt.Sprintf("%s.String", valName)
+		return fmt.Sprintf("%s.String", valName), nil
+	}
+	if dbType == "time.Time" && liteType == "sql.NullTime" {
+		return fmt.Sprintf("sql.NullTime{Time: %s, Valid: true}", valName), nil
+	}
+	if dbType == "sql.NullTime" && liteType == "time.Time" {
+		return fmt.Sprintf("%s.Time", valName), nil
 	}
 	if dbType == "[]int32" && liteType == "[]int64" {
-		return fmt.Sprintf("func(s []int32) []int64 { if s == nil { return nil }; out := make([]int64, len(s)); for i, v := range s { out[i] = int64(v) }; return out }(%s)", valName)
+		return fmt.Sprintf("func(s []int32) []int64 { if s == nil { return nil }; out := make([]int64, len(s)); for i, v := range s { out[i] = int64(v) }; return out }(%s)", valName), nil
 	}
 
 	if _, ok := dbAliases[dbType]; ok {
 		if _, ok2 := liteAliases[liteType]; ok2 {
-			return fmt.Sprintf("dbsqlite.%s(%s)", liteType, valName)
+			return fmt.Sprintf("dbsqlite.%s(%s)", liteType, valName), nil
 		}
 	}
 
@@ -466,11 +525,14 @@ func convertToLiteExpr(
 					}
 				}
 				if matchingDbF != nil {
-					fExpr := convertToLiteExpr(fmt.Sprintf("%s.%s", valName, matchingDbF.Name), matchingDbF.Type, liteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+					fExpr, err := convertToLiteExpr(fmt.Sprintf("%s.%s", valName, matchingDbF.Name), matchingDbF.Type, liteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+					if err != nil {
+						return "", fmt.Errorf("field %s: %w", liteF.Name, err)
+					}
 					fieldAssignments = append(fieldAssignments, fmt.Sprintf("%s: %s,", liteF.Name, fExpr))
 				}
 			}
-			return fmt.Sprintf("dbsqlite.%s{\n\t\t%s\n\t}", liteType, strings.Join(fieldAssignments, "\n\t\t"))
+			return fmt.Sprintf("dbsqlite.%s{\n\t\t%s\n\t}", liteType, strings.Join(fieldAssignments, "\n\t\t")), nil
 		}
 	}
 
@@ -479,7 +541,7 @@ func convertToLiteExpr(
 		return convertToLiteExpr(fmt.Sprintf("%s.%s", valName, dbF.Name), dbF.Type, liteType, dbStructs, liteStructs, dbAliases, liteAliases)
 	}
 
-	return fmt.Sprintf("/* unhandled convertToLite: %s (%s -> %s) */ %s", valName, dbType, liteType, valName)
+	return "", fmt.Errorf("unsupported conversion from %s to %s for %s", dbType, liteType, valName)
 }
 
 func convertFromLiteExpr(
@@ -490,65 +552,83 @@ func convertFromLiteExpr(
 	liteStructs map[string]StructInfo,
 	dbAliases map[string]string,
 	liteAliases map[string]string,
-) string {
+) (string, error) {
 	if dbType == liteType && isStdOrPrimitive(dbType) {
-		return valName
+		return valName, nil
+	}
+	if dbType == "interface{}" || dbType == "any" {
+		return valName, nil
 	}
 	if dbType == "int32" && liteType == "int64" {
-		return fmt.Sprintf("int32(%s)", valName)
+		return fmt.Sprintf("int32(%s)", valName), nil
 	}
 	if dbType == "int64" && liteType == "int32" {
-		return fmt.Sprintf("int64(%s)", valName)
+		return fmt.Sprintf("int64(%s)", valName), nil
 	}
 	if dbType == "int32" && liteType == "interface{}" {
-		return fmt.Sprintf("int32(toInt64(%s))", valName)
+		return fmt.Sprintf("int32(toInt64(%s))", valName), nil
 	}
 	if dbType == "int64" && liteType == "interface{}" {
-		return fmt.Sprintf("toInt64(%s)", valName)
+		return fmt.Sprintf("toInt64(%s)", valName), nil
 	}
 	if dbType == "string" && liteType == "interface{}" {
-		return fmt.Sprintf("toString(%s)", valName)
+		return fmt.Sprintf("toString(%s)", valName), nil
 	}
 	if dbType == "sql.NullTime" && liteType == "interface{}" {
-		return fmt.Sprintf("toNullTime(%s)", valName)
+		return fmt.Sprintf("toNullTime(%s)", valName), nil
+	}
+	if dbType == "sql.NullInt32" && liteType == "interface{}" {
+		return fmt.Sprintf("func(v any) sql.NullInt32 { if v == nil { return sql.NullInt32{} }; return sql.NullInt32{Int32: int32(toInt64(v)), Valid: true} }(%s)", valName), nil
+	}
+	if dbType == "sql.NullInt64" && liteType == "interface{}" {
+		return fmt.Sprintf("func(v any) sql.NullInt64 { if v == nil { return sql.NullInt64{} }; return sql.NullInt64{Int64: toInt64(v), Valid: true} }(%s)", valName), nil
+	}
+	if dbType == "sql.NullString" && liteType == "interface{}" {
+		return fmt.Sprintf("func(v any) sql.NullString { if v == nil { return sql.NullString{} }; return sql.NullString{String: toString(v), Valid: true} }(%s)", valName), nil
 	}
 	if dbType == "sql.NullInt32" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("sql.NullInt32{Int32: int32(%s.Int64), Valid: %s.Valid}", valName, valName)
-	}
-	if dbType == "sql.NullInt32" && liteType == "int64" {
-		return fmt.Sprintf("sql.NullInt32{Int32: int32(%s), Valid: true}", valName)
-	}
-	if dbType == "int32" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("int32(%s.Int64)", valName)
-	}
-	if dbType == "int64" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("%s.Int64", valName)
+		return fmt.Sprintf("sql.NullInt32{Int32: int32(%s.Int64), Valid: %s.Valid}", valName, valName), nil
 	}
 	if dbType == "sql.NullInt64" && liteType == "sql.NullInt32" {
-		return fmt.Sprintf("sql.NullInt64{Int64: int64(%s.Int32), Valid: %s.Valid}", valName, valName)
+		return fmt.Sprintf("sql.NullInt64{Int64: int64(%s.Int32), Valid: %s.Valid}", valName, valName), nil
+	}
+	if dbType == "sql.NullInt32" && liteType == "int64" {
+		return fmt.Sprintf("sql.NullInt32{Int32: int32(%s), Valid: true}", valName), nil
+	}
+	if dbType == "int32" && liteType == "sql.NullInt64" {
+		return fmt.Sprintf("int32(%s.Int64)", valName), nil
+	}
+	if dbType == "int64" && liteType == "sql.NullInt64" {
+		return fmt.Sprintf("%s.Int64", valName), nil
 	}
 	if dbType == "bool" && liteType == "int64" {
-		return fmt.Sprintf("(%s != 0)", valName)
+		return fmt.Sprintf("(%s != 0)", valName), nil
 	}
 	if dbType == "sql.NullBool" && liteType == "sql.NullInt64" {
-		return fmt.Sprintf("sql.NullBool{Bool: %s.Int64 != 0, Valid: %s.Valid}", valName, valName)
+		return fmt.Sprintf("sql.NullBool{Bool: %s.Int64 != 0, Valid: %s.Valid}", valName, valName), nil
 	}
 	if dbType == "sql.NullString" && liteType == "[]byte" {
-		return fmt.Sprintf("sql.NullString{String: string(%s), Valid: %s != nil}", valName, valName)
+		return fmt.Sprintf("sql.NullString{String: string(%s), Valid: %s != nil}", valName, valName), nil
 	}
 	if dbType == "sql.NullString" && liteType == "string" {
-		return fmt.Sprintf("sql.NullString{String: %s, Valid: true}", valName)
+		return fmt.Sprintf("sql.NullString{String: %s, Valid: true}", valName), nil
 	}
 	if dbType == "string" && liteType == "sql.NullString" {
-		return fmt.Sprintf("%s.String", valName)
+		return fmt.Sprintf("%s.String", valName), nil
+	}
+	if dbType == "time.Time" && liteType == "sql.NullTime" {
+		return fmt.Sprintf("%s.Time", valName), nil
+	}
+	if dbType == "sql.NullTime" && liteType == "time.Time" {
+		return fmt.Sprintf("sql.NullTime{Time: %s, Valid: true}", valName), nil
 	}
 	if dbType == "[]int32" && liteType == "[]int64" {
-		return fmt.Sprintf("func(s []int64) []int32 { if s == nil { return nil }; out := make([]int32, len(s)); for i, v := range s { out[i] = int32(v) }; return out }(%s)", valName)
+		return fmt.Sprintf("func(s []int64) []int32 { if s == nil { return nil }; out := make([]int32, len(s)); for i, v := range s { out[i] = int32(v) }; return out }(%s)", valName), nil
 	}
 
 	if _, ok := dbAliases[dbType]; ok {
 		if _, ok2 := liteAliases[liteType]; ok2 {
-			return fmt.Sprintf("%s(%s)", dbType, valName)
+			return fmt.Sprintf("%s(%s)", dbType, valName), nil
 		}
 	}
 
@@ -567,11 +647,14 @@ func convertFromLiteExpr(
 						}
 					}
 					if matchingLiteF != nil {
-						fExpr := convertFromLiteExpr(fmt.Sprintf("v.%s", matchingLiteF.Name), dbF.Type, matchingLiteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+						fExpr, err := convertFromLiteExpr(fmt.Sprintf("v.%s", matchingLiteF.Name), dbF.Type, matchingLiteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+						if err != nil {
+							return "", fmt.Errorf("struct %s field %s: %w", rawDbType, dbF.Name, err)
+						}
 						fieldAssignments = append(fieldAssignments, fmt.Sprintf("%s: %s,", dbF.Name, fExpr))
 					}
 				}
-				return fmt.Sprintf("func(v *dbsqlite.%s) *%s {\n\t\tif v == nil { return nil }\n\t\treturn &%s{\n\t\t\t%s\n\t\t}\n\t}(%s)", rawLiteType, rawDbType, rawDbType, strings.Join(fieldAssignments, "\n\t\t\t"), valName)
+				return fmt.Sprintf("func(v *dbsqlite.%s) *%s {\n\t\tif v == nil { return nil }\n\t\treturn &%s{\n\t\t\t%s\n\t\t}\n\t}(%s)", rawLiteType, rawDbType, rawDbType, strings.Join(fieldAssignments, "\n\t\t\t"), valName), nil
 			}
 		}
 	}
@@ -591,11 +674,14 @@ func convertFromLiteExpr(
 						}
 					}
 					if matchingLiteF != nil {
-						fExpr := convertFromLiteExpr(fmt.Sprintf("item.%s", matchingLiteF.Name), dbF.Type, matchingLiteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+						fExpr, err := convertFromLiteExpr(fmt.Sprintf("item.%s", matchingLiteF.Name), dbF.Type, matchingLiteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+						if err != nil {
+							return "", fmt.Errorf("slice struct %s field %s: %w", rawDbType, dbF.Name, err)
+						}
 						fieldAssignments = append(fieldAssignments, fmt.Sprintf("%s: %s,", dbF.Name, fExpr))
 					}
 				}
-				return fmt.Sprintf("func(items []*dbsqlite.%s) []*%s {\n\t\tif items == nil { return nil }\n\t\tout := make([]*%s, len(items))\n\t\tfor i, item := range items {\n\t\t\tif item == nil { continue }\n\t\t\tout[i] = &%s{\n\t\t\t\t%s\n\t\t\t}\n\t\t}\n\t\treturn out\n\t}(%s)", rawLiteType, rawDbType, rawDbType, rawDbType, strings.Join(fieldAssignments, "\n\t\t\t\t"), valName)
+				return fmt.Sprintf("func(items []*dbsqlite.%s) []*%s {\n\t\tif items == nil { return nil }\n\t\tout := make([]*%s, len(items))\n\t\tfor i, item := range items {\n\t\t\tif item == nil { continue }\n\t\t\tout[i] = &%s{\n\t\t\t\t%s\n\t\t\t}\n\t\t}\n\t\treturn out\n\t}(%s)", rawLiteType, rawDbType, rawDbType, rawDbType, strings.Join(fieldAssignments, "\n\t\t\t\t"), valName), nil
 			}
 		}
 	}
@@ -615,14 +701,17 @@ func convertFromLiteExpr(
 						}
 					}
 					if matchingLiteF != nil {
-						fExpr := convertFromLiteExpr(fmt.Sprintf("item.%s", matchingLiteF.Name), dbF.Type, matchingLiteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+						fExpr, err := convertFromLiteExpr(fmt.Sprintf("item.%s", matchingLiteF.Name), dbF.Type, matchingLiteF.Type, dbStructs, liteStructs, dbAliases, liteAliases)
+						if err != nil {
+							return "", fmt.Errorf("slice struct %s field %s: %w", rawDbType, dbF.Name, err)
+						}
 						fieldAssignments = append(fieldAssignments, fmt.Sprintf("%s: %s,", dbF.Name, fExpr))
 					}
 				}
-				return fmt.Sprintf("func(items []dbsqlite.%s) []%s {\n\t\tif items == nil { return nil }\n\t\tout := make([]%s, len(items))\n\t\tfor i, item := range items {\n\t\t\tout[i] = %s{\n\t\t\t\t%s\n\t\t\t}\n\t\t}\n\t\treturn out\n\t}(%s)", rawLiteType, rawDbType, rawDbType, rawDbType, strings.Join(fieldAssignments, "\n\t\t\t\t"), valName)
+				return fmt.Sprintf("func(items []dbsqlite.%s) []%s {\n\t\tif items == nil { return nil }\n\t\tout := make([]%s, len(items))\n\t\tfor i, item := range items {\n\t\t\tout[i] = %s{\n\t\t\t\t%s\n\t\t\t}\n\t\t}\n\t\treturn out\n\t}(%s)", rawLiteType, rawDbType, rawDbType, rawDbType, strings.Join(fieldAssignments, "\n\t\t\t\t"), valName), nil
 			}
 		}
 	}
 
-	return fmt.Sprintf("/* unhandled convertFromLite: %s (%s <- %s) */ %s", valName, dbType, liteType, valName)
+	return "", fmt.Errorf("unsupported conversion from %s to %s for %s", liteType, dbType, valName)
 }

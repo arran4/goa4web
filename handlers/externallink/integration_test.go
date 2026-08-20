@@ -182,5 +182,66 @@ func TestExternalLinkPreservesBloombergAccessTokenEndToEnd(t *testing.T) {
 	assert.Equal(t, canonicalURL, rec.Header().Get("Location"), "redirect destination must preserve accessToken")
 }
 
+func TestMigratedExternalLinkLookupAgreement(t *testing.T) {
+	key := "test-secret-key"
+	dbLinks := make(map[string]*db.ExternalLink)
+
+	qs := testhelpers.NewQuerierStub()
+	qs.GetExternalLinkFn = func(ctx context.Context, url string) (*db.ExternalLink, error) {
+		if l, ok := dbLinks[url]; ok {
+			return l, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+		if l, ok := dbLinks[url]; ok {
+			return db.FakeSQLResult{LastInsertIDValue: int64(l.ID)}, nil
+		}
+		t.Fatalf("unexpected insertion of second identity: %s", url)
+		return nil, nil
+	}
+
+	cfg := &config.RuntimeConfig{
+		BaseURL: "http://example.org",
+	}
+
+	// Simulated row cleaned by migration 0096
+	// Original raw tracked URL was: "https://example.com/item?id=1&utm_source=x&category=books"
+	// Migration 0096 left: "https://example.com/item?id=1&category=books"
+	migratedStoredURL := "https://example.com/item?id=1&category=books"
+	dbLinks[migratedStoredURL] = &db.ExternalLink{
+		ID:              300,
+		Url:             migratedStoredURL,
+		Clicks:          15,
+		CardTitle:       sql.NullString{String: "Item 1", Valid: true},
+		CardDescription: sql.NullString{String: "Item Description", Valid: true},
+	}
+
+	cd := common.NewCoreData(context.Background(), qs, cfg, common.WithLinkSignKey(key))
+
+	// Application runtime receives the tracked URL in content
+	rawTrackedURL := "https://example.com/item?id=1&utm_source=x&category=books"
+
+	// 1. Runtime canonicalization matches migrated stored URL exactly
+	runtimeCanonical := common.CanonicalizeExternalURL(rawTrackedURL)
+	assert.Equal(t, migratedStoredURL, runtimeCanonical, "runtime canonical URL must exactly match migrated URL")
+
+	// 2. cd.GetExternalLink finds the pre-existing migrated record
+	link, err := cd.GetExternalLink(context.Background(), rawTrackedURL)
+	assert.NoError(t, err)
+	assert.NotNil(t, link)
+	assert.Equal(t, int32(300), link.ID)
+	assert.Equal(t, int32(15), link.Clicks)
+	assert.Equal(t, "Item 1", link.CardTitle.String)
+
+	// 3. Renderer renders using the existing metadata rather than fallback
+	provider := common.NewGoa4WebLinkProvider(cd, context.Background())
+	open, close, _ := provider.RenderLink(rawTrackedURL, true, true)
+	rendered := open + close
+	assert.Contains(t, rendered, "Item 1", "must render migrated card title")
+	assert.Contains(t, rendered, "Item Description", "must render migrated card description")
+	assert.Contains(t, rendered, "http://example.org/goto?u=https%3A%2F%2Fexample.com%2Fitem%3Fid%3D1%26category%3Dbooks&sig=")
+}
+
 // Compile-time check that a4code is imported and reachable
 var _ = a4code.ParseString

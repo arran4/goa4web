@@ -53,21 +53,19 @@ func isTrackingParam(key string) bool {
 	return knownTrackingExactKeys[lower]
 }
 
-// isSignedURL checks if the URL query contains parameters that indicate a signed URL.
-func isSignedURL(q url.Values) bool {
-	for k := range q {
-		lower := strings.ToLower(k)
-		for _, sigKey := range signatureKeys {
-			if lower == sigKey {
-				return true
-			}
+// isSignatureParam checks if a query parameter key indicates a cryptographic signature.
+func isSignatureParam(key string) bool {
+	lower := strings.ToLower(key)
+	for _, sigKey := range signatureKeys {
+		if lower == sigKey {
+			return true
 		}
 	}
 	return false
 }
 
 // CanonicalizeExternalURL removes known tracking parameters while preserving functional ones,
-// unknown parameters, and cryptographically signed URLs.
+// original parameter order and escaping, repeated parameters, blank values, and cryptographically signed URLs.
 func CanonicalizeExternalURL(raw string) string {
 	if raw == "" {
 		return ""
@@ -81,21 +79,47 @@ func CanonicalizeExternalURL(raw string) string {
 		return raw
 	}
 
-	q := u.Query()
-	if len(q) == 0 {
-		return raw
-	}
-
-	// If the URL has a signature parameter, preserve query string intact to avoid invalidating the signature
-	if isSignedURL(q) {
-		return raw
-	}
-
+	// Split RawQuery into components preserving exact original order and encoding
+	parts := strings.Split(u.RawQuery, "&")
+	var retained []string
 	modified := false
-	for k := range q {
-		if isTrackingParam(k) {
-			q.Del(k)
+
+	// First check if any query parameter is a signature indicator.
+	// If so, preserve the URL completely byte-for-byte to avoid invalidating the signature.
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		key := part
+		if idx := strings.IndexByte(part, '='); idx != -1 {
+			key = part[:idx]
+		}
+		unescapedKey, err := url.QueryUnescape(key)
+		if err != nil {
+			unescapedKey = key
+		}
+		if isSignatureParam(unescapedKey) {
+			return raw
+		}
+	}
+
+	// Filter out tracking parameters while keeping everything else exactly intact
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		key := part
+		if idx := strings.IndexByte(part, '='); idx != -1 {
+			key = part[:idx]
+		}
+		unescapedKey, err := url.QueryUnescape(key)
+		if err != nil {
+			unescapedKey = key
+		}
+		if isTrackingParam(unescapedKey) {
 			modified = true
+		} else {
+			retained = append(retained, part)
 		}
 	}
 
@@ -103,10 +127,10 @@ func CanonicalizeExternalURL(raw string) string {
 		return raw
 	}
 
-	if len(q) == 0 {
+	if len(retained) == 0 {
 		u.RawQuery = ""
 	} else {
-		u.RawQuery = q.Encode()
+		u.RawQuery = strings.Join(retained, "&")
 	}
 	return u.String()
 }

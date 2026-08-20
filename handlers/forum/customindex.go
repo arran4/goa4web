@@ -30,6 +30,18 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	topicID := vars["topic"]
 
 	items := []common.IndexItem{}
+
+	if section == "privateforum" && topicID != "" {
+		tid, err := strconv.Atoi(topicID)
+		if err == nil {
+			if top, err := cd.ForumTopicByID(int32(tid)); err != nil || top == nil {
+				return items
+			}
+		} else {
+			return items
+		}
+	}
+
 	if cd.FeedsEnabled && topicID != "" && threadID == "" {
 		cd.RSSFeedURL = fmt.Sprintf("%s/topic/%s.rss", base, topicID)
 		cd.RSSFeedTitle = "Topic RSS Feed"
@@ -117,8 +129,8 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				if subscribedToTopic(cd, int32(tid)) {
 					items = append(items,
 						common.IndexItem{
-							Name:   "Unsubscribe From Topic",
-							Link:   fmt.Sprintf("%s/topic/%s/unsubscribe", base, topicID),
+							Name:    "Unsubscribe From Topic",
+							Link:    fmt.Sprintf("%s/topic/%s/unsubscribe", base, topicID),
 							GroupID: "danger",
 						},
 					)

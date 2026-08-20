@@ -22,8 +22,8 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr := r.PathPrefix("/private").Subrouter()
 	pr.NotFoundHandler = http.HandlerFunc(handlers.RenderNotFoundOrLogin)
 	pr.Use(DisablePrivateForumCaching, handlers.IndexMiddleware(CustomIndex), handlers.SectionMiddleware("privateforum"), forumhandlers.BasePathMiddleware("/private"))
-	pr.HandleFunc("/unread", UnreadThreadsPage).Methods(http.MethodGet)
-	pr.HandleFunc("/topic/{topic}/unread", UnreadThreadsPage).Methods(http.MethodGet)
+	pr.HandleFunc("/unread", UnreadThreadsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.HandleFunc("/topic/{topic}/unread", UnreadThreadsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("", PrivateForumPage).Methods(http.MethodGet)
 	pr.HandleFunc("/preview", handlers.PreviewPage).Methods("POST")
 	// Dedicated page to start a private group discussion
@@ -51,21 +51,21 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	apiWrite.HandleFunc("/topic/{topic}/thread/{thread}/reply", APIPostComment).Methods(http.MethodPost)
 
 	// Provide GET confirmation pages for subscribe/unsubscribe (mirrors public forum)
-	pr.HandleFunc("/topic/{topic}/subscribe", forumhandlers.SubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/unsubscribe", forumhandlers.UnsubscribeTopicPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/subscribe", handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
-	pr.HandleFunc("/topic/{topic}/unsubscribe", handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())
+	pr.Handle("/topic/{topic}/subscribe", RequirePrivateTopicAccess(http.HandlerFunc(forumhandlers.SubscribeTopicPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/unsubscribe", RequirePrivateTopicAccess(http.HandlerFunc(forumhandlers.UnsubscribeTopicPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/subscribe", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(forumhandlers.SubscribeTopicTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SubscribeTopicTaskHandler.Matcher())
+	pr.Handle("/topic/{topic}/unsubscribe", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(forumhandlers.UnsubscribeTopicTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.UnsubscribeTopicTaskHandler.Matcher())
 
-	pr.HandleFunc("/topic/{topic}/labels", forumhandlers.ManageTopicLabelsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/labels", RequirePrivateTopicAccess(http.HandlerFunc(forumhandlers.ManageTopicLabelsPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	addTopicPublicLabelTask := &forumhandlers.AddTopicPublicLabelTask{TaskString: forumhandlers.TaskAddTopicPublicLabel}
-	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(addTopicPublicLabelTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addTopicPublicLabelTask.Matcher())
+	pr.Handle("/topic/{topic}/labels", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(addTopicPublicLabelTask)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(addTopicPublicLabelTask.Matcher())
 	removeTopicPublicLabelTask := &forumhandlers.RemoveTopicPublicLabelTask{TaskString: forumhandlers.TaskRemoveTopicPublicLabel}
-	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(removeTopicPublicLabelTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(removeTopicPublicLabelTask.Matcher())
+	pr.Handle("/topic/{topic}/labels", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(removeTopicPublicLabelTask)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(removeTopicPublicLabelTask.Matcher())
 	setTopicLabelsTask := &forumhandlers.SetTopicLabelsTask{TaskString: forumhandlers.TaskSetTopicLabels}
-	pr.HandleFunc("/topic/{topic}/labels", handlers.TaskHandler(setTopicLabelsTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(setTopicLabelsTask.Matcher())
+	pr.Handle("/topic/{topic}/labels", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(setTopicLabelsTask)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(setTopicLabelsTask.Matcher())
 
-	pr.HandleFunc("/topic/{topic}/edit", TopicEditPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/edit", TopicEditSubmit).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/edit", RequirePrivateTopicAccess(http.HandlerFunc(TopicEditPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/edit", RequirePrivateTopicAccess(http.HandlerFunc(TopicEditSubmit))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.SetLabelsTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.SetLabelsTaskHandler.Matcher())
@@ -77,13 +77,13 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.RemovePrivateLabelTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.RemovePrivateLabelTaskHandler.Matcher())
 	pr.HandleFunc("/thread/{thread}/labels", handlers.TaskHandler(forumhandlers.MarkThreadReadTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.MarkThreadReadTaskHandler.Matcher())
 
-	pr.HandleFunc("/topic/{topic}/thread", forumhandlers.CreateThreadTaskHandler.Page).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.CreateThreadTaskHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.CreateThreadTaskHandler.Matcher())
+	pr.Handle("/topic/{topic}/thread", RequirePrivateTopicAccess(http.HandlerFunc(forumhandlers.CreateThreadTaskHandler.Page))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/thread", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(forumhandlers.CreateThreadTaskHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.CreateThreadTaskHandler.Matcher())
 	// Backwards-compatible alias: `/private/topic/{topic}/cancel` → `/private/topic/{topic}/thread/cancel`
-	pr.HandleFunc("/topic/{topic}/cancel", TopicCancelAlias).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/thread/cancel", forumhandlers.ThreadNewCancelPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
-	pr.HandleFunc("/topic/{topic}/thread/cancel", handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
-	pr.HandleFunc("/topic/{topic}/thread", handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
+	pr.Handle("/topic/{topic}/cancel", RequirePrivateTopicAccess(http.HandlerFunc(TopicCancelAlias))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/thread/cancel", RequirePrivateTopicAccess(http.HandlerFunc(forumhandlers.ThreadNewCancelPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	pr.Handle("/topic/{topic}/thread/cancel", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
+	pr.Handle("/topic/{topic}/thread", RequirePrivateTopicAccess(http.HandlerFunc(handlers.TaskHandler(forumhandlers.ThreadNewCancelHandler)))).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(forumhandlers.ThreadNewCancelHandler.Matcher())
 
 	// OpenGraph preview endpoints (no auth required for social media bots if signed)
 	pr.HandleFunc("/shared/topic/{topic}", SharedTopicPreviewPage).Methods(http.MethodGet, http.MethodHead)

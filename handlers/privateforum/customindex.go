@@ -23,6 +23,16 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			Link: "/private/topic/new",
 		}}
 	} else {
+		tid, err := strconv.Atoi(topicID)
+		if err != nil {
+			return
+		}
+
+		top, err := cd.ForumTopicByID(int32(tid))
+		if err != nil || top == nil || top.Handler != "private" {
+			return
+		}
+
 		if threadID != "" {
 			items = append(items, common.IndexItem{
 				Name: "Private threads",
@@ -34,12 +44,11 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			Name: "Private topics",
 			Link: "/private",
 		})
-		if tid, err := strconv.Atoi(topicID); err == nil {
-			if cd.HasGrant("privateforum", "topic", "edit", int32(tid)) {
-				items = append(items, common.IndexItem{
-					Name: "Edit Topic", Icon: "✏️", Link: fmt.Sprintf("/private/topic/%d/edit", tid),
-				})
-			}
+
+		if cd.HasGrant("privateforum", "topic", "edit", int32(tid)) {
+			items = append(items, common.IndexItem{
+				Name: "Edit Topic", Icon: "✏️", Link: fmt.Sprintf("/private/topic/%d/edit", tid),
+			})
 		}
 	}
 
@@ -50,21 +59,26 @@ var CustomIndex = func(cd *common.CoreData, r *http.Request) {
 			tid = int32(val)
 		}
 	}
-	if count, err := cd.UnreadPrivateThreadsCount(tid); err == nil && count > 0 {
-		unreadCountStr = fmt.Sprintf(" (%d)", count)
+	count, err := cd.UnreadPrivateThreadsCount(tid)
+	if err == nil {
+		if count > 0 {
+			unreadCountStr = fmt.Sprintf(" (%d)", count)
+		}
+
+		link := "/private/unread"
+		name := "All Unread"
+		if tid > 0 {
+			link = fmt.Sprintf("/private/topic/%d/unread", tid)
+			name = "Unread in Topic"
+		}
+
+		if tid == 0 || count > 0 {
+			items = append(items, common.IndexItem{
+				Name: fmt.Sprintf("%s%s", name, unreadCountStr),
+				Link: link,
+			})
+		}
 	}
-	link := "/private/unread"
-	if tid > 0 {
-		link = fmt.Sprintf("/private/topic/%d/unread", tid)
-	}
-	name := "All Unread"
-	if tid > 0 {
-		name = "Unread in Topic"
-	}
-	items = append(items, common.IndexItem{
-		Name: fmt.Sprintf("%s%s", name, unreadCountStr),
-		Link: link,
-	})
 
 	items = append(items, forumhandlers.ForumCustomIndexItems(cd, r)...)
 	cd.CustomIndexItems = items

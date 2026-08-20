@@ -244,6 +244,8 @@ func (cd *CoreData) UnreadPrivateThreads(limit, offset int32, topicIDNull sql.Nu
 	return cd.queries.ListUnreadPrivateThreadsForUser(cd.ctx, db.ListUnreadPrivateThreadsForUserParams{
 		GranteeID:   cd.UserID,
 		GrantUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		TopicIDNull: topicIDNull,
+		TopicIDVal:  topicIDVal,
 		Limit:       limit,
 		Offset:      offset,
 	})
@@ -254,8 +256,16 @@ func (cd *CoreData) UnreadPrivateThreadsCount(topicID int32) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
 	}
+	var topicIDNull sql.NullInt32
+	var topicIDVal int32
+	if topicID > 0 {
+		topicIDNull = sql.NullInt32{Int32: topicID, Valid: true}
+		topicIDVal = topicID
+	}
 	return cd.queries.CountUnreadPrivateThreadsForUser(cd.ctx, db.CountUnreadPrivateThreadsForUserParams{
 		GranteeID:   cd.UserID,
 		GrantUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		TopicIDNull: topicIDNull,
+		TopicIDVal:  topicIDVal,
 	})
 }

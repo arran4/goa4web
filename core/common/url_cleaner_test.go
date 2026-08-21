@@ -161,6 +161,21 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https:///path?utm_source=x",
 		},
 		{
+			name:     "Tracking-looking path component is preserved intact",
+			input:    "https://example.com/file1&gclid=part?download=1",
+			expected: "https://example.com/file1&gclid=part?download=1",
+		},
+		{
+			name:     "Tracking-looking path component preserved while outer tracker is removed",
+			input:    "https://example.com/file2&gclid=part?download=1&utm_source=x",
+			expected: "https://example.com/file2&gclid=part?download=1",
+		},
+		{
+			name:     "Signature-looking text nested in functional query value does not prevent outer tracker removal",
+			input:    "https://example.com/?redirect=https://target.test/file?signature=abc&utm_source=x",
+			expected: "https://example.com/?redirect=https://target.test/file?signature=abc",
+		},
+		{
 			name:     "Representation: blank value empty= preserved",
 			input:    "https://example.com/search?empty=&utm_source=x",
 			expected: "https://example.com/search?empty=",

@@ -6,24 +6,41 @@ ALTER TABLE external_links DROP INDEX external_links_url_idx, MODIFY COLUMN url 
 -- Step 2: Clean known tracking parameters from pre-existing URLs while preserving signed URLs, functional parameters, and query delimiters.
 UPDATE external_links
 SET url = CONCAT(
-    REGEXP_REPLACE(
+    REGEXP_SUBSTR(REGEXP_SUBSTR(url, '^[^#]*'), '^[^?]*'),
+    IF(
         REGEXP_REPLACE(
             REGEXP_REPLACE(
-                REGEXP_SUBSTR(url, '^[^#]*'),
+                SUBSTRING(REGEXP_SUBSTR(url, '^[^#]*'), LOCATE('?', REGEXP_SUBSTR(url, '^[^#]*')) + 1),
                 '&(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?(?=&|$)',
                 ''
             ),
-            '^([^?]*\\?)(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?&',
-            '$1'
-        ),
-        '^([^?]*)\\?(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?$',
-        '$1'
+            '^(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?&',
+            ''
+        ) REGEXP '^(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?$',
+        '',
+        CONCAT(
+            '?',
+            REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    REGEXP_REPLACE(
+                        SUBSTRING(REGEXP_SUBSTR(url, '^[^#]*'), LOCATE('?', REGEXP_SUBSTR(url, '^[^#]*')) + 1),
+                        '&(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?(?=&|$)',
+                        ''
+                    ),
+                    '^(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?&',
+                    ''
+                ),
+                '^(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?$',
+                ''
+            )
+        )
     ),
     IFNULL(REGEXP_SUBSTR(url, '#.*$'), '')
 )
 WHERE url REGEXP '^(?i)https?://[^/?#]+'
-  AND REGEXP_SUBSTR(url, '^[^#]*') REGEXP '([?&])(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?(&|$)'
-  AND REGEXP_SUBSTR(url, '^[^#]*') NOT REGEXP '([?&])(?i)(x-amz-signature|x-amz-credential|signature|sig|hash|hmac|x-goog-signature|x-ms-signature)(=|&|$)';
+  AND LOCATE('?', REGEXP_SUBSTR(url, '^[^#]*')) > 0
+  AND SUBSTRING(REGEXP_SUBSTR(url, '^[^#]*'), LOCATE('?', REGEXP_SUBSTR(url, '^[^#]*')) + 1) REGEXP '(^|&)(?i)(utm_[^=&]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&]*)?(&|$)'
+  AND SUBSTRING(REGEXP_SUBSTR(url, '^[^#]*'), LOCATE('?', REGEXP_SUBSTR(url, '^[^#]*')) + 1) NOT REGEXP '(^|&)(?i)(x-amz-signature|x-amz-credential|signature|sig|hash|hmac|x-goog-signature|x-ms-signature)(=|&|$)';
 
 -- Step 3: Consolidate duplicate pre-existing URLs resulting from tracking cleanup
 CREATE TEMPORARY TABLE IF NOT EXISTS _merged_links AS

@@ -384,6 +384,17 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("seed empty host 2: %v", err)
 	}
 
+	// 11. Seed tracking-looking path component and nested signature in query value cases
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/file1&gclid=part?download=1', 1)`); err != nil {
+		t.Fatalf("seed path tracker 1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/file2&gclid=part?download=1&utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed path tracker 2: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/redir3?redirect=https://target.test/file?signature=abc&utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed redir3 nested signature: %v", err)
+	}
+
 	contents, err := FS.ReadFile("0096_mysql.sql")
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
@@ -462,34 +473,37 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 
 	// Verify empty query components, percent-encoded keys, uppercase scheme, bare question marks, non-http schemes, and complex URLs
 	expectedCases := map[string]string{
-		"https://example.com/empty1?a=1&&b=2":                                 "empty components between params",
-		"https://example.com/empty2?&a=1":                                     "leading empty component",
-		"https://example.com/empty3?a=1&":                                     "trailing empty component",
-		"https://example.com/empty4?a=1&&&b=2":                                "multiple empty components",
-		"https://example.com/encoded?%75tm_source=x&id=1":                     "percent-encoded key untreated",
-		"HTTPS://example.com/upper?id=1":                                      "uppercase scheme preserved",
-		"https://example.com/bare1?":                                          "bare question mark leading",
-		"https://example.com/bare2?":                                          "bare question mark trailing",
-		"https://example.com/bare3?&":                                         "bare question mark with ampersand",
-		"mailto:user@example.com?utm_source=x":                                "mailto untouched",
-		"ftp://example.com/file?utm_source=x":                                 "ftp untouched",
-		"//example.com/file?utm_source=x":                                     "scheme-relative untouched",
-		"https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42#section-1": "complex url preserved",
-		"https://example.com/utm1?id=1":                                       "utm hyphen stripped",
-		"https://example.com/utm2?id=1":                                       "utm dot stripped",
-		"https://example.com/utm3?id=1":                                       "utm upper hyphen stripped",
-		"https://example.com/utm4?utm.foo=x&id=1":                             "non-utm dot preserved",
-		"https://example.com/prefix1?id=1&gclid_extra=keep":                   "gclid_extra preserved and utm_source stripped",
-		"https://example.com/prefix2?id=1&fbclid_extra=val":                   "fbclid_extra preserved and utm_medium stripped",
-		"https://example.com/prefix3?id=1&clickidfoo=123":                     "clickidfoo preserved and gclid stripped",
-		"https://example.com/redir1?redirect=https://target.test/path?utm_source=x": "nested ? in functional query value preserved intact",
-		"https://example.com/redir2?redirect=https://target.test/path?utm_source=x": "nested ? in functional query value preserved while outer tracker stripped",
-		"https://example.com/frag1#section?utm_source=x":                       "? in fragment preserved without outer query",
-		"https://example.com/frag2?id=1#section?gclid=fragment":                "? in fragment preserved while outer tracker stripped",
-		"https://example.com/frag3?id=1#section&utm_source=x":                  "&tracking in fragment preserved without being cleaned",
-		"https://example.com/frag4#section&signature=not-query":                "signature-looking fragment does not prevent outer tracker removal",
-		"https://?utm_source=x":                                                "empty host https://? left untouched",
-		"https:///path?utm_source=x":                                           "empty host https:///path left untouched",
+		"https://example.com/empty1?a=1&&b=2":                                        "empty components between params",
+		"https://example.com/empty2?&a=1":                                            "leading empty component",
+		"https://example.com/empty3?a=1&":                                            "trailing empty component",
+		"https://example.com/empty4?a=1&&&b=2":                                       "multiple empty components",
+		"https://example.com/encoded?%75tm_source=x&id=1":                            "percent-encoded key untreated",
+		"HTTPS://example.com/upper?id=1":                                             "uppercase scheme preserved",
+		"https://example.com/bare1?":                                                 "bare question mark leading",
+		"https://example.com/bare2?":                                                 "bare question mark trailing",
+		"https://example.com/bare3?&":                                                "bare question mark with ampersand",
+		"mailto:user@example.com?utm_source=x":                                       "mailto untouched",
+		"ftp://example.com/file?utm_source=x":                                        "ftp untouched",
+		"//example.com/file?utm_source=x":                                            "scheme-relative untouched",
+		"https://User:Pass@EXAMPLE.com:8080/path/to/page%201?id=42#section-1":        "complex url preserved",
+		"https://example.com/utm1?id=1":                                              "utm hyphen stripped",
+		"https://example.com/utm2?id=1":                                              "utm dot stripped",
+		"https://example.com/utm3?id=1":                                              "utm upper hyphen stripped",
+		"https://example.com/utm4?utm.foo=x&id=1":                                    "non-utm dot preserved",
+		"https://example.com/prefix1?id=1&gclid_extra=keep":                          "gclid_extra preserved and utm_source stripped",
+		"https://example.com/prefix2?id=1&fbclid_extra=val":                          "fbclid_extra preserved and utm_medium stripped",
+		"https://example.com/prefix3?id=1&clickidfoo=123":                            "clickidfoo preserved and gclid stripped",
+		"https://example.com/redir1?redirect=https://target.test/path?utm_source=x":  "nested ? in functional query value preserved intact",
+		"https://example.com/redir2?redirect=https://target.test/path?utm_source=x":  "nested ? in functional query value preserved while outer tracker stripped",
+		"https://example.com/frag1#section?utm_source=x":                             "? in fragment preserved without outer query",
+		"https://example.com/frag2?id=1#section?gclid=fragment":                      "? in fragment preserved while outer tracker stripped",
+		"https://example.com/frag3?id=1#section&utm_source=x":                        "&tracking in fragment preserved without being cleaned",
+		"https://example.com/frag4#section&signature=not-query":                      "signature-looking fragment does not prevent outer tracker removal",
+		"https://?utm_source=x":                                                      "empty host https://? left untouched",
+		"https:///path?utm_source=x":                                                 "empty host https:///path left untouched",
+		"https://example.com/file1&gclid=part?download=1":                            "tracking-looking path component preserved intact",
+		"https://example.com/file2&gclid=part?download=1":                            "tracking-looking path component preserved while outer tracker stripped",
+		"https://example.com/redir3?redirect=https://target.test/file?signature=abc": "signature-looking text nested in functional query value does not prevent outer tracker removal",
 	}
 	for expURL, desc := range expectedCases {
 		var matched int

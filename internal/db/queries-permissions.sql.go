@@ -751,7 +751,7 @@ type SystemCheckGrantParams struct {
 	Item                   sql.NullString
 	Action                 string
 	ItemID                 sql.NullInt32
-	IsSpecificPrivateForum interface{}
+	IsSpecificPrivateForum bool
 	UserID                 sql.NullInt32
 }
 

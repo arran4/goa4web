@@ -107,7 +107,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, bus, q) })
 	log.Printf("Starting background task worker")
-	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, q) })
+	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, q, cfg) })
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")

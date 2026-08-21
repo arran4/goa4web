@@ -1922,7 +1922,8 @@ func (cd *CoreData) RegisterExternalLinkClick(url string) {
 	if cd.queries == nil {
 		return
 	}
-	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, url); err != nil {
+	canonicalURL := CanonicalizeExternalURL(url)
+	if err := cd.queries.SystemRegisterExternalLinkClick(cd.ctx, canonicalURL); err != nil {
 		log.Printf("record external link click: %v", err)
 	}
 }
@@ -2422,12 +2423,20 @@ func (cd *CoreData) SelectedExternalLink() *db.ExternalLink {
 
 // EnsureExternalLink safely inserts or retrieves an external link ID.
 func (cd *CoreData) EnsureExternalLink(ctx context.Context, url string) (sql.Result, error) {
-	return cd.queries.EnsureExternalLink(ctx, url)
+	if cd.queries == nil {
+		return nil, fmt.Errorf("no queries")
+	}
+	canonicalURL := CanonicalizeExternalURL(url)
+	return cd.queries.EnsureExternalLink(ctx, canonicalURL)
 }
 
 // GetExternalLink fetches an external link by URL.
 func (cd *CoreData) GetExternalLink(ctx context.Context, url string) (*db.ExternalLink, error) {
-	return cd.queries.GetExternalLink(ctx, url)
+	if cd.queries == nil {
+		return nil, sql.ErrNoRows
+	}
+	canonicalURL := CanonicalizeExternalURL(url)
+	return cd.queries.GetExternalLink(ctx, canonicalURL)
 }
 
 // UpdateExternalLinkMetadata saves fetched open graph metadata to the database and invalidates the cache.

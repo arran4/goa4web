@@ -104,6 +104,7 @@ fabric.properties
 /goa4web.exe
 /server_bin
 /.session_secret
+/.bin/
 dbbackups
 /uploads/
 /dev-config.json
@@ -125,3 +126,4 @@ cmd/goa4web/cert.pem
 cmd/goa4web/key.pem
 node_modules
 /.data/cache/
+

@@ -37,33 +37,58 @@ func AdminCategoryGrantsPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := Data{CategoryID: int32(cid), Actions: []string{"see", "view"}}
 	cd.PageTitle = fmt.Sprintf("Category %d Grants", cid)
+
 	if roles, err := cd.AllRoles(); err == nil {
 		data.Roles = roles
 	}
+
+	rolesMap := make(map[int32]*db.Role)
+	if data.Roles != nil {
+		for _, r := range data.Roles {
+			rolesMap[r.ID] = r
+		}
+	}
+
 	grants, err := queries.ListGrants(r.Context())
 	if err != nil {
 		log.Printf("ListGrants: %v", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
+
+	var userIDs []int32
+	var relevantGrants []*db.Grant
 	for _, g := range grants {
 		if g.Section == "linker" && g.Item.Valid && g.Item.String == "category" && g.ItemID.Valid && g.ItemID.Int32 == int32(cid) {
-			gi := GrantInfo{Grant: g}
+			relevantGrants = append(relevantGrants, g)
 			if g.UserID.Valid {
-				if u, err := queries.SystemGetUserByID(r.Context(), g.UserID.Int32); err == nil {
-					gi.Username = sql.NullString{String: u.Username.String, Valid: true}
-				}
+				userIDs = append(userIDs, g.UserID.Int32)
 			}
-			if g.RoleID.Valid && data.Roles != nil {
-				for _, r := range data.Roles {
-					if r.ID == g.RoleID.Int32 {
-						gi.RoleName = sql.NullString{String: r.Name, Valid: true}
-						break
-					}
-				}
-			}
-			data.Grants = append(data.Grants, gi)
 		}
+	}
+
+	usersMap := make(map[int32]*db.SystemGetUsersByIDsRow)
+	if len(userIDs) > 0 {
+		if users, err := queries.SystemGetUsersByIDs(r.Context(), userIDs); err == nil {
+			for _, u := range users {
+				usersMap[u.Idusers] = u
+			}
+		}
+	}
+
+	for _, g := range relevantGrants {
+		gi := GrantInfo{Grant: g}
+		if g.UserID.Valid {
+			if u, ok := usersMap[g.UserID.Int32]; ok {
+				gi.Username = sql.NullString{String: u.Username.String, Valid: u.Username.Valid}
+			}
+		}
+		if g.RoleID.Valid {
+			if r, ok := rolesMap[g.RoleID.Int32]; ok {
+				gi.RoleName = sql.NullString{String: r.Name, Valid: true}
+			}
+		}
+		data.Grants = append(data.Grants, gi)
 	}
 	_ = LinkerAdminCategoryGrantsPageTmpl.Handle(w, r, data)
 }

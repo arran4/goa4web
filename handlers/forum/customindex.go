@@ -29,6 +29,17 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 	threadID := vars["thread"]
 	topicID := vars["topic"]
 
+	if section == "privateforum" && topicID != "" {
+		tid, err := strconv.Atoi(topicID)
+		if err != nil {
+			return nil
+		}
+		top, err := cd.ForumTopicByID(int32(tid))
+		if err != nil || top == nil || top.Handler != "private" {
+			return nil
+		}
+	}
+
 	items := []common.IndexItem{}
 	if cd.FeedsEnabled && topicID != "" && threadID == "" {
 		cd.RSSFeedURL = fmt.Sprintf("%s/topic/%s.rss", base, topicID)

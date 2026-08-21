@@ -73,6 +73,8 @@ func adminRolePage(w http.ResponseWriter, r *http.Request) {
 		Role        *db.Role
 		Users       []*roleUser
 		GrantGroups []GrantGroup
+		Errors      []string
+		Usernames   string
 	}{
 		Role:        role,
 		Users:       roleUsers,

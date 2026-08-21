@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -27,21 +26,8 @@ func ManageTopicLabelsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-
-	basePath := cd.ForumBasePath
-	if basePath == "" {
-		if strings.HasPrefix(r.URL.Path, "/private") {
-			basePath = "/private"
-		} else {
-			basePath = "/forum"
-		}
-	}
-
-	section := consts.PermissionSectionForum
-	if strings.HasPrefix(basePath, "/private") {
-		section = consts.PermissionSectionPrivateForum
-	}
-
+	basePath := forumBasePath(cd, r)
+	section := topicLabelPermissionSection(cd, r)
 	canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
 	if err != nil {
 		log.Printf("UserCanLabelTopic: %v", err)

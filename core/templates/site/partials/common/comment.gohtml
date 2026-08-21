@@ -33,6 +33,10 @@
                 </form>
             {{ else }}
                 <div id="comment-{{ $cmt.Idcomments }}">{{ $cmt.Text.String | a4code2html}}</div>
+                {{ if cd.SelectedThreadCanReply }}
+                    {{ $topicID := 0 }}
+                    {{ if cd.SelectedThreadLoaded }}{{ $topicID = cd.SelectedThreadLoaded.ForumtopicIdforumtopic }}{{ end }}
+                {{ end }}
                 {{ if ne $context "admin" }}
                 <footer>
                     {{ if cd.SelectedThreadCanReply }}
@@ -41,13 +45,13 @@
                         <span class="quote-actions">
                             <span class="quote-action-full-para">
                                 [<a href="#" class="quote-link" data-quote-type="full" data-comment-id="{{ $cmt.Idcomments }}">FULL REPLY</a>
-                                 <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=full" title="Reply in new thread">&#x2197;</a>]
+                                 {{ if $.CanFork }}<a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=full" title="Reply in new thread">[NEW THREAD REPLY]</a>{{ end }}]
                                 [<a href="#" class="quote-link" data-quote-type="paragraph" data-comment-id="{{ $cmt.Idcomments }}">PARAGRAPH REPLY</a>
-                                 <a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=paragraph" title="Reply in new thread">&#x2197;</a>]
+                                 {{ if $.CanFork }}<a href="{{ cd.ForumBasePath }}/topic/{{ $topicID }}/thread?quote_comment_id={{ $cmt.Idcomments }}&quote_type=paragraph" title="Reply in new thread">[NEW THREAD REPLY]</a>{{ end }}]
                             </span>
                             <span class="quote-action-selected" style="display: none;">
                                 [<a href="#" class="quote-link" data-quote-type="selected" data-comment-id="{{ $cmt.Idcomments }}">QUOTE SELECTED</a>
-                                 <a href="#" class="quote-new-thread-link" data-comment-id="{{ $cmt.Idcomments }}" data-topic-id="{{ $topicID }}" title="Reply in new thread">&#x2197;</a>]
+                                 {{ if $.CanFork }}<a href="#" class="quote-new-thread-link" data-comment-id="{{ $cmt.Idcomments }}" data-topic-id="{{ $topicID }}" title="Reply in new thread">[NEW THREAD REPLY]</a>{{ end }}]
                             </span>
                         </span>
                     {{ end }}
@@ -57,13 +61,13 @@
                     [<a href="#" class="view-source-link" data-target="source-modal-{{ $cmt.Idcomments }}">VIEW SOURCE</a>]
                 </footer>
                 <div id="source-modal-{{ $cmt.Idcomments }}" class="shortcuts-overlay hidden source-modal-overlay">
-                    <div class="shortcuts-modal" style="width: 800px;">
+                    <div class="shortcuts-modal" style="width: 80vw; height: 80vh; max-width: 1200px; display: flex; flex-direction: column;">
                         <div class="shortcuts-header">
                             <h2 style="margin: 0; font-size: 1.2em;">Source</h2>
                             <button class="close-button close-source-modal" data-target="source-modal-{{ $cmt.Idcomments }}">&times;</button>
                         </div>
-                        <div style="padding: 1rem;">
-                            <textarea readonly style="width: 100%; height: 300px; font-family: monospace; padding: 0.5rem; resize: vertical;">{{ $cmt.Text.String }}</textarea>
+                        <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
+                            <textarea readonly style="width: 100%; flex-grow: 1; font-family: monospace; padding: 0.5rem; resize: none;">{{ $cmt.Text.String }}</textarea>
                         </div>
                     </div>
                 </div>

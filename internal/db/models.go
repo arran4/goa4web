@@ -230,6 +230,7 @@ type DeadLetter struct {
 type ExternalLink struct {
 	ID              int32
 	Url             string
+	UrlHash         []byte
 	Clicks          int32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -294,6 +295,8 @@ type Forumthread struct {
 	Comments               sql.NullInt32
 	Lastaddition           sql.NullTime
 	Locked                 sql.NullBool
+	ReplyToCommentID       sql.NullInt32
+	ReplyToThreadID        sql.NullInt32
 	DeletedAt              sql.NullTime
 }
 

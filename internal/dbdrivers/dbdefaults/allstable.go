@@ -8,4 +8,5 @@ import (
 // Register registers all stable database connectors.
 func Register(r *dbdrivers.Registry) {
 	mysql.Register(r)
+	registerOptional(r)
 }

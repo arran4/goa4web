@@ -57,22 +57,35 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 					if url == "" {
 						return nil
 					}
+					canonicalURL := common.CanonicalizeExternalURL(url)
+					if canonicalURL == "" {
+						return nil
+					}
 
-					res, err := q.EnsureExternalLink(ctx, url)
+					res, err := q.EnsureExternalLink(ctx, canonicalURL)
 					if err != nil {
-						log.Printf("EnsureExternalLink %s: %v", url, err)
+						log.Printf("EnsureExternalLink %s: %v", canonicalURL, err)
 						return nil
 					}
 					id, err := res.LastInsertId()
 					if err != nil {
-						log.Printf("LastInsertId for %s: %v", url, err)
+						log.Printf("LastInsertId for %s: %v", canonicalURL, err)
+						return nil
+					}
+					linkID := int32(id)
+					if linkID == 0 {
+						if existing, err := q.GetExternalLink(ctx, canonicalURL); err == nil && existing != nil {
+							linkID = existing.ID
+						}
+					}
+					if linkID == 0 {
 						return nil
 					}
 
 					// Check if we need to fetch metadata
-					existing, err := q.GetExternalLinkByID(ctx, int32(id))
+					existing, err := q.GetExternalLinkByID(ctx, linkID)
 					if err != nil && !errors.Is(err, sql.ErrNoRows) {
-						log.Printf("GetExternalLinkByID %d: %v", id, err)
+						log.Printf("GetExternalLinkByID %d: %v", linkID, err)
 						return nil
 					}
 					if existing != nil && existing.CardTitle.Valid && existing.CardTitle.String != "" {
@@ -81,14 +94,14 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 
 					var info *opengraph.Info
 					for i := range 3 {
-						info, err = opengraph.Fetch(url, nil)
+						info, err = opengraph.Fetch(canonicalURL, nil)
 						if err == nil {
 							break
 						}
 						time.Sleep(time.Duration(i+1) * 2 * time.Second)
 					}
 					if err != nil {
-						log.Printf("opengraph.Fetch %s: %v", url, err)
+						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
 						return nil
 					}
 
@@ -122,17 +135,17 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
 						CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
 						CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-						ID:              int32(id),
+						ID:              linkID,
 					}); err != nil {
-						log.Printf("UpdateExternalLinkMetadata %d: %v", id, err)
+						log.Printf("UpdateExternalLinkMetadata %d: %v", linkID, err)
 					}
 
 					if cachedImage != "" {
 						if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
 							CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-							ID:             int32(id),
+							ID:             linkID,
 						}); err != nil {
-							log.Printf("UpdateExternalLinkImageCache %d: %v", id, err)
+							log.Printf("UpdateExternalLinkImageCache %d: %v", linkID, err)
 						}
 					}
 

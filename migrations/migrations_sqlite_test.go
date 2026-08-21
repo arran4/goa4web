@@ -94,4 +94,27 @@ func TestSQLiteMigrationsExecuteFromScratch(t *testing.T) {
 	if err != nil && err != sql.ErrNoRows {
 		t.Fatalf("failed to query 0095 forumthread columns: %v", err)
 	}
+
+	// Verify long URLs > 255 chars with identical first 255 chars in SQLite
+	prefix := "https://example.com/very/long/path/" + strings.Repeat("a", 230) + "?common=true&suffix="
+	url1 := prefix + "one"
+	url2 := prefix + "two"
+
+	if _, err := db.ExecContext(ctx, `INSERT INTO external_links (url, clicks) VALUES (?, 10)`, url1); err != nil {
+		t.Fatalf("insert long sqlite url 1: %v", err)
+	}
+	if _, err := db.ExecContext(ctx, `INSERT INTO external_links (url, clicks) VALUES (?, 20)`, url2); err != nil {
+		t.Fatalf("insert long sqlite url 2: %v", err)
+	}
+
+	var id1, id2, clicks1, clicks2 int
+	if err := db.QueryRowContext(ctx, `SELECT id, clicks FROM external_links WHERE url = ?`, url1).Scan(&id1, &clicks1); err != nil {
+		t.Fatalf("query long sqlite url 1: %v", err)
+	}
+	if err := db.QueryRowContext(ctx, `SELECT id, clicks FROM external_links WHERE url = ?`, url2).Scan(&id2, &clicks2); err != nil {
+		t.Fatalf("query long sqlite url 2: %v", err)
+	}
+	if id1 == id2 || clicks1 != 10 || clicks2 != 20 {
+		t.Fatalf("sqlite long urls collided: id1=%d, id2=%d, clicks1=%d, clicks2=%d", id1, id2, clicks1, clicks2)
+	}
 }

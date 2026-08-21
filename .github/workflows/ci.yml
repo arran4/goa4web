@@ -393,6 +393,32 @@ jobs:
           go test -tags sqlite ./... -v
           go test -tags sqlite3 ./... -v
 
+  go-test-mysql:
+    name: Go test MySQL (ubuntu-latest)
+    needs: [route, discover, golangci, go-vet]
+    if: ${{ needs.discover.outputs.has_go == 'true' && needs.route.outputs.run_code_checks == 'true' }}
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: goa4web_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test MySQL migrations and database queries
+        env:
+          GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
+        run: |
+          go test -tags nosqlite ./migrations ./internal/db -v
+
   go-fmt-pr:
     name: go fmt -> PR (manual dispatch)
     needs: [route, discover]

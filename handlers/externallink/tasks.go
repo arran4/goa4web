@@ -31,15 +31,16 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 	if err != nil {
 		return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
 	}
+	canonicalURL := common.CanonicalizeExternalURL(rawURL)
 
 	// Spawn a goroutine to fetch OpenGraph data in the background
 	go func() {
 		// create a disconnected context or use background context for DB operations
 		// since the request context will be canceled when this handler returns.
 		bgCtx := context.Background()
-		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
+		info, err := opengraph.Fetch(canonicalURL, cd.HTTPClient())
 		if err != nil {
-			log.Printf("background fetch error for %s: %v", rawURL, err)
+			log.Printf("background fetch error for %s: %v", canonicalURL, err)
 			return
 		}
 
@@ -53,7 +54,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 		}
 
 		// Update DB using EnsureExternalLink to handle duplicates properly
-		res, err := cd.EnsureExternalLink(bgCtx, rawURL)
+		res, err := cd.EnsureExternalLink(bgCtx, canonicalURL)
 		var lid int32
 		if err == nil {
 			id, _ := res.LastInsertId()
@@ -62,7 +63,7 @@ func (ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) any
 
 		// Always fetch existing if EnsureExternalLink returns 0 or fails
 		if lid == 0 {
-			if l, err := cd.GetExternalLink(bgCtx, rawURL); err == nil && l != nil {
+			if l, err := cd.GetExternalLink(bgCtx, canonicalURL); err == nil && l != nil {
 				lid = l.ID
 			}
 		}
@@ -128,15 +129,16 @@ func (PrefetchExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) a
 	if rawURL == "" {
 		return handlers.TextByteWriter("missing url")
 	}
+	canonicalURL := common.CanonicalizeExternalURL(rawURL)
 
 	// Spawn a goroutine to fetch OpenGraph data in the background
 	go func() {
 		// create a disconnected context or use background context for DB operations
 		// since the request context will be canceled when this handler returns.
 		bgCtx := context.Background()
-		info, err := opengraph.Fetch(rawURL, cd.HTTPClient())
+		info, err := opengraph.Fetch(canonicalURL, cd.HTTPClient())
 		if err != nil {
-			log.Printf("background fetch error for %s: %v", rawURL, err)
+			log.Printf("background fetch error for %s: %v", canonicalURL, err)
 			return
 		}
 
@@ -150,7 +152,7 @@ func (PrefetchExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) a
 		}
 
 		// Update DB using EnsureExternalLink to handle duplicates properly
-		res, err := cd.EnsureExternalLink(bgCtx, rawURL)
+		res, err := cd.EnsureExternalLink(bgCtx, canonicalURL)
 		var lid int32
 		if err == nil {
 			id, _ := res.LastInsertId()
@@ -159,7 +161,7 @@ func (PrefetchExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) a
 
 		// Always fetch existing if EnsureExternalLink returns 0 or fails
 		if lid == 0 {
-			if l, err := cd.GetExternalLink(bgCtx, rawURL); err == nil && l != nil {
+			if l, err := cd.GetExternalLink(bgCtx, canonicalURL); err == nil && l != nil {
 				lid = l.ID
 			}
 		}

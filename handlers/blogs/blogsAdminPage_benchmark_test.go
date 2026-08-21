@@ -1,16 +1,16 @@
 package blogs
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"context"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/config"
 )
 
 type MyQuerierStub struct {
@@ -31,7 +31,7 @@ func BenchmarkAdminPage(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		grants = append(grants, &db.Grant{
 			Section: "blogs",
-			UserID: sql.NullInt32{Int32: int32(i), Valid: true},
+			UserID:  sql.NullInt32{Int32: int32(i), Valid: true},
 		})
 	}
 
@@ -48,18 +48,18 @@ func BenchmarkAdminPage(b *testing.B) {
 		},
 		SystemGetUserByIDFn: func(ctx context.Context, id int32) (*db.SystemGetUserByIDRow, error) {
 			return &db.SystemGetUserByIDRow{
-				Idusers: id,
+				Idusers:  id,
 				Username: sql.NullString{String: "User", Valid: true},
-				Email: sql.NullString{String: "user@example.com", Valid: true},
+				Email:    sql.NullString{String: "user@example.com", Valid: true},
 			}, nil
 		},
 		SystemGetUsersByIDsFn: func(ctx context.Context, ids []int32) ([]*db.SystemGetUsersByIDsRow, error) {
 			var rows []*db.SystemGetUsersByIDsRow
 			for _, id := range ids {
 				rows = append(rows, &db.SystemGetUsersByIDsRow{
-					Idusers: id,
+					Idusers:  id,
 					Username: sql.NullString{String: "User", Valid: true},
-					Email: sql.NullString{String: "user@example.com", Valid: true},
+					Email:    sql.NullString{String: "user@example.com", Valid: true},
 				})
 			}
 			return rows, nil

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/arran4/goa4web/a4code"
@@ -21,12 +22,15 @@ import (
 
 func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 	key := "test-secret-key"
+	var dbMu sync.Mutex
 	dbLinks := make(map[string]*db.ExternalLink)
 	dbClicks := make(map[string]int32)
 	var nextID int32 = 100
 
 	qs := testhelpers.NewQuerierStub()
 	qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+		dbMu.Lock()
+		defer dbMu.Unlock()
 		if l, ok := dbLinks[url]; ok {
 			return db.FakeSQLResult{LastInsertIDValue: int64(l.ID)}, nil
 		}
@@ -40,20 +44,28 @@ func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 		return db.FakeSQLResult{LastInsertIDValue: int64(id)}, nil
 	}
 	qs.GetExternalLinkFn = func(ctx context.Context, url string) (*db.ExternalLink, error) {
+		dbMu.Lock()
+		defer dbMu.Unlock()
 		if l, ok := dbLinks[url]; ok {
-			return l, nil
+			cp := *l
+			return &cp, nil
 		}
 		return nil, sql.ErrNoRows
 	}
 	qs.GetExternalLinkByIDFn = func(ctx context.Context, id int32) (*db.ExternalLink, error) {
+		dbMu.Lock()
+		defer dbMu.Unlock()
 		for _, l := range dbLinks {
 			if l.ID == id {
-				return l, nil
+				cp := *l
+				return &cp, nil
 			}
 		}
 		return nil, sql.ErrNoRows
 	}
 	qs.UpdateExternalLinkMetadataFn = func(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
+		dbMu.Lock()
+		defer dbMu.Unlock()
 		for _, l := range dbLinks {
 			if l.ID == arg.ID {
 				l.CardTitle = arg.CardTitle
@@ -65,6 +77,8 @@ func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 		return nil
 	}
 	qs.SystemRegisterExternalLinkClickFn = func(ctx context.Context, url string) error {
+		dbMu.Lock()
+		defer dbMu.Unlock()
 		dbClicks[url]++
 		if l, ok := dbLinks[url]; ok {
 			l.Clicks++
@@ -93,10 +107,13 @@ func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 				"Body": "[link=" + rawTrackedURL + "]My Post[/link]",
 			},
 		})
+		dbMu.Lock()
 		_, ok := dbLinks[canonicalURL]
+		dbMu.Unlock()
 		return ok
 	}, 3e9, 5e7, "worker should insert link under canonical URL")
 
+	dbMu.Lock()
 	// Verify worker stored under canonicalURL, not rawTrackedURL
 	assert.Nil(t, dbLinks[rawTrackedURL], "worker must not store raw tracked URL")
 	assert.NotNil(t, dbLinks[canonicalURL], "worker must store canonical URL")
@@ -104,6 +121,7 @@ func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 	// Set metadata on canonical record
 	dbLinks[canonicalURL].CardTitle = sql.NullString{String: "My Post Title", Valid: true}
 	dbLinks[canonicalURL].CardDescription = sql.NullString{String: "My Post Description", Valid: true}
+	dbMu.Unlock()
 
 	// 2. Renderer renders the link from post content
 	cd := common.NewCoreData(context.Background(), qs, cfg, common.WithLinkSignKey(key))
@@ -129,8 +147,10 @@ func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 
 	assert.Equal(t, http.StatusTemporaryRedirect, rec.Code)
 	assert.Equal(t, canonicalURL, rec.Header().Get("Location"), "redirect destination must be canonical URL")
+	dbMu.Lock()
 	assert.Equal(t, int32(1), dbClicks[canonicalURL], "click must be registered under canonical URL")
 	assert.Equal(t, int32(0), dbClicks[rawTrackedURL], "no click should be registered under raw tracked URL")
+	dbMu.Unlock()
 }
 
 func TestExternalLinkPreservesBloombergAccessTokenEndToEnd(t *testing.T) {

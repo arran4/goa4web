@@ -141,7 +141,7 @@ func TestWorker_BurstReliabilityWithoutJobLoss(t *testing.T) {
 	ready := make(chan struct{})
 	workerFinished := make(chan struct{})
 	go func() {
-		Worker(ctx, bus, qs, nil, WithConcurrency(10), WithReady(ready))
+		Worker(ctx, bus, qs, nil, WithConcurrency(10), WithBufferSize(50), WithReady(ready))
 		close(workerFinished)
 	}()
 	<-ready
@@ -274,6 +274,133 @@ func TestWorker_BoundedConcurrency(t *testing.T) {
 	}
 }
 
+type blockingTask struct {
+	tasks.TaskString
+	block chan struct{}
+}
+
+var _ tasks.Task = (*blockingTask)(nil)
+var _ tasks.BackgroundTasker = (*blockingTask)(nil)
+
+func (t *blockingTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {
+	<-t.block
+	return nil, nil
+}
+
+func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
+	bus := eventbus.NewBus()
+	qs := testhelpers.NewQuerierStub()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	blockCh := make(chan struct{})
+
+	ready := make(chan struct{})
+	workerFinished := make(chan struct{})
+	go func() {
+		Worker(ctx, bus, qs, nil, WithConcurrency(1), WithBufferSize(10), WithReady(ready))
+		close(workerFinished)
+	}()
+	<-ready
+
+	// Publish 1 blocking task to occupy the single worker slot
+	err := bus.Publish(eventbus.TaskEvent{
+		Task:    &blockingTask{TaskString: "test:blocking", block: blockCh},
+		Outcome: eventbus.TaskOutcomeSuccess,
+		Time:    time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("failed to publish blocking task: %v", err)
+	}
+
+	// Publish 5 more tasks that sit in the worker queue
+	for i := 0; i < 5; i++ {
+		err := bus.Publish(eventbus.TaskEvent{
+			Task:    tasks.TaskString("test:queued"),
+			Outcome: eventbus.TaskOutcomeSuccess,
+			Time:    time.Now(),
+		})
+		if err != nil {
+			t.Fatalf("failed to publish queued task %d: %v", i, err)
+		}
+	}
+
+	// Cancel worker context while items remain in queue
+	cancel()
+	close(blockCh)
+
+	select {
+	case <-workerFinished:
+	case <-time.After(2 * time.Second):
+		t.Fatal("worker did not terminate promptly on context cancellation")
+	}
+
+	// Bus shutdown must succeed without hanging on abandoned envelopes
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer shutdownCancel()
+	if err := bus.Shutdown(shutdownCtx); err != nil {
+		t.Fatalf("bus shutdown failed after worker cancellation: %v", err)
+	}
+}
+
+type plainNonBackgroundTask struct {
+	tasks.TaskString
+}
+
+var _ tasks.Task = (*plainNonBackgroundTask)(nil)
+
+func TestWorker_FiltersIrrelevantTaskEvents(t *testing.T) {
+	bus := eventbus.NewBus()
+	qs := testhelpers.NewQuerierStub()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var bgExecuted bool
+	bgDone := make(chan struct{})
+	task := &httpClientTestTask{
+		TaskString: "test:bg",
+		executed:   bgDone,
+	}
+
+	ready := make(chan struct{})
+	go Worker(ctx, bus, qs, nil, WithReady(ready))
+	<-ready
+
+	// Publish 50 plain tasks (NOT BackgroundTasker)
+	for i := 0; i < 50; i++ {
+		err := bus.Publish(eventbus.TaskEvent{
+			Task:    &plainNonBackgroundTask{TaskString: "plain:task"},
+			Outcome: eventbus.TaskOutcomeSuccess,
+			Time:    time.Now(),
+		})
+		if err != nil {
+			t.Fatalf("publish plain task failed: %v", err)
+		}
+	}
+
+	// Publish 1 actual BackgroundTasker
+	err := bus.Publish(eventbus.TaskEvent{
+		Task:    task,
+		Outcome: eventbus.TaskOutcomeSuccess,
+		Time:    time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("publish bg task failed: %v", err)
+	}
+
+	select {
+	case <-bgDone:
+		bgExecuted = true
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for background task to execute")
+	}
+
+	if !bgExecuted {
+		t.Error("expected background task to execute")
+	}
+}
+
 type followUpInitialTask struct {
 	tasks.TaskString
 }
@@ -295,7 +422,9 @@ func TestWorker_FollowUpTaskPublishing(t *testing.T) {
 	bus := eventbus.NewBus()
 	qs := testhelpers.NewQuerierStub()
 
-	subCh := bus.Subscribe(eventbus.TaskMessageType)
+	sub := bus.SubscribeWithOptions(eventbus.WithTypes(eventbus.TaskMessageType))
+	defer sub.Close()
+	subCh := sub.Channel()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

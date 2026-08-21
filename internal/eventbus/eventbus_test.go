@@ -432,59 +432,125 @@ func TestConcurrentAccess(t *testing.T) {
 	close(stop)
 }
 
-func TestSubscribeWithOptions_Reliable_BurstNoDrop(t *testing.T) {
+func TestSubscribeWithOptions_Reliable_BackpressureWhenFull(t *testing.T) {
 	bus := NewBus()
-	ch := bus.SubscribeWithOptions(&SubscribeConfig{Reliable: true, BufferSize: 10}, TaskMessageType)
+	sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithReliableDelivery(), WithBufferSize(5))
+	defer sub.Close()
 
-	const total = 250
-	for i := 0; i < total; i++ {
+	ch := sub.Channel()
+
+	// Fill buffer to capacity (5 messages)
+	for i := 0; i < 5; i++ {
 		err := bus.Publish(TaskEvent{UserID: int32(i)})
 		require.NoError(t, err)
 	}
 
-	received := 0
-	for i := 0; i < total; i++ {
-		select {
-		case env := <-ch:
-			evt, ok := env.Msg.(TaskEvent)
-			require.True(t, ok)
-			assert.Equal(t, int32(i), evt.UserID)
-			env.Ack()
-			received++
-		case <-time.After(2 * time.Second):
-			t.Fatalf("timed out waiting for message %d, only received %d/%d", i, received, total)
-		}
+	// Publishing the 6th message should block because the buffer is full
+	sixthPublished := make(chan struct{})
+	go func() {
+		err := bus.Publish(TaskEvent{UserID: 999})
+		assert.NoError(t, err)
+		close(sixthPublished)
+	}()
+
+	select {
+	case <-sixthPublished:
+		t.Fatal("publish should have blocked on full reliable buffer")
+	case <-time.After(50 * time.Millisecond):
+		// Expected to block
 	}
-	assert.Equal(t, total, received)
+
+	// Consume 1 message from the buffer
+	env := <-ch
+	evt, ok := env.Msg.(TaskEvent)
+	require.True(t, ok)
+	assert.Equal(t, int32(0), evt.UserID)
+	env.Ack()
+
+	// Now the 6th message should unblock and be enqueued
+	select {
+	case <-sixthPublished:
+		// Successfully unblocked
+	case <-time.After(1 * time.Second):
+		t.Fatal("publish remained blocked after buffer space was freed")
+	}
+
+	// Drain remaining messages (1, 2, 3, 4, 999)
+	for i := 1; i < 5; i++ {
+		e := <-ch
+		e.Ack()
+	}
+	lastEnv := <-ch
+	lastEvt, ok := lastEnv.Msg.(TaskEvent)
+	require.True(t, ok)
+	assert.Equal(t, int32(999), lastEvt.UserID)
+	lastEnv.Ack()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	require.NoError(t, bus.Shutdown(ctx))
 }
 
-func TestSubscribeWithOptions_Reliable_ShutdownDrainsQueue(t *testing.T) {
+func TestSubscribeWithOptions_Reliable_ConsumerCancellationLifecycle(t *testing.T) {
 	bus := NewBus()
-	ch := bus.SubscribeWithOptions(&SubscribeConfig{Reliable: true, BufferSize: 5}, TaskMessageType)
 
-	const total = 50
-	for i := 0; i < total; i++ {
-		err := bus.Publish(TaskEvent{UserID: int32(i)})
-		require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithReliableDelivery(), WithBufferSize(20), WithContext(ctx))
+
+	// Publish 10 messages into buffer
+	for i := 0; i < 10; i++ {
+		require.NoError(t, bus.Publish(TaskEvent{UserID: int32(i)}))
 	}
 
-	shutdownDone := make(chan error, 1)
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		shutdownDone <- bus.Shutdown(ctx)
-	}()
+	// Cancel consumer context while messages remain unread in buffer
+	cancel()
 
-	received := 0
-	for env := range ch {
+	// Give cancellation goroutine a moment to run sub.Close()
+	sub.Close()
+
+	// Subsequent publish should not deliver to closed subscription
+	_ = bus.Publish(TaskEvent{UserID: 999})
+
+	// Bus.Shutdown should complete cleanly without hanging on abandoned envelopes
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer shutdownCancel()
+	require.NoError(t, bus.Shutdown(shutdownCtx))
+}
+
+func TestSubscribeWithOptions_Filter(t *testing.T) {
+	bus := NewBus()
+	sub := bus.SubscribeWithOptions(
+		WithTypes(TaskMessageType),
+		WithFilter(func(m Message) bool {
+			evt, ok := m.(TaskEvent)
+			return ok && evt.UserID > 100
+		}),
+	)
+	defer sub.Close()
+
+	ch := sub.Channel()
+
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 50}))
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 200}))
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 75}))
+
+	select {
+	case env := <-ch:
+		evt, ok := env.Msg.(TaskEvent)
+		require.True(t, ok)
+		assert.Equal(t, int32(200), evt.UserID)
 		env.Ack()
-		received++
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("expected filtered event")
 	}
 
-	require.NoError(t, <-shutdownDone)
-	assert.Equal(t, total, received)
+	select {
+	case env := <-ch:
+		t.Fatalf("unexpected message in filtered channel: %v", env.Msg)
+	default:
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	require.NoError(t, bus.Shutdown(ctx))
 }

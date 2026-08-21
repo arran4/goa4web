@@ -18,6 +18,9 @@ import (
 // DefaultConcurrency is the default maximum number of concurrently running background tasks.
 const DefaultConcurrency = 8
 
+// DefaultBufferSize is the default buffer size for the background task queue.
+const DefaultBufferSize = 100
+
 // Option configures the background task worker.
 type Option func(*WorkerConfig)
 
@@ -26,6 +29,7 @@ type WorkerConfig struct {
 	HTTPClient  *http.Client
 	CoreOptions []common.CoreOption
 	Concurrency int
+	BufferSize  int
 	Ready       chan<- struct{}
 }
 
@@ -52,6 +56,15 @@ func WithConcurrency(n int) Option {
 	}
 }
 
+// WithBufferSize sets the reliable queue buffer size for the background task worker.
+func WithBufferSize(n int) Option {
+	return func(c *WorkerConfig) {
+		if n > 0 {
+			c.BufferSize = n
+		}
+	}
+}
+
 // WithCoreOptions supplies additional CoreData options for background task execution.
 func WithCoreOptions(opts ...common.CoreOption) Option {
 	return func(c *WorkerConfig) {
@@ -68,6 +81,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 	}
 	wc := &WorkerConfig{
 		Concurrency: DefaultConcurrency,
+		BufferSize:  DefaultBufferSize,
 	}
 	for _, opt := range opts {
 		if opt != nil {
@@ -75,10 +89,26 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 		}
 	}
 
-	ch := bus.SubscribeWithOptions(&eventbus.SubscribeConfig{Reliable: true}, eventbus.TaskMessageType)
+	sub := bus.SubscribeWithOptions(
+		eventbus.WithTypes(eventbus.TaskMessageType),
+		eventbus.WithReliableDelivery(),
+		eventbus.WithBufferSize(wc.BufferSize),
+		eventbus.WithFilter(func(msg eventbus.Message) bool {
+			evt, ok := msg.(eventbus.TaskEvent)
+			if !ok {
+				return false
+			}
+			_, ok = evt.Task.(tasks.BackgroundTasker)
+			return ok
+		}),
+	)
+	defer sub.Close()
+
 	if wc.Ready != nil {
 		close(wc.Ready)
 	}
+
+	ch := sub.Channel()
 	sem := make(chan struct{}, wc.Concurrency)
 	var wg sync.WaitGroup
 

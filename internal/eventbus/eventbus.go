@@ -77,16 +77,21 @@ type DigestRunEvent struct {
 // Type implements the Message interface.
 func (DigestRunEvent) Type() MessageType { return DigestRunMessageType }
 
-// Bus provides a simple publish/subscribe mechanism for events.
+// subscriber represents a consumer of bus events.
 type subscriber struct {
-	ch    chan Envelope
-	types map[MessageType]struct{}
+	ch       chan Envelope
+	types    map[MessageType]struct{}
+	reliable bool
+	mu       sync.Mutex
+	cond     *sync.Cond
+	queue    []Envelope
+	closed   bool
 }
 
-// Bus provides a simple publish/subscribe mechanism for events.
+// Bus provides a publish/subscribe mechanism for events.
 type Bus struct {
 	mu          sync.RWMutex
-	subscribers []subscriber
+	subscribers []*subscriber
 	closed      bool
 	wg          sync.WaitGroup
 	SyncPublish func(Message) // Optional hook for synchronous delivery (mostly for tests)
@@ -100,18 +105,87 @@ func NewBus() *Bus {
 	return &Bus{}
 }
 
-// Subscribe registers a new subscriber for the provided message types.
+// SubscribeConfig configures subscription characteristics.
+type SubscribeConfig struct {
+	BufferSize int
+	Reliable   bool
+}
+
+// SubscribeOption configures a SubscribeConfig.
+type SubscribeOption func(*SubscribeConfig)
+
+// WithBufferSize sets the channel buffer size for the subscription.
+func WithBufferSize(size int) SubscribeOption {
+	return func(c *SubscribeConfig) {
+		if size > 0 {
+			c.BufferSize = size
+		}
+	}
+}
+
+// WithReliableDelivery ensures messages are never dropped when subscriber channels are full.
+func WithReliableDelivery() SubscribeOption {
+	return func(c *SubscribeConfig) {
+		c.Reliable = true
+	}
+}
+
+// Subscribe registers a new subscriber for the provided message types with default lossy semantics.
 // If no types are supplied the subscriber receives all messages.
 // It returns a read-only channel of Envelopes. Consumers must call Ack() on each envelope.
 func (b *Bus) Subscribe(types ...MessageType) <-chan Envelope {
-	ch := make(chan Envelope, 100)
+	return b.SubscribeWithOptions(nil, types...)
+}
+
+// SubscribeWithOptions registers a subscriber with custom options and message types.
+func (b *Bus) SubscribeWithOptions(cfg *SubscribeConfig, types ...MessageType) <-chan Envelope {
+	bufSize := 100
+	reliable := false
+	if cfg != nil {
+		if cfg.BufferSize > 0 {
+			bufSize = cfg.BufferSize
+		}
+		reliable = cfg.Reliable
+	}
+
+	ch := make(chan Envelope, bufSize)
 	set := make(map[MessageType]struct{}, len(types))
 	for _, t := range types {
 		set[t] = struct{}{}
 	}
+
+	s := &subscriber{
+		ch:       ch,
+		types:    set,
+		reliable: reliable,
+	}
+
+	if reliable {
+		s.cond = sync.NewCond(&s.mu)
+		go func() {
+			defer close(s.ch)
+			for {
+				s.mu.Lock()
+				for len(s.queue) == 0 && !s.closed {
+					s.cond.Wait()
+				}
+				if len(s.queue) == 0 && s.closed {
+					s.mu.Unlock()
+					return
+				}
+				env := s.queue[0]
+				s.queue = s.queue[1:]
+				s.mu.Unlock()
+
+				s.ch <- env
+			}
+		}()
+	}
+
 	b.mu.Lock()
-	b.subscribers = append(b.subscribers, subscriber{ch: ch, types: set})
+	b.subscribers = append(b.subscribers, s)
 	b.mu.Unlock()
+
 	return ch
 }
 
@@ -157,12 +231,24 @@ func (b *Bus) Publish(msg Message) error {
 			ack: ack,
 		}
 
-		select {
-		case s.ch <- env:
-		default:
-			// If channel is full, we drop but must decrease WG immediately
-			// effectively auto-acking the dropped message.
-			ack()
+		if s.reliable {
+			s.mu.Lock()
+			if s.closed {
+				ack()
+				s.mu.Unlock()
+				continue
+			}
+			s.queue = append(s.queue, env)
+			s.cond.Signal()
+			s.mu.Unlock()
+		} else {
+			select {
+			case s.ch <- env:
+			default:
+				// If channel is full, we drop but must decrease WG immediately
+				// effectively auto-acking the dropped message.
+				ack()
+			}
 		}
 	}
 	return nil
@@ -173,9 +259,16 @@ func (b *Bus) Publish(msg Message) error {
 func (b *Bus) Shutdown(ctx context.Context) error {
 	b.mu.Lock()
 	b.closed = true
-	// Close all subscriber channels to signal consumers to stop.
+	// Close or signal all subscribers to stop
 	for _, s := range b.subscribers {
-		close(s.ch)
+		if s.reliable {
+			s.mu.Lock()
+			s.closed = true
+			s.cond.Broadcast()
+			s.mu.Unlock()
+		} else {
+			close(s.ch)
+		}
 	}
 	b.mu.Unlock()
 

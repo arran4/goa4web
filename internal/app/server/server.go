@@ -62,6 +62,7 @@ type Server struct {
 	DLQReg         *dlq.Registry
 	Websocket      *websocket.Module
 	LanguageCache  *common.LanguageCache
+	HTTPClient     *http.Client
 
 	WorkerCancel context.CancelFunc
 
@@ -167,6 +168,11 @@ func WithEmailRegistry(r *email.Registry) Option { return func(s *Server) { s.Em
 // WithImageSignKey sets the image signing key.
 func WithImageSignKey(key string) Option {
 	return func(s *Server) { s.ImageSignKey = key }
+}
+
+// WithHTTPClient sets the HTTP client used by the server and background workers.
+func WithHTTPClient(client *http.Client) Option {
+	return func(s *Server) { s.HTTPClient = client }
 }
 
 // WithLinkSignKey sets the external link signing key.
@@ -326,7 +332,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		modules = s.RouterReg.Names()
 	}
 	customQueries, _ := queries.(db.CustomQueries)
-	cd := common.NewCoreData(r.Context(), queries, s.Config,
+	coreOpts := []common.CoreOption{
 		common.WithImageSignKey(s.ImageSignKey),
 		common.WithCustomQueries(customQueries),
 		common.WithLinkSignKey(s.LinkSignKey),
@@ -348,7 +354,11 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		common.WithTrustedProxies(trustedProxies),
 		common.WithLanguageCache(s.LanguageCache),
 		common.WithWebAuthn(),
-	)
+	}
+	if s.HTTPClient != nil {
+		coreOpts = append(coreOpts, common.WithHTTPClient(s.HTTPClient))
+	}
+	cd := common.NewCoreData(r.Context(), queries, s.Config, coreOpts...)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()
 	}
@@ -405,7 +415,11 @@ func (s *Server) startWorkers(ctx context.Context) {
 	}
 	workerCtx, cancel := context.WithCancel(ctx)
 	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
-	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus)
+	var workerOpts []workers.Option
+	if s.HTTPClient != nil {
+		workerOpts = append(workerOpts, workers.WithHTTPClient(s.HTTPClient))
+	}
+	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus, workerOpts...)
 	s.WorkerCancel = cancel
 }
 

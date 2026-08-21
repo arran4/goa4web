@@ -431,3 +431,60 @@ func TestConcurrentAccess(t *testing.T) {
 	wg.Wait()
 	close(stop)
 }
+
+func TestSubscribeWithOptions_Reliable_BurstNoDrop(t *testing.T) {
+	bus := NewBus()
+	ch := bus.SubscribeWithOptions(&SubscribeConfig{Reliable: true, BufferSize: 10}, TaskMessageType)
+
+	const total = 250
+	for i := 0; i < total; i++ {
+		err := bus.Publish(TaskEvent{UserID: int32(i)})
+		require.NoError(t, err)
+	}
+
+	received := 0
+	for i := 0; i < total; i++ {
+		select {
+		case env := <-ch:
+			evt, ok := env.Msg.(TaskEvent)
+			require.True(t, ok)
+			assert.Equal(t, int32(i), evt.UserID)
+			env.Ack()
+			received++
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for message %d, only received %d/%d", i, received, total)
+		}
+	}
+	assert.Equal(t, total, received)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	require.NoError(t, bus.Shutdown(ctx))
+}
+
+func TestSubscribeWithOptions_Reliable_ShutdownDrainsQueue(t *testing.T) {
+	bus := NewBus()
+	ch := bus.SubscribeWithOptions(&SubscribeConfig{Reliable: true, BufferSize: 5}, TaskMessageType)
+
+	const total = 50
+	for i := 0; i < total; i++ {
+		err := bus.Publish(TaskEvent{UserID: int32(i)})
+		require.NoError(t, err)
+	}
+
+	shutdownDone := make(chan error, 1)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		shutdownDone <- bus.Shutdown(ctx)
+	}()
+
+	received := 0
+	for env := range ch {
+		env.Ack()
+		received++
+	}
+
+	require.NoError(t, <-shutdownDone)
+	assert.Equal(t, total, received)
+}

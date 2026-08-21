@@ -3093,6 +3093,17 @@ func NewCoreData(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, o
 	return cd
 }
 
+// FromContext extracts CoreData from the provided context, or returns nil if absent.
+func FromContext(ctx context.Context) *CoreData {
+	if ctx == nil {
+		return nil
+	}
+	if cd, ok := ctx.Value(consts.KeyCoreData).(*CoreData); ok {
+		return cd
+	}
+	return nil
+}
+
 // EmailProvider lazily returns the configured email provider.
 // WithEmailProvider sets the email provider used by CoreData.
 func WithEmailProvider(p MailProvider) CoreOption {

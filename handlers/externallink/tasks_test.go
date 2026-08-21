@@ -18,6 +18,8 @@ import (
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/arran4/goa4web/workers/backgroundtaskworker"
+	"time"
 )
 
 func TestReloadExternalLinkTask(t *testing.T) {
@@ -283,5 +285,84 @@ func TestExternalLinkBackgroundTask_EmptyURLNoop(t *testing.T) {
 	prefetchTask := PrefetchExternalLinkTask{URL: ""}
 	if res, err := prefetchTask.BackgroundTask(context.Background(), qs); err != nil || res != nil {
 		t.Errorf("expected (nil, nil) for empty prefetch task, got (%v, %v)", res, err)
+	}
+}
+
+func TestExternalLinkWorkerPipeline_PreservesHTTPClient(t *testing.T) {
+	bus := eventbus.NewBus()
+	qs := testhelpers.NewQuerierStub()
+
+	var metadataUpdated bool
+	var updatedTitle string
+	done := make(chan struct{})
+
+	qs.EnsureExternalLinkFn = func(ctx context.Context, url string) (sql.Result, error) {
+		return db.FakeSQLResult{LastInsertIDValue: 789}, nil
+	}
+	qs.UpdateExternalLinkMetadataFn = func(ctx context.Context, arg db.UpdateExternalLinkMetadataParams) error {
+		if arg.ID == 789 {
+			metadataUpdated = true
+			updatedTitle = arg.CardTitle.String
+			close(done)
+		}
+		return nil
+	}
+
+	var clientCalled bool
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		clientCalled = true
+		return &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader(`<html><head><meta property="og:title" content="Worker Fetched Title"/></head><body></body></html>`)),
+			Header:     make(http.Header),
+		}
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ready := make(chan struct{})
+	workerDone := make(chan struct{})
+	go func() {
+		backgroundtaskworker.Worker(ctx, bus, qs, nil, backgroundtaskworker.WithHTTPClient(client), backgroundtaskworker.WithReady(ready))
+		close(workerDone)
+	}()
+	<-ready
+
+	task := ReloadExternalLinkTask{
+		TaskString: "admin:externallink:reload",
+		URL:        "https://example.com/worker/test",
+	}
+
+	err := bus.Publish(eventbus.TaskEvent{
+		Task:    task,
+		Outcome: eventbus.TaskOutcomeSuccess,
+		Time:    time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("failed to publish task event: %v", err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for background task to execute via worker")
+	}
+
+	if !clientCalled {
+		t.Error("expected custom HTTP client to be called in worker pipeline")
+	}
+	if !metadataUpdated {
+		t.Error("expected DB metadata update to be called")
+	}
+	if updatedTitle != "Worker Fetched Title" {
+		t.Errorf("expected title 'Worker Fetched Title', got %q", updatedTitle)
+	}
+
+	cancel()
+	select {
+	case <-workerDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("worker did not exit cleanly")
 	}
 }

@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -24,6 +25,29 @@ import (
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
+// Option configures background workers started by Start.
+type Option func(*WorkersConfig)
+
+// WorkersConfig holds worker configuration.
+type WorkersConfig struct {
+	HTTPClient  *http.Client
+	CoreOptions []common.CoreOption
+}
+
+// WithHTTPClient sets the HTTP client to supply to workers making external requests.
+func WithHTTPClient(client *http.Client) Option {
+	return func(c *WorkersConfig) {
+		c.HTTPClient = client
+	}
+}
+
+// WithCoreOptions supplies additional CoreData options for background workers.
+func WithCoreOptions(opts ...common.CoreOption) Option {
+	return func(c *WorkersConfig) {
+		c.CoreOptions = append(c.CoreOptions, opts...)
+	}
+}
+
 // safeGo runs fn in a goroutine and exits the program if the goroutine panics.
 func safeGo(fn func()) {
 	go func() {
@@ -38,7 +62,14 @@ func safeGo(fn func()) {
 }
 
 // Start launches all background workers using the given configuration.
-func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus) {
+func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus, opts ...Option) {
+	wc := &WorkersConfig{}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(wc)
+		}
+	}
+
 	log.Printf("Starting email worker")
 	safeGo(func() {
 		emailqueue.StartEventListener(ctx, q, provider, dlqProvider, bus, cfg)
@@ -107,7 +138,16 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	log.Printf("Starting search index worker")
 	safeGo(func() { searchworker.Worker(ctx, bus, q) })
 	log.Printf("Starting background task worker")
-	safeGo(func() { backgroundtaskworker.Worker(ctx, bus, q, cfg) })
+	safeGo(func() {
+		var bopts []backgroundtaskworker.Option
+		if wc.HTTPClient != nil {
+			bopts = append(bopts, backgroundtaskworker.WithHTTPClient(wc.HTTPClient))
+		}
+		if len(wc.CoreOptions) > 0 {
+			bopts = append(bopts, backgroundtaskworker.WithCoreOptions(wc.CoreOptions...))
+		}
+		backgroundtaskworker.Worker(ctx, bus, q, cfg, bopts...)
+	})
 	log.Printf("Starting post count worker")
 	safeGo(func() { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")

@@ -287,6 +287,18 @@ func (t *blockingTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.
 	return nil, nil
 }
 
+type queuedBgTask struct {
+	tasks.TaskString
+	id int
+}
+
+var _ tasks.Task = (*queuedBgTask)(nil)
+var _ tasks.BackgroundTasker = (*queuedBgTask)(nil)
+
+func (t *queuedBgTask) BackgroundTask(ctx context.Context, q db.Querier) (tasks.Task, error) {
+	return nil, nil
+}
+
 func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 	bus := eventbus.NewBus()
 	qs := testhelpers.NewQuerierStub()
@@ -303,7 +315,7 @@ func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 	}()
 	<-ready
 
-	// Publish 1 blocking task to occupy the single worker slot
+	// Publish 1 blocking task to occupy the single concurrency slot
 	err := bus.Publish(eventbus.TaskEvent{
 		Task:    &blockingTask{TaskString: "test:blocking", block: blockCh},
 		Outcome: eventbus.TaskOutcomeSuccess,
@@ -313,10 +325,10 @@ func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 		t.Fatalf("failed to publish blocking task: %v", err)
 	}
 
-	// Publish 5 more tasks that sit in the worker queue
+	// Publish 5 real BackgroundTasker tasks that enter and sit in the worker's reliable queue
 	for i := 0; i < 5; i++ {
 		err := bus.Publish(eventbus.TaskEvent{
-			Task:    tasks.TaskString("test:queued"),
+			Task:    &queuedBgTask{TaskString: "test:queued_bg", id: i},
 			Outcome: eventbus.TaskOutcomeSuccess,
 			Time:    time.Now(),
 		})
@@ -325,8 +337,18 @@ func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 		}
 	}
 
-	// Cancel worker context while items remain in queue
+	// Immediate server shutdown order: cancel worker, then immediately call Bus.Shutdown
+	// without waiting for the worker to exit first.
 	cancel()
+
+	shutdownErrCh := make(chan error, 1)
+	go func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer shutdownCancel()
+		shutdownErrCh <- bus.Shutdown(shutdownCtx)
+	}()
+
+	// Release the active in-flight task
 	close(blockCh)
 
 	select {
@@ -335,11 +357,13 @@ func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 		t.Fatal("worker did not terminate promptly on context cancellation")
 	}
 
-	// Bus shutdown must succeed without hanging on abandoned envelopes
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer shutdownCancel()
-	if err := bus.Shutdown(shutdownCtx); err != nil {
-		t.Fatalf("bus shutdown failed after worker cancellation: %v", err)
+	select {
+	case err := <-shutdownErrCh:
+		if err != nil {
+			t.Fatalf("bus shutdown failed after worker cancellation: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("bus shutdown timed out")
 	}
 }
 

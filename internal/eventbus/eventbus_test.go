@@ -554,3 +554,114 @@ func TestSubscribeWithOptions_Filter(t *testing.T) {
 	defer cancel()
 	require.NoError(t, bus.Shutdown(ctx))
 }
+
+func TestPublish_ReliableDeliveryRejectionReturnsError(t *testing.T) {
+	bus := NewBus()
+	sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithReliableDelivery(), WithBufferSize(2))
+
+	// Fill buffer
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 1}))
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 2}))
+
+	// Attempt 3rd publish in goroutine (will block on backpressure)
+	publishErrCh := make(chan error, 1)
+	go func() {
+		publishErrCh <- bus.Publish(TaskEvent{UserID: 3})
+	}()
+
+	select {
+	case <-publishErrCh:
+		t.Fatal("publish should block on full reliable buffer")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	// Close the subscription while publish is blocked
+	sub.Close()
+
+	// Publish should unblock and return an error
+	select {
+	case err := <-publishErrCh:
+		require.Error(t, err, "expected publish to return error when reliable delivery is rejected")
+		assert.Equal(t, ErrSubscriptionClosed, err)
+	case <-time.After(1 * time.Second):
+		t.Fatal("publish remained blocked after subscription closed")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	require.NoError(t, bus.Shutdown(ctx))
+}
+
+func TestPublish_ShutdownRace(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		bus := NewBus()
+		sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithReliableDelivery(), WithBufferSize(100))
+
+		var wg sync.WaitGroup
+		const publishers = 10
+		wg.Add(publishers)
+
+		for p := 0; p < publishers; p++ {
+			go func() {
+				defer wg.Done()
+				for m := 0; m < 50; m++ {
+					_ = bus.Publish(TaskEvent{UserID: int32(m)})
+				}
+			}()
+		}
+
+		// Consumer draining
+		stopConsumer := make(chan struct{})
+		go func() {
+			ch := sub.Channel()
+			for {
+				select {
+				case env, ok := <-ch:
+					if !ok {
+						return
+					}
+					env.Ack()
+				case <-stopConsumer:
+					return
+				}
+			}
+		}()
+
+		// Shutdown concurrently
+		time.Sleep(1 * time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		err := bus.Shutdown(ctx)
+		cancel()
+		close(stopConsumer)
+		wg.Wait()
+
+		require.NoError(t, err, "iteration %d shutdown failed", i)
+	}
+}
+
+func TestSubscribe_ChannelRangeClosedOnShutdown(t *testing.T) {
+	bus := NewBus()
+	sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithBufferSize(10))
+
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 1}))
+	require.NoError(t, bus.Publish(TaskEvent{UserID: 2}))
+
+	done := make(chan struct{})
+	go func() {
+		for env := range sub.Channel() {
+			env.Ack()
+		}
+		close(done)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	require.NoError(t, bus.Shutdown(ctx))
+
+	select {
+	case <-done:
+		// Clean exit of range loop
+	case <-time.After(1 * time.Second):
+		t.Fatal("range loop did not terminate after bus shutdown")
+	}
+}

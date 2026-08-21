@@ -78,14 +78,17 @@ func (DigestRunEvent) Type() MessageType { return DigestRunMessageType }
 
 // Subscription represents an active subscription to the event bus.
 type Subscription struct {
-	bus      *Bus
-	ch       chan Envelope
-	types    map[MessageType]struct{}
-	filter   func(Message) bool
-	reliable bool
-	mu       sync.Mutex
-	closed   bool
-	done     chan struct{}
+	bus       *Bus
+	ch        chan Envelope
+	types     map[MessageType]struct{}
+	filter    func(Message) bool
+	reliable  bool
+	mu        sync.Mutex
+	closed    bool
+	done      chan struct{}
+	deliverWg sync.WaitGroup
+	closeOnce sync.Once
+	drainOnce sync.Once
 }
 
 // Channel returns the read-only channel of Envelopes for this subscription.
@@ -93,34 +96,38 @@ func (s *Subscription) Channel() <-chan Envelope {
 	return s.ch
 }
 
-// Close unregisters the subscription, unblocks any pending delivery, and
-// drains and acknowledges any remaining unconsumed envelopes so Bus accounting completes cleanly.
-func (s *Subscription) Close() {
-	s.mu.Lock()
-	if s.closed {
+// closeDelivery stops any new deliveries, unblocks pending deliver calls,
+// and safely closes s.ch so range consumers can finish.
+func (s *Subscription) closeDelivery() {
+	s.closeOnce.Do(func() {
+		s.mu.Lock()
+		s.closed = true
+		close(s.done)
 		s.mu.Unlock()
-		return
-	}
-	s.closed = true
-	close(s.done)
-	s.mu.Unlock()
 
-	if s.bus != nil {
-		s.bus.removeSubscriber(s)
-	}
+		if s.bus != nil {
+			s.bus.removeSubscriber(s)
+		}
+
+		// Wait for all in-flight deliver calls to finish
+		s.deliverWg.Wait()
+
+		// Safely close the channel now that no further deliveries can occur
+		close(s.ch)
+	})
+}
+
+// Close unregisters the subscription, closes delivery, and drains/acknowledges
+// any remaining unconsumed envelopes so Bus accounting completes cleanly.
+func (s *Subscription) Close() {
+	s.closeDelivery()
 
 	// Drain any remaining buffered envelopes and acknowledge them
-	for {
-		select {
-		case env, ok := <-s.ch:
-			if !ok {
-				return
-			}
+	s.drainOnce.Do(func() {
+		for env := range s.ch {
 			env.Ack()
-		default:
-			return
 		}
-	}
+	})
 }
 
 func (s *Subscription) matches(msg Message) bool {
@@ -141,8 +148,11 @@ func (s *Subscription) deliver(env Envelope) error {
 		s.mu.Unlock()
 		return ErrSubscriptionClosed
 	}
+	s.deliverWg.Add(1)
 	done := s.done
 	s.mu.Unlock()
+
+	defer s.deliverWg.Done()
 
 	if s.reliable {
 		select {
@@ -267,6 +277,11 @@ func (b *Bus) SubscribeWithOptions(opts ...SubscribeOption) *Subscription {
 	}
 
 	b.mu.Lock()
+	if b.closed {
+		b.mu.Unlock()
+		sub.Close()
+		return sub
+	}
 	b.subscribers = append(b.subscribers, sub)
 	b.mu.Unlock()
 
@@ -296,6 +311,8 @@ func (b *Bus) removeSubscriber(s *Subscription) {
 
 // Publish dispatches an event to all current subscribers.
 // It returns ErrBusClosed when publishing after Shutdown.
+// If a reliable subscriber fails to accept the event (e.g. cancelled/closed during backpressure),
+// Publish returns a non-nil error.
 func (b *Bus) Publish(msg Message) error {
 	b.mu.RLock()
 	if b.closed {
@@ -303,8 +320,24 @@ func (b *Bus) Publish(msg Message) error {
 		return ErrBusClosed
 	}
 	syncPub := b.SyncPublish
-	subs := make([]*Subscription, len(b.subscribers))
-	copy(subs, b.subscribers)
+
+	var matching []*Subscription
+	for _, s := range b.subscribers {
+		if s.matches(msg) {
+			matching = append(matching, s)
+		}
+	}
+
+	if len(matching) == 0 {
+		b.mu.RUnlock()
+		if syncPub != nil {
+			syncPub(msg)
+		}
+		return nil
+	}
+
+	// Register all accepted work under lock before Shutdown can observe closed state
+	b.wg.Add(len(matching))
 	b.mu.RUnlock()
 
 	if syncPub != nil {
@@ -317,13 +350,8 @@ func (b *Bus) Publish(msg Message) error {
 		}
 	}
 
-	for _, s := range subs {
-		if !s.matches(msg) {
-			continue
-		}
-
-		b.wg.Add(1)
-
+	var firstErr error
+	for _, s := range matching {
 		var once sync.Once
 		ack := func() {
 			once.Do(func() {
@@ -338,13 +366,16 @@ func (b *Bus) Publish(msg Message) error {
 
 		if err := s.deliver(env); err != nil {
 			ack()
+			if s.reliable && firstErr == nil {
+				firstErr = err
+			}
 		}
 	}
-	return nil
+	return firstErr
 }
 
-// Shutdown waits for all queued events to be processed and
-// prevents any new events from being published.
+// Shutdown closes all subscriptions, waits for all queued/in-flight events to be acknowledged,
+// and prevents new events from being published.
 func (b *Bus) Shutdown(ctx context.Context) error {
 	b.mu.Lock()
 	b.closed = true
@@ -353,12 +384,7 @@ func (b *Bus) Shutdown(ctx context.Context) error {
 	b.mu.Unlock()
 
 	for _, s := range subs {
-		s.mu.Lock()
-		if !s.closed {
-			s.closed = true
-			close(s.done)
-		}
-		s.mu.Unlock()
+		s.closeDelivery()
 	}
 
 	done := make(chan struct{})

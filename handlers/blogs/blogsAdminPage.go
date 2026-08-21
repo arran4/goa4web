@@ -73,23 +73,30 @@ func AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data Data
+	var uids []int32
 	for uid := range relevantUserIDs {
-		u, err := cd.Queries().SystemGetUserByID(r.Context(), uid)
+		uids = append(uids, uid)
+	}
+
+	if len(uids) > 0 {
+		users, err := cd.Queries().SystemGetUsersByIDs(r.Context(), uids)
 		if err != nil {
-			log.Printf("SystemGetUserByID %d: %v", uid, err)
-			continue
+			log.Printf("SystemGetUsersByIDs: %v", err)
+		} else {
+			for _, u := range users {
+				rolesList := userRolesMap[u.Idusers]
+				sort.Strings(rolesList)
+				data.Rows = append(data.Rows, BlogRoleRow{
+					Idusers:  u.Idusers,
+					Username: u.Username,
+					Email:    u.Email.String,
+					Roles: sql.NullString{
+						String: strings.Join(rolesList, ", "),
+						Valid:  len(rolesList) > 0,
+					},
+				})
+			}
 		}
-		rolesList := userRolesMap[uid]
-		sort.Strings(rolesList)
-		data.Rows = append(data.Rows, BlogRoleRow{
-			Idusers:  u.Idusers,
-			Username: u.Username,
-			Email:    u.Email.String,
-			Roles: sql.NullString{
-				String: strings.Join(rolesList, ", "),
-				Valid:  len(rolesList) > 0,
-			},
-		})
 	}
 	sort.Slice(data.Rows, func(i, j int) bool {
 		return data.Rows[i].Idusers < data.Rows[j].Idusers

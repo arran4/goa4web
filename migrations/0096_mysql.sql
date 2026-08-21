@@ -9,7 +9,7 @@ SET url = REGEXP_REPLACE(
     REGEXP_REPLACE(
         REGEXP_REPLACE(
             url,
-            '&(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?',
+            '&(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?(?=[&#]|$)',
             ''
         ),
         '\\?(?i)(utm_[^=&#]*|fbclid|gclid|gbraid|wbraid|mc_cid|mc_eid|igshid|msclkid|twclid|yclid|click_id|clickid|_hsenc|_hsmi|mkt_tok)(=[^&#]*)?&',

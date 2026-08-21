@@ -347,6 +347,17 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("seed non-utm dot: %v", err)
 	}
 
+	// 9. Seed exact-key prefix regression cases (must NOT be corrupted)
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/prefix1?id=1&gclid_extra=keep&utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed gclid_extra: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/prefix2?id=1&fbclid_extra=val&utm_medium=mail', 1)`); err != nil {
+		t.Fatalf("seed fbclid_extra: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/prefix3?id=1&clickidfoo=123&gclid=real', 1)`); err != nil {
+		t.Fatalf("seed clickidfoo: %v", err)
+	}
+
 	contents, err := FS.ReadFile("0096_mysql.sql")
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
@@ -442,6 +453,9 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		"https://example.com/utm2?id=1":                                       "utm dot stripped",
 		"https://example.com/utm3?id=1":                                       "utm upper hyphen stripped",
 		"https://example.com/utm4?utm.foo=x&id=1":                             "non-utm dot preserved",
+		"https://example.com/prefix1?id=1&gclid_extra=keep":                   "gclid_extra preserved and utm_source stripped",
+		"https://example.com/prefix2?id=1&fbclid_extra=val":                   "fbclid_extra preserved and utm_medium stripped",
+		"https://example.com/prefix3?id=1&clickidfoo=123":                     "clickidfoo preserved and gclid stripped",
 	}
 	for expURL, desc := range expectedCases {
 		var matched int
@@ -532,7 +546,7 @@ func openTemporaryMySQLDatabase(t *testing.T, dsn string) *sql.DB {
 	if err != nil {
 		t.Fatalf("open MySQL admin connection: %v", err)
 	}
-	if _, err := adminDB.Exec("CREATE DATABASE `" + databaseName + "`"); err != nil {
+	if _, err := adminDB.Exec("CREATE DATABASE `" + databaseName + "` DEFAULT CHARACTER SET latin1"); err != nil {
 		_ = adminDB.Close()
 		t.Fatalf("create temporary database: %v", err)
 	}

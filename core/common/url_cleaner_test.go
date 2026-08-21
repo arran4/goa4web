@@ -106,6 +106,21 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https://example.com/item?utm.foo=x&id=1",
 		},
 		{
+			name:     "Preserve exact-key prefixes like gclid_extra when tracking param is also removed",
+			input:    "https://example.com/?id=1&gclid_extra=keep&utm_source=x",
+			expected: "https://example.com/?id=1&gclid_extra=keep",
+		},
+		{
+			name:     "Preserve fbclid_extra when tracking param is also removed",
+			input:    "https://example.com/?id=1&fbclid_extra=val&utm_medium=mail",
+			expected: "https://example.com/?id=1&fbclid_extra=val",
+		},
+		{
+			name:     "Preserve clickidfoo when tracking param is also removed",
+			input:    "https://example.com/?id=1&clickidfoo=123&gclid=real",
+			expected: "https://example.com/?id=1&clickidfoo=123",
+		},
+		{
 			name:     "Representation: blank value empty= preserved",
 			input:    "https://example.com/search?empty=&utm_source=x",
 			expected: "https://example.com/search?empty=",

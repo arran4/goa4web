@@ -121,6 +121,46 @@ func TestCanonicalizeExternalURL(t *testing.T) {
 			expected: "https://example.com/?id=1&clickidfoo=123",
 		},
 		{
+			name:     "Nested ? in functional query value is preserved intact",
+			input:    "https://example.com/?redirect=https://target.test/path?utm_source=x",
+			expected: "https://example.com/?redirect=https://target.test/path?utm_source=x",
+		},
+		{
+			name:     "Nested ? in functional query value preserved while outer tracker is removed",
+			input:    "https://example.com/?redirect=https://target.test/path?utm_source=x&gclid=real",
+			expected: "https://example.com/?redirect=https://target.test/path?utm_source=x",
+		},
+		{
+			name:     "? in fragment is preserved without outer query",
+			input:    "https://example.com/path#section?utm_source=x",
+			expected: "https://example.com/path#section?utm_source=x",
+		},
+		{
+			name:     "? in fragment is preserved while outer tracker is removed",
+			input:    "https://example.com/path?id=1&utm_source=x#section?gclid=fragment",
+			expected: "https://example.com/path?id=1#section?gclid=fragment",
+		},
+		{
+			name:     "&tracking in fragment is preserved without being cleaned",
+			input:    "https://example.com/path?id=1#section&utm_source=x",
+			expected: "https://example.com/path?id=1#section&utm_source=x",
+		},
+		{
+			name:     "Signature-looking fragment does not prevent outer tracker removal",
+			input:    "https://example.com/?utm_source=x#section&signature=not-query",
+			expected: "https://example.com/#section&signature=not-query",
+		},
+		{
+			name:     "Empty host https://?utm_source=x is left untouched",
+			input:    "https://?utm_source=x",
+			expected: "https://?utm_source=x",
+		},
+		{
+			name:     "Empty host https:///path?utm_source=x is left untouched",
+			input:    "https:///path?utm_source=x",
+			expected: "https:///path?utm_source=x",
+		},
+		{
 			name:     "Representation: blank value empty= preserved",
 			input:    "https://example.com/search?empty=&utm_source=x",
 			expected: "https://example.com/search?empty=",

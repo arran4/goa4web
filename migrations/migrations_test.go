@@ -358,6 +358,32 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("seed clickidfoo: %v", err)
 	}
 
+	// 10. Seed nested query, fragment, signature-in-fragment, and empty-host cases
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/redir1?redirect=https://target.test/path?utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed redir1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/redir2?redirect=https://target.test/path?utm_source=x&gclid=real', 1)`); err != nil {
+		t.Fatalf("seed redir2: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/frag1#section?utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed frag1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/frag2?id=1&utm_source=x#section?gclid=fragment', 1)`); err != nil {
+		t.Fatalf("seed frag2: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/frag3?id=1#section&utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed frag3: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://example.com/frag4?utm_source=x#section&signature=not-query', 1)`); err != nil {
+		t.Fatalf("seed frag4: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https://?utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed empty host 1: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url, clicks) VALUES ('https:///path?utm_source=x', 1)`); err != nil {
+		t.Fatalf("seed empty host 2: %v", err)
+	}
+
 	contents, err := FS.ReadFile("0096_mysql.sql")
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
@@ -456,6 +482,14 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		"https://example.com/prefix1?id=1&gclid_extra=keep":                   "gclid_extra preserved and utm_source stripped",
 		"https://example.com/prefix2?id=1&fbclid_extra=val":                   "fbclid_extra preserved and utm_medium stripped",
 		"https://example.com/prefix3?id=1&clickidfoo=123":                     "clickidfoo preserved and gclid stripped",
+		"https://example.com/redir1?redirect=https://target.test/path?utm_source=x": "nested ? in functional query value preserved intact",
+		"https://example.com/redir2?redirect=https://target.test/path?utm_source=x": "nested ? in functional query value preserved while outer tracker stripped",
+		"https://example.com/frag1#section?utm_source=x":                       "? in fragment preserved without outer query",
+		"https://example.com/frag2?id=1#section?gclid=fragment":                "? in fragment preserved while outer tracker stripped",
+		"https://example.com/frag3?id=1#section&utm_source=x":                  "&tracking in fragment preserved without being cleaned",
+		"https://example.com/frag4#section&signature=not-query":                "signature-looking fragment does not prevent outer tracker removal",
+		"https://?utm_source=x":                                                "empty host https://? left untouched",
+		"https:///path?utm_source=x":                                           "empty host https:///path left untouched",
 	}
 	for expURL, desc := range expectedCases {
 		var matched int

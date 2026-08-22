@@ -713,7 +713,7 @@ CREATE TABLE IF NOT EXISTS `admin_request_comments` (
 
 CREATE TABLE IF NOT EXISTS `external_links` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `url` tinytext NOT NULL,
+  `url` varchar(2048) NOT NULL,
   `clicks` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -820,6 +820,7 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (92, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (93, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (94, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (95, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (96, 1);
 
 
 

@@ -148,6 +148,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!currentComment || !currentComment.contains(range.startContainer) || !currentComment.contains(range.endContainer)) {
                 currentComment = null;
                 hideAll = true;
+            } else {
+                const isCommentBody = (node) => {
+                    const p = node.nodeType === 3 ? node.parentNode : node;
+                    if (!p || !p.closest) return false;
+                    return p.closest('.comment section.body, .comment .body') !== null;
+                };
+                if (!isCommentBody(range.startContainer) || !isCommentBody(range.endContainer)) {
+                    currentComment = null;
+                    hideAll = true;
+                }
             }
         }
 

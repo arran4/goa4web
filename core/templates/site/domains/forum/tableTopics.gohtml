@@ -4,7 +4,7 @@
     {{ $isAdmin := .IsAdmin }}
     <section class="topics">
         <div class="topic-controls">
-            {{ if .IsPrivate }}<input type="text" class="label-filter" placeholder="Filter by label or participant...">{{ end }}
+            {{ if .IsPrivate }}<input type="text" class="label-filter" placeholder="Filter by label, poster, participant, or topic...">{{ end }}
             <div class="sort-buttons">
                 <span>Sort by:</span>
                 <button class="sort-button" data-sort="last-reply" data-order="desc">Last Reply</button>
@@ -24,7 +24,7 @@
         {{ if .DisplayTitle }}{{ $title = topicTitleOrDefault .DisplayTitle }}{{ end }}
         <li class="topic-item" data-last-reply-time="{{ .Lastaddition.Time.Unix }}" data-threads="{{ .Threads.Int32 }}" data-replies="{{ .Comments.Int32 }}" data-name="{{ $title }}">
             <div class="topic-name">
-                {{ if $.IsPrivate }}{{ if ge .TotalParticipants 3 }}👥 {{ else }}👤 {{ end }}{{ end }}<a href="{{$base}}/topic/{{ .Idforumtopic }}">{{ $title | a4code2html }}</a>{{ if $isAdmin }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
+                {{ if $.IsPrivate }}{{ if ge .TotalParticipants 3 }}👥 {{ else }}👤 {{ end }}{{ end }}<a href="{{$base}}/topic/{{ .Idforumtopic }}" class="topic-name-filter">{{ $title | a4code2html }}</a>{{ if $isAdmin }} [<a href="/admin/forum/topics/topic/{{ .Idforumtopic }}/edit">ADMIN</a>]{{ end }}<br>
                 {{ $description := topicDescriptionOrDefault .Description.String }}<em>{{ $description | a4code2html }}</em>
                 {{- if .Labels }}<br>{{ template "topicLabels" .Labels }}{{ end }}
                 {{- $participants := default "" .ParticipantsString }}
@@ -36,7 +36,7 @@
                 {{- end }}
                 </small>{{ end }}
             </div>
-                <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ if ne .Lastposter cd.UserID }}<strong>{{ .Lastposterusername.String }}</strong>{{ else }}{{ .Lastposterusername.String }}{{ end }}</div>
+                <div class="last-reply">{{ cd.LocalTime .Lastaddition.Time }}<br>{{ if ne .Lastposter cd.UserID }}<strong class="poster-name">{{ .Lastposterusername.String }}</strong>{{ else }}<span class="poster-name">{{ .Lastposterusername.String }}</span>{{ end }}</div>
                 <div class="threads-replies">{{ .Threads.Int32 }}<br>{{ .Comments.Int32 }}</div>
             </li>
         {{ else }}

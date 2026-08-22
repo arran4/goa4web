@@ -77,8 +77,14 @@ WHERE g.section = ?
   AND (g.item = ? OR g.item IS NULL)
   AND g.action = ?
   AND g.active = 1
-  AND (g.item_id = ? OR g.item_id IS NULL)
-  AND (g.user_id = ? OR g.user_id IS NULL)
+  AND (
+      g.item_id = ? OR
+      (g.item_id IS NULL AND sqlc.arg(is_specific_private_forum) = false)
+  )
+  AND (
+      g.user_id = ? OR
+      (g.user_id IS NULL AND sqlc.arg(is_specific_private_forum) = false)
+  )
   AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LIMIT 1;
 

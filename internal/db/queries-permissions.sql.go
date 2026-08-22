@@ -733,19 +733,26 @@ WHERE g.section = ?
   AND (g.item = ? OR g.item IS NULL)
   AND g.action = ?
   AND g.active = 1
-  AND (g.item_id = ? OR g.item_id IS NULL)
-  AND (g.user_id = ? OR g.user_id IS NULL)
+  AND (
+      g.item_id = ? OR
+      (g.item_id IS NULL AND ? = false)
+  )
+  AND (
+      g.user_id = ? OR
+      (g.user_id IS NULL AND ? = false)
+  )
   AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
 LIMIT 1
 `
 
 type SystemCheckGrantParams struct {
-	ViewerID int32
-	Section  string
-	Item     sql.NullString
-	Action   string
-	ItemID   sql.NullInt32
-	UserID   sql.NullInt32
+	ViewerID               int32
+	Section                string
+	Item                   sql.NullString
+	Action                 string
+	ItemID                 sql.NullInt32
+	IsSpecificPrivateForum bool
+	UserID                 sql.NullInt32
 }
 
 func (q *Queries) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
@@ -755,7 +762,9 @@ func (q *Queries) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantPara
 		arg.Item,
 		arg.Action,
 		arg.ItemID,
+		arg.IsSpecificPrivateForum,
 		arg.UserID,
+		arg.IsSpecificPrivateForum,
 	)
 	var column_1 int32
 	err := row.Scan(&column_1)

@@ -155,7 +155,7 @@ func TestHasGrantPrivateForumSemantics(t *testing.T) {
 			if got := cd.HasGrant(tt.section, "", "see", tt.itemID); got != tt.want {
 				t.Errorf("HasGrant() = %v, want %v", got, tt.want)
 			}
-			conn.Close()
+			_ = conn.Close()
 		})
 	}
 }

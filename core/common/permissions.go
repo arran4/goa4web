@@ -35,15 +35,6 @@ func (cd *CoreData) HasGrant(section, item, action string, itemID int32) bool {
 		}
 	}
 
-	// Admin mode overrides all generic grants, but specific private forum checks bypass admin
-	if cd.IsAdmin() {
-		if (section == "privateforum" || section == "privateforum_thread") && itemID != 0 {
-			// Do not bypass permissions for specific private forum items, even for admins.
-		} else {
-			return true
-		}
-	}
-
 	if cd.queries == nil {
 		return false
 	}

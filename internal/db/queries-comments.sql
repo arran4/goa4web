@@ -296,7 +296,7 @@ SET text = sqlc.arg(text), written = sqlc.arg(written)
 WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.users_idusers = sqlc.arg(commenter_id)
   AND c.forumthread_id = sqlc.arg(forumthread_id)
-  AND c.written >= DATE_SUB(NOW(), INTERVAL sqlc.arg(append_window_mins) MINUTE)
+  AND c.written >= DATE_SUB(NOW(), INTERVAL CAST(sqlc.arg(append_window_mins) AS SIGNED) MINUTE)
   AND NOT EXISTS (
       SELECT 1 FROM comments newer
       WHERE newer.forumthread_id = c.forumthread_id

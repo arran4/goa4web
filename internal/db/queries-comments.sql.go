@@ -147,7 +147,7 @@ SET text = ?, written = ?
 WHERE c.idcomments = ?
   AND c.users_idusers = ?
   AND c.forumthread_id = ?
-  AND c.written >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
+  AND c.written >= DATE_SUB(NOW(), INTERVAL CAST(? AS SIGNED) MINUTE)
   AND NOT EXISTS (
       SELECT 1 FROM comments newer
       WHERE newer.forumthread_id = c.forumthread_id
@@ -180,7 +180,7 @@ type AppendCommentInSectionForCommenterParams struct {
 	CommentID        int32
 	CommenterID      int32
 	ForumthreadID    int32
-	AppendWindowMins interface{}
+	AppendWindowMins int64
 	Section          string
 	ItemType         sql.NullString
 	ItemID           sql.NullInt32

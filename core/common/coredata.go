@@ -2263,7 +2263,7 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID, threadID, topicID, la
 		CommentID:        commentID,
 		CommenterID:      commenterID,
 		ForumthreadID:    threadID,
-		AppendWindowMins: appendWindowMins,
+		AppendWindowMins: int64(appendWindowMins),
 		Section:          section,
 		ItemType:         sql.NullString{String: itemType, Valid: true},
 		ItemID:           sql.NullInt32{Int32: itemID, Valid: true},

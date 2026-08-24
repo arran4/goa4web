@@ -4111,6 +4111,25 @@ func (s *sqliteQuerier) AdminWritingCategoryCounts(ctx context.Context) ([]*Admi
 	}(res), nil
 }
 
+func (s *sqliteQuerier) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	res, err := s.q.AppendCommentInSectionForCommenter(ctx, dbsqlite.AppendCommentInSectionForCommenterParams{
+		Text:             arg.Text,
+		Written:          arg.Written,
+		CommentID:        int64(arg.CommentID),
+		CommenterID:      int64(arg.CommenterID),
+		ForumthreadID:    int64(arg.ForumthreadID),
+		AppendWindowMins: arg.AppendWindowMins,
+		Section:          arg.Section,
+		ItemType:         arg.ItemType,
+		ItemID:           sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
+		GrantUserID:      sql.NullInt64{Int64: int64(arg.GrantUserID.Int32), Valid: arg.GrantUserID.Valid},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error) {
 	res, err := s.q.CheckUserHasGrant(ctx, dbsqlite.CheckUserHasGrantParams{
 		UserID:  sql.NullInt64{Int64: int64(arg.UserID.Int32), Valid: arg.UserID.Valid},

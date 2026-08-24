@@ -282,7 +282,7 @@ SET text = sqlc.arg(text), written = sqlc.arg(written)
 WHERE comments.idcomments = sqlc.arg(comment_id)
   AND comments.users_idusers = sqlc.arg(commenter_id)
   AND comments.forumthread_id = sqlc.arg(forumthread_id)
-  AND comments.written >= datetime('now', '-' || sqlc.arg(append_window_mins) || ' minutes')
+  AND comments.written >= datetime('now', '-' || CAST(sqlc.arg(append_window_mins) AS INTEGER) || ' minutes')
   AND NOT EXISTS (
       SELECT 1 FROM comments newer
       WHERE newer.forumthread_id = comments.forumthread_id

@@ -141,6 +141,73 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 	return items, nil
 }
 
+const appendCommentInSectionForCommenter = `-- name: AppendCommentInSectionForCommenter :execrows
+UPDATE comments c
+SET text = ?, written = ?
+WHERE c.idcomments = ?
+  AND c.users_idusers = ?
+  AND c.forumthread_id = ?
+  AND c.written >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
+  AND NOT EXISTS (
+      SELECT 1 FROM comments newer
+      WHERE newer.forumthread_id = c.forumthread_id
+        AND newer.idcomments > c.idcomments
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM content_read_markers crm
+      WHERE crm.item = 'thread'
+        AND crm.item_id = c.forumthread_id
+        AND crm.user_id != ?
+        AND crm.last_comment_id >= c.idcomments
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = ?
+        AND (g.item = ? OR g.item IS NULL)
+        AND g.action = 'append'
+        AND g.active = 1
+        AND (g.item_id = ? OR g.item_id IS NULL)
+        AND (g.user_id = ? OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
+        ))
+  )
+`
+
+type AppendCommentInSectionForCommenterParams struct {
+	Text             sql.NullString
+	Written          sql.NullTime
+	CommentID        int32
+	CommenterID      int32
+	ForumthreadID    int32
+	AppendWindowMins interface{}
+	Section          string
+	ItemType         sql.NullString
+	ItemID           sql.NullInt32
+	GrantUserID      sql.NullInt32
+}
+
+func (q *Queries) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, appendCommentInSectionForCommenter,
+		arg.Text,
+		arg.Written,
+		arg.CommentID,
+		arg.CommenterID,
+		arg.ForumthreadID,
+		arg.AppendWindowMins,
+		arg.CommenterID,
+		arg.Section,
+		arg.ItemType,
+		arg.ItemID,
+		arg.GrantUserID,
+		arg.CommenterID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
 INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
 SELECT ?, ?, ?, ?, ?, ?

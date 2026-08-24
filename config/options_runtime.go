@@ -126,6 +126,8 @@ var IntOptions = []IntOption{
 	{"og-image-height", EnvOGImageHeight, "The height of the generated Open Graph image.", 630, "", func(c *RuntimeConfig) *int { return &c.OGImageHeight }},
 	{"startup-media-check-sample", EnvStartupMediaCheckSample, "The number of items to check for existence during startup.", 5, "", func(c *RuntimeConfig) *int { return &c.StartupMediaCheckSample }},
 	{"startup-media-check-threshold-percent", EnvStartupMediaCheckThresholdPercent, "The percentage of missing items allowed before startup failure.", 50, "", func(c *RuntimeConfig) *int { return &c.StartupMediaCheckThresholdPercent }},
+	{"forum-post-append-window", EnvForumPostAppendWindow, "The time window in minutes within which consecutive replies in a public forum are appended. 0 disables the feature.", 60, "", func(c *RuntimeConfig) *int { return &c.ForumPostAppendWindow }},
+	{"private-forum-post-append-window", EnvPrivateForumPostAppendWindow, "The time window in minutes within which consecutive replies in a private forum are appended. 0 disables the feature.", 60, "", func(c *RuntimeConfig) *int { return &c.PrivateForumPostAppendWindow }},
 }
 
 // BoolOptions lists the boolean runtime options shared by flag parsing and configuration generation.

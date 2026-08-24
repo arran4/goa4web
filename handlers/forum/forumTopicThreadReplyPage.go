@@ -135,10 +135,28 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		base = "/forum"
 	}
 	var cid int64
-	if topicRow.Handler == "private" {
-		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
-	} else {
-		cid, err = cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+	var isAppend bool
+
+	// Check if this might be an append. We need the last comment ID.
+	commentsList, _ := cd.ThreadComments(threadRow.Idforumthread)
+	if len(commentsList) > 0 {
+	    lastComment := commentsList[len(commentsList)-1]
+	    // Attempt append first
+	    cid, err = cd.AttemptAppendForumComment(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), lastComment.Idcomments, text, topicRow.Handler == "private")
+	    if err != nil {
+	        log.Printf("Append attempt error: %v", err)
+	    }
+	    if cid != 0 {
+	        isAppend = true
+	    }
+	}
+
+	if cid == 0 {
+		if topicRow.Handler == "private" {
+			cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+		} else {
+			cid, err = cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
+		}
 	}
 	if err != nil || cid == 0 {
 		if err == nil {
@@ -186,7 +204,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CommentURL:           cd.AbsoluteURL(endUrl),
 		ClearUnreadForOthers: true,
 		MarkThreadRead:       true,
-		IncludePostCount:     true,
+		IncludePostCount:     !isAppend,
 		IncludeSearch:        true,
 		AdditionalData:       data,
 	}); err != nil {

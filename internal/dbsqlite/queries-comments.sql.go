@@ -141,6 +141,71 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 	return items, nil
 }
 
+const appendCommentInSectionForCommenter = `-- name: AppendCommentInSectionForCommenter :execrows
+UPDATE comments
+SET text = ?1, written = ?2
+WHERE comments.idcomments = ?3
+  AND comments.users_idusers = ?4
+  AND comments.forumthread_id = ?5
+  AND comments.written >= datetime('now', '-' || ?6 || ' minutes')
+  AND NOT EXISTS (
+      SELECT 1 FROM comments newer
+      WHERE newer.forumthread_id = comments.forumthread_id
+        AND newer.idcomments > comments.idcomments
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM content_read_markers crm
+      WHERE crm.item = 'thread'
+        AND crm.item_id = comments.forumthread_id
+        AND crm.user_id != sqlc.arg(commenter_id)
+        AND crm.last_comment_id >= comments.idcomments
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = ?7
+        AND (g.item = ?8 OR g.item IS NULL)
+        AND g.action = 'append'
+        AND g.active = 1
+        AND (g.item_id = ?9 OR g.item_id IS NULL)
+        AND (g.user_id = ?10 OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?4
+        ))
+  )
+`
+
+type AppendCommentInSectionForCommenterParams struct {
+	Text             sql.NullString
+	Written          sql.NullTime
+	CommentID        int64
+	CommenterID      int64
+	ForumthreadID    int64
+	AppendWindowMins sql.NullString
+	Section          string
+	ItemType         sql.NullString
+	ItemID           sql.NullInt64
+	GrantUserID      sql.NullInt64
+}
+
+func (q *Queries) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, appendCommentInSectionForCommenter,
+		arg.Text,
+		arg.Written,
+		arg.CommentID,
+		arg.CommenterID,
+		arg.ForumthreadID,
+		arg.AppendWindowMins,
+		arg.Section,
+		arg.ItemType,
+		arg.ItemID,
+		arg.GrantUserID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
 ;
 

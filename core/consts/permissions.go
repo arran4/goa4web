@@ -58,6 +58,7 @@ func (a PermissionAction) String() string { return string(a) }
 
 const (
 	// PermissionActionCreate permits creating a container resource.
+	PermissionActionAppend PermissionAction = "append"
 	PermissionActionCreate PermissionAction = "create"
 	// PermissionActionEdit permits editing a resource.
 	PermissionActionEdit PermissionAction = "edit"

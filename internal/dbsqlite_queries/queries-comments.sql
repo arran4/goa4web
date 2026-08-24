@@ -274,3 +274,36 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
+
+
+-- name: AppendCommentInSectionForCommenter :execrows
+UPDATE comments
+SET text = sqlc.arg(text), written = sqlc.arg(written)
+WHERE comments.idcomments = sqlc.arg(comment_id)
+  AND comments.users_idusers = sqlc.arg(commenter_id)
+  AND comments.forumthread_id = sqlc.arg(forumthread_id)
+  AND comments.written >= datetime('now', '-' || sqlc.arg(append_window_mins) || ' minutes')
+  AND NOT EXISTS (
+      SELECT 1 FROM comments newer
+      WHERE newer.forumthread_id = comments.forumthread_id
+        AND newer.idcomments > comments.idcomments
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM content_read_markers crm
+      WHERE crm.item = 'thread'
+        AND crm.item_id = comments.forumthread_id
+        AND crm.user_id != sqlc.arg(commenter_id)
+        AND crm.last_comment_id >= comments.idcomments
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = sqlc.arg(section)
+        AND (g.item = sqlc.arg(item_type) OR g.item IS NULL)
+        AND g.action = 'append'
+        AND g.active = 1
+        AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.narg(grant_user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
+        ))
+  );

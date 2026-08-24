@@ -44,6 +44,7 @@ func TestHappyPathRequireImagebbsGrantWithBoard(t *testing.T) {
 		Item:     sql.NullString{String: "board", Valid: true},
 		Action:   imagebbsApproveAction,
 		ItemID:   sql.NullInt32{Int32: 7, Valid: true},
+		IsSpecificPrivateForum: false,
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: true},
 	}
 	if got := queries.SystemCheckGrantCalls[0]; got != want {
@@ -89,6 +90,7 @@ func TestHappyPathRequireImagebbsGrantWithPost(t *testing.T) {
 		Item:     sql.NullString{String: "board", Valid: true},
 		Action:   imagebbsApproveAction,
 		ItemID:   sql.NullInt32{Int32: 3, Valid: true},
+		IsSpecificPrivateForum: false,
 		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: true},
 	}
 	if got := queries.SystemCheckGrantCalls[0]; got != want {

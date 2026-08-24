@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 )
 
-// RequireCommentAuthor ensures the requester authored the comment referenced in the URL.
+// RequireCommentAuthor ensures the requester is authorized to edit the comment referenced in the URL.
 func RequireCommentAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -30,15 +30,29 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 		}
 		uid, _ := session.Values["UID"].(int32)
 
-		authorized := row.UsersIdusers == uid
-		if !authorized && cd != nil {
+		authorized := false
+		if cd != nil {
 			if cd.IsAdmin() {
 				authorized = true
 			} else {
-				authorized = cd.HasGrant("forum", "thread", "edit-any", row.ForumthreadID) ||
-					cd.HasGrant("forum", "thread", "edit", row.ForumthreadID)
+				section := cd.Section()
+				if section == "" {
+					section = "forum" // fallback
+				}
+
+				// If they own the comment, they need 'edit'. Otherwise they need 'edit-any'.
+				if row.UsersIdusers == uid {
+					authorized = cd.HasGrant(section, "thread", "edit", row.ForumthreadID) ||
+					    cd.HasGrant(section, "comment", "edit", row.Idcomments) ||
+						cd.HasGrant(section, "topic", "edit", cd.SelectedThreadID())
+				} else {
+					authorized = cd.HasGrant(section, "thread", "edit-any", row.ForumthreadID) ||
+					    cd.HasGrant(section, "comment", "edit-any", row.Idcomments) ||
+						cd.HasGrant(section, "topic", "edit-any", cd.SelectedThreadID())
+				}
 			}
 		}
+
 		if !authorized {
 			http.NotFound(w, r)
 			return

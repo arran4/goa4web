@@ -2227,6 +2227,108 @@ func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID,
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionNews, consts.PermissionItemPost, postID, threadID, commenterID, languageID, text)
 }
 
+func (cd *CoreData) AttemptAppendForumComment(commenterID, threadID, topicID, languageID, commentID int32, text string, isPrivate bool) (int64, error) {
+	if cd.queries == nil || cd.Config == nil {
+		return 0, nil
+	}
+	appendWindowMins := cd.Config.ForumPostAppendWindow
+	section := consts.PermissionSectionForum.String()
+	itemType := consts.PermissionItemTopic.String()
+	itemID := topicID
+	if isPrivate {
+	    appendWindowMins = cd.Config.PrivateForumPostAppendWindow
+	    section = consts.PermissionSectionPrivateForumThread.String()
+	    itemType = consts.PermissionItemThread.String()
+	    itemID = threadID
+	}
+	if appendWindowMins <= 0 {
+	    return 0, nil
+	}
+	text = cd.sanitizeCodeImages(text)
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return 0, fmt.Errorf("parse images: %w", err)
+	}
+	comment, err := cd.CommentByID(commentID)
+	if err != nil || comment == nil {
+	    return 0, fmt.Errorf("load comment: %w", err)
+	}
+	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
+		return 0, fmt.Errorf("validate images: %w", err)
+	}
+	newText := fmt.Sprintf("%s\n\n[hr]\n\n%s", comment.Text.String, text)
+	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(cd.ctx, db.AppendCommentInSectionForCommenterParams{
+		Text:             sql.NullString{String: newText, Valid: true},
+		Written:          sql.NullTime{Time: time.Now(), Valid: true},
+		CommentID:        commentID,
+		CommenterID:      commenterID,
+		ForumthreadID:    threadID,
+		AppendWindowMins: appendWindowMins,
+		Section:          section,
+		ItemType:         sql.NullString{String: itemType, Valid: true},
+		ItemID:           sql.NullInt32{Int32: itemID, Valid: true},
+		GrantUserID:      sql.NullInt32{Int32: commenterID, Valid: true},
+	})
+	if err != nil {
+		return 0, err
+	}
+	if rowsAffected > 0 {
+	    return int64(commentID), nil
+	}
+	return 0, nil
+}
+
+func (cd *CoreData) CanAppendToComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+	if cmt == nil || cd.Config == nil || !cmt.IsOwner || cd.UserID == 0 {
+		return false
+	}
+
+	topicID := int32(0)
+	if cd.currentTopicID != 0 {
+		topicID = cd.currentTopicID
+	}
+
+	isPrivate := false
+	if topicRow, _ := cd.CurrentTopic(); topicRow != nil && topicRow.Handler == "private" {
+		isPrivate = true
+	}
+
+	appendWindowMins := cd.Config.ForumPostAppendWindow
+	section := consts.PermissionSectionForum.String()
+	itemType := consts.PermissionItemTopic.String()
+	itemID := topicID
+
+	if isPrivate {
+		appendWindowMins = cd.Config.PrivateForumPostAppendWindow
+		section = consts.PermissionSectionPrivateForumThread.String()
+		itemType = consts.PermissionItemThread.String()
+		itemID = cmt.ForumthreadID
+	}
+
+	if appendWindowMins <= 0 {
+		return false
+	}
+
+	if !cd.HasGrant(section, itemType, "append", itemID) {
+		return false
+	}
+
+	importTime := time.Now().Add(-time.Duration(appendWindowMins) * time.Minute)
+	if cmt.Written.Time.Before(importTime) {
+		return false
+	}
+
+	commentsList, err := cd.ThreadComments(cmt.ForumthreadID)
+	if err != nil || len(commentsList) == 0 {
+		return false
+	}
+	if commentsList[len(commentsList)-1].Idcomments != cmt.Idcomments {
+		return false
+	}
+
+	return true
+}
+
 func (cd *CoreData) CreateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionForum, consts.PermissionItemTopic, topicID, threadID, commenterID, languageID, text)
 }
@@ -2262,10 +2364,30 @@ func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkI
 }
 
 // CanEditComment reports whether the current user may edit the supplied
-// comment. Only the original author can edit comments via the public
-// interface; administrative edits must occur through the admin portal.
+// comment.
 func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-	return cmt != nil && cmt.IsOwner && cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments)
+	if cmt == nil {
+		return false
+	}
+
+	if cd.IsAdmin() {
+	    return true
+	}
+
+	topicID := int32(0)
+	if cd.currentTopicID != 0 {
+		topicID = cd.currentTopicID
+	}
+
+	if cmt.IsOwner {
+	    return cd.HasGrant(cd.currentSection, "thread", "edit", cmt.ForumthreadID) ||
+	           cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments) ||
+	           (topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit", topicID))
+	} else {
+	    return cd.HasGrant(cd.currentSection, "thread", "edit-any", cmt.ForumthreadID) ||
+	           cd.HasGrant(cd.currentSection, "comment", "edit-any", cmt.Idcomments) ||
+	           (topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit-any", topicID))
+	}
 }
 
 // CommentEditing returns true if the given comment is currently being edited.

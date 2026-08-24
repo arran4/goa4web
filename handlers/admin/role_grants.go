@@ -52,6 +52,7 @@ var GrantActionMap = map[string]GrantDefinition{
 		Actions: []string{
 			consts.PermissionActionView.String(),
 			consts.PermissionActionReply.String(),
+			consts.PermissionActionAppend.String(),
 		},
 		RequireItemID: true,
 	},

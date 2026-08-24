@@ -32,6 +32,13 @@ func TestRequireCommentAuthor(t *testing.T) {
 			IsOwner:       true,
 		}
 
+		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		    if arg.Section == "forum" && arg.Action == "edit" {
+		        return 1, nil
+		    }
+		    return 0, sql.ErrNoRows
+		}
+
 		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
 		req = mux.SetURLVars(req, map[string]string{"comment": "3"})
 
@@ -68,8 +75,8 @@ func TestRequireCommentAuthor(t *testing.T) {
 		if got := q.GetCommentByIdForUserCalls[0]; got != want {
 			t.Fatalf("unexpected comment lookup params: %#v", got)
 		}
-		if len(q.SystemCheckGrantCalls) != 0 {
-			t.Fatalf("unexpected grant checks: %v", q.SystemCheckGrantCalls)
+		if len(q.SystemCheckGrantCalls) == 0 {
+			t.Fatalf("expected grant checks, got 0")
 		}
 	})
 

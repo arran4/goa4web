@@ -80,6 +80,7 @@ func requireGrantAllowed(t *testing.T) {
 		Item:     sql.NullString{String: "post", Valid: true},
 		Action:   "edit",
 		ItemID:   sql.NullInt32{Int32: 1, Valid: true},
+			IsSpecificPrivateForum: false,
 		UserID:   sql.NullInt32{Int32: 1, Valid: true},
 	}
 	if got := q.SystemCheckGrantCalls[0]; got != want {
@@ -111,6 +112,7 @@ func requireGrantDenied(t *testing.T) {
 		Item:     sql.NullString{String: "post", Valid: true},
 		Action:   "edit",
 		ItemID:   sql.NullInt32{Int32: 2, Valid: true},
+			IsSpecificPrivateForum: false,
 		UserID:   sql.NullInt32{Int32: 2, Valid: true},
 	}
 	if got := q.SystemCheckGrantCalls[0]; got != want {

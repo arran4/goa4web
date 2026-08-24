@@ -25,6 +25,8 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
+	AppendCommentInSectionForCommenterFn func(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error)
+
 	CreateAPIKeyStub            func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	GetAPIKeyByHashStub         func(ctx context.Context, apiKey string) (*ApiKey, error)
 	ListAPIKeysByUserStub       func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
@@ -3386,4 +3388,13 @@ func (s *QuerierStub) SystemCopyPrivateThreadGrantsToThread(ctx context.Context,
 		return fn(ctx, arg)
 	}
 	return err
+}
+
+func (s *QuerierStub) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.AppendCommentInSectionForCommenterFn == nil {
+		panic("QuerierStub.AppendCommentInSectionForCommenterFn not implemented")
+	}
+	return s.AppendCommentInSectionForCommenterFn(ctx, arg)
 }

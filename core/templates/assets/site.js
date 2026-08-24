@@ -137,15 +137,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentComment = null;
         let hideAll = false;
 
-        if (!selection.isCollapsed && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            let commonAncestor = range.commonAncestorContainer;
-            if (commonAncestor.nodeType === 3) {
-                commonAncestor = commonAncestor.parentNode;
-            }
-
-            currentComment = commonAncestor.closest('.comment');
-            if (!currentComment || !currentComment.contains(range.startContainer) || !currentComment.contains(range.endContainer)) {
+        if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+            const valid = getValidSelectedComment(selection);
+            if (valid) {
+                currentComment = valid.comment;
+            } else {
                 currentComment = null;
                 hideAll = true;
             }
@@ -564,6 +560,34 @@ function previewA4Code(targetId, previewUrl, containerId) {
     });
 }
 
+function getCommentContentElement(node) {
+    if (!node) return null;
+    const el = node.nodeType === Node.ELEMENT_NODE ? node : (node.parentElement || node.parentNode);
+    if (!el || !el.closest) return null;
+    const contentEl = el.closest('.comment section.body > div[id^="comment-"], .comment .body > div[id^="comment-"], .comment div[id^="comment-"]');
+    if (contentEl && /^comment-\d+$/.test(contentEl.id)) {
+        return contentEl;
+    }
+    return null;
+}
+
+function getValidSelectedComment(selection) {
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+        return null;
+    }
+    const range = selection.getRangeAt(0);
+    const startContent = getCommentContentElement(range.startContainer);
+    const endContent = getCommentContentElement(range.endContainer);
+    if (startContent && endContent && startContent === endContent && startContent.contains(range.commonAncestorContainer)) {
+        return {
+            comment: startContent.closest('.comment'),
+            contentElement: startContent,
+            range: range
+        };
+    }
+    return null;
+}
+
 function quoteInNewThread(commentId, topicId, event) {
     const selection = window.getSelection();
     let url = '';
@@ -574,19 +598,17 @@ function quoteInNewThread(commentId, topicId, event) {
         basePath = '/private';
     }
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const commentContainer = document.getElementById('comment-' + commentId);
+    const valid = getValidSelectedComment(selection);
+    const expectedContent = document.getElementById('comment-' + commentId);
+    if (valid && expectedContent && valid.contentElement === expectedContent) {
+        const range = valid.range;
+        // Calculate absolute offsets based on data attributes
+        const start = calculateSourceOffset(range.startContainer, range.startOffset);
+        const end = calculateSourceOffset(range.endContainer, range.endOffset);
 
-        if (commentContainer && commentContainer.contains(range.commonAncestorContainer)) {
-            // Calculate absolute offsets based on data attributes
-            const start = calculateSourceOffset(range.startContainer, range.startOffset);
-            const end = calculateSourceOffset(range.endContainer, range.endOffset);
-
-            if (start !== -1 && end !== -1) {
-                // Construct URL for selected text
-                url = basePath + '/topic/' + topicId + '/thread?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
-            }
+        if (start !== -1 && end !== -1) {
+            // Construct URL for selected text
+            url = basePath + '/topic/' + topicId + '/thread?quote_comment_id=' + commentId + '&quote_type=selected&quote_start=' + start + '&quote_end=' + end;
         }
     }
 
@@ -608,39 +630,37 @@ function quoteInNewThread(commentId, topicId, event) {
 function quote(type, commentId) {
     if (type === 'selected') {
         const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const commentContainer = document.getElementById('comment-' + commentId);
+        const valid = getValidSelectedComment(selection);
+        const expectedContent = document.getElementById('comment-' + commentId);
+        if (valid && expectedContent && valid.contentElement === expectedContent) {
+            const range = valid.range;
+            // Calculate absolute offsets based on data attributes
+            const start = calculateSourceOffset(range.startContainer, range.startOffset);
+            const end = calculateSourceOffset(range.endContainer, range.endOffset);
 
-            if (commentContainer && commentContainer.contains(range.commonAncestorContainer)) {
-                // Calculate absolute offsets based on data attributes
-                const start = calculateSourceOffset(range.startContainer, range.startOffset);
-                const end = calculateSourceOffset(range.endContainer, range.endOffset);
+            if (start !== -1 && end !== -1) {
+                // Construct URL
+                let url = '/api/forum/quote/' + commentId + '?type=selected&start=' + start + '&end=' + end;
 
-                if (start !== -1 && end !== -1) {
-                    // Construct URL
-                    let url = '/api/forum/quote/' + commentId + '?type=selected&start=' + start + '&end=' + end;
-
-                    fetch(url)
-                        .then(response => response.json())
-                        .then(data => {
-                            let reply = document.getElementById('reply');
-                            reply.value += data.text;
-                            reply.focus();
-                            reply.scrollIntoView();
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('An error occurred while quoting the comment.');
-                        });
-                } else {
-                    console.error("Could not calculate source offset");
-                    alert("Please select text within the comment you are quoting.");
-                }
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        let reply = document.getElementById('reply');
+                        reply.value += data.text;
+                        reply.focus();
+                        reply.scrollIntoView();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while quoting the comment.');
+                    });
             } else {
-                 console.error("Selection is not inside the expected comment container");
-                 alert("Please select text within the comment you are quoting.");
+                console.error("Could not calculate source offset");
+                alert("Please select text within the comment you are quoting.");
             }
+        } else {
+            console.error("Selection is not inside the expected comment container");
+            alert("Please select text within the comment you are quoting.");
         }
     } else {
         fetch('/api/forum/quote/' + commentId + '?type=' + type)

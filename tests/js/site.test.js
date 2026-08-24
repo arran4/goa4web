@@ -13,7 +13,7 @@ global.TextEncoder = TextEncoder;
 class MockNode {
     constructor(type, content = "", tagName = "") {
         this.nodeType = type;
-        this.textContent = content;
+        this._textContent = content;
         this.tagName = tagName;
         this.childNodes = [];
         this.parentElement = null;
@@ -24,6 +24,20 @@ class MockNode {
             add: (...c) => c.forEach(x => this.classList._classes.add(x)),
             remove: (...c) => c.forEach(x => this.classList._classes.delete(x)),
         };
+    }
+
+    get textContent() {
+        if (this.nodeType === Node.TEXT_NODE) {
+            return this._textContent;
+        }
+        let text = "";
+        for (const child of this.childNodes) {
+            text += child.textContent;
+        }
+        return text;
+    }
+    set textContent(val) {
+        this._textContent = val;
     }
 
     get id() { return this.attributes['id'] || ''; }
@@ -93,6 +107,27 @@ class MockNode {
             cur = cur.parentElement;
         }
         return false;
+    }
+
+    querySelectorAll(selector) {
+        const results = [];
+        const walk = (node) => {
+            for (const child of node.childNodes) {
+                if (child.nodeType === Node.ELEMENT_NODE) {
+                    if (child._matches(selector)) {
+                        results.push(child);
+                    }
+                    walk(child);
+                }
+            }
+        };
+        walk(this);
+        return results;
+    }
+
+    querySelector(selector) {
+        const all = this.querySelectorAll(selector);
+        return all.length > 0 ? all[0] : null;
     }
 }
 
@@ -492,4 +527,135 @@ testFilterMatch("poster:alice OR poster:charlie", true, "Match compound OR");
 testFilterMatch("poster:alice OR topic:missing", false, "Reject failed OR");
 
 console.log("All Forum Filter JS Tests Passed!");
+
+console.log("Running Forum Filter DOM Fixture Integration Tests...");
+
+function filterItemWithQuery(item, query) {
+    const labels = item.querySelectorAll('.label').map(el => el.textContent.toLowerCase());
+    const participants = item.querySelectorAll('.participant').map(el => el.textContent.toLowerCase());
+    const posters = item.querySelectorAll('.poster-name').map(el => el.textContent.toLowerCase());
+    const topics = item.querySelectorAll('.topic-name-filter').map(el => el.textContent.toLowerCase());
+    const ast = parse(tokenize(query));
+    return evaluateAST(ast, labels, participants, posters, topics);
+}
+
+// 1. Fixture: Topic item in tableTopics.gohtml
+const topicItem = new MockNode(Node.ELEMENT_NODE, "", "LI");
+topicItem.classList.add("topic-item");
+const topicNameDiv = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+topicNameDiv.classList.add("topic-name");
+
+const topicLink = new MockNode(Node.ELEMENT_NODE, "", "A");
+topicLink.classList.add("topic-name-filter");
+topicLink.appendChild(new MockNode(Node.TEXT_NODE, "Community Guidelines"));
+topicNameDiv.appendChild(topicLink);
+
+const topicLabel = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+topicLabel.classList.add("label");
+topicLabel.appendChild(new MockNode(Node.TEXT_NODE, "rules"));
+topicNameDiv.appendChild(topicLabel);
+
+const part1 = new MockNode(Node.ELEMENT_NODE, "", "A");
+part1.classList.add("participant");
+part1.appendChild(new MockNode(Node.TEXT_NODE, "mod_alice"));
+topicNameDiv.appendChild(part1);
+
+const part2 = new MockNode(Node.ELEMENT_NODE, "", "A");
+part2.classList.add("participant");
+part2.appendChild(new MockNode(Node.TEXT_NODE, "admin_bob"));
+topicNameDiv.appendChild(part2);
+
+topicItem.appendChild(topicNameDiv);
+
+const lastReplyDiv = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+lastReplyDiv.classList.add("last-reply");
+const posterStrong = new MockNode(Node.ELEMENT_NODE, "", "STRONG");
+posterStrong.classList.add("poster-name");
+posterStrong.appendChild(new MockNode(Node.TEXT_NODE, "poster_charlie"));
+lastReplyDiv.appendChild(posterStrong);
+topicItem.appendChild(lastReplyDiv);
+
+assert(filterItemWithQuery(topicItem, "topic:\"community guidelines\"") === true, "DOM fixture topic prefix match");
+assert(filterItemWithQuery(topicItem, "label:rules") === true, "DOM fixture label prefix match");
+assert(filterItemWithQuery(topicItem, "participant:mod_alice") === true, "DOM fixture participant prefix match");
+assert(filterItemWithQuery(topicItem, "poster:poster_charlie") === true, "DOM fixture poster prefix match");
+assert(filterItemWithQuery(topicItem, "guidelines") === true, "DOM fixture unprefixed topic match");
+assert(filterItemWithQuery(topicItem, "rules") === true, "DOM fixture unprefixed label match");
+assert(filterItemWithQuery(topicItem, "admin_bob") === true, "DOM fixture unprefixed participant match");
+assert(filterItemWithQuery(topicItem, "poster_charlie") === true, "DOM fixture unprefixed poster match");
+assert(filterItemWithQuery(topicItem, "topic:missing") === false, "DOM fixture non-matching topic");
+assert(filterItemWithQuery(topicItem, "poster:mod_alice") === false, "DOM fixture participant searched as poster should fail");
+assert(filterItemWithQuery(topicItem, "participant:poster_charlie") === false, "DOM fixture poster searched as participant should fail");
+
+// 2. Fixture: Unread thread item in unread.gohtml
+const unreadThread = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+unreadThread.classList.add("thread");
+const unreadHeader = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+unreadHeader.classList.add("thread-meta");
+
+const unreadFirstPoster = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+unreadFirstPoster.classList.add("poster-name");
+unreadFirstPoster.classList.add("first");
+unreadFirstPoster.appendChild(new MockNode(Node.TEXT_NODE, "alice_starter"));
+unreadHeader.appendChild(unreadFirstPoster);
+
+const unreadTopicStrong = new MockNode(Node.ELEMENT_NODE, "", "STRONG");
+unreadTopicStrong.classList.add("topic-name-filter");
+unreadTopicStrong.appendChild(new MockNode(Node.TEXT_NODE, "Secret Meeting"));
+unreadHeader.appendChild(unreadTopicStrong);
+
+const unreadParticipant = new MockNode(Node.ELEMENT_NODE, "", "A");
+unreadParticipant.classList.add("participant");
+unreadParticipant.appendChild(new MockNode(Node.TEXT_NODE, "bob_invited"));
+unreadHeader.appendChild(unreadParticipant);
+unreadThread.appendChild(unreadHeader);
+
+const unreadFooter = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+unreadFooter.classList.add("thread-meta");
+const unreadLastPoster = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+unreadLastPoster.classList.add("poster-name");
+unreadLastPoster.classList.add("last");
+unreadLastPoster.appendChild(new MockNode(Node.TEXT_NODE, "charlie_latest"));
+unreadFooter.appendChild(unreadLastPoster);
+unreadThread.appendChild(unreadFooter);
+
+assert(filterItemWithQuery(unreadThread, "poster:alice_starter") === true, "Unread thread first poster match");
+assert(filterItemWithQuery(unreadThread, "poster:charlie_latest") === true, "Unread thread last poster match");
+assert(filterItemWithQuery(unreadThread, "topic:\"secret meeting\"") === true, "Unread thread topic match");
+assert(filterItemWithQuery(unreadThread, "participant:bob_invited") === true, "Unread thread participant match");
+assert(filterItemWithQuery(unreadThread, "secret poster:alice_starter") === true, "Unread thread compound search");
+assert(filterItemWithQuery(unreadThread, "label:missing") === false, "Unread thread non-existent label search");
+
+// 3. Fixture: Topic threads item in topicThreads.gohtml
+const topicThread = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+topicThread.classList.add("thread");
+const thMeta1 = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+thMeta1.classList.add("thread-meta");
+const thFirst = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+thFirst.classList.add("poster-name");
+thFirst.classList.add("first");
+thFirst.appendChild(new MockNode(Node.TEXT_NODE, "thread_author"));
+thMeta1.appendChild(thFirst);
+topicThread.appendChild(thMeta1);
+
+const thMeta2 = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+thMeta2.classList.add("thread-meta");
+const thLast = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+thLast.classList.add("poster-name");
+thLast.classList.add("last");
+thLast.appendChild(new MockNode(Node.TEXT_NODE, "thread_replier"));
+thMeta2.appendChild(thLast);
+const thLabel = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+thLabel.classList.add("label");
+thLabel.appendChild(new MockNode(Node.TEXT_NODE, "feedback"));
+thMeta2.appendChild(thLabel);
+topicThread.appendChild(thMeta2);
+
+assert(filterItemWithQuery(topicThread, "poster:thread_author") === true, "Topic thread first poster match");
+assert(filterItemWithQuery(topicThread, "poster:thread_replier") === true, "Topic thread last poster match");
+assert(filterItemWithQuery(topicThread, "label:feedback") === true, "Topic thread label match");
+assert(filterItemWithQuery(topicThread, "feedback poster:thread_author") === true, "Topic thread compound match");
+assert(filterItemWithQuery(topicThread, "poster:unknown") === false, "Topic thread unknown poster");
+
+console.log("All Forum Filter DOM Fixture Integration Tests Passed!");
 

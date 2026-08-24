@@ -21,18 +21,21 @@ func TestTableTopicsFilterMarkers(t *testing.T) {
 	topic := &common.PrivateTopic{
 		ListPrivateTopicsByUserIDRow: &db.ListPrivateTopicsByUserIDRow{
 			Idforumtopic:       1,
-			Title:              sql.NullString{String: "Private chat with alice", Valid: true},
-			Description:        sql.NullString{String: "A description", Valid: true},
+			Title:              sql.NullString{String: "Secret Discussion", Valid: true},
+			Description:        sql.NullString{String: "A secret topic description", Valid: true},
 			Lastaddition:       sql.NullTime{Time: time.Now(), Valid: true},
-			Lastposterusername: sql.NullString{String: "testposter", Valid: true},
+			Lastposterusername: sql.NullString{String: "charlie_poster", Valid: true},
 			Lastposter:         2,
 			Threads:            sql.NullInt32{Int32: 5, Valid: true},
 			Comments:           sql.NullInt32{Int32: 10, Valid: true},
 		},
-		DisplayTitle:       "alice",
-		ParticipantsString: "alice, bob",
-		Participants:       []string{"alice", "bob"},
+		DisplayTitle:       "Secret Discussion",
+		ParticipantsString: "alice_user, bob_user",
+		Participants:       []string{"alice_user", "bob_user"},
 		TotalParticipants:  2,
+		Labels: []templates.TopicLabel{
+			{Name: "important_label", Type: "public"},
+		},
 	}
 
 	data := map[string]any{
@@ -49,16 +52,20 @@ func TestTableTopicsFilterMarkers(t *testing.T) {
 
 	out := buf.String()
 
-	if !strings.Contains(out, "topic-name-filter") {
-		t.Errorf("tableTopics rendered output missing 'topic-name-filter' class: %s", out)
+	// Assert semantic markers wrap actual values
+	if !strings.Contains(out, `class="topic-name-filter"`) || !strings.Contains(out, "Secret Discussion") {
+		t.Errorf("tableTopics missing topic-name-filter wrapping topic title: %s", out)
 	}
-	if !strings.Contains(out, "poster-name") {
-		t.Errorf("tableTopics rendered output missing 'poster-name' class: %s", out)
+	if !strings.Contains(out, `class="poster-name">charlie_poster`) {
+		t.Errorf("tableTopics missing poster-name wrapping poster username: %s", out)
 	}
-	if !strings.Contains(out, "participant") {
-		t.Errorf("tableTopics rendered output missing 'participant' class: %s", out)
+	if !strings.Contains(out, `<a class="participant">alice_user</a>`) || !strings.Contains(out, `<a class="participant">bob_user</a>`) {
+		t.Errorf("tableTopics missing participant markers wrapping participants: %s", out)
 	}
-	if !strings.Contains(out, "placeholder=\"Filter by label, poster, participant, or topic...\"") {
+	if !strings.Contains(out, "important_label") || !strings.Contains(out, "class=\"label") {
+		t.Errorf("tableTopics missing label markers: %s", out)
+	}
+	if !strings.Contains(out, `placeholder="Filter by label, poster, participant, or topic..."`) {
 		t.Errorf("tableTopics rendered output missing expected filter placeholder: %s", out)
 	}
 }
@@ -78,13 +85,16 @@ func TestTopicThreadsFilterMarkers(t *testing.T) {
 			Idforumthread:          1,
 			ForumtopicIdforumtopic: 1,
 			Firstpostwritten:       sql.NullTime{Time: time.Now(), Valid: true},
-			Firstpostusername:      sql.NullString{String: "firstposter", Valid: true},
+			Firstpostusername:      sql.NullString{String: "first_author", Valid: true},
 			Firstpostuserid:        sql.NullInt32{Int32: 1, Valid: true},
 			Firstposttext:          sql.NullString{String: "thread content", Valid: true},
 			Lastaddition:           sql.NullTime{Time: time.Now(), Valid: true},
-			Lastposterusername:     sql.NullString{String: "lastposter", Valid: true},
+			Lastposterusername:     sql.NullString{String: "last_replier", Valid: true},
 			Lastposterid:           sql.NullInt32{Int32: 2, Valid: true},
 			Comments:               sql.NullInt32{Int32: 3, Valid: true},
+		},
+		Labels: []templates.TopicLabel{
+			{Name: "question_label", Type: "public"},
 		},
 	}
 
@@ -100,10 +110,17 @@ func TestTopicThreadsFilterMarkers(t *testing.T) {
 
 	out := buf.String()
 
-	if !strings.Contains(out, "poster-name") {
-		t.Errorf("topicThreads rendered output missing 'poster-name' class: %s", out)
+	// Assert semantic markers wrap actual values
+	if !strings.Contains(out, `class="poster-name first"`) || !strings.Contains(out, `first_author`) {
+		t.Errorf("topicThreads missing poster-name wrapping first poster: %s", out)
 	}
-	if !strings.Contains(out, "placeholder=\"Filter by label, poster, participant, or topic...\"") {
+	if !strings.Contains(out, `class="poster-name last"`) || !strings.Contains(out, `last_replier`) {
+		t.Errorf("topicThreads missing poster-name wrapping last poster: %s", out)
+	}
+	if !strings.Contains(out, "question_label") || !strings.Contains(out, "class=\"label") {
+		t.Errorf("topicThreads missing label markers: %s", out)
+	}
+	if !strings.Contains(out, `placeholder="Filter by label or poster..."`) {
 		t.Errorf("topicThreads rendered output missing expected filter placeholder: %s", out)
 	}
 }
@@ -116,22 +133,24 @@ func TestUnreadFilterMarkers(t *testing.T) {
 	type decorThread struct {
 		*db.ListUnreadPrivateThreadsForUserRow
 		DisplayTitle string
+		Participants []string
 	}
 
 	thread := &decorThread{
 		ListUnreadPrivateThreadsForUserRow: &db.ListUnreadPrivateThreadsForUserRow{
 			Idforumthread:      1,
-			TopicID:            1,
+			TopicID:            10,
 			Firstpostwritten:   sql.NullTime{Time: time.Now(), Valid: true},
-			Firstpostusername:  sql.NullString{String: "firstposter", Valid: true},
+			Firstpostusername:  sql.NullString{String: "unread_starter", Valid: true},
 			Firstpostuserid:    sql.NullInt32{Int32: 1, Valid: true},
 			Firstposttext:      sql.NullString{String: "unread content", Valid: true},
 			Lastaddition:       sql.NullTime{Time: time.Now(), Valid: true},
-			Lastposterusername: sql.NullString{String: "lastposter", Valid: true},
+			Lastposterusername: sql.NullString{String: "unread_last_replier", Valid: true},
 			Lastposterid:       sql.NullInt32{Int32: 2, Valid: true},
 			Comments:           sql.NullInt32{Int32: 5, Valid: true},
 		},
-		DisplayTitle: "Private Topic 1",
+		DisplayTitle: "Private Conversation A",
+		Participants: []string{"participant_one", "participant_two"},
 	}
 
 	data := struct {
@@ -155,13 +174,20 @@ func TestUnreadFilterMarkers(t *testing.T) {
 
 	out := buf.String()
 
-	if !strings.Contains(out, "topic-name-filter") {
-		t.Errorf("unread.gohtml rendered output missing 'topic-name-filter' class: %s", out)
+	// Assert semantic markers wrap actual values
+	if !strings.Contains(out, `<strong class="topic-name-filter">Private Conversation A</strong>`) {
+		t.Errorf("unread.gohtml missing topic-name-filter wrapping topic title: %s", out)
 	}
-	if !strings.Contains(out, "poster-name") {
-		t.Errorf("unread.gohtml rendered output missing 'poster-name' class: %s", out)
+	if !strings.Contains(out, `class="poster-name first"`) || !strings.Contains(out, `unread_starter`) {
+		t.Errorf("unread.gohtml missing poster-name wrapping first poster: %s", out)
 	}
-	if !strings.Contains(out, "placeholder=\"Filter by label, poster, participant, or topic...\"") {
+	if !strings.Contains(out, `class="poster-name last"`) || !strings.Contains(out, `unread_last_replier`) {
+		t.Errorf("unread.gohtml missing poster-name wrapping last poster: %s", out)
+	}
+	if !strings.Contains(out, `<a class="participant">participant_one</a>`) || !strings.Contains(out, `<a class="participant">participant_two</a>`) {
+		t.Errorf("unread.gohtml missing participant markers wrapping participants: %s", out)
+	}
+	if !strings.Contains(out, `placeholder="Filter by poster, participant, or topic..."`) {
 		t.Errorf("unread.gohtml rendered output missing expected filter placeholder: %s", out)
 	}
 }

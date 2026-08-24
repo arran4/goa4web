@@ -13,21 +13,44 @@ global.TextEncoder = TextEncoder;
 class MockNode {
     constructor(type, content = "", tagName = "") {
         this.nodeType = type;
-        this.textContent = content;
+        this._textContent = content;
         this.tagName = tagName;
         this.childNodes = [];
         this.parentElement = null;
         this.attributes = {};
+        this.classList = {
+            _classes: new Set(),
+            contains: (c) => this.classList._classes.has(c),
+            add: (...c) => c.forEach(x => this.classList._classes.add(x)),
+            remove: (...c) => c.forEach(x => this.classList._classes.delete(x)),
+        };
+    }
+
+    get textContent() {
+        if (this.nodeType === Node.TEXT_NODE) {
+            return this._textContent;
+        }
+        let text = "";
+        for (const child of this.childNodes) {
+            text += child.textContent;
+        }
+        return text;
+    }
+    set textContent(val) {
+        this._textContent = val;
+    }
+
+    get id() { return this.attributes['id'] || ''; }
+    set id(val) { this.attributes['id'] = val; }
+
+    get className() { return Array.from(this.classList._classes).join(' '); }
+    set className(val) {
+        this.classList._classes = new Set(val.split(/\s+/).filter(Boolean));
     }
 
     appendChild(child) {
         child.parentElement = this;
         this.childNodes.push(child);
-        // Minimal textContent update logic for Element (not fully robust but enough for test)
-        if (this.nodeType === Node.ELEMENT_NODE) {
-             // In real DOM textContent is concatenation.
-             // But calculateSourceOffset accesses child.textContent or node.textContent directly.
-        }
     }
 
     get parentNode() { return this.parentElement; }
@@ -37,11 +60,74 @@ class MockNode {
     }
 
     getAttribute(name) {
+        if (name === 'class') return this.className;
         return this.attributes[name];
     }
 
     setAttribute(name, value) {
         this.attributes[name] = value;
+        if (name === 'class') {
+            this.className = value;
+        }
+    }
+
+    closest(selector) {
+        let cur = this;
+        while (cur) {
+            if (cur.nodeType === Node.ELEMENT_NODE && cur._matches(selector)) {
+                return cur;
+            }
+            cur = cur.parentElement;
+        }
+        return null;
+    }
+
+    _matches(selector) {
+        const parts = selector.split(',').map(s => s.trim());
+        return parts.some(p => {
+            const tokens = p.split(/\s*>\s*|\s+/).filter(Boolean);
+            const last = tokens[tokens.length - 1];
+            if (last.startsWith('.')) return this.classList.contains(last.substring(1));
+            if (last.startsWith('#')) return this.id === last.substring(1);
+            if (last.includes('[id^="comment-"]')) {
+                return (this.tagName.toLowerCase() === 'div' || !this.tagName) && this.id.startsWith('comment-');
+            }
+            if (/^[a-zA-Z0-9]+$/.test(last)) {
+                return this.tagName.toLowerCase() === last.toLowerCase();
+            }
+            return false;
+        });
+    }
+
+    contains(node) {
+        if (!node) return false;
+        let cur = node;
+        while (cur) {
+            if (cur === this) return true;
+            cur = cur.parentElement;
+        }
+        return false;
+    }
+
+    querySelectorAll(selector) {
+        const results = [];
+        const walk = (node) => {
+            for (const child of node.childNodes) {
+                if (child.nodeType === Node.ELEMENT_NODE) {
+                    if (child._matches(selector)) {
+                        results.push(child);
+                    }
+                    walk(child);
+                }
+            }
+        };
+        walk(this);
+        return results;
+    }
+
+    querySelector(selector) {
+        const all = this.querySelectorAll(selector);
+        return all.length > 0 ? all[0] : null;
     }
 }
 
@@ -255,5 +341,321 @@ let a4_7 = A4Code.markdownToA4Code(md7);
 assertEqual(a4_7, "[quote]Quote line 1\nQuote line 2[/quote]", "Quote to a4code");
 
 let a4_8 = "[quote]Quote line 1\nQuote line 2[/quote]";
-let md8 = A4Code.a4codeToMarkdown(a4_8);
-assertEqual(md8, "> Quote line 1\n> Quote line 2", "Quote to md");
+let md8_res = A4Code.a4codeToMarkdown(a4_8);
+assertEqual(md8_res, "> Quote line 1\n> Quote line 2", "Quote to md");
+
+console.log("Running Quote Boundary Selection Tests...");
+
+// Helper to construct a mock comment element tree
+function createMockComment(commentId, authorName, commentText) {
+    const comment = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+    comment.classList.add("comment");
+    comment.id = "c" + commentId;
+
+    const aside = new MockNode(Node.ELEMENT_NODE, "", "ASIDE");
+    aside.classList.add("author");
+    const username = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+    username.classList.add("username");
+    const usernameText = new MockNode(Node.TEXT_NODE, authorName);
+    username.appendChild(usernameText);
+    aside.appendChild(username);
+    comment.appendChild(aside);
+
+    const section = new MockNode(Node.ELEMENT_NODE, "", "SECTION");
+    section.classList.add("body");
+
+    const contentDiv = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+    contentDiv.id = "comment-" + commentId;
+    const bodyText = new MockNode(Node.TEXT_NODE, commentText);
+    contentDiv.appendChild(bodyText);
+    section.appendChild(contentDiv);
+
+    const footer = new MockNode(Node.ELEMENT_NODE, "", "FOOTER");
+    const quoteActions = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+    quoteActions.classList.add("quote-actions");
+    const quoteSelected = new MockNode(Node.ELEMENT_NODE, "", "A");
+    quoteSelected.classList.add("quote-link");
+    quoteSelected.setAttribute("data-quote-type", "selected");
+    quoteSelected.setAttribute("data-comment-id", String(commentId));
+    const quoteText = new MockNode(Node.TEXT_NODE, "QUOTE SELECTED");
+    quoteSelected.appendChild(quoteText);
+    quoteActions.appendChild(quoteSelected);
+    footer.appendChild(quoteActions);
+    section.appendChild(footer);
+
+    comment.appendChild(section);
+
+    return {
+        comment,
+        aside,
+        usernameText,
+        section,
+        contentDiv,
+        bodyText,
+        footer,
+        quoteText
+    };
+}
+
+const c1 = createMockComment(101, "Alice", "Hello world from comment 101");
+const c2 = createMockComment(102, "Bob", "Another comment 102");
+
+// Test getCommentContentElement
+assert(getCommentContentElement(c1.bodyText) === c1.contentDiv, "getCommentContentElement on text inside comment content");
+assert(getCommentContentElement(c1.contentDiv) === c1.contentDiv, "getCommentContentElement on content div directly");
+assert(getCommentContentElement(c1.usernameText) === null, "getCommentContentElement on author username should be null");
+assert(getCommentContentElement(c1.aside) === null, "getCommentContentElement on author aside should be null");
+assert(getCommentContentElement(c1.quoteText) === null, "getCommentContentElement on footer actions should be null");
+assert(getCommentContentElement(c1.footer) === null, "getCommentContentElement on footer should be null");
+
+// Test getValidSelectedComment
+// 1. Valid selection wholly inside c1 content
+const validSelection = {
+    isCollapsed: false,
+    rangeCount: 1,
+    getRangeAt: () => ({
+        startContainer: c1.bodyText,
+        startOffset: 0,
+        endContainer: c1.bodyText,
+        endOffset: 5,
+        commonAncestorContainer: c1.bodyText
+    })
+};
+const validResult = getValidSelectedComment(validSelection);
+assert(validResult !== null, "Valid selection should return result");
+assert(validResult.comment === c1.comment, "Valid selection should identify c1.comment");
+assert(validResult.contentElement === c1.contentDiv, "Valid selection should identify c1.contentDiv");
+
+// 2. Collapsed selection
+const collapsedSelection = {
+    isCollapsed: true,
+    rangeCount: 1,
+    getRangeAt: () => ({
+        startContainer: c1.bodyText,
+        startOffset: 0,
+        endContainer: c1.bodyText,
+        endOffset: 0,
+        commonAncestorContainer: c1.bodyText
+    })
+};
+assert(getValidSelectedComment(collapsedSelection) === null, "Collapsed selection should return null");
+
+// 3. Selection starting in author metadata and ending in comment content
+const authorToContentSelection = {
+    isCollapsed: false,
+    rangeCount: 1,
+    getRangeAt: () => ({
+        startContainer: c1.usernameText,
+        startOffset: 0,
+        endContainer: c1.bodyText,
+        endOffset: 5,
+        commonAncestorContainer: c1.comment
+    })
+};
+assert(getValidSelectedComment(authorToContentSelection) === null, "Author to content selection should return null");
+
+// 4. Selection starting in comment content and ending in footer
+const contentToFooterSelection = {
+    isCollapsed: false,
+    rangeCount: 1,
+    getRangeAt: () => ({
+        startContainer: c1.bodyText,
+        startOffset: 0,
+        endContainer: c1.quoteText,
+        endOffset: 3,
+        commonAncestorContainer: c1.section
+    })
+};
+assert(getValidSelectedComment(contentToFooterSelection) === null, "Content to footer selection should return null");
+
+// 5. Selection crossing between two different comments
+const crossCommentSelection = {
+    isCollapsed: false,
+    rangeCount: 1,
+    getRangeAt: () => ({
+        startContainer: c1.bodyText,
+        startOffset: 0,
+        endContainer: c2.bodyText,
+        endOffset: 5,
+        commonAncestorContainer: new MockNode(Node.ELEMENT_NODE, "", "BODY")
+    })
+};
+assert(getValidSelectedComment(crossCommentSelection) === null, "Cross-comment selection should return null");
+
+console.log("All Quote Boundary Selection Tests Passed!");
+
+console.log("Running Forum Filter JS Tests...");
+
+const forumJsPath = path.join(__dirname, '../../handlers/forum/forum.js');
+const forumJsContent = fs.readFileSync(forumJsPath, 'utf8');
+
+// Extract the parser and evaluate functions from forum.js
+let forumScope = {};
+(function() {
+    const fnStr = forumJsContent
+        .replace(/document\.addEventListener\('DOMContentLoaded',\s*\(\)\s*=>\s*\{/, '(function() {')
+        .replace(/const labelFilter = document\.querySelector\('\.label-filter'\);[\s\S]*$/, 'return { tokenize, parse, evaluateAST }; })()');
+    forumScope = eval(fnStr);
+})();
+
+const { tokenize, parse, evaluateAST } = forumScope;
+
+// Test forum filtering across labels, participants, posters, topics
+const labels = ["announcement", "help"];
+const participants = ["alice", "bob"];
+const posters = ["charlie"];
+const topics = ["general discussion"];
+
+function testFilterMatch(query, expected, desc) {
+    const tokens = tokenize(query);
+    const ast = parse(tokens);
+    const matched = evaluateAST(ast, labels, participants, posters, topics);
+    assert(matched === expected, `${desc} (query: "${query}"). Got ${matched}, want ${expected}`);
+}
+
+testFilterMatch("label:announcement", true, "Match existing label");
+testFilterMatch("label:bug", false, "Reject non-existing label");
+testFilterMatch("poster:charlie", true, "Match existing poster");
+testFilterMatch("poster:alice", false, "Reject non-existing poster");
+testFilterMatch("participant:alice", true, "Match existing participant");
+testFilterMatch("participant:david", false, "Reject non-existing participant");
+testFilterMatch("topic:\"general discussion\"", true, "Match existing topic with quotes");
+testFilterMatch("topic:rules", false, "Reject non-existing topic");
+testFilterMatch("poster:charlie topic:general", true, "Match implicit AND");
+testFilterMatch("poster:charlie (label:help OR label:announcement)", true, "Match compound AND with OR");
+testFilterMatch("poster:alice OR poster:charlie", true, "Match compound OR");
+testFilterMatch("poster:alice OR topic:missing", false, "Reject failed OR");
+
+console.log("All Forum Filter JS Tests Passed!");
+
+console.log("Running Forum Filter DOM Fixture Integration Tests...");
+
+function filterItemWithQuery(item, query) {
+    const labels = item.querySelectorAll('.label').map(el => el.textContent.toLowerCase());
+    const participants = item.querySelectorAll('.participant').map(el => el.textContent.toLowerCase());
+    const posters = item.querySelectorAll('.poster-name').map(el => el.textContent.toLowerCase());
+    const topics = item.querySelectorAll('.topic-name-filter').map(el => el.textContent.toLowerCase());
+    const ast = parse(tokenize(query));
+    return evaluateAST(ast, labels, participants, posters, topics);
+}
+
+// 1. Fixture: Topic item in tableTopics.gohtml
+const topicItem = new MockNode(Node.ELEMENT_NODE, "", "LI");
+topicItem.classList.add("topic-item");
+const topicNameDiv = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+topicNameDiv.classList.add("topic-name");
+
+const topicLink = new MockNode(Node.ELEMENT_NODE, "", "A");
+topicLink.classList.add("topic-name-filter");
+topicLink.appendChild(new MockNode(Node.TEXT_NODE, "Community Guidelines"));
+topicNameDiv.appendChild(topicLink);
+
+const topicLabel = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+topicLabel.classList.add("label");
+topicLabel.appendChild(new MockNode(Node.TEXT_NODE, "rules"));
+topicNameDiv.appendChild(topicLabel);
+
+const part1 = new MockNode(Node.ELEMENT_NODE, "", "A");
+part1.classList.add("participant");
+part1.appendChild(new MockNode(Node.TEXT_NODE, "mod_alice"));
+topicNameDiv.appendChild(part1);
+
+const part2 = new MockNode(Node.ELEMENT_NODE, "", "A");
+part2.classList.add("participant");
+part2.appendChild(new MockNode(Node.TEXT_NODE, "admin_bob"));
+topicNameDiv.appendChild(part2);
+
+topicItem.appendChild(topicNameDiv);
+
+const lastReplyDiv = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+lastReplyDiv.classList.add("last-reply");
+const posterStrong = new MockNode(Node.ELEMENT_NODE, "", "STRONG");
+posterStrong.classList.add("poster-name");
+posterStrong.appendChild(new MockNode(Node.TEXT_NODE, "poster_charlie"));
+lastReplyDiv.appendChild(posterStrong);
+topicItem.appendChild(lastReplyDiv);
+
+assert(filterItemWithQuery(topicItem, "topic:\"community guidelines\"") === true, "DOM fixture topic prefix match");
+assert(filterItemWithQuery(topicItem, "label:rules") === true, "DOM fixture label prefix match");
+assert(filterItemWithQuery(topicItem, "participant:mod_alice") === true, "DOM fixture participant prefix match");
+assert(filterItemWithQuery(topicItem, "poster:poster_charlie") === true, "DOM fixture poster prefix match");
+assert(filterItemWithQuery(topicItem, "guidelines") === true, "DOM fixture unprefixed topic match");
+assert(filterItemWithQuery(topicItem, "rules") === true, "DOM fixture unprefixed label match");
+assert(filterItemWithQuery(topicItem, "admin_bob") === true, "DOM fixture unprefixed participant match");
+assert(filterItemWithQuery(topicItem, "poster_charlie") === true, "DOM fixture unprefixed poster match");
+assert(filterItemWithQuery(topicItem, "topic:missing") === false, "DOM fixture non-matching topic");
+assert(filterItemWithQuery(topicItem, "poster:mod_alice") === false, "DOM fixture participant searched as poster should fail");
+assert(filterItemWithQuery(topicItem, "participant:poster_charlie") === false, "DOM fixture poster searched as participant should fail");
+
+// 2. Fixture: Unread thread item in unread.gohtml
+const unreadThread = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+unreadThread.classList.add("thread");
+const unreadHeader = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+unreadHeader.classList.add("thread-meta");
+
+const unreadFirstPoster = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+unreadFirstPoster.classList.add("poster-name");
+unreadFirstPoster.classList.add("first");
+unreadFirstPoster.appendChild(new MockNode(Node.TEXT_NODE, "alice_starter"));
+unreadHeader.appendChild(unreadFirstPoster);
+
+const unreadTopicStrong = new MockNode(Node.ELEMENT_NODE, "", "STRONG");
+unreadTopicStrong.classList.add("topic-name-filter");
+unreadTopicStrong.appendChild(new MockNode(Node.TEXT_NODE, "Secret Meeting"));
+unreadHeader.appendChild(unreadTopicStrong);
+
+const unreadParticipant = new MockNode(Node.ELEMENT_NODE, "", "A");
+unreadParticipant.classList.add("participant");
+unreadParticipant.appendChild(new MockNode(Node.TEXT_NODE, "bob_invited"));
+unreadHeader.appendChild(unreadParticipant);
+unreadThread.appendChild(unreadHeader);
+
+const unreadFooter = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+unreadFooter.classList.add("thread-meta");
+const unreadLastPoster = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+unreadLastPoster.classList.add("poster-name");
+unreadLastPoster.classList.add("last");
+unreadLastPoster.appendChild(new MockNode(Node.TEXT_NODE, "charlie_latest"));
+unreadFooter.appendChild(unreadLastPoster);
+unreadThread.appendChild(unreadFooter);
+
+assert(filterItemWithQuery(unreadThread, "poster:alice_starter") === true, "Unread thread first poster match");
+assert(filterItemWithQuery(unreadThread, "poster:charlie_latest") === true, "Unread thread last poster match");
+assert(filterItemWithQuery(unreadThread, "topic:\"secret meeting\"") === true, "Unread thread topic match");
+assert(filterItemWithQuery(unreadThread, "participant:bob_invited") === true, "Unread thread participant match");
+assert(filterItemWithQuery(unreadThread, "secret poster:alice_starter") === true, "Unread thread compound search");
+assert(filterItemWithQuery(unreadThread, "label:missing") === false, "Unread thread non-existent label search");
+
+// 3. Fixture: Topic threads item in topicThreads.gohtml
+const topicThread = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+topicThread.classList.add("thread");
+const thMeta1 = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+thMeta1.classList.add("thread-meta");
+const thFirst = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+thFirst.classList.add("poster-name");
+thFirst.classList.add("first");
+thFirst.appendChild(new MockNode(Node.TEXT_NODE, "thread_author"));
+thMeta1.appendChild(thFirst);
+topicThread.appendChild(thMeta1);
+
+const thMeta2 = new MockNode(Node.ELEMENT_NODE, "", "DIV");
+thMeta2.classList.add("thread-meta");
+const thLast = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+thLast.classList.add("poster-name");
+thLast.classList.add("last");
+thLast.appendChild(new MockNode(Node.TEXT_NODE, "thread_replier"));
+thMeta2.appendChild(thLast);
+const thLabel = new MockNode(Node.ELEMENT_NODE, "", "SPAN");
+thLabel.classList.add("label");
+thLabel.appendChild(new MockNode(Node.TEXT_NODE, "feedback"));
+thMeta2.appendChild(thLabel);
+topicThread.appendChild(thMeta2);
+
+assert(filterItemWithQuery(topicThread, "poster:thread_author") === true, "Topic thread first poster match");
+assert(filterItemWithQuery(topicThread, "poster:thread_replier") === true, "Topic thread last poster match");
+assert(filterItemWithQuery(topicThread, "label:feedback") === true, "Topic thread label match");
+assert(filterItemWithQuery(topicThread, "feedback poster:thread_author") === true, "Topic thread compound match");
+assert(filterItemWithQuery(topicThread, "poster:unknown") === false, "Topic thread unknown poster");
+
+console.log("All Forum Filter DOM Fixture Integration Tests Passed!");
+

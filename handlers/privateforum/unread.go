@@ -88,21 +88,24 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 		currentError = "Error loading unread threads."
 	}
 
-	// Make a slice to hold the decorated threads (e.g. for display title)
+	// Make a slice to hold the decorated threads (e.g. for display title and participants)
 	type DecorThread struct {
 		*db.ListUnreadPrivateThreadsForUserRow
 		DisplayTitle string
+		Participants []string
 	}
 
 	var threads []*DecorThread
 	for _, row := range rows {
 		displayTitle := row.TopicTitle.String
+		var participants []string
 		if row.TopicTitle.Valid {
-			displayTitle = cd.GetPrivateTopicDisplayTitle(row.TopicID, row.TopicTitle.String)
+			displayTitle, participants, _, _ = cd.GetPrivateTopicDetails(row.TopicID, row.TopicTitle.String)
 		}
 		threads = append(threads, &DecorThread{
 			ListUnreadPrivateThreadsForUserRow: row,
 			DisplayTitle:                       displayTitle,
+			Participants:                       participants,
 		})
 	}
 

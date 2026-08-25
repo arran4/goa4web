@@ -1,6 +1,8 @@
 package db
 
 import (
+	_ "modernc.org/sqlite"
+
 	"context"
 	"database/sql"
 	"fmt"
@@ -25,7 +27,7 @@ func TestGetReplyThreadsForListerFiltersPrivateChildrenAndOrdersUnread(t *testin
 		`INSERT INTO grants (user_id, role_id, section, item, item_id, action, active, rule_type) VALUES (10, NULL, 'privateforum_thread', 'thread', 100, 'view', 1, 'allow'), (11, NULL, 'privateforum_thread', 'thread', 101, 'view', 1, 'allow'), (NULL, 1, 'privateforum_thread', 'thread', 102, 'view', 1, 'allow')`,
 		`INSERT INTO content_private_labels (item, item_id, user_id, label, invert) VALUES ('thread', 100, 10, 'unread', true)`,
 	)
-	queries := New(database)
+	queries := NewForDriver(database, "mysql")
 	rows, err := queries.GetReplyThreadsForLister(context.Background(), GetReplyThreadsForListerParams{
 		ViewerID:        10,
 		ReplyToThreadID: sql.NullInt32{Int32: 50, Valid: true},
@@ -61,7 +63,7 @@ func TestGetReplyThreadsForListerPreservesPublicForumVisibility(t *testing.T) {
 		`INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (2000, 200, 12, 'public fork', '2026-08-16 10:00:00')`,
 		`INSERT INTO forumthread (idforumthread, firstpost, lastposter, forumtopic_idforumtopic, comments, lastaddition, reply_to_comment_id, reply_to_thread_id) VALUES (200, 2000, 12, 6, 0, '2026-08-16 10:00:00', 600, 60)`,
 	)
-	rows, err := New(database).GetReplyThreadsForLister(context.Background(), GetReplyThreadsForListerParams{
+	rows, err := NewForDriver(database, "mysql").GetReplyThreadsForLister(context.Background(), GetReplyThreadsForListerParams{
 		ViewerID:        10,
 		ReplyToThreadID: sql.NullInt32{Int32: 60, Valid: true},
 		ViewerMatchID:   sql.NullInt32{Int32: 10, Valid: true},
@@ -81,7 +83,7 @@ func TestSystemCopyPrivateThreadGrantsDoesNotBroadenToTopicParticipants(t *testi
 		`INSERT INTO users (idusers, username) VALUES (10, 'source viewer'), (11, 'topic only')`,
 		`INSERT INTO grants (user_id, role_id, section, item, item_id, action, active, rule_type) VALUES (10, NULL, 'privateforum_thread', 'thread', 300, 'view', 1, 'allow'), (10, NULL, 'privateforum_thread', 'thread', 300, 'reply', 1, 'allow'), (NULL, 1, 'privateforum_thread', 'thread', 300, 'view', 1, 'allow'), (11, NULL, 'privateforum', 'topic', 5, 'view', 1, 'allow')`,
 	)
-	if err := New(database).SystemCopyPrivateThreadGrantsToThread(context.Background(), SystemCopyPrivateThreadGrantsToThreadParams{
+	if err := NewForDriver(database, "mysql").SystemCopyPrivateThreadGrantsToThread(context.Background(), SystemCopyPrivateThreadGrantsToThreadParams{
 		SrcThreadID: sql.NullInt32{Int32: 300, Valid: true},
 		DstThreadID: sql.NullInt32{Int32: 301, Valid: true},
 	}); err != nil {
@@ -124,7 +126,7 @@ func TestSystemDeleteUninitializedThreadRemovesForkAndCopiedGrants(t *testing.T)
 		`INSERT INTO forumthread (idforumthread, forumtopic_idforumtopic, reply_to_comment_id, reply_to_thread_id) VALUES (400, 5, 40, 30)`,
 		`INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (10, 'privateforum_thread', 'thread', 400, 'view', 1, 'allow')`,
 	)
-	if err := New(database).SystemDeleteUninitializedThread(context.Background(), 400); err != nil {
+	if err := NewForDriver(database, "mysql").SystemDeleteUninitializedThread(context.Background(), 400); err != nil {
 		t.Fatalf("delete uninitialized fork: %v", err)
 	}
 	var threadCount, grantCount int
@@ -142,17 +144,18 @@ func TestSystemDeleteUninitializedThreadRemovesForkAndCopiedGrants(t *testing.T)
 func createReplyThreadTestSchema(t *testing.T, database *sql.DB) {
 	t.Helper()
 	execReplySQL(t, database,
-		`CREATE TABLE roles (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL)`,
-		`CREATE TABLE users (idusers INT PRIMARY KEY, username VARCHAR(255))`,
-		`CREATE TABLE user_roles (users_idusers INT NOT NULL, role_id INT NOT NULL)`,
-		`CREATE TABLE user_language (users_idusers INT NOT NULL, language_id INT NOT NULL)`,
-		`CREATE TABLE forumtopic (idforumtopic INT PRIMARY KEY, language_id INT NULL, title VARCHAR(255), handler VARCHAR(255) NOT NULL)`,
-		`CREATE TABLE forumthread (idforumthread INT PRIMARY KEY, firstpost INT NOT NULL DEFAULT 0, lastposter INT NOT NULL DEFAULT 0, forumtopic_idforumtopic INT NOT NULL, comments INT NULL, lastaddition DATETIME NULL, locked BOOLEAN NULL, reply_to_comment_id INT NULL, reply_to_thread_id INT NULL, deleted_at DATETIME NULL)`,
-		`CREATE TABLE comments (idcomments INT PRIMARY KEY, forumthread_id INT NOT NULL, users_idusers INT NOT NULL, language_id INT NULL, text TEXT NULL, written DATETIME NULL)`,
-		`CREATE TABLE grants (id INT AUTO_INCREMENT PRIMARY KEY, created_at DATETIME NULL, user_id INT NULL, role_id INT NULL, section VARCHAR(255) NOT NULL, item VARCHAR(255) NULL, rule_type VARCHAR(255) NOT NULL, item_id INT NULL, item_rule VARCHAR(255) NULL, action VARCHAR(255) NOT NULL, extra VARCHAR(255) NULL, active BOOLEAN NOT NULL)`,
-		`CREATE TABLE content_private_labels (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, user_id INT NOT NULL, label VARCHAR(255) NOT NULL, invert BOOLEAN NOT NULL)`,
-		`CREATE TABLE content_public_labels (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, label VARCHAR(255) NOT NULL)`,
-		`CREATE TABLE content_label_status (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, label VARCHAR(255) NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS roles (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS users (idusers INT PRIMARY KEY, username VARCHAR(255))`,
+		`CREATE TABLE IF NOT EXISTS user_roles (users_idusers INT NOT NULL, role_id INT NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS user_language (users_idusers INT NOT NULL, language_id INT NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS forumtopic (idforumtopic INT PRIMARY KEY, language_id INT NULL, title VARCHAR(255), handler VARCHAR(255) NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS forumthread (idforumthread INT PRIMARY KEY, firstpost INT NOT NULL DEFAULT 0, lastposter INT NOT NULL DEFAULT 0, forumtopic_idforumtopic INT NOT NULL, comments INT NULL, lastaddition DATETIME NULL, locked BOOLEAN NULL, reply_to_comment_id INT NULL, reply_to_thread_id INT NULL, deleted_at DATETIME NULL)`,
+		`CREATE TABLE IF NOT EXISTS comments (idcomments INT PRIMARY KEY, forumthread_id INT NOT NULL, users_idusers INT NOT NULL, language_id INT NULL, text TEXT NULL, written DATETIME NULL, timezone VARCHAR(255) NULL, deleted_at DATETIME NULL, last_index DATETIME NULL)`,
+		`CREATE TABLE IF NOT EXISTS grants (id INT AUTO_INCREMENT PRIMARY KEY, created_at DATETIME NULL, user_id INT NULL, role_id INT NULL, section VARCHAR(255) NOT NULL, item VARCHAR(255) NULL, rule_type VARCHAR(255) NOT NULL, item_id INT NULL, item_rule VARCHAR(255) NULL, action VARCHAR(255) NOT NULL, extra VARCHAR(255) NULL, active BOOLEAN NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS content_read_markers (item VARCHAR(255), item_id INT, user_id INT, last_comment_id INT, unread INT)`,
+		`CREATE TABLE IF NOT EXISTS content_private_labels (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, user_id INT NOT NULL, label VARCHAR(255) NOT NULL, invert BOOLEAN NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS content_public_labels (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, label VARCHAR(255) NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS content_label_status (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, label VARCHAR(255) NOT NULL)`,
 	)
 }
 
@@ -198,4 +201,14 @@ func openReplyThreadTestDatabase(t *testing.T) *sql.DB {
 	}
 	t.Cleanup(func() { _ = database.Close() })
 	return database
+}
+
+func openReplyThreadTestDatabaseSQLite(t *testing.T) *sql.DB {
+	t.Helper()
+	// Using file::memory:?cache=shared instead of just :memory: for concurrent accesses
+	db, err := sql.Open("sqlite", "file:"+t.Name()+"?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	return db
 }

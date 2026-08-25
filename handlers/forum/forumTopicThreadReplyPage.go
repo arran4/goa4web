@@ -206,7 +206,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CommentURL:           cd.AbsoluteURL(endUrl),
 		ClearUnreadForOthers: true,
 		MarkThreadRead:       true,
-		IncludePostCount:     !isAppend,
+		IncludePostCount:     true,
 		IncludeSearch:        true,
 		AdditionalData:       data,
 	}); err != nil {

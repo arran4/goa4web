@@ -23,7 +23,6 @@ func TestCreatePrivateTopicUsesProvidedUsernames(t *testing.T) {
 	cd.UserID = 1
 
 	mock.ExpectQuery("WITH role_ids AS \\(").WithArgs(int32(1), "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: 1, Valid: true}, false).
-
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	topicID := int64(42)
@@ -89,7 +88,6 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 	cd.UserID = 1
 
 	mock.ExpectQuery("WITH role_ids AS \\(").WithArgs(int32(1), "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: 1, Valid: true}, false).
-
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at").

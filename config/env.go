@@ -234,8 +234,8 @@ const (
 	EnvSkipStartupMediaCheck = "SKIP_STARTUP_MEDIA_CHECK"
 
 	// EnvTrustedProxies is a comma-separated list of trusted proxy CIDRs.
-	EnvTrustedProxies = "TRUSTED_PROXIES"
-	EnvForumPostAppendWindow = "FORUM_POST_APPEND_WINDOW"
+	EnvTrustedProxies               = "TRUSTED_PROXIES"
+	EnvForumPostAppendWindow        = "FORUM_POST_APPEND_WINDOW"
 	EnvPrivateForumPostAppendWindow = "PRIVATE_FORUM_POST_APPEND_WINDOW"
 	// EnvWebAuthnEnabled toggles WebAuthn.
 	EnvWebAuthnEnabled = "WEBAUTHN_ENABLED"

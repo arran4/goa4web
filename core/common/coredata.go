@@ -2261,7 +2261,7 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32,
 	}
 
 	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(cd.ctx, db.AppendCommentInSectionForCommenterParams{
-		Text:             sql.NullString{String: text, Valid: true},
+		Text:             text,
 		Written:          sql.NullTime{Time: time.Now(), Valid: true},
 		CommentID:        commentID,
 		CommenterID:      commenterID,
@@ -2284,9 +2284,12 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32,
 		if err := cd.recordThreadImages(threadID, paths); err != nil {
 			log.Printf("record thread images append: %v", err)
 		}
-		// Reconstruct full text for search indexing
-		fullText := fmt.Sprintf("%s\n\n[hr]\n\n%s", comment.Text.String, text)
-		return int64(commentID), fullText, nil
+		// Reload authoritative post-update text from the DB for search indexing
+		reloadedComment, err := cd.queries.GetCommentById(cd.ctx, commentID)
+		if err != nil {
+			return 0, "", fmt.Errorf("reload comment after append: %w", err)
+		}
+		return int64(commentID), reloadedComment.Text.String, nil
 	}
 	return 0, "", nil
 }
@@ -2336,6 +2339,17 @@ func (cd *CoreData) CanAppendToComment(cmt *db.GetCommentsByThreadIdForUserRow) 
 		return false
 	}
 	if commentsList[len(commentsList)-1].Idcomments != cmt.Idcomments {
+		return false
+	}
+
+	// Read marker check: block append if someone else has read this comment or beyond.
+	hasRead, err := cd.queries.HasOtherUserReadItemAtOrBeyond(cd.ctx, db.HasOtherUserReadItemAtOrBeyondParams{
+		Item:          itemType,
+		ItemID:        itemID,
+		UserID:        cd.UserID,
+		LastCommentID: cmt.Idcomments,
+	})
+	if err != nil || hasRead {
 		return false
 	}
 

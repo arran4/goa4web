@@ -33,10 +33,10 @@ func TestRequireCommentAuthor(t *testing.T) {
 		}
 
 		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-		    if arg.Section == "forum" && arg.Action == "edit" {
-		        return 1, nil
-		    }
-		    return 0, sql.ErrNoRows
+			if arg.Section == "forum" && arg.Action == "edit" {
+				return 1, nil
+			}
+			return 0, sql.ErrNoRows
 		}
 
 		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)

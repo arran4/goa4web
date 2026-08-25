@@ -21,40 +21,40 @@ import (
 
 type mockQuerier struct {
 	*db.QuerierStub
-	GetCommentByIdFn func(ctx context.Context, id int32) (*db.Comment, error)
-	AppendCommentInSectionForCommenterFn func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error)
+	GetCommentByIdFn                        func(ctx context.Context, id int32) (*db.Comment, error)
+	AppendCommentInSectionForCommenterFn    func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error)
 	AppendCommentInSectionForCommenterCalls []db.AppendCommentInSectionForCommenterParams
 }
 
 func (m *mockQuerier) GetCommentById(ctx context.Context, id int32) (*db.Comment, error) {
-    if m.GetCommentByIdFn != nil {
-        return m.GetCommentByIdFn(ctx, id)
-    }
-    return &db.Comment{Idcomments: id}, nil
+	if m.GetCommentByIdFn != nil {
+		return m.GetCommentByIdFn(ctx, id)
+	}
+	return &db.Comment{Idcomments: id}, nil
 }
 
 func (m *mockQuerier) AppendCommentInSectionForCommenter(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
-    m.AppendCommentInSectionForCommenterCalls = append(m.AppendCommentInSectionForCommenterCalls, arg)
-    if m.AppendCommentInSectionForCommenterFn != nil {
-        return m.AppendCommentInSectionForCommenterFn(ctx, arg)
-    }
-    return 0, nil
+	m.AppendCommentInSectionForCommenterCalls = append(m.AppendCommentInSectionForCommenterCalls, arg)
+	if m.AppendCommentInSectionForCommenterFn != nil {
+		return m.AppendCommentInSectionForCommenterFn(ctx, arg)
+	}
+	return 0, nil
 }
 
 func (m *mockQuerier) GetCommentByIdForUser(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
-    if m.GetCommentByIdFn != nil {
-        comment, err := m.GetCommentByIdFn(ctx, arg.ID)
-        if err != nil || comment == nil {
-            return nil, err
-        }
-        return &db.GetCommentByIdForUserRow{
-            Idcomments: comment.Idcomments,
-            ForumthreadID: comment.ForumthreadID,
-            UsersIdusers: comment.UsersIdusers,
-            Text: comment.Text,
-        }, nil
-    }
-    return &db.GetCommentByIdForUserRow{Idcomments: arg.ID}, nil
+	if m.GetCommentByIdFn != nil {
+		comment, err := m.GetCommentByIdFn(ctx, arg.ID)
+		if err != nil || comment == nil {
+			return nil, err
+		}
+		return &db.GetCommentByIdForUserRow{
+			Idcomments:    comment.Idcomments,
+			ForumthreadID: comment.ForumthreadID,
+			UsersIdusers:  comment.UsersIdusers,
+			Text:          comment.Text,
+		}, nil
+	}
+	return &db.GetCommentByIdForUserRow{Idcomments: arg.ID}, nil
 }
 
 func TestForumPostAppend_Fallback(t *testing.T) {
@@ -94,7 +94,7 @@ func TestForumPostAppend_Fallback(t *testing.T) {
 		}
 
 		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-		    return 1, nil
+			return 1, nil
 		}
 
 		replyTask.Action(httptest.NewRecorder(), req)
@@ -148,18 +148,18 @@ func TestForumPostAppend_Fallback(t *testing.T) {
 		}
 
 		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-		    return 1, nil
+			return 1, nil
 		}
 
 		replyTask.Action(httptest.NewRecorder(), req)
 
 		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
-		    t.Fatalf("expected append comment to be called once")
+			t.Fatalf("expected append comment to be called once")
 		}
 
 		got := mq.AppendCommentInSectionForCommenterCalls[0]
 		if got.CommentID != 10 || got.CommenterID != 5 || got.AppendWindowMins != int64(60) {
-		    t.Fatalf("unexpected arguments to append: %+v", got)
+			t.Fatalf("unexpected arguments to append: %+v", got)
 		}
 	})
 
@@ -206,13 +206,13 @@ func TestForumPostAppend_Fallback(t *testing.T) {
 		}
 
 		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-		    return 1, nil
+			return 1, nil
 		}
 
 		replyTask.Action(httptest.NewRecorder(), req)
 
 		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
-		    t.Fatalf("expected append comment to be called once")
+			t.Fatalf("expected append comment to be called once")
 		}
 		if len(q.CreateCommentInSectionForCommenterCalls) != 1 {
 			t.Fatalf("expected fallback to create comment")
@@ -263,13 +263,13 @@ func TestForumPostAppend_Fallback(t *testing.T) {
 		}
 
 		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-		    return 1, nil
+			return 1, nil
 		}
 
 		replyTask.Action(httptest.NewRecorder(), req)
 
 		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
-		    t.Fatalf("expected append comment to be called once")
+			t.Fatalf("expected append comment to be called once")
 		}
 	})
 }

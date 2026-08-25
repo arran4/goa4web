@@ -268,7 +268,7 @@ type RuntimeConfig struct {
 	// TrustedProxies is a comma-separated list of trusted proxy CIDRs.
 	TrustedProxies string
 
-	ForumPostAppendWindow int
+	ForumPostAppendWindow        int
 	PrivateForumPostAppendWindow int
 
 	// WebAuthnEnabled toggles WebAuthn support.

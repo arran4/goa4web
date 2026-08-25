@@ -468,7 +468,6 @@ func convertToLiteExpr(
 		return "func(v interface{}) string { if s, ok := v.(string); ok { return s }; if s, ok := v.(*string); ok && s != nil { return *s }; return \"\" }(" + valName + ")", nil
 	}
 
-
 	if dbType == "int32" && liteType == "int64" {
 		return fmt.Sprintf("int64(%s)", valName), nil
 	}

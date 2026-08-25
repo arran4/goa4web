@@ -278,7 +278,7 @@ LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: AppendCommentInSectionForCommenter :execrows
 UPDATE comments
-SET text = COALESCE(comments.text, '') || '\n\n[hr]\n\n' || CAST(sqlc.arg(text) AS TEXT), written = sqlc.arg(written)
+SET text = COALESCE(comments.text, '') || char(10) || char(10) || '[hr]' || char(10) || char(10) || CAST(sqlc.arg(text) AS TEXT), written = sqlc.arg(written)
 WHERE comments.idcomments = sqlc.arg(comment_id)
   AND comments.users_idusers = sqlc.arg(commenter_id)
   AND comments.forumthread_id = sqlc.arg(forumthread_id)

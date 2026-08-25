@@ -292,7 +292,7 @@ LIMIT ? OFFSET ?;
 
 -- name: AppendCommentInSectionForCommenter :execrows
 UPDATE comments c
-SET text = CONCAT(c.text, '\n\n[hr]\n\n', sqlc.arg(text)), written = sqlc.arg(written)
+SET text = CONCAT(COALESCE(c.text, ''), '\n\n[hr]\n\n', CAST(sqlc.arg(text) AS CHAR)), written = sqlc.arg(written)
 WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.users_idusers = sqlc.arg(commenter_id)
   AND c.forumthread_id = sqlc.arg(forumthread_id)

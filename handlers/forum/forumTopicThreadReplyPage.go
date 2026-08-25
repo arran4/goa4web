@@ -153,7 +153,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if cid == 0 {
+	if !isAppend && err == nil {
 		if topicRow.Handler == "private" {
 			cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
 		} else {

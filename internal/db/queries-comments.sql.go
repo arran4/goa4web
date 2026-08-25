@@ -143,7 +143,7 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 
 const appendCommentInSectionForCommenter = `-- name: AppendCommentInSectionForCommenter :execrows
 UPDATE comments c
-SET text = CONCAT(c.text, '\n\n[hr]\n\n', ?), written = ?
+SET text = CONCAT(COALESCE(c.text, ''), '\n\n[hr]\n\n', CAST(? AS CHAR)), written = ?
 WHERE c.idcomments = ?
   AND c.users_idusers = ?
   AND c.forumthread_id = ?

@@ -30,7 +30,7 @@ func (m *mockQuerier) GetCommentById(ctx context.Context, id int32) (*db.Comment
     if m.GetCommentByIdFn != nil {
         return m.GetCommentByIdFn(ctx, id)
     }
-    return m.QuerierStub.GetCommentById(ctx, id)
+    return &db.Comment{Idcomments: id}, nil
 }
 
 func (m *mockQuerier) AppendCommentInSectionForCommenter(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
@@ -39,6 +39,22 @@ func (m *mockQuerier) AppendCommentInSectionForCommenter(ctx context.Context, ar
         return m.AppendCommentInSectionForCommenterFn(ctx, arg)
     }
     return 0, nil
+}
+
+func (m *mockQuerier) GetCommentByIdForUser(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+    if m.GetCommentByIdFn != nil {
+        comment, err := m.GetCommentByIdFn(ctx, arg.ID)
+        if err != nil || comment == nil {
+            return nil, err
+        }
+        return &db.GetCommentByIdForUserRow{
+            Idcomments: comment.Idcomments,
+            ForumthreadID: comment.ForumthreadID,
+            UsersIdusers: comment.UsersIdusers,
+            Text: comment.Text,
+        }, nil
+    }
+    return &db.GetCommentByIdForUserRow{Idcomments: arg.ID}, nil
 }
 
 func TestForumPostAppend_Fallback(t *testing.T) {
@@ -202,20 +218,58 @@ func TestForumPostAppend_Fallback(t *testing.T) {
 			t.Fatalf("expected fallback to create comment")
 		}
 	})
-}
 
-func (m *mockQuerier) GetCommentByIdForUser(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
-    if m.GetCommentByIdFn != nil {
-        comment, err := m.GetCommentByIdFn(ctx, arg.ID)
-        if err != nil || comment == nil {
-            return nil, err
-        }
-        return &db.GetCommentByIdForUserRow{
-            Idcomments: comment.Idcomments,
-            ForumthreadID: comment.ForumthreadID,
-            UsersIdusers: comment.UsersIdusers,
-            Text: comment.Text,
-        }, nil
-    }
-    return &db.GetCommentByIdForUserRow{Idcomments: arg.ID}, nil
+	t.Run("DB error does not fallback", func(t *testing.T) {
+		q := testhelpers.NewQuerierStub()
+		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: 1, Handler: "forum", Title: sql.NullString{String: "Title", Valid: true},
+			}, nil
+		}
+		q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+			return &db.GetThreadLastPosterAndPermsForUserRow{
+				Idforumthread: 2, ForumtopicIdforumtopic: 1,
+			}, nil
+		}
+		q.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+			return []*db.GetCommentsByThreadIdForUserRow{
+				{Idcomments: 10, ForumthreadID: 2, UsersIdusers: 5, Written: sql.NullTime{Time: time.Now().Add(-5 * time.Minute), Valid: true}},
+			}, nil
+		}
+
+		mq := &mockQuerier{QuerierStub: q}
+		mq.GetCommentByIdFn = func(ctx context.Context, id int32) (*db.Comment, error) {
+			return &db.Comment{Idcomments: 10, ForumthreadID: 2, Text: sql.NullString{String: "old text", Valid: true}}, nil
+		}
+
+		cfg := config.NewRuntimeConfig()
+		cfg.ForumPostAppendWindow = 60
+
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/2/reply", nil)
+		req.Form = url.Values{"replytext": {"new text"}, "language": {"1"}}
+		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
+
+		sess := &sessions.Session{Values: map[any]any{"UID": int32(5)}}
+		cd := common.NewCoreData(context.Background(), mq, cfg, common.WithSession(sess))
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+		mq.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+			return 0, sql.ErrConnDone // return an actual error
+		}
+
+		q.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+			t.Fatalf("should not fallback to create comment on DB error")
+			return 0, nil
+		}
+
+		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		    return 1, nil
+		}
+
+		replyTask.Action(httptest.NewRecorder(), req)
+
+		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
+		    t.Fatalf("expected append comment to be called once")
+		}
+	})
 }

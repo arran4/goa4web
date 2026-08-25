@@ -36,6 +36,13 @@ func TestHappyPathForumReplyRedirect(t *testing.T) {
 			Username: sql.NullString{String: "replier", Valid: true},
 		}, nil
 	}
+	qs.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		return 0, nil
+	}
+
+	qs.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: arg.ID, ForumthreadID: threadID, Text: sql.NullString{String: "old text", Valid: true}}, nil
+	}
 	qs.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
 		return commentID, nil
 	}

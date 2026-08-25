@@ -10946,3 +10946,12 @@ func (s *sqliteQuerier) UpsertSchedulerState(ctx context.Context, arg UpsertSche
 		Metadata:  arg.Metadata,
 	})
 }
+
+func (s *sqliteQuerier) HasOtherUserReadItemAtOrBeyond(ctx context.Context, arg HasOtherUserReadItemAtOrBeyondParams) (bool, error) {
+	return s.q.HasOtherUserReadItemAtOrBeyond(ctx, dbsqlite.HasOtherUserReadItemAtOrBeyondParams{
+		Item:          arg.Item,
+		ItemID:        int64(arg.ItemID),
+		UserID:        int64(arg.UserID),
+		LastCommentID: int64(arg.LastCommentID),
+	})
+}

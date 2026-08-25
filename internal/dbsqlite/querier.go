@@ -465,6 +465,7 @@ type Querier interface {
 	GetVerifiedUserEmails(ctx context.Context) ([]*GetVerifiedUserEmailsRow, error)
 	GetWritingCategoryById(ctx context.Context, idwritingcategory int64) (*WritingCategory, error)
 	GetWritingForListerByID(ctx context.Context, arg GetWritingForListerByIDParams) (*GetWritingForListerByIDRow, error)
+	HasOtherUserReadItemAtOrBeyond(ctx context.Context, arg HasOtherUserReadItemAtOrBeyondParams) (int64, error)
 	InsertAdminUserComment(ctx context.Context, arg InsertAdminUserCommentParams) error
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertEmailPreferenceForLister(ctx context.Context, arg InsertEmailPreferenceForListerParams) error

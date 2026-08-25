@@ -138,17 +138,19 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var isAppend bool
 
 	// Check if this might be an append. We need the last comment ID.
+	var fullText string
 	commentsList, _ := cd.ThreadComments(threadRow.Idforumthread)
 	if len(commentsList) > 0 {
-	    lastComment := commentsList[len(commentsList)-1]
-	    // Attempt append first
-	    cid, err = cd.AttemptAppendForumComment(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), lastComment.Idcomments, text, topicRow.Handler == "private")
-	    if err != nil {
-	        log.Printf("Append attempt error: %v", err)
-	    }
-	    if cid != 0 {
-	        isAppend = true
-	    }
+		lastComment := commentsList[len(commentsList)-1]
+		// Attempt append first
+		cid, fullText, err = cd.AttemptAppendForumComment(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), lastComment.Idcomments, text, topicRow.Handler == "private")
+		if err != nil {
+			log.Printf("Append attempt error: %v", err)
+		}
+		if cid != 0 {
+			isAppend = true
+			text = fullText // update the text for the thread updated event
+		}
 	}
 
 	if cid == 0 {

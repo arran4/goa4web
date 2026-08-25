@@ -25,6 +25,8 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
+	HasOtherUserReadItemAtOrBeyondFn func(ctx context.Context, arg HasOtherUserReadItemAtOrBeyondParams) (bool, error)
+
 	AppendCommentInSectionForCommenterFn func(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error)
 
 	CreateAPIKeyStub            func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
@@ -3397,4 +3399,13 @@ func (s *QuerierStub) AppendCommentInSectionForCommenter(ctx context.Context, ar
 		panic("QuerierStub.AppendCommentInSectionForCommenterFn not implemented")
 	}
 	return s.AppendCommentInSectionForCommenterFn(ctx, arg)
+}
+
+func (s *QuerierStub) HasOtherUserReadItemAtOrBeyond(ctx context.Context, arg HasOtherUserReadItemAtOrBeyondParams) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.HasOtherUserReadItemAtOrBeyondFn == nil {
+		panic("QuerierStub.HasOtherUserReadItemAtOrBeyondFn not implemented")
+	}
+	return s.HasOtherUserReadItemAtOrBeyondFn(ctx, arg)
 }

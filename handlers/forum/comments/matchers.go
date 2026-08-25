@@ -40,15 +40,20 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 					section = "forum" // fallback
 				}
 
+				topicID := int32(0)
+				if topic, _ := cd.CurrentTopic(); topic != nil {
+				    topicID = topic.Idforumtopic
+				}
+
 				// If they own the comment, they need 'edit'. Otherwise they need 'edit-any'.
 				if row.UsersIdusers == uid {
 					authorized = cd.HasGrant(section, "thread", "edit", row.ForumthreadID) ||
 					    cd.HasGrant(section, "comment", "edit", row.Idcomments) ||
-						cd.HasGrant(section, "topic", "edit", cd.SelectedThreadID())
+						(topicID != 0 && cd.HasGrant(section, "topic", "edit", topicID))
 				} else {
 					authorized = cd.HasGrant(section, "thread", "edit-any", row.ForumthreadID) ||
 					    cd.HasGrant(section, "comment", "edit-any", row.Idcomments) ||
-						cd.HasGrant(section, "topic", "edit-any", cd.SelectedThreadID())
+						(topicID != 0 && cd.HasGrant(section, "topic", "edit-any", topicID))
 				}
 			}
 		}

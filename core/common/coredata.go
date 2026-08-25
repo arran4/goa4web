@@ -2227,38 +2227,41 @@ func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID,
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionNews, consts.PermissionItemPost, postID, threadID, commenterID, languageID, text)
 }
 
-func (cd *CoreData) AttemptAppendForumComment(commenterID, threadID, topicID, languageID, commentID int32, text string, isPrivate bool) (int64, error) {
+func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32, topicID int32, languageID int32, commentID int32, text string, isPrivate bool) (int64, string, error) {
 	if cd.queries == nil || cd.Config == nil {
-		return 0, nil
+		return 0, "", nil
 	}
 	appendWindowMins := cd.Config.ForumPostAppendWindow
 	section := consts.PermissionSectionForum.String()
 	itemType := consts.PermissionItemTopic.String()
 	itemID := topicID
 	if isPrivate {
-	    appendWindowMins = cd.Config.PrivateForumPostAppendWindow
-	    section = consts.PermissionSectionPrivateForumThread.String()
-	    itemType = consts.PermissionItemThread.String()
-	    itemID = threadID
+		appendWindowMins = cd.Config.PrivateForumPostAppendWindow
+		section = consts.PermissionSectionPrivateForumThread.String()
+		itemType = consts.PermissionItemThread.String()
+		itemID = threadID
 	}
 	if appendWindowMins <= 0 {
-	    return 0, nil
+		return 0, "", nil
 	}
-	text = cd.sanitizeCodeImages(text)
+
+	// Preserve the normal image pipeline
+	var queuedFetches []queuedRemoteImageCacheFetch
+	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
-		return 0, fmt.Errorf("parse images: %w", err)
+		return 0, "", fmt.Errorf("parse images: %w", err)
 	}
 	comment, err := cd.CommentByID(commentID)
 	if err != nil || comment == nil {
-	    return 0, fmt.Errorf("load comment: %w", err)
+		return 0, "", fmt.Errorf("load comment: %w", err)
 	}
 	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
-		return 0, fmt.Errorf("validate images: %w", err)
+		return 0, "", fmt.Errorf("validate images: %w", err)
 	}
-	newText := fmt.Sprintf("%s\n\n[hr]\n\n%s", comment.Text.String, text)
+
 	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(cd.ctx, db.AppendCommentInSectionForCommenterParams{
-		Text:             sql.NullString{String: newText, Valid: true},
+		Text:             sql.NullString{String: text, Valid: true},
 		Written:          sql.NullTime{Time: time.Now(), Valid: true},
 		CommentID:        commentID,
 		CommenterID:      commenterID,
@@ -2270,12 +2273,22 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID, threadID, topicID, la
 		GrantUserID:      sql.NullInt32{Int32: commenterID, Valid: true},
 	})
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 	if rowsAffected > 0 {
-	    return int64(commentID), nil
+		// Queue required remote-image cache fetches
+		for _, fetch := range queuedFetches {
+			cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
+		}
+		// Record thread-image associations
+		if err := cd.recordThreadImages(threadID, paths); err != nil {
+			log.Printf("record thread images append: %v", err)
+		}
+		// Reconstruct full text for search indexing
+		fullText := fmt.Sprintf("%s\n\n[hr]\n\n%s", comment.Text.String, text)
+		return int64(commentID), fullText, nil
 	}
-	return 0, nil
+	return 0, "", nil
 }
 
 func (cd *CoreData) CanAppendToComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -2371,7 +2384,7 @@ func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool
 	}
 
 	if cd.IsAdmin() {
-	    return true
+		return true
 	}
 
 	topicID := int32(0)
@@ -2380,13 +2393,13 @@ func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool
 	}
 
 	if cmt.IsOwner {
-	    return cd.HasGrant(cd.currentSection, "thread", "edit", cmt.ForumthreadID) ||
-	           cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments) ||
-	           (topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit", topicID))
+		return cd.HasGrant(cd.currentSection, "thread", "edit", cmt.ForumthreadID) ||
+			cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments) ||
+			(topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit", topicID))
 	} else {
-	    return cd.HasGrant(cd.currentSection, "thread", "edit-any", cmt.ForumthreadID) ||
-	           cd.HasGrant(cd.currentSection, "comment", "edit-any", cmt.Idcomments) ||
-	           (topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit-any", topicID))
+		return cd.HasGrant(cd.currentSection, "thread", "edit-any", cmt.ForumthreadID) ||
+			cd.HasGrant(cd.currentSection, "comment", "edit-any", cmt.Idcomments) ||
+			(topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit-any", topicID))
 	}
 }
 

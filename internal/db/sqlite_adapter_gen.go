@@ -4117,6 +4117,7 @@ func (s *sqliteQuerier) AppendCommentInSectionForCommenter(ctx context.Context, 
 		CommentID:        int64(arg.CommentID),
 		CommenterID:      int64(arg.CommenterID),
 		ForumthreadID:    int64(arg.ForumthreadID),
+		AppendWindowMins: int64(arg.AppendWindowMins),
 		Section:          arg.Section,
 		ItemType:         arg.ItemType,
 		ItemID:           sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
@@ -4127,16 +4128,8 @@ func (s *sqliteQuerier) AppendCommentInSectionForCommenter(ctx context.Context, 
 	    sqliteArg.Text = val
 	} else if val, ok := arg.Text.(string); ok {
 	    sqliteArg.Text = sql.NullString{String: val, Valid: true}
-	}
-
-	if val, ok := arg.AppendWindowMins.(int64); ok {
-	    sqliteArg.AppendWindowMins = val
-	} else if val, ok := arg.AppendWindowMins.(int32); ok {
-	    sqliteArg.AppendWindowMins = int64(val)
-	} else if val, ok := arg.AppendWindowMins.(int); ok {
-	    sqliteArg.AppendWindowMins = int64(val)
-	} else if val, ok := arg.AppendWindowMins.(float64); ok {
-	    sqliteArg.AppendWindowMins = int64(val)
+	} else if val, ok := arg.Text.(*string); ok && val != nil {
+	    sqliteArg.Text = sql.NullString{String: *val, Valid: true}
 	}
 
 	res, err := s.q.AppendCommentInSectionForCommenter(ctx, sqliteArg)

@@ -157,7 +157,7 @@ WHERE c.idcomments = ?
       SELECT 1 FROM content_read_markers crm
       WHERE crm.item = 'thread'
         AND crm.item_id = c.forumthread_id
-        AND crm.user_id != ?
+        AND crm.user_id != c.users_idusers
         AND crm.last_comment_id >= c.idcomments
   )
   AND EXISTS (
@@ -195,7 +195,6 @@ func (q *Queries) AppendCommentInSectionForCommenter(ctx context.Context, arg Ap
 		arg.CommenterID,
 		arg.ForumthreadID,
 		arg.AppendWindowMins,
-		arg.CommenterID,
 		arg.Section,
 		arg.ItemType,
 		arg.ItemID,

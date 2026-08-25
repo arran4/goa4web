@@ -202,13 +202,3 @@ func openReplyThreadTestDatabase(t *testing.T) *sql.DB {
 	t.Cleanup(func() { _ = database.Close() })
 	return database
 }
-
-func openReplyThreadTestDatabaseSQLite(t *testing.T) *sql.DB {
-	t.Helper()
-	// Using file::memory:?cache=shared instead of just :memory: for concurrent accesses
-	db, err := sql.Open("sqlite", "file:"+t.Name()+"?mode=memory&cache=shared")
-	if err != nil {
-		t.Fatalf("open sqlite: %v", err)
-	}
-	return db
-}

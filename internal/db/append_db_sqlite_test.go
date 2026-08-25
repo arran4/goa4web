@@ -131,3 +131,13 @@ func TestAppendCommentConcurrencySQLite(t *testing.T) {
 		t.Errorf("missing append 2 in: %q", finalText)
 	}
 }
+
+func openReplyThreadTestDatabaseSQLite(t *testing.T) *sql.DB {
+	t.Helper()
+	// Using file::memory:?cache=shared instead of just :memory: for concurrent accesses
+	db, err := sql.Open("sqlite", "file:"+t.Name()+"?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	return db
+}

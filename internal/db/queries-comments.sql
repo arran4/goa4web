@@ -306,7 +306,7 @@ WHERE c.idcomments = sqlc.arg(comment_id)
       SELECT 1 FROM content_read_markers crm
       WHERE crm.item = 'thread'
         AND crm.item_id = c.forumthread_id
-        AND crm.user_id != sqlc.arg(commenter_id)
+        AND crm.user_id != c.users_idusers
         AND crm.last_comment_id >= c.idcomments
   )
   AND EXISTS (

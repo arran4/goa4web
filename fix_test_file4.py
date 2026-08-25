@@ -1,4 +1,6 @@
-package forum
+import sys
+
+new_content = """package forum
 
 import (
 	"context"
@@ -20,7 +22,7 @@ import (
 )
 
 type mockQuerier struct {
-	*db.QuerierStub
+	*testhelpers.QuerierStub
 	GetCommentByIdFn func(ctx context.Context, id int32) (*db.Comment, error)
 	AppendCommentInSectionForCommenterFn func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error)
 	AppendCommentInSectionForCommenterCalls []db.AppendCommentInSectionForCommenterParams
@@ -203,19 +205,7 @@ func TestForumPostAppend_Fallback(t *testing.T) {
 		}
 	})
 }
+"""
 
-func (m *mockQuerier) GetCommentByIdForUser(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
-    if m.GetCommentByIdFn != nil {
-        comment, err := m.GetCommentByIdFn(ctx, arg.ID)
-        if err != nil || comment == nil {
-            return nil, err
-        }
-        return &db.GetCommentByIdForUserRow{
-            Idcomments: comment.Idcomments,
-            ForumthreadID: comment.ForumthreadID,
-            UsersIdusers: comment.UsersIdusers,
-            Text: comment.Text,
-        }, nil
-    }
-    return &db.GetCommentByIdForUserRow{Idcomments: arg.ID}, nil
-}
+with open("handlers/forum/forum_post_append_test.go", "w") as f:
+    f.write(new_content)

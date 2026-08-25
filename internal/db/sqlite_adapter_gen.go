@@ -4112,18 +4112,34 @@ func (s *sqliteQuerier) AdminWritingCategoryCounts(ctx context.Context) ([]*Admi
 }
 
 func (s *sqliteQuerier) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
-	res, err := s.q.AppendCommentInSectionForCommenter(ctx, dbsqlite.AppendCommentInSectionForCommenterParams{
-		Text:             arg.Text,
+	sqliteArg := dbsqlite.AppendCommentInSectionForCommenterParams{
 		Written:          arg.Written,
 		CommentID:        int64(arg.CommentID),
 		CommenterID:      int64(arg.CommenterID),
 		ForumthreadID:    int64(arg.ForumthreadID),
-		AppendWindowMins: arg.AppendWindowMins,
 		Section:          arg.Section,
 		ItemType:         arg.ItemType,
 		ItemID:           sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
 		GrantUserID:      sql.NullInt64{Int64: int64(arg.GrantUserID.Int32), Valid: arg.GrantUserID.Valid},
-	})
+	}
+
+	if val, ok := arg.Text.(sql.NullString); ok {
+	    sqliteArg.Text = val
+	} else if val, ok := arg.Text.(string); ok {
+	    sqliteArg.Text = sql.NullString{String: val, Valid: true}
+	}
+
+	if val, ok := arg.AppendWindowMins.(int64); ok {
+	    sqliteArg.AppendWindowMins = val
+	} else if val, ok := arg.AppendWindowMins.(int32); ok {
+	    sqliteArg.AppendWindowMins = int64(val)
+	} else if val, ok := arg.AppendWindowMins.(int); ok {
+	    sqliteArg.AppendWindowMins = int64(val)
+	} else if val, ok := arg.AppendWindowMins.(float64); ok {
+	    sqliteArg.AppendWindowMins = int64(val)
+	}
+
+	res, err := s.q.AppendCommentInSectionForCommenter(ctx, sqliteArg)
 	if err != nil {
 		return 0, err
 	}
@@ -10948,10 +10964,11 @@ func (s *sqliteQuerier) UpsertSchedulerState(ctx context.Context, arg UpsertSche
 }
 
 func (s *sqliteQuerier) HasOtherUserReadItemAtOrBeyond(ctx context.Context, arg HasOtherUserReadItemAtOrBeyondParams) (bool, error) {
-	return s.q.HasOtherUserReadItemAtOrBeyond(ctx, dbsqlite.HasOtherUserReadItemAtOrBeyondParams{
+	val, err := s.q.HasOtherUserReadItemAtOrBeyond(ctx, dbsqlite.HasOtherUserReadItemAtOrBeyondParams{
 		Item:          arg.Item,
 		ItemID:        int64(arg.ItemID),
 		UserID:        int64(arg.UserID),
 		LastCommentID: int64(arg.LastCommentID),
 	})
+	return val > 0, err
 }

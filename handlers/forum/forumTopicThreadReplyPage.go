@@ -201,6 +201,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	res, err := performForumReply(cd, uid, threadRow, topicRow, int32(languageId), text)
 	if err != nil {
 		log.Printf("Error posting thread reply: %v", err)
+		cd.SetCurrentError(err.Error())
 		if r.Form == nil {
 			r.Form = make(url.Values)
 		}

@@ -191,7 +191,6 @@ func TestCanAppendToComment(t *testing.T) {
 			} else {
 				cd.currentTopicID = 50
 				stub.GetForumTopicByIdFn = func(ctx context.Context, idforumtopic int32) (*db.Forumtopic, error) {
-					return &db.Forumtopic{Handler: "private"}, nil
 					if idforumtopic == 50 {
 						return &db.Forumtopic{Handler: "forum"}, nil
 					}

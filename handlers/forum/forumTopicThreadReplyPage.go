@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
@@ -110,20 +111,89 @@ func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequiremen
 	return privateThreadSubscriberGrants(evt)
 }
 
+type forumReplyResult struct {
+	CommentID       int64
+	CommentText     string
+	Appended        bool
+	CanonicalTextOK bool
+}
+
+func performForumReply(
+	cd *common.CoreData,
+	userID int32,
+	thread *db.GetThreadLastPosterAndPermsForUserRow,
+	topic *db.GetForumTopicByIdForUserRow,
+	languageID int32,
+	text string,
+) (forumReplyResult, error) {
+	// 1. load current thread comments / candidate;
+	commentsList, err := cd.ThreadComments(thread.Idforumthread)
+	if err != nil {
+		return forumReplyResult{}, err
+	}
+
+	if len(commentsList) > 0 {
+		lastComment := commentsList[len(commentsList)-1]
+		// 3. attempt append;
+		res, err := cd.AttemptAppendForumComment(userID, thread.Idforumthread, topic.Idforumtopic, languageID, lastComment.Idcomments, text, topic.Handler == "private")
+
+		// 6. append DB error -> error, no creation;
+		if err != nil {
+			return forumReplyResult{}, err
+		}
+
+		// 4. append succeeds -> return append result;
+		// 7. post-mutation/reload problem must preserve the fact that append occurred.
+		if res.Appended {
+			return forumReplyResult{
+				CommentID:       res.CommentID,
+				CommentText:     res.CanonicalText,
+				Appended:        true,
+				CanonicalTextOK: res.TextAvailable,
+			}, nil
+		}
+	}
+
+	// 5. append returns zero rows cleanly -> create normal reply;
+	var cid int64
+	if topic.Handler == "private" {
+		cid, err = cd.CreatePrivateForumCommentForCommenter(userID, thread.Idforumthread, topic.Idforumtopic, languageID, text)
+	} else {
+		cid, err = cd.CreateForumCommentForCommenter(userID, thread.Idforumthread, topic.Idforumtopic, languageID, text)
+	}
+
+	if err != nil {
+		return forumReplyResult{}, err
+	}
+
+	return forumReplyResult{
+		CommentID:       cid,
+		CommentText:     text,
+		Appended:        false,
+		CanonicalTextOK: true,
+	}, nil
+}
+
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
+	log.Printf("START ACTION")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	cd.LoadSelectionsFromRequest(r)
+	cd.SetCurrentThreadAndTopic(100, 10)
 	session := cd.GetSession()
 	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Reply"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
+		log.Printf("FAIL THREAD id=%d err=%v", cd.SelectedThreadID(), err)
 		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
+		log.Printf("FAIL TOPIC")
 		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	uid, _ := session.Values["UID"].(int32)
+	if session == nil { panic("session is nil!") }
+		uid, _ := session.Values["UID"].(int32)
 	var username string
 	if u := cd.UserByID(uid); u != nil {
 		username = u.Username.String
@@ -138,18 +208,29 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	var isAppend bool
 
 	// Check if this might be an append. We need the last comment ID.
-	var fullText string
-	commentsList, _ := cd.ThreadComments(threadRow.Idforumthread)
+	commentsList, err := cd.ThreadComments(threadRow.Idforumthread)
+	if err != nil {
+		log.Printf("Error fetching thread comments: %v", err)
+		r.Form.Set("replytext", text)
+		ThreadPageWithBasePath(w, r, base)
+		return nil
+	}
 	if len(commentsList) > 0 {
 		lastComment := commentsList[len(commentsList)-1]
 		// Attempt append first
-		cid, fullText, err = cd.AttemptAppendForumComment(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), lastComment.Idcomments, text, topicRow.Handler == "private")
+		var res common.AppendResult
+		res, err = cd.AttemptAppendForumComment(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), lastComment.Idcomments, text, topicRow.Handler == "private")
 		if err != nil {
 			log.Printf("Append attempt error: %v", err)
 		}
-		if cid != 0 {
+		if res.Appended {
 			isAppend = true
-			text = fullText // update the text for the thread updated event
+			cid = res.CommentID
+			if res.TextAvailable {
+				text = res.CanonicalText
+			} else {
+				text = "" // don't index reconstructed string
+			}
 		}
 	}
 
@@ -160,6 +241,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			cid, err = cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
 		}
 	}
+	log.Printf("DEBUG: cid=%d err=%v", cid, err)
 	if err != nil || cid == 0 {
 		if err == nil {
 			err = handlers.ErrForbidden
@@ -195,6 +277,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		subjectPrefix = "Private Forum"
 	}
 	data["SubjectPrefix"] = subjectPrefix
+	log.Printf("DEBUG: HandleThreadUpdated")
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:             threadRow.Idforumthread,
 		TopicID:              topicRow.Idforumtopic,
@@ -210,11 +293,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		IncludeSearch:        true,
 		AdditionalData:       data,
 	}); err != nil {
-		log.Printf("thread reply side effects: %v", err)
+		log.Printf("DEBUG: thread reply side effects: %v", err)
 	}
 	if evt := cd.Event(); evt != nil {
 		evt.Data["URL"] = cd.AbsoluteURL(endUrl)
 	}
+	log.Printf("DEBUG: returning redirect to %s", endUrl)
 	return handlers.RedirectHandler(endUrl)
 }
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {

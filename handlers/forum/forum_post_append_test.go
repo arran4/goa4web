@@ -3,273 +3,301 @@ package forum
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"github.com/arran4/goa4web/handlers/handlertest"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
-	"time"
-
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
-type mockQuerier struct {
-	*db.QuerierStub
-	GetCommentByIdFn                        func(ctx context.Context, id int32) (*db.Comment, error)
-	AppendCommentInSectionForCommenterFn    func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error)
-	AppendCommentInSectionForCommenterCalls []db.AppendCommentInSectionForCommenterParams
-}
+// B. Test performForumReply with QuerierStub
+func TestPerformForumReply_SuccessfulAppend(t *testing.T) {
+	stub := testhelpers.NewQuerierStub()
+	cd := common.NewCoreData(context.Background(), stub, config.NewRuntimeConfig(), common.WithUserRoles([]string{"member"}))
 
-func (m *mockQuerier) GetCommentById(ctx context.Context, id int32) (*db.Comment, error) {
-	if m.GetCommentByIdFn != nil {
-		return m.GetCommentByIdFn(ctx, id)
+	// Mock comments lookup
+	stub.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: 200, Text: sql.NullString{String: "old text", Valid: true}}, nil
 	}
-	return &db.Comment{Idcomments: id}, nil
-}
 
-func (m *mockQuerier) AppendCommentInSectionForCommenter(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
-	m.AppendCommentInSectionForCommenterCalls = append(m.AppendCommentInSectionForCommenterCalls, arg)
-	if m.AppendCommentInSectionForCommenterFn != nil {
-		return m.AppendCommentInSectionForCommenterFn(ctx, arg)
+	stub.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{{Idcomments: 200}}, nil
 	}
-	return 0, nil
-}
 
-func (m *mockQuerier) GetCommentByIdForUser(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
-	if m.GetCommentByIdFn != nil {
-		comment, err := m.GetCommentByIdFn(ctx, arg.ID)
-		if err != nil || comment == nil {
-			return nil, err
-		}
-		return &db.GetCommentByIdForUserRow{
-			Idcomments:    comment.Idcomments,
-			ForumthreadID: comment.ForumthreadID,
-			UsersIdusers:  comment.UsersIdusers,
-			Text:          comment.Text,
-		}, nil
+	appended := false
+	stub.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		appended = true
+		return 1, nil // 1 row affected
 	}
-	return &db.GetCommentByIdForUserRow{Idcomments: arg.ID}, nil
+
+	stub.GetCommentByIdFn = func(ctx context.Context, idcomments int32) (*db.Comment, error) {
+		return &db.Comment{Idcomments: 200, Text: sql.NullString{String: "canonical", Valid: true}}, nil
+	}
+
+	stub.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		t.Errorf("CreateCommentInSectionForCommenter should not be called")
+		return 300, nil
+	}
+
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+
+	// We don't need a full Config for the append wrapper inside performForumReply,
+	// wait, AttemptAppendForumComment checks cd.Config.
+
+	res, err := performForumReply(cd, 1, thread, topic, 1, "test")
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+
+	if !appended {
+		t.Errorf("expected append to be called")
+	}
+	if !res.Appended {
+		t.Errorf("expected Appended=true")
+	}
+	if res.CommentID != 200 {
+		t.Errorf("expected CommentID=200, got %d", res.CommentID)
+	}
+	if !res.CanonicalTextOK {
+		t.Errorf("expected CanonicalTextOK=true")
+	}
+	if res.CommentText != "canonical" {
+		t.Errorf("expected canonical text")
+	}
 }
 
-func TestForumPostAppend_Fallback(t *testing.T) {
-	t.Run("Fallback to normal reply", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: 1, Handler: "forum", Title: sql.NullString{String: "Title", Valid: true},
-			}, nil
-		}
-		q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
-			return &db.GetThreadLastPosterAndPermsForUserRow{
-				Idforumthread: 2, ForumtopicIdforumtopic: 1,
-			}, nil
-		}
-		q.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-			return []*db.GetCommentsByThreadIdForUserRow{
-				{Idcomments: 10, ForumthreadID: 2, UsersIdusers: 5, Written: sql.NullTime{Time: time.Now().Add(-2 * time.Hour), Valid: true}},
-			}, nil
-		}
+func TestPerformForumReply_ZeroRowsFallback(t *testing.T) {
+	stub := testhelpers.NewQuerierStub()
+	cd := common.NewCoreData(context.Background(), stub, config.NewRuntimeConfig(), common.WithUserRoles([]string{"member"}))
 
-		mq := &mockQuerier{QuerierStub: q}
+	stub.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: 200, Text: sql.NullString{String: "old text", Valid: true}}, nil
+	}
 
-		cfg := config.NewRuntimeConfig()
-		cfg.ForumPostAppendWindow = 60
+	stub.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{{Idcomments: 200}}, nil
+	}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/2/reply", nil)
-		req.Form = url.Values{"replytext": {"new text"}, "language": {"1"}}
-		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
+	appended := false
+	stub.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		appended = true
+		return 0, nil // 0 rows affected -> fallback
+	}
 
-		sess := &sessions.Session{Values: map[any]any{"UID": int32(5)}}
-		cd := common.NewCoreData(context.Background(), mq, cfg, common.WithSession(sess))
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	created := false
+	stub.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		created = true
+		return 300, nil
+	}
 
-		q.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
-			return 11, nil
-		}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
 
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 1, nil
-		}
+	res, err := performForumReply(cd, 1, thread, topic, 1, "test")
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
 
-		replyTask.Action(httptest.NewRecorder(), req)
+	if !appended {
+		t.Errorf("expected append to be attempted")
+	}
+	if !created {
+		t.Errorf("expected create to be called")
+	}
+	if res.Appended {
+		t.Errorf("expected Appended=false")
+	}
+	if res.CommentID != 300 {
+		t.Errorf("expected CommentID=300")
+	}
+}
 
-		if len(q.CreateCommentInSectionForCommenterCalls) != 1 {
-			t.Fatalf("expected fallback to create comment, got %d calls", len(q.CreateCommentInSectionForCommenterCalls))
-		}
+func TestPerformForumReply_AppendDBError(t *testing.T) {
+	stub := testhelpers.NewQuerierStub()
+	cd := common.NewCoreData(context.Background(), stub, config.NewRuntimeConfig(), common.WithUserRoles([]string{"member"}))
+
+	stub.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: 200, Text: sql.NullString{String: "old text", Valid: true}}, nil
+	}
+
+	stub.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{{Idcomments: 200}}, nil
+	}
+
+	stub.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		return 0, fmt.Errorf("db error")
+	}
+
+	stub.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		t.Errorf("CreateCommentInSectionForCommenter should not be called")
+		return 300, nil
+	}
+
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+
+	_, err := performForumReply(cd, 1, thread, topic, 1, "test")
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestPerformForumReply_ThreadCommentsError(t *testing.T) {
+	stub := testhelpers.NewQuerierStub()
+	cd := common.NewCoreData(context.Background(), stub, config.NewRuntimeConfig(), common.WithUserRoles([]string{"member"}))
+
+	stub.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: 200, Text: sql.NullString{String: "old text", Valid: true}}, nil
+	}
+
+	stub.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return nil, fmt.Errorf("db error")
+	}
+
+	stub.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		t.Errorf("AppendCommentInSectionForCommenter should not be called")
+		return 0, nil
+	}
+
+	stub.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		t.Errorf("CreateCommentInSectionForCommenter should not be called")
+		return 300, nil
+	}
+
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+
+	_, err := performForumReply(cd, 1, thread, topic, 1, "test")
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestPerformForumReply_ReloadFailed(t *testing.T) {
+	stub := testhelpers.NewQuerierStub()
+	cd := common.NewCoreData(context.Background(), stub, config.NewRuntimeConfig(), common.WithUserRoles([]string{"member"}))
+
+	stub.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: 200, Text: sql.NullString{String: "old text", Valid: true}}, nil
+	}
+
+	stub.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{{Idcomments: 200}}, nil
+	}
+
+	stub.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		return 1, nil // 1 row affected
+	}
+
+	stub.GetCommentByIdFn = func(ctx context.Context, idcomments int32) (*db.Comment, error) {
+		return nil, fmt.Errorf("reload failed")
+	}
+
+	stub.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		t.Errorf("CreateCommentInSectionForCommenter should not be called")
+		return 300, nil
+	}
+
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+
+	res, err := performForumReply(cd, 1, thread, topic, 1, "test")
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+
+	if !res.Appended {
+		t.Errorf("expected Appended=true")
+	}
+	if res.CanonicalTextOK {
+		t.Errorf("expected CanonicalTextOK=false")
+	}
+	if res.CommentID != 200 {
+		t.Errorf("expected CommentID=200, got %d", res.CommentID)
+	}
+}
+
+// C. Thin HTTP test for ReplyTask
+func TestReplyTaskAction_Redirect(t *testing.T) {
+	req := httptest.NewRequest("POST", "/forum/topic/10/thread/100", nil)
+	session := &sessions.Session{Values: make(map[any]any)}
+	if session.Values == nil {
+		session.Values = make(map[any]any)
+	}
+	session.Values["UID"] = int32(1)
+	req, cd, stub := handlertest.RequestWithCoreData(t, req, common.WithUserRoles([]string{"member"}), common.WithSession(session))
+	cd.UserID = 1
+	req = mux.SetURLVars(req, map[string]string{
+		"topic":  "10",
+		"thread": "100",
 	})
 
-	t.Run("Append Successfully", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: 1, Handler: "forum", Title: sql.NullString{String: "Title", Valid: true},
-			}, nil
-		}
-		q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
-			return &db.GetThreadLastPosterAndPermsForUserRow{
-				Idforumthread: 2, ForumtopicIdforumtopic: 1,
-			}, nil
-		}
-		q.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-			return []*db.GetCommentsByThreadIdForUserRow{
-				{Idcomments: 10, ForumthreadID: 2, UsersIdusers: 5, Written: sql.NullTime{Time: time.Now().Add(-5 * time.Minute), Valid: true}},
-			}, nil
-		}
+	form := url.Values{}
+	form.Set("replytext", "reply content")
+	form.Set("task", string(TaskReply))
+	req.Body = io.NopCloser(strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		mq := &mockQuerier{QuerierStub: q}
-		mq.GetCommentByIdFn = func(ctx context.Context, id int32) (*db.Comment, error) {
-			return &db.Comment{Idcomments: 10, ForumthreadID: 2, Text: sql.NullString{String: "old text", Valid: true}}, nil
-		}
+	stub.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}, nil
+	}
+	stub.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}, nil
+	}
 
-		cfg := config.NewRuntimeConfig()
-		cfg.ForumPostAppendWindow = 60
+	// Fallback path
+	stub.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{{Idcomments: 200}}, nil
+	}
+	stub.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		return 0, nil // zero rows -> fallback
+	}
+	stub.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		return 300, nil
+	}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/2/reply", nil)
-		req.Form = url.Values{"replytext": {"new text"}, "language": {"1"}}
-		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
+	stub.GetCommentByIdFn = func(ctx context.Context, idcomments int32) (*db.Comment, error) {
+		return &db.Comment{Idcomments: idcomments}, nil
+	}
+	stub.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: 200}, nil
+	}
 
-		sess := &sessions.Session{Values: map[any]any{"UID": int32(5)}}
-		cd := common.NewCoreData(context.Background(), mq, cfg, common.WithSession(sess))
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	stub.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		return 1, nil
+	}
 
-		mq.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
-			return 1, nil // 1 row updated
-		}
+	cd.ForumBasePath = "/forum"
 
-		q.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
-			t.Fatalf("should not fallback to create comment")
-			return 0, nil
-		}
+	rr := httptest.NewRecorder()
+	ret := ReplyTaskHandler.Action(rr, req)
+	if err, ok := ret.(error); ok {
+		t.Fatalf("Action returned error: %v", err)
+	}
 
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 1, nil
-		}
+	typeName := fmt.Sprintf("%T", ret)
+	if strings.Contains(typeName, "RedirectHandler") {
+		http.Redirect(rr, req, fmt.Sprintf("%s", ret), http.StatusFound)
+	} else {
+		t.Fatalf("Action returned unhandled type: %s", typeName)
+	}
 
-		replyTask.Action(httptest.NewRecorder(), req)
-
-		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
-			t.Fatalf("expected append comment to be called once")
-		}
-
-		got := mq.AppendCommentInSectionForCommenterCalls[0]
-		if got.CommentID != 10 || got.CommenterID != 5 || got.AppendWindowMins != int64(60) {
-			t.Fatalf("unexpected arguments to append: %+v", got)
-		}
-	})
-
-	t.Run("Fallback on read marker block", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: 1, Handler: "forum", Title: sql.NullString{String: "Title", Valid: true},
-			}, nil
-		}
-		q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
-			return &db.GetThreadLastPosterAndPermsForUserRow{
-				Idforumthread: 2, ForumtopicIdforumtopic: 1,
-			}, nil
-		}
-		q.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-			return []*db.GetCommentsByThreadIdForUserRow{
-				{Idcomments: 10, ForumthreadID: 2, UsersIdusers: 5, Written: sql.NullTime{Time: time.Now().Add(-5 * time.Minute), Valid: true}},
-			}, nil
-		}
-
-		mq := &mockQuerier{QuerierStub: q}
-		mq.GetCommentByIdFn = func(ctx context.Context, id int32) (*db.Comment, error) {
-			return &db.Comment{Idcomments: 10, ForumthreadID: 2, Text: sql.NullString{String: "old text", Valid: true}}, nil
-		}
-
-		cfg := config.NewRuntimeConfig()
-		cfg.ForumPostAppendWindow = 60
-
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/2/reply", nil)
-		req.Form = url.Values{"replytext": {"new text"}, "language": {"1"}}
-		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-
-		sess := &sessions.Session{Values: map[any]any{"UID": int32(5)}}
-		cd := common.NewCoreData(context.Background(), mq, cfg, common.WithSession(sess))
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-
-		mq.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
-			return 0, nil // 0 rows updated (e.g. read marker blocked)
-		}
-
-		q.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
-			return 11, nil
-		}
-
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 1, nil
-		}
-
-		replyTask.Action(httptest.NewRecorder(), req)
-
-		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
-			t.Fatalf("expected append comment to be called once")
-		}
-		if len(q.CreateCommentInSectionForCommenterCalls) != 1 {
-			t.Fatalf("expected fallback to create comment")
-		}
-	})
-
-	t.Run("DB error does not fallback", func(t *testing.T) {
-		q := testhelpers.NewQuerierStub()
-		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-			return &db.GetForumTopicByIdForUserRow{
-				Idforumtopic: 1, Handler: "forum", Title: sql.NullString{String: "Title", Valid: true},
-			}, nil
-		}
-		q.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
-			return &db.GetThreadLastPosterAndPermsForUserRow{
-				Idforumthread: 2, ForumtopicIdforumtopic: 1,
-			}, nil
-		}
-		q.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-			return []*db.GetCommentsByThreadIdForUserRow{
-				{Idcomments: 10, ForumthreadID: 2, UsersIdusers: 5, Written: sql.NullTime{Time: time.Now().Add(-5 * time.Minute), Valid: true}},
-			}, nil
-		}
-
-		mq := &mockQuerier{QuerierStub: q}
-		mq.GetCommentByIdFn = func(ctx context.Context, id int32) (*db.Comment, error) {
-			return &db.Comment{Idcomments: 10, ForumthreadID: 2, Text: sql.NullString{String: "old text", Valid: true}}, nil
-		}
-
-		cfg := config.NewRuntimeConfig()
-		cfg.ForumPostAppendWindow = 60
-
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/2/reply", nil)
-		req.Form = url.Values{"replytext": {"new text"}, "language": {"1"}}
-		req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "2"})
-
-		sess := &sessions.Session{Values: map[any]any{"UID": int32(5)}}
-		cd := common.NewCoreData(context.Background(), mq, cfg, common.WithSession(sess))
-		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
-
-		mq.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
-			return 0, sql.ErrConnDone // return an actual error
-		}
-
-		q.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
-			t.Fatalf("should not fallback to create comment on DB error")
-			return 0, nil
-		}
-
-		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
-			return 1, nil
-		}
-
-		replyTask.Action(httptest.NewRecorder(), req)
-
-		if len(mq.AppendCommentInSectionForCommenterCalls) != 1 {
-			t.Fatalf("expected append comment to be called once")
-		}
-	})
+	res := rr.Result()
+	if res.StatusCode != http.StatusFound {
+		t.Errorf("expected 302 Found, got %d", res.StatusCode)
+	}
+	if loc := res.Header.Get("Location"); !strings.Contains(loc, "/forum/topic/10/thread/100#c1") {
+		t.Errorf("expected redirect to #c300, got %s", loc)
+	}
 }

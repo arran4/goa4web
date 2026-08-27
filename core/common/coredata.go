@@ -2227,9 +2227,16 @@ func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID,
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionNews, consts.PermissionItemPost, postID, threadID, commenterID, languageID, text)
 }
 
-func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32, topicID int32, languageID int32, commentID int32, text string, isPrivate bool) (int64, string, error) {
+type AppendResult struct {
+	CommentID     int64
+	Appended      bool
+	CanonicalText string
+	TextAvailable bool
+}
+
+func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32, topicID int32, languageID int32, commentID int32, submittedText string, isPrivate bool) (AppendResult, error) {
 	if cd.queries == nil || cd.Config == nil {
-		return 0, "", nil
+		return AppendResult{}, nil
 	}
 	appendWindowMins := cd.Config.ForumPostAppendWindow
 	section := consts.PermissionSectionForum.String()
@@ -2242,22 +2249,22 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32,
 		itemID = threadID
 	}
 	if appendWindowMins <= 0 {
-		return 0, "", nil
+		return AppendResult{}, nil
 	}
 
 	// Preserve the normal image pipeline
 	var queuedFetches []queuedRemoteImageCacheFetch
-	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(submittedText)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
-		return 0, "", fmt.Errorf("parse images: %w", err)
+		return AppendResult{}, fmt.Errorf("parse images: %w", err)
 	}
 	comment, err := cd.CommentByID(commentID)
 	if err != nil || comment == nil {
-		return 0, "", fmt.Errorf("load comment: %w", err)
+		return AppendResult{}, fmt.Errorf("load comment: %w", err)
 	}
 	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
-		return 0, "", fmt.Errorf("validate images: %w", err)
+		return AppendResult{}, fmt.Errorf("validate images: %w", err)
 	}
 
 	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(cd.ctx, db.AppendCommentInSectionForCommenterParams{
@@ -2273,7 +2280,7 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32,
 		GrantUserID:      sql.NullInt32{Int32: commenterID, Valid: true},
 	})
 	if err != nil {
-		return 0, "", err
+		return AppendResult{}, err
 	}
 	if rowsAffected > 0 {
 		// Queue required remote-image cache fetches
@@ -2286,12 +2293,23 @@ func (cd *CoreData) AttemptAppendForumComment(commenterID int32, threadID int32,
 		}
 		// Reload authoritative post-update text from the DB for search indexing
 		reloadedComment, err := cd.queries.GetCommentById(cd.ctx, commentID)
-		if err != nil {
-			return 0, "", fmt.Errorf("reload comment after append: %w", err)
+		if err == nil {
+			return AppendResult{
+				CommentID:     int64(commentID),
+				Appended:      true,
+				CanonicalText: reloadedComment.Text.String,
+				TextAvailable: true,
+			}, nil
 		}
-		return int64(commentID), reloadedComment.Text.String, nil
+		// Fallback if the reload fails but update succeeded
+		return AppendResult{
+			CommentID:     int64(commentID),
+			Appended:      true,
+			CanonicalText: "",
+			TextAvailable: false,
+		}, nil
 	}
-	return 0, "", nil
+	return AppendResult{}, nil
 }
 
 func (cd *CoreData) CanAppendToComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
@@ -2343,9 +2361,10 @@ func (cd *CoreData) CanAppendToComment(cmt *db.GetCommentsByThreadIdForUserRow) 
 	}
 
 	// Read marker check: block append if someone else has read this comment or beyond.
+	// The read marker for a thread is always stored against Item: "thread", ItemID: cmt.ForumthreadID.
 	hasRead, err := cd.queries.HasOtherUserReadItemAtOrBeyond(cd.ctx, db.HasOtherUserReadItemAtOrBeyondParams{
-		Item:          itemType,
-		ItemID:        itemID,
+		Item:          consts.PermissionItemThread.String(),
+		ItemID:        cmt.ForumthreadID,
 		UserID:        cd.UserID,
 		LastCommentID: cmt.Idcomments,
 	})
@@ -2390,10 +2409,10 @@ func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkI
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionLinker, consts.PermissionItemLink, linkID, threadID, commenterID, languageID, text)
 }
 
-// CanEditComment reports whether the current user may edit the supplied
-// comment.
-func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-	if cmt == nil {
+// CanEditCommentTarget reports whether the current user may edit the comment
+// identified by the target parameters, centralizing edit authorization policy.
+func (cd *CoreData) CanEditCommentTarget(commentID, threadID, authorID int32) bool {
+	if cd == nil || cd.UserID == 0 {
 		return false
 	}
 
@@ -2401,20 +2420,42 @@ func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool
 		return true
 	}
 
-	topicID := int32(0)
-	if cd.currentTopicID != 0 {
-		topicID = cd.currentTopicID
+	topic, err := cd.CurrentTopic()
+	if err != nil || topic == nil {
+		return false
 	}
 
-	if cmt.IsOwner {
-		return cd.HasGrant(cd.currentSection, "thread", "edit", cmt.ForumthreadID) ||
-			cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments) ||
-			(topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit", topicID))
-	} else {
-		return cd.HasGrant(cd.currentSection, "thread", "edit-any", cmt.ForumthreadID) ||
-			cd.HasGrant(cd.currentSection, "comment", "edit-any", cmt.Idcomments) ||
-			(topicID != 0 && cd.HasGrant(cd.currentSection, "topic", "edit-any", topicID))
+	action := consts.PermissionActionEdit.String()
+	if authorID != cd.UserID {
+		action = "edit-any"
 	}
+
+	section := cd.currentSection
+	if section == "" {
+		section = "forum" // fallback
+	}
+
+	threadItem := "thread"
+	topicItem := "topic"
+
+	if topic.Handler == "private" {
+		section = consts.PermissionSectionPrivateForumThread.String()
+		threadItem = consts.PermissionItemThread.String()
+		topicItem = consts.PermissionItemThread.String() // fallback to thread for topic level if needed, but usually it's just thread
+	}
+
+	return cd.HasGrant(section, threadItem, action, threadID) ||
+		cd.HasGrant(section, "comment", action, commentID) ||
+		(topic.Idforumtopic != 0 && cd.HasGrant(section, topicItem, action, topic.Idforumtopic))
+}
+
+// CanEditComment reports whether the current user may edit the supplied
+// comment, acting as a thin adapter for UI templates.
+func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+	if cmt == nil {
+		return false
+	}
+	return cd.CanEditCommentTarget(cmt.Idcomments, cmt.ForumthreadID, cmt.UsersIdusers)
 }
 
 // CommentEditing returns true if the given comment is currently being edited.

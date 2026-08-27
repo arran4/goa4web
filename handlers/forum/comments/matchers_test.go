@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -25,6 +24,13 @@ func TestRequireCommentAuthor(t *testing.T) {
 		userID := int32(7)
 
 		q := testhelpers.NewQuerierStub()
+		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
+		}
+		q.GetForumTopicByIdFn = func(ctx context.Context, id int32) (*db.Forumtopic, error) {
+			return &db.Forumtopic{Idforumtopic: 1, Handler: "forum"}, nil
+		}
+
 		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 			Idcomments:    commentID,
 			ForumthreadID: threadID,
@@ -39,11 +45,15 @@ func TestRequireCommentAuthor(t *testing.T) {
 			return 0, sql.ErrNoRows
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "3"})
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3?comment=3", nil)
 
 		sess := &sessions.Session{Values: map[any]any{"UID": userID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
+		if v, ok := sess.Values["UID"].(int32); ok {
+			cd.UserID = v
+		}
+		cd.SetCurrentThreadAndTopic(5, 1)
+		cd.SetCurrentSection("forum")
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -58,7 +68,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		RequireCommentAuthor(handler).ServeHTTP(rr, req)
 
 		if !called {
-			t.Fatalf("expected downstream handler to be called")
+			t.Fatalf("expected downstream handler to be called. rr.Code=%d cd.UserID=%d", rr.Code, cd.UserID)
 		}
 		if rr.Code != http.StatusOK {
 			t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
@@ -87,6 +97,13 @@ func TestRequireCommentAuthor(t *testing.T) {
 		adminID := int32(12)
 
 		q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "thread", "edit-any"))
+		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
+		}
+		q.GetForumTopicByIdFn = func(ctx context.Context, id int32) (*db.Forumtopic, error) {
+			return &db.Forumtopic{Idforumtopic: 1, Handler: "forum"}, nil
+		}
+
 		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 			Idcomments:    commentID,
 			ForumthreadID: threadID,
@@ -94,11 +111,16 @@ func TestRequireCommentAuthor(t *testing.T) {
 			IsOwner:       false,
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "9"})
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9?comment=9", nil)
 
 		sess := &sessions.Session{Values: map[any]any{"UID": adminID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
+		cd.UserID = 7
+		if v, ok := sess.Values["UID"].(int32); ok {
+			cd.UserID = v
+		}
+		cd.SetCurrentThreadAndTopic(10, 1)
+		cd.SetCurrentSection("forum")
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -113,7 +135,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		RequireCommentAuthor(handler).ServeHTTP(rr, req)
 
 		if !called {
-			t.Fatalf("expected downstream handler to be called")
+			t.Fatalf("expected downstream handler to be called. rr.Code=%d cd.UserID=%d", rr.Code, cd.UserID)
 		}
 		if rr.Code != http.StatusOK {
 			t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)
@@ -145,6 +167,13 @@ func TestRequireCommentAuthor(t *testing.T) {
 		adminID := int32(17)
 
 		q := testhelpers.NewQuerierStub()
+		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
+		}
+		q.GetForumTopicByIdFn = func(ctx context.Context, id int32) (*db.Forumtopic, error) {
+			return &db.Forumtopic{Idforumtopic: 1, Handler: "forum"}, nil
+		}
+
 		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 			Idcomments:    commentID,
 			ForumthreadID: threadID,
@@ -155,11 +184,16 @@ func TestRequireCommentAuthor(t *testing.T) {
 			{Name: "administrator", IsAdmin: true},
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "13"})
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13?comment=13", nil)
 
 		sess := &sessions.Session{Values: map[any]any{"UID": adminID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
+		cd.UserID = 17
+		if v, ok := sess.Values["UID"].(int32); ok {
+			cd.UserID = v
+		}
+		cd.SetCurrentThreadAndTopic(15, 1)
+		cd.SetCurrentSection("forum")
 		cd.AdminMode = true
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
@@ -175,7 +209,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		RequireCommentAuthor(handler).ServeHTTP(rr, req)
 
 		if !called {
-			t.Fatalf("expected downstream handler to be called")
+			t.Fatalf("expected downstream handler to be called. rr.Code=%d cd.UserID=%d", rr.Code, cd.UserID)
 		}
 		if rr.Code != http.StatusOK {
 			t.Fatalf("expected status %d got %d", http.StatusOK, rr.Code)

@@ -149,7 +149,9 @@ WHERE c.idcomments = ?
   AND c.forumthread_id = ?
   AND c.written >= DATE_SUB(NOW(), INTERVAL CAST(? AS SIGNED) MINUTE)
   AND NOT EXISTS (
-      SELECT 1 FROM comments newer
+      SELECT 1 FROM (
+          SELECT idcomments, forumthread_id FROM comments
+      ) AS newer
       WHERE newer.forumthread_id = c.forumthread_id
         AND newer.idcomments > c.idcomments
   )

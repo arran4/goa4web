@@ -298,7 +298,9 @@ WHERE c.idcomments = sqlc.arg(comment_id)
   AND c.forumthread_id = sqlc.arg(forumthread_id)
   AND c.written >= DATE_SUB(NOW(), INTERVAL CAST(sqlc.arg(append_window_mins) AS SIGNED) MINUTE)
   AND NOT EXISTS (
-      SELECT 1 FROM comments newer
+      SELECT 1 FROM (
+          SELECT idcomments, forumthread_id FROM comments
+      ) AS newer
       WHERE newer.forumthread_id = c.forumthread_id
         AND newer.idcomments > c.idcomments
   )

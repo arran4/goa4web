@@ -175,25 +175,19 @@ func performForumReply(
 }
 
 func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
-	log.Printf("START ACTION")
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	cd.LoadSelectionsFromRequest(r)
-	cd.SetCurrentThreadAndTopic(100, 10)
 	session := cd.GetSession()
 	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Reply"
 	threadRow, err := cd.SelectedThread()
 	if err != nil || threadRow == nil {
-		log.Printf("FAIL THREAD id=%d err=%v", cd.SelectedThreadID(), err)
 		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	topicRow, err := cd.CurrentTopic()
 	if err != nil || topicRow == nil {
-		log.Printf("FAIL TOPIC")
 		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if session == nil { panic("session is nil!") }
-		uid, _ := session.Values["UID"].(int32)
+	uid, _ := session.Values["UID"].(int32)
 	var username string
 	if u := cd.UserByID(uid); u != nil {
 		username = u.Username.String
@@ -204,45 +198,25 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	var cid int64
-	var isAppend bool
-
-	// Check if this might be an append. We need the last comment ID.
-	commentsList, err := cd.ThreadComments(threadRow.Idforumthread)
+	res, err := performForumReply(cd, uid, threadRow, topicRow, int32(languageId), text)
 	if err != nil {
-		log.Printf("Error fetching thread comments: %v", err)
+		log.Printf("Error posting thread reply: %v", err)
+		if r.Form == nil {
+			r.Form = make(url.Values)
+		}
 		r.Form.Set("replytext", text)
 		ThreadPageWithBasePath(w, r, base)
 		return nil
 	}
-	if len(commentsList) > 0 {
-		lastComment := commentsList[len(commentsList)-1]
-		// Attempt append first
-		var res common.AppendResult
-		res, err = cd.AttemptAppendForumComment(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), lastComment.Idcomments, text, topicRow.Handler == "private")
-		if err != nil {
-			log.Printf("Append attempt error: %v", err)
-		}
-		if res.Appended {
-			isAppend = true
-			cid = res.CommentID
-			if res.TextAvailable {
-				text = res.CanonicalText
-			} else {
-				text = "" // don't index reconstructed string
-			}
-		}
+
+	cid := res.CommentID
+	if res.Appended && !res.CanonicalTextOK {
+		text = "" // do not index non-canonical text
+	} else if res.Appended {
+		text = res.CommentText
 	}
 
-	if !isAppend && err == nil {
-		if topicRow.Handler == "private" {
-			cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
-		} else {
-			cid, err = cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
-		}
-	}
-	log.Printf("DEBUG: cid=%d err=%v", cid, err)
-	if err != nil || cid == 0 {
+	if cid == 0 {
 		if err == nil {
 			err = handlers.ErrForbidden
 		}
@@ -277,7 +251,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		subjectPrefix = "Private Forum"
 	}
 	data["SubjectPrefix"] = subjectPrefix
-	log.Printf("DEBUG: HandleThreadUpdated")
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
 		ThreadID:             threadRow.Idforumthread,
 		TopicID:              topicRow.Idforumtopic,
@@ -290,7 +263,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ClearUnreadForOthers: true,
 		MarkThreadRead:       true,
 		IncludePostCount:     true,
-		IncludeSearch:        true,
+		IncludeSearch:        !res.Appended || res.CanonicalTextOK,
 		AdditionalData:       data,
 	}); err != nil {
 		log.Printf("DEBUG: thread reply side effects: %v", err)
@@ -298,7 +271,6 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if evt := cd.Event(); evt != nil {
 		evt.Data["URL"] = cd.AbsoluteURL(endUrl)
 	}
-	log.Printf("DEBUG: returning redirect to %s", endUrl)
 	return handlers.RedirectHandler(endUrl)
 }
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {

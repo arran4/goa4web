@@ -67,8 +67,8 @@ func requireGrantAllowed(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	match := &mux.RouteMatch{Vars: map[string]string{"news": "1"}}
-	if !RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
+	req = mux.SetURLVars(req, map[string]string{"news": "1"})
+	if !RequireGrantForPathInt("news", "post", "edit", "news")(req, nil) {
 		t.Fatalf("expected grant-based matcher to allow request")
 	}
 	if len(q.SystemCheckGrantCalls) != 1 {
@@ -99,8 +99,8 @@ func requireGrantDenied(t *testing.T) {
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
 
-	match := &mux.RouteMatch{Vars: map[string]string{"news": "2"}}
-	if RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
+	req = mux.SetURLVars(req, map[string]string{"news": "2"})
+	if RequireGrantForPathInt("news", "post", "edit", "news")(req, nil) {
 		t.Fatalf("expected grant-based matcher to reject request")
 	}
 	if len(q.SystemCheckGrantCalls) != 1 {

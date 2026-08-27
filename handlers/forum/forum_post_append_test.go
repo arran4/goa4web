@@ -49,8 +49,8 @@ func TestPerformForumReply_SuccessfulAppend(t *testing.T) {
 		return 300, nil
 	}
 
-	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 412}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 37, Handler: "forum"}
 
 	// We don't need a full Config for the append wrapper inside performForumReply,
 	// wait, AttemptAppendForumComment checks cd.Config.
@@ -101,8 +101,8 @@ func TestPerformForumReply_ZeroRowsFallback(t *testing.T) {
 		return 300, nil
 	}
 
-	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 412}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 37, Handler: "forum"}
 
 	res, err := performForumReply(cd, 1, thread, topic, 1, "test")
 	if err != nil {
@@ -144,8 +144,8 @@ func TestPerformForumReply_AppendDBError(t *testing.T) {
 		return 300, nil
 	}
 
-	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 412}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 37, Handler: "forum"}
 
 	_, err := performForumReply(cd, 1, thread, topic, 1, "test")
 	if err == nil {
@@ -175,8 +175,8 @@ func TestPerformForumReply_ThreadCommentsError(t *testing.T) {
 		return 300, nil
 	}
 
-	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 412}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 37, Handler: "forum"}
 
 	_, err := performForumReply(cd, 1, thread, topic, 1, "test")
 	if err == nil {
@@ -209,8 +209,8 @@ func TestPerformForumReply_ReloadFailed(t *testing.T) {
 		return 300, nil
 	}
 
-	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}
-	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}
+	thread := &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 412}
+	topic := &db.GetForumTopicByIdForUserRow{Idforumtopic: 37, Handler: "forum"}
 
 	res, err := performForumReply(cd, 1, thread, topic, 1, "test")
 	if err != nil {
@@ -230,7 +230,7 @@ func TestPerformForumReply_ReloadFailed(t *testing.T) {
 
 // C. Thin HTTP test for ReplyTask
 func TestReplyTaskAction_Redirect(t *testing.T) {
-	req := httptest.NewRequest("POST", "/forum/topic/10/thread/100", nil)
+	req := httptest.NewRequest("POST", "/forum/topic/37/thread/412", nil)
 	session := &sessions.Session{Values: make(map[any]any)}
 	if session.Values == nil {
 		session.Values = make(map[any]any)
@@ -239,8 +239,8 @@ func TestReplyTaskAction_Redirect(t *testing.T) {
 	req, cd, stub := handlertest.RequestWithCoreData(t, req, common.WithUserRoles([]string{"member"}), common.WithSession(session))
 	cd.UserID = 1
 	req = mux.SetURLVars(req, map[string]string{
-		"topic":  "10",
-		"thread": "100",
+		"topic":  "37",
+		"thread": "412",
 	})
 
 	form := url.Values{}
@@ -250,10 +250,10 @@ func TestReplyTaskAction_Redirect(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	stub.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
-		return &db.GetForumTopicByIdForUserRow{Idforumtopic: 10, Handler: "forum"}, nil
+		return &db.GetForumTopicByIdForUserRow{Idforumtopic: 37, Handler: "forum"}, nil
 	}
 	stub.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
-		return &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 100}, nil
+		return &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 412}, nil
 	}
 
 	// Fallback path
@@ -297,7 +297,7 @@ func TestReplyTaskAction_Redirect(t *testing.T) {
 	if res.StatusCode != http.StatusFound {
 		t.Errorf("expected 302 Found, got %d", res.StatusCode)
 	}
-	if loc := res.Header.Get("Location"); !strings.Contains(loc, "/forum/topic/10/thread/100#c1") {
+	if loc := res.Header.Get("Location"); !strings.Contains(loc, "/forum/topic/37/thread/412#c1") {
 		t.Errorf("expected redirect to #c300, got %s", loc)
 	}
 }

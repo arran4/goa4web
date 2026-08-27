@@ -142,23 +142,30 @@ func openReplyThreadTestDatabaseSQLite(t *testing.T) *sql.DB {
 	return db
 }
 
+func mustExec(t *testing.T, ctx context.Context, db *sql.DB, query string, args ...any) {
+	t.Helper()
+	if _, err := db.ExecContext(ctx, query, args...); err != nil {
+		t.Fatalf("setup exec failed: %v", err)
+	}
+}
+
 func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier, ctx context.Context) {
 	// Instead of using real queries (which might be missing in Querier stub or generated types),
 	// we will manually setup the DB via exec.
 
 	// Create user
-	_, _ = database.ExecContext(ctx, "INSERT INTO users (idusers, username) VALUES (?, ?)", 60, "poster")
-	_, _ = database.ExecContext(ctx, "INSERT INTO users (idusers, username) VALUES (?, ?)", 61, "reader")
+	mustExec(t, ctx, database, "INSERT INTO users (idusers, username) VALUES (?, ?)", 60, "poster")
+	mustExec(t, ctx, database, "INSERT INTO users (idusers, username) VALUES (?, ?)", 61, "reader")
 
 	// Create thread
-	_, _ = database.ExecContext(ctx, "INSERT INTO forumthread (idforumthread, poster, language_id) VALUES (?, ?, ?)", 1000, 60, 1)
+	mustExec(t, ctx, database, "INSERT INTO forumthread (idforumthread, firstpost, lastposter, forumtopic_idforumtopic) VALUES (?, ?, ?, ?)", 1000, 2000, 60, 30)
 
 	// Create comment
-	_, _ = database.ExecContext(ctx, "INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (?, ?, ?, ?, '2030-01-01 12:00:00')", 2000, 1000, 60, "Initial post")
-	_, _ = database.ExecContext(ctx, "UPDATE forumthread SET firstpost = 2000, lastpost = 2000 WHERE idforumthread = 1000")
+	mustExec(t, ctx, database, "INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (?, ?, ?, ?, '2030-01-01 12:00:00')", 2000, 1000, 60, "Initial post")
+	mustExec(t, ctx, database, "UPDATE forumthread SET firstpost = 2000, lastposter = 60 WHERE idforumthread = 1000")
 
 	// Create grant for poster
-	_, _ = database.ExecContext(ctx, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "forum", "topic", 30, "append", 1, "allow")
+	mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "forum", "topic", 30, "append", 1, "allow")
 
 	tests := []struct {
 		name     string
@@ -173,28 +180,28 @@ func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 		{
 			name: "author's own marker -> 1 row",
 			setup: func() {
-				_, _ = database.ExecContext(ctx, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 60, 2000)
+				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 60, 2000)
 			},
 			wantRows: true,
 		},
 		{
 			name: "other user's older marker -> 1 row",
 			setup: func() {
-				_, _ = database.ExecContext(ctx, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 1999)
+				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 1999)
 			},
 			wantRows: true,
 		},
 		{
 			name: "other user's marker at comment -> 0 rows",
 			setup: func() {
-				_, _ = database.ExecContext(ctx, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 2000)
+				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 2000)
 			},
 			wantRows: false,
 		},
 		{
 			name: "other user's marker beyond -> 0 rows",
 			setup: func() {
-				_, _ = database.ExecContext(ctx, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 2001)
+				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 2001)
 			},
 			wantRows: false,
 		},
@@ -203,9 +210,9 @@ func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Clear all read markers
-			_, _ = database.ExecContext(ctx, "DELETE FROM content_read_markers WHERE item_id = ? AND item = ?", 1000, "thread")
+			mustExec(t, ctx, database, "DELETE FROM content_read_markers WHERE item_id = ? AND item = ?", 1000, "thread")
 			// Reset comment text and written time
-			_, _ = database.ExecContext(ctx, "UPDATE comments SET text = 'Initial post', written = '2030-01-01 12:00:00' WHERE idcomments = 2000")
+			mustExec(t, ctx, database, "UPDATE comments SET text = 'Initial post', written = '2030-01-01 12:00:00' WHERE idcomments = 2000")
 
 			tc.setup()
 

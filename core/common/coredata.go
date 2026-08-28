@@ -2426,16 +2426,8 @@ func (cd *CoreData) CanEditCommentTarget(commentID, threadID, authorID int32) bo
 	}
 
 	section := cd.currentSection
-	if section == "" {
-		return false
-	}
-
-	// For non-forum sections, rely on thread/comment grants for now, mimicking previous behavior but strictly sectioned.
 	if section != consts.PermissionSectionForum.String() && section != consts.PermissionSectionPrivateForum.String() {
-		// e.g. for blogs, section="blogs". We check if user has grant for section="blogs", item="thread", item_id=threadID
-		return cd.HasGrant(section, consts.PermissionItemThread.String(), action, threadID) ||
-			cd.HasGrant(section, "comment", action, commentID) ||
-			cd.HasGrant(section, "", action, 0) // check wildcard
+		return false // Target validation only applies to forum and privateforum.
 	}
 
 	topic, err := cd.CurrentTopic()
@@ -2455,10 +2447,15 @@ func (cd *CoreData) CanEditCommentTarget(commentID, threadID, authorID int32) bo
 // CanEditComment reports whether the current user may edit the supplied
 // comment, acting as a thin adapter for UI templates.
 func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-	if cmt == nil {
+	if cmt == nil || cd == nil {
 		return false
 	}
-	return cd.CanEditCommentTarget(cmt.Idcomments, cmt.ForumthreadID, cmt.UsersIdusers)
+	switch cd.currentSection {
+	case consts.PermissionSectionForum.String(), consts.PermissionSectionPrivateForum.String():
+		return cd.CanEditCommentTarget(cmt.Idcomments, cmt.ForumthreadID, cmt.UsersIdusers)
+	default:
+		return cmt.IsOwner && cd.HasGrant(cd.currentSection, "comment", consts.PermissionActionEdit.String(), cmt.Idcomments)
+	}
 }
 
 // CommentEditing returns true if the given comment is currently being edited.

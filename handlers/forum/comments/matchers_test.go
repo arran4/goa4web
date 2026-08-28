@@ -96,7 +96,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		authorID := int32(11)
 		adminID := int32(12)
 
-		q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "thread", "edit-any"))
+		q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "topic", "edit-any"))
 		q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
 			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
 		}
@@ -155,7 +155,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		if len(q.SystemCheckGrantCalls) != 1 {
 			t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
 		}
-		if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "thread", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: threadID, Valid: true}) {
+		if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "topic", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: 1, Valid: true}) {
 			t.Fatalf("unexpected grant params: %#v", got)
 		}
 	})

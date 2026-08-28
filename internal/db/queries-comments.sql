@@ -56,9 +56,10 @@ WHERE comments.idcomments = sqlc.arg(comment_id)
   AND EXISTS (
       SELECT 1 FROM grants g
       LEFT JOIN forumthread th ON comments.forumthread_id = th.idforumthread
+      LEFT JOIN forumtopic top ON th.forumtopic_idforumtopic = top.idforumtopic
       WHERE (
-             (g.section = 'forum' AND g.item = 'topic' AND (g.item_id = th.forumtopic_idforumtopic OR g.item_id IS NULL)) OR
-             (g.section = 'privateforum_thread' AND g.item = 'thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL))
+             (top.handler != 'private' AND g.section = 'forum' AND g.item = 'topic' AND (g.item_id = th.forumtopic_idforumtopic OR g.item_id IS NULL)) OR
+             (top.handler = 'private' AND g.section = 'privateforum_thread' AND g.item = 'thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL))
             )
         AND g.action = CASE WHEN comments.users_idusers = sqlc.arg(editor_id) THEN 'edit' ELSE 'edit-any' END
         AND g.active=1

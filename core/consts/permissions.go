@@ -61,7 +61,8 @@ const (
 	PermissionActionAppend PermissionAction = "append"
 	PermissionActionCreate PermissionAction = "create"
 	// PermissionActionEdit permits editing a resource.
-	PermissionActionEdit PermissionAction = "edit"
+	PermissionActionEdit    PermissionAction = "edit"
+	PermissionActionEditAny PermissionAction = "edit-any"
 	// PermissionActionLabel permits managing resource labels.
 	PermissionActionLabel PermissionAction = "label"
 	// PermissionActionPost permits adding a child resource.

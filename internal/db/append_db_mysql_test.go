@@ -240,7 +240,7 @@ func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 		{
 			name: "privateforum_thread/thread grant -> 1 row",
 			setup: func() {
-				mustExec(t, ctx, database, "DELETE FROM grants")
+
 				mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "privateforum_thread", "thread", 1000, "append", 1, "allow")
 			},
 			section:  "privateforum_thread",
@@ -252,11 +252,18 @@ func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Clear all read markers
 			mustExec(t, ctx, database, "DELETE FROM comments WHERE idcomments > 2000")
-			mustExec(t, ctx, database, "DELETE FROM content_read_markers WHERE item_id = ? AND item = ?", 1000, "thread")
-			// Reset comment text and written time
+			mustExec(t, ctx, database, "DELETE FROM content_read_markers")
+			mustExec(t, ctx, database, "DELETE FROM grants")
 			mustExec(t, ctx, database, "UPDATE comments SET users_idusers = 60, text = 'Initial post', written = '2030-01-01 12:00:00' WHERE idcomments = 2000")
+
+			section := "forum"
+			if tc.section == "privateforum_thread" {
+				section = tc.section
+			}
+			if section == "forum" {
+				mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "forum", "topic", 30, "append", 1, "allow")
+			}
 
 			tc.setup()
 

@@ -1,6 +1,8 @@
 package common_test
 
 import (
+	"strings"
+
 	"context"
 	"testing"
 
@@ -96,5 +98,37 @@ func TestCommentEditSaveURLPrivateForumFallback(t *testing.T) {
 
 	if got, want := cd.CommentEditSaveURL(cmt), "/forum/topic/30/thread/106/comment/42"; got != want {
 		t.Fatalf("CommentEditSaveURL got %q, want %q", got, want)
+	}
+}
+
+func TestCommentEditURLsNonForum(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+		return 1, nil
+	}
+
+	cd := common.NewTestCoreData(t, q)
+	cd.UserID = 1
+
+	cmt := &db.GetCommentsByThreadIdForUserRow{
+		Idcomments:    42,
+		ForumthreadID: 106,
+		UsersIdusers:  1,
+		IsOwner:       true,
+	}
+
+	cd.SetCurrentSection("blogs")
+	if got := cd.CommentEditURL(cmt); got != "?editComment=42#edit" && !strings.Contains(got, "42") {
+		t.Fatalf("CommentEditURL for blogs got %q", got)
+	}
+
+	cd.SetCurrentSection("news")
+	if got, want := cd.CommentEditURL(cmt), "?editComment=42#edit"; got != want {
+		t.Fatalf("CommentEditURL for news got %q, want %q", got, want)
+	}
+
+	cd.SetCurrentSection("writing")
+	if got, want := cd.CommentEditURL(cmt), "?editComment=42#edit"; got != want {
+		t.Fatalf("CommentEditURL for writing got %q, want %q", got, want)
 	}
 }

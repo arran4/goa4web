@@ -2420,33 +2420,36 @@ func (cd *CoreData) CanEditCommentTarget(commentID, threadID, authorID int32) bo
 		return true
 	}
 
+	action := consts.PermissionActionEdit.String()
+	if authorID != cd.UserID {
+		action = consts.PermissionActionEditAny.String()
+	}
+
+	section := cd.currentSection
+	if section == "" {
+		return false
+	}
+
+	// For non-forum sections, rely on thread/comment grants for now, mimicking previous behavior but strictly sectioned.
+	if section != consts.PermissionSectionForum.String() && section != consts.PermissionSectionPrivateForum.String() {
+		// e.g. for blogs, section="blogs". We check if user has grant for section="blogs", item="thread", item_id=threadID
+		return cd.HasGrant(section, consts.PermissionItemThread.String(), action, threadID) ||
+			cd.HasGrant(section, "comment", action, commentID) ||
+			cd.HasGrant(section, "", action, 0) // check wildcard
+	}
+
 	topic, err := cd.CurrentTopic()
 	if err != nil || topic == nil {
 		return false
 	}
 
-	action := consts.PermissionActionEdit.String()
-	if authorID != cd.UserID {
-		action = "edit-any"
-	}
-
-	section := cd.currentSection
-	if section == "" {
-		section = "forum" // fallback
-	}
-
-	threadItem := "thread"
-	topicItem := "topic"
-
 	if topic.Handler == "private" {
 		section = consts.PermissionSectionPrivateForumThread.String()
-		threadItem = consts.PermissionItemThread.String()
-		topicItem = consts.PermissionItemThread.String() // fallback to thread for topic level if needed, but usually it's just thread
+		return cd.HasGrant(section, consts.PermissionItemThread.String(), action, threadID)
 	}
 
-	return cd.HasGrant(section, threadItem, action, threadID) ||
-		cd.HasGrant(section, "comment", action, commentID) ||
-		(topic.Idforumtopic != 0 && cd.HasGrant(section, topicItem, action, topic.Idforumtopic))
+	// Public forum edit: we support forum/topic
+	return cd.HasGrant(consts.PermissionSectionForum.String(), consts.PermissionItemTopic.String(), action, topic.Idforumtopic)
 }
 
 // CanEditComment reports whether the current user may edit the supplied

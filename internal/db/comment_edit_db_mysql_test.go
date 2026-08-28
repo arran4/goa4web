@@ -12,6 +12,7 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 	mustExec(t, ctx, database, "INSERT INTO users (idusers, username) VALUES (?, ?)", 60, "poster")
 	mustExec(t, ctx, database, "INSERT INTO users (idusers, username) VALUES (?, ?)", 61, "editor")
 
+	mustExec(t, ctx, database, "INSERT INTO forumtopic (idforumtopic, handler) VALUES (?, ?)", 30, "forum")
 	mustExec(t, ctx, database, "INSERT INTO forumthread (idforumthread, firstpost, lastposter, forumtopic_idforumtopic) VALUES (?, ?, ?, ?)", 1000, 2000, 60, 30)
 
 	tests := []struct {
@@ -69,6 +70,24 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 			},
 			editorID: 61,
 			wantRows: true,
+		},
+		{
+			name: "public thread + only privateforum_thread edit grant -> 0 rows",
+			setup: func() {
+				mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "privateforum_thread", "thread", 1000, "edit", 1, "allow")
+			},
+			editorID: 60,
+			wantRows: false,
+		},
+		{
+			name: "private thread + only forum/topic edit grant -> 0 rows",
+			setup: func() {
+				// Make topic private
+				mustExec(t, ctx, database, "UPDATE forumtopic SET handler = 'private' WHERE idforumtopic = 30")
+				mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "forum", "topic", 30, "edit", 1, "allow")
+			},
+			editorID: 60,
+			wantRows: false,
 		},
 		{
 			name:     "private forum coverage: owner + edit -> 1 row",

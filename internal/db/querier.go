@@ -670,7 +670,7 @@ type Querier interface {
 	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
 	// This query updates the "list" column in the "bookmarks" table for a specific lister.
 	UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) error
-	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error
+	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error)
 	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error

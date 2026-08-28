@@ -139,6 +139,9 @@ func openReplyThreadTestDatabaseSQLite(t *testing.T) *sql.DB {
 	if err != nil {
 		t.Fatalf("open sqlite: %v", err)
 	}
+	t.Cleanup(func() {
+		_ = db.Close()
+	})
 	return db
 }
 
@@ -170,29 +173,36 @@ func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 	tests := []struct {
 		name     string
 		setup    func()
+		section  string
+		itemType string
+		itemID   int32
 		wantRows bool
 	}{
 		{
-			name:     "no marker -> 1 row",
+			name:    "no marker -> 1 row",
+			section: "forum", itemType: "topic", itemID: 30,
 			setup:    func() {},
 			wantRows: true,
 		},
 		{
-			name: "author's own marker -> 1 row",
+			name:    "author's own marker -> 1 row",
+			section: "forum", itemType: "topic", itemID: 30,
 			setup: func() {
 				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 60, 2000)
 			},
 			wantRows: true,
 		},
 		{
-			name: "other user's older marker -> 1 row",
+			name:    "other user's older marker -> 1 row",
+			section: "forum", itemType: "topic", itemID: 30,
 			setup: func() {
 				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 1999)
 			},
 			wantRows: true,
 		},
 		{
-			name: "other user's marker at comment -> 0 rows",
+			name:    "other user's marker at comment -> 0 rows",
+			section: "forum", itemType: "topic", itemID: 30,
 			setup: func() {
 				mustExec(t, ctx, database, "INSERT INTO content_read_markers (item, item_id, user_id, last_comment_id) VALUES (?, ?, ?, ?)", "thread", 1000, 61, 2000)
 			},
@@ -205,34 +215,100 @@ func testAppendEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 			},
 			wantRows: false,
 		},
+		{
+			name: "newer comment exists -> 0 rows",
+			setup: func() {
+				mustExec(t, ctx, database, "INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (?, ?, ?, ?, '2030-01-01 12:01:00')", 2001, 1000, 60, "newer")
+			},
+			wantRows: false,
+		},
+		{
+			name: "wrong owner -> 0 rows",
+			setup: func() {
+				mustExec(t, ctx, database, "UPDATE comments SET users_idusers = 61 WHERE idcomments = 2000")
+			},
+			wantRows: false,
+		},
+		{
+			name: "append grant missing -> 0 rows",
+			setup: func() {
+				mustExec(t, ctx, database, "DELETE FROM grants")
+			},
+			wantRows: false,
+		},
+		{
+			name: "outside window -> 0 rows",
+			setup: func() {
+				mustExec(t, ctx, database, "UPDATE comments SET written = '2000-01-01 12:00:00' WHERE idcomments = 2000")
+			},
+			wantRows: false,
+		},
+		{
+			name: "privateforum_thread/thread grant -> 1 row",
+			setup: func() {
+				mustExec(t, ctx, database, "DELETE FROM grants")
+				mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "privateforum_thread", "thread", 1000, "append", 1, "allow")
+			},
+			section:  "privateforum_thread",
+			itemType: "thread",
+			itemID:   1000,
+			wantRows: true,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Clear all read markers
+			mustExec(t, ctx, database, "DELETE FROM comments WHERE idcomments > 2000")
 			mustExec(t, ctx, database, "DELETE FROM content_read_markers WHERE item_id = ? AND item = ?", 1000, "thread")
 			// Reset comment text and written time
-			mustExec(t, ctx, database, "UPDATE comments SET text = 'Initial post', written = '2030-01-01 12:00:00' WHERE idcomments = 2000")
+			mustExec(t, ctx, database, "UPDATE comments SET users_idusers = 60, text = 'Initial post', written = '2030-01-01 12:00:00' WHERE idcomments = 2000")
 
 			tc.setup()
 
 			rowsAffected, err := queries.AppendCommentInSectionForCommenter(ctx, AppendCommentInSectionForCommenterParams{
-				Text:             "\n\n[hr]\n\nnew text",
+				Text:             "new text",
 				AppendWindowMins: 60, // normal window
-				Section:          "forum",
-				ItemType:         sql.NullString{String: "topic", Valid: true},
-				ItemID:           sql.NullInt32{Int32: 30, Valid: true},
-				CommentID:        2000,
-				CommenterID:      60,
-				ForumthreadID:    1000,
-				GrantUserID:      sql.NullInt32{Int32: 60, Valid: true},
-				Written:          sql.NullTime{Time: time.Now(), Valid: true},
+				Section: func() string {
+					if tc.section == "" {
+						return "forum"
+					} else {
+						return tc.section
+					}
+				}(),
+				ItemType: sql.NullString{String: func() string {
+					if tc.itemType == "" {
+						return "topic"
+					} else {
+						return tc.itemType
+					}
+				}(), Valid: true},
+				ItemID: sql.NullInt32{Int32: func() int32 {
+					if tc.itemID == 0 {
+						return 30
+					} else {
+						return tc.itemID
+					}
+				}(), Valid: true},
+				CommentID:     2000,
+				CommenterID:   60,
+				ForumthreadID: 1000,
+				GrantUserID:   sql.NullInt32{Int32: 60, Valid: true},
+				Written:       sql.NullTime{Time: time.Now(), Valid: true},
 			})
 			hasAppended := rowsAffected > 0
-			_ = err
+			if err != nil {
+				t.Fatalf("err: %v", err)
+			}
 
 			if hasAppended != tc.wantRows {
 				t.Fatalf("Expected wantRows=%v, got=%v", tc.wantRows, hasAppended)
+			}
+			if tc.wantRows {
+				cRow, _ := queries.GetCommentById(ctx, 2000)
+				if cRow.Text.String != "Initial post\n\n[hr]\n\nnew text" {
+					t.Fatalf("Expected exact text, got: %q", cRow.Text.String)
+				}
 			}
 		})
 	}

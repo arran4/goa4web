@@ -45,24 +45,22 @@ WHERE c.idcomments = sqlc.arg(id)
   )
 LIMIT 1;
 
--- name: UpdateCommentForEditor :exec
+-- name: UpdateCommentForEditor :execrows
 UPDATE comments
-SET language_id = sqlc.arg(language_id), text = sqlc.arg(text)
+SET language_id = sqlc.narg(language_id), text = sqlc.arg(text)
 WHERE comments.idcomments = sqlc.arg(comment_id)
-  AND comments.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE (g.section='forum' OR g.section='privateforum')
-        AND (
-            g.item IS NULL OR
-            (g.item='thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL)) OR
-            (g.item='comment' AND (g.item_id = comments.idcomments OR g.item_id IS NULL))
-        )
-        AND g.action='edit'
+      LEFT JOIN forumthread th ON comments.forumthread_id = th.idforumthread
+      WHERE (
+             (g.section = 'forum' AND g.item = 'topic' AND (g.item_id = th.forumtopic_idforumtopic OR g.item_id IS NULL)) OR
+             (g.section = 'privateforum_thread' AND g.item = 'thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL))
+            )
+        AND g.action = CASE WHEN comments.users_idusers = sqlc.arg(editor_id) THEN 'edit' ELSE 'edit-any' END
         AND g.active=1
-        AND (g.user_id = sqlc.arg(editor_id) OR g.user_id IS NULL)
+        AND (g.user_id = sqlc.narg(editor_user_id) OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
-            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(editor_id)
         ))
   );
 

@@ -833,20 +833,18 @@ func (q *Queries) SystemSetCommentLastIndex(ctx context.Context, idcomments int3
 	return err
 }
 
-const updateCommentForEditor = `-- name: UpdateCommentForEditor :exec
-UPDATE comments c
+const updateCommentForEditor = `-- name: UpdateCommentForEditor :execrows
+UPDATE comments
 SET language_id = ?, text = ?
-WHERE c.idcomments = ?
-  AND c.users_idusers = ?
+WHERE comments.idcomments = ?
   AND EXISTS (
       SELECT 1 FROM grants g
-      WHERE (g.section='forum' OR g.section='privateforum')
-        AND (
-            g.item IS NULL OR
-            (g.item='thread' AND (g.item_id = c.forumthread_id OR g.item_id IS NULL)) OR
-            (g.item='comment' AND (g.item_id = c.idcomments OR g.item_id IS NULL))
-        )
-        AND g.action='edit'
+      LEFT JOIN forumthread th ON comments.forumthread_id = th.idforumthread
+      WHERE (
+             (g.section = 'forum' AND g.item = 'topic' AND (g.item_id = th.forumtopic_idforumtopic OR g.item_id IS NULL)) OR
+             (g.section = 'privateforum_thread' AND g.item = 'thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL))
+            )
+        AND g.action = CASE WHEN comments.users_idusers = ? THEN 'edit' ELSE 'edit-any' END
         AND g.active=1
         AND (g.user_id = ? OR g.user_id IS NULL)
         AND (g.role_id IS NULL OR g.role_id IN (
@@ -856,21 +854,24 @@ WHERE c.idcomments = ?
 `
 
 type UpdateCommentForEditorParams struct {
-	LanguageID  sql.NullInt32
-	Text        sql.NullString
-	CommentID   int32
-	CommenterID int32
-	EditorID    sql.NullInt32
+	LanguageID   sql.NullInt32
+	Text         sql.NullString
+	CommentID    int32
+	EditorID     int32
+	EditorUserID sql.NullInt32
 }
 
-func (q *Queries) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error {
-	_, err := q.db.ExecContext(ctx, updateCommentForEditor,
+func (q *Queries) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateCommentForEditor,
 		arg.LanguageID,
 		arg.Text,
 		arg.CommentID,
-		arg.CommenterID,
 		arg.EditorID,
-		arg.CommenterID,
+		arg.EditorUserID,
+		arg.EditorID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

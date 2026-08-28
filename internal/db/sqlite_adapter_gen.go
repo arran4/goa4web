@@ -10748,14 +10748,18 @@ func (s *sqliteQuerier) UpdateBookmarksForLister(ctx context.Context, arg Update
 	})
 }
 
-func (s *sqliteQuerier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error {
-	return s.q.UpdateCommentForEditor(ctx, dbsqlite.UpdateCommentForEditorParams{
-		LanguageID:  sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
-		Text:        arg.Text,
-		CommentID:   int64(arg.CommentID),
-		CommenterID: int64(arg.CommenterID),
-		EditorID:    sql.NullInt64{Int64: int64(arg.EditorID.Int32), Valid: arg.EditorID.Valid},
+func (s *sqliteQuerier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
+	res, err := s.q.UpdateCommentForEditor(ctx, dbsqlite.UpdateCommentForEditorParams{
+		LanguageID:   sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
+		Text:         arg.Text,
+		CommentID:    int64(arg.CommentID),
+		EditorID:     int64(arg.EditorID),
+		EditorUserID: sql.NullInt64{Int64: int64(arg.EditorUserID.Int32), Valid: arg.EditorUserID.Valid},
 	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error {

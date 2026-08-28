@@ -15,14 +15,12 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 		row, err := cd.CurrentComment(r)
 		if err != nil {
 			log.Printf("Error: %s", err)
-			log.Printf("NOT FOUND")
-			log.Printf("NOT FOUND")
+
 			http.NotFound(w, r)
 			return
 		}
 		if row == nil {
-			log.Printf("NOT FOUND")
-			log.Printf("NOT FOUND")
+
 			http.NotFound(w, r)
 			return
 		}
@@ -34,8 +32,7 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 		}
 
 		if !authorized {
-			log.Printf("NOT FOUND")
-			log.Printf("NOT FOUND")
+
 			http.NotFound(w, r)
 			return
 		}

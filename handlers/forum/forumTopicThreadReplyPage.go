@@ -12,8 +12,8 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -201,7 +201,12 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	res, err := performForumReply(cd, uid, threadRow, topicRow, int32(languageId), text)
 	if err != nil {
 		log.Printf("Error posting thread reply: %v", err)
-		cd.SetCurrentError(err.Error())
+		message := "Error creating comment"
+		var userError interface{ UserErrorMessage() string }
+		if errors.As(err, &userError) && userError.UserErrorMessage() != "" {
+			message = userError.UserErrorMessage()
+		}
+		cd.SetCurrentError(message)
 		if r.Form == nil {
 			r.Form = make(url.Values)
 		}
@@ -267,7 +272,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		IncludeSearch:        !res.Appended || res.CanonicalTextOK,
 		AdditionalData:       data,
 	}); err != nil {
-		log.Printf("DEBUG: thread reply side effects: %v", err)
+		log.Printf("thread reply side effects: %v", err)
 	}
 	if evt := cd.Event(); evt != nil {
 		evt.Data["URL"] = cd.AbsoluteURL(endUrl)

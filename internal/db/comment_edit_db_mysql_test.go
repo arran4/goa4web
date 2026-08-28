@@ -112,7 +112,7 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 
 			tc.setup()
 
-			rowsAffected, err := queries.UpdateCommentForEditor(ctx, UpdateCommentForEditorParams{
+			rowsAffected, err := queries.UpdateForumCommentForEditor(ctx, UpdateForumCommentForEditorParams{
 				Text:         sql.NullString{String: "updated text", Valid: true},
 				CommentID:    2000,
 				EditorID:     tc.editorID,

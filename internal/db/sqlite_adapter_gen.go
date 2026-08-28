@@ -10750,11 +10750,11 @@ func (s *sqliteQuerier) UpdateBookmarksForLister(ctx context.Context, arg Update
 
 func (s *sqliteQuerier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
 	res, err := s.q.UpdateCommentForEditor(ctx, dbsqlite.UpdateCommentForEditorParams{
-		LanguageID:   sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
-		Text:         arg.Text,
-		CommentID:    int64(arg.CommentID),
-		EditorID:     int64(arg.EditorID),
-		EditorUserID: sql.NullInt64{Int64: int64(arg.EditorUserID.Int32), Valid: arg.EditorUserID.Valid},
+		LanguageID:  sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
+		Text:        arg.Text,
+		CommentID:   int64(arg.CommentID),
+		CommenterID: int64(arg.CommenterID),
+		EditorID:    sql.NullInt64{Int64: int64(arg.EditorID.Int32), Valid: arg.EditorID.Valid},
 	})
 	if err != nil {
 		return 0, err
@@ -10801,6 +10801,20 @@ func (s *sqliteQuerier) UpdateExternalLinkMetadata(ctx context.Context, arg Upda
 		CardAuthor:      arg.CardAuthor,
 		ID:              int64(arg.ID),
 	})
+}
+
+func (s *sqliteQuerier) UpdateForumCommentForEditor(ctx context.Context, arg UpdateForumCommentForEditorParams) (int64, error) {
+	res, err := s.q.UpdateForumCommentForEditor(ctx, dbsqlite.UpdateForumCommentForEditorParams{
+		LanguageID:   sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
+		Text:         arg.Text,
+		CommentID:    int64(arg.CommentID),
+		EditorID:     int64(arg.EditorID),
+		EditorUserID: sql.NullInt64{Int64: int64(arg.EditorUserID.Int32), Valid: arg.EditorUserID.Valid},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error {

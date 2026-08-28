@@ -173,7 +173,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.queries.UpdateForumCommentForEditor(cd.ctx, db.UpdateForumCommentForEditorParams{
 		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:         sql.NullString{String: text, Valid: true},
 		CommentID:    commentID,
@@ -209,7 +209,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.queries.UpdateForumCommentForEditor(cd.ctx, db.UpdateForumCommentForEditorParams{
 		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:         sql.NullString{String: text, Valid: true},
 		CommentID:    commentID,

@@ -70,9 +70,9 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 			String: text,
 			Valid:  true,
 		},
-		CommentID:    int32(commentId),
-		EditorID:     cd.UserID,
-		EditorUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		CommentID:   int32(commentId),
+		CommenterID: cd.UserID,
+		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))

@@ -675,6 +675,7 @@ type Querier interface {
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
+	UpdateForumCommentForEditor(ctx context.Context, arg UpdateForumCommentForEditorParams) (int64, error)
 	UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error
 	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateLastMonthlyDigestSentAt(ctx context.Context, arg UpdateLastMonthlyDigestSentAtParams) error

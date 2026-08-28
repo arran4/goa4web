@@ -796,6 +796,50 @@ const updateCommentForEditor = `-- name: UpdateCommentForEditor :execrows
 UPDATE comments
 SET language_id = ?1, text = ?2
 WHERE comments.idcomments = ?3
+  AND comments.users_idusers = ?4
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE (g.section='forum' OR g.section='privateforum')
+        AND (
+            g.item IS NULL OR
+            (g.item='thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL)) OR
+            (g.item='comment' AND (g.item_id = comments.idcomments OR g.item_id IS NULL))
+        )
+        AND g.action='edit'
+        AND g.active=1
+        AND (g.user_id = ?5 OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?4
+        ))
+  )
+`
+
+type UpdateCommentForEditorParams struct {
+	LanguageID  sql.NullInt64
+	Text        sql.NullString
+	CommentID   int64
+	CommenterID int64
+	EditorID    sql.NullInt64
+}
+
+func (q *Queries) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateCommentForEditor,
+		arg.LanguageID,
+		arg.Text,
+		arg.CommentID,
+		arg.CommenterID,
+		arg.EditorID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updateForumCommentForEditor = `-- name: UpdateForumCommentForEditor :execrows
+UPDATE comments
+SET language_id = ?1, text = ?2
+WHERE comments.idcomments = ?3
   AND EXISTS (
       SELECT 1 FROM grants g
       LEFT JOIN forumthread th ON comments.forumthread_id = th.idforumthread
@@ -813,7 +857,7 @@ WHERE comments.idcomments = ?3
   )
 `
 
-type UpdateCommentForEditorParams struct {
+type UpdateForumCommentForEditorParams struct {
 	LanguageID   sql.NullInt64
 	Text         sql.NullString
 	CommentID    int64
@@ -821,8 +865,8 @@ type UpdateCommentForEditorParams struct {
 	EditorUserID sql.NullInt64
 }
 
-func (q *Queries) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, updateCommentForEditor,
+func (q *Queries) UpdateForumCommentForEditor(ctx context.Context, arg UpdateForumCommentForEditorParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateForumCommentForEditor,
 		arg.LanguageID,
 		arg.Text,
 		arg.CommentID,

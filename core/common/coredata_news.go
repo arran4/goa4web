@@ -116,11 +116,11 @@ func (cd *CoreData) UpdateNewsReply(commentID, editorID, languageID int32, text 
 		return ThreadInfo{}, fmt.Errorf("thread fetch: %w", err)
 	}
 	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
-		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
-		Text:         sql.NullString{String: text, Valid: true},
-		CommentID:    commentID,
-		EditorID:     editorID,
-		EditorUserID: sql.NullInt32{Int32: editorID, Valid: editorID != 0},
+		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
+		Text:        sql.NullString{String: text, Valid: true},
+		CommentID:   commentID,
+		CommenterID: editorID,
+		EditorID:    sql.NullInt32{Int32: editorID, Valid: editorID != 0},
 	})
 	if err != nil {
 		return ThreadInfo{}, fmt.Errorf("update comment: %w", err)

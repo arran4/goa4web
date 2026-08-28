@@ -39,3 +39,49 @@ func TestGrantActionMap_AppendPresent(t *testing.T) {
 		t.Errorf("GrantActionMap does not contain %q", privateKey)
 	}
 }
+
+func TestGrantActionMap_EditAny(t *testing.T) {
+	pubKey := "forum|topic"
+	if def, ok := GrantActionMap[pubKey]; ok {
+		hasEdit := false
+		hasEditAny := false
+		for _, a := range def.Actions {
+			if a == consts.PermissionActionEdit.String() {
+				hasEdit = true
+			}
+			if a == consts.PermissionActionEditAny.String() {
+				hasEditAny = true
+			}
+		}
+		if !hasEdit {
+			t.Errorf("GrantActionMap[%q] is missing edit", pubKey)
+		}
+		if !hasEditAny {
+			t.Errorf("GrantActionMap[%q] is missing edit-any", pubKey)
+		}
+	} else {
+		t.Errorf("GrantActionMap does not contain %q", pubKey)
+	}
+
+	privKey := consts.PermissionSectionPrivateForumThread.String() + "|" + consts.PermissionItemThread.String()
+	if def, ok := GrantActionMap[privKey]; ok {
+		hasEdit := false
+		hasEditAny := false
+		for _, a := range def.Actions {
+			if a == consts.PermissionActionEdit.String() {
+				hasEdit = true
+			}
+			if a == consts.PermissionActionEditAny.String() {
+				hasEditAny = true
+			}
+		}
+		if !hasEdit {
+			t.Errorf("GrantActionMap[%q] is missing edit", privKey)
+		}
+		if !hasEditAny {
+			t.Errorf("GrantActionMap[%q] is missing edit-any", privKey)
+		}
+	} else {
+		t.Errorf("GrantActionMap does not contain %q", privKey)
+	}
+}

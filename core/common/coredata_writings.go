@@ -80,8 +80,8 @@ func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text strin
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
-		CommenterID: cd.UserID,
-		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		CommenterID: uid,
+		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return err
@@ -166,8 +166,8 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
-		CommenterID: cd.UserID,
-		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		CommenterID: uid,
+		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
 	})
 	if err != nil {
 		return nil, err

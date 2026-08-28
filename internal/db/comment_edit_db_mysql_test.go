@@ -17,9 +17,6 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 
 	tests := []struct {
 		name     string
-		section  string
-		itemType string
-		itemID   int32
 		setup    func()
 		editorID int32
 		wantRows bool
@@ -90,11 +87,9 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 			wantRows: false,
 		},
 		{
-			name:     "private forum coverage: owner + edit -> 1 row",
-			section:  "privateforum_thread",
-			itemType: "thread",
-			itemID:   1000,
+			name: "private forum coverage: owner + edit -> 1 row",
 			setup: func() {
+				mustExec(t, ctx, database, "UPDATE forumtopic SET handler = 'private' WHERE idforumtopic = 30")
 				mustExec(t, ctx, database, "INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (?, ?, ?, ?, ?, ?, ?)", 60, "privateforum_thread", "thread", 1000, "edit", 1, "allow")
 			},
 			editorID: 60,
@@ -107,6 +102,7 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 			mustExec(t, ctx, database, "DELETE FROM comments")
 			mustExec(t, ctx, database, "DELETE FROM grants")
 			mustExec(t, ctx, database, "DELETE FROM user_roles")
+			mustExec(t, ctx, database, "UPDATE forumtopic SET handler = 'forum' WHERE idforumtopic = 30")
 
 			mustExec(t, ctx, database, "INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (?, ?, ?, ?, '2030-01-01 12:00:00')", 2000, 1000, 60, "Initial post")
 
@@ -118,14 +114,19 @@ func testUpdateEligibilityMatrix(t *testing.T, database *sql.DB, queries Querier
 				EditorID:     tc.editorID,
 				EditorUserID: sql.NullInt32{Int32: tc.editorID, Valid: true},
 			})
-			_ = err
+			if err != nil {
+				t.Fatalf("UpdateForumCommentForEditor: %v", err)
+			}
 
 			hasUpdated := rowsAffected > 0
 			if hasUpdated != tc.wantRows {
 				t.Fatalf("Expected wantRows=%v, got=%v", tc.wantRows, hasUpdated)
 			}
 			if tc.wantRows {
-				cRow, _ := queries.GetCommentById(ctx, 2000)
+				cRow, err := queries.GetCommentById(ctx, 2000)
+				if err != nil {
+					t.Fatalf("GetCommentById: %v", err)
+				}
 				if cRow.Text.String != "updated text" {
 					t.Fatalf("Expected updated text, got: %q", cRow.Text.String)
 				}
@@ -146,6 +147,7 @@ func TestMySQLUpdateEligibilityMatrix(t *testing.T) {
 	mustExec(t, ctx, database, "DELETE FROM forumthread")
 	mustExec(t, ctx, database, "DELETE FROM users")
 	mustExec(t, ctx, database, "DELETE FROM user_roles")
+	mustExec(t, ctx, database, "UPDATE forumtopic SET handler = 'forum' WHERE idforumtopic = 30")
 
 	testUpdateEligibilityMatrix(t, database, queries, ctx)
 }

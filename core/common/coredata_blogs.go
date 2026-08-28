@@ -82,8 +82,8 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
-		CommenterID: cd.UserID,
-		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+		CommenterID: commenterID,
+		EditorID:    sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 	})
 	if err != nil {
 		return err

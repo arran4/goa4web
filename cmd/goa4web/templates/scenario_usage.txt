@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} scenario <command> [<args>]
+
+The scenario command provides tools for validating and inspecting human-readable
+application event scenarios.
+
+Commands:
+  validate    Validate a scenario file or directory.
+
+Examples:
+  # Validate a scenario TXTAR file
+  {{.Prog}} scenario validate testdata/scenarios/100-private-forum/scenario.txtar
+
+  # Validate a scenario directory containing scenario.txtar
+  {{.Prog}} scenario validate testdata/scenarios/100-private-forum
+
+{{template "flag_groups_section" .FlagGroups}}

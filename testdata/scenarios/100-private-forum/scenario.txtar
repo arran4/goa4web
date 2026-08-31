@@ -1,0 +1,36 @@
+# Scenario demonstrating private forum creation and welcome post with attachment.
+
+-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: private-forum
+Description: Staff private forum setup and welcome thread
+
+-- 010-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+At: 2026-08-01T09:00:00+10:00
+
+-- 020-enable-alice.event --
+Op: user.enable
+Actor: admin
+User: alice
+At: 2026-08-01T09:02:00+10:00
+
+-- 030-private-forum.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: alice
+Title: Staff Room
+At: 2026-08-01T09:05:00+10:00
+
+-- 040-welcome-post.event --
+Op: forum.post
+Ref: welcome
+Actor: alice
+Forum: staff-room
+At: 2026-08-01T09:10:00+10:00
+Attachment: assets/welcome.jpg
+
+Welcome to the staff forum.

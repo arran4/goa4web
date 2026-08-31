@@ -64,6 +64,7 @@ Commands:
           page size bounds.
   test    Run manual tests. This is used for running specific tests that are
           not part of the automated test suite.
+  scenario Validate and inspect application event scenarios.
 
 Examples:
   {{.Prog}} serve

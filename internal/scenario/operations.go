@@ -1,0 +1,328 @@
+package scenario
+
+import (
+	"fmt"
+	"strings"
+	"sync"
+	"time"
+)
+
+// OperationData is a marker interface for parsed, strongly-typed operation payloads.
+type OperationData interface {
+	Op() string
+}
+
+// Operation defines the specification and validator/parser for an application operation.
+type Operation interface {
+	// OpName returns the unique string identifier for the operation (e.g. "user.create").
+	OpName() string
+	// AllowedHeaders returns the list of valid header names for this operation.
+	AllowedHeaders() []string
+	// RequiredHeaders returns the list of mandatory header names for this operation.
+	RequiredHeaders() []string
+	// DeclaredRef returns the RefType and symbol declared by this event, if any.
+	DeclaredRef(evt *Event) (RefType, string, bool)
+	// ReferencedSymbols returns all symbolic references required by this event.
+	ReferencedSymbols(evt *Event) []SymbolRef
+	// AssetPaths returns all relative asset file paths declared in this event's headers.
+	AssetPaths(evt *Event) []string
+	// Parse parses and validates the event headers/body into a typed OperationData struct.
+	Parse(evt *Event) (OperationData, error)
+}
+
+var (
+	opsMu        sync.RWMutex
+	operationReg = make(map[string]Operation)
+)
+
+func init() {
+	RegisterOperation(&UserCreateOp{})
+	RegisterOperation(&UserEnableOp{})
+	RegisterOperation(&PrivateForumCreateOp{})
+	RegisterOperation(&ForumPostOp{})
+}
+
+// RegisterOperation registers an Operation in the global scenario operation registry.
+func RegisterOperation(op Operation) {
+	opsMu.Lock()
+	defer opsMu.Unlock()
+	operationReg[op.OpName()] = op
+}
+
+// LookupOperation retrieves an Operation from the registry by name.
+func LookupOperation(name string) (Operation, bool) {
+	opsMu.RLock()
+	defer opsMu.RUnlock()
+	op, ok := operationReg[name]
+	return op, ok
+}
+
+// RegisteredOperations returns the sorted list of registered operation names.
+func RegisteredOperations() []string {
+	opsMu.RLock()
+	defer opsMu.RUnlock()
+	var names []string
+	for name := range operationReg {
+		names = append(names, name)
+	}
+	return names
+}
+
+// --- user.create ---
+
+// UserCreateData holds the strongly-typed data for user.create.
+type UserCreateData struct {
+	Ref      string
+	Username string
+	Email    string
+	Password string
+	At       time.Time
+}
+
+func (d *UserCreateData) Op() string { return "user.create" }
+
+// UserCreateOp implements Operation for user.create.
+type UserCreateOp struct{}
+
+func (o *UserCreateOp) OpName() string { return "user.create" }
+
+func (o *UserCreateOp) AllowedHeaders() []string {
+	return []string{"Op", "Ref", "Username", "Email", "Password", "At"}
+}
+
+func (o *UserCreateOp) RequiredHeaders() []string {
+	return []string{"Username", "At"}
+}
+
+func (o *UserCreateOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	ref := strings.TrimSpace(evt.Headers.Get("Ref"))
+	if ref != "" {
+		return RefTypeUser, ref, true
+	}
+	return "", "", false
+}
+
+func (o *UserCreateOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	return nil
+}
+
+func (o *UserCreateOp) AssetPaths(evt *Event) []string {
+	return nil
+}
+
+func (o *UserCreateOp) Parse(evt *Event) (OperationData, error) {
+	username := strings.TrimSpace(evt.Headers.Get("Username"))
+	if username == "" {
+		return nil, fmt.Errorf("user.create: missing required 'Username'")
+	}
+	return &UserCreateData{
+		Ref:      strings.TrimSpace(evt.Headers.Get("Ref")),
+		Username: username,
+		Email:    strings.TrimSpace(evt.Headers.Get("Email")),
+		Password: strings.TrimSpace(evt.Headers.Get("Password")),
+		At:       evt.At,
+	}, nil
+}
+
+// --- user.enable ---
+
+// UserEnableData holds the strongly-typed data for user.enable.
+type UserEnableData struct {
+	Actor string
+	User  string
+	At    time.Time
+}
+
+func (d *UserEnableData) Op() string { return "user.enable" }
+
+// UserEnableOp implements Operation for user.enable.
+type UserEnableOp struct{}
+
+func (o *UserEnableOp) OpName() string { return "user.enable" }
+
+func (o *UserEnableOp) AllowedHeaders() []string {
+	return []string{"Op", "Actor", "User", "At"}
+}
+
+func (o *UserEnableOp) RequiredHeaders() []string {
+	return []string{"User", "At"}
+}
+
+func (o *UserEnableOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	return "", "", false
+}
+
+func (o *UserEnableOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	var refs []SymbolRef
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
+	}
+	if user := strings.TrimSpace(evt.Headers.Get("User")); user != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: user, Field: "User"})
+	}
+	return refs
+}
+
+func (o *UserEnableOp) AssetPaths(evt *Event) []string {
+	return nil
+}
+
+func (o *UserEnableOp) Parse(evt *Event) (OperationData, error) {
+	user := strings.TrimSpace(evt.Headers.Get("User"))
+	if user == "" {
+		return nil, fmt.Errorf("user.enable: missing required 'User'")
+	}
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		actor = "admin"
+	}
+	return &UserEnableData{
+		Actor: actor,
+		User:  user,
+		At:    evt.At,
+	}, nil
+}
+
+// --- private-forum.create ---
+
+// PrivateForumCreateData holds the strongly-typed data for private-forum.create.
+type PrivateForumCreateData struct {
+	Ref   string
+	Actor string
+	Title string
+	At    time.Time
+}
+
+func (d *PrivateForumCreateData) Op() string { return "private-forum.create" }
+
+// PrivateForumCreateOp implements Operation for private-forum.create.
+type PrivateForumCreateOp struct{}
+
+func (o *PrivateForumCreateOp) OpName() string { return "private-forum.create" }
+
+func (o *PrivateForumCreateOp) AllowedHeaders() []string {
+	return []string{"Op", "Ref", "Actor", "Title", "At"}
+}
+
+func (o *PrivateForumCreateOp) RequiredHeaders() []string {
+	return []string{"Actor", "Title", "At"}
+}
+
+func (o *PrivateForumCreateOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	ref := strings.TrimSpace(evt.Headers.Get("Ref"))
+	if ref != "" {
+		return RefTypeForum, ref, true
+	}
+	return "", "", false
+}
+
+func (o *PrivateForumCreateOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	var refs []SymbolRef
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
+	}
+	return refs
+}
+
+func (o *PrivateForumCreateOp) AssetPaths(evt *Event) []string {
+	return nil
+}
+
+func (o *PrivateForumCreateOp) Parse(evt *Event) (OperationData, error) {
+	title := strings.TrimSpace(evt.Headers.Get("Title"))
+	if title == "" {
+		return nil, fmt.Errorf("private-forum.create: missing required 'Title'")
+	}
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("private-forum.create: missing required 'Actor'")
+	}
+	return &PrivateForumCreateData{
+		Ref:   strings.TrimSpace(evt.Headers.Get("Ref")),
+		Actor: actor,
+		Title: title,
+		At:    evt.At,
+	}, nil
+}
+
+// --- forum.post ---
+
+// ForumPostData holds the strongly-typed data for forum.post.
+type ForumPostData struct {
+	Ref         string
+	Actor       string
+	Forum       string
+	Topic       string
+	Thread      string
+	Attachments []string
+	Body        string
+	At          time.Time
+}
+
+func (d *ForumPostData) Op() string { return "forum.post" }
+
+// ForumPostOp implements Operation for forum.post.
+type ForumPostOp struct{}
+
+func (o *ForumPostOp) OpName() string { return "forum.post" }
+
+func (o *ForumPostOp) AllowedHeaders() []string {
+	return []string{"Op", "Ref", "Actor", "Forum", "Topic", "Thread", "Attachment", "At"}
+}
+
+func (o *ForumPostOp) RequiredHeaders() []string {
+	return []string{"Actor", "At"}
+}
+
+func (o *ForumPostOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	ref := strings.TrimSpace(evt.Headers.Get("Ref"))
+	if ref != "" {
+		return RefTypePost, ref, true
+	}
+	return "", "", false
+}
+
+func (o *ForumPostOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	var refs []SymbolRef
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
+	}
+	if forum := strings.TrimSpace(evt.Headers.Get("Forum")); forum != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeForum, Symbol: forum, Field: "Forum"})
+	}
+	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeTopic, Symbol: topic, Field: "Topic"})
+	}
+	if thread := strings.TrimSpace(evt.Headers.Get("Thread")); thread != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: thread, Field: "Thread"})
+	}
+	return refs
+}
+
+func (o *ForumPostOp) AssetPaths(evt *Event) []string {
+	return evt.Headers.Values("Attachment")
+}
+
+func (o *ForumPostOp) Parse(evt *Event) (OperationData, error) {
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("forum.post: missing required 'Actor'")
+	}
+	forum := strings.TrimSpace(evt.Headers.Get("Forum"))
+	topic := strings.TrimSpace(evt.Headers.Get("Topic"))
+	thread := strings.TrimSpace(evt.Headers.Get("Thread"))
+	if forum == "" && topic == "" && thread == "" {
+		return nil, fmt.Errorf("forum.post: one of 'Forum', 'Topic', or 'Thread' is required")
+	}
+
+	return &ForumPostData{
+		Ref:         strings.TrimSpace(evt.Headers.Get("Ref")),
+		Actor:       actor,
+		Forum:       forum,
+		Topic:       topic,
+		Thread:      thread,
+		Attachments: evt.Headers.Values("Attachment"),
+		Body:        evt.Body,
+		At:          evt.At,
+	}, nil
+}

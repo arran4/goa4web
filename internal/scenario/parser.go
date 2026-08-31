@@ -94,7 +94,7 @@ func ParseFS(fsys fs.FS, scenarioPath string) (*Scenario, error) {
 	}
 
 	dir := path.Dir(cleanPath)
-	var assetFS fs.FS = fsys
+	assetFS := fsys
 	if dir != "." && dir != "" && dir != "/" {
 		sub, err := fs.Sub(fsys, dir)
 		if err != nil {

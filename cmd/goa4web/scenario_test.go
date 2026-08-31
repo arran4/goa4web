@@ -40,6 +40,7 @@ Name: cli-test
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 
 -- 02-enable.event --
@@ -61,6 +62,7 @@ Name: missing-asset-test
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 
 -- 02-forum.event --

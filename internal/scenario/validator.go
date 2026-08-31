@@ -131,11 +131,7 @@ func ValidateWithRegistry(s *Scenario, opReg *Registry) error {
 						Field:        ref.Field,
 					})
 				}
-				return fmt.Errorf("%s (%s): %w", sectionName, evt.Op, ErrUnresolvedRef{
-					Type:   ref.Type,
-					Symbol: ref.Symbol,
-					Field:  ref.Field,
-				})
+				return fmt.Errorf("%s (%s): %w", sectionName, evt.Op, ErrUnresolvedRef(ref))
 			}
 		}
 

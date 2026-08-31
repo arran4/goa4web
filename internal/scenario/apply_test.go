@@ -17,7 +17,12 @@ func TestApplyUserCreateAndEnable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
 
 	ctx := context.Background()
 	queries := db.New(conn)
@@ -92,7 +97,12 @@ func TestApplyPreflightRejectsUnsupportedOperationWithoutMutation(t *testing.T) 
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
 	}
-	defer conn.Close()
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
 
 	ctx := context.Background()
 	queries := db.New(conn)

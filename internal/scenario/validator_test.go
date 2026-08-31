@@ -94,6 +94,19 @@ At: 2026-08-01T09:00:00Z
 			errSubstr: "missing required field \"Username\"",
 		},
 		{
+			name: "missing required Email in user.create rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Username: alice
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "missing required field \"Email\"",
+		},
+		{
 			name: "unknown field rejected",
 			txtar: `-- scenario.meta --
 Format: goa4web-scenario/v1
@@ -102,6 +115,7 @@ Name: test
 -- 01.event --
 Op: user.create
 Username: alice
+Email: alice@example.test
 SuperPower: flying
 At: 2026-08-01T09:00:00Z
 `,
@@ -117,12 +131,14 @@ Name: test
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
 Op: user.create
 Ref: alice
 Username: alice2
+Email: alice2@example.test
 At: 2026-08-01T09:05:00Z
 `,
 			errSubstr: "duplicate user reference \"alice\"",
@@ -155,6 +171,7 @@ At: 2026-08-01T09:00:00Z
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:05:00Z
 `,
 			errSubstr: "unresolved user reference \"alice\"",
@@ -169,6 +186,7 @@ Name: test
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
@@ -189,6 +207,7 @@ Name: test
 -- 01.event --
 Op: user.create
 Username: alice
+Email: alice@example.test
 `,
 			errSubstr: "missing required field \"At\"",
 		},
@@ -202,6 +221,7 @@ Name: test
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
@@ -230,6 +250,7 @@ Name: test
 Op: user.create
 Ref: alice
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --

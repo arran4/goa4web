@@ -95,6 +95,7 @@ Name: fs-test
 Op: user.create
 Ref: bob
 Username: bob
+Email: bob@example.test
 At: 2026-08-01T10:00:00Z
 `),
 		},
@@ -117,6 +118,7 @@ func TestParseMissingMeta(t *testing.T) {
 	txt := `-- 01-user.event --
 Op: user.create
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 `
 	_, err := Parse([]byte(txt), nil)
@@ -137,6 +139,7 @@ Name: second
 -- 01-user.event --
 Op: user.create
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 `
 	_, err := Parse([]byte(txt), nil)
@@ -153,6 +156,7 @@ Name: test
 -- 010-user.events --
 Op: user.create
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 `
 	_, err := Parse([]byte(txt), nil)
@@ -169,6 +173,7 @@ Name: invalid
 -- 01-user.event --
 Op: user.create
 Username: alice
+Email: alice@example.test
 At: 2026-08-01T09:00:00Z
 `
 	_, err := Parse([]byte(txt), nil)

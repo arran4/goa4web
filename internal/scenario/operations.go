@@ -109,7 +109,7 @@ func (o *UserCreateOp) AllowedHeaders() []string {
 }
 
 func (o *UserCreateOp) RequiredHeaders() []string {
-	return []string{"Username", "At"}
+	return []string{"Username", "Email", "At"}
 }
 
 func (o *UserCreateOp) DeclaredRef(evt *Event) (RefType, string, bool) {
@@ -133,10 +133,14 @@ func (o *UserCreateOp) Parse(evt *Event) (OperationData, error) {
 	if username == "" {
 		return nil, fmt.Errorf("user.create: missing required 'Username'")
 	}
+	email := strings.TrimSpace(evt.Headers.Get("Email"))
+	if email == "" {
+		return nil, fmt.Errorf("user.create: missing required 'Email'")
+	}
 	return &UserCreateData{
 		Ref:      strings.TrimSpace(evt.Headers.Get("Ref")),
 		Username: username,
-		Email:    strings.TrimSpace(evt.Headers.Get("Email")),
+		Email:    email,
 		Password: strings.TrimSpace(evt.Headers.Get("Password")),
 		At:       evt.At,
 	}, nil

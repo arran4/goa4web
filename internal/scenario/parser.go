@@ -40,6 +40,9 @@ func Parse(data []byte, fsys fs.FS) (*Scenario, error) {
 	for _, f := range ar.Files {
 		name := strings.TrimSpace(f.Name)
 		if name == MetaFile {
+			if meta != nil {
+				return nil, fmt.Errorf("duplicate %s in scenario archive", MetaFile)
+			}
 			parsedMeta, err := parseMeta(f.Data)
 			if err != nil {
 				return nil, fmt.Errorf("parse %s: %w", MetaFile, err)
@@ -51,6 +54,8 @@ func Parse(data []byte, fsys fs.FS) (*Scenario, error) {
 				return nil, fmt.Errorf("parse event %s: %w", name, err)
 			}
 			events = append(events, evt)
+		} else {
+			return nil, fmt.Errorf("unexpected file %q in scenario archive (expected %s or *.event)", name, MetaFile)
 		}
 	}
 
@@ -92,9 +97,10 @@ func ParseFS(fsys fs.FS, scenarioPath string) (*Scenario, error) {
 	var assetFS fs.FS = fsys
 	if dir != "." && dir != "" && dir != "/" {
 		sub, err := fs.Sub(fsys, dir)
-		if err == nil {
-			assetFS = sub
+		if err != nil {
+			return nil, fmt.Errorf("create scenario sub-filesystem for %s: %w", dir, err)
 		}
+		assetFS = sub
 	}
 
 	return Parse(data, assetFS)

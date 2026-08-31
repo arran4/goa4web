@@ -41,10 +41,18 @@ func (e ErrMissingRequiredField) Error() string {
 	return fmt.Sprintf("missing required field %q", e.Field)
 }
 
-// Validate performs strict structural, referential, and asset validation on a Scenario.
+// Validate performs strict structural, referential, and asset validation on a Scenario using the DefaultRegistry.
 func Validate(s *Scenario) error {
+	return ValidateWithRegistry(s, DefaultRegistry())
+}
+
+// ValidateWithRegistry performs strict structural, referential, and asset validation on a Scenario using an explicit Registry.
+func ValidateWithRegistry(s *Scenario, opReg *Registry) error {
 	if s == nil {
 		return errors.New("nil scenario")
+	}
+	if opReg == nil {
+		opReg = DefaultRegistry()
 	}
 
 	// 1. Validate scenario.meta
@@ -83,7 +91,7 @@ func Validate(s *Scenario) error {
 			return ErrMissingRequiredField{Section: sectionName, Field: "Op"}
 		}
 
-		op, ok := LookupOperation(evt.Op)
+		op, ok := opReg.Lookup(evt.Op)
 		if !ok {
 			return fmt.Errorf("%s: %w", sectionName, ErrUnknownOp{Op: evt.Op})
 		}

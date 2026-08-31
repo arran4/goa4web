@@ -125,6 +125,42 @@ At: 2026-08-01T09:00:00Z
 	}
 }
 
+func TestParseDuplicateMeta(t *testing.T) {
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: first
+
+-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: second
+
+-- 01-user.event --
+Op: user.create
+Username: alice
+At: 2026-08-01T09:00:00Z
+`
+	_, err := Parse([]byte(txt), nil)
+	if err == nil || !strings.Contains(err.Error(), "duplicate scenario.meta") {
+		t.Fatalf("expected duplicate scenario.meta error, got: %v", err)
+	}
+}
+
+func TestParseUnexpectedMember(t *testing.T) {
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 010-user.events --
+Op: user.create
+Username: alice
+At: 2026-08-01T09:00:00Z
+`
+	_, err := Parse([]byte(txt), nil)
+	if err == nil || !strings.Contains(err.Error(), "unexpected file \"010-user.events\"") {
+		t.Fatalf("expected unexpected file error, got: %v", err)
+	}
+}
+
 func TestParseInvalidFormat(t *testing.T) {
 	txt := `-- scenario.meta --
 Format: goa4web-scenario/v999

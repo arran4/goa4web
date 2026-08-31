@@ -2,31 +2,27 @@ package scenario
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
 )
 
-// Clock provides current time abstraction.
-type Clock interface {
-	Now() time.Time
+// ErrUnsupportedOperation indicates that an operation is valid in format but not yet supported by this runner.
+type ErrUnsupportedOperation struct {
+	Op        string
+	EventFile string
 }
 
-// RealClock uses system time.
-type RealClock struct{}
-
-func (RealClock) Now() time.Time { return time.Now() }
-
-// FixedClock provides a fixed time for testing.
-type FixedClock struct {
-	T time.Time
+func (e ErrUnsupportedOperation) Error() string {
+	if e.EventFile != "" {
+		return fmt.Sprintf("event %s: operation %q is not supported for application in this runner", e.EventFile, e.Op)
+	}
+	return fmt.Sprintf("operation %q is not supported for application in this runner", e.Op)
 }
-
-func (f FixedClock) Now() time.Time { return f.T }
 
 // ApplyResult contains the outcome of applying a scenario.
 type ApplyResult struct {
@@ -37,34 +33,39 @@ type ApplyResult struct {
 
 // Runner applies validated scenario events to a goa4web database instance.
 type Runner struct {
-	queries  db.Querier
-	clock    Clock
-	registry *RefRegistry
+	coreData     *common.CoreData
+	opRegistry   *Registry
+	refRegistry  *RefRegistry
+	supportedOps map[string]bool
 }
 
 // Option configures a Runner.
 type Option func(*Runner)
 
-// WithClock sets a custom Clock on the Runner.
-func WithClock(c Clock) Option {
+// WithOpRegistry sets a custom Operation Registry on the Runner.
+func WithOpRegistry(reg *Registry) Option {
 	return func(r *Runner) {
-		r.clock = c
+		r.opRegistry = reg
 	}
 }
 
 // WithRefRegistry sets a custom RefRegistry on the Runner.
 func WithRefRegistry(reg *RefRegistry) Option {
 	return func(r *Runner) {
-		r.registry = reg
+		r.refRegistry = reg
 	}
 }
 
-// NewRunner creates a new Runner with the provided Querier and options.
-func NewRunner(q db.Querier, opts ...Option) *Runner {
+// NewRunner creates a new Runner with CoreData.
+func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 	r := &Runner{
-		queries:  q,
-		clock:    RealClock{},
-		registry: NewRefRegistry(),
+		coreData:    cd,
+		opRegistry:  DefaultRegistry(),
+		refRegistry: NewRefRegistry(),
+		supportedOps: map[string]bool{
+			"user.create": true,
+			"user.enable": true,
+		},
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -72,15 +73,36 @@ func NewRunner(q db.Querier, opts ...Option) *Runner {
 	return r
 }
 
-// Registry returns the runner's RefRegistry.
-func (r *Runner) Registry() *RefRegistry {
-	return r.registry
+// NewRunnerWithQuerier creates a new Runner using a db.Querier.
+func NewRunnerWithQuerier(ctx context.Context, q db.Querier, opts ...Option) *Runner {
+	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{})
+	return NewRunner(cd, opts...)
 }
 
-// Apply validates and executes all events in a scenario in order.
+// Registry returns the runner's RefRegistry.
+func (r *Runner) Registry() *RefRegistry {
+	return r.refRegistry
+}
+
+// Preflight checks if the scenario is valid and if ALL events are supported by this runner
+// before any database modifications occur.
+func (r *Runner) Preflight(s *Scenario) error {
+	if err := ValidateWithRegistry(s, r.opRegistry); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
+	}
+
+	for _, evt := range s.Events {
+		if !r.supportedOps[evt.Op] {
+			return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
+		}
+	}
+	return nil
+}
+
+// Apply validates, preflights, and executes all events in a scenario in order.
 func (r *Runner) Apply(ctx context.Context, s *Scenario) (*ApplyResult, error) {
-	if err := Validate(s); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+	if err := r.Preflight(s); err != nil {
+		return nil, err
 	}
 
 	applied := 0
@@ -94,7 +116,7 @@ func (r *Runner) Apply(ctx context.Context, s *Scenario) (*ApplyResult, error) {
 	return &ApplyResult{
 		ScenarioName:  s.Meta.Name,
 		EventsApplied: applied,
-		Registry:      r.registry,
+		Registry:      r.refRegistry,
 	}, nil
 }
 
@@ -115,15 +137,13 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 		return r.applyUserEnable(ctx, data)
 
 	default:
-		return fmt.Errorf("operation %q apply handler not yet implemented in this version", evt.Op)
+		return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 	}
 }
 
 func (r *Runner) applyUserCreate(ctx context.Context, data *UserCreateData) error {
-	// Generate or hash password
 	pw := data.Password
 	if pw == "" {
-		// Provide default scenario password if unspecified
 		pw = "scenario-default-password"
 	}
 	hash, alg, err := auth.HashPassword(pw)
@@ -131,42 +151,16 @@ func (r *Runner) applyUserCreate(ctx context.Context, data *UserCreateData) erro
 		return fmt.Errorf("hash password: %w", err)
 	}
 
-	// Insert user
-	id, err := r.queries.SystemInsertUser(ctx, sql.NullString{String: data.Username, Valid: true})
+	uid, err := r.coreData.CreateUserWithEmail(data.Username, data.Email, hash, alg)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return fmt.Errorf("user %q already exists: %w", data.Username, err)
 		}
-		return fmt.Errorf("insert user: %w", err)
-	}
-	uid := int32(id)
-
-	// Insert email if specified
-	if data.Email != "" {
-		verifiedAt := sql.NullTime{Time: data.At, Valid: true}
-		if err := r.queries.InsertUserEmail(ctx, db.InsertUserEmailParams{
-			UserID:               uid,
-			Email:                data.Email,
-			VerifiedAt:           verifiedAt,
-			LastVerificationCode: sql.NullString{},
-			NotificationPriority: 100,
-		}); err != nil {
-			return fmt.Errorf("insert user email: %w", err)
-		}
+		return fmt.Errorf("create user: %w", err)
 	}
 
-	// Insert password
-	if err := r.queries.InsertPassword(ctx, db.InsertPasswordParams{
-		UsersIdusers:    uid,
-		Passwd:          hash,
-		PasswdAlgorithm: sql.NullString{String: alg, Valid: true},
-	}); err != nil {
-		return fmt.Errorf("insert password: %w", err)
-	}
-
-	// Bind reference if declared
 	if data.Ref != "" {
-		if err := r.registry.Bind(RefTypeUser, data.Ref, uid); err != nil {
+		if err := r.refRegistry.Bind(RefTypeUser, data.Ref, uid); err != nil {
 			return fmt.Errorf("bind user ref %q: %w", data.Ref, err)
 		}
 	}
@@ -175,16 +169,13 @@ func (r *Runner) applyUserCreate(ctx context.Context, data *UserCreateData) erro
 }
 
 func (r *Runner) applyUserEnable(ctx context.Context, data *UserEnableData) error {
-	uid, ok := r.registry.ResolveUser(data.User)
+	uid, ok := r.refRegistry.ResolveUser(data.User)
 	if !ok {
 		return fmt.Errorf("cannot resolve user %q", data.User)
 	}
 
-	if err := r.queries.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
-		UsersIdusers: uid,
-		Name:         "user",
-	}); err != nil {
-		return fmt.Errorf("grant user role: %w", err)
+	if err := r.coreData.ApproveUser(uid); err != nil {
+		return fmt.Errorf("approve user: %w", err)
 	}
 
 	return nil

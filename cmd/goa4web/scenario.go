@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/arran4/goa4web/internal/scenario"
 )
@@ -62,6 +65,7 @@ type scenarioValidateCmd struct {
 	*scenarioCmd
 	fs   *flag.FlagSet
 	Path string
+	fsys fs.FS
 }
 
 func parseScenarioValidateCmd(parent *scenarioCmd, args []string) (*scenarioValidateCmd, error) {
@@ -83,28 +87,45 @@ func (c *scenarioValidateCmd) Run() error {
 		return fmt.Errorf("scenario path required")
 	}
 
-	targetPath := c.Path
-	info, err := os.Stat(targetPath)
-	if err != nil {
-		return fmt.Errorf("scenario path: %w", err)
-	}
-
-	var dir string
-	var filename string
-
-	if info.IsDir() {
-		dir = targetPath
-		filename = "scenario.txtar"
-		if _, err := os.Stat(filepath.Join(dir, filename)); err != nil {
-			return fmt.Errorf("scenario directory missing scenario.txtar: %w", err)
+	fsys := c.fsys
+	var targetPath string
+	if fsys != nil {
+		targetPath = path.Clean(strings.TrimPrefix(filepath.ToSlash(c.Path), "/"))
+		info, err := fs.Stat(fsys, targetPath)
+		if err != nil {
+			return fmt.Errorf("scenario path: %w", err)
+		}
+		if info.IsDir() {
+			scenarioFile := path.Join(targetPath, "scenario.txtar")
+			if _, err := fs.Stat(fsys, scenarioFile); err != nil {
+				return fmt.Errorf("scenario directory missing scenario.txtar: %w", err)
+			}
+			targetPath = scenarioFile
 		}
 	} else {
-		dir = filepath.Dir(targetPath)
-		filename = filepath.Base(targetPath)
+		// Production boundary: inspect OS filesystem
+		rawPath := c.Path
+		info, err := os.Stat(rawPath)
+		if err != nil {
+			return fmt.Errorf("scenario path: %w", err)
+		}
+		var dir string
+		var filename string
+		if info.IsDir() {
+			dir = rawPath
+			filename = "scenario.txtar"
+			if _, err := os.Stat(filepath.Join(dir, filename)); err != nil {
+				return fmt.Errorf("scenario directory missing scenario.txtar: %w", err)
+			}
+		} else {
+			dir = filepath.Dir(rawPath)
+			filename = filepath.Base(rawPath)
+		}
+		fsys = os.DirFS(dir)
+		targetPath = filename
 	}
 
-	dirFS := os.DirFS(dir)
-	sc, err := scenario.ParseFS(dirFS, filename)
+	sc, err := scenario.ParseFS(fsys, targetPath)
 	if err != nil {
 		return fmt.Errorf("parse scenario: %w", err)
 	}

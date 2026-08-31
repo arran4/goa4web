@@ -2,8 +2,8 @@ package scenario
 
 import (
 	"fmt"
+	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -30,41 +30,59 @@ type Operation interface {
 	Parse(evt *Event) (OperationData, error)
 }
 
-var (
-	opsMu        sync.RWMutex
-	operationReg = make(map[string]Operation)
-)
-
-func init() {
-	RegisterOperation(&UserCreateOp{})
-	RegisterOperation(&UserEnableOp{})
-	RegisterOperation(&PrivateForumCreateOp{})
-	RegisterOperation(&ForumPostOp{})
+// Registry manages known scenario operations without global state.
+type Registry struct {
+	ops map[string]Operation
 }
 
-// RegisterOperation registers an Operation in the global scenario operation registry.
-func RegisterOperation(op Operation) {
-	opsMu.Lock()
-	defer opsMu.Unlock()
-	operationReg[op.OpName()] = op
+// NewRegistry creates a new Operation Registry with the given operations.
+func NewRegistry(ops ...Operation) *Registry {
+	r := &Registry{
+		ops: make(map[string]Operation, len(ops)),
+	}
+	for _, op := range ops {
+		r.ops[op.OpName()] = op
+	}
+	return r
 }
 
-// LookupOperation retrieves an Operation from the registry by name.
-func LookupOperation(name string) (Operation, bool) {
-	opsMu.RLock()
-	defer opsMu.RUnlock()
-	op, ok := operationReg[name]
+// DefaultRegistry returns a standard Registry populated with the default set of known operations.
+func DefaultRegistry() *Registry {
+	return NewRegistry(
+		&UserCreateOp{},
+		&UserEnableOp{},
+		&PrivateForumCreateOp{},
+		&ForumPostOp{},
+	)
+}
+
+// Register registers an Operation in the registry.
+func (r *Registry) Register(op Operation) {
+	if r.ops == nil {
+		r.ops = make(map[string]Operation)
+	}
+	r.ops[op.OpName()] = op
+}
+
+// Lookup retrieves an Operation from the registry by name.
+func (r *Registry) Lookup(name string) (Operation, bool) {
+	if r == nil || r.ops == nil {
+		return nil, false
+	}
+	op, ok := r.ops[name]
 	return op, ok
 }
 
 // RegisteredOperations returns the sorted list of registered operation names.
-func RegisteredOperations() []string {
-	opsMu.RLock()
-	defer opsMu.RUnlock()
-	var names []string
-	for name := range operationReg {
+func (r *Registry) RegisteredOperations() []string {
+	if r == nil || len(r.ops) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(r.ops))
+	for name := range r.ops {
 		names = append(names, name)
 	}
+	sort.Strings(names)
 	return names
 }
 

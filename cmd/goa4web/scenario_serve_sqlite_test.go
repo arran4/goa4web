@@ -8,6 +8,8 @@ import (
 	"flag"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -62,6 +64,29 @@ func TestScenarioServeCmd_ParseCLI(t *testing.T) {
 	}
 	if serveCmdListen.Path != "testdata/scenarios/100-private-forum" {
 		t.Errorf("expected path testdata/scenarios/100-private-forum, got %q", serveCmdListen.Path)
+	}
+}
+
+func TestScenarioServeCmd_DeriveScenarioBaseURL(t *testing.T) {
+	tests := []struct {
+		listen string
+		want   string
+	}{
+		{"", "http://localhost:8080"},
+		{":8080", "http://localhost:8080"},
+		{":9090", "http://localhost:9090"},
+		{"0.0.0.0:8080", "http://localhost:8080"},
+		{"[::]:8080", "http://localhost:8080"},
+		{"127.0.0.1:8080", "http://127.0.0.1:8080"},
+		{"http://localhost:8080", "http://localhost:8080"},
+		{"https://dev.local:8443/", "https://dev.local:8443"},
+	}
+
+	for _, tt := range tests {
+		got := deriveScenarioBaseURL(tt.listen)
+		if got != tt.want {
+			t.Errorf("deriveScenarioBaseURL(%q) = %q, want %q", tt.listen, got, tt.want)
+		}
 	}
 }
 
@@ -176,10 +201,10 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 		t.Fatalf("GetForumTopicById: %v", err)
 	}
 	if topic.Title.String != "Staff Room" {
-		t.Errorf("expected topic title 'Staff Room', got %q", topic.Title.String)
+		t.Errorf("topic title = %q, want 'Staff Room'", topic.Title.String)
 	}
 	if topic.Description.String != "Private discussion for Alice and Bob" {
-		t.Errorf("expected topic description 'Private discussion for Alice and Bob', got %q", topic.Description.String)
+		t.Errorf("topic description = %q, want 'Private discussion for Alice and Bob'", topic.Description.String)
 	}
 
 	// Verify topic-specific participant grants
@@ -213,15 +238,43 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 	}
 }
 
-func TestScenarioServeCmd_IsolationFromConfiguredDBConn(t *testing.T) {
+func TestScenarioServeCmd_IsolationFromConfiguredProductionSettings(t *testing.T) {
 	ctx := context.Background()
 
-	// Configure root with an intentionally broken / unreachable DB_CONN and MySQL driver
-	root, err := parseRoot([]string{"goa4web", "--db-conn", "mysql://invalid-nonexistent-host:9999/dummy", "--db-driver", "mysql", "scenario", "serve", "scenarios/valid"})
+	// Configure root with production-like settings across database, URLs, email, uploads, DLQ
+	root, err := parseRoot([]string{
+		"goa4web",
+		"--db-conn", "mysql://invalid-nonexistent-host:9999/dummy",
+		"--db-driver", "mysql",
+		"--external-url", "https://production.example.test",
+		"--hostname", "https://production.example.test",
+		"--host", "production.example.test",
+		"--email-provider", "smtp",
+		"--smtp-host", "smtp.production.test",
+		"--smtp-port", "587",
+		"--smtp-user", "prod_user",
+		"--smtp-pass", "prod_pass",
+		"--sendgrid-key", "SG.production_key",
+		"scenario", "serve",
+		"--listen", ":9090",
+		"scenarios/valid",
+	})
 	if err != nil {
 		t.Fatalf("parseRoot: %v", err)
 	}
 	defer root.Close()
+
+	// Manually set non-flag production fields on parent config to ensure total override
+	root.cfg.BaseURL = "https://production.example.test"
+	root.cfg.EmailEnabled = true
+	root.cfg.ImageUploadProvider = "s3"
+	root.cfg.ImageUploadS3URL = "s3://prod-bucket/uploads"
+	root.cfg.ImageCacheProvider = "s3"
+	root.cfg.ImageCacheS3URL = "s3://prod-bucket/cache"
+	root.cfg.ImageUploadDir = "/var/www/production/uploads"
+	root.cfg.ImageCacheDir = "/var/www/production/cache"
+	root.cfg.DLQProvider = "file"
+	root.cfg.DLQFile = "/var/log/production_dlq.json"
 
 	fsys := fstest.MapFS{
 		"scenarios/valid/scenario.txtar": &fstest.MapFile{
@@ -240,39 +293,100 @@ At: 2026-08-01T09:00:00Z
 		},
 	}
 
-	parent, err := parseScenarioCmd(root, []string{"serve", "scenarios/valid"})
+	parent, err := parseScenarioCmd(root, []string{"serve", "--listen", ":9090", "scenarios/valid"})
 	if err != nil {
 		t.Fatalf("parseScenarioCmd: %v", err)
 	}
 
-	serveCmd, err := parseScenarioServeCmd(parent, []string{"scenarios/valid"})
+	serveCmd, err := parseScenarioServeCmd(parent, []string{"--listen", ":9090", "scenarios/valid"})
 	if err != nil {
 		t.Fatalf("parseScenarioServeCmd: %v", err)
 	}
 	serveCmd.fsys = fsys
 
-	// Bootstrap should succeed because it creates its own ephemeral SQLite DB, completely ignoring the broken DB_CONN
 	srv, dbConn, cleanup, err := serveCmd.Bootstrap(ctx)
 	if err != nil {
-		t.Fatalf("Bootstrap should succeed in isolation from DB_CONN, but failed: %v", err)
+		t.Fatalf("Bootstrap should succeed in isolation from production settings, but failed: %v", err)
 	}
-	defer cleanup()
 
-	// Verify the database used is SQLite, not MySQL
+	// 1. Database isolation
 	if srv.Config.DBDriver != "sqlite3" {
 		t.Errorf("expected DBDriver sqlite3, got %q", srv.Config.DBDriver)
 	}
 	if srv.Config.DBConn != "" {
-		t.Errorf("expected DBConn to be cleared for ephemeral serve, got %q", srv.Config.DBConn)
+		t.Errorf("expected DBConn cleared, got %q", srv.Config.DBConn)
 	}
 
-	// Verify Alice is created in the ephemeral SQLite database
+	// 2. BaseURL isolation: derived from :9090, not inherited from production
+	if srv.Config.BaseURL != "http://localhost:9090" {
+		t.Errorf("expected local BaseURL http://localhost:9090, got %q", srv.Config.BaseURL)
+	}
+	if srv.Config.HTTPHostname != "" {
+		t.Errorf("expected HTTPHostname cleared, got %q", srv.Config.HTTPHostname)
+	}
+	if srv.Config.ExternalURL != "" {
+		t.Errorf("expected ExternalURL cleared, got %q", srv.Config.ExternalURL)
+	}
+
+	// 3. Email isolation
+	if srv.Config.EmailEnabled != false {
+		t.Errorf("expected EmailEnabled false, got %v", srv.Config.EmailEnabled)
+	}
+	if srv.Config.EmailProvider != "log" {
+		t.Errorf("expected EmailProvider 'log', got %q", srv.Config.EmailProvider)
+	}
+	if srv.Config.EmailSMTPHost != "" {
+		t.Errorf("expected EmailSMTPHost cleared, got %q", srv.Config.EmailSMTPHost)
+	}
+	if srv.Config.EmailSendGridKey != "" {
+		t.Errorf("expected EmailSendGridKey cleared, got %q", srv.Config.EmailSendGridKey)
+	}
+
+	// 4. Image upload / cache isolation
+	if srv.Config.ImageUploadProvider != "local" {
+		t.Errorf("expected ImageUploadProvider local, got %q", srv.Config.ImageUploadProvider)
+	}
+	if srv.Config.ImageCacheProvider != "local" {
+		t.Errorf("expected ImageCacheProvider local, got %q", srv.Config.ImageCacheProvider)
+	}
+	if srv.Config.ImageUploadS3URL != "" {
+		t.Errorf("expected ImageUploadS3URL cleared, got %q", srv.Config.ImageUploadS3URL)
+	}
+	if srv.Config.ImageCacheS3URL != "" {
+		t.Errorf("expected ImageCacheS3URL cleared, got %q", srv.Config.ImageCacheS3URL)
+	}
+	if srv.Config.ImageUploadDir == "/var/www/production/uploads" {
+		t.Error("expected ImageUploadDir to be overridden with temporary directory")
+	}
+
+	// 5. DLQ isolation
+	if srv.Config.DLQProvider != "db" {
+		t.Errorf("expected DLQProvider 'db', got %q", srv.Config.DLQProvider)
+	}
+	if srv.Config.DLQFile != "" {
+		t.Errorf("expected DLQFile cleared, got %q", srv.Config.DLQFile)
+	}
+
+	// 6. Temporary directory exists during run
+	uploadDir := srv.Config.ImageUploadDir
+	tempDir := filepath.Dir(uploadDir)
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		t.Fatalf("expected temporary scenario directory %s to exist during run", tempDir)
+	}
+
+	// 7. Alice exists in the ephemeral SQLite database
 	var aliceCount int
 	if err := dbConn.QueryRowContext(ctx, "SELECT count(*) FROM users WHERE username = 'alice';").Scan(&aliceCount); err != nil {
 		t.Fatalf("query alice in ephemeral sqlite DB: %v", err)
 	}
 	if aliceCount != 1 {
 		t.Errorf("expected 1 alice user in ephemeral DB, got %d", aliceCount)
+	}
+
+	// 8. Cleanup removes the temporary directory
+	cleanup()
+	if _, err := os.Stat(tempDir); !os.IsNotExist(err) {
+		t.Errorf("expected temporary scenario directory %s to be removed on cleanup, stat err: %v", tempDir, err)
 	}
 }
 

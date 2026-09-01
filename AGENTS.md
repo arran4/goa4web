@@ -90,6 +90,44 @@ Before committing, run `go mod tidy` followed by `go fmt ./...`, `go vet ./...`,
 
 Do not add new global variables unless explicitly instructed or already well established. Avoid global state. Use dependency injection (e.g., passing structs via options/constructors) to share state like caches.
 
+## Scenario-backed behavioural coverage
+
+The human-readable scenario system under `internal/scenario` and `testdata/scenarios`
+is intended to provide representative working environments, executable behavioural
+documentation, and reusable integration-test setup. Treat scenarios as application
+intent, not database row snapshots or an HTTP-test DSL. See #3079 for the current
+coverage roadmap.
+
+Current coverage priorities are:
+
+- **Private forum** is the primary active domain and should be driven toward
+  representative behavioural completeness. When changing persistent or user-visible
+  private-forum behaviour, extend the representative scenario and its automated
+  behavioural/integration verification where practical. Coverage should include the
+  realistic topic/participant/thread/reply lifecycle, access boundaries, and actively
+  used read, subscription, and label state.
+- **User management** should cover the realistic actors, roles, and account states
+  required by active scenarios.
+- **News** should retain enough scenario coverage to protect active behaviour while it
+  is split and partially consolidated into the forum model. Avoid large new
+  news-specific fixture machinery that will immediately become legacy.
+- **Bookmarks, linker, blogs, writings/articles, image board, and help/FAQ** should
+  receive token scenario coverage only unless a task specifically targets their
+  migration or behaviour. Several are expected to be consolidated into forum or
+  otherwise substantially reworked.
+
+For a significant user-visible change in an active domain, if the behaviour can be
+represented as valid scenario state or an action sequence, update or add a scenario
+fixture and an automated test that applies it through the current application/domain
+operation path. Assert domain-visible outcomes rather than fixture-specific SQL rows.
+Layer HTTP/API tests on top of scenario-created state when the behaviour is
+transport-specific instead of adding HTTP concepts to the scenario format.
+
+Do not seed derived infrastructure state such as search indexes, notification queues,
+caches, generated thumbnails, WebSocket state, or post counts when normal application
+behaviour can derive or emit that state. Do not bypass business logic merely to make a
+scenario easier to construct.
+
 ## Database and Testing Notes
 
 - If the database setup is blocking frontend verification, it is acceptable to skip it and note that the user may perform manual testing instead.

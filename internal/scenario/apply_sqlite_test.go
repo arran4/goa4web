@@ -53,7 +53,7 @@ func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 
 	// Step A: Security boundary verification before scenario apply.
 	// Create a baseline user with 'user' role and verify that on a freshly seeded database without the scenario,
-	// normal users with the 'user' role DO NOT implicitly possess privateforum see/create grants.
+	// normal users with the 'user' role DO NOT implicitly possess privateforum see/view/create grants.
 	initUserRes, err := querier.SystemInsertUser(ctx, sql.NullString{String: "baseline_user", Valid: true})
 	if err != nil {
 		t.Fatalf("insert baseline user: %v", err)
@@ -72,6 +72,9 @@ func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 	}
 	if baselineCD.HasGrant("privateforum", "topic", "see", 0) {
 		t.Fatal("security violation: baseline user unexpectedly has global privateforum see permission before scenario apply")
+	}
+	if baselineCD.HasGrant("privateforum", "topic", "view", 0) {
+		t.Fatal("security violation: baseline user unexpectedly has global privateforum view permission before scenario apply")
 	}
 
 	// Step B: Self-provisioning scenario.
@@ -106,6 +109,14 @@ Item: topic
 Action: see
 At: 2026-08-01T09:01:30Z
 
+-- 023-grant-alice-view.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: view
+At: 2026-08-01T09:01:40Z
+
 -- 024-grant-alice-create.event --
 Op: user.grant
 User: alice
@@ -136,6 +147,14 @@ Item: topic
 Action: see
 At: 2026-08-01T09:03:30Z
 
+-- 043-grant-bob-view.event --
+Op: user.grant
+User: bob
+Section: privateforum
+Item: topic
+Action: view
+At: 2026-08-01T09:03:40Z
+
 -- 05-forum.event --
 Op: private-forum.create
 Ref: staff-room
@@ -156,8 +175,8 @@ At: 2026-08-01T09:05:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 8 {
-		t.Errorf("expected 8 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 10 {
+		t.Errorf("expected 10 events applied, got %d", res.EventsApplied)
 	}
 
 	// Step C: Verify that baseline user STILL has no privateforum permissions after scenario apply
@@ -166,6 +185,9 @@ At: 2026-08-01T09:05:00Z
 	}
 	if baselineCD.HasGrant("privateforum", "topic", "see", 0) {
 		t.Fatal("security violation: baseline user unexpectedly gained privateforum see permission after scenario apply")
+	}
+	if baselineCD.HasGrant("privateforum", "topic", "view", 0) {
+		t.Fatal("security violation: baseline user unexpectedly gained privateforum view permission after scenario apply")
 	}
 
 	aliceUID, ok := res.Registry.ResolveUser("alice")
@@ -188,8 +210,14 @@ At: 2026-08-01T09:05:00Z
 	if !aliceCD.HasGrant("privateforum", "topic", "see", 0) {
 		t.Error("expected Alice to have global privateforum see permission after user.grant")
 	}
+	if !aliceCD.HasGrant("privateforum", "topic", "view", 0) {
+		t.Error("expected Alice to have global privateforum view permission after user.grant")
+	}
 	if !bobCD.HasGrant("privateforum", "topic", "see", 0) {
 		t.Error("expected Bob to have global privateforum see permission after user.grant")
+	}
+	if !bobCD.HasGrant("privateforum", "topic", "view", 0) {
+		t.Error("expected Bob to have global privateforum view permission after user.grant")
 	}
 	if bobCD.HasGrant("privateforum", "topic", "create", 0) {
 		t.Error("expected Bob NOT to have global privateforum create permission since it was not granted")

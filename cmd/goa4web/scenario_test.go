@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/testdata/scenarios"
 )
 
 func TestScenarioCmd_ParseAndRun(t *testing.T) {
@@ -303,5 +304,23 @@ At: 2026-08-01T09:10:00+10:00
 
 	if err := valCmd.Run(); err != nil {
 		t.Fatalf("expected example fixture validation success, got: %v", err)
+	}
+}
+
+func TestScenarioValidateCmd_CommittedScenario(t *testing.T) {
+	root := &rootCmd{fs: flag.NewFlagSet("goa4web", flag.ContinueOnError)}
+	parent, err := parseScenarioCmd(root, []string{"validate"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+
+	valCmd, err := parseScenarioValidateCmd(parent, []string{"100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioValidateCmd: %v", err)
+	}
+	valCmd.fsys = scenarios.FS
+
+	if err := valCmd.Run(); err != nil {
+		t.Fatalf("expected committed scenario validation success, got: %v", err)
 	}
 }

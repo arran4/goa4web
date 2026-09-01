@@ -24,6 +24,14 @@ func TestPermissionLookupAndGlobalValidity(t *testing.T) {
 			wantRequireID: false,
 		},
 		{
+			name:          "privateforum topic view is global",
+			section:       "privateforum",
+			item:          "topic",
+			action:        "view",
+			wantFound:     true,
+			wantRequireID: false,
+		},
+		{
 			name:          "privateforum topic create is global",
 			section:       "privateforum",
 			item:          "topic",

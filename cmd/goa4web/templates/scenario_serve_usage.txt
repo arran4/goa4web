@@ -2,7 +2,9 @@ Usage:
   {{.Prog}} scenario serve <path>
 
 Creates an isolated, disposable SQLite environment from the requested scenario and starts
-the Goa4Web HTTP server. The ephemeral environment is automatically cleaned up on exit.
+the normal Goa4Web HTTP server. The command applies migrations, normal SQLite seed data,
+and the scenario before serving. Configured persistent database settings are ignored,
+external email delivery is disabled, and temporary upload/cache state is cleaned up on exit.
 
 Arguments:
   <path>    Path to a .txtar scenario file or scenario directory.
@@ -11,7 +13,10 @@ Examples:
   # Serve an ephemeral environment from a scenario directory
   {{.Prog}} scenario serve testdata/scenarios/100-private-forum
 
+  # From a source checkout without building a binary first
+  go run -tags sqlite ./cmd/goa4web scenario serve testdata/scenarios/100-private-forum
+
   # Serve on a custom listen address
-  {{.Prog}} --listen :8081 scenario serve testdata/scenarios/100-private-forum
+  {{.Prog}} scenario serve --listen :8081 testdata/scenarios/100-private-forum
 
 {{template "flag_groups_section" .FlagGroups}}

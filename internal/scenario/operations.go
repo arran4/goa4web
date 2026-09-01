@@ -449,8 +449,12 @@ func (o *UserGrantOp) Parse(evt *Event) (OperationData, error) {
 	}
 	item := strings.TrimSpace(evt.Headers.Get("Item"))
 
-	if !permissions.IsValid(section, item, action) {
+	def := permissions.Lookup(section, item, action)
+	if def == nil {
 		return nil, fmt.Errorf("user.grant: invalid or unsupported permission tuple (%s/%s/%s)", section, item, action)
+	}
+	if def.RequireItemID {
+		return nil, fmt.Errorf("user.grant: permission (%s/%s/%s) requires a concrete item ID and cannot be granted globally", section, item, action)
 	}
 
 	return &UserGrantData{

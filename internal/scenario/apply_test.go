@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -329,6 +330,70 @@ Post content here.
 	}
 	if errUnsupported.Op != "forum.post" {
 		t.Errorf("expected unsupported op 'forum.post', got %q", errUnsupported.Op)
+	}
+	if res != nil {
+		t.Errorf("expected nil ApplyResult on failure, got: %+v", res)
+	}
+
+	// Verify ZERO queries were executed
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected DB calls made: %v", err)
+	}
+}
+
+func TestApplyPreflightRejectsItemSpecificPermissionInUserGrant(t *testing.T) {
+	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
+
+	ctx := context.Background()
+	queries := db.New(conn)
+	cd := common.NewCoreData(ctx, queries, &config.RuntimeConfig{})
+	runner := NewRunner(cd)
+
+	// Scenario where a user is created, followed by an item-specific grant (e.g. privateforum_thread/thread/view)
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: item-specific-grant-preflight-test
+
+-- 01-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: alice-password
+At: 2026-08-01T09:00:00Z
+
+-- 02-grant.event --
+Op: user.grant
+User: alice
+Section: privateforum_thread
+Item: thread
+Action: view
+At: 2026-08-01T09:01:00Z
+`
+
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+
+	// Crucial assertion: No mock expectations are set.
+	// If any DB query runs (e.g. SystemInsertUser for alice), sqlmock will fail.
+	res, err := runner.Apply(ctx, sc)
+	if err == nil {
+		t.Fatal("expected Apply to fail during preflight for item-specific grant, but it succeeded")
+	}
+
+	if !strings.Contains(err.Error(), "requires a concrete item ID and cannot be granted globally") {
+		t.Errorf("expected error mentioning item ID requirement, got: %v", err)
 	}
 	if res != nil {
 		t.Errorf("expected nil ApplyResult on failure, got: %+v", res)

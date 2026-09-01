@@ -593,6 +593,54 @@ At: 2026-08-01T09:01:00Z
 `,
 			errSubstr: "invalid or unsupported permission tuple",
 		},
+		{
+			name: "item-specific privateforum_thread view permission rejected in user.grant",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.grant
+User: alice
+Section: privateforum_thread
+Item: thread
+Action: view
+At: 2026-08-01T09:01:00Z
+`,
+			errSubstr: "requires a concrete item ID and cannot be granted globally",
+		},
+		{
+			name: "item-specific forum topic post permission rejected in user.grant",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.grant
+User: alice
+Section: forum
+Item: topic
+Action: post
+At: 2026-08-01T09:01:00Z
+`,
+			errSubstr: "requires a concrete item ID and cannot be granted globally",
+		},
 	}
 
 	for _, tt := range tests {

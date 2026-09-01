@@ -38,6 +38,8 @@ const (
 	PermissionItemBoard PermissionItem = "board"
 	// PermissionItemCategory identifies a forum or writing category.
 	PermissionItemCategory PermissionItem = "category"
+	// PermissionItemComment identifies a comment.
+	PermissionItemComment PermissionItem = "comment"
 	// PermissionItemEntry identifies a blog entry.
 	PermissionItemEntry PermissionItem = "entry"
 	// PermissionItemLink identifies a linker link.
@@ -57,10 +59,14 @@ type PermissionAction string
 func (a PermissionAction) String() string { return string(a) }
 
 const (
+	// PermissionActionAppend permits adding text to an eligible existing comment.
+	PermissionActionAppend PermissionAction = "append"
 	// PermissionActionCreate permits creating a container resource.
 	PermissionActionCreate PermissionAction = "create"
 	// PermissionActionEdit permits editing a resource.
 	PermissionActionEdit PermissionAction = "edit"
+	// PermissionActionEditAny permits editing a resource owned by another user.
+	PermissionActionEditAny PermissionAction = "edit-any"
 	// PermissionActionLabel permits managing resource labels.
 	PermissionActionLabel PermissionAction = "label"
 	// PermissionActionPost permits adding a child resource.

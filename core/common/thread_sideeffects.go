@@ -149,11 +149,18 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 // ApplyForumMutationWorkers synchronously refreshes thread/topic metadata and indexes a comment.
 // Scenario imports use this because their events predate server worker startup.
 func (cd *CoreData) ApplyForumMutationWorkers(ctx context.Context, threadID, topicID, commentID int32, text string) error {
+	return cd.applyForumMutationWorkers(ctx, threadID, topicID, commentID, text, true)
+}
+
+func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, topicID, commentID int32, text string, includeSearch bool) error {
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
 	if err := postcountworker.PostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
 		return err
+	}
+	if !includeSearch {
+		return nil
 	}
 	return searchworker.Index(ctx, cd.queries, searchworker.IndexEventData{
 		Type: searchworker.TypeComment,

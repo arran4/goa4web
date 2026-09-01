@@ -50,6 +50,48 @@ func TestRuntimeConfigDefaultsFromOptions(t *testing.T) {
 	if cfg.LoginAttemptWindow != 15 || cfg.LoginAttemptThreshold != 5 {
 		t.Fatalf("login attempt defaults = %d/%d", cfg.LoginAttemptWindow, cfg.LoginAttemptThreshold)
 	}
+	if cfg.ForumPostAppendWindow != 60 || cfg.PrivateForumPostAppendWindow != 60 {
+		t.Fatalf("forum append window defaults = %d/%d", cfg.ForumPostAppendWindow, cfg.PrivateForumPostAppendWindow)
+	}
+}
+
+func TestForumAppendWindowConfigurationPrecedenceAndIndependence(t *testing.T) {
+	fs := config.NewRuntimeFlagSet("test")
+	if err := fs.Parse([]string{"--forum-post-append-window=15"}); err != nil {
+		t.Fatalf("parse flags: %v", err)
+	}
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(map[string]string{
+			config.EnvForumPostAppendWindow:        "30",
+			config.EnvPrivateForumPostAppendWindow: "45",
+		}),
+		config.WithGetenv(func(key string) string {
+			switch key {
+			case config.EnvForumPostAppendWindow:
+				return "50"
+			case config.EnvPrivateForumPostAppendWindow:
+				return "55"
+			default:
+				return ""
+			}
+		}),
+	)
+	if cfg.ForumPostAppendWindow != 15 || cfg.PrivateForumPostAppendWindow != 45 {
+		t.Fatalf("append windows = %d/%d, want flag 15 and file 45", cfg.ForumPostAppendWindow, cfg.PrivateForumPostAppendWindow)
+	}
+
+	envOnly := config.NewRuntimeConfig(
+		config.WithGetenv(func(key string) string {
+			if key == config.EnvPrivateForumPostAppendWindow {
+				return "0"
+			}
+			return ""
+		}),
+	)
+	if envOnly.ForumPostAppendWindow != 60 || envOnly.PrivateForumPostAppendWindow != 0 {
+		t.Fatalf("independent env append windows = %d/%d", envOnly.ForumPostAppendWindow, envOnly.PrivateForumPostAppendWindow)
+	}
 }
 
 func TestThumbnailSizes(t *testing.T) {

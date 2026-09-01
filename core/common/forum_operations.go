@@ -91,6 +91,13 @@ type ReplyForumThreadResult struct {
 	TopicID   int32
 	CommentID int32
 	URL       string
+	Appended  bool
+}
+
+type forumCommentAppendResult struct {
+	appended      bool
+	canonicalText string
+	textAvailable bool
 }
 
 // CanCreateForumThread reports whether actorID may post a thread in topicID.
@@ -140,6 +147,83 @@ func forumBasePath(private bool, basePath string) string {
 		return "/private"
 	}
 	return "/forum"
+}
+
+func (cd *CoreData) forumAppendWindow(isPrivate bool) int {
+	if cd == nil || cd.Config == nil {
+		return 0
+	}
+	if isPrivate {
+		return cd.Config.PrivateForumPostAppendWindow
+	}
+	return cd.Config.ForumPostAppendWindow
+}
+
+func forumAppendGrantTarget(isPrivate bool, topicID, threadID int32) (consts.PermissionSection, consts.PermissionItem, int32) {
+	if isPrivate {
+		return consts.PermissionSectionPrivateForumThread, consts.PermissionItemThread, threadID
+	}
+	return consts.PermissionSectionForum, consts.PermissionItemTopic, topicID
+}
+
+func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, threadID, topicID, commentID int32, text string, writtenAt time.Time, isPrivate bool) (forumCommentAppendResult, error) {
+	appendWindowMins := cd.forumAppendWindow(isPrivate)
+	if appendWindowMins <= 0 {
+		return forumCommentAppendResult{}, nil
+	}
+
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
+	paths, err := cd.imagePathsFromText(text)
+	if err != nil {
+		return forumCommentAppendResult{}, fmt.Errorf("parse images: %w", imageValidationUserError(err))
+	}
+	if err := cd.validateImagePathsForThread(actorID, threadID, paths); err != nil {
+		return forumCommentAppendResult{}, fmt.Errorf("validate images: %w", err)
+	}
+
+	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
+	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(ctx, db.AppendCommentInSectionForCommenterParams{
+		Text:             text,
+		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
+		CommentID:        commentID,
+		CommenterID:      actorID,
+		ForumthreadID:    threadID,
+		AppendWindowMins: int64(appendWindowMins),
+		Section:          section.String(),
+		ItemType:         sql.NullString{String: itemType.String(), Valid: true},
+		ItemID:           sql.NullInt32{Int32: itemID, Valid: true},
+		GrantUserID:      sql.NullInt32{Int32: actorID, Valid: actorID != 0},
+	})
+	if err != nil {
+		return forumCommentAppendResult{}, fmt.Errorf("append forum reply: %w", err)
+	}
+	if rowsAffected == 0 {
+		return forumCommentAppendResult{}, nil
+	}
+
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
+	}
+	if err := cd.recordThreadImages(threadID, paths); err != nil {
+		log.Printf("record thread images after append: %v", err)
+	}
+
+	comment, err := cd.queries.GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
+		ViewerID: actorID,
+		ID:       commentID,
+		UserID:   sql.NullInt32{Int32: actorID, Valid: actorID != 0},
+	})
+	if err != nil || comment == nil {
+		if err != nil {
+			log.Printf("reload appended forum comment %d: %v", commentID, err)
+		}
+		return forumCommentAppendResult{appended: true}, nil
+	}
+	return forumCommentAppendResult{
+		appended:      true,
+		canonicalText: comment.Text.String,
+		textAvailable: true,
+	}, nil
 }
 
 func (cd *CoreData) forumTopicForActor(ctx context.Context, topicID, actorID int32) (*db.GetForumTopicByIdForUserRow, error) {
@@ -340,23 +424,68 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	if writtenAt.IsZero() {
 		writtenAt = time.Now().UTC()
 	}
-	commentID64, err := cd.createCommentInSectionForCommenterAt(
-		section, itemType, consts.PermissionActionReply, itemID,
-		thread.Idforumthread, params.ActorID, params.LanguageID, params.Text, writtenAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("create forum reply: %w", err)
+
+	var comments []*db.GetCommentsByThreadIdForUserRow
+	commentsLoaded := false
+	appendResult := forumCommentAppendResult{}
+	if cd.forumAppendWindow(isPrivate) > 0 {
+		comments, err = cd.ThreadComments(thread.Idforumthread)
+		if err != nil {
+			return nil, fmt.Errorf("load forum replies for append candidate: %w", err)
+		}
+		commentsLoaded = true
+		if len(comments) > 0 {
+			candidate := comments[len(comments)-1]
+			appendResult, err = cd.attemptAppendForumComment(
+				ctx,
+				params.ActorID,
+				thread.Idforumthread,
+				topic.Idforumtopic,
+				candidate.Idcomments,
+				params.Text,
+				writtenAt,
+				isPrivate,
+			)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
-	if commentID64 == 0 {
-		return nil, ForumOperationForbiddenError{Action: "reply"}
+
+	commentID := int32(0)
+	commentText := params.Text
+	canonicalTextAvailable := true
+	if appendResult.appended {
+		commentID = comments[len(comments)-1].Idcomments
+		commentText = appendResult.canonicalText
+		canonicalTextAvailable = appendResult.textAvailable
+	} else {
+		commentID64, createErr := cd.createCommentInSectionForCommenterAt(
+			section, itemType, consts.PermissionActionReply, itemID,
+			thread.Idforumthread, params.ActorID, params.LanguageID, params.Text, writtenAt,
+		)
+		if createErr != nil {
+			return nil, fmt.Errorf("create forum reply: %w", createErr)
+		}
+		if commentID64 == 0 {
+			return nil, ForumOperationForbiddenError{Action: "reply"}
+		}
+		commentID = int32(commentID64)
 	}
-	commentID := int32(commentID64)
 
 	anchor := fmt.Sprintf("c%d", commentID)
-	if comments, commentsErr := cd.ThreadComments(thread.Idforumthread); commentsErr != nil {
+	if commentsLoaded && len(comments) > 0 {
+		anchorIndex := len(comments)
+		if !appendResult.appended {
+			anchorIndex++
+		}
+		if anchorIndex > 0 {
+			anchor = fmt.Sprintf("c%d", anchorIndex)
+		}
+	} else if currentComments, commentsErr := cd.ThreadComments(thread.Idforumthread); commentsErr != nil {
 		log.Printf("fetch comments to determine reply anchor: %v", commentsErr)
-	} else if len(comments) > 0 {
-		anchor = fmt.Sprintf("c%d", len(comments))
+	} else if len(currentComments) > 0 {
+		anchor = fmt.Sprintf("c%d", len(currentComments))
 	}
 	basePath := forumBasePath(isPrivate, params.BasePath)
 	endURL := fmt.Sprintf("%s/topic/%d/thread/%d#%s", basePath, topic.Idforumtopic, thread.Idforumthread, anchor)
@@ -380,18 +509,18 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		Thread:               thread,
 		TopicTitle:           topic.Title.String,
 		Username:             username,
-		CommentText:          params.Text,
+		CommentText:          commentText,
 		CommentURL:           cd.AbsoluteURL(endURL),
 		ClearUnreadForOthers: true,
 		MarkThreadRead:       true,
 		IncludePostCount:     true,
-		IncludeSearch:        true,
+		IncludeSearch:        canonicalTextAvailable,
 		AdditionalData:       data,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
 	}
 	if params.SynchronousSideEffects {
-		if err := cd.ApplyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, params.Text); err != nil {
+		if err := cd.applyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, commentText, canonicalTextAvailable); err != nil {
 			return nil, fmt.Errorf("apply forum reply workers: %w", err)
 		}
 	}
@@ -401,5 +530,6 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		TopicID:   topic.Idforumtopic,
 		CommentID: commentID,
 		URL:       endURL,
+		Appended:  appendResult.appended,
 	}, nil
 }

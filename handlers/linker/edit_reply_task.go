@@ -64,7 +64,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if err = queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+	rows, err := queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
 		LanguageID: sql.NullInt32{Int32: int32(languageId), Valid: languageId != 0},
 		Text: sql.NullString{
 			String: text,
@@ -73,8 +73,12 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		CommentID:   int32(commentId),
 		CommenterID: cd.UserID,
 		EditorID:    sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
+	if rows == 0 {
+		return fmt.Errorf("edit denied: access restricted or comment not found %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("access denied")))
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{

@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
@@ -25,6 +24,9 @@ func TestRequireCommentAuthor(t *testing.T) {
 		userID := int32(7)
 
 		q := testhelpers.NewQuerierStub()
+		q.GetForumTopicByIdForUserFn = func(context.Context, db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
+		}
 		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 			Idcomments:    commentID,
 			ForumthreadID: threadID,
@@ -32,11 +34,19 @@ func TestRequireCommentAuthor(t *testing.T) {
 			IsOwner:       true,
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "3"})
+		q.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+			if arg.Section == "forum" && arg.Action == "edit" {
+				return 1, nil
+			}
+			return 0, sql.ErrNoRows
+		}
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/5/comment/3?comment=3", nil)
 
 		sess := &sessions.Session{Values: map[any]any{"UID": userID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
+		cd.UserID = userID
+		cd.SetCurrentThreadAndTopic(threadID, 1)
+		cd.SetCurrentSection("forum")
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -68,8 +78,8 @@ func TestRequireCommentAuthor(t *testing.T) {
 		if got := q.GetCommentByIdForUserCalls[0]; got != want {
 			t.Fatalf("unexpected comment lookup params: %#v", got)
 		}
-		if len(q.SystemCheckGrantCalls) != 0 {
-			t.Fatalf("unexpected grant checks: %v", q.SystemCheckGrantCalls)
+		if len(q.SystemCheckGrantCalls) == 0 {
+			t.Fatalf("expected a grant check")
 		}
 	})
 
@@ -79,7 +89,10 @@ func TestRequireCommentAuthor(t *testing.T) {
 		authorID := int32(11)
 		adminID := int32(12)
 
-		q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "thread", "edit-any"))
+		q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "topic", "edit-any"))
+		q.GetForumTopicByIdForUserFn = func(context.Context, db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
+		}
 		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 			Idcomments:    commentID,
 			ForumthreadID: threadID,
@@ -87,11 +100,13 @@ func TestRequireCommentAuthor(t *testing.T) {
 			IsOwner:       false,
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "9"})
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/10/comment/9?comment=9", nil)
 
 		sess := &sessions.Session{Values: map[any]any{"UID": adminID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user"}))
+		cd.UserID = adminID
+		cd.SetCurrentThreadAndTopic(threadID, 1)
+		cd.SetCurrentSection("forum")
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)
 		ctx = context.WithValue(ctx, consts.KeyCoreData, cd)
@@ -126,7 +141,7 @@ func TestRequireCommentAuthor(t *testing.T) {
 		if len(q.SystemCheckGrantCalls) != 1 {
 			t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
 		}
-		if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "thread", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: threadID, Valid: true}) {
+		if got := q.SystemCheckGrantCalls[0]; got.Action != "edit-any" || got.Section != "forum" || got.Item != (sql.NullString{String: "topic", Valid: true}) || got.ItemID != (sql.NullInt32{Int32: 1, Valid: true}) {
 			t.Fatalf("unexpected grant params: %#v", got)
 		}
 	})
@@ -138,6 +153,9 @@ func TestRequireCommentAuthor(t *testing.T) {
 		adminID := int32(17)
 
 		q := testhelpers.NewQuerierStub()
+		q.GetForumTopicByIdForUserFn = func(context.Context, db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{Idforumtopic: 1, Handler: "forum"}, nil
+		}
 		q.GetCommentByIdForUserRow = &db.GetCommentByIdForUserRow{
 			Idcomments:    commentID,
 			ForumthreadID: threadID,
@@ -148,11 +166,13 @@ func TestRequireCommentAuthor(t *testing.T) {
 			{Name: "administrator", IsAdmin: true},
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13", nil)
-		req = mux.SetURLVars(req, map[string]string{"comment": "13"})
+		req := httptest.NewRequest(http.MethodPost, "/forum/topic/1/thread/15/comment/13?comment=13", nil)
 
 		sess := &sessions.Session{Values: map[any]any{"UID": adminID}}
 		cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig(), common.WithSession(sess), common.WithUserRoles([]string{"anyone", "user", "administrator"}))
+		cd.UserID = adminID
+		cd.SetCurrentThreadAndTopic(threadID, 1)
+		cd.SetCurrentSection("forum")
 		cd.AdminMode = true
 
 		ctx := context.WithValue(req.Context(), core.ContextValues("session"), sess)

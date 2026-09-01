@@ -25,6 +25,9 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
+	AppendCommentInSectionForCommenterFn   func(context.Context, AppendCommentInSectionForCommenterParams) (int64, error)
+	SystemHasOtherUserReadItemAtOrBeyondFn func(context.Context, SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)
+
 	CreateAPIKeyStub            func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	GetAPIKeyByHashStub         func(ctx context.Context, apiKey string) (*ApiKey, error)
 	ListAPIKeysByUserStub       func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
@@ -1063,6 +1066,28 @@ type QuerierStub struct {
 	ListUnreadPrivateThreadsForUserReturns  []*ListUnreadPrivateThreadsForUserRow
 	ListUnreadPrivateThreadsForUserErr      error
 	ListUnreadPrivateThreadsForUserFn       func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+}
+
+// AppendCommentInSectionForCommenter invokes the configured append mutation, defaulting to an ineligible result.
+func (s *QuerierStub) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	s.mu.Lock()
+	fn := s.AppendCommentInSectionForCommenterFn
+	s.mu.Unlock()
+	if fn == nil {
+		return 0, nil
+	}
+	return fn(ctx, arg)
+}
+
+// SystemHasOtherUserReadItemAtOrBeyond invokes the configured read-marker check.
+func (s *QuerierStub) SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error) {
+	s.mu.Lock()
+	fn := s.SystemHasOtherUserReadItemAtOrBeyondFn
+	s.mu.Unlock()
+	if fn == nil {
+		return false, errors.New("SystemHasOtherUserReadItemAtOrBeyond not stubbed")
+	}
+	return fn(ctx, arg)
 }
 
 // AdminListGrantsByThreadID records calls and returns configured private-thread grants.

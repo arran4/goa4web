@@ -25,7 +25,7 @@ type GrantDefinition struct {
 // specs/permissions.md.
 var GrantActionMap = map[string]GrantDefinition{
 	"forum|":              {Actions: []string{"search"}},
-	"forum|topic":         {Actions: []string{"see", "view", "reply", "post", "edit"}, RequireItemID: true},
+	"forum|topic":         {Actions: []string{"see", "view", "reply", "post", consts.PermissionActionEdit.String(), consts.PermissionActionEditAny.String(), consts.PermissionActionAppend.String()}, RequireItemID: true},
 	"forum|thread":        {Actions: []string{"see", "view", "reply", "edit"}, RequireItemID: true},
 	"forum|comment":       {Actions: []string{"edit"}}, // RequireItemID must be false to allow global grants (ItemID 0) for generic self-edit permissions.
 	"forum|category":      {Actions: []string{"see", "view", "post"}, RequireItemID: true},
@@ -52,6 +52,9 @@ var GrantActionMap = map[string]GrantDefinition{
 		Actions: []string{
 			consts.PermissionActionView.String(),
 			consts.PermissionActionReply.String(),
+			consts.PermissionActionAppend.String(),
+			consts.PermissionActionEdit.String(),
+			consts.PermissionActionEditAny.String(),
 		},
 		RequireItemID: true,
 	},

@@ -40,6 +40,35 @@ func (q *Queries) GetContentReadMarker(ctx context.Context, arg GetContentReadMa
 	return &i, err
 }
 
+const systemHasOtherUserReadItemAtOrBeyond = `-- name: SystemHasOtherUserReadItemAtOrBeyond :one
+SELECT EXISTS (
+    SELECT 1 FROM content_read_markers crm
+    WHERE crm.item = ?1
+      AND crm.item_id = ?2
+      AND crm.user_id != ?3
+      AND crm.last_comment_id >= ?4
+) AS has_read
+`
+
+type SystemHasOtherUserReadItemAtOrBeyondParams struct {
+	Item          string
+	ItemID        int64
+	UserID        int64
+	LastCommentID int64
+}
+
+func (q *Queries) SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg SystemHasOtherUserReadItemAtOrBeyondParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemHasOtherUserReadItemAtOrBeyond,
+		arg.Item,
+		arg.ItemID,
+		arg.UserID,
+		arg.LastCommentID,
+	)
+	var has_read int64
+	err := row.Scan(&has_read)
+	return has_read, err
+}
+
 const upsertContentReadMarker = `-- name: UpsertContentReadMarker :exec
 INSERT INTO content_read_markers (
     item, item_id, user_id, last_comment_id

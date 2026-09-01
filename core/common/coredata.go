@@ -2234,6 +2234,50 @@ func (cd *CoreData) CreateNewsCommentForCommenter(commenterID, threadID, postID,
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionNews, consts.PermissionItemPost, postID, threadID, commenterID, languageID, text)
 }
 
+// CanAppendToComment reports whether the reply form may advertise appending to cmt.
+// The SQL mutation repeats every check atomically; this method is advisory and fails closed.
+func (cd *CoreData) CanAppendToComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
+	if cd == nil || cd.queries == nil || cd.UserID == 0 || cmt == nil || !cmt.IsOwner || !cmt.Written.Valid {
+		return false
+	}
+
+	topic, err := cd.CurrentTopic()
+	if err != nil || topic == nil {
+		return false
+	}
+	isPrivate := topic.Handler == "private"
+	appendWindowMins := cd.forumAppendWindow(isPrivate)
+	if appendWindowMins <= 0 || cmt.Written.Time.Before(time.Now().Add(-time.Duration(appendWindowMins)*time.Minute)) {
+		return false
+	}
+
+	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topic.Idforumtopic, cmt.ForumthreadID)
+	_, err = cd.queries.SystemCheckGrant(cd.ctx, db.SystemCheckGrantParams{
+		ViewerID:               cd.UserID,
+		Section:                section.String(),
+		Item:                   sql.NullString{String: itemType.String(), Valid: true},
+		Action:                 consts.PermissionActionAppend.String(),
+		ItemID:                 sql.NullInt32{Int32: itemID, Valid: true},
+		IsSpecificPrivateForum: isPrivate,
+		UserID:                 sql.NullInt32{Int32: cd.UserID, Valid: true},
+	})
+	if err != nil {
+		return false
+	}
+
+	comments, err := cd.ThreadComments(cmt.ForumthreadID)
+	if err != nil || len(comments) == 0 || comments[len(comments)-1].Idcomments != cmt.Idcomments {
+		return false
+	}
+	hasRead, err := cd.queries.SystemHasOtherUserReadItemAtOrBeyond(cd.ctx, db.SystemHasOtherUserReadItemAtOrBeyondParams{
+		Item:          consts.PermissionItemThread.String(),
+		ItemID:        cmt.ForumthreadID,
+		UserID:        cd.UserID,
+		LastCommentID: cmt.Idcomments,
+	})
+	return err == nil && !hasRead
+}
+
 func (cd *CoreData) CreateForumCommentForCommenter(commenterID, threadID, topicID, languageID int32, text string) (int64, error) {
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionForum, consts.PermissionItemTopic, topicID, threadID, commenterID, languageID, text)
 }
@@ -2268,11 +2312,42 @@ func (cd *CoreData) CreateLinkerCommentForCommenter(commenterID, threadID, linkI
 	return cd.CreateCommentInSectionForCommenter(consts.PermissionSectionLinker, consts.PermissionItemLink, linkID, threadID, commenterID, languageID, text)
 }
 
-// CanEditComment reports whether the current user may edit the supplied
-// comment. Only the original author can edit comments via the public
-// interface; administrative edits must occur through the admin portal.
+// CanEditCommentTarget reports whether the current user may edit a forum comment target.
+func (cd *CoreData) CanEditCommentTarget(commentID, threadID, authorID int32) bool {
+	if cd == nil || cd.UserID == 0 {
+		return false
+	}
+	if cd.IsAdmin() {
+		return true
+	}
+	if cd.currentSection != consts.PermissionSectionForum.String() && cd.currentSection != consts.PermissionSectionPrivateForum.String() {
+		return false
+	}
+	topic, err := cd.CurrentTopic()
+	if err != nil || topic == nil {
+		return false
+	}
+	action := consts.PermissionActionEdit
+	if authorID != cd.UserID {
+		action = consts.PermissionActionEditAny
+	}
+	if topic.Handler == "private" {
+		return cd.HasGrant(consts.PermissionSectionPrivateForumThread.String(), consts.PermissionItemThread.String(), action.String(), threadID)
+	}
+	return cd.HasGrant(consts.PermissionSectionForum.String(), consts.PermissionItemTopic.String(), action.String(), topic.Idforumtopic)
+}
+
+// CanEditComment reports whether the current user may edit the supplied comment.
 func (cd *CoreData) CanEditComment(cmt *db.GetCommentsByThreadIdForUserRow) bool {
-	return cmt != nil && cmt.IsOwner && cd.HasGrant(cd.currentSection, "comment", "edit", cmt.Idcomments)
+	if cmt == nil || cd == nil {
+		return false
+	}
+	switch cd.currentSection {
+	case consts.PermissionSectionForum.String(), consts.PermissionSectionPrivateForum.String():
+		return cd.CanEditCommentTarget(cmt.Idcomments, cmt.ForumthreadID, cmt.UsersIdusers)
+	default:
+		return cmt.IsOwner && cd.HasGrant(cd.currentSection, consts.PermissionItemComment.String(), consts.PermissionActionEdit.String(), cmt.Idcomments)
+	}
 }
 
 // CommentEditing returns true if the given comment is currently being edited.

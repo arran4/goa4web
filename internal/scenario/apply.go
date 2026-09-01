@@ -65,6 +65,7 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 		supportedOps: map[string]bool{
 			"user.create":          true,
 			"user.enable":          true,
+			"role.grant":           true,
 			"private-forum.create": true,
 		},
 	}
@@ -136,6 +137,13 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 			return fmt.Errorf("invalid operation data for user.enable")
 		}
 		return r.applyUserEnable(ctx, data)
+
+	case "role.grant":
+		data, ok := evt.OpData.(*RoleGrantData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for role.grant")
+		}
+		return r.applyRoleGrant(ctx, data)
 
 	case "private-forum.create":
 		data, ok := evt.OpData.(*PrivateForumCreateData)
@@ -219,5 +227,12 @@ func (r *Runner) applyPrivateForumCreate(ctx context.Context, data *PrivateForum
 		}
 	}
 
+	return nil
+}
+
+func (r *Runner) applyRoleGrant(ctx context.Context, data *RoleGrantData) error {
+	if err := r.coreData.GrantRole(data.Role, data.Section, data.Item, data.Action); err != nil {
+		return fmt.Errorf("grant role %s (%s/%s/%s): %w", data.Role, data.Section, data.Item, data.Action, err)
+	}
 	return nil
 }

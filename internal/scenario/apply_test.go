@@ -61,6 +61,22 @@ Actor: admin
 User: bob
 At: 2026-08-01T09:04:00Z
 
+-- 042-grant-see.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:04:30Z
+
+-- 044-grant-create.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:04:45Z
+
 -- 05-forum.event --
 Op: private-forum.create
 Ref: staff-room
@@ -112,7 +128,44 @@ At: 2026-08-01T09:10:00Z
 		WithArgs(bobUID, "user").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	// 5. Private forum creation by Alice with Bob
+	// 5. Role grants for privateforum
+	mock.ExpectQuery("(?s).*GetRoleByName.*").
+		WithArgs("user").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
+			AddRow(2, "user", 1, 0, 1, nil))
+	mock.ExpectExec("(?s).*AdminCreateGrant.*").
+		WithArgs(
+			sql.NullInt32{},
+			sql.NullInt32{Int32: 2, Valid: true},
+			"privateforum",
+			sql.NullString{String: "topic", Valid: true},
+			"allow",
+			sql.NullInt32{},
+			sql.NullString{},
+			"see",
+			sql.NullString{},
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectQuery("(?s).*GetRoleByName.*").
+		WithArgs("user").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
+			AddRow(2, "user", 1, 0, 1, nil))
+	mock.ExpectExec("(?s).*AdminCreateGrant.*").
+		WithArgs(
+			sql.NullInt32{},
+			sql.NullInt32{Int32: 2, Valid: true},
+			"privateforum",
+			sql.NullString{String: "topic", Valid: true},
+			"allow",
+			sql.NullInt32{},
+			sql.NullString{},
+			"create",
+			sql.NullString{},
+		).
+		WillReturnResult(sqlmock.NewResult(2, 1))
+
+	// 6. Private forum creation by Alice with Bob
 	// Check creator grant
 	mock.ExpectQuery("(?s).*SystemCheckGrant.*").
 		WithArgs(aliceUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: aliceUID, Valid: true}, false).
@@ -163,8 +216,8 @@ At: 2026-08-01T09:10:00Z
 		t.Fatalf("Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 5 {
-		t.Errorf("expected 5 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 7 {
+		t.Errorf("expected 7 events applied, got %d", res.EventsApplied)
 	}
 
 	resolvedAlice, ok := res.Registry.ResolveUser("alice")
@@ -435,6 +488,72 @@ At: 2026-08-01T09:05:00Z
 	}
 	if res != nil {
 		t.Errorf("expected nil ApplyResult on failure, got: %+v", res)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sqlmock expectations: %v", err)
+	}
+}
+
+func TestApplyRoleGrant(t *testing.T) {
+	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
+
+	ctx := context.Background()
+	queries := db.New(conn)
+	cd := common.NewCoreData(ctx, queries, &config.RuntimeConfig{})
+	runner := NewRunner(cd)
+
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: role-grant-test
+
+-- 01-grant.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:00:00Z
+`
+
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+
+	mock.ExpectQuery("(?s).*GetRoleByName.*").
+		WithArgs("user").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
+			AddRow(2, "user", 1, 0, 1, nil))
+	mock.ExpectExec("(?s).*AdminCreateGrant.*").
+		WithArgs(
+			sql.NullInt32{},
+			sql.NullInt32{Int32: 2, Valid: true},
+			"privateforum",
+			sql.NullString{String: "topic", Valid: true},
+			"allow",
+			sql.NullInt32{},
+			sql.NullString{},
+			"see",
+			sql.NullString{},
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	res, err := runner.Apply(ctx, sc)
+	if err != nil {
+		t.Fatalf("runner.Apply failed: %v", err)
+	}
+	if res.EventsApplied != 1 {
+		t.Errorf("expected 1 event applied, got %d", res.EventsApplied)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

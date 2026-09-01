@@ -33,6 +33,22 @@ Actor: admin
 User: bob
 At: 2026-08-01T09:04:00+10:00
 
+-- 042-grant-private-forum-see.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:04:30+10:00
+
+-- 044-grant-private-forum-create.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:04:45+10:00
+
 -- 050-private-forum.event --
 Op: private-forum.create
 Ref: staff-room

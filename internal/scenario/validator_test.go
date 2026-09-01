@@ -470,6 +470,65 @@ At: 2026-08-01T09:10:00Z
 `,
 			errSubstr: "escapes scenario directory",
 		},
+		{
+			name: "missing required Role in role.grant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: role.grant
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "missing required field \"Role\"",
+		},
+		{
+			name: "missing required Section in role.grant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: role.grant
+Role: user
+Action: see
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "missing required field \"Section\"",
+		},
+		{
+			name: "missing required Action in role.grant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: role.grant
+Role: user
+Section: privateforum
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "missing required field \"Action\"",
+		},
+		{
+			name: "unknown field in role.grant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Action: see
+UnknownKey: foo
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "unknown field \"UnknownKey\"",
+		},
 	}
 
 	for _, tt := range tests {
@@ -565,5 +624,45 @@ func TestValidateInvalidMeta(t *testing.T) {
 	var errMissing ErrMissingRequiredField
 	if err := Validate(s); !errors.As(err, &errMissing) {
 		t.Fatalf("expected ErrMissingRequiredField, got %v", err)
+	}
+}
+
+func TestValidateRoleGrant(t *testing.T) {
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test-role-grant
+
+-- 01.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: role.grant
+Role: administrator
+Section: role
+Action: moderator
+At: 2026-08-01T09:01:00Z
+`
+
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if err := Validate(sc); err != nil {
+		t.Fatalf("Validate failed: %v", err)
+	}
+
+	d1, ok := sc.Events[0].OpData.(*RoleGrantData)
+	if !ok || d1.Role != "user" || d1.Section != "privateforum" || d1.Item != "topic" || d1.Action != "see" {
+		t.Errorf("unexpected d1: %+v", d1)
+	}
+
+	d2, ok := sc.Events[1].OpData.(*RoleGrantData)
+	if !ok || d2.Role != "administrator" || d2.Section != "role" || d2.Item != "" || d2.Action != "moderator" {
+		t.Errorf("unexpected d2: %+v", d2)
 	}
 }

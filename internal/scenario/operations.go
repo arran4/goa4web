@@ -51,6 +51,7 @@ func DefaultRegistry() *Registry {
 	return NewRegistry(
 		&UserCreateOp{},
 		&UserEnableOp{},
+		&RoleGrantOp{},
 		&PrivateForumCreateOp{},
 		&ForumPostOp{},
 	)
@@ -386,5 +387,67 @@ func (o *ForumPostOp) Parse(evt *Event) (OperationData, error) {
 		Attachments: evt.Headers.Values("Attachment"),
 		Body:        evt.Body,
 		At:          evt.At,
+	}, nil
+}
+
+// --- role.grant ---
+
+// RoleGrantData holds the strongly-typed data for role.grant.
+type RoleGrantData struct {
+	Role    string
+	Section string
+	Item    string
+	Action  string
+	At      time.Time
+}
+
+func (d *RoleGrantData) Op() string { return "role.grant" }
+
+// RoleGrantOp implements Operation for granting permissions to a named role.
+type RoleGrantOp struct{}
+
+func (o *RoleGrantOp) OpName() string { return "role.grant" }
+
+func (o *RoleGrantOp) AllowedHeaders() []string {
+	return []string{"Op", "Role", "Section", "Item", "Action", "At"}
+}
+
+func (o *RoleGrantOp) RequiredHeaders() []string {
+	return []string{"Role", "Section", "Action", "At"}
+}
+
+func (o *RoleGrantOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	return "", "", false
+}
+
+func (o *RoleGrantOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	return nil
+}
+
+func (o *RoleGrantOp) AssetPaths(evt *Event) []string {
+	return nil
+}
+
+func (o *RoleGrantOp) Parse(evt *Event) (OperationData, error) {
+	role := strings.TrimSpace(evt.Headers.Get("Role"))
+	if role == "" {
+		return nil, fmt.Errorf("role.grant: missing required 'Role'")
+	}
+	section := strings.TrimSpace(evt.Headers.Get("Section"))
+	if section == "" {
+		return nil, fmt.Errorf("role.grant: missing required 'Section'")
+	}
+	action := strings.TrimSpace(evt.Headers.Get("Action"))
+	if action == "" {
+		return nil, fmt.Errorf("role.grant: missing required 'Action'")
+	}
+	item := strings.TrimSpace(evt.Headers.Get("Item"))
+
+	return &RoleGrantData{
+		Role:    role,
+		Section: section,
+		Item:    item,
+		Action:  action,
+		At:      evt.At,
 	}, nil
 }

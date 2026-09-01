@@ -50,12 +50,39 @@ func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 	querier := db.NewForDriver(dbConn, "sqlite3")
 	cfg := &config.RuntimeConfig{DBDriver: "sqlite3"}
 	cd := common.NewCoreData(ctx, querier, cfg)
+
+	// Step A: Security boundary verification.
+	// Create a preliminary user to demonstrate that on a freshly seeded database without the scenario,
+	// normal users with the 'user' role DO NOT implicitly possess privateforum see/create grants.
+	initUserRes, err := querier.SystemInsertUser(ctx, sql.NullString{String: "baseline_user", Valid: true})
+	if err != nil {
+		t.Fatalf("insert baseline user: %v", err)
+	}
+	baselineUID := int32(initUserRes)
+	if err := querier.SystemCreateUserRole(ctx, db.SystemCreateUserRoleParams{
+		UsersIdusers: baselineUID,
+		Name:         "user",
+	}); err != nil {
+		t.Fatalf("assign user role: %v", err)
+	}
+
+	baselineCD := cd.ForUser(baselineUID)
+	if baselineCD.HasGrant("privateforum", "topic", "create", 0) {
+		t.Fatal("security violation: baseline user unexpectedly has global privateforum create permission from base seed")
+	}
+	if baselineCD.HasGrant("privateforum", "topic", "see", 0) {
+		t.Fatal("security violation: baseline user unexpectedly has global privateforum see permission from base seed")
+	}
+
+	// Step B: Self-provisioning scenario.
+	// Scenario explicitly defines users, grants required privateforum permissions to role 'user',
+	// and creates the private forum between Alice and Bob.
 	runner := NewRunner(cd)
 
 	scenarioTxt := `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: real-db-private-forum
-Description: Real in-memory SQLite integration test for user and private topic creation
+Description: Real in-memory SQLite integration test for permission provisioning and private topic creation
 
 -- 01-alice.event --
 Op: user.create
@@ -85,6 +112,22 @@ Actor: admin
 User: bob
 At: 2026-08-01T09:03:00Z
 
+-- 042-grant-private-forum-see.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:04:30Z
+
+-- 044-grant-private-forum-create.event --
+Op: role.grant
+Role: user
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:04:45Z
+
 -- 05-forum.event --
 Op: private-forum.create
 Ref: staff-room
@@ -105,8 +148,8 @@ At: 2026-08-01T09:05:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 5 {
-		t.Errorf("expected 5 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 7 {
+		t.Errorf("expected 7 events applied, got %d", res.EventsApplied)
 	}
 
 	aliceUID, ok := res.Registry.ResolveUser("alice")
@@ -117,6 +160,17 @@ At: 2026-08-01T09:05:00Z
 	bobUID, ok := res.Registry.ResolveUser("bob")
 	if !ok || bobUID == 0 {
 		t.Fatalf("failed to resolve bob user ref: %d (ok=%v)", bobUID, ok)
+	}
+
+	aliceCD := cd.ForUser(aliceUID)
+	bobCD := cd.ForUser(bobUID)
+
+	// Verify that the permissions are now established for role 'user'
+	if !aliceCD.HasGrant("privateforum", "topic", "create", 0) {
+		t.Error("expected Alice to have global privateforum create permission after role.grant")
+	}
+	if !bobCD.HasGrant("privateforum", "topic", "see", 0) {
+		t.Error("expected Bob to have global privateforum see permission after role.grant")
 	}
 
 	topicIDVal, ok := res.Registry.Resolve(RefTypeForum, "staff-room")
@@ -141,7 +195,6 @@ At: 2026-08-01T09:05:00Z
 	}
 
 	// Verify Alice permissions on the private topic
-	aliceCD := cd.ForUser(aliceUID)
 	for _, act := range []string{"see", "view", "post", "reply"} {
 		if !aliceCD.HasGrant("privateforum", "topic", act, topicID) {
 			t.Errorf("expected Alice to have grant %s on private topic %d", act, topicID)
@@ -149,7 +202,6 @@ At: 2026-08-01T09:05:00Z
 	}
 
 	// Verify Bob permissions on the private topic
-	bobCD := cd.ForUser(bobUID)
 	for _, act := range []string{"see", "view", "post", "reply"} {
 		if !bobCD.HasGrant("privateforum", "topic", act, topicID) {
 			t.Errorf("expected Bob to have grant %s on private topic %d", act, topicID)
@@ -173,5 +225,14 @@ At: 2026-08-01T09:05:00Z
 	}
 	if !auth.VerifyPassword("bob-password456", bobPasswd, bobAlg) {
 		t.Error("bob password hash verification failed for 'bob-password456'")
+	}
+}
+
+func TestSeedSQLDoesNotContainPrivateForumGrants(t *testing.T) {
+	for _, driver := range []string{"mysql", "sqlite3"} {
+		seed := string(database.SeedSQLForDriver(driver))
+		if strings.Contains(seed, "privateforum") {
+			t.Errorf("seed SQL for driver %q must not contain privateforum grants", driver)
+		}
 	}
 }

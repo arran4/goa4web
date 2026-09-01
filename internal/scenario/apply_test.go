@@ -47,6 +47,22 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:02:00Z
 
+-- 022-grant-alice-see.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:02:30Z
+
+-- 024-grant-alice-create.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:02:45Z
+
 -- 03-bob.event --
 Op: user.create
 Ref: bob
@@ -61,21 +77,13 @@ Actor: admin
 User: bob
 At: 2026-08-01T09:04:00Z
 
--- 042-grant-see.event --
-Op: role.grant
-Role: user
+-- 042-grant-bob-see.event --
+Op: user.grant
+User: bob
 Section: privateforum
 Item: topic
 Action: see
 At: 2026-08-01T09:04:30Z
-
--- 044-grant-create.event --
-Op: role.grant
-Role: user
-Section: privateforum
-Item: topic
-Action: create
-At: 2026-08-01T09:04:45Z
 
 -- 05-forum.event --
 Op: private-forum.create
@@ -112,31 +120,11 @@ At: 2026-08-01T09:10:00Z
 		WithArgs(aliceUID, "user").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	// 3. Bob creation
-	mock.ExpectExec("(?s).*SystemInsertUser.*").
-		WithArgs(sql.NullString{String: "bob", Valid: true}).
-		WillReturnResult(sqlmock.NewResult(int64(bobUID), 1))
-	mock.ExpectExec("(?s).*InsertUserEmail.*").
-		WithArgs(bobUID, "bob@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("(?s).*InsertPassword.*").
-		WithArgs(bobUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// 4. Bob enable
-	mock.ExpectExec("(?s).*SystemCreateUserRole.*").
-		WithArgs(bobUID, "user").
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// 5. Role grants for privateforum
-	mock.ExpectQuery("(?s).*GetRoleByName.*").
-		WithArgs("user").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
-			AddRow(2, "user", 1, 0, 1, nil))
+	// 3. Alice user grants
 	mock.ExpectExec("(?s).*AdminCreateGrant.*").
 		WithArgs(
+			sql.NullInt32{Int32: aliceUID, Valid: true},
 			sql.NullInt32{},
-			sql.NullInt32{Int32: 2, Valid: true},
 			"privateforum",
 			sql.NullString{String: "topic", Valid: true},
 			"allow",
@@ -147,14 +135,10 @@ At: 2026-08-01T09:10:00Z
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	mock.ExpectQuery("(?s).*GetRoleByName.*").
-		WithArgs("user").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
-			AddRow(2, "user", 1, 0, 1, nil))
 	mock.ExpectExec("(?s).*AdminCreateGrant.*").
 		WithArgs(
+			sql.NullInt32{Int32: aliceUID, Valid: true},
 			sql.NullInt32{},
-			sql.NullInt32{Int32: 2, Valid: true},
 			"privateforum",
 			sql.NullString{String: "topic", Valid: true},
 			"allow",
@@ -165,7 +149,38 @@ At: 2026-08-01T09:10:00Z
 		).
 		WillReturnResult(sqlmock.NewResult(2, 1))
 
-	// 6. Private forum creation by Alice with Bob
+	// 4. Bob creation
+	mock.ExpectExec("(?s).*SystemInsertUser.*").
+		WithArgs(sql.NullString{String: "bob", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(int64(bobUID), 1))
+	mock.ExpectExec("(?s).*InsertUserEmail.*").
+		WithArgs(bobUID, "bob@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*InsertPassword.*").
+		WithArgs(bobUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// 5. Bob enable
+	mock.ExpectExec("(?s).*SystemCreateUserRole.*").
+		WithArgs(bobUID, "user").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// 6. Bob user grant
+	mock.ExpectExec("(?s).*AdminCreateGrant.*").
+		WithArgs(
+			sql.NullInt32{Int32: bobUID, Valid: true},
+			sql.NullInt32{},
+			"privateforum",
+			sql.NullString{String: "topic", Valid: true},
+			"allow",
+			sql.NullInt32{},
+			sql.NullString{},
+			"see",
+			sql.NullString{},
+		).
+		WillReturnResult(sqlmock.NewResult(3, 1))
+
+	// 7. Private forum creation by Alice with Bob
 	// Check creator grant
 	mock.ExpectQuery("(?s).*SystemCheckGrant.*").
 		WithArgs(aliceUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: aliceUID, Valid: true}, false).
@@ -216,8 +231,8 @@ At: 2026-08-01T09:10:00Z
 		t.Fatalf("Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 7 {
-		t.Errorf("expected 7 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 8 {
+		t.Errorf("expected 8 events applied, got %d", res.EventsApplied)
 	}
 
 	resolvedAlice, ok := res.Registry.ResolveUser("alice")
@@ -495,7 +510,7 @@ At: 2026-08-01T09:05:00Z
 	}
 }
 
-func TestApplyRoleGrant(t *testing.T) {
+func TestApplyUserGrant(t *testing.T) {
 	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -514,15 +529,23 @@ func TestApplyRoleGrant(t *testing.T) {
 
 	txt := `-- scenario.meta --
 Format: goa4web-scenario/v1
-Name: role-grant-test
+Name: user-grant-test
 
--- 01-grant.event --
-Op: role.grant
-Role: user
+-- 01-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02-grant.event --
+Op: user.grant
+User: alice
 Section: privateforum
 Item: topic
 Action: see
-At: 2026-08-01T09:00:00Z
+At: 2026-08-01T09:01:00Z
 `
 
 	sc, err := Parse([]byte(txt), nil)
@@ -530,14 +553,21 @@ At: 2026-08-01T09:00:00Z
 		t.Fatalf("Parse: %v", err)
 	}
 
-	mock.ExpectQuery("(?s).*GetRoleByName.*").
-		WithArgs("user").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
-			AddRow(2, "user", 1, 0, 1, nil))
+	aliceUID := int32(10)
+	mock.ExpectExec("(?s).*SystemInsertUser.*").
+		WithArgs(sql.NullString{String: "alice", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(int64(aliceUID), 1))
+	mock.ExpectExec("(?s).*InsertUserEmail.*").
+		WithArgs(aliceUID, "alice@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*InsertPassword.*").
+		WithArgs(aliceUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
 	mock.ExpectExec("(?s).*AdminCreateGrant.*").
 		WithArgs(
+			sql.NullInt32{Int32: aliceUID, Valid: true},
 			sql.NullInt32{},
-			sql.NullInt32{Int32: 2, Valid: true},
 			"privateforum",
 			sql.NullString{String: "topic", Valid: true},
 			"allow",
@@ -552,8 +582,8 @@ At: 2026-08-01T09:00:00Z
 	if err != nil {
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
-	if res.EventsApplied != 1 {
-		t.Errorf("expected 1 event applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 2 {
+		t.Errorf("expected 2 events applied, got %d", res.EventsApplied)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

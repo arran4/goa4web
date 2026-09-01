@@ -471,63 +471,127 @@ At: 2026-08-01T09:10:00Z
 			errSubstr: "escapes scenario directory",
 		},
 		{
-			name: "missing required Role in role.grant rejected",
+			name: "missing required User in user.grant rejected",
 			txtar: `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: test
 
 -- 01.event --
-Op: role.grant
+Op: user.grant
 Section: privateforum
 Item: topic
 Action: see
 At: 2026-08-01T09:00:00Z
 `,
-			errSubstr: "missing required field \"Role\"",
+			errSubstr: "missing required field \"User\"",
 		},
 		{
-			name: "missing required Section in role.grant rejected",
+			name: "missing required Section in user.grant rejected",
 			txtar: `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: test
 
 -- 01.event --
-Op: role.grant
-Role: user
-Action: see
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
 At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.grant
+User: alice
+Action: see
+At: 2026-08-01T09:01:00Z
 `,
 			errSubstr: "missing required field \"Section\"",
 		},
 		{
-			name: "missing required Action in role.grant rejected",
+			name: "missing required Action in user.grant rejected",
 			txtar: `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: test
 
 -- 01.event --
-Op: role.grant
-Role: user
-Section: privateforum
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
 At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.grant
+User: alice
+Section: privateforum
+At: 2026-08-01T09:01:00Z
 `,
 			errSubstr: "missing required field \"Action\"",
 		},
 		{
-			name: "unknown field in role.grant rejected",
+			name: "unknown field in user.grant rejected",
 			txtar: `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: test
 
 -- 01.event --
-Op: role.grant
-Role: user
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.grant
+User: alice
 Section: privateforum
 Action: see
 UnknownKey: foo
-At: 2026-08-01T09:00:00Z
+At: 2026-08-01T09:01:00Z
 `,
 			errSubstr: "unknown field \"UnknownKey\"",
+		},
+		{
+			name: "unresolved user ref in user.grant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.grant
+User: unknown-user
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "unresolved user reference \"unknown-user\" in field \"User\"",
+		},
+		{
+			name: "invalid permission tuple in user.grant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.grant
+User: alice
+Section: invalid_section
+Item: topic
+Action: see
+At: 2026-08-01T09:01:00Z
+`,
+			errSubstr: "invalid or unsupported permission tuple",
 		},
 	}
 
@@ -627,25 +691,34 @@ func TestValidateInvalidMeta(t *testing.T) {
 	}
 }
 
-func TestValidateRoleGrant(t *testing.T) {
+func TestValidateUserGrant(t *testing.T) {
 	txt := `-- scenario.meta --
 Format: goa4web-scenario/v1
-Name: test-role-grant
+Name: test-user-grant
 
 -- 01.event --
-Op: role.grant
-Role: user
-Section: privateforum
-Item: topic
-Action: see
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
-Op: role.grant
-Role: administrator
-Section: role
-Action: moderator
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: see
 At: 2026-08-01T09:01:00Z
+
+-- 03.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:02:00Z
 `
 
 	sc, err := Parse([]byte(txt), nil)
@@ -656,13 +729,13 @@ At: 2026-08-01T09:01:00Z
 		t.Fatalf("Validate failed: %v", err)
 	}
 
-	d1, ok := sc.Events[0].OpData.(*RoleGrantData)
-	if !ok || d1.Role != "user" || d1.Section != "privateforum" || d1.Item != "topic" || d1.Action != "see" {
+	d1, ok := sc.Events[1].OpData.(*UserGrantData)
+	if !ok || d1.User != "alice" || d1.Section != "privateforum" || d1.Item != "topic" || d1.Action != "see" {
 		t.Errorf("unexpected d1: %+v", d1)
 	}
 
-	d2, ok := sc.Events[1].OpData.(*RoleGrantData)
-	if !ok || d2.Role != "administrator" || d2.Section != "role" || d2.Item != "" || d2.Action != "moderator" {
+	d2, ok := sc.Events[2].OpData.(*UserGrantData)
+	if !ok || d2.User != "alice" || d2.Section != "privateforum" || d2.Item != "topic" || d2.Action != "create" {
 		t.Errorf("unexpected d2: %+v", d2)
 	}
 }

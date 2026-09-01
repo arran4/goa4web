@@ -50,10 +50,11 @@ var (
 	ForumThreadEditAny = &GrantDefinition{"forum", "thread", "edit-any", "Allows editing any post in a thread."}
 
 	// Private Forum
-	PrivateforumTopicSee   = &GrantDefinition{"privateforum", "topic", "see", "Allows seeing private topics."}
-	PrivateforumTopicPost  = &GrantDefinition{"privateforum", "topic", "post", "Allows posting new threads in a private topic."}
-	PrivateforumTopicReply = &GrantDefinition{"privateforum", "topic", "reply", "Allows replying to threads in a private topic."}
-	PrivateforumThreadView = &GrantDefinition{
+	PrivateforumTopicSee    = &GrantDefinition{"privateforum", "topic", "see", "Allows seeing private topics."}
+	PrivateforumTopicCreate = &GrantDefinition{"privateforum", "topic", "create", "Allows creating private topics."}
+	PrivateforumTopicPost   = &GrantDefinition{"privateforum", "topic", "post", "Allows posting new threads in a private topic."}
+	PrivateforumTopicReply  = &GrantDefinition{"privateforum", "topic", "reply", "Allows replying to threads in a private topic."}
+	PrivateforumThreadView  = &GrantDefinition{
 		consts.PermissionSectionPrivateForumThread.String(),
 		consts.PermissionItemThread.String(),
 		consts.PermissionActionView.String(),
@@ -122,6 +123,7 @@ var Definitions = []*GrantDefinition{
 
 	// Private Forum
 	PrivateforumTopicSee,
+	PrivateforumTopicCreate,
 	PrivateforumTopicPost,
 	PrivateforumTopicReply,
 	PrivateforumThreadView,
@@ -146,4 +148,14 @@ var Definitions = []*GrantDefinition{
 	WritingArticleReply,
 	WritingArticleSee,
 	WritingPostEdit,
+}
+
+// IsValid checks whether the given (section, item, action) tuple matches a defined grant permission.
+func IsValid(section, item, action string) bool {
+	for _, def := range Definitions {
+		if def.Section == section && def.Item == item && def.Action == action {
+			return true
+		}
+	}
+	return false
 }

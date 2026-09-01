@@ -19,6 +19,22 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:02:00+10:00
 
+-- 022-grant-alice-see.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:02:30+10:00
+
+-- 024-grant-alice-create.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:02:45+10:00
+
 -- 030-bob.event --
 Op: user.create
 Ref: bob
@@ -33,21 +49,13 @@ Actor: admin
 User: bob
 At: 2026-08-01T09:04:00+10:00
 
--- 042-grant-private-forum-see.event --
-Op: role.grant
-Role: user
+-- 042-grant-bob-see.event --
+Op: user.grant
+User: bob
 Section: privateforum
 Item: topic
 Action: see
 At: 2026-08-01T09:04:30+10:00
-
--- 044-grant-private-forum-create.event --
-Op: role.grant
-Role: user
-Section: privateforum
-Item: topic
-Action: create
-At: 2026-08-01T09:04:45+10:00
 
 -- 050-private-forum.event --
 Op: private-forum.create

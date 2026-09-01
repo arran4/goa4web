@@ -65,7 +65,7 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 		supportedOps: map[string]bool{
 			"user.create":          true,
 			"user.enable":          true,
-			"role.grant":           true,
+			"user.grant":           true,
 			"private-forum.create": true,
 		},
 	}
@@ -138,12 +138,12 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 		}
 		return r.applyUserEnable(ctx, data)
 
-	case "role.grant":
-		data, ok := evt.OpData.(*RoleGrantData)
+	case "user.grant":
+		data, ok := evt.OpData.(*UserGrantData)
 		if !ok {
-			return fmt.Errorf("invalid operation data for role.grant")
+			return fmt.Errorf("invalid operation data for user.grant")
 		}
-		return r.applyRoleGrant(ctx, data)
+		return r.applyUserGrant(ctx, data)
 
 	case "private-forum.create":
 		data, ok := evt.OpData.(*PrivateForumCreateData)
@@ -230,9 +230,13 @@ func (r *Runner) applyPrivateForumCreate(ctx context.Context, data *PrivateForum
 	return nil
 }
 
-func (r *Runner) applyRoleGrant(ctx context.Context, data *RoleGrantData) error {
-	if err := r.coreData.GrantRole(data.Role, data.Section, data.Item, data.Action); err != nil {
-		return fmt.Errorf("grant role %s (%s/%s/%s): %w", data.Role, data.Section, data.Item, data.Action, err)
+func (r *Runner) applyUserGrant(ctx context.Context, data *UserGrantData) error {
+	uid, ok := r.refRegistry.ResolveUser(data.User)
+	if !ok {
+		return fmt.Errorf("cannot resolve user %q", data.User)
+	}
+	if err := r.coreData.GrantUser(uid, data.Section, data.Item, data.Action); err != nil {
+		return fmt.Errorf("grant user %s (%d) (%s/%s/%s): %w", data.User, uid, data.Section, data.Item, data.Action, err)
 	}
 	return nil
 }

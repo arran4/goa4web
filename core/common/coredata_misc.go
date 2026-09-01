@@ -296,14 +296,11 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 	return fname, nil
 }
 
-// GrantRole creates an administrative grant for a named role.
-func (cd *CoreData) GrantRole(roleName, section, item, action string) error {
-	role, err := cd.queries.GetRoleByName(cd.ctx, roleName)
-	if err != nil {
-		return fmt.Errorf("lookup role %q: %w", roleName, err)
-	}
-	_, err = cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
-		RoleID:   sql.NullInt32{Int32: role.ID, Valid: true},
+// GrantUser creates an administrative grant directly for a specific user ID.
+func (cd *CoreData) GrantUser(userID int32, section, item, action string) error {
+	_, err := cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
+		UserID:   sql.NullInt32{Int32: userID, Valid: true},
+		RoleID:   sql.NullInt32{},
 		Section:  section,
 		Item:     sql.NullString{String: item, Valid: item != ""},
 		RuleType: "allow",
@@ -313,7 +310,7 @@ func (cd *CoreData) GrantRole(roleName, section, item, action string) error {
 		Extra:    sql.NullString{},
 	})
 	if err != nil {
-		return fmt.Errorf("create grant for role %q (%s/%s/%s): %w", roleName, section, item, action, err)
+		return fmt.Errorf("create grant for user %d (%s/%s/%s): %w", userID, section, item, action, err)
 	}
 	return nil
 }

@@ -51,8 +51,8 @@ func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 	cfg := &config.RuntimeConfig{DBDriver: "sqlite3"}
 	cd := common.NewCoreData(ctx, querier, cfg)
 
-	// Step A: Security boundary verification.
-	// Create a preliminary user to demonstrate that on a freshly seeded database without the scenario,
+	// Step A: Security boundary verification before scenario apply.
+	// Create a baseline user with 'user' role and verify that on a freshly seeded database without the scenario,
 	// normal users with the 'user' role DO NOT implicitly possess privateforum see/create grants.
 	initUserRes, err := querier.SystemInsertUser(ctx, sql.NullString{String: "baseline_user", Valid: true})
 	if err != nil {
@@ -68,14 +68,14 @@ func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 
 	baselineCD := cd.ForUser(baselineUID)
 	if baselineCD.HasGrant("privateforum", "topic", "create", 0) {
-		t.Fatal("security violation: baseline user unexpectedly has global privateforum create permission from base seed")
+		t.Fatal("security violation: baseline user unexpectedly has global privateforum create permission before scenario apply")
 	}
 	if baselineCD.HasGrant("privateforum", "topic", "see", 0) {
-		t.Fatal("security violation: baseline user unexpectedly has global privateforum see permission from base seed")
+		t.Fatal("security violation: baseline user unexpectedly has global privateforum see permission before scenario apply")
 	}
 
 	// Step B: Self-provisioning scenario.
-	// Scenario explicitly defines users, grants required privateforum permissions to role 'user',
+	// Scenario explicitly defines users, grants required privateforum permissions directly to Alice and Bob via user.grant,
 	// and creates the private forum between Alice and Bob.
 	runner := NewRunner(cd)
 
@@ -98,6 +98,22 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:01:00Z
 
+-- 022-grant-alice-see.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:01:30Z
+
+-- 024-grant-alice-create.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:01:45Z
+
 -- 03-bob.event --
 Op: user.create
 Ref: bob
@@ -112,21 +128,13 @@ Actor: admin
 User: bob
 At: 2026-08-01T09:03:00Z
 
--- 042-grant-private-forum-see.event --
-Op: role.grant
-Role: user
+-- 042-grant-bob-see.event --
+Op: user.grant
+User: bob
 Section: privateforum
 Item: topic
 Action: see
-At: 2026-08-01T09:04:30Z
-
--- 044-grant-private-forum-create.event --
-Op: role.grant
-Role: user
-Section: privateforum
-Item: topic
-Action: create
-At: 2026-08-01T09:04:45Z
+At: 2026-08-01T09:03:30Z
 
 -- 05-forum.event --
 Op: private-forum.create
@@ -148,8 +156,16 @@ At: 2026-08-01T09:05:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 7 {
-		t.Errorf("expected 7 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 8 {
+		t.Errorf("expected 8 events applied, got %d", res.EventsApplied)
+	}
+
+	// Step C: Verify that baseline user STILL has no privateforum permissions after scenario apply
+	if baselineCD.HasGrant("privateforum", "topic", "create", 0) {
+		t.Fatal("security violation: baseline user unexpectedly gained privateforum create permission after scenario apply")
+	}
+	if baselineCD.HasGrant("privateforum", "topic", "see", 0) {
+		t.Fatal("security violation: baseline user unexpectedly gained privateforum see permission after scenario apply")
 	}
 
 	aliceUID, ok := res.Registry.ResolveUser("alice")
@@ -165,12 +181,18 @@ At: 2026-08-01T09:05:00Z
 	aliceCD := cd.ForUser(aliceUID)
 	bobCD := cd.ForUser(bobUID)
 
-	// Verify that the permissions are now established for role 'user'
+	// Verify that the permissions are now established specifically for Alice and Bob
 	if !aliceCD.HasGrant("privateforum", "topic", "create", 0) {
-		t.Error("expected Alice to have global privateforum create permission after role.grant")
+		t.Error("expected Alice to have global privateforum create permission after user.grant")
+	}
+	if !aliceCD.HasGrant("privateforum", "topic", "see", 0) {
+		t.Error("expected Alice to have global privateforum see permission after user.grant")
 	}
 	if !bobCD.HasGrant("privateforum", "topic", "see", 0) {
-		t.Error("expected Bob to have global privateforum see permission after role.grant")
+		t.Error("expected Bob to have global privateforum see permission after user.grant")
+	}
+	if bobCD.HasGrant("privateforum", "topic", "create", 0) {
+		t.Error("expected Bob NOT to have global privateforum create permission since it was not granted")
 	}
 
 	topicIDVal, ok := res.Registry.Resolve(RefTypeForum, "staff-room")

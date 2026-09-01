@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/arran4/goa4web/internal/permissions"
 )
 
 // OperationData is a marker interface for parsed, strongly-typed operation payloads.
@@ -51,7 +53,7 @@ func DefaultRegistry() *Registry {
 	return NewRegistry(
 		&UserCreateOp{},
 		&UserEnableOp{},
-		&RoleGrantOp{},
+		&UserGrantOp{},
 		&PrivateForumCreateOp{},
 		&ForumPostOp{},
 	)
@@ -390,61 +392,69 @@ func (o *ForumPostOp) Parse(evt *Event) (OperationData, error) {
 	}, nil
 }
 
-// --- role.grant ---
+// --- user.grant ---
 
-// RoleGrantData holds the strongly-typed data for role.grant.
-type RoleGrantData struct {
-	Role    string
+// UserGrantData holds the strongly-typed data for user.grant.
+type UserGrantData struct {
+	User    string
 	Section string
 	Item    string
 	Action  string
 	At      time.Time
 }
 
-func (d *RoleGrantData) Op() string { return "role.grant" }
+func (d *UserGrantData) Op() string { return "user.grant" }
 
-// RoleGrantOp implements Operation for granting permissions to a named role.
-type RoleGrantOp struct{}
+// UserGrantOp implements Operation for granting permissions to a specific user.
+type UserGrantOp struct{}
 
-func (o *RoleGrantOp) OpName() string { return "role.grant" }
+func (o *UserGrantOp) OpName() string { return "user.grant" }
 
-func (o *RoleGrantOp) AllowedHeaders() []string {
-	return []string{"Op", "Role", "Section", "Item", "Action", "At"}
+func (o *UserGrantOp) AllowedHeaders() []string {
+	return []string{"Op", "User", "Section", "Item", "Action", "At"}
 }
 
-func (o *RoleGrantOp) RequiredHeaders() []string {
-	return []string{"Role", "Section", "Action", "At"}
+func (o *UserGrantOp) RequiredHeaders() []string {
+	return []string{"User", "Section", "Action", "At"}
 }
 
-func (o *RoleGrantOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+func (o *UserGrantOp) DeclaredRef(evt *Event) (RefType, string, bool) {
 	return "", "", false
 }
 
-func (o *RoleGrantOp) ReferencedSymbols(evt *Event) []SymbolRef {
+func (o *UserGrantOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	var refs []SymbolRef
+	if u := strings.TrimSpace(evt.Headers.Get("User")); u != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: u, Field: "User"})
+	}
+	return refs
+}
+
+func (o *UserGrantOp) AssetPaths(evt *Event) []string {
 	return nil
 }
 
-func (o *RoleGrantOp) AssetPaths(evt *Event) []string {
-	return nil
-}
-
-func (o *RoleGrantOp) Parse(evt *Event) (OperationData, error) {
-	role := strings.TrimSpace(evt.Headers.Get("Role"))
-	if role == "" {
-		return nil, fmt.Errorf("role.grant: missing required 'Role'")
+func (o *UserGrantOp) Parse(evt *Event) (OperationData, error) {
+	user := strings.TrimSpace(evt.Headers.Get("User"))
+	if user == "" {
+		return nil, fmt.Errorf("user.grant: missing required 'User'")
 	}
 	section := strings.TrimSpace(evt.Headers.Get("Section"))
 	if section == "" {
-		return nil, fmt.Errorf("role.grant: missing required 'Section'")
+		return nil, fmt.Errorf("user.grant: missing required 'Section'")
 	}
 	action := strings.TrimSpace(evt.Headers.Get("Action"))
 	if action == "" {
-		return nil, fmt.Errorf("role.grant: missing required 'Action'")
+		return nil, fmt.Errorf("user.grant: missing required 'Action'")
 	}
 	item := strings.TrimSpace(evt.Headers.Get("Item"))
 
-	return &RoleGrantData{
-		Role:    role,
+	if !permissions.IsValid(section, item, action) {
+		return nil, fmt.Errorf("user.grant: invalid or unsupported permission tuple (%s/%s/%s)", section, item, action)
+	}
+
+	return &UserGrantData{
+		User:    user,
 		Section: section,
 		Item:    item,
 		Action:  action,

@@ -3,9 +3,11 @@ package common
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 )
 
@@ -208,5 +210,43 @@ func TestCreatePrivateTopicRejectsIneligibleParticipants(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestMapLinkURL(t *testing.T) {
+	cd := &CoreData{
+		Config: &config.RuntimeConfig{
+			BaseURL: "http://example.com",
+		},
+		LinkSignKey: "test-link-key",
+	}
+
+	tests := []struct {
+		name string
+		tag  string
+		val  string
+		want string // we'll just check if it was signed or not by looking at prefixes or identical values
+	}{
+		{"not an anchor tag", "img", "http://external.com/img.png", "http://external.com/img.png"},
+		{"relative url", "a", "/internal/path", "/internal/path"},
+		{"allowed host", "a", "http://example.com/path", "http://example.com/path"},
+		{"allowed host case insensitive", "a", "HTTP://eXaMpLe.CoM/path", "HTTP://eXaMpLe.CoM/path"},
+		{"disallowed host", "a", "http://external.com/path", "signed"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := cd.MapLinkURL(tt.tag, tt.val)
+
+			if tt.want == "signed" {
+				if got == tt.val || !strings.Contains(got, "/goto?u=") {
+					t.Errorf("MapLinkURL(%q, %q) = %q, want signed URL", tt.tag, tt.val, got)
+				}
+			} else {
+				if got != tt.want {
+					t.Errorf("MapLinkURL(%q, %q) = %q, want %q", tt.tag, tt.val, got, tt.want)
+				}
+			}
+		})
 	}
 }

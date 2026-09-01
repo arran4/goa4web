@@ -268,6 +268,11 @@ type RuntimeConfig struct {
 	// TrustedProxies is a comma-separated list of trusted proxy CIDRs.
 	TrustedProxies string
 
+	// ForumPostAppendWindow is the public-forum consecutive-reply append window in minutes.
+	ForumPostAppendWindow int
+	// PrivateForumPostAppendWindow is the private-forum consecutive-reply append window in minutes.
+	PrivateForumPostAppendWindow int
+
 	// WebAuthnEnabled toggles WebAuthn support.
 	WebAuthnEnabled bool
 }

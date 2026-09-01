@@ -78,14 +78,18 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: commenterID,
 		EditorID:    sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
-	}); err != nil {
+	})
+	if err != nil {
 		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("edit denied")
 	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)

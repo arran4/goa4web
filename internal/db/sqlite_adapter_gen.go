@@ -4111,6 +4111,33 @@ func (s *sqliteQuerier) AdminWritingCategoryCounts(ctx context.Context) ([]*Admi
 	}(res), nil
 }
 
+func (s *sqliteQuerier) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	res, err := s.q.AppendCommentInSectionForCommenter(ctx, dbsqlite.AppendCommentInSectionForCommenterParams{
+		Text: func(v interface{}) string {
+			if s, ok := v.(string); ok {
+				return s
+			}
+			if s, ok := v.(*string); ok && s != nil {
+				return *s
+			}
+			return ""
+		}(arg.Text),
+		Written:          arg.Written,
+		CommentID:        int64(arg.CommentID),
+		CommenterID:      int64(arg.CommenterID),
+		ForumthreadID:    int64(arg.ForumthreadID),
+		AppendWindowMins: arg.AppendWindowMins,
+		Section:          arg.Section,
+		ItemType:         arg.ItemType,
+		ItemID:           sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
+		GrantUserID:      sql.NullInt64{Int64: int64(arg.GrantUserID.Int32), Valid: arg.GrantUserID.Valid},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error) {
 	res, err := s.q.CheckUserHasGrant(ctx, dbsqlite.CheckUserHasGrantParams{
 		UserID:  sql.NullInt64{Int64: int64(arg.UserID.Int32), Valid: arg.UserID.Valid},
@@ -10116,6 +10143,19 @@ func (s *sqliteQuerier) SystemGetWritingByID(ctx context.Context, idwriting int3
 	return int32(res), nil
 }
 
+func (s *sqliteQuerier) SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error) {
+	res, err := s.q.SystemHasOtherUserReadItemAtOrBeyond(ctx, dbsqlite.SystemHasOtherUserReadItemAtOrBeyondParams{
+		Item:          arg.Item,
+		ItemID:        int64(arg.ItemID),
+		UserID:        int64(arg.UserID),
+		LastCommentID: int64(arg.LastCommentID),
+	})
+	if err != nil {
+		return false, err
+	}
+	return (res != 0), nil
+}
+
 func (s *sqliteQuerier) SystemIncrementPendingEmailError(ctx context.Context, id int32) error {
 	return s.q.SystemIncrementPendingEmailError(ctx, int64(id))
 }
@@ -10708,14 +10748,18 @@ func (s *sqliteQuerier) UpdateBookmarksForLister(ctx context.Context, arg Update
 	})
 }
 
-func (s *sqliteQuerier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error {
-	return s.q.UpdateCommentForEditor(ctx, dbsqlite.UpdateCommentForEditorParams{
+func (s *sqliteQuerier) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
+	res, err := s.q.UpdateCommentForEditor(ctx, dbsqlite.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
 		Text:        arg.Text,
 		CommentID:   int64(arg.CommentID),
 		CommenterID: int64(arg.CommenterID),
 		EditorID:    sql.NullInt64{Int64: int64(arg.EditorID.Int32), Valid: arg.EditorID.Valid},
 	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error {
@@ -10757,6 +10801,20 @@ func (s *sqliteQuerier) UpdateExternalLinkMetadata(ctx context.Context, arg Upda
 		CardAuthor:      arg.CardAuthor,
 		ID:              int64(arg.ID),
 	})
+}
+
+func (s *sqliteQuerier) UpdateForumCommentForEditor(ctx context.Context, arg UpdateForumCommentForEditorParams) (int64, error) {
+	res, err := s.q.UpdateForumCommentForEditor(ctx, dbsqlite.UpdateForumCommentForEditorParams{
+		LanguageID:   sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
+		Text:         arg.Text,
+		CommentID:    int64(arg.CommentID),
+		EditorID:     int64(arg.EditorID),
+		EditorUserID: sql.NullInt64{Int64: int64(arg.EditorUserID.Int32), Valid: arg.EditorUserID.Valid},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error {

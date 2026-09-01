@@ -76,14 +76,18 @@ func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text strin
 	if err := cd.validateImagePathsForThread(uid, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
 		CommenterID: uid,
 		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	}); err != nil {
+	})
+	if err != nil {
 		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("edit denied")
 	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
@@ -158,14 +162,18 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	if err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
 		CommenterID: uid,
 		EditorID:    sql.NullInt32{Int32: uid, Valid: uid != 0},
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
+	}
+	if rows == 0 {
+		return nil, fmt.Errorf("edit denied: access restricted or comment not found")
 	}
 	if err := cd.recordThreadImages(cmt.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)

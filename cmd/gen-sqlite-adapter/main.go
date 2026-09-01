@@ -458,6 +458,15 @@ func convertToLiteExpr(
 	if liteType == "interface{}" || liteType == "any" {
 		return valName, nil
 	}
+	if dbType == "interface{}" && liteType == "sql.NullString" {
+		return "func(v interface{}) sql.NullString { if s, ok := v.(string); ok { return sql.NullString{String: s, Valid: true} }; if s, ok := v.(sql.NullString); ok { return s }; if s, ok := v.(*string); ok && s != nil { return sql.NullString{String: *s, Valid: true} }; return sql.NullString{} }(" + valName + ")", nil
+	}
+	if dbType == "interface{}" && liteType == "int64" {
+		return "func(v interface{}) int64 { if i, ok := v.(int64); ok { return i }; if i, ok := v.(int32); ok { return int64(i) }; if i, ok := v.(int); ok { return int64(i) }; if i, ok := v.(float64); ok { return int64(i) }; return 0 }(" + valName + ")", nil
+	}
+	if dbType == "interface{}" && liteType == "string" {
+		return "func(v interface{}) string { if s, ok := v.(string); ok { return s }; if s, ok := v.(*string); ok && s != nil { return *s }; return \"\" }(" + valName + ")", nil
+	}
 	if dbType == "int32" && liteType == "int64" {
 		return fmt.Sprintf("int64(%s)", valName), nil
 	}

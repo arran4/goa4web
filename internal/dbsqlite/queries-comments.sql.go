@@ -141,6 +141,71 @@ func (q *Queries) AdminListAllCommentsWithThreadInfo(ctx context.Context, arg Ad
 	return items, nil
 }
 
+const appendCommentInSectionForCommenter = `-- name: AppendCommentInSectionForCommenter :execrows
+UPDATE comments
+SET text = COALESCE(comments.text, '') || char(10) || char(10) || '[hr]' || char(10) || char(10) || CAST(?1 AS TEXT), written = ?2
+WHERE comments.idcomments = ?3
+  AND comments.users_idusers = ?4
+  AND comments.forumthread_id = ?5
+  AND comments.written >= datetime('now', '-' || CAST(?6 AS INTEGER) || ' minutes')
+  AND NOT EXISTS (
+      SELECT 1 FROM comments newer
+      WHERE newer.forumthread_id = comments.forumthread_id
+        AND newer.idcomments > comments.idcomments
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM content_read_markers crm
+      WHERE crm.item = 'thread'
+        AND crm.item_id = comments.forumthread_id
+        AND crm.user_id != comments.users_idusers
+        AND crm.last_comment_id >= comments.idcomments
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = ?7
+        AND (g.item = ?8 OR g.item IS NULL)
+        AND g.action = 'append'
+        AND g.active = 1
+        AND (g.item_id = ?9 OR g.item_id IS NULL)
+        AND (g.user_id = ?10 OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?4
+        ))
+  )
+`
+
+type AppendCommentInSectionForCommenterParams struct {
+	Text             string
+	Written          sql.NullTime
+	CommentID        int64
+	CommenterID      int64
+	ForumthreadID    int64
+	AppendWindowMins int64
+	Section          string
+	ItemType         sql.NullString
+	ItemID           sql.NullInt64
+	GrantUserID      sql.NullInt64
+}
+
+func (q *Queries) AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, appendCommentInSectionForCommenter,
+		arg.Text,
+		arg.Written,
+		arg.CommentID,
+		arg.CommenterID,
+		arg.ForumthreadID,
+		arg.AppendWindowMins,
+		arg.Section,
+		arg.ItemType,
+		arg.ItemID,
+		arg.GrantUserID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
 ;
 
@@ -727,7 +792,7 @@ func (q *Queries) SystemSetCommentLastIndex(ctx context.Context, idcomments int6
 	return err
 }
 
-const updateCommentForEditor = `-- name: UpdateCommentForEditor :exec
+const updateCommentForEditor = `-- name: UpdateCommentForEditor :execrows
 UPDATE comments
 SET language_id = ?1, text = ?2
 WHERE comments.idcomments = ?3
@@ -757,13 +822,66 @@ type UpdateCommentForEditorParams struct {
 	EditorID    sql.NullInt64
 }
 
-func (q *Queries) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error {
-	_, err := q.db.ExecContext(ctx, updateCommentForEditor,
+func (q *Queries) UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateCommentForEditor,
 		arg.LanguageID,
 		arg.Text,
 		arg.CommentID,
 		arg.CommenterID,
 		arg.EditorID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const updateForumCommentForEditor = `-- name: UpdateForumCommentForEditor :execrows
+UPDATE comments
+SET language_id = ?1, text = ?2
+WHERE comments.idcomments = ?3
+  AND (
+      EXISTS (
+          SELECT 1 FROM grants g
+          LEFT JOIN forumthread th ON comments.forumthread_id = th.idforumthread
+          LEFT JOIN forumtopic top ON th.forumtopic_idforumtopic = top.idforumtopic
+          WHERE (
+                 (top.handler != 'private' AND g.section = 'forum' AND g.item = 'topic' AND (g.item_id = th.forumtopic_idforumtopic OR g.item_id IS NULL)) OR
+                 (top.handler = 'private' AND g.section = 'privateforum_thread' AND g.item = 'thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL))
+                )
+            AND g.action = CASE WHEN comments.users_idusers = ?4 THEN 'edit' ELSE 'edit-any' END
+            AND g.active = 1
+            AND (g.user_id = ?5 OR g.user_id IS NULL)
+            AND (g.role_id IS NULL OR g.role_id IN (
+                SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?4
+            ))
+      )
+      OR EXISTS (
+          SELECT 1 FROM user_roles ur
+          JOIN roles r ON r.id = ur.role_id
+          WHERE ur.users_idusers = ?4 AND r.is_admin = 1
+      )
+  )
+`
+
+type UpdateForumCommentForEditorParams struct {
+	LanguageID   sql.NullInt64
+	Text         sql.NullString
+	CommentID    int64
+	EditorID     int64
+	EditorUserID sql.NullInt64
+}
+
+func (q *Queries) UpdateForumCommentForEditor(ctx context.Context, arg UpdateForumCommentForEditorParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateForumCommentForEditor,
+		arg.LanguageID,
+		arg.Text,
+		arg.CommentID,
+		arg.EditorID,
+		arg.EditorUserID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

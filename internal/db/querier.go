@@ -296,6 +296,7 @@ type Querier interface {
 	AdminWordListWithCounts(ctx context.Context, arg AdminWordListWithCountsParams) ([]*AdminWordListWithCountsRow, error)
 	AdminWordListWithCountsByPrefix(ctx context.Context, arg AdminWordListWithCountsByPrefixParams) ([]*AdminWordListWithCountsByPrefixRow, error)
 	AdminWritingCategoryCounts(ctx context.Context) ([]*AdminWritingCategoryCountsRow, error)
+	AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
 	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
@@ -622,6 +623,7 @@ type Querier interface {
 	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
 	SystemGetUsersByIDs(ctx context.Context, ids []int32) ([]*SystemGetUsersByIDsRow, error)
 	SystemGetWritingByID(ctx context.Context, idwriting int32) (int32, error)
+	SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)
 	SystemIncrementPendingEmailError(ctx context.Context, id int32) error
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
@@ -668,11 +670,12 @@ type Querier interface {
 	UpdateBlogEntryForWriter(ctx context.Context, arg UpdateBlogEntryForWriterParams) error
 	// This query updates the "list" column in the "bookmarks" table for a specific lister.
 	UpdateBookmarksForLister(ctx context.Context, arg UpdateBookmarksForListerParams) error
-	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) error
+	UpdateCommentForEditor(ctx context.Context, arg UpdateCommentForEditorParams) (int64, error)
 	UpdateCustomCssForLister(ctx context.Context, arg UpdateCustomCssForListerParams) error
 	UpdateEmailForumUpdatesForLister(ctx context.Context, arg UpdateEmailForumUpdatesForListerParams) error
 	UpdateExternalLinkImageCache(ctx context.Context, arg UpdateExternalLinkImageCacheParams) error
 	UpdateExternalLinkMetadata(ctx context.Context, arg UpdateExternalLinkMetadataParams) error
+	UpdateForumCommentForEditor(ctx context.Context, arg UpdateForumCommentForEditorParams) (int64, error)
 	UpdateImageSafeDimensionForLister(ctx context.Context, arg UpdateImageSafeDimensionForListerParams) error
 	UpdateLastDigestSentAt(ctx context.Context, arg UpdateLastDigestSentAtParams) error
 	UpdateLastMonthlyDigestSentAt(ctx context.Context, arg UpdateLastMonthlyDigestSentAtParams) error

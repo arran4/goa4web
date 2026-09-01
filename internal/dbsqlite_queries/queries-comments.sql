@@ -45,9 +45,36 @@ WHERE c.idcomments = sqlc.arg(id)
   )
 LIMIT 1;
 
--- name: UpdateCommentForEditor :exec
+-- name: UpdateForumCommentForEditor :execrows
 UPDATE comments
-SET language_id = sqlc.arg(language_id), text = sqlc.arg(text)
+SET language_id = sqlc.narg(language_id), text = sqlc.arg(text)
+WHERE comments.idcomments = sqlc.arg(comment_id)
+  AND (
+      EXISTS (
+          SELECT 1 FROM grants g
+          LEFT JOIN forumthread th ON comments.forumthread_id = th.idforumthread
+          LEFT JOIN forumtopic top ON th.forumtopic_idforumtopic = top.idforumtopic
+          WHERE (
+                 (top.handler != 'private' AND g.section = 'forum' AND g.item = 'topic' AND (g.item_id = th.forumtopic_idforumtopic OR g.item_id IS NULL)) OR
+                 (top.handler = 'private' AND g.section = 'privateforum_thread' AND g.item = 'thread' AND (g.item_id = comments.forumthread_id OR g.item_id IS NULL))
+                )
+            AND g.action = CASE WHEN comments.users_idusers = sqlc.arg(editor_id) THEN 'edit' ELSE 'edit-any' END
+            AND g.active = 1
+            AND (g.user_id = sqlc.narg(editor_user_id) OR g.user_id IS NULL)
+            AND (g.role_id IS NULL OR g.role_id IN (
+                SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(editor_id)
+            ))
+      )
+      OR EXISTS (
+          SELECT 1 FROM user_roles ur
+          JOIN roles r ON r.id = ur.role_id
+          WHERE ur.users_idusers = sqlc.arg(editor_id) AND r.is_admin = 1
+      )
+  );
+
+-- name: UpdateCommentForEditor :execrows
+UPDATE comments
+SET language_id = sqlc.narg(language_id), text = sqlc.arg(text)
 WHERE comments.idcomments = sqlc.arg(comment_id)
   AND comments.users_idusers = sqlc.arg(commenter_id)
   AND EXISTS (
@@ -274,3 +301,35 @@ LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 LEFT JOIN users u ON u.idusers = c.users_idusers
 ORDER BY c.written DESC
 LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
+
+-- name: AppendCommentInSectionForCommenter :execrows
+UPDATE comments
+SET text = COALESCE(comments.text, '') || char(10) || char(10) || '[hr]' || char(10) || char(10) || CAST(sqlc.arg(text) AS TEXT), written = sqlc.arg(written)
+WHERE comments.idcomments = sqlc.arg(comment_id)
+  AND comments.users_idusers = sqlc.arg(commenter_id)
+  AND comments.forumthread_id = sqlc.arg(forumthread_id)
+  AND comments.written >= datetime('now', '-' || CAST(sqlc.arg(append_window_mins) AS INTEGER) || ' minutes')
+  AND NOT EXISTS (
+      SELECT 1 FROM comments newer
+      WHERE newer.forumthread_id = comments.forumthread_id
+        AND newer.idcomments > comments.idcomments
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM content_read_markers crm
+      WHERE crm.item = 'thread'
+        AND crm.item_id = comments.forumthread_id
+        AND crm.user_id != comments.users_idusers
+        AND crm.last_comment_id >= comments.idcomments
+  )
+  AND EXISTS (
+      SELECT 1 FROM grants g
+      WHERE g.section = sqlc.arg(section)
+        AND (g.item = sqlc.arg(item_type) OR g.item IS NULL)
+        AND g.action = 'append'
+        AND g.active = 1
+        AND (g.item_id = sqlc.arg(item_id) OR g.item_id IS NULL)
+        AND (g.user_id = sqlc.narg(grant_user_id) OR g.user_id IS NULL)
+        AND (g.role_id IS NULL OR g.role_id IN (
+            SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
+        ))
+  );

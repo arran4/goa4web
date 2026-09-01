@@ -1,15 +1,14 @@
 package comments
 
 import (
-	"github.com/arran4/goa4web/core/consts"
 	"log"
 	"net/http"
 
-	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
 )
 
-// RequireCommentAuthor ensures the requester authored the comment referenced in the URL.
+// RequireCommentAuthor ensures the requester may edit the comment referenced in the URL.
 func RequireCommentAuthor(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -23,23 +22,7 @@ func RequireCommentAuthor(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		session, err := core.GetSession(r)
-		if err != nil {
-			http.NotFound(w, r)
-			return
-		}
-		uid, _ := session.Values["UID"].(int32)
-
-		authorized := row.UsersIdusers == uid
-		if !authorized && cd != nil {
-			if cd.IsAdmin() {
-				authorized = true
-			} else {
-				authorized = cd.HasGrant("forum", "thread", "edit-any", row.ForumthreadID) ||
-					cd.HasGrant("forum", "thread", "edit", row.ForumthreadID)
-			}
-		}
-		if !authorized {
+		if cd == nil || !cd.CanEditCommentTarget(row.Idcomments, row.ForumthreadID, row.UsersIdusers) {
 			http.NotFound(w, r)
 			return
 		}

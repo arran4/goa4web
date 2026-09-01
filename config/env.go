@@ -235,6 +235,10 @@ const (
 
 	// EnvTrustedProxies is a comma-separated list of trusted proxy CIDRs.
 	EnvTrustedProxies = "TRUSTED_PROXIES"
+	// EnvForumPostAppendWindow configures the public-forum append window in minutes.
+	EnvForumPostAppendWindow = "FORUM_POST_APPEND_WINDOW"
+	// EnvPrivateForumPostAppendWindow configures the private-forum append window in minutes.
+	EnvPrivateForumPostAppendWindow = "PRIVATE_FORUM_POST_APPEND_WINDOW"
 	// EnvWebAuthnEnabled toggles WebAuthn.
 	EnvWebAuthnEnabled = "WEBAUTHN_ENABLED"
 )

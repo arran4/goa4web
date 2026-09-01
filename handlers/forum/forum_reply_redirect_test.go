@@ -61,17 +61,15 @@ func TestHappyPathForumReplyRedirect(t *testing.T) {
 		}, nil
 	}
 
-	// We mock GetCommentsByThreadIdForUser to return 6 comments (5 existing + 1 new)
-	// This will be used when we fix the code.
+	// ReplyForumThread loads the five existing comments before deciding whether
+	// to append or create a sixth comment.
 	qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
-		comments := make([]*db.GetCommentsByThreadIdForUserRow, 6)
-		for i := range 6 {
+		comments := make([]*db.GetCommentsByThreadIdForUserRow, 5)
+		for i := range 5 {
 			comments[i] = &db.GetCommentsByThreadIdForUserRow{
 				Idcomments: int32(100 + i), // Arbitrary IDs
 			}
 		}
-		// Ensure one matches the new ID just in case
-		comments[5].Idcomments = int32(commentID)
 		return comments, nil
 	}
 

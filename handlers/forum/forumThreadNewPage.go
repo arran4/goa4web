@@ -2,6 +2,7 @@ package forum
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -207,7 +208,6 @@ const ForumThreadNewPageTmpl tasks.Template = "domains/forum/threadNewPage.gohtm
 
 func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	vars := mux.Vars(r)
 	topicId, err := strconv.Atoi(vars["topic"])
 	if err != nil {
@@ -220,147 +220,70 @@ func (CreateThreadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if base == "" {
 		base = "/forum"
 	}
-	section := consts.PermissionSectionForum
-	if base == "/private" {
-		section = consts.PermissionSectionPrivateForum
-	}
-	topic, err := queries.GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
-		ViewerID:      uid,
-		Idforumtopic:  int32(topicId),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
-	})
-	if err != nil || topic == nil {
-		w.WriteHeader(http.StatusNotFound)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found"))
-		return nil
-	}
-	if (base == "/private") != (topic.Handler == "private") {
-		w.WriteHeader(http.StatusBadRequest)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("forum handler does not match topic"))
-		return nil
-	}
-	allowed, err := UserCanCreateThread(r.Context(), queries, section, int32(topicId), uid)
-	if err != nil {
-		log.Printf("UserCanCreateThread error: %v", err)
-		w.WriteHeader(http.StatusForbidden)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
-		return nil
-	}
-	if !allowed {
-		w.WriteHeader(http.StatusForbidden)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
-		return nil
-	}
-
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse thread form: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	fork, status, err := validateForkRequest(r, cd, topic, uid)
-	if err != nil {
-		w.WriteHeader(status)
-		handlers.RenderErrorPage(w, r, err)
-		return nil
-	}
-
-	var threadId int64
-	if fork != nil {
-		threadId, err = queries.SystemCreateReplyThread(r.Context(), db.SystemCreateReplyThreadParams{
-			TopicID:          topic.Idforumtopic,
-			ReplyToCommentID: sql.NullInt32{Int32: fork.commentID, Valid: true},
-			ReplyToThreadID:  sql.NullInt32{Int32: fork.threadID, Valid: true},
+	var fork *forkRequest
+	if r.URL.Query().Get("quote_comment_id") != "" {
+		topic, topicErr := cd.Queries().GetForumTopicByIdForUser(r.Context(), db.GetForumTopicByIdForUserParams{
+			ViewerID:      uid,
+			Idforumtopic:  int32(topicId),
+			ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
 		})
-	} else {
-		threadId, err = queries.SystemCreateThread(r.Context(), topic.Idforumtopic)
+		if topicErr != nil || topic == nil {
+			w.WriteHeader(http.StatusNotFound)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found"))
+			return nil
+		}
+		var status int
+		fork, status, err = validateForkRequest(r, cd, topic, uid)
+		if err != nil {
+			w.WriteHeader(status)
+			handlers.RenderErrorPage(w, r, err)
+			return nil
+		}
 	}
+
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
+	params := common.CreateForumThreadParams{
+		ActorID:        uid,
+		TopicID:        int32(topicId),
+		LanguageID:     int32(languageID),
+		Text:           r.PostFormValue("replytext"),
+		Private:        base == "/private",
+		EnforceHandler: true,
+		BasePath:       base,
+		PublicLabels:   r.PostForm["public"],
+		PrivateLabels:  r.PostForm["private"],
+	}
+	if fork != nil {
+		params.ReplyToCommentID = fork.commentID
+		params.ReplyToThreadID = fork.threadID
+	}
+	result, err := cd.CreateForumThread(r.Context(), params)
 	if err != nil {
-		log.Printf("Error: makeThread: %s", err)
-		return fmt.Errorf("make thread %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	cleanupUninitialized := func(cause error) error {
-		if cleanupErr := queries.SystemDeleteUninitializedThread(r.Context(), int32(threadId)); cleanupErr != nil {
-			return fmt.Errorf("%w; cleanup uninitialized thread %d: %v", cause, threadId, cleanupErr)
-		}
-		return cause
-	}
-
-	topicTitle := topic.Title.String
-	var author string
-	if u := cd.UserByID(uid); u != nil {
-		author = u.Username.String
-	}
-
-	text := r.PostFormValue("replytext")
-	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
-
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d", base, topicId, threadId)
-
-	var cid int64
-	if topic.Handler == "private" {
-		if fork != nil {
-			if err := cd.CopyPrivateThreadGrantsToThread(fork.threadID, int32(threadId)); err != nil {
-				return cleanupUninitialized(fmt.Errorf("copying private thread grants to thread: %w", err))
-			}
-		} else {
-			if err := cd.CopyPrivateTopicGrantsToThread(int32(topicId), int32(threadId)); err != nil {
-				return cleanupUninitialized(fmt.Errorf("copying private topic grants to thread: %w", err))
-			}
-		}
-		cid, err = cd.CreatePrivateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
-		if err != nil {
-			log.Printf("Error: create forum comment: %s", err)
-			return cleanupUninitialized(fmt.Errorf("creating private topic comment: %w", err))
-		}
-	} else {
-		cid, err = cd.CreateForumOpeningCommentForPoster(uid, int32(threadId), int32(topicId), int32(languageId), text)
-		if err != nil {
-			log.Printf("Error: create forum comment: %s", err)
-			return cleanupUninitialized(fmt.Errorf("create forum comment %w", handlers.ErrRedirectOnSamePageHandler(err)))
+		var notFound common.ForumResourceNotFoundError
+		var mismatch common.ForumHandlerMismatchError
+		var forbidden common.ForumOperationForbiddenError
+		switch {
+		case errors.As(err, &notFound):
+			w.WriteHeader(http.StatusNotFound)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("topic not found"))
+			return nil
+		case errors.As(err, &mismatch):
+			w.WriteHeader(http.StatusBadRequest)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("forum handler does not match topic"))
+			return nil
+		case errors.As(err, &forbidden):
+			w.WriteHeader(http.StatusForbidden)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
+			return nil
+		default:
+			return fmt.Errorf("create forum thread: %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 	}
-	if cid == 0 {
-		log.Printf("Error: cid == 0 on comment create - no error")
-		return cleanupUninitialized(fmt.Errorf("create comment %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden)))
-	}
-
-	if err := cd.SetThreadPublicLabels(int32(threadId), r.PostForm["public"]); err != nil {
-		log.Printf("set public labels: %v", err)
-	}
-	if err := cd.SetThreadPrivateLabels(int32(threadId), r.PostForm["private"]); err != nil {
-		log.Printf("set private labels: %v", err)
-	}
-
-	if evt := cd.Event(); evt != nil {
-		evt.Path = endUrl
-	}
-
-	subjectPrefix := "Forum"
-	if topic.Handler == "private" {
-		subjectPrefix = "Private Forum"
-	}
-
-	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:         int32(threadId),
-		TopicID:          int32(topicId),
-		CommentID:        int32(cid),
-		TopicTitle:       topicTitle,
-		Author:           author,
-		Username:         author,
-		CommentText:      text,
-		PostURL:          cd.AbsoluteURL(endUrl),
-		ThreadURL:        cd.AbsoluteURL(endUrl),
-		IncludePostCount: true,
-		IncludeSearch:    true,
-		MarkThreadRead:   true,
-		AdditionalData: map[string]any{
-			"ThreadOpenerPreview": a4code.SnipTextWords(text, 10),
-			"SubjectPrefix":       subjectPrefix,
-		},
-	}); err != nil {
-		log.Printf("thread create side effects: %v", err)
-	}
-
-	return handlers.RedirectHandler(endUrl)
+	return handlers.RedirectHandler(result.URL)
 }
 
 type forkRequest struct {

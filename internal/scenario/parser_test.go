@@ -84,6 +84,41 @@ Line 2 of post body.
 	}
 }
 
+func TestParseSemanticForumOperationsPreservesBodies(t *testing.T) {
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: semantic-forum
+
+-- 010-thread.event --
+Op: forum.thread.create
+Ref: welcome
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T09:15:00Z
+
+Welcome opening body.
+
+-- 020-reply.event --
+Op: forum.reply
+Ref: reply
+Actor: bob
+Thread: welcome
+At: 2026-08-01T09:17:00Z
+
+Reply body.
+`
+	scenario, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if len(scenario.Events) != 2 {
+		t.Fatalf("event count = %d, want 2", len(scenario.Events))
+	}
+	if scenario.Events[0].Body != "Welcome opening body.\n" || scenario.Events[1].Body != "Reply body." {
+		t.Fatalf("semantic operation bodies = %q, %q", scenario.Events[0].Body, scenario.Events[1].Body)
+	}
+}
+
 func TestParseFS(t *testing.T) {
 	fsys := fstest.MapFS{
 		"scenarios/test/scenario.txtar": &fstest.MapFile{

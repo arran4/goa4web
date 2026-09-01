@@ -6,10 +6,15 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -121,14 +126,14 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 		t.Errorf("server DB (%p) does not match bootstrap DB (%p)", srv.DB, dbConn)
 	}
 
-	// 2. Verify schema version is migrated to 97
+	// 2. Verify schema version is migrated to 98
 	var currentVersion int64
 	err = dbConn.QueryRowContext(ctx, "SELECT version_id FROM goose_db_version ORDER BY id DESC LIMIT 1;").Scan(&currentVersion)
 	if err != nil {
 		t.Fatalf("query goose_db_version: %v", err)
 	}
-	if currentVersion != 97 {
-		t.Errorf("expected migrated schema version 97, got %d", currentVersion)
+	if currentVersion != 98 {
+		t.Errorf("expected migrated schema version 98, got %d", currentVersion)
 	}
 
 	// 3. Verify language English is seeded
@@ -443,6 +448,189 @@ func TestScenarioServeCmd_HTTPSmokeTest(t *testing.T) {
 	if pfRec.Code != http.StatusOK && pfRec.Code != http.StatusFound && pfRec.Code != http.StatusForbidden && pfRec.Code != http.StatusSeeOther {
 		t.Errorf("GET /privateforum/ returned unexpected status %d", pfRec.Code)
 	}
+}
+
+func TestScenarioServeCmd_PrivateForumCreateThreadHTTP(t *testing.T) {
+	ctx := context.Background()
+
+	root, err := parseRoot([]string{"goa4web", "scenario", "serve", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseRoot: %v", err)
+	}
+	defer root.Close()
+	parent, err := parseScenarioCmd(root, []string{"serve", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+	serveCmd, err := parseScenarioServeCmd(parent, []string{"100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioServeCmd: %v", err)
+	}
+	serveCmd.fsys = scenarios.FS
+
+	srv, dbConn, cleanup, err := serveCmd.Bootstrap(ctx)
+	if err != nil {
+		t.Fatalf("Bootstrap: %v", err)
+	}
+	defer cleanup()
+
+	httpServer := httptest.NewServer(srv.Router)
+	defer httpServer.Close()
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatalf("cookiejar.New: %v", err)
+	}
+	client := &http.Client{Jar: jar}
+
+	loginPage := scenarioHTTPGet(t, client, httpServer.URL+"/login")
+	loginToken := scenarioCSRFToken(t, loginPage)
+	loginForm := url.Values{
+		"username":           {"alice"},
+		"password":           {"alice-test"},
+		"task":               {"Login"},
+		"gorilla.csrf.Token": {loginToken},
+	}
+	loginResponse := scenarioHTTPPostForm(t, client, httpServer.URL+"/login", loginForm)
+	if strings.Contains(loginResponse, "Invalid username or password") {
+		t.Fatal("Alice's scenario credentials were rejected")
+	}
+
+	privatePage := scenarioHTTPGet(t, client, httpServer.URL+"/private")
+	for _, visible := range []string{"Staff Room", "Coordination"} {
+		if !strings.Contains(privatePage, visible) {
+			t.Fatalf("authenticated private page does not contain %q", visible)
+		}
+	}
+	if strings.Contains(privatePage, "Project Room") {
+		t.Fatal("authenticated Alice page exposed Project Room")
+	}
+
+	var staffTopicID int32
+	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffTopicID); err != nil {
+		t.Fatalf("query Staff Room: %v", err)
+	}
+	createURL := fmt.Sprintf("%s/private/topic/%d/thread", httpServer.URL, staffTopicID)
+	createPage := scenarioHTTPGet(t, client, createURL)
+	createToken := scenarioCSRFToken(t, createPage)
+	const openingText = "Alice created this thread through the normal private-forum HTTP form."
+	createForm := url.Values{
+		"replytext":          {openingText},
+		"task":               {"Create Thread"},
+		"gorilla.csrf.Token": {createToken},
+	}
+	createResponse := scenarioHTTPPostForm(t, client, createURL, createForm)
+	if strings.Contains(createResponse, "error-message") || strings.Contains(createResponse, "Access Denied") {
+		t.Fatalf("create-thread response reported an error: %s", createResponse)
+	}
+
+	var threadID int32
+	var languageID sql.NullInt32
+	if err := dbConn.QueryRowContext(ctx, `
+		SELECT forumthread_id, language_id
+		FROM comments
+		WHERE text = ?`, openingText).Scan(&threadID, &languageID); err != nil {
+		t.Fatalf("query HTTP-created opening comment: %v", err)
+	}
+	if languageID.Valid {
+		t.Fatalf("opening comment language_id = %d, want NULL when the form omits language", languageID.Int32)
+	}
+
+	threadURL := fmt.Sprintf("%s/private/topic/%d/thread/%d", httpServer.URL, staffTopicID, threadID)
+	threadPage := scenarioHTTPGet(t, client, threadURL)
+	if !strings.Contains(threadPage, openingText) {
+		t.Fatal("HTTP-created thread is not visible on its normal private thread page")
+	}
+
+	bobJar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatalf("create Bob cookie jar: %v", err)
+	}
+	bobClient := &http.Client{Jar: bobJar}
+	bobLoginPage := scenarioHTTPGet(t, bobClient, httpServer.URL+"/login")
+	bobLoginForm := url.Values{
+		"username":           {"bob"},
+		"password":           {"bob-test"},
+		"task":               {"Login"},
+		"gorilla.csrf.Token": {scenarioCSRFToken(t, bobLoginPage)},
+	}
+	scenarioHTTPPostForm(t, bobClient, httpServer.URL+"/login", bobLoginForm)
+
+	var projectTopicID, projectThreadID int32
+	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Project Room'").Scan(&projectTopicID); err != nil {
+		t.Fatalf("query Project Room: %v", err)
+	}
+	if err := dbConn.QueryRowContext(ctx,
+		"SELECT forumthread_id FROM comments WHERE text = 'Project Room kickoff for Carol and Dave.'",
+	).Scan(&projectThreadID); err != nil {
+		t.Fatalf("query Project Room thread: %v", err)
+	}
+	projectURL := fmt.Sprintf("%s/private/topic/%d/thread/%d", httpServer.URL, projectTopicID, projectThreadID)
+	projectResponse, err := bobClient.Get(projectURL)
+	if err != nil {
+		t.Fatalf("Bob GET inaccessible project thread: %v", err)
+	}
+	defer projectResponse.Body.Close()
+	projectBody, err := io.ReadAll(projectResponse.Body)
+	if err != nil {
+		t.Fatalf("read inaccessible project thread response: %v", err)
+	}
+	if projectResponse.StatusCode >= http.StatusInternalServerError {
+		t.Fatalf("inaccessible project thread status = %d", projectResponse.StatusCode)
+	}
+	for _, secretText := range []string{"Project Room kickoff for Carol and Dave.", "Dave here. I can see the project conversation and reply."} {
+		if strings.Contains(string(projectBody), secretText) {
+			t.Fatalf("Bob's direct URL response leaked inaccessible content %q", secretText)
+		}
+	}
+}
+
+func scenarioHTTPGet(t *testing.T, client *http.Client, target string) string {
+	t.Helper()
+	response, err := client.Get(target)
+	if err != nil {
+		t.Fatalf("GET %s: %v", target, err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("read GET %s response: %v", target, err)
+	}
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("GET %s status = %d, body: %s", target, response.StatusCode, body)
+	}
+	return string(body)
+}
+
+func scenarioHTTPPostForm(t *testing.T, client *http.Client, target string, form url.Values) string {
+	t.Helper()
+	request, err := http.NewRequest(http.MethodPost, target, strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatalf("create POST %s: %v", target, err)
+	}
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Referer", target)
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("POST %s: %v", target, err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("read POST %s response: %v", target, err)
+	}
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("POST %s status = %d, body: %s", target, response.StatusCode, body)
+	}
+	return string(body)
+}
+
+func scenarioCSRFToken(t *testing.T, body string) string {
+	t.Helper()
+	match := regexp.MustCompile(`name="gorilla\.csrf\.Token" value="([^"]+)"`).FindStringSubmatch(body)
+	if len(match) != 2 {
+		t.Fatal("response does not contain a CSRF token")
+	}
+	return match[1]
 }
 
 func TestScenarioServeCmd_GracefulShutdown(t *testing.T) {

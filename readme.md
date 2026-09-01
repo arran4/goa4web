@@ -37,12 +37,16 @@ With Go installed, run the committed private-forum scenario directly from the re
 go run -tags sqlite ./cmd/goa4web scenario serve testdata/scenarios/100-private-forum
 ```
 
-Then open <http://localhost:8080> and log in with either test account:
+Then open <http://localhost:8080> and use any of these test accounts:
 
-| User | Username | Password | Private forum capability |
-| --- | --- | --- | --- |
-| Alice | `alice` | `alice-test` | Can access `Staff Room` and create new private topics. |
-| Bob | `bob` | `bob-test` | Can access `Staff Room`; cannot create new private topics. |
+| User | Username | Password | Conversations visible | Conversations hidden |
+| --- | --- | --- | --- | --- |
+| Alice | `alice` | `alice-test` | `Staff Room`, `Coordination` | `Project Room` |
+| Bob | `bob` | `bob-test` | `Staff Room` | `Coordination`, `Project Room` |
+| Carol | `carol` | `carol-test` | `Project Room`, `Coordination` | `Staff Room` |
+| Dave | `dave` | `dave-test` | `Project Room` | `Staff Room`, `Coordination` |
+
+Alice and Carol can create new private conversations. Every listed participant can open threads and reply inside their conversations. The three seeded conversations already contain representative threads and replies, so switching among accounts provides immediate positive and negative permission checks rather than a set of empty topics.
 
 `scenario serve` is expressly designed for disposable manual testing. It creates a shared in-memory SQLite database, applies the normal migrations and SQLite seed data, imports the scenario, and starts the normal Goa4Web HTTP server against that database. It ignores the configured persistent `DB_CONN`, disables external email delivery, uses temporary local upload/cache storage, and removes the disposable environment when the process exits.
 

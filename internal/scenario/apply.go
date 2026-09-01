@@ -67,6 +67,8 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 			"user.enable":          true,
 			"user.grant":           true,
 			"private-forum.create": true,
+			"forum.thread.create":  true,
+			"forum.reply":          true,
 		},
 	}
 	for _, opt := range opts {
@@ -152,6 +154,20 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 		}
 		return r.applyPrivateForumCreate(ctx, data)
 
+	case "forum.thread.create":
+		data, ok := evt.OpData.(*ForumThreadCreateData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for forum.thread.create")
+		}
+		return r.applyForumThreadCreate(ctx, data)
+
+	case "forum.reply":
+		data, ok := evt.OpData.(*ForumReplyData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for forum.reply")
+		}
+		return r.applyForumReply(ctx, data)
+
 	default:
 		return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 	}
@@ -227,6 +243,73 @@ func (r *Runner) applyPrivateForumCreate(ctx context.Context, data *PrivateForum
 		}
 	}
 
+	return nil
+}
+
+func (r *Runner) resolveInt32Ref(typ RefType, symbol string) (int32, bool) {
+	value, ok := r.refRegistry.Resolve(typ, symbol)
+	if !ok {
+		return 0, false
+	}
+	switch id := value.(type) {
+	case int32:
+		return id, true
+	case int:
+		return int32(id), true
+	case int64:
+		return int32(id), true
+	default:
+		return 0, false
+	}
+}
+
+func (r *Runner) applyForumThreadCreate(ctx context.Context, data *ForumThreadCreateData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve actor %q", data.Actor)
+	}
+	topicID, ok := r.resolveInt32Ref(RefTypeForum, data.Topic)
+	if !ok {
+		return fmt.Errorf("cannot resolve topic %q", data.Topic)
+	}
+	actorCD := r.coreData.ForUser(actorID)
+	result, err := actorCD.CreateForumThread(ctx, common.CreateForumThreadParams{
+		ActorID: actorID, TopicID: topicID, Text: data.Body, At: data.At,
+		SynchronousSideEffects: true,
+	})
+	if err != nil {
+		return fmt.Errorf("create forum thread: %w", err)
+	}
+	if data.Ref != "" {
+		if err := r.refRegistry.Bind(RefTypeThread, data.Ref, result.ThreadID); err != nil {
+			return fmt.Errorf("bind thread ref %q: %w", data.Ref, err)
+		}
+	}
+	return nil
+}
+
+func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve actor %q", data.Actor)
+	}
+	threadID, ok := r.resolveInt32Ref(RefTypeThread, data.Thread)
+	if !ok {
+		return fmt.Errorf("cannot resolve thread %q", data.Thread)
+	}
+	actorCD := r.coreData.ForUser(actorID)
+	result, err := actorCD.ReplyForumThread(ctx, common.ReplyForumThreadParams{
+		ActorID: actorID, ThreadID: threadID, Text: data.Body, At: data.At,
+		SynchronousSideEffects: true,
+	})
+	if err != nil {
+		return fmt.Errorf("reply to forum thread: %w", err)
+	}
+	if data.Ref != "" {
+		if err := r.refRegistry.Bind(RefTypePost, data.Ref, result.CommentID); err != nil {
+			return fmt.Errorf("bind post ref %q: %w", data.Ref, err)
+		}
+	}
 	return nil
 }
 

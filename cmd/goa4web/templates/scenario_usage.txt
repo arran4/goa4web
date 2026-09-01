@@ -4,6 +4,10 @@ Usage:
 The scenario command provides tools for validating and executing human-readable
 application event scenarios.
 
+Scenarios use semantic operations such as user.create, private-forum.create,
+forum.thread.create, and forum.reply. The event body supplies thread and reply text;
+symbolic Ref, Actor, Topic, and Thread fields keep fixtures independent of database IDs.
+
 Commands:
   apply       Apply a scenario file or directory to the database.
   serve       Serve a disposable SQLite environment created from a scenario.
@@ -18,5 +22,9 @@ Examples:
 
   # Validate a scenario directory containing scenario.txtar
   {{.Prog}} scenario validate testdata/scenarios/100-private-forum
+
+The representative 100-private-forum scenario creates four loginable users, three
+private conversations with overlapping membership, and real threads and replies.
+Image attachment ingestion is not currently supported.
 
 {{template "flag_groups_section" .FlagGroups}}

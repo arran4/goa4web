@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -115,34 +114,39 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	session := cd.GetSession()
 	cd.LoadSelectionsFromRequest(r)
 	cd.PageTitle = "Forum - Reply"
-	threadRow, err := cd.SelectedThread()
-	if err != nil || threadRow == nil {
-		return fmt.Errorf("thread fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	topicRow, err := cd.CurrentTopic()
-	if err != nil || topicRow == nil {
-		return fmt.Errorf("topic fetch %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
 	uid, _ := session.Values["UID"].(int32)
-	var username string
-	if u := cd.UserByID(uid); u != nil {
-		username = u.Username.String
-	}
 	text := r.PostFormValue("replytext")
-	languageId, _ := strconv.Atoi(r.PostFormValue("language"))
+	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	base := cd.ForumBasePath
 	if base == "" {
 		base = "/forum"
 	}
-	var cid int64
-	if topicRow.Handler == "private" {
-		cid, err = cd.CreatePrivateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
-	} else {
-		cid, err = cd.CreateForumCommentForCommenter(uid, threadRow.Idforumthread, topicRow.Idforumtopic, int32(languageId), text)
-	}
-	if err != nil || cid == 0 {
-		if err == nil {
-			err = handlers.ErrForbidden
+	result, err := cd.ReplyForumThread(r.Context(), common.ReplyForumThreadParams{
+		ActorID:        uid,
+		ThreadID:       cd.SelectedThreadID(),
+		LanguageID:     int32(languageID),
+		Text:           text,
+		Private:        base == "/private",
+		EnforceHandler: true,
+		BasePath:       base,
+	})
+	if err != nil {
+		var notFound common.ForumResourceNotFoundError
+		var mismatch common.ForumHandlerMismatchError
+		var forbidden common.ForumOperationForbiddenError
+		switch {
+		case errors.As(err, &notFound):
+			w.WriteHeader(http.StatusNotFound)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("thread not found"))
+			return nil
+		case errors.As(err, &mismatch):
+			w.WriteHeader(http.StatusBadRequest)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("forum handler does not match topic"))
+			return nil
+		case errors.As(err, &forbidden):
+			w.WriteHeader(http.StatusForbidden)
+			handlers.RenderErrorPage(w, r, fmt.Errorf("forbidden"))
+			return nil
 		}
 		log.Printf("Error: CreateComment: %s", err)
 		message := fmt.Sprintf("Error creating comment: %v", err)
@@ -158,44 +162,10 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ThreadPageWithBasePath(w, r, base)
 		return nil
 	}
-	anchor := fmt.Sprintf("c%d", cid)
-	comments, err := cd.ThreadComments(threadRow.Idforumthread)
-	if err != nil {
-		log.Printf("Error fetching comments to determine index: %s", err)
-	} else if len(comments) > 0 {
-		anchor = fmt.Sprintf("c%d", len(comments))
-	}
-	endUrl := fmt.Sprintf("%s/topic/%d/thread/%d#%s", base, topicRow.Idforumtopic, threadRow.Idforumthread, anchor)
-	data := map[string]any{}
-	if firstPost, err := cd.CommentByID(threadRow.Firstpost); err == nil && firstPost != nil && firstPost.Text.Valid {
-		data["ThreadOpenerPreview"] = a4code.SnipTextWords(firstPost.Text.String, 10)
-	}
-	subjectPrefix := "Forum"
-	if topicRow.Handler == "private" {
-		subjectPrefix = "Private Forum"
-	}
-	data["SubjectPrefix"] = subjectPrefix
-	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             threadRow.Idforumthread,
-		TopicID:              topicRow.Idforumtopic,
-		CommentID:            int32(cid),
-		Thread:               threadRow,
-		TopicTitle:           topicRow.Title.String,
-		Username:             username,
-		CommentText:          text,
-		CommentURL:           cd.AbsoluteURL(endUrl),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
-		IncludeSearch:        true,
-		AdditionalData:       data,
-	}); err != nil {
-		log.Printf("thread reply side effects: %v", err)
-	}
 	if evt := cd.Event(); evt != nil {
-		evt.Data["URL"] = cd.AbsoluteURL(endUrl)
+		evt.Data["URL"] = cd.AbsoluteURL(result.URL)
 	}
-	return handlers.RedirectHandler(endUrl)
+	return handlers.RedirectHandler(result.URL)
 }
 func TopicThreadReplyCancelPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)

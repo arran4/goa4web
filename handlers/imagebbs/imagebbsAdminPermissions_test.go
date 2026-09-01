@@ -39,12 +39,13 @@ func TestHappyPathRequireImagebbsGrantWithBoard(t *testing.T) {
 		t.Fatalf("expected one grant check, got %d", len(queries.SystemCheckGrantCalls))
 	}
 	want := db.SystemCheckGrantParams{
-		ViewerID: cd.UserID,
-		Section:  "imagebbs",
-		Item:     sql.NullString{String: "board", Valid: true},
-		Action:   imagebbsApproveAction,
-		ItemID:   sql.NullInt32{Int32: 7, Valid: true},
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: true},
+		ViewerID:               cd.UserID,
+		Section:                "imagebbs",
+		Item:                   sql.NullString{String: "board", Valid: true},
+		Action:                 imagebbsApproveAction,
+		ItemID:                 sql.NullInt32{Int32: 7, Valid: true},
+		IsSpecificPrivateForum: false,
+		UserID:                 sql.NullInt32{Int32: cd.UserID, Valid: true},
 	}
 	if got := queries.SystemCheckGrantCalls[0]; got != want {
 		t.Fatalf("expected grant call %#v, got %#v", want, got)
@@ -84,12 +85,13 @@ func TestHappyPathRequireImagebbsGrantWithPost(t *testing.T) {
 		t.Fatalf("expected one grant check, got %d", len(queries.SystemCheckGrantCalls))
 	}
 	want := db.SystemCheckGrantParams{
-		ViewerID: cd.UserID,
-		Section:  "imagebbs",
-		Item:     sql.NullString{String: "board", Valid: true},
-		Action:   imagebbsApproveAction,
-		ItemID:   sql.NullInt32{Int32: 3, Valid: true},
-		UserID:   sql.NullInt32{Int32: cd.UserID, Valid: true},
+		ViewerID:               cd.UserID,
+		Section:                "imagebbs",
+		Item:                   sql.NullString{String: "board", Valid: true},
+		Action:                 imagebbsApproveAction,
+		ItemID:                 sql.NullInt32{Int32: 3, Valid: true},
+		IsSpecificPrivateForum: false,
+		UserID:                 sql.NullInt32{Int32: cd.UserID, Valid: true},
 	}
 	if got := queries.SystemCheckGrantCalls[0]; got != want {
 		t.Fatalf("expected grant call %#v, got %#v", want, got)

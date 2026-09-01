@@ -4,6 +4,11 @@ Usage:
 Validates, preflights, and applies a scenario TXTAR file or directory to the configured
 database using standard application domain operations.
 
+Supported discussion operations include forum.thread.create and forum.reply. They use
+symbolic topic/thread references and event bodies, and follow the same permission and
+side-effect boundary as normal HTTP forum actions. Image attachment ingestion remains
+unsupported.
+
 Arguments:
   <path>    Path to a .txtar scenario file or scenario directory.
 

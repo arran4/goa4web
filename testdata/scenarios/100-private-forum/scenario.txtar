@@ -1,9 +1,9 @@
-# Scenario demonstrating private forum creation between Alice and Bob with explicit credentials.
+# Executable private-forum permission matrix with overlapping memberships.
 
 -- scenario.meta --
 Format: goa4web-scenario/v1
 Name: private-forum
-Description: Staff private forum setup for Alice and Bob
+Description: Four-user private-forum permission and discussion test environment
 
 -- 010-alice.event --
 Op: user.create
@@ -13,67 +13,136 @@ Email: alice@example.test
 Password: alice-test
 At: 2026-08-01T09:00:00+10:00
 
--- 020-enable-alice.event --
+-- 011-enable-alice.event --
 Op: user.enable
 Actor: admin
 User: alice
-At: 2026-08-01T09:02:00+10:00
+At: 2026-08-01T09:00:10+10:00
 
--- 022-grant-alice-see.event --
+-- 012-alice-see.event --
 Op: user.grant
 User: alice
 Section: privateforum
 Item: topic
 Action: see
-At: 2026-08-01T09:02:30+10:00
+At: 2026-08-01T09:00:20+10:00
 
--- 023-grant-alice-view.event --
+-- 013-alice-view.event --
 Op: user.grant
 User: alice
 Section: privateforum
 Item: topic
 Action: view
-At: 2026-08-01T09:02:40+10:00
+At: 2026-08-01T09:00:30+10:00
 
--- 024-grant-alice-create.event --
+-- 014-alice-create.event --
 Op: user.grant
 User: alice
 Section: privateforum
 Item: topic
 Action: create
-At: 2026-08-01T09:02:45+10:00
+At: 2026-08-01T09:00:40+10:00
 
--- 030-bob.event --
+-- 020-bob.event --
 Op: user.create
 Ref: bob
 Username: bob
 Email: bob@example.test
 Password: bob-test
-At: 2026-08-01T09:03:00+10:00
+At: 2026-08-01T09:01:00+10:00
 
--- 040-enable-bob.event --
+-- 021-enable-bob.event --
 Op: user.enable
 Actor: admin
 User: bob
-At: 2026-08-01T09:04:00+10:00
+At: 2026-08-01T09:01:10+10:00
 
--- 042-grant-bob-see.event --
+-- 022-bob-see.event --
 Op: user.grant
 User: bob
 Section: privateforum
 Item: topic
 Action: see
-At: 2026-08-01T09:04:30+10:00
+At: 2026-08-01T09:01:20+10:00
 
--- 043-grant-bob-view.event --
+-- 023-bob-view.event --
 Op: user.grant
 User: bob
 Section: privateforum
 Item: topic
 Action: view
-At: 2026-08-01T09:04:40+10:00
+At: 2026-08-01T09:01:30+10:00
 
--- 050-private-forum.event --
+-- 030-carol.event --
+Op: user.create
+Ref: carol
+Username: carol
+Email: carol@example.test
+Password: carol-test
+At: 2026-08-01T09:02:00+10:00
+
+-- 031-enable-carol.event --
+Op: user.enable
+Actor: admin
+User: carol
+At: 2026-08-01T09:02:10+10:00
+
+-- 032-carol-see.event --
+Op: user.grant
+User: carol
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:02:20+10:00
+
+-- 033-carol-view.event --
+Op: user.grant
+User: carol
+Section: privateforum
+Item: topic
+Action: view
+At: 2026-08-01T09:02:30+10:00
+
+-- 034-carol-create.event --
+Op: user.grant
+User: carol
+Section: privateforum
+Item: topic
+Action: create
+At: 2026-08-01T09:02:40+10:00
+
+-- 040-dave.event --
+Op: user.create
+Ref: dave
+Username: dave
+Email: dave@example.test
+Password: dave-test
+At: 2026-08-01T09:03:00+10:00
+
+-- 041-enable-dave.event --
+Op: user.enable
+Actor: admin
+User: dave
+At: 2026-08-01T09:03:10+10:00
+
+-- 042-dave-see.event --
+Op: user.grant
+User: dave
+Section: privateforum
+Item: topic
+Action: see
+At: 2026-08-01T09:03:20+10:00
+
+-- 043-dave-view.event --
+Op: user.grant
+User: dave
+Section: privateforum
+Item: topic
+Action: view
+At: 2026-08-01T09:03:30+10:00
+
+# Staff Room: Alice and Bob only.
+-- 100-staff-room.event --
 Op: private-forum.create
 Ref: staff-room
 Actor: alice
@@ -81,3 +150,94 @@ Participant: bob
 Title: Staff Room
 Description: Private discussion for Alice and Bob
 At: 2026-08-01T09:10:00+10:00
+
+-- 110-staff-welcome.event --
+Op: forum.thread.create
+Ref: staff-welcome
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T09:15:00+10:00
+
+Welcome to the staff room. This conversation is for Alice and Bob.
+
+-- 111-bob-welcome-reply.event --
+Op: forum.reply
+Ref: bob-welcome-reply
+Actor: bob
+Thread: staff-welcome
+At: 2026-08-01T09:17:00+10:00
+
+I can see Staff Room and reply here.
+
+-- 112-bob-staff-check-in.event --
+Op: forum.thread.create
+Ref: bob-staff-check-in
+Actor: bob
+Topic: staff-room
+At: 2026-08-01T09:20:00+10:00
+
+Bob opening a second Staff Room thread to exercise participant thread creation.
+
+-- 113-alice-staff-check-in-reply.event --
+Op: forum.reply
+Actor: alice
+Thread: bob-staff-check-in
+At: 2026-08-01T09:22:00+10:00
+
+Confirmed. Participants can open and reply to threads here.
+
+# Project Room: Carol and Dave only.
+-- 200-project-room.event --
+Op: private-forum.create
+Ref: project-room
+Actor: carol
+Participant: dave
+Title: Project Room
+Description: Private project discussion for Carol and Dave
+At: 2026-08-01T09:30:00+10:00
+
+-- 210-project-kickoff.event --
+Op: forum.thread.create
+Ref: project-kickoff
+Actor: carol
+Topic: project-room
+At: 2026-08-01T09:35:00+10:00
+
+Project Room kickoff for Carol and Dave.
+
+-- 211-dave-project-reply.event --
+Op: forum.reply
+Ref: dave-project-reply
+Actor: dave
+Thread: project-kickoff
+At: 2026-08-01T09:37:00+10:00
+
+Dave here. I can see the project conversation and reply.
+
+# Coordination: Alice and Carol only, overlapping the other two rooms.
+-- 300-coordination.event --
+Op: private-forum.create
+Ref: coordination
+Actor: alice
+Participant: carol
+Title: Coordination
+Description: Cross-team coordination for Alice and Carol
+At: 2026-08-01T09:45:00+10:00
+
+-- 310-coordination-plan.event --
+Op: forum.thread.create
+Ref: coordination-plan
+Actor: alice
+Topic: coordination
+At: 2026-08-01T09:50:00+10:00
+
+Coordination plan for Alice and Carol across the two teams.
+
+-- 311-carol-coordination-reply.event --
+Op: forum.reply
+Ref: carol-coordination-reply
+Actor: carol
+Thread: coordination-plan
+At: 2026-08-01T09:52:00+10:00
+
+Carol here. Coordination is visible without exposing either team's private room.

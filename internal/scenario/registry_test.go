@@ -66,12 +66,12 @@ func TestRefRegistry(t *testing.T) {
 func TestOperationRegistry(t *testing.T) {
 	reg := DefaultRegistry()
 	ops := reg.RegisteredOperations()
-	if len(ops) != 5 {
-		t.Fatalf("expected 5 operations, got %d: %v", len(ops), ops)
+	if len(ops) != 7 {
+		t.Fatalf("expected 7 operations, got %d: %v", len(ops), ops)
 	}
 
 	// Verify operations are returned sorted
-	expected := []string{"forum.post", "private-forum.create", "user.create", "user.enable", "user.grant"}
+	expected := []string{"forum.post", "forum.reply", "forum.thread.create", "private-forum.create", "user.create", "user.enable", "user.grant"}
 	for i, name := range expected {
 		if ops[i] != name {
 			t.Errorf("ops[%d] = %q, want %q", i, ops[i], name)

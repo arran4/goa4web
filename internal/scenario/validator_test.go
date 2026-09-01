@@ -76,6 +76,68 @@ Welcome to the staff forum.
 	}
 }
 
+func TestValidateSemanticForumThreadAndReplyReferences(t *testing.T) {
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: semantic-forum
+
+-- 010-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: alice-test
+At: 2026-08-01T09:00:00Z
+
+-- 020-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-test
+At: 2026-08-01T09:01:00Z
+
+-- 030-room.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: alice
+Participant: bob
+Title: Staff Room
+At: 2026-08-01T09:10:00Z
+
+-- 040-thread.event --
+Op: forum.thread.create
+Ref: welcome
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T09:15:00Z
+
+Welcome.
+
+-- 050-reply.event --
+Op: forum.reply
+Ref: welcome-reply
+Actor: bob
+Thread: welcome
+At: 2026-08-01T09:17:00Z
+
+Thanks.
+`
+	scenario, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if err := Validate(scenario); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if _, ok := scenario.Events[3].OpData.(*ForumThreadCreateData); !ok {
+		t.Fatalf("thread OpData type = %T", scenario.Events[3].OpData)
+	}
+	if _, ok := scenario.Events[4].OpData.(*ForumReplyData); !ok {
+		t.Fatalf("reply OpData type = %T", scenario.Events[4].OpData)
+	}
+}
+
 func TestValidateErrors(t *testing.T) {
 	fsys := fstest.MapFS{
 		"assets/welcome.jpg": &fstest.MapFile{Data: []byte("jpg")},
@@ -97,6 +159,54 @@ Op: magic.dance
 At: 2026-08-01T09:00:00Z
 `,
 			errSubstr: "unknown operation \"magic.dance\"",
+		},
+		{
+			name: "forum.thread.create with unresolved Topic rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01-user.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02-thread.event --
+Op: forum.thread.create
+Actor: alice
+Topic: missing-room
+At: 2026-08-01T09:01:00Z
+
+Opening text.
+`,
+			errSubstr: "unresolved forum reference \"missing-room\" in field \"Topic\"",
+		},
+		{
+			name: "forum.reply with unresolved Thread rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01-user.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02-reply.event --
+Op: forum.reply
+Actor: alice
+Thread: missing-thread
+At: 2026-08-01T09:01:00Z
+
+Reply text.
+`,
+			errSubstr: "unresolved thread reference \"missing-thread\" in field \"Thread\"",
 		},
 		{
 			name: "missing required Username rejected",

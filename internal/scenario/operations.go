@@ -55,6 +55,8 @@ func DefaultRegistry() *Registry {
 		&UserEnableOp{},
 		&UserGrantOp{},
 		&PrivateForumCreateOp{},
+		&ForumThreadCreateOp{},
+		&ForumReplyOp{},
 		&ForumPostOp{},
 	)
 }
@@ -307,6 +309,122 @@ func (o *PrivateForumCreateOp) Parse(evt *Event) (OperationData, error) {
 		Title:        title,
 		Description:  strings.TrimSpace(evt.Headers.Get("Description")),
 		At:           evt.At,
+	}, nil
+}
+
+// --- forum.thread.create ---
+
+// ForumThreadCreateData holds the strongly-typed data for forum.thread.create.
+type ForumThreadCreateData struct {
+	Ref   string
+	Actor string
+	Topic string
+	Body  string
+	At    time.Time
+}
+
+func (d *ForumThreadCreateData) Op() string { return "forum.thread.create" }
+
+// ForumThreadCreateOp implements Operation for semantic forum thread creation.
+type ForumThreadCreateOp struct{}
+
+func (o *ForumThreadCreateOp) OpName() string { return "forum.thread.create" }
+
+func (o *ForumThreadCreateOp) AllowedHeaders() []string {
+	return []string{"Op", "Ref", "Actor", "Topic", "At"}
+}
+
+func (o *ForumThreadCreateOp) RequiredHeaders() []string {
+	return []string{"Actor", "Topic", "At"}
+}
+
+func (o *ForumThreadCreateOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	ref := strings.TrimSpace(evt.Headers.Get("Ref"))
+	if ref != "" {
+		return RefTypeThread, ref, true
+	}
+	return "", "", false
+}
+
+func (o *ForumThreadCreateOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	return []SymbolRef{
+		{Type: RefTypeUser, Symbol: strings.TrimSpace(evt.Headers.Get("Actor")), Field: "Actor"},
+		{Type: RefTypeForum, Symbol: strings.TrimSpace(evt.Headers.Get("Topic")), Field: "Topic"},
+	}
+}
+
+func (o *ForumThreadCreateOp) AssetPaths(evt *Event) []string { return nil }
+
+func (o *ForumThreadCreateOp) Parse(evt *Event) (OperationData, error) {
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("forum.thread.create: missing required 'Actor'")
+	}
+	topic := strings.TrimSpace(evt.Headers.Get("Topic"))
+	if topic == "" {
+		return nil, fmt.Errorf("forum.thread.create: missing required 'Topic'")
+	}
+	return &ForumThreadCreateData{
+		Ref: strings.TrimSpace(evt.Headers.Get("Ref")), Actor: actor, Topic: topic,
+		Body: strings.TrimRight(evt.Body, "\r\n"), At: evt.At,
+	}, nil
+}
+
+// --- forum.reply ---
+
+// ForumReplyData holds the strongly-typed data for forum.reply.
+type ForumReplyData struct {
+	Ref    string
+	Actor  string
+	Thread string
+	Body   string
+	At     time.Time
+}
+
+func (d *ForumReplyData) Op() string { return "forum.reply" }
+
+// ForumReplyOp implements Operation for semantic forum replies.
+type ForumReplyOp struct{}
+
+func (o *ForumReplyOp) OpName() string { return "forum.reply" }
+
+func (o *ForumReplyOp) AllowedHeaders() []string {
+	return []string{"Op", "Ref", "Actor", "Thread", "At"}
+}
+
+func (o *ForumReplyOp) RequiredHeaders() []string {
+	return []string{"Actor", "Thread", "At"}
+}
+
+func (o *ForumReplyOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	ref := strings.TrimSpace(evt.Headers.Get("Ref"))
+	if ref != "" {
+		return RefTypePost, ref, true
+	}
+	return "", "", false
+}
+
+func (o *ForumReplyOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	return []SymbolRef{
+		{Type: RefTypeUser, Symbol: strings.TrimSpace(evt.Headers.Get("Actor")), Field: "Actor"},
+		{Type: RefTypeThread, Symbol: strings.TrimSpace(evt.Headers.Get("Thread")), Field: "Thread"},
+	}
+}
+
+func (o *ForumReplyOp) AssetPaths(evt *Event) []string { return nil }
+
+func (o *ForumReplyOp) Parse(evt *Event) (OperationData, error) {
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("forum.reply: missing required 'Actor'")
+	}
+	thread := strings.TrimSpace(evt.Headers.Get("Thread"))
+	if thread == "" {
+		return nil, fmt.Errorf("forum.reply: missing required 'Thread'")
+	}
+	return &ForumReplyData{
+		Ref: strings.TrimSpace(evt.Headers.Get("Ref")), Actor: actor, Thread: thread,
+		Body: strings.TrimRight(evt.Body, "\r\n"), At: evt.At,
 	}, nil
 }
 

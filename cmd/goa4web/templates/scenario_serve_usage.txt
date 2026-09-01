@@ -6,6 +6,10 @@ the normal Goa4Web HTTP server. The command applies migrations, normal SQLite se
 and the scenario before serving. Configured persistent database settings are ignored,
 external email delivery is disabled, and temporary upload/cache state is cleaned up on exit.
 
+The committed 100-private-forum example provides Alice, Bob, Carol, and Dave across
+three overlapping private conversations. Its seeded threads and replies are suitable
+for manual permission-isolation testing as well as a quick product preview.
+
 Arguments:
   <path>    Path to a .txtar scenario file or scenario directory.
 

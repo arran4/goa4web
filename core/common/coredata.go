@@ -2187,8 +2187,15 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section consts.Permission
 }
 
 func (cd *CoreData) createCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenterAt(section, itemType, action, itemID, threadID, commenterID, languageID, text, time.Now().UTC())
+}
+
+func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string, writtenAt time.Time) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
+	}
+	if writtenAt.IsZero() {
+		writtenAt = time.Now().UTC()
 	}
 	var queuedFetches []queuedRemoteImageCacheFetch
 	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
@@ -2204,7 +2211,7 @@ func (cd *CoreData) createCommentInSectionForCommenter(section consts.Permission
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
 		Text:          sql.NullString{String: text, Valid: text != ""},
-		Written:       sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		Written:       sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		Timezone:      sql.NullString{String: cd.Location().String(), Valid: true},
 		Section:       section.String(),
 		ItemType:      sql.NullString{String: itemType.String(), Valid: itemType != ""},

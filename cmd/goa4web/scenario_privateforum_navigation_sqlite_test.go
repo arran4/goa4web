@@ -39,7 +39,7 @@ func TestScenarioServePrivateForumUsersHaveNavigationCapability(t *testing.T) {
 	querier := db.NewForDriver(dbConn, "sqlite3")
 	cd := common.NewCoreData(ctx, querier, srv.Config)
 
-	for _, username := range []string{"alice", "bob"} {
+	for _, username := range []string{"alice", "bob", "carol", "dave"} {
 		t.Run(username, func(t *testing.T) {
 			var userID int32
 			if err := dbConn.QueryRowContext(ctx, "SELECT idusers FROM users WHERE username = ?", username).Scan(&userID); err != nil {

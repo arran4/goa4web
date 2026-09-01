@@ -27,6 +27,14 @@ Item: topic
 Action: see
 At: 2026-08-01T09:02:30+10:00
 
+-- 023-grant-alice-view.event --
+Op: user.grant
+User: alice
+Section: privateforum
+Item: topic
+Action: view
+At: 2026-08-01T09:02:40+10:00
+
 -- 024-grant-alice-create.event --
 Op: user.grant
 User: alice
@@ -56,6 +64,14 @@ Section: privateforum
 Item: topic
 Action: see
 At: 2026-08-01T09:04:30+10:00
+
+-- 043-grant-bob-view.event --
+Op: user.grant
+User: bob
+Section: privateforum
+Item: topic
+Action: view
+At: 2026-08-01T09:04:40+10:00
 
 -- 050-private-forum.event --
 Op: private-forum.create

@@ -2187,8 +2187,15 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section consts.Permission
 }
 
 func (cd *CoreData) createCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
+	return cd.createCommentInSectionForCommenterAt(section, itemType, action, itemID, threadID, commenterID, languageID, text, time.Now().UTC())
+}
+
+func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string, writtenAt time.Time) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
+	}
+	if writtenAt.IsZero() {
+		writtenAt = time.Now().UTC()
 	}
 	var queuedFetches []queuedRemoteImageCacheFetch
 	text, queuedFetches = cd.sanitizeCodeImagesAndQueue(text)
@@ -2204,7 +2211,7 @@ func (cd *CoreData) createCommentInSectionForCommenter(section consts.Permission
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
 		Text:          sql.NullString{String: text, Valid: text != ""},
-		Written:       sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		Written:       sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		Timezone:      sql.NullString{String: cd.Location().String(), Valid: true},
 		Section:       section.String(),
 		ItemType:      sql.NullString{String: itemType.String(), Valid: itemType != ""},
@@ -2811,6 +2818,11 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[int32, *db.GetWriti
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
 
+// WithUserID sets the active UserID for CoreData.
+func WithUserID(userID int32) CoreOption {
+	return func(cd *CoreData) { cd.UserID = userID }
+}
+
 // WithImageURLMapper sets the a4code image mapper option.
 func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
@@ -3102,6 +3114,25 @@ func FromContext(ctx context.Context) *CoreData {
 		return cd
 	}
 	return nil
+}
+
+// ForUser returns a CoreData instance scoped to the specified user ID,
+// sharing the context, queries, configuration, and dependencies.
+func (cd *CoreData) ForUser(userID int32) *CoreData {
+	if cd == nil {
+		return nil
+	}
+	userCD := NewCoreData(cd.ctx, cd.queries, cd.Config, WithUserID(userID))
+	userCD.bus = cd.bus
+	userCD.customQueries = cd.customQueries
+	userCD.routerModules = cd.routerModules
+	userCD.languageCache = cd.languageCache
+	userCD.WebAuthn = cd.WebAuthn
+	userCD.httpClient = cd.httpClient
+	userCD.TasksReg = cd.TasksReg
+	userCD.SiteTitle = cd.SiteTitle
+	userCD.ForumBasePath = cd.ForumBasePath
+	return userCD
 }
 
 // EmailProvider lazily returns the configured email provider.

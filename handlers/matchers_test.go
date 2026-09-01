@@ -75,12 +75,13 @@ func requireGrantAllowed(t *testing.T) {
 		t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 	want := db.SystemCheckGrantParams{
-		ViewerID: cd.UserID,
-		Section:  "news",
-		Item:     sql.NullString{String: "post", Valid: true},
-		Action:   "edit",
-		ItemID:   sql.NullInt32{Int32: 1, Valid: true},
-		UserID:   sql.NullInt32{Int32: 1, Valid: true},
+		ViewerID:               cd.UserID,
+		Section:                "news",
+		Item:                   sql.NullString{String: "post", Valid: true},
+		Action:                 "edit",
+		ItemID:                 sql.NullInt32{Int32: 1, Valid: true},
+		IsSpecificPrivateForum: false,
+		UserID:                 sql.NullInt32{Int32: 1, Valid: true},
 	}
 	if got := q.SystemCheckGrantCalls[0]; got != want {
 		t.Fatalf("unexpected grant check: %#v", got)
@@ -106,12 +107,13 @@ func requireGrantDenied(t *testing.T) {
 		t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
 	}
 	want := db.SystemCheckGrantParams{
-		ViewerID: cd.UserID,
-		Section:  "news",
-		Item:     sql.NullString{String: "post", Valid: true},
-		Action:   "edit",
-		ItemID:   sql.NullInt32{Int32: 2, Valid: true},
-		UserID:   sql.NullInt32{Int32: 2, Valid: true},
+		ViewerID:               cd.UserID,
+		Section:                "news",
+		Item:                   sql.NullString{String: "post", Valid: true},
+		Action:                 "edit",
+		ItemID:                 sql.NullInt32{Int32: 2, Valid: true},
+		IsSpecificPrivateForum: false,
+		UserID:                 sql.NullInt32{Int32: 2, Valid: true},
 	}
 	if got := q.SystemCheckGrantCalls[0]; got != want {
 		t.Fatalf("unexpected grant check: %#v", got)

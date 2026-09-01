@@ -104,3 +104,8 @@ func index(ctx context.Context, q db.Querier, data IndexEventData) error {
 	}
 	return nil
 }
+
+// Index synchronously updates the search index for one item.
+func Index(ctx context.Context, q db.Querier, data IndexEventData) error {
+	return index(ctx, q, data)
+}

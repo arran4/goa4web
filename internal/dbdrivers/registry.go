@@ -41,6 +41,9 @@ func (r *Registry) RegisterDriver(d DBDriver) {
 
 // Drivers returns a copy of registered drivers.
 func (r *Registry) Drivers() []DBDriver {
+	if r == nil {
+		return nil
+	}
 	r.mu.RLock()
 	ds := append([]DBDriver(nil), r.drivers...)
 	r.mu.RUnlock()

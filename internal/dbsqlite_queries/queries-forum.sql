@@ -129,7 +129,7 @@ ORDER BY t.lastaddition DESC;
 -- name: ListPrivateTopicParticipantsByTopicIDForUser :many
 SELECT u.idusers, u.username
 FROM grants g
-JOIN users u ON u.u.idusers = g.user_id
+JOIN users u ON u.idusers = g.user_id
 WHERE g.section = 'privateforum'
   AND g.item = 'topic'
   AND g.action = 'view'
@@ -149,7 +149,7 @@ WHERE g.section = 'privateforum'
 -- name: AdminListPrivateTopicParticipantsByTopicID :many
 SELECT u.idusers, u.username
 FROM grants g
-JOIN users u ON u.u.idusers = g.user_id
+JOIN users u ON u.idusers = g.user_id
 WHERE g.section = 'privateforum'
   AND g.item = 'topic'
   AND g.action = 'view'
@@ -501,7 +501,7 @@ VALUES (sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc
 SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
 FROM grants g
 LEFT JOIN roles r ON r.id = g.role_id
-LEFT JOIN users u ON u.u.idusers = g.user_id
+LEFT JOIN users u ON u.idusers = g.user_id
 WHERE (g.item = 'topic')
   AND g.item_id = sqlc.arg(topic_id)
   AND g.active = 1;

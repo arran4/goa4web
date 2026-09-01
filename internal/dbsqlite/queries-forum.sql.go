@@ -105,7 +105,7 @@ const adminGetTopicGrants = `-- name: AdminGetTopicGrants :many
 SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username
 FROM grants g
 LEFT JOIN roles r ON r.id = g.role_id
-LEFT JOIN users u ON u.u.idusers = g.user_id
+LEFT JOIN users u ON u.idusers = g.user_id
 WHERE (g.item = 'topic')
   AND g.item_id = ?1
   AND g.active = 1
@@ -322,7 +322,7 @@ func (q *Queries) AdminListForumTopics(ctx context.Context, arg AdminListForumTo
 const adminListPrivateTopicParticipantsByTopicID = `-- name: AdminListPrivateTopicParticipantsByTopicID :many
 SELECT u.idusers, u.username
 FROM grants g
-JOIN users u ON u.u.idusers = g.user_id
+JOIN users u ON u.idusers = g.user_id
 WHERE g.section = 'privateforum'
   AND g.item = 'topic'
   AND g.action = 'view'
@@ -1631,7 +1631,7 @@ func (q *Queries) ListForumcategoryPath(ctx context.Context, categoryID int64) (
 const listPrivateTopicParticipantsByTopicIDForUser = `-- name: ListPrivateTopicParticipantsByTopicIDForUser :many
 SELECT u.idusers, u.username
 FROM grants g
-JOIN users u ON u.u.idusers = g.user_id
+JOIN users u ON u.idusers = g.user_id
 WHERE g.section = 'privateforum'
   AND g.item = 'topic'
   AND g.action = 'view'

@@ -57,7 +57,6 @@ const AdminPendingUsersPage tasks.Template = "domains/admin/pendingUsersPage.goh
 
 func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	queries := cd.Queries()
 	uid := r.PostFormValue("uid")
 	var id int32
 	_, _ = fmt.Sscanf(uid, "%d", &id)
@@ -71,7 +70,7 @@ func adminPendingUsersApprove(w http.ResponseWriter, r *http.Request) {
 	if id == 0 {
 		data.Errors = append(data.Errors, "invalid id")
 	} else {
-		if err := queries.SystemCreateUserRole(r.Context(), db.SystemCreateUserRoleParams{UsersIdusers: id, Name: "user"}); err != nil {
+		if err := cd.ApproveUser(id); err != nil {
 			data.Errors = append(data.Errors, fmt.Errorf("add role: %w", err).Error())
 		} else {
 			data.Messages = append(data.Messages, "User approved")

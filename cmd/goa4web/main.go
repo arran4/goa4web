@@ -521,6 +521,12 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: test: %w", err)
 		}
 		return c.Run()
+	case "scenario":
+		c, err := parseScenarioCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: scenario: %w", err)
+		}
+		return c.Run()
 
 	default:
 		r.fs.Usage()

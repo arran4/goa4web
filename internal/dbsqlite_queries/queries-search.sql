@@ -71,12 +71,11 @@ DELETE FROM linker_search;
 -- name: SystemGetSearchWordByWordLowercased :one
 SELECT *
 FROM searchwordlist
-WHERE word = lcase(?);
+WHERE word = lower(?);
 
 -- name: SystemCreateSearchWord :execlastid
 INSERT INTO searchwordlist (word)
-VALUES (lcase(sqlc.arg(word)))
-ON CONFLICT(word) DO UPDATE SET idsearchwordlist=excluded.idsearchwordlist;
+VALUES (lower(sqlc.arg(word)));
 
 -- name: SystemAddToForumCommentSearch :exec
 INSERT INTO comments_search

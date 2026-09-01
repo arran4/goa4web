@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -315,5 +316,16 @@ func (cd *CoreData) SaveNotificationDigestPreferences(userID int32, dailyHour *i
 		MonthlyDigestDay:    sqlMonthlyDay,
 		MonthlyDigestHour:   sqlMonthlyHour,
 		ListerID:            userID,
+	})
+}
+
+// ApproveUser grants the standard 'user' role to a pending user account.
+func (cd *CoreData) ApproveUser(userID int32) error {
+	if cd == nil || cd.queries == nil {
+		return errors.New("no queries")
+	}
+	return cd.queries.SystemCreateUserRole(cd.ctx, db.SystemCreateUserRoleParams{
+		UsersIdusers: userID,
+		Name:         "user",
 	})
 }

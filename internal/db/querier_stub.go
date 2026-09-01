@@ -36,6 +36,11 @@ type QuerierStub struct {
 	Querier
 	mu sync.Mutex
 
+	AdminListGrantsByThreadIDCalls   []sql.NullInt32
+	AdminListGrantsByThreadIDReturns []*AdminListGrantsByThreadIDRow
+	AdminListGrantsByThreadIDErr     error
+	AdminListGrantsByThreadIDFn      func(context.Context, sql.NullInt32) ([]*AdminListGrantsByThreadIDRow, error)
+
 	AdminCountSentEmailsCalls   []AdminCountSentEmailsParams
 	AdminCountSentEmailsReturns int64
 	AdminCountSentEmailsErr     error
@@ -1058,6 +1063,20 @@ type QuerierStub struct {
 	ListUnreadPrivateThreadsForUserReturns  []*ListUnreadPrivateThreadsForUserRow
 	ListUnreadPrivateThreadsForUserErr      error
 	ListUnreadPrivateThreadsForUserFn       func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+}
+
+// AdminListGrantsByThreadID records calls and returns configured private-thread grants.
+func (s *QuerierStub) AdminListGrantsByThreadID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListGrantsByThreadIDRow, error) {
+	s.mu.Lock()
+	s.AdminListGrantsByThreadIDCalls = append(s.AdminListGrantsByThreadIDCalls, itemID)
+	fn := s.AdminListGrantsByThreadIDFn
+	rows := s.AdminListGrantsByThreadIDReturns
+	err := s.AdminListGrantsByThreadIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, itemID)
+	}
+	return rows, err
 }
 
 func (s *QuerierStub) ensurePublicLabelSetLocked(item string, itemID int32) map[string]struct{} {

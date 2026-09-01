@@ -29,39 +29,125 @@ type PrivateTopicParticipant struct {
 	Username string
 }
 
-// CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
+// ErrInvalidParticipants indicates that one or more invited participants are ineligible
+// for private forum topics (e.g. they lack global privateforum:topic:see permission).
+type ErrInvalidParticipants struct {
+	UserIDs   []int32
+	Usernames []string
+}
+
+func (e *ErrInvalidParticipants) Error() string {
+	if len(e.Usernames) > 0 {
+		return fmt.Sprintf("ineligible participants: %s", strings.Join(e.Usernames, ", "))
+	}
+	ids := make([]string, len(e.UserIDs))
+	for i, id := range e.UserIDs {
+		ids[i] = fmt.Sprintf("%d", id)
+	}
+	return fmt.Sprintf("ineligible participant user IDs: %s", strings.Join(ids, ", "))
+}
+
+// CanSeePrivateForum reports whether the given user has permission to see private forum topics.
+func (cd *CoreData) CanSeePrivateForum(userID int32) bool {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return false
+	}
+	userCD := cd.ForUser(userID)
+	return userCD.HasGrant("privateforum", "topic", "see", 0)
+}
+
+// CreatePrivateTopic creates a new private topic and assigns grants and subscriptions.
 func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int32, err error) {
 	if cd == nil || cd.queries == nil {
 		return 0, fmt.Errorf("no queries")
 	}
-	if !cd.HasGrant("privateforum", "topic", "create", 0) {
+	actorCD := cd
+	if p.CreatorID != 0 && cd.UserID != p.CreatorID {
+		actorCD = cd.ForUser(p.CreatorID)
+	}
+	if !actorCD.HasGrant("privateforum", "topic", "create", 0) {
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
 		return 0, fmt.Errorf("permission denied")
 	}
-	usernames := make([]string, 0, len(p.Participants))
-	for _, participant := range p.Participants {
-		name := participant.Username
-		if name == "" {
-			if u := cd.UserByID(participant.ID); u != nil {
-				name = u.Username.String
-			} else {
-				return 0, fmt.Errorf("unknown user %d", participant.ID)
+
+	participants := p.Participants
+	if p.CreatorID != 0 {
+		hasCreator := false
+		for _, pt := range participants {
+			if pt.ID == p.CreatorID {
+				hasCreator = true
+				break
 			}
 		}
-		usernames = append(usernames, name)
+		if !hasCreator {
+			participants = append(participants, PrivateTopicParticipant{ID: p.CreatorID})
+		}
 	}
+
+	hasOtherMember := false
+	for _, pt := range participants {
+		if pt.ID != p.CreatorID {
+			hasOtherMember = true
+			break
+		}
+	}
+	if !hasOtherMember {
+		return 0, fmt.Errorf("at least one other participant is required")
+	}
+
+	var invalidIDs []int32
+	var invalidNames []string
+	for _, pt := range participants {
+		if pt.ID == p.CreatorID {
+			continue
+		}
+		if !actorCD.CanSeePrivateForum(pt.ID) {
+			invalidIDs = append(invalidIDs, pt.ID)
+			name := pt.Username
+			if name == "" {
+				if u := actorCD.UserByID(pt.ID); u != nil {
+					name = u.Username.String
+				}
+			}
+			if name != "" {
+				invalidNames = append(invalidNames, name)
+			} else {
+				invalidNames = append(invalidNames, fmt.Sprintf("user %d", pt.ID))
+			}
+		}
+	}
+	if len(invalidIDs) > 0 {
+		return 0, &ErrInvalidParticipants{UserIDs: invalidIDs, Usernames: invalidNames}
+	}
+
 	title := p.Title
 	description := p.Description
 	if title == "" {
+		usernames := make([]string, 0, len(participants))
+		for _, participant := range participants {
+			name := participant.Username
+			if name == "" {
+				if u := actorCD.UserByID(participant.ID); u != nil {
+					name = u.Username.String
+				} else {
+					return 0, fmt.Errorf("unknown user %d", participant.ID)
+				}
+			}
+			usernames = append(usernames, name)
+		}
 		title = fmt.Sprintf("%s%s", PrivateTopicDefaultTitlePrefix, strings.Join(usernames, ", "))
 		if description == "" {
 			description = title
 		}
 	}
-	tid, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+	langID := actorCD.PreferredLanguageID("")
+	if langID == 0 {
+		langID = 1
+	}
+	tid, err := actorCD.queries.CreateForumTopicForPoster(actorCD.ctx, db.CreateForumTopicForPosterParams{
 		PosterID:        p.CreatorID,
 		ForumcategoryID: PrivateForumCategoryID,
-		ForumLang:       sql.NullInt32{},
+		ForumLang:       sql.NullInt32{Int32: langID, Valid: true},
 		Title:           sql.NullString{String: title, Valid: true},
 		Description:     sql.NullString{String: description, Valid: true},
 		Handler:         "private",
@@ -76,12 +162,15 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		return 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
-	for _, participant := range p.Participants {
+	for _, participant := range participants {
 		uid := participant.ID
 		for _, act := range []string{"see", "view", "post", "reply"} {
-			if _, err := cd.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
+			if _, err := actorCD.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
 				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}
+		}
+		if err := actorCD.SubscribeTopic(uid, topicID); err != nil {
+			return 0, fmt.Errorf("subscribe topic %w", err)
 		}
 	}
 	return topicID, nil
@@ -205,4 +294,23 @@ func (cd *CoreData) storeImageInternal(p StoreImageParams) (string, error) {
 		}
 	}
 	return fname, nil
+}
+
+// GrantUser creates an administrative grant directly for a specific user ID.
+func (cd *CoreData) GrantUser(userID int32, section, item, action string) error {
+	_, err := cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
+		UserID:   sql.NullInt32{Int32: userID, Valid: true},
+		RoleID:   sql.NullInt32{},
+		Section:  section,
+		Item:     sql.NullString{String: item, Valid: item != ""},
+		RuleType: "allow",
+		ItemID:   sql.NullInt32{},
+		ItemRule: sql.NullString{},
+		Action:   action,
+		Extra:    sql.NullString{},
+	})
+	if err != nil {
+		return fmt.Errorf("create grant for user %d (%s/%s/%s): %w", userID, section, item, action, err)
+	}
+	return nil
 }

@@ -27,6 +27,39 @@ Most handlers share one package and `cmd/goa4web/main.go` maps them directly for
 
 Optional notification emails can be sent through several providers. See the [Email Provider Configuration](#email-provider-configuration) section for details. The template for these messages lives under `core/templates/email/updateEmail.gotxt`.
 
+## Try Goa4Web immediately with a disposable scenario
+
+> **Reviewing, evaluating, or developing Goa4Web? You do not need to configure MySQL or create test accounts first.**
+
+With Go installed, run the committed private-forum scenario directly from the repository root:
+
+```bash
+go run -tags sqlite ./cmd/goa4web scenario serve testdata/scenarios/100-private-forum
+```
+
+Then open <http://localhost:8080> and use any of these test accounts:
+
+| User | Username | Password | Conversations visible | Conversations hidden |
+| --- | --- | --- | --- | --- |
+| Alice | `alice` | `alice-test` | `Staff Room`, `Coordination` | `Project Room` |
+| Bob | `bob` | `bob-test` | `Staff Room` | `Coordination`, `Project Room` |
+| Carol | `carol` | `carol-test` | `Project Room`, `Coordination` | `Staff Room` |
+| Dave | `dave` | `dave-test` | `Project Room` | `Staff Room`, `Coordination` |
+
+Alice and Carol can create new private conversations. Every listed participant can open threads and reply inside their conversations. The three seeded conversations already contain representative threads and replies, so switching among accounts provides immediate positive and negative permission checks rather than a set of empty topics.
+
+`scenario serve` is expressly designed for disposable manual testing. It creates a shared in-memory SQLite database, applies the normal migrations and SQLite seed data, imports the scenario, and starts the normal Goa4Web HTTP server against that database. It ignores the configured persistent `DB_CONN`, disables external email delivery, uses temporary local upload/cache storage, and removes the disposable environment when the process exits.
+
+Stop the server with Ctrl-C. Nothing from the scenario needs to be cleaned out of your normal Goa4Web database.
+
+To use another port:
+
+```bash
+go run -tags sqlite ./cmd/goa4web scenario serve --listen :8090 testdata/scenarios/100-private-forum
+```
+
+Scenarios under `testdata/scenarios/` are intended to be readable descriptions of working environments as well as executable test data.
+
 ## Getting Started
 
 1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
@@ -117,7 +150,6 @@ go test -tags nosqlite ./...
 ---
 
 ## Contributing
-
 This project is primarily maintained for personal use, but others are welcome to adopt it and contribute improvements.
 
 ## Application Configuration File

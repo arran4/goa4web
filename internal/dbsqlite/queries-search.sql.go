@@ -1036,11 +1036,10 @@ func (q *Queries) SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddTo
 
 const systemCreateSearchWord = `-- name: SystemCreateSearchWord :execlastid
 INSERT INTO searchwordlist (word)
-VALUES (lcase(?1))
-ON CONFLICT(word) DO UPDATE SET idsearchwordlist=excluded.idsearchwordlist
+VALUES (lower(?1))
 `
 
-func (q *Queries) SystemCreateSearchWord(ctx context.Context, word interface{}) (int64, error) {
+func (q *Queries) SystemCreateSearchWord(ctx context.Context, word string) (int64, error) {
 	result, err := q.db.ExecContext(ctx, systemCreateSearchWord, word)
 	if err != nil {
 		return 0, err
@@ -1120,11 +1119,11 @@ func (q *Queries) SystemDeleteWritingSearchByWritingID(ctx context.Context, writ
 const systemGetSearchWordByWordLowercased = `-- name: SystemGetSearchWordByWordLowercased :one
 SELECT idsearchwordlist, word
 FROM searchwordlist
-WHERE word = lcase(?)
+WHERE word = lower(?)
 `
 
-func (q *Queries) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase interface{}) (*Searchwordlist, error) {
-	row := q.db.QueryRowContext(ctx, systemGetSearchWordByWordLowercased, lcase)
+func (q *Queries) SystemGetSearchWordByWordLowercased(ctx context.Context, lower string) (*Searchwordlist, error) {
+	row := q.db.QueryRowContext(ctx, systemGetSearchWordByWordLowercased, lower)
 	var i Searchwordlist
 	err := row.Scan(&i.Idsearchwordlist, &i.Word)
 	return &i, err

@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -54,20 +53,6 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		if _, err := queries.SystemCheckGrant(r.Context(), db.SystemCheckGrantParams{
-			ViewerID: u.Idusers,
-			Section:  "privateforum",
-			Item:     sql.NullString{String: "topic", Valid: true},
-			Action:   "see",
-			ItemID:   sql.NullInt32{Valid: false},
-			UserID:   sql.NullInt32{Int32: u.Idusers, Valid: true},
-		}); err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
-			}
-			invalidUsers = append(invalidUsers, p)
-			continue
-		}
 		participants = append(participants, common.PrivateTopicParticipant{
 			ID:       u.Idusers,
 			Username: u.Username.String,
@@ -85,52 +70,34 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		return nil
 	}
 
-	hasOtherMember := false
-	for _, participant := range participants {
-		if participant.ID != cd.UserID {
-			hasOtherMember = true
-			break
-		}
-	}
-
-	if !hasOtherMember {
-		cd.SetCurrentError("You must invite at least one other member")
-		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
-			Participants: participantsInput,
-			Title:        title,
-			Description:  description,
-		})
-		return nil
-	}
-
-	creator := cd.UserID
-	seen := false
-	for _, participant := range participants {
-		if participant.ID == creator {
-			seen = true
-			break
-		}
-	}
-	if creator != 0 && !seen {
-		username := ""
-		if u := cd.UserByID(creator); u != nil {
-			username = u.Username.String
-		}
-		participants = append(participants, common.PrivateTopicParticipant{ID: creator, Username: username})
-	}
 	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
-		CreatorID:    creator,
+		CreatorID:    cd.UserID,
 		Participants: participants,
 		Title:        title,
 		Description:  description,
 	})
 	if err != nil {
-		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	for _, participant := range participants {
-		if err := cd.SubscribeTopic(participant.ID, topicID); err != nil {
-			return fmt.Errorf("subscribe topic for user %d: %w", participant.ID, handlers.ErrRedirectOnSamePageHandler(err))
+		var errInvalid *common.ErrInvalidParticipants
+		if errors.As(err, &errInvalid) {
+			cd.SetCurrentError(fmt.Sprintf("Invalid users: %s", strings.Join(errInvalid.Usernames, ", ")))
+			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+				Participants:        participantsInput,
+				InvalidParticipants: strings.Join(errInvalid.Usernames, ","),
+				Title:               title,
+				Description:         description,
+			})
+			return nil
 		}
+		if strings.Contains(err.Error(), "at least one other participant") {
+			cd.SetCurrentError("You must invite at least one other member")
+			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+				Participants: participantsInput,
+				Title:        title,
+				Description:  description,
+			})
+			return nil
+		}
+		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	base := cd.ForumBasePath
 	if base == "" {

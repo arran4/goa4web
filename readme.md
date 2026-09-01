@@ -27,6 +27,35 @@ Most handlers share one package and `cmd/goa4web/main.go` maps them directly for
 
 Optional notification emails can be sent through several providers. See the [Email Provider Configuration](#email-provider-configuration) section for details. The template for these messages lives under `core/templates/email/updateEmail.gotxt`.
 
+## Try Goa4Web immediately with a disposable scenario
+
+> **Reviewing, evaluating, or developing Goa4Web? You do not need to configure MySQL or create test accounts first.**
+
+With Go installed, run the committed private-forum scenario directly from the repository root:
+
+```bash
+go run -tags sqlite ./cmd/goa4web scenario serve testdata/scenarios/100-private-forum
+```
+
+Then open <http://localhost:8080> and log in with either test account:
+
+| User | Username | Password | Private forum capability |
+| --- | --- | --- | --- |
+| Alice | `alice` | `alice-test` | Can access `Staff Room` and create new private topics. |
+| Bob | `bob` | `bob-test` | Can access `Staff Room`; cannot create new private topics. |
+
+`scenario serve` is expressly designed for disposable manual testing. It creates a shared in-memory SQLite database, applies the normal migrations and SQLite seed data, imports the scenario, and starts the normal Goa4Web HTTP server against that database. It ignores the configured persistent `DB_CONN`, disables external email delivery, uses temporary local upload/cache storage, and removes the disposable environment when the process exits.
+
+Stop the server with Ctrl-C. Nothing from the scenario needs to be cleaned out of your normal Goa4Web database.
+
+To use another port:
+
+```bash
+go run -tags sqlite ./cmd/goa4web scenario serve --listen :8090 testdata/scenarios/100-private-forum
+```
+
+Scenarios under `testdata/scenarios/` are intended to be readable descriptions of working environments as well as executable test data.
+
 ## Getting Started
 
 1. Install Go 1.23 or newer and ensure `go` is available in your `PATH`.
@@ -117,7 +146,6 @@ go test -tags nosqlite ./...
 ---
 
 ## Contributing
-
 This project is primarily maintained for personal use, but others are welcome to adopt it and contribute improvements.
 
 ## Application Configuration File

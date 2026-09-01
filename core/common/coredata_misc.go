@@ -29,6 +29,33 @@ type PrivateTopicParticipant struct {
 	Username string
 }
 
+// ErrInvalidParticipants indicates that one or more invited participants are ineligible
+// for private forum topics (e.g. they lack global privateforum:topic:see permission).
+type ErrInvalidParticipants struct {
+	UserIDs   []int32
+	Usernames []string
+}
+
+func (e *ErrInvalidParticipants) Error() string {
+	if len(e.Usernames) > 0 {
+		return fmt.Sprintf("ineligible participants: %s", strings.Join(e.Usernames, ", "))
+	}
+	ids := make([]string, len(e.UserIDs))
+	for i, id := range e.UserIDs {
+		ids[i] = fmt.Sprintf("%d", id)
+	}
+	return fmt.Sprintf("ineligible participant user IDs: %s", strings.Join(ids, ", "))
+}
+
+// CanSeePrivateForum reports whether the given user has permission to see private forum topics.
+func (cd *CoreData) CanSeePrivateForum(userID int32) bool {
+	if cd == nil || cd.queries == nil || userID == 0 {
+		return false
+	}
+	userCD := cd.ForUser(userID)
+	return userCD.HasGrant("privateforum", "topic", "see", 0)
+}
+
 // CreatePrivateTopic creates a new private topic and assigns grants and subscriptions.
 func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int32, err error) {
 	if cd == nil || cd.queries == nil {
@@ -68,6 +95,31 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		return 0, fmt.Errorf("at least one other participant is required")
 	}
 
+	var invalidIDs []int32
+	var invalidNames []string
+	for _, pt := range participants {
+		if pt.ID == p.CreatorID {
+			continue
+		}
+		if !actorCD.CanSeePrivateForum(pt.ID) {
+			invalidIDs = append(invalidIDs, pt.ID)
+			name := pt.Username
+			if name == "" {
+				if u := actorCD.UserByID(pt.ID); u != nil {
+					name = u.Username.String
+				}
+			}
+			if name != "" {
+				invalidNames = append(invalidNames, name)
+			} else {
+				invalidNames = append(invalidNames, fmt.Sprintf("user %d", pt.ID))
+			}
+		}
+	}
+	if len(invalidIDs) > 0 {
+		return 0, &ErrInvalidParticipants{UserIDs: invalidIDs, Usernames: invalidNames}
+	}
+
 	title := p.Title
 	description := p.Description
 	if title == "" {
@@ -88,10 +140,14 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 			description = title
 		}
 	}
+	langID := actorCD.PreferredLanguageID("")
+	if langID == 0 {
+		langID = 1
+	}
 	tid, err := actorCD.queries.CreateForumTopicForPoster(actorCD.ctx, db.CreateForumTopicForPosterParams{
 		PosterID:        p.CreatorID,
 		ForumcategoryID: PrivateForumCategoryID,
-		ForumLang:       sql.NullInt32{},
+		ForumLang:       sql.NullInt32{Int32: langID, Valid: true},
 		Title:           sql.NullString{String: title, Valid: true},
 		Description:     sql.NullString{String: description, Valid: true},
 		Handler:         "private",

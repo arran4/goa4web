@@ -244,7 +244,7 @@ At: 2026-08-01T09:00:00Z
 -- 02.event --
 Op: forum.post
 Ref: post1
-Actor: admin
+Actor: alice
 Forum: alice
 At: 2026-08-01T09:05:00Z
 `,

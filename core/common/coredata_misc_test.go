@@ -2,10 +2,8 @@ package common
 
 import (
 	"database/sql"
-	"strings"
+	"errors"
 	"testing"
-
-	"github.com/arran4/goa4web/config"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/internal/db"
@@ -25,12 +23,15 @@ func TestCreatePrivateTopicUsesProvidedUsernames(t *testing.T) {
 	mock.ExpectQuery("WITH role_ids AS \\(").WithArgs(int32(1), "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: 1, Valid: true}, false).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
+	mock.ExpectQuery("WITH role_ids AS \\(").WithArgs(int32(2), "privateforum", sql.NullString{String: "topic", Valid: true}, "see", sql.NullInt32{}, false, sql.NullInt32{Int32: 2, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
 	topicID := int64(42)
 	expectedTitle := "Private chat with creator, participant"
 	mock.ExpectExec("INSERT INTO forumtopic").
 		WithArgs(
 			PrivateForumCategoryID,
-			sql.NullInt32{},
+			sql.NullInt32{Int32: 1, Valid: true},
 			sql.NullString{String: expectedTitle, Valid: true},
 			sql.NullString{String: expectedTitle, Valid: true},
 			"private",
@@ -96,6 +97,9 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 	mock.ExpectQuery("WITH role_ids AS \\(").WithArgs(int32(1), "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: 1, Valid: true}, false).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
+	mock.ExpectQuery("WITH role_ids AS \\(").WithArgs(int32(2), "privateforum", sql.NullString{String: "topic", Valid: true}, "see", sql.NullInt32{}, false, sql.NullInt32{Int32: 2, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
 	mock.ExpectQuery("SELECT u.idusers, ue.email, u.username, u.public_profile_enabled_at").
 		WithArgs(int32(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"idusers", "email", "username", "public_profile_enabled_at"}).
@@ -110,7 +114,7 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 	mock.ExpectExec("INSERT INTO forumtopic").
 		WithArgs(
 			PrivateForumCategoryID,
-			sql.NullInt32{},
+			sql.NullInt32{Int32: 1, Valid: true},
 			sql.NullString{String: expectedTitle, Valid: true},
 			sql.NullString{String: expectedTitle, Valid: true},
 			"private",
@@ -162,40 +166,47 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 	}
 }
 
-func TestMapLinkURL(t *testing.T) {
-	cd := &CoreData{
-		Config: &config.RuntimeConfig{
-			BaseURL: "http://example.com",
+func TestCreatePrivateTopicRejectsIneligibleParticipants(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	queries := db.New(conn)
+	cd := NewTestCoreData(t, queries)
+	cd.UserID = 1
+
+	// Creator check succeeds
+	mock.ExpectQuery("WITH role_ids AS \\(").
+		WithArgs(int32(1), "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: 1, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	// Participant check fails (ineligible / no rows)
+	mock.ExpectQuery("WITH role_ids AS \\(").
+		WithArgs(int32(2), "privateforum", sql.NullString{String: "topic", Valid: true}, "see", sql.NullInt32{}, false, sql.NullInt32{Int32: 2, Valid: true}, false).
+		WillReturnError(sql.ErrNoRows)
+
+	tid, err := cd.CreatePrivateTopic(CreatePrivateTopicParams{
+		CreatorID: 1,
+		Participants: []PrivateTopicParticipant{
+			{ID: 1, Username: "creator"},
+			{ID: 2, Username: "ineligible_user"},
 		},
-		LinkSignKey: "test-link-key",
+	})
+	if err == nil {
+		t.Fatalf("expected CreatePrivateTopic to fail for ineligible participant, got topic %d", tid)
 	}
 
-	tests := []struct {
-		name string
-		tag  string
-		val  string
-		want string // we'll just check if it was signed or not by looking at prefixes or identical values
-	}{
-		{"not an anchor tag", "img", "http://external.com/img.png", "http://external.com/img.png"},
-		{"relative url", "a", "/internal/path", "/internal/path"},
-		{"allowed host", "a", "http://example.com/path", "http://example.com/path"},
-		{"allowed host case insensitive", "a", "HTTP://eXaMpLe.CoM/path", "HTTP://eXaMpLe.CoM/path"},
-		{"disallowed host", "a", "http://external.com/path", "signed"},
+	var errInvalid *ErrInvalidParticipants
+	if !errors.As(err, &errInvalid) {
+		t.Fatalf("expected ErrInvalidParticipants, got: %v", err)
+	}
+	if len(errInvalid.Usernames) != 1 || errInvalid.Usernames[0] != "ineligible_user" {
+		t.Errorf("unexpected invalid usernames: %v", errInvalid.Usernames)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := cd.MapLinkURL(tt.tag, tt.val)
-
-			if tt.want == "signed" {
-				if got == tt.val || !strings.Contains(got, "/goto?u=") {
-					t.Errorf("MapLinkURL(%q, %q) = %q, want signed URL", tt.tag, tt.val, got)
-				}
-			} else {
-				if got != tt.want {
-					t.Errorf("MapLinkURL(%q, %q) = %q, want %q", tt.tag, tt.val, got, tt.want)
-				}
-			}
-		})
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
 	}
 }

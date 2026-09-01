@@ -180,7 +180,7 @@ func (o *UserEnableOp) DeclaredRef(evt *Event) (RefType, string, bool) {
 
 func (o *UserEnableOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	var refs []SymbolRef
-	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" && actor != "admin" && actor != "system" {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
 	}
 	if user := strings.TrimSpace(evt.Headers.Get("User")); user != "" {

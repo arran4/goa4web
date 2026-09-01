@@ -118,11 +118,16 @@ At: 2026-08-01T09:10:00Z
 		WithArgs(aliceUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: aliceUID, Valid: true}, false).
 		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
 
+	// Check participant eligibility for Bob
+	mock.ExpectQuery("(?s).*SystemCheckGrant.*").
+		WithArgs(bobUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "see", sql.NullInt32{}, false, sql.NullInt32{Int32: bobUID, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
 	// CreateForumTopicForPoster
 	mock.ExpectExec("(?s).*CreateForumTopicForPoster.*").
 		WithArgs(
 			int32(0), // PrivateForumCategoryID
-			sql.NullInt32{},
+			sql.NullInt32{Int32: 1, Valid: true},
 			sql.NullString{String: "Staff Room", Valid: true},
 			sql.NullString{String: "Staff discussion", Valid: true},
 			"private",
@@ -264,5 +269,175 @@ Post content here.
 	// Verify ZERO queries were executed
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unexpected DB calls made: %v", err)
+	}
+}
+
+func TestApplyPreflightRejectsUnboundAdminActorInPrivateForumWithZeroMutation(t *testing.T) {
+	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
+
+	ctx := context.Background()
+	queries := db.New(conn)
+	cd := common.NewCoreData(ctx, queries, &config.RuntimeConfig{})
+	runner := NewRunner(cd)
+
+	// Scenario where Actor: admin is used in private-forum.create without admin being declared as a user
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: unbound-admin-actor-test
+
+-- 01-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: alice-password
+At: 2026-08-01T09:00:00Z
+
+-- 02-forum.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: admin
+Participant: alice
+Title: Staff Room
+At: 2026-08-01T09:05:00Z
+`
+
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+
+	// Zero mock queries set - preflight must reject it before touching the DB
+	res, err := runner.Apply(ctx, sc)
+	if err == nil {
+		t.Fatal("expected Apply to fail during preflight for unbound admin actor, got success")
+	}
+
+	var errUnresolved ErrUnresolvedRef
+	if !errors.As(err, &errUnresolved) {
+		t.Fatalf("expected ErrUnresolvedRef, got: %v", err)
+	}
+	if errUnresolved.Symbol != "admin" || errUnresolved.Field != "Actor" {
+		t.Errorf("unexpected unresolved ref details: %+v", errUnresolved)
+	}
+	if res != nil {
+		t.Errorf("expected nil ApplyResult, got: %+v", res)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unexpected DB calls made: %v", err)
+	}
+}
+
+func TestApplyRejectsIneligibleParticipant(t *testing.T) {
+	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
+
+	ctx := context.Background()
+	queries := db.New(conn)
+	cd := common.NewCoreData(ctx, queries, &config.RuntimeConfig{})
+	runner := NewRunner(cd)
+
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: ineligible-participant-test
+
+-- 01-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: alice-pass
+At: 2026-08-01T09:00:00Z
+
+-- 02-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-pass
+At: 2026-08-01T09:01:00Z
+
+-- 03-forum.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: alice
+Participant: bob
+Title: Staff Room
+At: 2026-08-01T09:05:00Z
+`
+
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+
+	aliceUID := int32(10)
+	bobUID := int32(20)
+
+	// Alice creation
+	mock.ExpectExec("(?s).*SystemInsertUser.*").
+		WithArgs(sql.NullString{String: "alice", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(int64(aliceUID), 1))
+	mock.ExpectExec("(?s).*InsertUserEmail.*").
+		WithArgs(aliceUID, "alice@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*InsertPassword.*").
+		WithArgs(aliceUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// Bob creation
+	mock.ExpectExec("(?s).*SystemInsertUser.*").
+		WithArgs(sql.NullString{String: "bob", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(int64(bobUID), 1))
+	mock.ExpectExec("(?s).*InsertUserEmail.*").
+		WithArgs(bobUID, "bob@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*InsertPassword.*").
+		WithArgs(bobUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// Private forum creation: Alice check passes
+	mock.ExpectQuery("(?s).*SystemCheckGrant.*").
+		WithArgs(aliceUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: aliceUID, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	// Bob eligibility check fails
+	mock.ExpectQuery("(?s).*SystemCheckGrant.*").
+		WithArgs(bobUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "see", sql.NullInt32{}, false, sql.NullInt32{Int32: bobUID, Valid: true}, false).
+		WillReturnError(sql.ErrNoRows)
+
+	res, err := runner.Apply(ctx, sc)
+	if err == nil {
+		t.Fatal("expected Apply to fail for ineligible participant, got success")
+	}
+
+	var errInvalid *common.ErrInvalidParticipants
+	if !errors.As(err, &errInvalid) {
+		t.Fatalf("expected ErrInvalidParticipants, got: %v", err)
+	}
+	if res != nil {
+		t.Errorf("expected nil ApplyResult on failure, got: %+v", res)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sqlmock expectations: %v", err)
 	}
 }

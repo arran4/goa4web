@@ -11,7 +11,6 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	forumhandlers "github.com/arran4/goa4web/handlers/forum"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -54,20 +53,6 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			return fmt.Errorf("unknown error %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
-		if _, err := queries.SystemCheckGrant(r.Context(), db.SystemCheckGrantParams{
-			ViewerID: u.Idusers,
-			Section:  "privateforum",
-			Item:     sql.NullString{String: "topic", Valid: true},
-			Action:   "see",
-			ItemID:   sql.NullInt32{Valid: false},
-			UserID:   sql.NullInt32{Int32: u.Idusers, Valid: true},
-		}); err != nil {
-			if !errors.Is(err, sql.ErrNoRows) {
-				return fmt.Errorf("checking user grant: %w", handlers.ErrRedirectOnSamePageHandler(err))
-			}
-			invalidUsers = append(invalidUsers, p)
-			continue
-		}
 		participants = append(participants, common.PrivateTopicParticipant{
 			ID:       u.Idusers,
 			Username: u.Username.String,
@@ -92,6 +77,17 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		Description:  description,
 	})
 	if err != nil {
+		var errInvalid *common.ErrInvalidParticipants
+		if errors.As(err, &errInvalid) {
+			cd.SetCurrentError(fmt.Sprintf("Invalid users: %s", strings.Join(errInvalid.Usernames, ", ")))
+			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+				Participants:        participantsInput,
+				InvalidParticipants: strings.Join(errInvalid.Usernames, ","),
+				Title:               title,
+				Description:         description,
+			})
+			return nil
+		}
 		if strings.Contains(err.Error(), "at least one other participant") {
 			cd.SetCurrentError("You must invite at least one other member")
 			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{

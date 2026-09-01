@@ -37,3 +37,16 @@ SELECT NOW(), r_admin.id, 'role', NULL, 'allow', 'content writer', 1
 FROM roles r_admin
 WHERE r_admin.name = 'administrator'
 ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'see', 1
+FROM roles r
+WHERE r.can_login = 1
+ON DUPLICATE KEY UPDATE action=VALUES(action);
+
+INSERT INTO grants (created_at, role_id, section, item, rule_type, action, active)
+SELECT NOW(), r.id, 'privateforum', 'topic', 'allow', 'create', 1
+FROM roles r
+WHERE r.can_login = 1
+ON DUPLICATE KEY UPDATE action=VALUES(action);
+

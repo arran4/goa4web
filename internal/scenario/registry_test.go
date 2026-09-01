@@ -8,12 +8,12 @@ import (
 func TestRefRegistry(t *testing.T) {
 	reg := NewRefRegistry()
 
-	// Special built-in actors
-	if !reg.HasDeclared(RefTypeUser, "admin") {
-		t.Error("expected admin to be declared implicitly")
+	// Verify symbols are not declared implicitly
+	if reg.HasDeclared(RefTypeUser, "admin") {
+		t.Error("expected admin not to be declared implicitly")
 	}
-	if !reg.HasDeclared(RefTypeUser, "system") {
-		t.Error("expected system to be declared implicitly")
+	if reg.HasDeclared(RefTypeUser, "system") {
+		t.Error("expected system not to be declared implicitly")
 	}
 
 	// Declare new user

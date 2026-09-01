@@ -88,11 +88,6 @@ func (r *RefRegistry) HasDeclared(typ RefType, symbol string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	// Special built-in user actors (e.g. admin, system) are implicitly available as RefTypeUser.
-	if typ == RefTypeUser && (symbol == "admin" || symbol == "system") {
-		return true
-	}
-
 	return r.declared[refKey{Type: typ, Symbol: symbol}]
 }
 
@@ -100,10 +95,6 @@ func (r *RefRegistry) HasDeclared(typ RefType, symbol string) bool {
 func (r *RefRegistry) LookupDeclaredType(symbol string) (RefType, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-
-	if symbol == "admin" || symbol == "system" {
-		return RefTypeUser, true
-	}
 
 	t, ok := r.symbolTypes[symbol]
 	return t, ok

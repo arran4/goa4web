@@ -203,12 +203,7 @@ func (r *Runner) applyPrivateForumCreate(ctx context.Context, data *PrivateForum
 		})
 	}
 
-	actorCD := r.coreData
-	if actorUID != 0 && r.coreData.UserID != actorUID {
-		actorCD = r.coreData.ForUser(actorUID)
-	}
-
-	topicID, err := actorCD.CreatePrivateTopic(common.CreatePrivateTopicParams{
+	topicID, err := r.coreData.CreatePrivateTopic(common.CreatePrivateTopicParams{
 		CreatorID:    actorUID,
 		Participants: participants,
 		Title:        data.Title,

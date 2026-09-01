@@ -444,3 +444,43 @@ func TestScenarioServeCmd_HTTPSmokeTest(t *testing.T) {
 		t.Errorf("GET /privateforum/ returned unexpected status %d", pfRec.Code)
 	}
 }
+
+func TestScenarioServeCmd_GracefulShutdown(t *testing.T) {
+	root, err := parseRoot([]string{"goa4web", "--listen", "127.0.0.1:0", "scenario", "serve", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseRoot: %v", err)
+	}
+	defer root.Close()
+
+	parent, err := parseScenarioCmd(root, []string{"serve", "--listen", "127.0.0.1:0", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+
+	serveCmd, err := parseScenarioServeCmd(parent, []string{"--listen", "127.0.0.1:0", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioServeCmd: %v", err)
+	}
+	serveCmd.fsys = scenarios.FS
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	srv, _, cleanup, err := serveCmd.Bootstrap(ctx)
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+	defer cleanup()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- srv.RunContext(ctx)
+	}()
+
+	// Allow server to start then trigger graceful shutdown
+	cancel()
+
+	err = <-done
+	if err != nil {
+		t.Errorf("RunContext returned unexpected error on shutdown: %v", err)
+	}
+}

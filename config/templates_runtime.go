@@ -22,7 +22,11 @@ func ExtendedUsage(name string, reg *dbdrivers.Registry) (string, error) {
 		return "", err
 	}
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, reg.Drivers()); err != nil {
+	var drivers []dbdrivers.DBDriver
+	if reg != nil {
+		drivers = reg.Drivers()
+	}
+	if err := t.Execute(&buf, drivers); err != nil {
 		return "", err
 	}
 	return buf.String(), nil

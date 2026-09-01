@@ -272,6 +272,7 @@ func (c *scenarioServeCmd) Bootstrap(ctx context.Context) (*server.Server, *sql.
 		app.WithShareSignSecret(shareKey),
 		app.WithDB(dbConn),
 		app.WithQuerier(querier),
+		app.WithDBRegistry(c.dbReg),
 		app.WithEmailRegistry(c.emailReg),
 		app.WithDLQRegistry(c.dlqReg),
 		app.WithTasksRegistry(c.tasksReg),

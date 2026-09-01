@@ -19,6 +19,7 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: alice-test
 At: 2026-08-01T09:00:00+10:00
 
 -- 020-enable-alice.event --
@@ -27,14 +28,30 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:02:00+10:00
 
--- 030-private-forum.event --
+-- 030-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-test
+At: 2026-08-01T09:03:00+10:00
+
+-- 040-enable-bob.event --
+Op: user.enable
+Actor: admin
+User: bob
+At: 2026-08-01T09:04:00+10:00
+
+-- 050-private-forum.event --
 Op: private-forum.create
 Ref: staff-room
 Actor: alice
+Participant: bob
 Title: Staff Room
+Description: Staff forum
 At: 2026-08-01T09:05:00+10:00
 
--- 040-welcome-post.event --
+-- 060-welcome-post.event --
 Op: forum.post
 Ref: welcome
 Actor: alice
@@ -82,7 +99,7 @@ At: 2026-08-01T09:00:00Z
 			errSubstr: "unknown operation \"magic.dance\"",
 		},
 		{
-			name: "missing required field rejected",
+			name: "missing required Username rejected",
 			txtar: `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: test
@@ -102,9 +119,39 @@ Name: test
 -- 01.event --
 Op: user.create
 Username: alice
+Password: secret-password
 At: 2026-08-01T09:00:00Z
 `,
 			errSubstr: "missing required field \"Email\"",
+		},
+		{
+			name: "missing required Password in user.create rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Username: alice
+Email: alice@example.test
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "missing required field \"Password\"",
+		},
+		{
+			name: "blank Password in user.create rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Username: alice
+Email: alice@example.test
+Password:   
+At: 2026-08-01T09:00:00Z
+`,
+			errSubstr: "missing required field \"Password\"",
 		},
 		{
 			name: "unknown field rejected",
@@ -116,6 +163,7 @@ Name: test
 Op: user.create
 Username: alice
 Email: alice@example.test
+Password: secret-password
 SuperPower: flying
 At: 2026-08-01T09:00:00Z
 `,
@@ -132,6 +180,7 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: pass-one
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
@@ -139,6 +188,7 @@ Op: user.create
 Ref: alice
 Username: alice2
 Email: alice2@example.test
+Password: pass-two
 At: 2026-08-01T09:05:00Z
 `,
 			errSubstr: "duplicate user reference \"alice\"",
@@ -172,6 +222,7 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: secret-pass
 At: 2026-08-01T09:05:00Z
 `,
 			errSubstr: "unresolved user reference \"alice\"",
@@ -187,6 +238,7 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: secret-pass
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
@@ -208,8 +260,137 @@ Name: test
 Op: user.create
 Username: alice
 Email: alice@example.test
+Password: secret-pass
 `,
 			errSubstr: "missing required field \"At\"",
+		},
+		{
+			name: "private-forum.create without Participant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: private-forum.create
+Ref: forum1
+Actor: alice
+Title: Forum
+At: 2026-08-01T09:05:00Z
+`,
+			errSubstr: "missing required field \"Participant\"",
+		},
+		{
+			name: "private-forum.create with Actor as Participant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: private-forum.create
+Ref: forum1
+Actor: alice
+Participant: alice
+Title: Forum
+At: 2026-08-01T09:05:00Z
+`,
+			errSubstr: "cannot specify Actor \"alice\" as Participant",
+		},
+		{
+			name: "private-forum.create with duplicate Participant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: pass
+At: 2026-08-01T09:01:00Z
+
+-- 03.event --
+Op: private-forum.create
+Ref: forum1
+Actor: alice
+Participant: bob
+Participant: bob
+Title: Forum
+At: 2026-08-01T09:05:00Z
+`,
+			errSubstr: "duplicate participant \"bob\"",
+		},
+		{
+			name: "private-forum.create with unresolved Participant rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: private-forum.create
+Ref: forum1
+Actor: alice
+Participant: charlie
+Title: Forum
+At: 2026-08-01T09:05:00Z
+`,
+			errSubstr: "unresolved user reference \"charlie\" in field \"Participant\"",
+		},
+		{
+			name: "private-forum.create with unresolved Actor rejected",
+			txtar: `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+
+-- 01.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: pass
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: private-forum.create
+Ref: forum1
+Actor: charlie
+Participant: bob
+Title: Forum
+At: 2026-08-01T09:05:00Z
+`,
+			errSubstr: "unresolved user reference \"charlie\" in field \"Actor\"",
 		},
 		{
 			name: "missing asset rejected",
@@ -222,16 +403,26 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: pass
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: pass
+At: 2026-08-01T09:01:00Z
+
+-- 03.event --
 Op: private-forum.create
 Ref: forum1
 Actor: alice
+Participant: bob
 Title: Forum
 At: 2026-08-01T09:05:00Z
 
--- 03.event --
+-- 04.event --
 Op: forum.post
 Actor: alice
 Forum: forum1
@@ -251,16 +442,26 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: pass
 At: 2026-08-01T09:00:00Z
 
 -- 02.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: pass
+At: 2026-08-01T09:01:00Z
+
+-- 03.event --
 Op: private-forum.create
 Ref: forum1
 Actor: alice
+Participant: bob
 Title: Forum
 At: 2026-08-01T09:05:00Z
 
--- 03.event --
+-- 04.event --
 Op: forum.post
 Actor: alice
 Forum: forum1
@@ -289,6 +490,62 @@ At: 2026-08-01T09:10:00Z
 				t.Fatalf("Validate error %v, want substring %q", err, tt.errSubstr)
 			}
 		})
+	}
+}
+
+func TestValidatePrivateForumMultipleParticipants(t *testing.T) {
+	txt := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test-multiple-participants
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: pass-alice
+At: 2026-08-01T09:00:00Z
+
+-- 02.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: pass-bob
+At: 2026-08-01T09:01:00Z
+
+-- 03.event --
+Op: user.create
+Ref: charlie
+Username: charlie
+Email: charlie@example.test
+Password: pass-charlie
+At: 2026-08-01T09:02:00Z
+
+-- 04.event --
+Op: private-forum.create
+Ref: group-chat
+Actor: alice
+Participant: bob
+Participant: charlie
+Title: Group Chat
+At: 2026-08-01T09:05:00Z
+`
+
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if err := Validate(sc); err != nil {
+		t.Fatalf("Validate failed: %v", err)
+	}
+
+	data, ok := sc.Events[3].OpData.(*PrivateForumCreateData)
+	if !ok {
+		t.Fatalf("expected PrivateForumCreateData, got: %T", sc.Events[3].OpData)
+	}
+	if len(data.Participants) != 2 || data.Participants[0] != "bob" || data.Participants[1] != "charlie" {
+		t.Errorf("unexpected participants: %v", data.Participants)
 	}
 }
 

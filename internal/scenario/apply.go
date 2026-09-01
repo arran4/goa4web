@@ -63,8 +63,9 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 		opRegistry:  DefaultRegistry(),
 		refRegistry: NewRefRegistry(),
 		supportedOps: map[string]bool{
-			"user.create": true,
-			"user.enable": true,
+			"user.create":          true,
+			"user.enable":          true,
+			"private-forum.create": true,
 		},
 	}
 	for _, opt := range opts {
@@ -136,17 +137,20 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 		}
 		return r.applyUserEnable(ctx, data)
 
+	case "private-forum.create":
+		data, ok := evt.OpData.(*PrivateForumCreateData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for private-forum.create")
+		}
+		return r.applyPrivateForumCreate(ctx, data)
+
 	default:
 		return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 	}
 }
 
 func (r *Runner) applyUserCreate(ctx context.Context, data *UserCreateData) error {
-	pw := data.Password
-	if pw == "" {
-		pw = "scenario-default-password"
-	}
-	hash, alg, err := auth.HashPassword(pw)
+	hash, alg, err := auth.HashPassword(data.Password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
 	}
@@ -176,6 +180,48 @@ func (r *Runner) applyUserEnable(ctx context.Context, data *UserEnableData) erro
 
 	if err := r.coreData.ApproveUser(uid); err != nil {
 		return fmt.Errorf("approve user: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) applyPrivateForumCreate(ctx context.Context, data *PrivateForumCreateData) error {
+	actorUID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve actor %q", data.Actor)
+	}
+
+	participants := make([]common.PrivateTopicParticipant, 0, len(data.Participants))
+	for _, p := range data.Participants {
+		uid, ok := r.refRegistry.ResolveUser(p)
+		if !ok {
+			return fmt.Errorf("cannot resolve participant %q", p)
+		}
+		participants = append(participants, common.PrivateTopicParticipant{
+			ID:       uid,
+			Username: p,
+		})
+	}
+
+	actorCD := r.coreData
+	if actorUID != 0 && r.coreData.UserID != actorUID {
+		actorCD = r.coreData.ForUser(actorUID)
+	}
+
+	topicID, err := actorCD.CreatePrivateTopic(common.CreatePrivateTopicParams{
+		CreatorID:    actorUID,
+		Participants: participants,
+		Title:        data.Title,
+		Description:  data.Description,
+	})
+	if err != nil {
+		return fmt.Errorf("create private topic: %w", err)
+	}
+
+	if data.Ref != "" {
+		if err := r.refRegistry.Bind(RefTypeForum, data.Ref, topicID); err != nil {
+			return fmt.Errorf("bind forum ref %q: %w", data.Ref, err)
+		}
 	}
 
 	return nil

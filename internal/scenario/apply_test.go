@@ -12,7 +12,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
-func TestApplyUserCreateAndEnable(t *testing.T) {
+func TestApplyUserCreateAndEnableAndPrivateForumCreate(t *testing.T) {
 	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	if err != nil {
 		t.Fatalf("sqlmock.New: %v", err)
@@ -31,21 +31,44 @@ func TestApplyUserCreateAndEnable(t *testing.T) {
 
 	txt := `-- scenario.meta --
 Format: goa4web-scenario/v1
-Name: user-slice-test
+Name: private-forum-full-test
 
 -- 01-alice.event --
 Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
-Password: secret-password
+Password: alice-test
 At: 2026-08-01T09:00:00Z
 
--- 02-enable.event --
+-- 02-enable-alice.event --
 Op: user.enable
 Actor: admin
 User: alice
 At: 2026-08-01T09:02:00Z
+
+-- 03-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-test
+At: 2026-08-01T09:03:00Z
+
+-- 04-enable-bob.event --
+Op: user.enable
+Actor: admin
+User: bob
+At: 2026-08-01T09:04:00Z
+
+-- 05-forum.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: alice
+Participant: bob
+Title: Staff Room
+Description: Staff discussion
+At: 2026-08-01T09:10:00Z
 `
 
 	sc, err := Parse([]byte(txt), nil)
@@ -53,38 +76,105 @@ At: 2026-08-01T09:02:00Z
 		t.Fatalf("Parse failed: %v", err)
 	}
 
-	// 1. SystemInsertUser expectation
+	aliceUID := int32(10)
+	bobUID := int32(20)
+	topicID := int32(100)
+
+	// 1. Alice creation
 	mock.ExpectExec("(?s).*SystemInsertUser.*").
 		WithArgs(sql.NullString{String: "alice", Valid: true}).
-		WillReturnResult(sqlmock.NewResult(15, 1))
-
-	// 2. InsertUserEmail expectation (standard unverified email from CreateUserWithEmail)
+		WillReturnResult(sqlmock.NewResult(int64(aliceUID), 1))
 	mock.ExpectExec("(?s).*InsertUserEmail.*").
-		WithArgs(int32(15), "alice@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WithArgs(aliceUID, "alice@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// 3. InsertPassword expectation
 	mock.ExpectExec("(?s).*InsertPassword.*").
-		WithArgs(int32(15), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs(aliceUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	// 4. SystemCreateUserRole expectation (standard ApproveUser)
+	// 2. Alice enable
 	mock.ExpectExec("(?s).*SystemCreateUserRole.*").
-		WithArgs(int32(15), "user").
+		WithArgs(aliceUID, "user").
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// 3. Bob creation
+	mock.ExpectExec("(?s).*SystemInsertUser.*").
+		WithArgs(sql.NullString{String: "bob", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(int64(bobUID), 1))
+	mock.ExpectExec("(?s).*InsertUserEmail.*").
+		WithArgs(bobUID, "bob@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*InsertPassword.*").
+		WithArgs(bobUID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// 4. Bob enable
+	mock.ExpectExec("(?s).*SystemCreateUserRole.*").
+		WithArgs(bobUID, "user").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// 5. Private forum creation by Alice with Bob
+	// Check creator grant
+	mock.ExpectQuery("(?s).*SystemCheckGrant.*").
+		WithArgs(aliceUID, "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: aliceUID, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	// CreateForumTopicForPoster
+	mock.ExpectExec("(?s).*CreateForumTopicForPoster.*").
+		WithArgs(
+			int32(0), // PrivateForumCategoryID
+			sql.NullInt32{},
+			sql.NullString{String: "Staff Room", Valid: true},
+			sql.NullString{String: "Staff discussion", Valid: true},
+			"private",
+			"privateforum",
+			sql.NullInt32{Int32: 0, Valid: true},
+			sql.NullInt32{Int32: aliceUID, Valid: true},
+			aliceUID,
+		).WillReturnResult(sqlmock.NewResult(int64(topicID), 1))
+
+	// Grants and subscriptions for Alice & Bob
+	for _, uid := range []int32{bobUID, aliceUID} {
+		for _, act := range []string{"see", "view", "post", "reply"} {
+			mock.ExpectExec("(?s).*INSERT INTO grants.*").
+				WithArgs(
+					sql.NullInt32{Int32: uid, Valid: true},
+					sql.NullInt32{},
+					"privateforum",
+					sql.NullString{String: "topic", Valid: true},
+					"allow",
+					sql.NullInt32{Int32: topicID, Valid: true},
+					sql.NullString{},
+					act,
+					sql.NullString{},
+				).WillReturnResult(sqlmock.NewResult(1, 1))
+		}
+		mock.ExpectExec("(?s).*InsertSubscription.*").
+			WithArgs(uid, "create thread:/forum/topic/100/*", "internal").
+			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
 
 	res, err := runner.Apply(ctx, sc)
 	if err != nil {
 		t.Fatalf("Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 2 {
-		t.Errorf("expected 2 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 5 {
+		t.Errorf("expected 5 events applied, got %d", res.EventsApplied)
 	}
 
-	uid, ok := res.Registry.ResolveUser("alice")
-	if !ok || uid != 15 {
-		t.Errorf("expected alice to resolve to 15, got %d (ok=%v)", uid, ok)
+	resolvedAlice, ok := res.Registry.ResolveUser("alice")
+	if !ok || resolvedAlice != aliceUID {
+		t.Errorf("expected alice to resolve to %d, got %d (ok=%v)", aliceUID, resolvedAlice, ok)
+	}
+
+	resolvedBob, ok := res.Registry.ResolveUser("bob")
+	if !ok || resolvedBob != bobUID {
+		t.Errorf("expected bob to resolve to %d, got %d (ok=%v)", bobUID, resolvedBob, ok)
+	}
+
+	resolvedTopic, ok := res.Registry.Resolve(RefTypeForum, "staff-room")
+	if !ok || resolvedTopic != topicID {
+		t.Errorf("expected staff-room to resolve to %d, got %d (ok=%v)", topicID, resolvedTopic, ok)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -109,7 +199,7 @@ func TestApplyPreflightRejectsUnsupportedOperationWithoutMutation(t *testing.T) 
 	cd := common.NewCoreData(ctx, queries, &config.RuntimeConfig{})
 	runner := NewRunner(cd)
 
-	// Scenario containing valid format operations, but private-forum.create is not supported by the runner
+	// Scenario containing valid format operations, but forum.post is not supported by the runner
 	txt := `-- scenario.meta --
 Format: goa4web-scenario/v1
 Name: partial-apply-test
@@ -119,14 +209,33 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: alice-password
 At: 2026-08-01T09:00:00Z
 
--- 02-forum.event --
+-- 02-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-password
+At: 2026-08-01T09:01:00Z
+
+-- 03-forum.event --
 Op: private-forum.create
 Ref: staff-room
 Actor: alice
+Participant: bob
 Title: Staff Room
+At: 2026-08-01T09:02:00Z
+
+-- 04-post.event --
+Op: forum.post
+Ref: welcome-post
+Actor: alice
+Forum: staff-room
 At: 2026-08-01T09:05:00Z
+
+Post content here.
 `
 
 	sc, err := Parse([]byte(txt), nil)
@@ -145,8 +254,8 @@ At: 2026-08-01T09:05:00Z
 	if !errors.As(err, &errUnsupported) {
 		t.Fatalf("expected ErrUnsupportedOperation, got: %v", err)
 	}
-	if errUnsupported.Op != "private-forum.create" {
-		t.Errorf("expected unsupported op 'private-forum.create', got %q", errUnsupported.Op)
+	if errUnsupported.Op != "forum.post" {
+		t.Errorf("expected unsupported op 'forum.post', got %q", errUnsupported.Op)
 	}
 	if res != nil {
 		t.Errorf("expected nil ApplyResult on failure, got: %+v", res)

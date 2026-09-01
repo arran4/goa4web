@@ -29,36 +29,66 @@ type PrivateTopicParticipant struct {
 	Username string
 }
 
-// CreatePrivateTopic creates a new private topic and assigns grants and the initial comment.
+// CreatePrivateTopic creates a new private topic and assigns grants and subscriptions.
 func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int32, err error) {
 	if cd == nil || cd.queries == nil {
 		return 0, fmt.Errorf("no queries")
 	}
-	if !cd.HasGrant("privateforum", "topic", "create", 0) {
+	actorCD := cd
+	if p.CreatorID != 0 && cd.UserID != p.CreatorID {
+		actorCD = cd.ForUser(p.CreatorID)
+	}
+	if !actorCD.HasGrant("privateforum", "topic", "create", 0) {
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
 		return 0, fmt.Errorf("permission denied")
 	}
-	usernames := make([]string, 0, len(p.Participants))
-	for _, participant := range p.Participants {
-		name := participant.Username
-		if name == "" {
-			if u := cd.UserByID(participant.ID); u != nil {
-				name = u.Username.String
-			} else {
-				return 0, fmt.Errorf("unknown user %d", participant.ID)
+
+	participants := p.Participants
+	if p.CreatorID != 0 {
+		hasCreator := false
+		for _, pt := range participants {
+			if pt.ID == p.CreatorID {
+				hasCreator = true
+				break
 			}
 		}
-		usernames = append(usernames, name)
+		if !hasCreator {
+			participants = append(participants, PrivateTopicParticipant{ID: p.CreatorID})
+		}
 	}
+
+	hasOtherMember := false
+	for _, pt := range participants {
+		if pt.ID != p.CreatorID {
+			hasOtherMember = true
+			break
+		}
+	}
+	if !hasOtherMember {
+		return 0, fmt.Errorf("at least one other participant is required")
+	}
+
 	title := p.Title
 	description := p.Description
 	if title == "" {
+		usernames := make([]string, 0, len(participants))
+		for _, participant := range participants {
+			name := participant.Username
+			if name == "" {
+				if u := actorCD.UserByID(participant.ID); u != nil {
+					name = u.Username.String
+				} else {
+					return 0, fmt.Errorf("unknown user %d", participant.ID)
+				}
+			}
+			usernames = append(usernames, name)
+		}
 		title = fmt.Sprintf("%s%s", PrivateTopicDefaultTitlePrefix, strings.Join(usernames, ", "))
 		if description == "" {
 			description = title
 		}
 	}
-	tid, err := cd.queries.CreateForumTopicForPoster(cd.ctx, db.CreateForumTopicForPosterParams{
+	tid, err := actorCD.queries.CreateForumTopicForPoster(actorCD.ctx, db.CreateForumTopicForPosterParams{
 		PosterID:        p.CreatorID,
 		ForumcategoryID: PrivateForumCategoryID,
 		ForumLang:       sql.NullInt32{},
@@ -76,12 +106,15 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		return 0, fmt.Errorf("create topic returned 0")
 	}
 	topicID = int32(tid)
-	for _, participant := range p.Participants {
+	for _, participant := range participants {
 		uid := participant.ID
 		for _, act := range []string{"see", "view", "post", "reply"} {
-			if _, err := cd.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
+			if _, err := actorCD.GrantPrivateForumTopic(topicID, sql.NullInt32{Int32: uid, Valid: true}, sql.NullInt32{}, act); err != nil {
 				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}
+		}
+		if err := actorCD.SubscribeTopic(uid, topicID); err != nil {
+			return 0, fmt.Errorf("subscribe topic %w", err)
 		}
 	}
 	return topicID, nil

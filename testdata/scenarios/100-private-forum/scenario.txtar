@@ -1,15 +1,16 @@
-# Scenario demonstrating private forum creation and welcome post with attachment.
+# Scenario demonstrating private forum creation between Alice and Bob with explicit credentials.
 
 -- scenario.meta --
 Format: goa4web-scenario/v1
 Name: private-forum
-Description: Staff private forum setup and welcome thread
+Description: Staff private forum setup for Alice and Bob
 
 -- 010-alice.event --
 Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: alice-test
 At: 2026-08-01T09:00:00+10:00
 
 -- 020-enable-alice.event --
@@ -18,19 +19,25 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:02:00+10:00
 
--- 030-private-forum.event --
+-- 030-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-test
+At: 2026-08-01T09:03:00+10:00
+
+-- 040-enable-bob.event --
+Op: user.enable
+Actor: admin
+User: bob
+At: 2026-08-01T09:04:00+10:00
+
+-- 050-private-forum.event --
 Op: private-forum.create
 Ref: staff-room
 Actor: alice
+Participant: bob
 Title: Staff Room
-At: 2026-08-01T09:05:00+10:00
-
--- 040-welcome-post.event --
-Op: forum.post
-Ref: welcome
-Actor: alice
-Forum: staff-room
+Description: Private discussion for Alice and Bob
 At: 2026-08-01T09:10:00+10:00
-Attachment: assets/welcome.jpg
-
-Welcome to the staff forum.

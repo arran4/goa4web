@@ -1,0 +1,17 @@
+Usage:
+  {{.Prog}} scenario apply <path>
+
+Validates, preflights, and applies a scenario TXTAR file or directory to the configured
+database using standard application domain operations.
+
+Arguments:
+  <path>    Path to a .txtar scenario file or scenario directory.
+
+Examples:
+  # Apply a scenario TXTAR file
+  {{.Prog}} scenario apply testdata/scenarios/100-private-forum/scenario.txtar
+
+  # Apply a directory containing scenario.txtar and assets/
+  {{.Prog}} scenario apply testdata/scenarios/100-private-forum
+
+{{template "flag_groups_section" .FlagGroups}}

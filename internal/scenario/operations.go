@@ -109,7 +109,7 @@ func (o *UserCreateOp) AllowedHeaders() []string {
 }
 
 func (o *UserCreateOp) RequiredHeaders() []string {
-	return []string{"Username", "Email", "At"}
+	return []string{"Username", "Email", "Password", "At"}
 }
 
 func (o *UserCreateOp) DeclaredRef(evt *Event) (RefType, string, bool) {
@@ -137,11 +137,15 @@ func (o *UserCreateOp) Parse(evt *Event) (OperationData, error) {
 	if email == "" {
 		return nil, fmt.Errorf("user.create: missing required 'Email'")
 	}
+	password := strings.TrimSpace(evt.Headers.Get("Password"))
+	if password == "" {
+		return nil, fmt.Errorf("user.create: missing required 'Password'")
+	}
 	return &UserCreateData{
 		Ref:      strings.TrimSpace(evt.Headers.Get("Ref")),
 		Username: username,
 		Email:    email,
-		Password: strings.TrimSpace(evt.Headers.Get("Password")),
+		Password: password,
 		At:       evt.At,
 	}, nil
 }
@@ -209,10 +213,12 @@ func (o *UserEnableOp) Parse(evt *Event) (OperationData, error) {
 
 // PrivateForumCreateData holds the strongly-typed data for private-forum.create.
 type PrivateForumCreateData struct {
-	Ref   string
-	Actor string
-	Title string
-	At    time.Time
+	Ref          string
+	Actor        string
+	Participants []string
+	Title        string
+	Description  string
+	At           time.Time
 }
 
 func (d *PrivateForumCreateData) Op() string { return "private-forum.create" }
@@ -223,11 +229,11 @@ type PrivateForumCreateOp struct{}
 func (o *PrivateForumCreateOp) OpName() string { return "private-forum.create" }
 
 func (o *PrivateForumCreateOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "Title", "At"}
+	return []string{"Op", "Ref", "Actor", "Participant", "Title", "Description", "At"}
 }
 
 func (o *PrivateForumCreateOp) RequiredHeaders() []string {
-	return []string{"Actor", "Title", "At"}
+	return []string{"Actor", "Participant", "Title", "At"}
 }
 
 func (o *PrivateForumCreateOp) DeclaredRef(evt *Event) (RefType, string, bool) {
@@ -243,6 +249,11 @@ func (o *PrivateForumCreateOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
 	}
+	for _, p := range evt.Headers.Values("Participant") {
+		if p = strings.TrimSpace(p); p != "" {
+			refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: p, Field: "Participant"})
+		}
+	}
 	return refs
 }
 
@@ -251,19 +262,48 @@ func (o *PrivateForumCreateOp) AssetPaths(evt *Event) []string {
 }
 
 func (o *PrivateForumCreateOp) Parse(evt *Event) (OperationData, error) {
-	title := strings.TrimSpace(evt.Headers.Get("Title"))
-	if title == "" {
-		return nil, fmt.Errorf("private-forum.create: missing required 'Title'")
-	}
 	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
 	if actor == "" {
 		return nil, fmt.Errorf("private-forum.create: missing required 'Actor'")
 	}
+	title := strings.TrimSpace(evt.Headers.Get("Title"))
+	if title == "" {
+		return nil, fmt.Errorf("private-forum.create: missing required 'Title'")
+	}
+
+	participantsRaw := evt.Headers.Values("Participant")
+	if len(participantsRaw) == 0 {
+		return nil, fmt.Errorf("private-forum.create: missing required 'Participant'")
+	}
+
+	seen := make(map[string]bool)
+	var participants []string
+	for _, p := range participantsRaw {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if p == actor {
+			return nil, fmt.Errorf("private-forum.create: cannot specify Actor %q as Participant", actor)
+		}
+		if seen[p] {
+			return nil, fmt.Errorf("private-forum.create: duplicate participant %q", p)
+		}
+		seen[p] = true
+		participants = append(participants, p)
+	}
+
+	if len(participants) == 0 {
+		return nil, fmt.Errorf("private-forum.create: at least one participant other than Actor is required")
+	}
+
 	return &PrivateForumCreateData{
-		Ref:   strings.TrimSpace(evt.Headers.Get("Ref")),
-		Actor: actor,
-		Title: title,
-		At:    evt.At,
+		Ref:          strings.TrimSpace(evt.Headers.Get("Ref")),
+		Actor:        actor,
+		Participants: participants,
+		Title:        title,
+		Description:  strings.TrimSpace(evt.Headers.Get("Description")),
+		At:           evt.At,
 	}, nil
 }
 

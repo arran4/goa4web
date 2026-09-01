@@ -85,52 +85,23 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		return nil
 	}
 
-	hasOtherMember := false
-	for _, participant := range participants {
-		if participant.ID != cd.UserID {
-			hasOtherMember = true
-			break
-		}
-	}
-
-	if !hasOtherMember {
-		cd.SetCurrentError("You must invite at least one other member")
-		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
-			Participants: participantsInput,
-			Title:        title,
-			Description:  description,
-		})
-		return nil
-	}
-
-	creator := cd.UserID
-	seen := false
-	for _, participant := range participants {
-		if participant.ID == creator {
-			seen = true
-			break
-		}
-	}
-	if creator != 0 && !seen {
-		username := ""
-		if u := cd.UserByID(creator); u != nil {
-			username = u.Username.String
-		}
-		participants = append(participants, common.PrivateTopicParticipant{ID: creator, Username: username})
-	}
 	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
-		CreatorID:    creator,
+		CreatorID:    cd.UserID,
 		Participants: participants,
 		Title:        title,
 		Description:  description,
 	})
 	if err != nil {
-		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	for _, participant := range participants {
-		if err := cd.SubscribeTopic(participant.ID, topicID); err != nil {
-			return fmt.Errorf("subscribe topic for user %d: %w", participant.ID, handlers.ErrRedirectOnSamePageHandler(err))
+		if strings.Contains(err.Error(), "at least one other participant") {
+			cd.SetCurrentError("You must invite at least one other member")
+			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+				Participants: participantsInput,
+				Title:        title,
+				Description:  description,
+			})
+			return nil
 		}
+		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	base := cd.ForumBasePath
 	if base == "" {

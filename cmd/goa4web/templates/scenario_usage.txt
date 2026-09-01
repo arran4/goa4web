@@ -1,13 +1,17 @@
 Usage:
   {{.Prog}} scenario <command> [<args>]
 
-The scenario command provides tools for validating and inspecting human-readable
+The scenario command provides tools for validating and executing human-readable
 application event scenarios.
 
 Commands:
+  apply       Apply a scenario file or directory to the database.
   validate    Validate a scenario file or directory.
 
 Examples:
+  # Apply a scenario to the database
+  {{.Prog}} scenario apply testdata/scenarios/100-private-forum/scenario.txtar
+
   # Validate a scenario TXTAR file
   {{.Prog}} scenario validate testdata/scenarios/100-private-forum/scenario.txtar
 

@@ -1,10 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"strings"
 	"testing"
 	"testing/fstest"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func TestScenarioCmd_ParseAndRun(t *testing.T) {
@@ -41,6 +45,7 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: alice-pass
 At: 2026-08-01T09:00:00Z
 
 -- 02-enable.event --
@@ -63,16 +68,26 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: alice-pass
 At: 2026-08-01T09:00:00Z
 
--- 02-forum.event --
+-- 02-user-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-pass
+At: 2026-08-01T09:01:00Z
+
+-- 03-forum.event --
 Op: private-forum.create
 Ref: forum1
 Actor: alice
+Participant: bob
 Title: Forum 1
 At: 2026-08-01T09:02:00Z
 
--- 03-post.event --
+-- 04-post.event --
 Op: forum.post
 Ref: post1
 Actor: alice
@@ -153,6 +168,77 @@ At: 2026-08-01T09:05:00Z
 	}
 }
 
+func TestScenarioApplyCmd_InjectedFS(t *testing.T) {
+	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() {
+		mock.ExpectClose()
+		if err := conn.Close(); err != nil {
+			t.Errorf("conn.Close: %v", err)
+		}
+	})
+
+	fsys := fstest.MapFS{
+		"scenarios/valid/scenario.txtar": &fstest.MapFile{
+			Data: []byte(`-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: apply-cli-test
+
+-- 01-user.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: alice-pass
+At: 2026-08-01T09:00:00Z
+
+-- 02-enable.event --
+Op: user.enable
+Actor: admin
+User: alice
+At: 2026-08-01T09:01:00Z
+`),
+		},
+	}
+
+	// Alice creation & enable expectations
+	mock.ExpectExec("(?s).*SystemInsertUser.*").
+		WithArgs(sql.NullString{String: "alice", Valid: true}).
+		WillReturnResult(sqlmock.NewResult(10, 1))
+	mock.ExpectExec("(?s).*InsertUserEmail.*").
+		WithArgs(int32(10), "alice@example.test", sql.NullTime{}, sql.NullString{}, nil, 0).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*InsertPassword.*").
+		WithArgs(int32(10), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("(?s).*SystemCreateUserRole.*").
+		WithArgs(int32(10), "user").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	root := &rootCmd{fs: flag.NewFlagSet("goa4web", flag.ContinueOnError)}
+	parent, err := parseScenarioCmd(root, []string{"apply"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+
+	applyCmd, err := parseScenarioApplyCmd(parent, []string{"scenarios/valid/scenario.txtar"})
+	if err != nil {
+		t.Fatalf("parseScenarioApplyCmd: %v", err)
+	}
+	applyCmd.fsys = fsys
+	applyCmd.querier = db.New(conn)
+
+	if err := applyCmd.Run(); err != nil {
+		t.Fatalf("applyCmd.Run: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sqlmock expectations: %v", err)
+	}
+}
+
 func TestScenarioValidateCmd_ExampleFixtureInMapFS(t *testing.T) {
 	fsys := fstest.MapFS{
 		"scenarios/100-private-forum/scenario.txtar": &fstest.MapFile{
@@ -168,6 +254,7 @@ Op: user.create
 Ref: alice
 Username: alice
 Email: alice@example.test
+Password: alice-test
 At: 2026-08-01T09:00:00+10:00
 
 -- 020-enable-alice.event --
@@ -176,26 +263,29 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:02:00+10:00
 
--- 030-private-forum.event --
+-- 030-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: bob-test
+At: 2026-08-01T09:03:00+10:00
+
+-- 040-enable-bob.event --
+Op: user.enable
+Actor: admin
+User: bob
+At: 2026-08-01T09:04:00+10:00
+
+-- 050-private-forum.event --
 Op: private-forum.create
 Ref: staff-room
 Actor: alice
+Participant: bob
 Title: Staff Room
-At: 2026-08-01T09:05:00+10:00
-
--- 040-welcome-post.event --
-Op: forum.post
-Ref: welcome
-Actor: alice
-Forum: staff-room
+Description: Private discussion for Alice and Bob
 At: 2026-08-01T09:10:00+10:00
-Attachment: assets/welcome.jpg
-
-Welcome to the staff forum.
 `),
-		},
-		"scenarios/100-private-forum/assets/welcome.jpg": &fstest.MapFile{
-			Data: []byte("mock-image-data"),
 		},
 	}
 

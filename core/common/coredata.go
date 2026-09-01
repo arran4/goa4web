@@ -2811,6 +2811,11 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[int32, *db.GetWriti
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
 
+// WithUserID sets the active UserID for CoreData.
+func WithUserID(userID int32) CoreOption {
+	return func(cd *CoreData) { cd.UserID = userID }
+}
+
 // WithImageURLMapper sets the a4code image mapper option.
 func WithImageURLMapper(fn func(tag, val string) string) CoreOption {
 	return func(cd *CoreData) { cd.a4codeMapper = fn }
@@ -3102,6 +3107,25 @@ func FromContext(ctx context.Context) *CoreData {
 		return cd
 	}
 	return nil
+}
+
+// ForUser returns a CoreData instance scoped to the specified user ID,
+// sharing the context, queries, configuration, and dependencies.
+func (cd *CoreData) ForUser(userID int32) *CoreData {
+	if cd == nil {
+		return nil
+	}
+	userCD := NewCoreData(cd.ctx, cd.queries, cd.Config, WithUserID(userID))
+	userCD.bus = cd.bus
+	userCD.customQueries = cd.customQueries
+	userCD.routerModules = cd.routerModules
+	userCD.languageCache = cd.languageCache
+	userCD.WebAuthn = cd.WebAuthn
+	userCD.httpClient = cd.httpClient
+	userCD.TasksReg = cd.TasksReg
+	userCD.SiteTitle = cd.SiteTitle
+	userCD.ForumBasePath = cd.ForumBasePath
+	return userCD
 }
 
 // EmailProvider lazily returns the configured email provider.

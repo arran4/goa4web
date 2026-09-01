@@ -52,6 +52,7 @@ var (
 
 	// Private Forum
 	PrivateforumTopicSee    = &GrantDefinition{"privateforum", "topic", "see", "Allows seeing private topics.", false}
+	PrivateforumTopicView   = &GrantDefinition{"privateforum", "topic", "view", "Allows accessing the private forum section.", false}
 	PrivateforumTopicCreate = &GrantDefinition{"privateforum", "topic", "create", "Allows creating private topics.", false}
 	PrivateforumTopicPost   = &GrantDefinition{"privateforum", "topic", "post", "Allows posting new threads in a private topic.", false}
 	PrivateforumTopicReply  = &GrantDefinition{"privateforum", "topic", "reply", "Allows replying to threads in a private topic.", false}
@@ -126,6 +127,7 @@ var Definitions = []*GrantDefinition{
 
 	// Private Forum
 	PrivateforumTopicSee,
+	PrivateforumTopicView,
 	PrivateforumTopicCreate,
 	PrivateforumTopicPost,
 	PrivateforumTopicReply,

@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +17,45 @@ import (
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
+
+type forumReplyAppendQuerier struct {
+	*db.QuerierStub
+	metadataThreadIDs []int32
+	metadataTopicIDs  []int32
+	indexedWords      []string
+	indexedCommentIDs []int32
+}
+
+func (q *forumReplyAppendQuerier) AdminRecalculateForumThreadByIdMetaData(_ context.Context, threadID int32) error {
+	q.metadataThreadIDs = append(q.metadataThreadIDs, threadID)
+	return nil
+}
+
+func (q *forumReplyAppendQuerier) SystemRebuildForumTopicMetaByID(_ context.Context, topicID int32) error {
+	q.metadataTopicIDs = append(q.metadataTopicIDs, topicID)
+	return nil
+}
+
+func (q *forumReplyAppendQuerier) SystemCreateSearchWord(_ context.Context, word string) (int64, error) {
+	q.indexedWords = append(q.indexedWords, word)
+	return int64(len(q.indexedWords)), nil
+}
+
+func (q *forumReplyAppendQuerier) SystemAddToForumCommentSearch(_ context.Context, arg db.SystemAddToForumCommentSearchParams) error {
+	q.indexedCommentIDs = append(q.indexedCommentIDs, arg.CommentID)
+	return nil
+}
+
+func (q *forumReplyAppendQuerier) SystemSetCommentLastIndex(_ context.Context, commentID int32) error {
+	q.indexedCommentIDs = append(q.indexedCommentIDs, commentID)
+	return nil
+}
+
+type forumReplyRoundTripper func(*http.Request) (*http.Response, error)
+
+func (f forumReplyRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
 
 const (
 	// forumReplyAppendActorID identifies the test reply author.
@@ -27,9 +68,9 @@ const (
 	forumReplyAppendCommentID int32 = 200
 )
 
-func newForumReplyAppendCoreData(t *testing.T, cfg *config.RuntimeConfig, private bool) (*CoreData, *db.QuerierStub, *eventbus.TaskEvent) {
+func newForumReplyAppendCoreData(t *testing.T, cfg *config.RuntimeConfig, private bool, options ...CoreOption) (*CoreData, *forumReplyAppendQuerier, *eventbus.TaskEvent) {
 	t.Helper()
-	q := testhelpers.NewQuerierStub()
+	q := &forumReplyAppendQuerier{QuerierStub: testhelpers.NewQuerierStub()}
 	handler := "forum"
 	if private {
 		handler = "private"
@@ -67,18 +108,25 @@ func newForumReplyAppendCoreData(t *testing.T, cfg *config.RuntimeConfig, privat
 		return nil, sql.ErrNoRows
 	}
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	cd := NewCoreData(context.Background(), q, cfg, WithEvent(evt), WithUserRoles([]string{"user"}))
+	options = append(options, WithEvent(evt), WithUserRoles([]string{"user"}))
+	cd := NewCoreData(context.Background(), q, cfg, options...)
 	cd.UserID = forumReplyAppendActorID
 	return cd, q, evt
 }
 
 func TestReplyForumThreadSuccessfulAppendUsesCanonicalTextAndImages(t *testing.T) {
 	cfg := &config.RuntimeConfig{ForumPostAppendWindow: 60}
-	cd, q, evt := newForumReplyAppendCoreData(t, cfg, false)
+	fetchRequests := make(chan string, 1)
+	client := &http.Client{Transport: forumReplyRoundTripper(func(req *http.Request) (*http.Response, error) {
+		fetchRequests <- req.URL.String()
+		return nil, errors.New("test transport stops after observing fetch")
+	})}
+	cd, q, evt := newForumReplyAppendCoreData(t, cfg, false, WithHTTPClient(client))
 	imageID := "abcd1234.jpg"
 	imagePath := path.Join("/", imageID[:2], imageID[2:4], imageID)
-	submitted := "new segment [img image:" + imageID + "]"
-	canonical := "old segment\n\n[hr]\n\n" + submitted
+	remoteURL := "http://93.184.216.34/remote.png"
+	submitted := "new segment [img image:" + imageID + "] [img " + remoteURL + "]"
+	canonical := ""
 	q.ListUploadedImagePathsByUserFn = func(context.Context, db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
 		return []sql.NullString{{String: imagePath, Valid: true}}, nil
 	}
@@ -89,6 +137,14 @@ func TestReplyForumThreadSuccessfulAppendUsesCanonicalTextAndImages(t *testing.T
 		if arg.CommentID != forumReplyAppendCommentID || arg.ForumthreadID != forumReplyAppendThreadID || arg.CommenterID != forumReplyAppendActorID {
 			t.Fatalf("append target = %#v", arg)
 		}
+		segment, ok := arg.Text.(string)
+		if !ok {
+			t.Fatalf("sanitised segment type = %T", arg.Text)
+		}
+		if strings.Contains(segment, remoteURL) || !strings.Contains(segment, "cache:") {
+			t.Fatalf("remote image was not sanitised to a cache reference: %q", segment)
+		}
+		canonical = "old segment\n\n[hr]\n\n" + segment
 		return 1, nil
 	}
 	q.GetCommentByIdForUserFn = func(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
@@ -107,7 +163,7 @@ func TestReplyForumThreadSuccessfulAppendUsesCanonicalTextAndImages(t *testing.T
 	}
 
 	result, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
-		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, LanguageID: 1, Text: submitted,
+		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, LanguageID: 1, Text: submitted, SynchronousSideEffects: true,
 	})
 	if err != nil {
 		t.Fatalf("ReplyForumThread: %v", err)
@@ -128,6 +184,20 @@ func TestReplyForumThreadSuccessfulAppendUsesCanonicalTextAndImages(t *testing.T
 	}
 	if got := evt.Data["Body"]; got != canonical {
 		t.Fatalf("notification body = %#v", got)
+	}
+	if len(q.metadataThreadIDs) != 1 || q.metadataThreadIDs[0] != forumReplyAppendThreadID || len(q.metadataTopicIDs) != 1 || q.metadataTopicIDs[0] != forumReplyAppendTopicID {
+		t.Fatalf("metadata recalculation calls = threads %v topics %v", q.metadataThreadIDs, q.metadataTopicIDs)
+	}
+	if len(q.indexedCommentIDs) == 0 || !strings.Contains(strings.Join(q.indexedWords, " "), "old") || !strings.Contains(strings.Join(q.indexedWords, " "), "new") {
+		t.Fatalf("synchronous canonical search calls = words %v comments %v", q.indexedWords, q.indexedCommentIDs)
+	}
+	select {
+	case got := <-fetchRequests:
+		if got != remoteURL {
+			t.Fatalf("remote fetch URL = %q, want %q", got, remoteURL)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("successful append did not start the queued remote image fetch")
 	}
 }
 
@@ -156,7 +226,17 @@ func TestReplyForumThreadAppendZeroRowsFallsBackToCreate(t *testing.T) {
 }
 
 func TestReplyForumThreadAppendErrorNeverCreatesReply(t *testing.T) {
-	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
+	fetchRequests := make(chan string, 1)
+	client := &http.Client{Transport: forumReplyRoundTripper(func(req *http.Request) (*http.Response, error) {
+		fetchRequests <- req.URL.String()
+		return nil, errors.New("unexpected fetch after failed append")
+	})}
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false, WithHTTPClient(client))
+	imageID := "abcd1234.jpg"
+	imagePath := path.Join("/", imageID[:2], imageID[2:4], imageID)
+	q.ListUploadedImagePathsByUserFn = func(context.Context, db.ListUploadedImagePathsByUserParams) ([]sql.NullString, error) {
+		return []sql.NullString{{String: imagePath, Valid: true}}, nil
+	}
 	wantErr := errors.New("append database unavailable")
 	q.AppendCommentInSectionForCommenterFn = func(context.Context, db.AppendCommentInSectionForCommenterParams) (int64, error) {
 		return 0, wantErr
@@ -168,13 +248,22 @@ func TestReplyForumThreadAppendErrorNeverCreatesReply(t *testing.T) {
 	}
 
 	_, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
-		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, Text: "new reply",
+		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID,
+		Text: "new reply [img image:" + imageID + "] [img http://93.184.216.34/failed.png]",
 	})
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("error = %v, want wrapped %v", err, wantErr)
 	}
 	if created {
 		t.Fatal("normal reply created after append database error")
+	}
+	if len(q.CreateThreadImageCalls) != 0 {
+		t.Fatalf("failed append recorded thread images: %#v", q.CreateThreadImageCalls)
+	}
+	select {
+	case got := <-fetchRequests:
+		t.Fatalf("failed append started remote image fetch for %q", got)
+	case <-time.After(100 * time.Millisecond):
 	}
 }
 
@@ -196,7 +285,7 @@ func TestReplyForumThreadAppendReloadFailureIsIrreversible(t *testing.T) {
 	}
 
 	result, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
-		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, Text: "submitted fragment",
+		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, Text: "submitted fragment", SynchronousSideEffects: true,
 	})
 	if err != nil {
 		t.Fatalf("ReplyForumThread: %v", err)
@@ -212,6 +301,70 @@ func TestReplyForumThreadAppendReloadFailureIsIrreversible(t *testing.T) {
 	}
 	if got := evt.Data["Body"]; got != "" {
 		t.Fatalf("reload failure notification body = %#v", got)
+	}
+	if len(q.metadataThreadIDs) != 1 || len(q.metadataTopicIDs) != 1 {
+		t.Fatalf("reload failure metadata calls = threads %v topics %v", q.metadataThreadIDs, q.metadataTopicIDs)
+	}
+	if len(q.indexedWords) != 0 || len(q.indexedCommentIDs) != 0 {
+		t.Fatalf("reload failure indexed non-canonical text: words %v comments %v", q.indexedWords, q.indexedCommentIDs)
+	}
+}
+
+func TestReplyForumThreadSuccessfulPrivateAppendUsesThreadGrantScope(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{PrivateForumPostAppendWindow: 60}, true)
+	q.AppendCommentInSectionForCommenterFn = func(_ context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		if arg.Section != "privateforum_thread" || arg.ItemType.String != "thread" || arg.ItemID.Int32 != forumReplyAppendThreadID {
+			t.Fatalf("private append grant target = %#v", arg)
+		}
+		return 1, nil
+	}
+	q.GetCommentByIdForUserFn = func(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		if arg.ID == forumReplyAppendCommentID {
+			return &db.GetCommentByIdForUserRow{Idcomments: arg.ID, Text: sql.NullString{String: "old\n\n[hr]\n\nprivate reply", Valid: true}}, nil
+		}
+		return &db.GetCommentByIdForUserRow{Idcomments: 100, Text: sql.NullString{String: "Opening post", Valid: true}}, nil
+	}
+	q.CreateCommentInSectionForCommenterFn = func(context.Context, db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		t.Fatal("normal private reply created after successful append")
+		return 0, nil
+	}
+
+	result, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, Text: "private reply", Private: true, EnforceHandler: true,
+	})
+	if err != nil {
+		t.Fatalf("ReplyForumThread: %v", err)
+	}
+	if !result.Appended || result.CommentID != forumReplyAppendCommentID || result.URL != "/private/topic/37/thread/412#c1" {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestReplyForumThreadAppendCandidateLookupErrorNeverFallsBack(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
+	wantErr := errors.New("candidate lookup unavailable")
+	q.GetCommentsByThreadIdForUserFn = func(context.Context, db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return nil, wantErr
+	}
+	appendCalled := false
+	q.AppendCommentInSectionForCommenterFn = func(context.Context, db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		appendCalled = true
+		return 0, nil
+	}
+	created := false
+	q.CreateCommentInSectionForCommenterFn = func(context.Context, db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		created = true
+		return 300, nil
+	}
+
+	_, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID, Text: "new reply",
+	})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("error = %v, want wrapped %v", err, wantErr)
+	}
+	if appendCalled || created {
+		t.Fatalf("append called = %v, create called = %v after candidate lookup error", appendCalled, created)
 	}
 }
 
@@ -281,6 +434,8 @@ func TestCanAppendToCommentEligibilityAndMarkerScope(t *testing.T) {
 		wantGrantID   int32
 	}{
 		{name: "public eligible", window: 60, owner: true, written: time.Now(), comments: []*db.GetCommentsByThreadIdForUserRow{{Idcomments: forumReplyAppendCommentID}}, want: true, wantSection: "forum", wantGrantItem: "topic", wantGrantID: forumReplyAppendTopicID},
+		{name: "author own marker remains eligible", window: 60, owner: true, written: time.Now(), comments: []*db.GetCommentsByThreadIdForUserRow{{Idcomments: forumReplyAppendCommentID}}, want: true, wantSection: "forum", wantGrantItem: "topic", wantGrantID: forumReplyAppendTopicID},
+		{name: "other user older marker remains eligible", window: 60, owner: true, written: time.Now(), comments: []*db.GetCommentsByThreadIdForUserRow{{Idcomments: forumReplyAppendCommentID}}, want: true, wantSection: "forum", wantGrantItem: "topic", wantGrantID: forumReplyAppendTopicID},
 		{name: "private eligible", private: true, window: 60, owner: true, written: time.Now(), comments: []*db.GetCommentsByThreadIdForUserRow{{Idcomments: forumReplyAppendCommentID}}, want: true, wantSection: "privateforum_thread", wantGrantItem: "thread", wantGrantID: forumReplyAppendThreadID},
 		{name: "zero window", owner: true, written: time.Now()},
 		{name: "not owner", window: 60, written: time.Now()},

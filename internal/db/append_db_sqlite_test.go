@@ -26,7 +26,7 @@ func TestAppendCommentSQLite(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now()
 
-	rowsAffected, err := queries.AppendCommentInSectionForCommenter(ctx, AppendCommentInSectionForCommenterParams{
+	appendParams := AppendCommentInSectionForCommenterParams{
 		Text:             "new text sqlite",
 		AppendWindowMins: 60,
 		Section:          "forum",
@@ -37,7 +37,8 @@ func TestAppendCommentSQLite(t *testing.T) {
 		CommentID:        1000,
 		CommenterID:      1,
 		ForumthreadID:    100,
-	})
+	}
+	rowsAffected, err := queries.AppendCommentInSectionForCommenter(ctx, appendParams)
 
 	if err != nil {
 		t.Fatalf("append comment: %v", err)
@@ -65,6 +66,62 @@ func TestAppendCommentSQLite(t *testing.T) {
 	}
 	if commentCount != 1 || comment.Idcomments != 1000 {
 		t.Fatalf("append changed comment identity/count: id=%d count=%d", comment.Idcomments, commentCount)
+	}
+
+	appendParams.Text = "second segment"
+	appendParams.Written = sql.NullTime{Time: now.Add(time.Second), Valid: true}
+	rowsAffected, err = queries.AppendCommentInSectionForCommenter(ctx, appendParams)
+	if err != nil {
+		t.Fatalf("repeat append comment: %v", err)
+	}
+	if rowsAffected != 1 {
+		t.Fatalf("expected repeat append to affect 1 row, got %d", rowsAffected)
+	}
+	comment, err = queries.GetCommentById(ctx, 1000)
+	if err != nil {
+		t.Fatalf("get repeatedly appended comment: %v", err)
+	}
+	expectedText += "\n\n[hr]\n\nsecond segment"
+	if comment.Text.String != expectedText {
+		t.Fatalf("repeated append text = %q, want %q", comment.Text.String, expectedText)
+	}
+	if err := database.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", 100).Scan(&commentCount); err != nil {
+		t.Fatalf("count comments after repeat append: %v", err)
+	}
+	if commentCount != 1 || comment.Idcomments != 1000 {
+		t.Fatalf("repeat append changed comment identity/count: id=%d count=%d", comment.Idcomments, commentCount)
+	}
+}
+
+func TestAppendCommentWithNullExistingTextSQLite(t *testing.T) {
+	database := openReplyThreadTestDatabaseSQLite(t)
+	createReplyThreadTestSchema(t, database)
+	execReplySQL(t, database,
+		`INSERT INTO users (idusers, username) VALUES (1, 'user1')`,
+		`INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (1000, 100, 1, NULL, datetime('now'))`,
+		`INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (1, 'forum', 'topic', 100, 'append', 1, 'allow')`,
+	)
+	queries := NewForDriver(database, "sqlite")
+	ctx := context.Background()
+
+	rowsAffected, err := queries.AppendCommentInSectionForCommenter(ctx, AppendCommentInSectionForCommenterParams{
+		Text: "new text", AppendWindowMins: 60, Section: "forum",
+		ItemType: sql.NullString{String: "topic", Valid: true}, GrantUserID: sql.NullInt32{Int32: 1, Valid: true},
+		ItemID: sql.NullInt32{Int32: 100, Valid: true}, Written: sql.NullTime{Time: time.Now(), Valid: true},
+		CommentID: 1000, CommenterID: 1, ForumthreadID: 100,
+	})
+	if err != nil {
+		t.Fatalf("append comment with NULL text: %v", err)
+	}
+	if rowsAffected != 1 {
+		t.Fatalf("expected 1 row affected, got %d", rowsAffected)
+	}
+	comment, err := queries.GetCommentById(ctx, 1000)
+	if err != nil {
+		t.Fatalf("get comment: %v", err)
+	}
+	if got, want := comment.Text.String, "\n\n[hr]\n\nnew text"; got != want || !comment.Text.Valid {
+		t.Fatalf("NULL append text = %#v, want %q", comment.Text, want)
 	}
 }
 

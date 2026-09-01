@@ -324,3 +324,19 @@ func TestScenarioValidateCmd_CommittedScenario(t *testing.T) {
 		t.Fatalf("expected committed scenario validation success, got: %v", err)
 	}
 }
+
+func TestScenarioCmd_ServeSubcommandDispatch(t *testing.T) {
+	root := &rootCmd{fs: flag.NewFlagSet("goa4web", flag.ContinueOnError)}
+	parent, err := parseScenarioCmd(root, []string{"serve"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+
+	serveCmd, err := parseScenarioServeCmd(parent, []string{})
+	if err != nil {
+		t.Fatalf("parseScenarioServeCmd: %v", err)
+	}
+	if serveCmd == nil {
+		t.Fatal("expected non-nil scenarioServeCmd")
+	}
+}

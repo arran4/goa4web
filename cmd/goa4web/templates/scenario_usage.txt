@@ -6,6 +6,7 @@ application event scenarios.
 
 Commands:
   apply       Apply a scenario file or directory to the database.
+  serve       Serve a disposable SQLite environment created from a scenario.
   validate    Validate a scenario file or directory.
 
 Examples:

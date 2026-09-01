@@ -47,6 +47,12 @@ func (c *scenarioCmd) Run() error {
 			return fmt.Errorf("apply: %w", err)
 		}
 		return cmd.Run()
+	case "serve":
+		cmd, err := parseScenarioServeCmd(c, args[1:])
+		if err != nil {
+			return fmt.Errorf("serve: %w", err)
+		}
+		return cmd.Run()
 	case "validate":
 		cmd, err := parseScenarioValidateCmd(c, args[1:])
 		if err != nil {

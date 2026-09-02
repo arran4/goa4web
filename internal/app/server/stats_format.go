@@ -8,8 +8,8 @@ import (
 	"github.com/arran4/goa4web/internal/stats"
 )
 
-var serverStatsTmpl = template.Must(template.New("server").Parse(`
-Server Stats: Uptime={{.Uptime}} Goroutines={{.Stats.Goroutines}} Mem(Alloc={{.Stats.Alloc}} Total={{.Stats.TotalAlloc}} Sys={{.Stats.Sys}} HeapAlloc={{.Stats.HeapAlloc}} HeapSys={{.Stats.HeapSys}}) GC={{.Stats.NumGC}} CPU={{.Stats.NumCPU}}({{.Stats.Arch}}) Free(Disk={{.Stats.DiskFree}} RAM={{.Stats.RAMFree}}) AutoSubFailures={{.Stats.AutoSubscribePreferenceFailures}} Reg(Tasks={{len .Registries.Tasks}} DB={{len .Registries.DBDrivers}} DLQ={{len .Registries.DLQProviders}} Email={{len .Registries.EmailProviders}} Upload={{len .Registries.UploadProviders}} Router={{len .Registries.RouterModules}})
+var serverStatsTmpl = template.Must(template.New("server").Funcs(template.FuncMap{"join": strings.Join}).Parse(`
+Server Stats: Uptime={{.Uptime}} Goroutines={{.Stats.Goroutines}} Mem(Alloc={{.Stats.Alloc}} Total={{.Stats.TotalAlloc}} Sys={{.Stats.Sys}} HeapAlloc={{.Stats.HeapAlloc}} HeapSys={{.Stats.HeapSys}}) GC={{.Stats.NumGC}} CPU={{.Stats.NumCPU}}({{.Stats.Arch}}) Free(Disk={{.Stats.DiskFree}} RAM={{.Stats.RAMFree}}) AutoSubFailures={{.Stats.AutoSubscribePreferenceFailures}} Reg(Tasks=[{{join .Registries.Tasks ","}}] DB=[{{join .Registries.DBDrivers ","}}] DLQ=[{{join .Registries.DLQProviders ","}}] Email=[{{join .Registries.EmailProviders ","}}] Upload=[{{join .Registries.UploadProviders ","}}] Router=[{{join .Registries.RouterModules ","}}])
 `))
 
 var usageStatsTmpl = template.Must(template.New("usage").Parse(`

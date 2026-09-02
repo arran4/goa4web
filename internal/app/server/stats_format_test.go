@@ -54,12 +54,12 @@ func TestFormatServerStats(t *testing.T) {
 		"Disk=123456789",
 		"RAM=987654321",
 		"AutoSubFailures=3",
-		"Tasks=2",
-		"DB=1",
-		"DLQ=1",
-		"Email=2",
-		"Upload=1",
-		"Router=2",
+		"Tasks=[Task1,Task2]",
+		"DB=[mysql]",
+		"DLQ=[dir]",
+		"Email=[smtp,local]",
+		"Upload=[local]",
+		"Router=[auth,forum]",
 	}
 
 	for _, part := range expectedParts {

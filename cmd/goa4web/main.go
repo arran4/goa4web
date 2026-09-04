@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"errors"
+	"strings"
 	"flag"
 	"fmt"
 	"log"
@@ -190,18 +191,28 @@ func parseRoot(args []string) (*rootCmd, error) {
 	dlqdefaults.RegisterDefaults(r.dlqReg, r.emailReg)
 	dbdefaults.Register(r.dbReg)
 
-	early := newFlagSet(args[0])
-	early.Usage = func() {}
-
 	var cfgPath string
 	var showVersion bool
+	var wantHelp bool
 
-	early.StringVar(&cfgPath, "config-file", "", "path to config file")
-	early.BoolVar(&showVersion, "version", false, "print version and exit")
+	for i := 1; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--version" || arg == "-version" {
+			showVersion = true
+		} else if strings.HasPrefix(arg, "--config-file=") || strings.HasPrefix(arg, "-config-file=") {
+			parts := strings.SplitN(arg, "=", 2)
+			cfgPath = parts[1]
+		} else if (arg == "--config-file" || arg == "-config-file") && i+1 < len(args) {
+			cfgPath = args[i+1]
+			i++
+		} else if arg == "--help" || arg == "-help" || arg == "-h" {
+			wantHelp = true
+		} else if !strings.HasPrefix(arg, "-") {
+			break
+		}
+	}
 
-	earlyErr := early.Parse(args[1:])
-	wantHelp := errors.Is(earlyErr, flag.ErrHelp)
-	rest := early.Args()
+	rest := args[1:]
 
 	if cfgPath == "" {
 		cfgPath = os.Getenv(config.EnvConfigFile)

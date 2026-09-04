@@ -47,6 +47,7 @@ var (
 	// Forum
 	ForumTopicPost     = &GrantDefinition{"forum", "topic", "post", "Allows posting new threads in a topic.", true}
 	ForumTopicReply    = &GrantDefinition{"forum", "topic", "reply", "Allows replying to threads in a topic.", true}
+	ForumTopicAppend   = &GrantDefinition{"forum", "topic", "append", "Allows appending to own consecutive replies in a public topic.", true}
 	ForumThreadEdit    = &GrantDefinition{"forum", "thread", "edit", "Allows editing own posts in a thread.", true}
 	ForumThreadEditAny = &GrantDefinition{"forum", "thread", "edit-any", "Allows editing any post in a thread.", true}
 
@@ -68,6 +69,13 @@ var (
 		consts.PermissionItemThread.String(),
 		consts.PermissionActionReply.String(),
 		"Allows replying to a private forum thread.",
+		true,
+	}
+	PrivateforumThreadAppend = &GrantDefinition{
+		consts.PermissionSectionPrivateForumThread.String(),
+		consts.PermissionItemThread.String(),
+		"append",
+		"Allows appending to own consecutive replies in a private forum thread.",
 		true,
 	}
 
@@ -122,6 +130,7 @@ var Definitions = []*GrantDefinition{
 	// Forum
 	ForumTopicPost,
 	ForumTopicReply,
+	ForumTopicAppend,
 	ForumThreadEdit,
 	ForumThreadEditAny,
 
@@ -133,6 +142,7 @@ var Definitions = []*GrantDefinition{
 	PrivateforumTopicReply,
 	PrivateforumThreadView,
 	PrivateforumThreadReply,
+	PrivateforumThreadAppend,
 
 	// ImageBBS
 	ImagebbsBoardView,

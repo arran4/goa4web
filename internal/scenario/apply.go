@@ -318,6 +318,33 @@ func (r *Runner) applyUserGrant(ctx context.Context, data *UserGrantData) error 
 	if !ok {
 		return fmt.Errorf("cannot resolve user %q", data.User)
 	}
+
+	if data.ItemRef != "" {
+		if data.Section == "privateforum_thread" && data.Item == "thread" {
+			threadIDRaw, ok := r.refRegistry.Resolve(RefTypeThread, data.ItemRef)
+			if !ok {
+				return fmt.Errorf("user.grant: unknown thread reference %q", data.ItemRef)
+			}
+			threadID, ok := threadIDRaw.(int32)
+			if !ok {
+				return fmt.Errorf("user.grant: thread reference %q is not an int32", data.ItemRef)
+			}
+			return r.coreData.GrantUserItem(uid, data.Section, data.Item, threadID, data.Action)
+		} else if data.Section == "forum" && data.Item == "topic" {
+			topicIDRaw, ok := r.refRegistry.Resolve(RefTypeTopic, data.ItemRef)
+			if !ok {
+				return fmt.Errorf("user.grant: unknown topic reference %q", data.ItemRef)
+			}
+			topicID, ok := topicIDRaw.(int32)
+			if !ok {
+				return fmt.Errorf("user.grant: topic reference %q is not an int32", data.ItemRef)
+			}
+			return r.coreData.GrantUserItem(uid, data.Section, data.Item, topicID, data.Action)
+		} else {
+			return fmt.Errorf("user.grant: ItemRef is not supported for section %q item %q", data.Section, data.Item)
+		}
+	}
+
 	if err := r.coreData.GrantUser(uid, data.Section, data.Item, data.Action); err != nil {
 		return fmt.Errorf("grant user %s (%d) (%s/%s/%s): %w", data.User, uid, data.Section, data.Item, data.Action, err)
 	}

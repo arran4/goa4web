@@ -160,24 +160,6 @@ At: 2026-08-01T09:15:00+10:00
 
 Welcome to the staff room. This conversation is for Alice and Bob.
 
--- 110a-alice-append-staff-welcome.event --
-Op: user.grant
-User: alice
-Section: privateforum_thread
-Item: thread
-ItemRef: staff-welcome
-Action: append
-At: 2026-08-01T09:15:10+10:00
-
--- 110b-bob-append-staff-welcome.event --
-Op: user.grant
-User: bob
-Section: privateforum_thread
-Item: thread
-ItemRef: staff-welcome
-Action: append
-At: 2026-08-01T09:15:20+10:00
-
 -- 111-bob-welcome-reply.event --
 Op: forum.reply
 Ref: bob-welcome-reply
@@ -195,24 +177,6 @@ Topic: staff-room
 At: 2026-08-01T09:20:00+10:00
 
 Bob opening a second Staff Room thread to exercise participant thread creation.
-
--- 112a-bob-append-staff-check-in.event --
-Op: user.grant
-User: bob
-Section: privateforum_thread
-Item: thread
-ItemRef: bob-staff-check-in
-Action: append
-At: 2026-08-01T09:20:10+10:00
-
--- 112b-alice-append-staff-check-in.event --
-Op: user.grant
-User: alice
-Section: privateforum_thread
-Item: thread
-ItemRef: bob-staff-check-in
-Action: append
-At: 2026-08-01T09:20:20+10:00
 
 -- 113-alice-staff-check-in-reply.event --
 Op: forum.reply
@@ -241,24 +205,6 @@ At: 2026-08-01T09:35:00+10:00
 
 Project Room kickoff for Carol and Dave.
 
--- 210a-carol-append-project-kickoff.event --
-Op: user.grant
-User: carol
-Section: privateforum_thread
-Item: thread
-ItemRef: project-kickoff
-Action: append
-At: 2026-08-01T09:35:10+10:00
-
--- 210b-dave-append-project-kickoff.event --
-Op: user.grant
-User: dave
-Section: privateforum_thread
-Item: thread
-ItemRef: project-kickoff
-Action: append
-At: 2026-08-01T09:35:20+10:00
-
 -- 211-dave-project-reply.event --
 Op: forum.reply
 Ref: dave-project-reply
@@ -286,24 +232,6 @@ Topic: coordination
 At: 2026-08-01T09:50:00+10:00
 
 Coordination plan for Alice and Carol across the two teams.
-
--- 310a-alice-append-coordination-plan.event --
-Op: user.grant
-User: alice
-Section: privateforum_thread
-Item: thread
-ItemRef: coordination-plan
-Action: append
-At: 2026-08-01T09:50:10+10:00
-
--- 310b-carol-append-coordination-plan.event --
-Op: user.grant
-User: carol
-Section: privateforum_thread
-Item: thread
-ItemRef: coordination-plan
-Action: append
-At: 2026-08-01T09:50:20+10:00
 
 -- 311-carol-coordination-reply.event --
 Op: forum.reply

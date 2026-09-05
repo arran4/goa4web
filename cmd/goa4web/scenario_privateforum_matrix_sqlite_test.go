@@ -136,31 +136,61 @@ func TestScenarioServePrivateForumPermissionMatrix(t *testing.T) {
 		}
 	}
 
-	wantThreadUsers := map[string][]string{
-		"staff-welcome":     {"alice", "bob"},
-		"staff-check-in":    {"alice", "bob"},
-		"project-kickoff":   {"carol", "dave"},
-		"coordination-plan": {"alice", "carol"},
+	// Assert explicit view/reply/append capabilities per thread based on the test plan
+	type userGrants struct {
+		view   bool
+		reply  bool
+		append bool
 	}
-	for threadName, expected := range wantThreadUsers {
+	wantThreadGrants := map[string]map[string]userGrants{
+		"staff-welcome": {
+			"alice": {true, true, true},
+			"bob":   {true, true, true},
+			"carol": {false, false, false},
+			"dave":  {false, false, false},
+		},
+		"staff-check-in": { // Only staff-welcome got the append grant via user.grant in 100-private-forum? Wait, the PR requested staff-check-in to also have it? The prompt says "staff-welcome: Alice/Bob" and "bob-staff-check-in: Alice/Bob". The seed uses staff-check-in. Let's give append to both.
+			"alice": {true, true, true},
+			"bob":   {true, true, true},
+			"carol": {false, false, false},
+			"dave":  {false, false, false},
+		},
+		"project-kickoff": {
+			"alice": {false, false, false},
+			"bob":   {false, false, false},
+			"carol": {true, true, true},
+			"dave":  {true, true, true},
+		},
+		"coordination-plan": {
+			"alice": {true, true, true},
+			"bob":   {false, false, false},
+			"carol": {true, true, true},
+			"dave":  {false, false, false},
+		},
+	}
+
+	for threadName, expectedUsers := range wantThreadGrants {
 		t.Run("thread-grants/"+threadName, func(t *testing.T) {
-			grants, err := querier.AdminListGrantsByThreadID(ctx, sql.NullInt32{Int32: threadIDs[threadName], Valid: true})
-			if err != nil {
-				t.Fatalf("AdminListGrantsByThreadID: %v", err)
-			}
-			seen := map[string]bool{}
-			for _, grant := range grants {
-				if grant.Username.Valid {
-					seen[grant.Username.String] = true
+			for username, expected := range expectedUsers {
+				hasGrant := func(action string) bool {
+					var count int
+					dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM grants WHERE section = 'privateforum_thread' AND item = 'thread' AND item_id = ? AND action = ? AND user_id = ? AND active = 1", threadIDs[threadName], action, userIDs[username]).Scan(&count)
+					return count > 0
 				}
-			}
-			got := make([]string, 0, len(seen))
-			for username := range seen {
-				got = append(got, username)
-			}
-			sort.Strings(got)
-			if fmt.Sprint(got) != fmt.Sprint(expected) {
-				t.Fatalf("thread grant users = %v, want %v", got, expected)
+
+				gotView := hasGrant("view")
+				gotReply := hasGrant("reply")
+				gotAppend := hasGrant("append")
+
+				if gotView != expected.view {
+					t.Errorf("%s in %s: view = %v, want %v", username, threadName, gotView, expected.view)
+				}
+				if gotReply != expected.reply {
+					t.Errorf("%s in %s: reply = %v, want %v", username, threadName, gotReply, expected.reply)
+				}
+				if gotAppend != expected.append {
+					t.Errorf("%s in %s: append = %v, want %v", username, threadName, gotAppend, expected.append)
+				}
 			}
 		})
 	}

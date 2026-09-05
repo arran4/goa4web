@@ -1,8 +1,8 @@
 package scenario
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestUserGrantReferencedSymbols(t *testing.T) {

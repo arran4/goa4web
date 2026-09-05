@@ -5,11 +5,11 @@ import (
 	"database/sql"
 
 	"errors"
-	"strings"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	_ "time/tzdata"
 
 	"github.com/arran4/goa4web"

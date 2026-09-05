@@ -9,12 +9,12 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
-	"os"
 
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 )
 
 func newTestScenarioServeCmd(t *testing.T, args []string) (*scenarioServeCmd, func()) {
@@ -102,8 +102,8 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 	replyHTML := scenarioHTTPGet(t, client, threadURL)
 	token := scenarioCSRFToken(t, replyHTML)
 	form := url.Values{
-		"replytext": {"Alice first fresh reply"},
-		"task": {"Reply"},
+		"replytext":          {"Alice first fresh reply"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
 	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
@@ -117,8 +117,8 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 	// 2. Second fresh reply
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext": {"Alice second fresh reply"},
-		"task": {"Reply"},
+		"replytext":          {"Alice second fresh reply"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
 	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
@@ -127,8 +127,8 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext": {"Alice third fresh reply"},
-		"task": {"Reply"},
+		"replytext":          {"Alice third fresh reply"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
 	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
@@ -137,8 +137,8 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext": {"Alice fourth fresh reply"},
-		"task": {"Reply"},
+		"replytext":          {"Alice fourth fresh reply"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
 	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
@@ -191,8 +191,8 @@ func TestScenarioForumAppend_DisabledByConfig(t *testing.T) {
 	replyHTML := scenarioHTTPGet(t, client, threadURL)
 	token := scenarioCSRFToken(t, replyHTML)
 	form := url.Values{
-		"replytext": {"Alice first fresh reply (disabled)"},
-		"task": {"Reply"},
+		"replytext":          {"Alice first fresh reply (disabled)"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
 	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
@@ -204,8 +204,8 @@ func TestScenarioForumAppend_DisabledByConfig(t *testing.T) {
 
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext": {"Alice second fresh reply (disabled)"},
-		"task": {"Reply"},
+		"replytext":          {"Alice second fresh reply (disabled)"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
 	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)

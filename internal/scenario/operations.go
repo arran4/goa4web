@@ -546,6 +546,17 @@ func (o *UserGrantOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if u := strings.TrimSpace(evt.Headers.Get("User")); u != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: u, Field: "User"})
 	}
+	section := strings.TrimSpace(evt.Headers.Get("Section"))
+	item := strings.TrimSpace(evt.Headers.Get("Item"))
+	itemRef := strings.TrimSpace(evt.Headers.Get("ItemRef"))
+
+	if itemRef != "" {
+		if section == "privateforum_thread" && item == "thread" {
+			refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: itemRef, Field: "ItemRef"})
+		} else if section == "forum" && item == "topic" {
+			refs = append(refs, SymbolRef{Type: RefTypeTopic, Symbol: itemRef, Field: "ItemRef"})
+		}
+	}
 	return refs
 }
 

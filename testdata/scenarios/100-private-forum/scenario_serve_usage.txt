@@ -25,3 +25,16 @@ To test the append feature manually:
 6. Submit another reply immediately. It will be added to Alice's previous fresh comment rather than creating an additional comment row.
 
 Note: Append windows dictate eligibility duration (in minutes). A value of 0 disables append logic for that forum type entirely. Append permission is explicit and separate from normal reply permission.
+
+Example of user.grant format with ItemRef:
+
+```text
+Op: user.grant
+User: alice
+Section: privateforum_thread
+Item: thread
+ItemRef: staff-welcome
+Action: append
+At: 2026-08-01T09:16:00+10:00
+```
+This requires an explicit symbolic string matching another operation's declaration (like `forum.thread.create` declaring a `Ref`) to apply item-specific user grants without DB ID hardcoding.

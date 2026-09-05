@@ -24,11 +24,43 @@ func TestUserGrantReferencedSymbols(t *testing.T) {
 	if syms[1].Symbol != "valid-ref" {
 		t.Errorf("expected valid-ref, got %s", syms[1].Symbol)
 	}
-
-	// Test an invalid or missing ref logic indirectly by checking parsing output
-	// Note: missing ItemRef logic is evaluated during Apply / DB validation, but we can verify it parses initially.
 }
 
+func TestUserGrantApplyLogicItemRef(t *testing.T) {
+	op := &UserGrantOp{}
+	h := NewHeader()
+	h.Set("User", "alice")
+	h.Set("Section", "privateforum_thread")
+	h.Set("Item", "thread")
+	h.Set("ItemRef", "staff-welcome")
+	h.Set("Action", "append")
+	evt := &Event{Headers: h}
+
+	// Valid tuple
+	_, err := op.Parse(evt)
+	if err != nil {
+		t.Errorf("expected valid Parse, got %v", err)
+	}
+
+	// Incompatible reference missing
+	h.Set("ItemRef", "")
+	evt.Headers = h
+	_, err = op.Parse(evt)
+	if err == nil || !strings.Contains(err.Error(), "ItemRef is required") {
+		t.Errorf("expected error for missing item ref, got %v", err)
+	}
+
+	// Incompatible reference included for global action
+	h.Set("Section", "privateforum")
+	h.Set("Item", "topic")
+	h.Set("ItemRef", "wrong-ref")
+	h.Set("Action", "view")
+	evt.Headers = h
+	_, err = op.Parse(evt)
+	if err == nil || !strings.Contains(err.Error(), "does not support or require an item ID") {
+		t.Errorf("expected error for global action with ItemRef, got %v", err)
+	}
+}
 func TestUserGrantParse(t *testing.T) {
 	op := &UserGrantOp{}
 	h := NewHeader()

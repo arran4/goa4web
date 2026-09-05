@@ -60,65 +60,94 @@ func TestParseRoot_EnvironmentAppendWindows(t *testing.T) {
 	}
 }
 
-
 func TestParseRoot_EarlyScanSkipsValues(t *testing.T) {
-	// E.g. "--db-driver sqlite" should skip "sqlite" and still find --config-file
-	args := []string{
-		"goa4web",
-		"--db-driver", "sqlite",
-		"--config-file", "test.env",
-		"scenario",
-		"serve",
+	// Prove that early scanning skips values of unrelated flags correctly
+	// and actually loads the configuration file.
+
+	tmpFile, err := os.CreateTemp("", "test.env")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	_, err = tmpFile.WriteString("FORUM_POST_APPEND_WINDOW=99\nPRIVATE_FORUM_POST_APPEND_WINDOW=88\n")
+	if err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+	tmpFile.Close()
+
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "separate value",
+			args: []string{"goa4web", "--db-driver", "sqlite", "--config-file", tmpFile.Name(), "scenario", "serve"},
+		},
+		{
+			name: "equals value",
+			args: []string{"goa4web", "--db-driver", "sqlite", "--config-file=" + tmpFile.Name(), "scenario", "serve"},
+		},
 	}
 
-	cmd, _ := parseRoot(args)
-	if cmd == nil {
-		t.Fatalf("cmd is nil")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd, err := parseRoot(tc.args)
+			if err != nil {
+				t.Fatalf("parseRoot returned err: %v", err)
+			}
+			cfg, _ := cmd.RuntimeConfig()
+
+			if cfg.ForumPostAppendWindow != 99 {
+				t.Errorf("expected 99, got %d", cfg.ForumPostAppendWindow)
+			}
+			if cfg.PrivateForumPostAppendWindow != 88 {
+				t.Errorf("expected 88, got %d", cfg.PrivateForumPostAppendWindow)
+			}
+		})
 	}
-	// Unfortunately we can't test internal cfgPath directly without modifying parseRoot further,
-	// but we can ensure it doesn't fail parsing.
 }
 
 func TestParseRoot_VariousWindows(t *testing.T) {
 	cases := []struct {
-		name string
-		args []string
-		env  map[string]string
-		wantPub int
+		name     string
+		args     []string
+		env      map[string]string
+		wantPub  int
 		wantPriv int
 	}{
 		{
-			name: "defaults 60/60",
-			args: []string{"goa4web", "scenario", "serve"},
-			wantPub: 60,
+			name:     "defaults 60/60",
+			args:     []string{"goa4web", "scenario", "serve"},
+			wantPub:  60,
 			wantPriv: 60,
 		},
 		{
-			name: "0/15",
-			args: []string{"goa4web", "--forum-post-append-window=0", "--private-forum-post-append-window=15", "scenario", "serve"},
-			wantPub: 0,
+			name:     "0/15",
+			args:     []string{"goa4web", "--forum-post-append-window=0", "--private-forum-post-append-window=15", "scenario", "serve"},
+			wantPub:  0,
 			wantPriv: 15,
 		},
 		{
-			name: "30/0",
-			args: []string{"goa4web", "--forum-post-append-window=30", "--private-forum-post-append-window=0", "scenario", "serve"},
-			wantPub: 30,
+			name:     "30/0",
+			args:     []string{"goa4web", "--forum-post-append-window=30", "--private-forum-post-append-window=0", "scenario", "serve"},
+			wantPub:  30,
 			wantPriv: 0,
 		},
 		{
-			name: "0/0",
-			args: []string{"goa4web", "--forum-post-append-window=0", "--private-forum-post-append-window=0", "scenario", "serve"},
-			wantPub: 0,
+			name:     "0/0",
+			args:     []string{"goa4web", "--forum-post-append-window=0", "--private-forum-post-append-window=0", "scenario", "serve"},
+			wantPub:  0,
 			wantPriv: 0,
 		},
 		{
 			name: "precedence CLI > env",
 			args: []string{"goa4web", "--forum-post-append-window=30", "scenario", "serve"},
 			env: map[string]string{
-				"FORUM_POST_APPEND_WINDOW": "45",
+				"FORUM_POST_APPEND_WINDOW":         "45",
 				"PRIVATE_FORUM_POST_APPEND_WINDOW": "25",
 			},
-			wantPub: 30,
+			wantPub:  30,
 			wantPriv: 25,
 		},
 	}

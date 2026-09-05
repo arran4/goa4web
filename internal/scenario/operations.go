@@ -517,6 +517,7 @@ type UserGrantData struct {
 	User    string
 	Section string
 	Item    string
+	ItemRef string
 	Action  string
 	At      time.Time
 }
@@ -529,7 +530,7 @@ type UserGrantOp struct{}
 func (o *UserGrantOp) OpName() string { return "user.grant" }
 
 func (o *UserGrantOp) AllowedHeaders() []string {
-	return []string{"Op", "User", "Section", "Item", "Action", "At"}
+	return []string{"Op", "User", "Section", "Item", "ItemRef", "Action", "At"}
 }
 
 func (o *UserGrantOp) RequiredHeaders() []string {
@@ -544,6 +545,17 @@ func (o *UserGrantOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	var refs []SymbolRef
 	if u := strings.TrimSpace(evt.Headers.Get("User")); u != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: u, Field: "User"})
+	}
+	section := strings.TrimSpace(evt.Headers.Get("Section"))
+	item := strings.TrimSpace(evt.Headers.Get("Item"))
+	itemRef := strings.TrimSpace(evt.Headers.Get("ItemRef"))
+
+	if itemRef != "" {
+		if section == "privateforum_thread" && item == "thread" {
+			refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: itemRef, Field: "ItemRef"})
+		} else if section == "forum" && item == "topic" {
+			refs = append(refs, SymbolRef{Type: RefTypeTopic, Symbol: itemRef, Field: "ItemRef"})
+		}
 	}
 	return refs
 }
@@ -566,19 +578,33 @@ func (o *UserGrantOp) Parse(evt *Event) (OperationData, error) {
 		return nil, fmt.Errorf("user.grant: missing required 'Action'")
 	}
 	item := strings.TrimSpace(evt.Headers.Get("Item"))
+	itemRef := strings.TrimSpace(evt.Headers.Get("ItemRef"))
 
 	def := permissions.Lookup(section, item, action)
 	if def == nil {
 		return nil, fmt.Errorf("user.grant: invalid or unsupported permission tuple (%s/%s/%s)", section, item, action)
 	}
 	if def.RequireItemID {
-		return nil, fmt.Errorf("user.grant: permission (%s/%s/%s) requires a concrete item ID and cannot be granted globally", section, item, action)
+		if itemRef == "" {
+			return nil, fmt.Errorf("user.grant: permission (%s/%s/%s) requires a concrete item ID and cannot be granted globally (ItemRef is required)", section, item, action)
+		}
+		// Validate that the section/item combo is supported for reference resolution.
+		if section == "privateforum_thread" && item == "thread" {
+			// Supported
+		} else if section == "forum" && item == "topic" {
+			// Supported
+		} else {
+			return nil, fmt.Errorf("user.grant: ItemRef resolution is not supported for section %q item %q", section, item)
+		}
+	} else if itemRef != "" {
+		return nil, fmt.Errorf("user.grant: ItemRef provided but permission (%s/%s/%s) does not support or require an item ID", section, item, action)
 	}
 
 	return &UserGrantData{
 		User:    user,
 		Section: section,
 		Item:    item,
+		ItemRef: itemRef,
 		Action:  action,
 		At:      evt.At,
 	}, nil

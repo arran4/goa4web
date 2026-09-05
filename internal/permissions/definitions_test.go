@@ -114,3 +114,15 @@ func TestPermissionLookupAndGlobalValidity(t *testing.T) {
 		})
 	}
 }
+
+func TestForumAppendDefinitions(t *testing.T) {
+	// Verify that the specific append definitions added in #3091 exist and require ItemID
+
+	if !ForumTopicAppend.RequireItemID {
+		t.Errorf("ForumTopicAppend should require an item ID")
+	}
+
+	if !PrivateforumThreadAppend.RequireItemID {
+		t.Errorf("PrivateforumThreadAppend should require an item ID")
+	}
+}

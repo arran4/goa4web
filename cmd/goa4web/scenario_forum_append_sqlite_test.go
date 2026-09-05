@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -39,10 +40,10 @@ func doScenarioLogin(t *testing.T, ts *httptest.Server, client *http.Client, use
 	loginHTML := scenarioHTTPGet(t, client, ts.URL+"/login")
 	token := scenarioCSRFToken(t, loginHTML)
 	form := url.Values{
-		"username":           {username},
-		"password":           {password},
-		"task":               {"Login"},
-		"gorilla.csrf.Token": {token},
+		"username":		{username},
+		"password":		{password},
+		"task":			{"Login"},
+		"gorilla.csrf.Token":	{token},
 	}
 	scenarioHTTPPostForm(t, client, ts.URL+"/login", form)
 }
@@ -88,15 +89,18 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 
 	doScenarioLogin(t, ts, client, "alice", "alice-test")
 
-	querier := db.NewForDriver(dbConn, "sqlite3")
-	cd := common.NewCoreData(ctx, querier, srv.Config)
-	comments, err := cd.ThreadComments(threadID)
+	var baseline int
+	err = dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&baseline)
 	if err != nil {
-		t.Fatalf("ThreadComments baseline: %v", err)
+		t.Fatalf("failed to query baseline comments: %v", err)
 	}
-	baseline := len(comments)
 
 	threadURL := ts.URL + fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
+
+	noRedirectClient := *client
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	// 1. First fresh reply
 	replyHTML := scenarioHTTPGet(t, client, threadURL)
@@ -106,12 +110,108 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
 
-	// Check UI for Append:
+	req1, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req1.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req1.Header.Set("Referer", threadURL)
+	resp1, err := noRedirectClient.Do(req1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp1.Body.Close()
+	if resp1.StatusCode != http.StatusSeeOther {
+		t.Fatalf("first reply expected status 303, got %d", resp1.StatusCode)
+	}
+
+	// Prove the mutation happened
+	var rowCount int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&rowCount)
+	if rowCount != baseline+1 {
+		t.Fatalf("expected %d comments, got %d", baseline+1, rowCount)
+	}
+
+	var aliceCommentID int32
+	var aliceUID int32
+	var text string
+	err = dbConn.QueryRowContext(ctx, "SELECT idcomments, users_idusers, text FROM comments WHERE forumthread_id = ? ORDER BY idcomments DESC LIMIT 1", threadID).Scan(&aliceCommentID, &aliceUID, &text)
+	if err != nil {
+		t.Fatalf("failed to get last comment: %v", err)
+	}
+	if text != "Alice first fresh reply" {
+		t.Fatalf("unexpected text: %s", text)
+	}
+
+	var expectedAliceUID int32
+	dbConn.QueryRowContext(ctx, "SELECT idusers FROM users WHERE username = 'alice'").Scan(&expectedAliceUID)
+	if aliceUID != expectedAliceUID {
+		t.Fatalf("expected alice (%d) to own new comment, got %d", expectedAliceUID, aliceUID)
+	}
+
+	// Prove server config
+	if got := srv.Config.PrivateForumPostAppendWindow; got != 60 {
+		t.Fatalf("PrivateForumPostAppendWindow = %d, want 60", got)
+	}
+
+	// Prove explicit append grant
+	var grantCount int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM grants WHERE section = 'privateforum_thread' AND item = 'thread' AND item_id = ? AND action = 'append' AND user_id = ? AND active = 1", threadID, aliceUID).Scan(&grantCount)
+	if grantCount != 1 {
+		t.Fatalf("expected 1 explicit append grant, got %d", grantCount)
+	}
+
+	// Create fresh diagnostic CoreData
+	querier := db.NewForDriver(dbConn, "sqlite3")
+	probeCD := common.NewCoreData(ctx, querier, srv.Config).ForUser(aliceUID)
+	probeCD.SetCurrentThreadAndTopic(threadID, topicID)
+
+	probeComments, err := probeCD.ThreadComments(threadID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(probeComments) == 0 {
+		t.Fatal("fresh Alice CoreData sees no comments")
+	}
+
+	candidate := probeComments[len(probeComments)-1]
+
+	if candidate.Idcomments != aliceCommentID {
+		t.Fatalf("candidate ID %d != aliceCommentID %d", candidate.Idcomments, aliceCommentID)
+	}
+	if candidate.UsersIdusers != aliceUID {
+		t.Fatalf("candidate UID %d != aliceUID %d", candidate.UsersIdusers, aliceUID)
+	}
+	if candidate.ForumthreadID != threadID {
+		t.Fatalf("candidate ThreadID %d != %d", candidate.ForumthreadID, threadID)
+	}
+	if !candidate.IsOwner {
+		t.Fatalf("candidate is not owner")
+	}
+	if !candidate.Written.Valid {
+		t.Fatalf("candidate written timestamp is not valid")
+	}
+
+	if !probeCD.CanAppendToComment(candidate) {
+		t.Fatalf("fresh probe CanAppendToComment returned false. Grant/window/read-marker issue.")
+	}
+
+	// Check read markers
+	var newerMarkerCount int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM content_read_markers WHERE item = 'thread' AND item_id = ? AND last_comment_id >= ? AND user_id != ?", threadID, aliceCommentID, aliceUID).Scan(&newerMarkerCount)
+	if newerMarkerCount > 0 {
+		t.Fatalf("found %d read markers blocking append", newerMarkerCount)
+	}
+
+	// Finality check
+	var newerComments int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ? AND idcomments > ?", threadID, aliceCommentID).Scan(&newerComments)
+	if newerComments > 0 {
+		t.Fatalf("expected 0 newer comments, got %d", newerComments)
+	}
+
+	// Re-fetch the page. If it still says Reply, the bug is in the request-scoped template projection
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
 	if !strings.Contains(replyHTML, "Append:") {
-		t.Fatalf("expected 'Append:' in reply form, got: %s", replyHTML)
+		t.Fatalf("HTTP GET rendered 'Reply:', but CanAppendToComment probe returned true. Bug is in GET's viewer/selection/template projection.")
 	}
 
 	// 2. Second fresh reply
@@ -121,7 +221,18 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
+
+	req2, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req2.Header.Set("Referer", threadURL)
+	resp2, err := noRedirectClient.Do(req2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusSeeOther {
+		t.Fatalf("second reply expected status 303, got %d", resp2.StatusCode)
+	}
 
 	// 3. Third fresh reply
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
@@ -131,7 +242,15 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
+
+	req3, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req3.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req3.Header.Set("Referer", threadURL)
+	resp3, err := noRedirectClient.Do(req3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp3.Body.Close()
 
 	// 4. Fourth fresh reply
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
@@ -141,20 +260,36 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
 
-	comments, err = cd.ThreadComments(threadID)
+	req4, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req4.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req4.Header.Set("Referer", threadURL)
+	resp4, err := noRedirectClient.Do(req4)
 	if err != nil {
-		t.Fatalf("ThreadComments end: %v", err)
+		t.Fatal(err)
+	}
+	defer resp4.Body.Close()
+
+	// Final verification
+	var finalCount int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&finalCount)
+	if finalCount != baseline+1 {
+		t.Fatalf("expected %d comments, got %d", baseline+1, finalCount)
 	}
 
-	if len(comments) != baseline+1 {
-		t.Fatalf("expected %d comments, got %d", baseline+1, len(comments))
-	}
+	var finalID int32
+	var finalOwner int32
+	var finalText string
+	dbConn.QueryRowContext(ctx, "SELECT idcomments, users_idusers, text FROM comments WHERE forumthread_id = ? ORDER BY idcomments DESC LIMIT 1", threadID).Scan(&finalID, &finalOwner, &finalText)
 
-	lastComment := comments[len(comments)-1]
-	if !strings.Contains(lastComment.Text.String, "Alice first fresh reply") || !strings.Contains(lastComment.Text.String, "Alice fourth fresh reply") {
-		t.Fatalf("last comment doesn't contain appended texts: %s", lastComment.Text.String)
+	if finalID != aliceCommentID {
+		t.Fatalf("expected final comment ID to remain %d, got %d", aliceCommentID, finalID)
+	}
+	if finalOwner != aliceUID {
+		t.Fatalf("expected final comment to belong to alice (%d), got %d", aliceUID, finalOwner)
+	}
+	if !strings.Contains(finalText, "Alice first fresh reply") || !strings.Contains(finalText, "Alice fourth fresh reply") {
+		t.Fatalf("last comment doesn't contain appended texts: %s", finalText)
 	}
 }
 
@@ -181,21 +316,45 @@ func TestScenarioForumAppend_DisabledByConfig(t *testing.T) {
 
 	doScenarioLogin(t, ts, client, "alice", "alice-test")
 
-	querier := db.NewForDriver(dbConn, "sqlite3")
-	cd := common.NewCoreData(ctx, querier, srv.Config)
-	comments, _ := cd.ThreadComments(threadID)
-	baseline := len(comments)
+	var baseline int
+	err = dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&baseline)
+	if err != nil {
+		t.Fatalf("failed to query baseline comments: %v", err)
+	}
 
 	threadURL := ts.URL + fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
+
+	noRedirectClient := *client
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	replyHTML := scenarioHTTPGet(t, client, threadURL)
 	token := scenarioCSRFToken(t, replyHTML)
 	form := url.Values{
-		"replytext":          {"Alice first fresh reply (disabled)"},
-		"task":               {"Reply"},
-		"gorilla.csrf.Token": {token},
+		"replytext":		{"Alice first fresh reply (disabled)"},
+		"task":			{"Reply"},
+		"gorilla.csrf.Token":	{token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
+
+	req1, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req1.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req1.Header.Set("Referer", threadURL)
+	resp1, err := noRedirectClient.Do(req1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp1.Body.Close()
+	if resp1.StatusCode != http.StatusSeeOther {
+		body, _ := ioutil.ReadAll(resp1.Body)
+		t.Fatalf("reply 1 status = %d, body=%s", resp1.StatusCode, body)
+	}
+
+	var count1 int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&count1)
+	if count1 != baseline+1 {
+		t.Fatalf("expected %d comments after first reply, got %d", baseline+1, count1)
+	}
 
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
 	if strings.Contains(replyHTML, "Append:") {
@@ -204,21 +363,71 @@ func TestScenarioForumAppend_DisabledByConfig(t *testing.T) {
 
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext":          {"Alice second fresh reply (disabled)"},
-		"task":               {"Reply"},
-		"gorilla.csrf.Token": {token},
+		"replytext":		{"Alice second fresh reply (disabled)"},
+		"task":			{"Reply"},
+		"gorilla.csrf.Token":	{token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
-
-	comments, _ = cd.ThreadComments(threadID)
-
-	if len(comments) != baseline+2 {
-		t.Fatalf("expected %d comments, got %d", baseline+2, len(comments))
+	req2, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req2.Header.Set("Referer", threadURL)
+	resp2, err := noRedirectClient.Do(req2)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if comments[len(comments)-1].Idcomments == comments[len(comments)-2].Idcomments {
-		t.Fatalf("expected two distinct comment IDs, but they were the same")
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusSeeOther {
+		body, _ := ioutil.ReadAll(resp2.Body)
+		t.Fatalf("reply 2 status = %d, body=%s", resp2.StatusCode, body)
+	}
+
+	var count2 int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&count2)
+	if count2 != baseline+2 {
+		t.Fatalf("expected %d comments after second reply, got %d", baseline+2, count2)
+	}
+
+	rows, err := dbConn.QueryContext(ctx, "SELECT idcomments, users_idusers, text FROM comments WHERE forumthread_id = ? ORDER BY idcomments DESC LIMIT 2", threadID)
+	if err != nil {
+		t.Fatalf("failed to query new comments: %v", err)
+	}
+	defer rows.Close()
+
+	type commentRow struct {
+		id	int32
+		uid	int32
+		text	string
+	}
+	var newComments []commentRow
+	for rows.Next() {
+		var c commentRow
+		rows.Scan(&c.id, &c.uid, &c.text)
+		newComments = append(newComments, c)
+	}
+
+	if len(newComments) != 2 {
+		t.Fatalf("expected to read 2 new comments, got %d", len(newComments))
+	}
+
+	c2 := newComments[0]
+	c1 := newComments[1]
+
+	var aliceID int32
+	dbConn.QueryRowContext(ctx, "SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+
+	if c1.uid != aliceID || c2.uid != aliceID {
+		t.Fatalf("expected both comments to belong to alice (%d), got uid1=%d, uid2=%d", aliceID, c1.uid, c2.uid)
+	}
+	if c1.id == c2.id {
+		t.Fatalf("expected two distinct comment IDs, but got same ID %d", c1.id)
+	}
+	if !strings.Contains(c1.text, "Alice first fresh reply (disabled)") {
+		t.Fatalf("first comment text unexpected: %s", c1.text)
+	}
+	if !strings.Contains(c2.text, "Alice second fresh reply (disabled)") {
+		t.Fatalf("second comment text unexpected: %s", c2.text)
 	}
 }
+
 
 func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -255,21 +464,38 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 
 	doScenarioLogin(t, ts, client, "bob", "bob-test")
 
-	querier := db.NewForDriver(dbConn, "sqlite3")
-	cd := common.NewCoreData(ctx, querier, srv.Config)
-	comments, _ := cd.ThreadComments(threadID)
-	baseline := len(comments)
+	var baseline int
+	err = dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&baseline)
+	if err != nil {
+		t.Fatalf("failed to query baseline comments: %v", err)
+	}
 
 	threadURL := ts.URL + fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
+
+	noRedirectClient := *client
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	replyHTML := scenarioHTTPGet(t, client, threadURL)
 	token := scenarioCSRFToken(t, replyHTML)
 	form := url.Values{
-		"replytext": {"Bob first fresh reply (denied)"},
-		"task": {"Reply"},
+		"replytext":          {"Bob first fresh reply (denied)"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
+
+	req1, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req1.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req1.Header.Set("Referer", threadURL)
+	resp1, err := noRedirectClient.Do(req1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp1.Body.Close()
+	if resp1.StatusCode != http.StatusSeeOther {
+		t.Fatalf("first reply expected status 303, got %d", resp1.StatusCode)
+	}
 
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
 	if strings.Contains(replyHTML, "Append:") {
@@ -278,18 +504,26 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext": {"Bob second fresh reply (denied)"},
-		"task": {"Reply"},
+		"replytext":          {"Bob second fresh reply (denied)"},
+		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
-	scenarioHTTPPostForm(t, client, threadURL+"/reply", form)
 
-	comments, _ = cd.ThreadComments(threadID)
-
-	if len(comments) != baseline+2 {
-		t.Fatalf("expected %d comments, got %d", baseline+2, len(comments))
+	req2, _ := http.NewRequest(http.MethodPost, threadURL+"/reply", strings.NewReader(form.Encode()))
+	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req2.Header.Set("Referer", threadURL)
+	resp2, err := noRedirectClient.Do(req2)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if comments[len(comments)-1].Idcomments == comments[len(comments)-2].Idcomments {
-		t.Fatalf("expected two distinct comment IDs, but they were the same")
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusSeeOther {
+		t.Fatalf("second reply expected status 303, got %d", resp2.StatusCode)
+	}
+
+	var finalCount int
+	dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&finalCount)
+	if finalCount != baseline+2 {
+		t.Fatalf("expected %d comments, got %d", baseline+2, finalCount)
 	}
 }

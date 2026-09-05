@@ -1,0 +1,27 @@
+To serve the private forum scenario with specific append windows:
+
+```bash
+go run -tags sqlite ./cmd/goa4web \
+  --forum-post-append-window=30 \
+  --private-forum-post-append-window=15 \
+  scenario serve testdata/scenarios/100-private-forum
+```
+
+Or using environment variables:
+
+```bash
+FORUM_POST_APPEND_WINDOW=30 \
+PRIVATE_FORUM_POST_APPEND_WINDOW=15 \
+go run -tags sqlite ./cmd/goa4web \
+  scenario serve testdata/scenarios/100-private-forum
+```
+
+To test the append feature manually:
+1. Start the scenario server with positive append windows (as above).
+2. Log in as Alice.
+3. Open the "staff-welcome" private thread (where Alice has explicit append grants).
+4. Submit a fresh reply.
+5. Reload/return to the reply form. It should say "Append:".
+6. Submit another reply immediately. It will be added to Alice's previous fresh comment rather than creating an additional comment row.
+
+Note: Append windows dictate eligibility duration (in minutes). A value of 0 disables append logic for that forum type entirely. Append permission is explicit and separate from normal reply permission.

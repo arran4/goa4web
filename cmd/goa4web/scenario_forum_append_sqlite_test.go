@@ -489,27 +489,95 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 	}
 	defer cleanupServe()
 
-	var bobID int32
-	err = dbConn.QueryRowContext(ctx, "SELECT idusers FROM users WHERE username = 'bob';").Scan(&bobID)
-	if err != nil {
-		t.Fatalf("query bob idusers: %v", err)
-	}
-
-	topicID, threadID := getTopicAndThreadIDForUser(ctx, t, dbConn, "alice") // staff room thread
-
-	// Remove Bob's append grant so he only has reply.
-	_, err = dbConn.Exec("DELETE FROM grants WHERE item_id = ? AND action = 'append' AND user_id = ?", threadID, bobID)
-	if err != nil {
-		t.Fatalf("failed to revoke grant: %v", err)
-	}
-
 	ts := httptest.NewServer(srv.Router)
 	defer ts.Close()
 
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{Jar: jar}
 
-	doScenarioLogin(t, ts, client, "bob", "bob-test")
+	// Login as Carol
+	doScenarioLogin(t, ts, client, "carol", "carol-test")
+
+	var carolID int32
+	err = dbConn.QueryRowContext(ctx, "SELECT idusers FROM users WHERE username = 'carol';").Scan(&carolID)
+	if err != nil {
+		t.Fatalf("query carol idusers: %v", err)
+	}
+
+	var topicID int32
+	err = dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Project Room';").Scan(&topicID)
+	if err != nil {
+		t.Fatalf("query Project Room topic: %v", err)
+	}
+
+	// create a fresh private thread through the real HTTP create-thread route
+	createThreadURL := ts.URL + fmt.Sprintf("/private/topic/%d/thread", topicID)
+
+	createHTML := scenarioHTTPGet(t, client, createThreadURL)
+	token := scenarioCSRFToken(t, createHTML)
+
+	form := url.Values{
+		"body":               {"Carol creating a new thread"},
+		"task":               {"Create Thread"},
+		"gorilla.csrf.Token": {token},
+	}
+
+	noRedirectClient := *client
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	req, err := http.NewRequest(http.MethodPost, createThreadURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", createThreadURL)
+
+	resp, err := noRedirectClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("create thread expected status 303, got %d", resp.StatusCode)
+	}
+
+	location := resp.Header.Get("Location")
+	// Location is e.g. /private/topic/X/thread/Y
+	parts := strings.Split(location, "/")
+	threadIDStr := parts[len(parts)-1]
+	var threadID int
+	fmt.Sscanf(threadIDStr, "%d", &threadID)
+
+	// assert exact grants on that new thread: view=true, reply=true, append=false
+	hasGrant := func(action string) bool {
+		var count int
+		err := dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM grants WHERE section = 'privateforum_thread' AND item = 'thread' AND item_id = ? AND action = ? AND user_id = ? AND active = 1", threadID, action, carolID).Scan(&count)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return count > 0
+	}
+
+	if !hasGrant("view") {
+		t.Errorf("expected Carol to have view grant on thread %d", threadID)
+	}
+	if !hasGrant("reply") {
+		t.Errorf("expected Carol to have reply grant on thread %d", threadID)
+	}
+	if hasGrant("append") {
+		t.Errorf("expected Carol to NOT have append grant on thread %d", threadID)
+	}
+
+	threadURL := ts.URL + location
+
+	// GET the new thread and assert Reply: and not Append:
+	replyHTML := scenarioHTTPGet(t, client, threadURL)
+	if strings.Contains(replyHTML, "Append:") {
+		t.Fatalf("expected 'Reply:' in form, got 'Append:'")
+	}
 
 	var baseline int
 	err = dbConn.QueryRowContext(ctx, "SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", threadID).Scan(&baseline)
@@ -517,17 +585,10 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 		t.Fatalf("failed to query baseline comments: %v", err)
 	}
 
-	threadURL := ts.URL + fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
-
-	noRedirectClient := *client
-	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	}
-
-	replyHTML := scenarioHTTPGet(t, client, threadURL)
-	token := scenarioCSRFToken(t, replyHTML)
-	form := url.Values{
-		"replytext":          {"Bob first fresh reply (denied)"},
+	// submit two rapid Carol replies through the production HTTP reply route
+	token = scenarioCSRFToken(t, replyHTML)
+	form = url.Values{
+		"replytext":          {"Carol first reply"},
 		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
@@ -548,13 +609,9 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 	}
 
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
-	if strings.Contains(replyHTML, "Append:") {
-		t.Fatalf("expected 'Reply:' in form, got 'Append:'")
-	}
-
 	token = scenarioCSRFToken(t, replyHTML)
 	form = url.Values{
-		"replytext":          {"Bob second fresh reply (denied)"},
+		"replytext":          {"Carol second reply"},
 		"task":               {"Reply"},
 		"gorilla.csrf.Token": {token},
 	}
@@ -581,5 +638,46 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 	}
 	if finalCount != baseline+2 {
 		t.Fatalf("expected %d comments, got %d", baseline+2, finalCount)
+	}
+
+	rows, err := dbConn.QueryContext(ctx, "SELECT idcomments, users_idusers, text FROM comments WHERE forumthread_id = ? ORDER BY idcomments DESC LIMIT 2", threadID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	type commentRow struct {
+		id   int32
+		uid  int32
+		text string
+	}
+	var newComments []commentRow
+	for rows.Next() {
+		var c commentRow
+		err = rows.Scan(&c.id, &c.uid, &c.text)
+		if err != nil {
+			t.Fatal(err)
+		}
+		newComments = append(newComments, c)
+	}
+
+	if len(newComments) != 2 {
+		t.Fatalf("expected to read 2 new comments, got %d", len(newComments))
+	}
+
+	c2 := newComments[0]
+	c1 := newComments[1]
+
+	if c1.uid != carolID || c2.uid != carolID {
+		t.Fatalf("expected both comments to belong to carol (%d), got uid1=%d, uid2=%d", carolID, c1.uid, c2.uid)
+	}
+	if c1.id == c2.id {
+		t.Fatalf("expected two distinct comment IDs, but got same ID %d", c1.id)
+	}
+	if !strings.Contains(c1.text, "Carol first reply") {
+		t.Fatalf("first comment text unexpected: %s", c1.text)
+	}
+	if !strings.Contains(c2.text, "Carol second reply") {
+		t.Fatalf("second comment text unexpected: %s", c2.text)
 	}
 }

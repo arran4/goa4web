@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -712,7 +712,7 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 			op := &UserGrantOp{}
 			_, err := op.Parse(evt)
 			if err == nil {
-				err = r.applyUserGrant(nil, tc.data)
+				err = r.applyUserGrant(context.TODO(), tc.data)
 			}
 			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
 				t.Errorf("expected %q, got %v", tc.wantErr, err)

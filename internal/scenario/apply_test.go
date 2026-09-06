@@ -2,11 +2,11 @@ package scenario
 
 import (
 	"context"
-	"time"
 	"database/sql"
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
@@ -196,7 +196,7 @@ At: 2026-08-01T09:10:00Z
 	// CreateForumTopicForPoster
 	mock.ExpectExec("(?s).*CreateForumTopicForPoster.*").
 		WithArgs(
-			int32(0),	// PrivateForumCategoryID
+			int32(0), // PrivateForumCategoryID
 			sql.NullInt32{Int32: 1, Valid: true},
 			sql.NullString{String: "Staff Room", Valid: true},
 			sql.NullString{String: "Staff discussion", Valid: true},
@@ -659,34 +659,34 @@ At: 2026-08-01T09:01:00Z
 
 func TestRunnerPreflightUserGrant(t *testing.T) {
 	testCases := []struct {
-		name	string
-		data	*UserGrantData
-		wantErr	string
+		name    string
+		data    *UserGrantData
+		wantErr string
 	}{
 		{
-			name:		"unresolved ItemRef",
-			data:		&UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "missing", Action: "append"},
-			wantErr:	"unknown thread reference",
+			name:    "unresolved ItemRef",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "missing", Action: "append"},
+			wantErr: "unknown thread reference",
 		},
 		{
-			name:		"wrong ref type",
-			data:		&UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "valid-topic", Action: "append"},
-			wantErr:	"unknown thread reference",
+			name:    "wrong ref type",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "valid-topic", Action: "append"},
+			wantErr: "unknown thread reference",
 		},
 		{
-			name:		"missing ItemRef for item-scoped",
-			data:		&UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "", Action: "append"},
-			wantErr:	"ItemRef is required",
+			name:    "missing ItemRef for item-scoped",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "", Action: "append"},
+			wantErr: "ItemRef is required",
 		},
 		{
-			name:		"incompatible ItemRef on global",
-			data:		&UserGrantData{User: "alice", Section: "privateforum", Item: "topic", ItemRef: "valid-ref", Action: "view"},
-			wantErr:	"does not support or require an item ID",
+			name:    "incompatible ItemRef on global",
+			data:    &UserGrantData{User: "alice", Section: "privateforum", Item: "topic", ItemRef: "valid-ref", Action: "view"},
+			wantErr: "does not support or require an item ID",
 		},
 		{
-			name:		"item_id=0",
-			data:		&UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "zero-thread", Action: "append"},
-			wantErr:	"GrantUserItem requires a strictly positive item ID",
+			name:    "item_id=0",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "zero-thread", Action: "append"},
+			wantErr: "GrantUserItem requires a strictly positive item ID",
 		},
 	}
 
@@ -700,9 +700,9 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 			h.Set("Action", tc.data.Action)
 			tAt, _ := time.Parse(time.RFC3339, "2026-08-01T09:16:00+10:00")
 			var evt = &Event{
-				Op:		"user.grant",
-				At:		tAt,
-				Headers:	h,
+				Op:      "user.grant",
+				At:      tAt,
+				Headers: h,
 			}
 			op := &UserGrantOp{}
 			var err error
@@ -717,8 +717,8 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 
 				cd := common.NewCoreData(context.TODO(), querier, nil)
 				r := &Runner{
-					coreData:	cd,
-					refRegistry:	NewRefRegistry(),
+					coreData:    cd,
+					refRegistry: NewRefRegistry(),
 				}
 
 				_ = r.refRegistry.Declare(RefTypeUser, "alice")
@@ -750,9 +750,9 @@ func TestRunnerApplyPositiveUserGrant(t *testing.T) {
 	h.Set("At", "2026-08-01T09:16:00+10:00")
 	tAt, _ := time.Parse(time.RFC3339, "2026-08-01T09:16:00+10:00")
 	evt := &Event{
-		Op:		"user.grant",
-		At:		tAt,
-		Headers:	h,
+		Op:      "user.grant",
+		At:      tAt,
+		Headers: h,
 	}
 
 	querier := &db.QuerierStub{}
@@ -770,8 +770,8 @@ func TestRunnerApplyPositiveUserGrant(t *testing.T) {
 
 	cd := common.NewCoreData(context.TODO(), querier, nil)
 	r := &Runner{
-		coreData:	cd,
-		refRegistry:	NewRefRegistry(),
+		coreData:    cd,
+		refRegistry: NewRefRegistry(),
 	}
 
 	_ = r.refRegistry.Declare(RefTypeUser, "alice")

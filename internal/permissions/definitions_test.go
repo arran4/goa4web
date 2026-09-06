@@ -80,6 +80,22 @@ func TestPermissionLookupAndGlobalValidity(t *testing.T) {
 			wantRequireID: true,
 		},
 		{
+			name:          "privateforum_thread thread append requires item ID",
+			section:       "privateforum_thread",
+			item:          "thread",
+			action:        "append",
+			wantFound:     true,
+			wantRequireID: true,
+		},
+		{
+			name:          "forum topic append requires item ID",
+			section:       "forum",
+			item:          "topic",
+			action:        "append",
+			wantFound:     true,
+			wantRequireID: true,
+		},
+		{
 			name:          "unknown permission",
 			section:       "unknown_section",
 			item:          "unknown_item",

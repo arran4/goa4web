@@ -660,10 +660,10 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 	r := &Runner{
 		refRegistry: NewRefRegistry(),
 	}
-	r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
-	r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
-	r.refRegistry.Bind(RefTypeForum, "valid-topic", int32(456))
-	r.refRegistry.Bind(RefTypeThread, "zero-thread", int32(0))
+	_ = r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
+	_ = r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
+	_ = r.refRegistry.Bind(RefTypeForum, "valid-topic", int32(456))
+	_ = r.refRegistry.Bind(RefTypeThread, "zero-thread", int32(0))
 
 	testCases := []struct {
 		name    string

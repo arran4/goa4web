@@ -746,3 +746,52 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 		})
 	}
 }
+
+func TestRunnerApplyPositiveUserGrant(t *testing.T) {
+	h := NewHeader()
+	h.Set("Op", "user.grant")
+	h.Set("User", "alice")
+	h.Set("Section", "privateforum_thread")
+	h.Set("Item", "thread")
+	h.Set("ItemRef", "valid-ref")
+	h.Set("Action", "append")
+	h.Set("At", "2026-08-01T09:16:00+10:00")
+	evt := &Event{
+		Op:      "user.grant",
+		Headers: h,
+	}
+
+	querier := &db.QuerierStub{}
+	var createCalled bool
+	querier.AdminCreateGrantFn = func(ctx context.Context, arg db.AdminCreateGrantParams) (int64, error) {
+		createCalled = true
+		if !arg.ItemID.Valid || arg.ItemID.Int32 != 123 {
+			t.Errorf("expected itemID=123, valid=true, got %v valid=%v", arg.ItemID.Int32, arg.ItemID.Valid)
+		}
+		if arg.Section != "privateforum_thread" || !arg.Item.Valid || arg.Item.String != "thread" || arg.Action != "append" || !arg.UserID.Valid || arg.UserID.Int32 != 1 {
+			t.Errorf("invalid grant arg %v", arg)
+		}
+		return 1, nil
+	}
+
+	cd := common.NewCoreData(context.TODO(), querier, nil)
+	r := &Runner{
+		coreData:    cd,
+		refRegistry: NewRefRegistry(),
+	}
+
+	_ = r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
+	_ = r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
+
+	op := &UserGrantOp{}
+	evt.OpData, _ = op.Parse(evt)
+
+	err := r.applyUserGrant(context.TODO(), evt.OpData.(*UserGrantData))
+	if err != nil {
+		t.Fatalf("expected valid apply, got %v", err)
+	}
+
+	if !createCalled {
+		t.Errorf("AdminCreateGrantFn was not called")
+	}
+}

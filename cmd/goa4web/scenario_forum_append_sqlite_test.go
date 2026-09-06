@@ -275,6 +275,9 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer resp3.Body.Close()
+	if resp3.StatusCode != 303 {
+		t.Fatalf("third reply expected status 303, got %d", resp3.StatusCode)
+	}
 
 	// 4. Fourth fresh reply
 	replyHTML = scenarioHTTPGet(t, client, threadURL)
@@ -296,6 +299,9 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer resp4.Body.Close()
+	if resp4.StatusCode != 303 {
+		t.Fatalf("fourth reply expected status 303, got %d", resp4.StatusCode)
+	}
 
 	// Final verification
 	var finalCount int
@@ -321,8 +327,9 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 	if finalOwner != aliceUID {
 		t.Fatalf("expected final comment to belong to alice (%d), got %d", aliceUID, finalOwner)
 	}
-	if !strings.Contains(finalText, "Alice first fresh reply") || !strings.Contains(finalText, "Alice fourth fresh reply") {
-		t.Fatalf("last comment doesn't contain appended texts: %s", finalText)
+	expectedFinalText := "Alice first fresh reply\n\n[hr]\n\nAlice second fresh reply\n\n[hr]\n\nAlice third fresh reply\n\n[hr]\n\nAlice fourth fresh reply"
+	if !strings.Contains(finalText, expectedFinalText) {
+		t.Fatalf("last comment doesn't contain canonical appended text segments. Expected:\n%s\n\nGot:\n%s", expectedFinalText, finalText)
 	}
 }
 

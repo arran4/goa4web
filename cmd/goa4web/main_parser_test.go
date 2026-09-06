@@ -31,12 +31,8 @@ func TestParseRoot_AppendWindows(t *testing.T) {
 }
 
 func TestParseRoot_EnvironmentAppendWindows(t *testing.T) {
-	os.Setenv("FORUM_POST_APPEND_WINDOW", "45")
-	os.Setenv("PRIVATE_FORUM_POST_APPEND_WINDOW", "25")
-	defer func() {
-		os.Unsetenv("FORUM_POST_APPEND_WINDOW")
-		os.Unsetenv("PRIVATE_FORUM_POST_APPEND_WINDOW")
-	}()
+	t.Setenv("FORUM_POST_APPEND_WINDOW", "45")
+	t.Setenv("PRIVATE_FORUM_POST_APPEND_WINDOW", "25")
 
 	args := []string{
 		"goa4web",
@@ -64,17 +60,12 @@ func TestParseRoot_EarlyScanSkipsValues(t *testing.T) {
 	// Prove that early scanning skips values of unrelated flags correctly
 	// and actually loads the configuration file.
 
-	tmpFile, err := os.CreateTemp("", "test.env")
+	tempDir := t.TempDir()
+	tempFile := tempDir + "/test.env"
+	err := os.WriteFile(tempFile, []byte("FORUM_POST_APPEND_WINDOW=99\nPRIVATE_FORUM_POST_APPEND_WINDOW=88\n"), 0644)
 	if err != nil {
-		t.Fatalf("failed to create temp file: %v", err)
+		t.Fatalf("failed to write temp config file: %v", err)
 	}
-	defer os.Remove(tmpFile.Name())
-
-	_, err = tmpFile.WriteString("FORUM_POST_APPEND_WINDOW=99\nPRIVATE_FORUM_POST_APPEND_WINDOW=88\n")
-	if err != nil {
-		t.Fatalf("failed to write temp file: %v", err)
-	}
-	tmpFile.Close()
 
 	cases := []struct {
 		name string
@@ -82,11 +73,11 @@ func TestParseRoot_EarlyScanSkipsValues(t *testing.T) {
 	}{
 		{
 			name: "separate value",
-			args: []string{"goa4web", "--db-driver", "sqlite", "--config-file", tmpFile.Name(), "scenario", "serve"},
+			args: []string{"goa4web", "--db-driver", "sqlite", "--config-file", tempFile, "scenario", "serve"},
 		},
 		{
 			name: "equals value",
-			args: []string{"goa4web", "--db-driver", "sqlite", "--config-file=" + tmpFile.Name(), "scenario", "serve"},
+			args: []string{"goa4web", "--db-driver", "sqlite", "--config-file=" + tempFile, "scenario", "serve"},
 		},
 	}
 
@@ -155,13 +146,8 @@ func TestParseRoot_VariousWindows(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {
-				os.Setenv(k, v)
+				t.Setenv(k, v)
 			}
-			defer func() {
-				for k := range tc.env {
-					os.Unsetenv(k)
-				}
-			}()
 
 			cmd, err := parseRoot(tc.args)
 			if err != nil {

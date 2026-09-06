@@ -209,6 +209,8 @@ func parseRoot(args []string) (*rootCmd, error) {
 			wantHelp = true
 		} else if !strings.HasPrefix(arg, "-") {
 			break
+		} else if !strings.Contains(arg, "=") && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+			i++
 		}
 	}
 

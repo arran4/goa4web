@@ -98,7 +98,7 @@ func TestUserGrantParse(t *testing.T) {
 	h.Set("ItemRef", "test-topic-ref")
 	evt.Headers = h
 	_, err = op.Parse(evt)
-	if err != nil {
-		t.Errorf("expected valid parse for forum/topic ItemRef, got: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "resolution is not supported") {
+		t.Errorf("expected invalid parse for forum/topic ItemRef, got: %v", err)
 	}
 }

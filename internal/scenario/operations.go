@@ -589,8 +589,6 @@ func (o *UserGrantOp) Parse(evt *Event) (OperationData, error) {
 		// Validate that the section/item combo is supported for reference resolution.
 		if section == "privateforum_thread" && item == "thread" {
 			// Supported
-		} else if section == "forum" && item == "topic" {
-			// Supported
 		} else {
 			return nil, fmt.Errorf("user.grant: ItemRef resolution is not supported for section %q item %q", section, item)
 		}

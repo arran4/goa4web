@@ -655,3 +655,68 @@ At: 2026-08-01T09:01:00Z
 		t.Fatalf("unmet sqlmock expectations: %v", err)
 	}
 }
+
+func TestRunnerPreflightUserGrant(t *testing.T) {
+	r := &Runner{
+		refRegistry: NewRefRegistry(),
+	}
+	r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
+	r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
+	r.refRegistry.Bind(RefTypeForum, "valid-topic", int32(456))
+	r.refRegistry.Bind(RefTypeThread, "zero-thread", int32(0))
+
+	testCases := []struct {
+		name    string
+		data    *UserGrantData
+		wantErr string
+	}{
+		{
+			name:    "unresolved ItemRef",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "missing", Action: "append"},
+			wantErr: "unknown thread reference",
+		},
+		{
+			name:    "wrong ref type",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "valid-topic", Action: "append"},
+			wantErr: "unknown thread reference",
+		},
+		{
+			name:    "incompatible ItemRef on global",
+			data:    &UserGrantData{User: "alice", Section: "privateforum", Item: "topic", ItemRef: "valid-topic", Action: "view"},
+			wantErr: "does not support or require an item ID",
+		},
+		{
+			name:    "missing ItemRef for item-scoped",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "", Action: "append"},
+			wantErr: "ItemRef is required",
+		},
+		{
+			name:    "item_id=0",
+			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "zero-thread", Action: "append"},
+			wantErr: "GrantUserItem requires a strictly positive item ID",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := NewHeader()
+			h.Set("User", tc.data.User)
+			h.Set("Section", tc.data.Section)
+			h.Set("Item", tc.data.Item)
+			h.Set("ItemRef", tc.data.ItemRef)
+			h.Set("Action", tc.data.Action)
+			var evt = &Event{
+				Op:      "user.grant",
+				Headers: h,
+			}
+			op := &UserGrantOp{}
+			_, err := op.Parse(evt)
+			if err == nil {
+				err = r.applyUserGrant(nil, tc.data)
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("expected %q, got %v", tc.wantErr, err)
+			}
+		})
+	}
+}

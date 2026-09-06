@@ -331,7 +331,7 @@ func (r *Runner) applyUserGrant(ctx context.Context, data *UserGrantData) error 
 			}
 			return r.coreData.GrantUserItem(uid, data.Section, data.Item, threadID, data.Action)
 		} else if data.Section == "forum" && data.Item == "topic" {
-			topicIDRaw, ok := r.refRegistry.Resolve(RefTypeTopic, data.ItemRef)
+			topicIDRaw, ok := r.refRegistry.Resolve(RefTypeForum, data.ItemRef)
 			if !ok {
 				return fmt.Errorf("user.grant: unknown topic reference %q", data.ItemRef)
 			}

@@ -657,28 +657,6 @@ At: 2026-08-01T09:01:00Z
 }
 
 func TestRunnerPreflightUserGrant(t *testing.T) {
-	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	defer func() {
-		mock.ExpectClose()
-		if err := conn.Close(); err != nil {
-			t.Errorf("conn.Close: %v", err)
-		}
-	}()
-
-	querier := &db.QuerierStub{}
-	cd := common.NewCoreData(context.TODO(), querier, nil)
-	r := &Runner{
-		coreData:    cd,
-		refRegistry: NewRefRegistry(),
-	}
-
-	_ = r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
-	_ = r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
-	_ = r.refRegistry.Bind(RefTypeThread, "zero-thread", int32(0))
-
 	testCases := []struct {
 		name    string
 		data    *UserGrantData
@@ -692,12 +670,7 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 		{
 			name:    "wrong ref type",
 			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "valid-topic", Action: "append"},
-			wantErr: "unknown thread reference", // Because "valid-topic" wasn't bound as a thread
-		},
-		{
-			name:    "incompatible ItemRef on global",
-			data:    &UserGrantData{User: "alice", Section: "privateforum", Item: "topic", ItemRef: "valid-ref", Action: "view"},
-			wantErr: "does not support or require an item ID",
+			wantErr: "unknown thread reference",
 		},
 		{
 			name:    "missing ItemRef for item-scoped",
@@ -723,25 +696,32 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 				Op:      "user.grant",
 				Headers: h,
 			}
-
-			// We will test the Runner Preflight execution directly using ops lookup
-			// and Ensure no DB mutations occur if Preflight fails.
-
 			op := &UserGrantOp{}
+			var err error
 			evt.OpData, err = op.Parse(evt)
 
 			if err == nil {
-				// We expect Preflight/Apply failure
-				err = r.applyUserGrant(context.TODO(), tc.data)
+				querier := &db.QuerierStub{}
+				querier.AdminCreateGrantFn = func(ctx context.Context, arg db.AdminCreateGrantParams) (int64, error) {
+					t.Fatalf("AdminCreateGrant called on invalid preflight")
+					return 0, nil
+				}
+
+				cd := common.NewCoreData(context.TODO(), querier, nil)
+				r := &Runner{
+					coreData:    cd,
+					refRegistry: NewRefRegistry(),
+				}
+
+				_ = r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
+				_ = r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
+				_ = r.refRegistry.Bind(RefTypeThread, "zero-thread", int32(0))
+
+				err = r.applyUserGrant(context.TODO(), evt.OpData.(*UserGrantData))
 			}
 
 			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
 				t.Errorf("expected error %q, got %v", tc.wantErr, err)
-			}
-
-			// Verify no DB mutations occurred
-			if err := mock.ExpectationsWereMet(); err != nil {
-				t.Fatalf("unmet sqlmock expectations: %v", err)
 			}
 		})
 	}

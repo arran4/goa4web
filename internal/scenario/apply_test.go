@@ -686,7 +686,7 @@ func TestRunnerPreflightUserGrant(t *testing.T) {
 		{
 			name:    "item_id=0",
 			data:    &UserGrantData{User: "alice", Section: "privateforum_thread", Item: "thread", ItemRef: "zero-thread", Action: "append"},
-			wantErr: "GrantUserItem requires a strictly positive item ID",
+			wantErr: "item-scoped grant can never create item_id=0 for \"zero-thread\"",
 		},
 	}
 

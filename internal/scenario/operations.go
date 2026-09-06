@@ -554,7 +554,7 @@ func (o *UserGrantOp) ReferencedSymbols(evt *Event) []SymbolRef {
 		if section == "privateforum_thread" && item == "thread" {
 			refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: itemRef, Field: "ItemRef"})
 		} else if section == "forum" && item == "topic" {
-			refs = append(refs, SymbolRef{Type: RefTypeTopic, Symbol: itemRef, Field: "ItemRef"})
+			refs = append(refs, SymbolRef{Type: RefTypeForum, Symbol: itemRef, Field: "ItemRef"})
 		}
 	}
 	return refs

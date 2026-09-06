@@ -20,9 +20,9 @@ To test the append feature manually:
 1. Start the scenario server with positive append windows (as above).
 2. Log in as Alice.
 3. Open the "staff-welcome" private thread (where Alice has explicit append grants).
-4. Submit a fresh reply.
+4. Because the historical Bob comment is the final seeded comment, Alice's first fresh reply creates one new Alice row.
 5. Reload/return to the reply form. It should say "Append:".
-6. Submit another reply immediately. It will be added to Alice's previous fresh comment rather than creating an additional comment row.
+6. Submit another reply immediately (e.g. replies 2-4). They will append to that same Alice row under the positive 60-minute window and explicit append grant, rather than creating additional comment rows.
 
 Note: Append windows dictate eligibility duration (in minutes). A value of 0 disables append logic for that forum type entirely. Append permission is explicit and separate from normal reply permission.
 

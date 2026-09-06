@@ -328,8 +328,8 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 		t.Fatalf("expected final comment to belong to alice (%d), got %d", aliceUID, finalOwner)
 	}
 	expectedFinalText := "Alice first fresh reply\n\n[hr]\n\nAlice second fresh reply\n\n[hr]\n\nAlice third fresh reply\n\n[hr]\n\nAlice fourth fresh reply"
-	if !strings.Contains(finalText, expectedFinalText) {
-		t.Fatalf("last comment doesn't contain canonical appended text segments. Expected:\n%s\n\nGot:\n%s", expectedFinalText, finalText)
+	if finalText != expectedFinalText {
+		t.Fatalf("last comment does not exactly match canonical appended text segments. Expected:\n%q\n\nGot:\n%q", expectedFinalText, finalText)
 	}
 }
 
@@ -524,7 +524,7 @@ func TestScenarioForumAppend_PermissionDenial(t *testing.T) {
 	token := scenarioCSRFToken(t, createHTML)
 
 	form := url.Values{
-		"body":               {"Carol creating a new thread"},
+		"replytext":          {"Carol creating a new thread"},
 		"task":               {"Create Thread"},
 		"gorilla.csrf.Token": {token},
 	}

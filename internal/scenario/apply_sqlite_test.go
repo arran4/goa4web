@@ -163,6 +163,22 @@ Participant: bob
 Title: Staff Room
 Description: Private discussion between Alice and Bob
 At: 2026-08-01T09:05:00Z
+
+-- 06-staff-thread.event --
+Op: forum.thread.create
+Ref: staff-thread
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T09:10:00Z
+
+-- 07-grant-alice-append.event --
+Op: user.grant
+User: alice
+Section: privateforum_thread
+Item: thread
+ItemRef: staff-thread
+Action: append
+At: 2026-08-01T09:15:00Z
 `
 
 	sc, err := Parse([]byte(scenarioTxt), nil)
@@ -175,8 +191,8 @@ At: 2026-08-01T09:05:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 10 {
-		t.Errorf("expected 10 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 12 {
+		t.Errorf("expected 12 events applied, got %d", res.EventsApplied)
 	}
 
 	// Step C: Verify that baseline user STILL has no privateforum permissions after scenario apply
@@ -256,6 +272,19 @@ At: 2026-08-01T09:05:00Z
 		if !bobCD.HasGrant("privateforum", "topic", act, topicID) {
 			t.Errorf("expected Bob to have grant %s on private topic %d", act, topicID)
 		}
+	}
+
+	threadIDVal, ok := res.Registry.Resolve(RefTypeThread, "staff-thread")
+	if !ok || threadIDVal == nil {
+		t.Fatalf("failed to resolve staff-thread ref (ok=%v)", ok)
+	}
+	threadID, ok := threadIDVal.(int32)
+	if !ok || threadID <= 0 {
+		t.Fatalf("expected positive int32 thread ID, got %T (%v)", threadIDVal, threadIDVal)
+	}
+
+	if !aliceCD.HasGrant("privateforum_thread", "thread", "append", threadID) {
+		t.Errorf("expected Alice to have explicitly granted 'append' permission on thread %d", threadID)
 	}
 
 	// Verify passwords in real database

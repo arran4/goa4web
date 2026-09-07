@@ -1709,4 +1709,21 @@ kbd {
     .poster-name.last, .post-time.last {
         color: #90caf9;
     }
+
+    .close-button {
+        color: #e0e0e0;
+    }
+    .close-button:hover {
+        color: #ff9999;
+    }
+    .folded-toggle {
+        color: #8ab4f8;
+    }
+    .folded-toggle:hover {
+        color: #ff9999;
+    }
+    .grant-step {
+        background: #333;
+        color: #aaa;
+    }
 }

@@ -314,3 +314,25 @@ func (cd *CoreData) GrantUser(userID int32, section, item, action string) error 
 	}
 	return nil
 }
+
+// GrantUserItem creates an administrative grant directly for a specific user ID and item ID.
+func (cd *CoreData) GrantUserItem(userID int32, section, item string, itemID int32, action string) error {
+	if itemID <= 0 {
+		return fmt.Errorf("GrantUserItem requires a strictly positive item ID, got %d", itemID)
+	}
+	_, err := cd.queries.AdminCreateGrant(cd.ctx, db.AdminCreateGrantParams{
+		UserID:   sql.NullInt32{Int32: userID, Valid: true},
+		RoleID:   sql.NullInt32{},
+		Section:  section,
+		Item:     sql.NullString{String: item, Valid: item != ""},
+		RuleType: "allow",
+		ItemID:   sql.NullInt32{Int32: itemID, Valid: true},
+		ItemRule: sql.NullString{},
+		Action:   action,
+		Extra:    sql.NullString{},
+	})
+	if err != nil {
+		return fmt.Errorf("create grant for user %d item %d (%s/%s/%s): %w", userID, itemID, section, item, action, err)
+	}
+	return nil
+}

@@ -80,6 +80,22 @@ func TestPermissionLookupAndGlobalValidity(t *testing.T) {
 			wantRequireID: true,
 		},
 		{
+			name:          "privateforum_thread thread append requires item ID",
+			section:       "privateforum_thread",
+			item:          "thread",
+			action:        "append",
+			wantFound:     true,
+			wantRequireID: true,
+		},
+		{
+			name:          "forum topic append requires item ID",
+			section:       "forum",
+			item:          "topic",
+			action:        "append",
+			wantFound:     true,
+			wantRequireID: true,
+		},
+		{
 			name:          "unknown permission",
 			section:       "unknown_section",
 			item:          "unknown_item",
@@ -112,5 +128,17 @@ func TestPermissionLookupAndGlobalValidity(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestForumAppendDefinitions(t *testing.T) {
+	// Verify that the specific append definitions added in #3091 exist and require ItemID
+
+	if !ForumTopicAppend.RequireItemID {
+		t.Errorf("ForumTopicAppend should require an item ID")
+	}
+
+	if !PrivateforumThreadAppend.RequireItemID {
+		t.Errorf("PrivateforumThreadAppend should require an item ID")
 	}
 }

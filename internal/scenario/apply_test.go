@@ -6,8 +6,9 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -653,5 +654,254 @@ At: 2026-08-01T09:01:00Z
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sqlmock expectations: %v", err)
+	}
+}
+
+func TestRunnerPreflightUserGrant(t *testing.T) {
+	buildScenario := func(grantHeaders Header) *Scenario {
+		h1 := NewHeader()
+		h1.Set("Ref", "alice")
+		h1.Set("Username", "alice")
+		h1.Set("Email", "a@example.com")
+		h1.Set("Password", "pass")
+
+		h2 := NewHeader()
+		h2.Set("Ref", "bob")
+		h2.Set("Username", "bob")
+		h2.Set("Email", "b@example.com")
+		h2.Set("Password", "pass")
+
+		h3 := NewHeader()
+		h3.Set("Ref", "topic")
+		h3.Set("Actor", "alice")
+		h3.Set("Participant", "bob")
+		h3.Set("Title", "topic title")
+
+		h4 := NewHeader()
+		h4.Set("Ref", "thread")
+		h4.Set("Actor", "alice")
+		h4.Set("Topic", "topic")
+
+		h5 := NewHeader()
+		h5.Set("Ref", "wrong-type-thread")
+		h5.Set("Username", "wrong")
+		h5.Set("Email", "w@example.com")
+		h5.Set("Password", "pass")
+
+		sc := &Scenario{
+			Meta: Meta{Format: "goa4web-scenario/v1", Name: "Test Runner Apply SQLite"},
+			Events: []*Event{
+				{Op: "user.create", Headers: h1},
+				{Op: "user.create", Headers: h2},
+				{Op: "private-forum.create", Headers: h3},
+				{Op: "forum.thread.create", Headers: h4},
+				{Op: "user.create", Headers: h5},
+				{Op: "user.grant", Headers: grantHeaders},
+			},
+		}
+
+		for _, e := range sc.Events {
+			tAt, _ := time.Parse(time.RFC3339, "2026-08-01T09:16:00+10:00")
+			e.At = tAt
+			e.Headers.Set("At", "2026-08-01T09:16:00+10:00")
+		}
+		return sc
+	}
+
+	testCases := []struct {
+		name         string
+		grantHeaders Header
+		wantErr      string
+	}{
+		{
+			name: "unresolved ItemRef",
+			grantHeaders: func() Header {
+				h := NewHeader()
+				h.Set("User", "alice")
+				h.Set("Section", "privateforum_thread")
+				h.Set("Item", "thread")
+				h.Set("ItemRef", "missing-thread")
+				h.Set("Action", "append")
+				return h
+			}(),
+			wantErr: "unresolved thread reference",
+		},
+		{
+			name: "wrong ref type",
+			grantHeaders: func() Header {
+				h := NewHeader()
+				h.Set("User", "alice")
+				h.Set("Section", "privateforum_thread")
+				h.Set("Item", "thread")
+				h.Set("ItemRef", "wrong-type-thread")
+				h.Set("Action", "append")
+				return h
+			}(),
+			wantErr: "reference \"wrong-type-thread\" in field \"ItemRef\" is a user, expected thread",
+		},
+		{
+			name: "missing ItemRef for item-scoped",
+			grantHeaders: func() Header {
+				h := NewHeader()
+				h.Set("User", "alice")
+				h.Set("Section", "privateforum_thread")
+				h.Set("Item", "thread")
+				h.Set("ItemRef", "")
+				h.Set("Action", "append")
+				return h
+			}(),
+			wantErr: "ItemRef is required",
+		},
+		{
+			name: "incompatible ItemRef on global",
+			grantHeaders: func() Header {
+				h := NewHeader()
+				h.Set("User", "alice")
+				h.Set("Section", "privateforum")
+				h.Set("Item", "topic")
+				h.Set("ItemRef", "thread")
+				h.Set("Action", "view")
+				return h
+			}(),
+			wantErr: "does not support or require an item ID",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sc := buildScenario(tc.grantHeaders)
+
+			querier := &db.QuerierStub{}
+			querier.AdminCreateGrantFn = func(ctx context.Context, arg db.AdminCreateGrantParams) (int64, error) {
+				t.Fatalf("AdminCreateGrant called on invalid preflight")
+				return 0, nil
+			}
+
+			cd := common.NewCoreData(context.TODO(), querier, nil)
+			r := &Runner{
+				coreData:    cd,
+				refRegistry: NewRefRegistry(),
+				opRegistry:  DefaultRegistry(),
+			}
+
+			err := r.Preflight(sc)
+
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("Preflight expected error containing %q, got %v", tc.wantErr, err)
+			}
+
+			res, errApply := r.Apply(context.TODO(), sc)
+
+			if errApply == nil || !strings.Contains(errApply.Error(), tc.wantErr) {
+				t.Errorf("Apply expected error containing %q, got %v", tc.wantErr, errApply)
+			}
+			if res != nil && res.EventsApplied > 0 {
+				t.Errorf("expected 0 events applied, got %d", res.EventsApplied)
+			}
+		})
+	}
+}
+
+func TestRunnerApplyItemIdZero(t *testing.T) {
+	h := NewHeader()
+	h.Set("Op", "user.grant")
+	h.Set("User", "alice")
+	h.Set("Section", "privateforum_thread")
+	h.Set("Item", "thread")
+	h.Set("ItemRef", "zero-thread")
+	h.Set("Action", "append")
+	h.Set("At", "2026-08-01T09:16:00+10:00")
+	tAt, _ := time.Parse(time.RFC3339, "2026-08-01T09:16:00+10:00")
+	var evt = &Event{
+		Op:      "user.grant",
+		At:      tAt,
+		Headers: h,
+	}
+	op := &UserGrantOp{}
+	var err error
+	evt.OpData, err = op.Parse(evt)
+	if err != nil {
+		t.Fatalf("parse failed: %v", err)
+	}
+
+	querier := &db.QuerierStub{}
+	querier.AdminCreateGrantFn = func(ctx context.Context, arg db.AdminCreateGrantParams) (int64, error) {
+		t.Fatalf("AdminCreateGrant called on invalid apply")
+		return 0, nil
+	}
+
+	cd := common.NewCoreData(context.TODO(), querier, nil)
+	r := &Runner{
+		coreData:    cd,
+		refRegistry: NewRefRegistry(),
+	}
+
+	_ = r.refRegistry.Declare(RefTypeUser, "alice")
+	_ = r.refRegistry.Declare(RefTypeThread, "zero-thread")
+
+	_ = r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
+	_ = r.refRegistry.Bind(RefTypeThread, "zero-thread", int32(0))
+
+	err = r.applyUserGrant(context.TODO(), evt.OpData.(*UserGrantData))
+	if err == nil || !strings.Contains(err.Error(), "item-scoped grant can never create item_id=0 for \"zero-thread\"") {
+		t.Errorf("Apply expected error containing %q, got %v", "item-scoped grant can never create item_id=0 for \"zero-thread\"", err)
+	}
+}
+
+func TestRunnerApplyPositiveUserGrant(t *testing.T) {
+	h := NewHeader()
+	h.Set("Op", "user.grant")
+	h.Set("User", "alice")
+	h.Set("Section", "privateforum_thread")
+	h.Set("Item", "thread")
+	h.Set("ItemRef", "valid-ref")
+	h.Set("Action", "append")
+	h.Set("At", "2026-08-01T09:16:00+10:00")
+	tAt, _ := time.Parse(time.RFC3339, "2026-08-01T09:16:00+10:00")
+	evt := &Event{
+		Op:      "user.grant",
+		At:      tAt,
+		Headers: h,
+	}
+
+	querier := &db.QuerierStub{}
+	var createCalled bool
+	querier.AdminCreateGrantFn = func(ctx context.Context, arg db.AdminCreateGrantParams) (int64, error) {
+		createCalled = true
+		if !arg.ItemID.Valid || arg.ItemID.Int32 != 123 {
+			t.Errorf("expected itemID=123, valid=true, got %v valid=%v", arg.ItemID.Int32, arg.ItemID.Valid)
+		}
+		if arg.Section != "privateforum_thread" || !arg.Item.Valid || arg.Item.String != "thread" || arg.Action != "append" || !arg.UserID.Valid || arg.UserID.Int32 != 1 {
+			t.Errorf("invalid grant arg %v", arg)
+		}
+		return 1, nil
+	}
+
+	cd := common.NewCoreData(context.TODO(), querier, nil)
+	r := &Runner{
+		coreData:    cd,
+		refRegistry: NewRefRegistry(),
+	}
+
+	_ = r.refRegistry.Declare(RefTypeUser, "alice")
+	_ = r.refRegistry.Declare(RefTypeThread, "valid-ref")
+
+	_ = r.refRegistry.Bind(RefTypeUser, "alice", int32(1))
+	_ = r.refRegistry.Bind(RefTypeThread, "valid-ref", int32(123))
+
+	op := &UserGrantOp{}
+	var err error
+	evt.OpData, err = op.Parse(evt)
+	if err != nil {
+		t.Fatalf("expected valid parse, got %v", err)
+	}
+
+	err = r.applyUserGrant(context.TODO(), evt.OpData.(*UserGrantData))
+	if err != nil {
+		t.Fatalf("expected valid apply, got %v", err)
+	}
+
+	if !createCalled {
+		t.Errorf("AdminCreateGrantFn was not called")
 	}
 }

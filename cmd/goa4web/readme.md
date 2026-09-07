@@ -272,3 +272,16 @@ Use command-specific `--help` before administrative operations. Configuration is
 ## Limitations and Constraints
 
 The command composes application dependencies and should keep business logic in reusable packages. Errors from `main`/`run` paths must be logged or wrapped with context.
+
+Example of user.grant format with ItemRef:
+
+```text
+Op: user.grant
+User: alice
+Section: privateforum_thread
+Item: thread
+ItemRef: staff-welcome
+Action: append
+At: 2026-08-01T09:16:00+10:00
+```
+This requires an explicit symbolic string matching another operation's declaration (like `forum.thread.create` declaring a `Ref`) to apply item-specific user grants without DB ID hardcoding.

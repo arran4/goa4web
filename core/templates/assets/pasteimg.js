@@ -309,6 +309,142 @@
         return true;
     }
 
+    function isEscaped(text, index) {
+        let count = 0;
+        let i = index - 1;
+        while (i >= 0 && text[i] === '\\') {
+            count++;
+            i--;
+        }
+        return count % 2 !== 0;
+    }
+
+    function isInsideCodeBlock(textBeforeCaret) {
+        let i = 0;
+        let inCodeBlock = false;
+
+        const lowerText = textBeforeCaret.toLowerCase();
+
+        function skipArgPrefix(idx) {
+            if (idx >= lowerText.length) return idx;
+            const ch = lowerText[idx];
+            if (ch === ' ' || ch === '=') {
+                idx++;
+                if (idx < lowerText.length) {
+                    if (lowerText[idx] === '\n') {
+                        idx++;
+                    } else if (lowerText[idx] === '\r') {
+                        idx++;
+                        if (idx < lowerText.length && lowerText[idx] === '\n') {
+                            idx++;
+                        }
+                    }
+                }
+            } else if (ch === '\n') {
+                idx++;
+            } else if (ch === '\r') {
+                idx++;
+                if (idx < lowerText.length && lowerText[idx] === '\n') {
+                    idx++;
+                }
+            }
+            return idx;
+        }
+
+        while (i < lowerText.length) {
+            if (!inCodeBlock && !isEscaped(lowerText, i)) {
+                if (lowerText.substring(i).startsWith('[codein')) {
+                    let nextChar = lowerText[i + 7];
+                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '[' || nextChar === '=' || !nextChar) {
+                        let j = skipArgPrefix(i + 7);
+
+                        let argFinished = false;
+                        if (j < lowerText.length && lowerText[j] === '"') {
+                            j++;
+                            while (j < lowerText.length) {
+                                if (lowerText[j] === '"' && !isEscaped(lowerText, j)) {
+                                    j++;
+                                    argFinished = true;
+                                    break;
+                                }
+                                j++;
+                            }
+                        } else {
+                            while (j < lowerText.length) {
+                                if ((lowerText[j] === ' ' || lowerText[j] === ']' || lowerText[j] === '[' || lowerText[j] === '\n' || lowerText[j] === '\r') && !isEscaped(lowerText, j)) {
+                                    argFinished = true;
+                                    break;
+                                }
+                                j++;
+                            }
+                            if (j === lowerText.length) {
+                                argFinished = false;
+                            }
+                        }
+
+                        if (!argFinished) {
+                            i = lowerText.length;
+                            continue;
+                        }
+
+                        j = skipArgPrefix(j);
+
+                        inCodeBlock = true;
+                        i = j;
+                        continue;
+                    }
+                } else if (lowerText.substring(i).startsWith('[code')) {
+                    let nextChar = lowerText[i + 5];
+                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '[' || nextChar === '=' || !nextChar) {
+                        inCodeBlock = true;
+                        let j = skipArgPrefix(i + 5);
+
+                        if (j < lowerText.length && lowerText[j] === ']') {
+                            j++;
+                        }
+                        i = j;
+                        continue;
+                    }
+                }
+            }
+            if (inCodeBlock && lowerText[i] === ']' && !isEscaped(lowerText, i)) {
+                inCodeBlock = false;
+            }
+            i++;
+        }
+        return inCodeBlock;
+    }
+
+    function escapeCodeBlockContent(text) {
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === ']' && !isEscaped(text, i)) {
+                result += '\\]';
+            } else {
+                result += text[i];
+            }
+        }
+        return result;
+    }
+
+    function handleTextPaste(e) {
+        const pastedText = e.clipboardData.getData('text');
+        if (!pastedText) return false;
+
+        const textarea = e.target;
+        const start = textarea.selectionStart;
+        const textBeforeCaret = textarea.value.substring(0, start);
+
+        if (isInsideCodeBlock(textBeforeCaret)) {
+            e.preventDefault();
+            const escapedText = escapeCodeBlockContent(pastedText);
+            textarea.setRangeText(escapedText, start, textarea.selectionEnd, 'end');
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            return true;
+        }
+        return false;
+    }
+
     function handlePaste(e){
         if (e.target.readOnly || e.target.disabled) {
             return;
@@ -330,7 +466,9 @@
         }
 
         if (!hasImage) {
-            handleUrlPaste(e);
+            if (!handleTextPaste(e)) {
+                handleUrlPaste(e);
+            }
         }
     }
     window.addEventListener('load', function(){

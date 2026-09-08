@@ -659,3 +659,189 @@ assert(filterItemWithQuery(topicThread, "poster:unknown") === false, "Topic thre
 
 console.log("All Forum Filter DOM Fixture Integration Tests Passed!");
 
+
+
+// --- pasteimg.js Tests ---
+console.log("Running pasteimg.js Tests...");
+{
+    const fs = require('fs');
+    const pasteimgCode = fs.readFileSync('./core/templates/assets/pasteimg.js', 'utf8');
+
+    // Make global mock objects
+    const _originalDoc = global.document;
+    const _originalWin = global.window;
+
+    global.document = {
+        querySelectorAll: () => [],
+        querySelector: () => null,
+        createElement: () => ({}),
+        addEventListener: () => {}
+    };
+    global.window = {
+        addEventListener: () => {},
+        scrollX: 0,
+        scrollY: 0,
+        scrollTo: () => {}
+    };
+    global.FileReader = class { readAsDataURL(){} };
+    global.FormData = class { append(){} };
+    global.XMLHttpRequest = class {
+        open() {}
+        send() {}
+        setRequestHeader() {}
+        get upload() { return { addEventListener: () => {} }; }
+    };
+    global.uuidv4 = () => 'test-uuid';
+
+    // Inject functions into global scope
+    const scriptToRun = pasteimgCode.replace(
+        /function isEscaped\(text, index\) {/,
+        'global.isEscaped = isEscaped; global.isInsideCodeBlock = isInsideCodeBlock; global.escapeCodeBlockContent = escapeCodeBlockContent; global.handleTextPaste = handleTextPaste; global.handlePaste = handlePaste; global.handleUrlPaste = handleUrlPaste; function isEscaped(text, index) {'
+    );
+
+    try {
+        eval(scriptToRun);
+    } catch(e) {
+        console.error("Failed to eval pasteimg.js:", e);
+    }
+
+    // 0. Parity Tests
+    // 0. Parity Tests
+    const checkParity = (actual, expected, msg) => {
+        if (actual !== expected) {
+            throw new Error("FAIL: " + msg + " (Got: " + actual + ", Want: " + expected + ")");
+        }
+    };
+    checkParity(global.isInsideCodeBlock("[code \n"), true, "[code is detected");
+    checkParity(global.isInsideCodeBlock("\\[code \n"), false, "escaped \\[code is NOT detected");
+    checkParity(global.isInsideCodeBlock("\\\\\[code \n"), true, "double escaped \\\\\[code is detected");
+    checkParity(global.isInsideCodeBlock("[code]"), true, "[code] leaves it open");
+
+    checkParity(global.isInsideCodeBlock("[code  ]"), false, "[code  ] spaces close block because second space is code content and ] terminates it");
+    checkParity(global.isInsideCodeBlock("[code =]"), false, "[code =] closes because skipArgPrefix only consumes space, and = is code content before ]");
+    checkParity(global.isInsideCodeBlock("[codein go=l"), false, "[codein go=l caret is still in arg");
+    checkParity(global.isInsideCodeBlock("[codein go=lang ]"), false, "[codein go=lang ] is closed by terminating ]");
+    checkParity(global.isInsideCodeBlock("[codein go=lang \n"), true, "[codein go=lang \n leaves it open");
+
+    checkParity(global.isInsideCodeBlock("[code] text ]"), false, "closing bracket terminates block");
+    checkParity(global.isInsideCodeBlock("[code] text \\]"), true, "escaped bracket doesn't terminate");
+    checkParity(global.isInsideCodeBlock("[code] text \\\\\]"), false, "double escaped bracket terminates");
+    checkParity(global.escapeCodeBlockContent("text ] text"), "text \\] text", "escapes unescaped ]");
+
+    checkParity(global.isInsideCodeBlock("[CODE \n"), true, "[CODE is detected");
+    checkParity(global.isInsideCodeBlock("[CoDe]"), true, "[CoDe] leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein \"go\" \n"), true, "[codein \"go\" \n] leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein go \n"), true, "[codein go \n] leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein \"g\\]o\" \n"), true, "[codein \"g\\]o\" \n] escapes inside quotes and leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein \"go\"]"), false, "[codein \"go\"] closes because ] terminates");
+    checkParity(global.isInsideCodeBlock("[codein \"go\" ]"), false, "[codein \"go\" ] closes because ] terminates");
+    checkParity(global.isInsideCodeBlock("[codein \"g\\]"), false, "Still in codein arg");
+
+    checkParity(global.escapeCodeBlockContent("text \\] text"), "text \\] text", "preserves escaped \\]");
+    checkParity(global.escapeCodeBlockContent("text \\\\\] text"), "text \\\\\\] text", "escapes double escaped \\\\\]");
+
+    checkParity(global.isInsideCodeBlock("[code["), true, "[code[ leaves it open with caret after [ inside code content");
+    checkParity(global.isInsideCodeBlock("[code[]"), false, "[code[] is closed by the final ]");
+    checkParity(global.isInsideCodeBlock("[codein["), true, "[codein[ leaves it open with caret after [ inside code content after empty arg");
+    checkParity(global.isInsideCodeBlock("[codein[]"), false, "[codein[] is closed by the final ]");
+    console.log("PASS: All parity tests passed");
+
+    // 1. Text pasted outside a code block is not rewritten
+    let mockTextareaOutside = {
+        value: "regular text ",
+        selectionStart: 13,
+        selectionEnd: 13,
+        readOnly: false,
+        disabled: false,
+        setRangeText: function(replacement, start, end, selectionMode) {
+            this.value = this.value.substring(0, start) + replacement + this.value.substring(end);
+            this.selectionStart = start + replacement.length;
+            this.selectionEnd = start + replacement.length;
+        },
+        dispatchEvent: function(e) {}
+    };
+    let preventedOutside = false;
+    let mockEventOutside = {
+        target: mockTextareaOutside,
+        clipboardData: {
+            getData: (type) => "hello ] world"
+        },
+        preventDefault: () => { preventedOutside = true; }
+    };
+    let handledOutside = global.handleTextPaste(mockEventOutside);
+    if (handledOutside) {
+        throw new Error("FAIL: Text paste outside code block should not be handled by handleTextPaste");
+    }
+    if (preventedOutside) {
+        throw new Error("FAIL: preventDefault should not be called outside code block");
+    }
+    if (mockTextareaOutside.value !== "regular text ") {
+        throw new Error("FAIL: textarea value should remain unchanged outside code block");
+    }
+    console.log("PASS: Text paste outside code block not handled and unmodified");
+
+    // 2. Non-empty textarea selection inside a code block is replaced correctly
+    let mockTextareaSelection = {
+        value: "[code \nreplace me\n]",
+        selectionStart: 7,
+        selectionEnd: 17,
+        readOnly: false,
+        disabled: false,
+        setRangeText: function(replacement, start, end, selectionMode) {
+            this.value = this.value.substring(0, start) + replacement + this.value.substring(end);
+            if (selectionMode === 'end') {
+                this.selectionStart = start + replacement.length;
+                this.selectionEnd = start + replacement.length;
+            }
+        },
+        dispatchEvent: function(e) {}
+    };
+    let mockEventSelection = {
+        target: mockTextareaSelection,
+        clipboardData: {
+            getData: (type) => "new ] content"
+        },
+        preventDefault: () => {}
+    };
+    global.handleTextPaste(mockEventSelection);
+    if (mockTextareaSelection.value !== "[code \nnew \\] content\n]") {
+        throw new Error("FAIL: Non-empty selection replacement failed. Got: " + mockTextareaSelection.value);
+    }
+    console.log("PASS: Non-empty selection replaced correctly inside code block");
+
+    // 3. Existing URL paste path outside code blocks still works
+    let mockTextareaUrl = {
+        value: "check this out: ",
+        selectionStart: 16,
+        selectionEnd: 16,
+        readOnly: false,
+        disabled: false,
+        setRangeText: function(replacement, start, end, selectionMode) {
+            this.value = this.value.substring(0, start) + replacement + this.value.substring(end);
+            this.selectionStart = start + replacement.length;
+            this.selectionEnd = start + replacement.length;
+        },
+        dispatchEvent: function(e) {}
+    };
+    let preventedUrl = false;
+    let mockEventUrl = {
+        target: mockTextareaUrl,
+        clipboardData: {
+            getData: (type) => "https://example.com"
+        },
+        preventDefault: () => { preventedUrl = true; }
+    };
+    mockEventUrl.clipboardData.items = []; // Need to mock handlePaste flow which checks items for image
+    global.handlePaste(mockEventUrl);
+    if (!preventedUrl) {
+        throw new Error("FAIL: preventDefault was not called for URL paste outside code block");
+    }
+    if (!mockTextareaUrl.value.includes("[link https://example.com]")) {
+        throw new Error("FAIL: URL paste outside code block failed. Got: " + mockTextareaUrl.value);
+    }
+    console.log("PASS: URL paste outside code block works");
+
+    // Restore globals
+    global.document = _originalDoc;
+    global.window = _originalWin;
+}

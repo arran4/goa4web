@@ -309,12 +309,22 @@
         return true;
     }
 
+    function isEscaped(text, index) {
+        let count = 0;
+        let i = index - 1;
+        while (i >= 0 && text[i] === '\\') {
+            count++;
+            i--;
+        }
+        return count % 2 !== 0;
+    }
+
     function isInsideCodeBlock(textBeforeCaret) {
         let i = 0;
         let inCodeBlock = false;
 
         while (i < textBeforeCaret.length) {
-            if (!inCodeBlock && textBeforeCaret.substring(i).startsWith('[code') && (i === 0 || textBeforeCaret[i-1] !== '\\')) {
+            if (!inCodeBlock && textBeforeCaret.substring(i).startsWith('[code') && !isEscaped(textBeforeCaret, i)) {
                 let nextChar = textBeforeCaret[i + 5];
                 if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || !nextChar) {
                     inCodeBlock = true;
@@ -325,7 +335,7 @@
                     continue;
                 }
             }
-            if (inCodeBlock && textBeforeCaret[i] === ']' && (i === 0 || textBeforeCaret[i-1] !== '\\')) {
+            if (inCodeBlock && textBeforeCaret[i] === ']' && !isEscaped(textBeforeCaret, i)) {
                 inCodeBlock = false;
             }
             i++;
@@ -336,7 +346,7 @@
     function escapeCodeBlockContent(text) {
         let result = '';
         for (let i = 0; i < text.length; i++) {
-            if (text[i] === ']' && (i === 0 || text[i-1] !== '\\')) {
+            if (text[i] === ']' && !isEscaped(text, i)) {
                 result += '\\]';
             } else {
                 result += text[i];

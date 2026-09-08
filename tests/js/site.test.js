@@ -720,6 +720,16 @@ console.log("Running pasteimg.js Tests...");
     checkParity(global.isInsideCodeBlock("[code] text \\]"), true, "escaped bracket doesn't terminate");
     checkParity(global.isInsideCodeBlock("[code] text \\\\\]"), false, "double escaped bracket terminates");
     checkParity(global.escapeCodeBlockContent("text ] text"), "text \\] text", "escapes unescaped ]");
+
+    checkParity(global.isInsideCodeBlock("[CODE \n"), true, "[CODE is detected");
+    checkParity(global.isInsideCodeBlock("[CoDe]"), true, "[CoDe] leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein \"go\" \n"), true, "[codein \"go\" \n] leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein go \n"), true, "[codein go \n] leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein \"g\\]o\" \n"), true, "[codein \"g\\]o\" \n] escapes inside quotes and leaves it open");
+    checkParity(global.isInsideCodeBlock("[codein \"go\"]"), false, "[codein \"go\"] closes because ] terminates");
+    checkParity(global.isInsideCodeBlock("[codein \"go\" ]"), false, "[codein \"go\" ] closes because ] terminates");
+    checkParity(global.isInsideCodeBlock("[codein \"g\\]"), false, "Still in codein arg");
+
     checkParity(global.escapeCodeBlockContent("text \\] text"), "text \\] text", "preserves escaped \\]");
     checkParity(global.escapeCodeBlockContent("text \\\\\] text"), "text \\\\\\] text", "escapes double escaped \\\\\]");
     console.log("PASS: All parity tests passed");

@@ -323,19 +323,78 @@
         let i = 0;
         let inCodeBlock = false;
 
-        while (i < textBeforeCaret.length) {
-            if (!inCodeBlock && textBeforeCaret.substring(i).startsWith('[code') && !isEscaped(textBeforeCaret, i)) {
-                let nextChar = textBeforeCaret[i + 5];
-                if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || !nextChar) {
-                    inCodeBlock = true;
-                    i += 5;
-                    if (textBeforeCaret[i] === ']') {
-                        i++;
+        const lowerText = textBeforeCaret.toLowerCase();
+
+        while (i < lowerText.length) {
+            if (!inCodeBlock && !isEscaped(lowerText, i)) {
+                if (lowerText.substring(i).startsWith('[codein')) {
+                    let nextChar = lowerText[i + 7];
+                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '=' || !nextChar) {
+                        let j = i + 7;
+
+                        while (j < lowerText.length && (lowerText[j] === ' ' || lowerText[j] === '\n' || lowerText[j] === '\r' || lowerText[j] === '=')) {
+                            j++;
+                        }
+
+                        let argFinished = false;
+                        if (j < lowerText.length && lowerText[j] === '"') {
+                            j++;
+                            while (j < lowerText.length) {
+                                if (lowerText[j] === '"' && !isEscaped(lowerText, j)) {
+                                    j++;
+                                    argFinished = true;
+                                    break;
+                                }
+                                j++;
+                            }
+                        } else {
+                            while (j < lowerText.length) {
+                                if ((lowerText[j] === ' ' || lowerText[j] === ']' || lowerText[j] === '[' || lowerText[j] === '\n' || lowerText[j] === '\r' || lowerText[j] === '=') && !isEscaped(lowerText, j)) {
+                                    argFinished = true;
+                                    break;
+                                }
+                                j++;
+                            }
+                            if (j === lowerText.length) {
+                                argFinished = false;
+                            }
+                        }
+
+                        if (!argFinished) {
+                            i = lowerText.length;
+                            continue;
+                        }
+
+                        while (j < lowerText.length && (lowerText[j] === ' ' || lowerText[j] === '\n' || lowerText[j] === '\r' || lowerText[j] === '=')) {
+                            j++;
+                        }
+
+                        inCodeBlock = true;
+                        i = j;
+
+                        // For codein, there is no legacy ']' swallowing. If we are exactly at ']', the block immediately terminates!
+                        // But we don't terminate it here, we just continue the loop, and the NEXT loop iteration will see the ']' and terminate it!
+                        continue;
                     }
-                    continue;
+                } else if (lowerText.substring(i).startsWith('[code')) {
+                    let nextChar = lowerText[i + 5];
+                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '=' || !nextChar) {
+                        inCodeBlock = true;
+                        i += 5;
+
+                        while (i < lowerText.length && (lowerText[i] === ' ' || lowerText[i] === '\n' || lowerText[i] === '\r' || lowerText[i] === '=')) {
+                            i++;
+                        }
+
+                        // For code, legacy ']' swallowing exists.
+                        if (i < lowerText.length && lowerText[i] === ']') {
+                            i++;
+                        }
+                        continue;
+                    }
                 }
             }
-            if (inCodeBlock && textBeforeCaret[i] === ']' && !isEscaped(textBeforeCaret, i)) {
+            if (inCodeBlock && lowerText[i] === ']' && !isEscaped(lowerText, i)) {
                 inCodeBlock = false;
             }
             i++;

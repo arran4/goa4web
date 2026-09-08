@@ -309,6 +309,60 @@
         return true;
     }
 
+    function isInsideCodeBlock(textBeforeCaret) {
+        let i = 0;
+        let inCodeBlock = false;
+
+        while (i < textBeforeCaret.length) {
+            if (!inCodeBlock && textBeforeCaret.substring(i).startsWith('[code') && (i === 0 || textBeforeCaret[i-1] !== '\\')) {
+                let nextChar = textBeforeCaret[i + 5];
+                if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || !nextChar) {
+                    inCodeBlock = true;
+                    i += 5;
+                    if (textBeforeCaret[i] === ']') {
+                        i++;
+                    }
+                    continue;
+                }
+            }
+            if (inCodeBlock && textBeforeCaret[i] === ']' && (i === 0 || textBeforeCaret[i-1] !== '\\')) {
+                inCodeBlock = false;
+            }
+            i++;
+        }
+        return inCodeBlock;
+    }
+
+    function escapeCodeBlockContent(text) {
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] === ']' && (i === 0 || text[i-1] !== '\\')) {
+                result += '\\]';
+            } else {
+                result += text[i];
+            }
+        }
+        return result;
+    }
+
+    function handleTextPaste(e) {
+        const pastedText = e.clipboardData.getData('text');
+        if (!pastedText) return false;
+
+        const textarea = e.target;
+        const start = textarea.selectionStart;
+        const textBeforeCaret = textarea.value.substring(0, start);
+
+        if (isInsideCodeBlock(textBeforeCaret)) {
+            e.preventDefault();
+            const escapedText = escapeCodeBlockContent(pastedText);
+            textarea.setRangeText(escapedText, start, textarea.selectionEnd, 'end');
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            return true;
+        }
+        return false;
+    }
+
     function handlePaste(e){
         if (e.target.readOnly || e.target.disabled) {
             return;
@@ -330,7 +384,9 @@
         }
 
         if (!hasImage) {
-            handleUrlPaste(e);
+            if (!handleTextPaste(e)) {
+                handleUrlPaste(e);
+            }
         }
     }
     window.addEventListener('load', function(){

@@ -739,6 +739,11 @@ console.log("Running pasteimg.js Tests...");
 
     checkParity(global.escapeCodeBlockContent("text \\] text"), "text \\] text", "preserves escaped \\]");
     checkParity(global.escapeCodeBlockContent("text \\\\\] text"), "text \\\\\\] text", "escapes double escaped \\\\\]");
+
+    checkParity(global.isInsideCodeBlock("[code["), true, "[code[ leaves it open with caret after [ inside code content");
+    checkParity(global.isInsideCodeBlock("[code[]"), false, "[code[] is closed by the final ]");
+    checkParity(global.isInsideCodeBlock("[codein["), true, "[codein[ leaves it open with caret after [ inside code content after empty arg");
+    checkParity(global.isInsideCodeBlock("[codein[]"), false, "[codein[] is closed by the final ]");
     console.log("PASS: All parity tests passed");
 
     // 1. Text pasted outside a code block is not rewritten

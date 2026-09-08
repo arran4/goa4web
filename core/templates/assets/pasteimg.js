@@ -355,7 +355,7 @@
             if (!inCodeBlock && !isEscaped(lowerText, i)) {
                 if (lowerText.substring(i).startsWith('[codein')) {
                     let nextChar = lowerText[i + 7];
-                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '=' || !nextChar) {
+                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '[' || nextChar === '=' || !nextChar) {
                         let j = skipArgPrefix(i + 7);
 
                         let argFinished = false;
@@ -370,8 +370,6 @@
                                 j++;
                             }
                         } else {
-                            // unquoted GetNextArg uses GetNext(..., false) which stops on newline, ], [, space,
-                            // AND NOT '=' because endAtEqual is false!
                             while (j < lowerText.length) {
                                 if ((lowerText[j] === ' ' || lowerText[j] === ']' || lowerText[j] === '[' || lowerText[j] === '\n' || lowerText[j] === '\r') && !isEscaped(lowerText, j)) {
                                     argFinished = true;
@@ -397,7 +395,7 @@
                     }
                 } else if (lowerText.substring(i).startsWith('[code')) {
                     let nextChar = lowerText[i + 5];
-                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '=' || !nextChar) {
+                    if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '[' || nextChar === '=' || !nextChar) {
                         inCodeBlock = true;
                         let j = skipArgPrefix(i + 5);
 

@@ -716,6 +716,13 @@ console.log("Running pasteimg.js Tests...");
     checkParity(global.isInsideCodeBlock("\\[code \n"), false, "escaped \\[code is NOT detected");
     checkParity(global.isInsideCodeBlock("\\\\\[code \n"), true, "double escaped \\\\\[code is detected");
     checkParity(global.isInsideCodeBlock("[code]"), true, "[code] leaves it open");
+
+    checkParity(global.isInsideCodeBlock("[code  ]"), false, "[code  ] spaces close block because second space is code content and ] terminates it");
+    checkParity(global.isInsideCodeBlock("[code =]"), false, "[code =] closes because skipArgPrefix only consumes space, and = is code content before ]");
+    checkParity(global.isInsideCodeBlock("[codein go=l"), false, "[codein go=l caret is still in arg");
+    checkParity(global.isInsideCodeBlock("[codein go=lang ]"), false, "[codein go=lang ] is closed by terminating ]");
+    checkParity(global.isInsideCodeBlock("[codein go=lang \n"), true, "[codein go=lang \n leaves it open");
+
     checkParity(global.isInsideCodeBlock("[code] text ]"), false, "closing bracket terminates block");
     checkParity(global.isInsideCodeBlock("[code] text \\]"), true, "escaped bracket doesn't terminate");
     checkParity(global.isInsideCodeBlock("[code] text \\\\\]"), false, "double escaped bracket terminates");

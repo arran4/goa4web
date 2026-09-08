@@ -325,16 +325,38 @@
 
         const lowerText = textBeforeCaret.toLowerCase();
 
+        function skipArgPrefix(idx) {
+            if (idx >= lowerText.length) return idx;
+            const ch = lowerText[idx];
+            if (ch === ' ' || ch === '=') {
+                idx++;
+                if (idx < lowerText.length) {
+                    if (lowerText[idx] === '\n') {
+                        idx++;
+                    } else if (lowerText[idx] === '\r') {
+                        idx++;
+                        if (idx < lowerText.length && lowerText[idx] === '\n') {
+                            idx++;
+                        }
+                    }
+                }
+            } else if (ch === '\n') {
+                idx++;
+            } else if (ch === '\r') {
+                idx++;
+                if (idx < lowerText.length && lowerText[idx] === '\n') {
+                    idx++;
+                }
+            }
+            return idx;
+        }
+
         while (i < lowerText.length) {
             if (!inCodeBlock && !isEscaped(lowerText, i)) {
                 if (lowerText.substring(i).startsWith('[codein')) {
                     let nextChar = lowerText[i + 7];
                     if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '=' || !nextChar) {
-                        let j = i + 7;
-
-                        while (j < lowerText.length && (lowerText[j] === ' ' || lowerText[j] === '\n' || lowerText[j] === '\r' || lowerText[j] === '=')) {
-                            j++;
-                        }
+                        let j = skipArgPrefix(i + 7);
 
                         let argFinished = false;
                         if (j < lowerText.length && lowerText[j] === '"') {
@@ -348,8 +370,10 @@
                                 j++;
                             }
                         } else {
+                            // unquoted GetNextArg uses GetNext(..., false) which stops on newline, ], [, space,
+                            // AND NOT '=' because endAtEqual is false!
                             while (j < lowerText.length) {
-                                if ((lowerText[j] === ' ' || lowerText[j] === ']' || lowerText[j] === '[' || lowerText[j] === '\n' || lowerText[j] === '\r' || lowerText[j] === '=') && !isEscaped(lowerText, j)) {
+                                if ((lowerText[j] === ' ' || lowerText[j] === ']' || lowerText[j] === '[' || lowerText[j] === '\n' || lowerText[j] === '\r') && !isEscaped(lowerText, j)) {
                                     argFinished = true;
                                     break;
                                 }
@@ -365,31 +389,22 @@
                             continue;
                         }
 
-                        while (j < lowerText.length && (lowerText[j] === ' ' || lowerText[j] === '\n' || lowerText[j] === '\r' || lowerText[j] === '=')) {
-                            j++;
-                        }
+                        j = skipArgPrefix(j);
 
                         inCodeBlock = true;
                         i = j;
-
-                        // For codein, there is no legacy ']' swallowing. If we are exactly at ']', the block immediately terminates!
-                        // But we don't terminate it here, we just continue the loop, and the NEXT loop iteration will see the ']' and terminate it!
                         continue;
                     }
                 } else if (lowerText.substring(i).startsWith('[code')) {
                     let nextChar = lowerText[i + 5];
                     if (nextChar === ' ' || nextChar === '\n' || nextChar === '\r' || nextChar === ']' || nextChar === '=' || !nextChar) {
                         inCodeBlock = true;
-                        i += 5;
+                        let j = skipArgPrefix(i + 5);
 
-                        while (i < lowerText.length && (lowerText[i] === ' ' || lowerText[i] === '\n' || lowerText[i] === '\r' || lowerText[i] === '=')) {
-                            i++;
+                        if (j < lowerText.length && lowerText[j] === ']') {
+                            j++;
                         }
-
-                        // For code, legacy ']' swallowing exists.
-                        if (i < lowerText.length && lowerText[i] === ']') {
-                            i++;
-                        }
+                        i = j;
                         continue;
                     }
                 }

@@ -13,6 +13,7 @@ import (
 type loginFormHandler struct{ msg string }
 
 func (l loginFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handlers.DisableCaching(w)
 	renderLoginForm(w, r, l.msg, "")
 }
 
@@ -29,14 +30,12 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 	type Data struct {
 		Code    string
 		Back    string
-		Method  string
 	}
 	handlers.SetPageTitle(r, "Login")
 	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 	data := Data{
 		Code:    r.FormValue("code"),
 		Back:    backURL,
-		Method:  r.FormValue("method"),
 	}
 	_ = LoginPageTmpl.Handle(w, r, data)
 }

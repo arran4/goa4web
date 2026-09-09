@@ -71,9 +71,6 @@ func TestRedirectToLoginDiscardsPostData(t *testing.T) {
 	if got := q.Get("back"); got != "/submit?foo=1" {
 		t.Fatalf("back=%q", got)
 	}
-	if got := q.Get("method"); got != http.MethodPost {
-		t.Fatalf("method=%q", got)
-	}
 	if q.Has("data") {
 		t.Fatalf("unexpected data parameter: %s", q.Get("data"))
 	}

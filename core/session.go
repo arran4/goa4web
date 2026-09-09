@@ -77,10 +77,6 @@ func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.S
 
 	newVals := url.Values{}
 	newVals.Set("back", back)
-	if r.Method != http.MethodGet {
-		newVals.Set("method", r.Method)
-	}
-
 	http.Redirect(w, r, "/login?"+newVals.Encode(), http.StatusSeeOther)
 }
 

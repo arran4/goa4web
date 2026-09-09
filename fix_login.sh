@@ -1,3 +1,4 @@
+cat << 'LT_EOF' > handlers/auth/login_task.go
 package auth
 
 import (
@@ -164,3 +165,4 @@ func (LoginTask) RequiredTemplates() []tasks.Template {
 		tasks.Template(templatePasswordVerifyPage),
 	}
 }
+LT_EOF

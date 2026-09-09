@@ -1,3 +1,4 @@
+cat << 'HTML3_EOF' > handlers/auth/loginPage_test.go
 package auth
 
 import (
@@ -424,3 +425,7 @@ func TestHappyPathSanitizeBackURLSigned(t *testing.T) {
 		t.Fatalf("backURL=%s", res)
 	}
 }
+HTML3_EOF
+
+git add -A
+git commit --amend --no-edit

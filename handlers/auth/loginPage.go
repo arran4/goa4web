@@ -28,14 +28,14 @@ func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg s
 	cd.SetCurrentError(errMsg)
 	cd.SetCurrentNotice(noticeMsg)
 	type Data struct {
-		Code    string
-		Back    string
+		Code string
+		Back string
 	}
 	handlers.SetPageTitle(r, "Login")
 	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 	data := Data{
-		Code:    r.FormValue("code"),
-		Back:    backURL,
+		Code: r.FormValue("code"),
+		Back: backURL,
 	}
 	_ = LoginPageTmpl.Handle(w, r, data)
 }

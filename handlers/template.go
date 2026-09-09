@@ -29,6 +29,9 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any
 
 	if (cd != nil && cd.UserID != 0) || hasCookie {
 		DisableCaching(w)
+	} else {
+		// Explicitly allow caching for purely anonymous, cookie-less requests
+		w.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if err := tmpl.TemplateExecute(w, r, data); err != nil {

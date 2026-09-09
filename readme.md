@@ -537,7 +537,7 @@ docker compose up
 If you are using Cloudflare or a similar CDN, you must configure Cache Rules to ensure authenticated or state-dependent HTML is isolated from anonymous public caching:
 
 1. **Bypass Cache** when the `URI Path` matches `^/(login|logout|register|forgot|admin|private|account)` (and any other route that responds differently per user).
-2. **Bypass Cache** for all HTML responses when the `goa4web_session` cookie is present.
+2. **Bypass Cache** for all HTML responses when the configured session cookie (default: `goa4web_session`) is present.
 3. Do not force an Edge Cache TTL over origin `no-store`. Respect origin Cache-Control headers natively.
 4. If Vary Cache Rules are used, cookie/per-user variation must use a bypass rather than passthrough.
 5. Purge affected cached HTML after making rule changes.

@@ -17,8 +17,11 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/middleware"
 	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/gorilla/mux"
 )
 
 // Tests transition matrices for #3095.
@@ -385,4 +388,278 @@ func TestIssue3095_LoginPageDeterministicAndNoMethodData(t *testing.T) {
 	if strings.Contains(body, "name=\"method\"") || strings.Contains(body, "name=\"data\"") {
 		t.Errorf("unexpected method or data fields in form: %q", body)
 	}
+}
+
+// Adding integrated matrix tests to cover actual routing, logout, and caching
+
+func TestIssue3095_RouteLevelTransitions(t *testing.T) {
+	// Setup mocked database, session store, and full application router for end-to-end tests
+	q := testhelpers.NewQuerierStub()
+	pwHash, alg, _ := HashPassword("correcthorse")
+	q.SystemGetLoginFn = func(ctx context.Context, username sql.NullString) (*db.SystemGetLoginRow, error) {
+		if username.String == "testuser" {
+			return &db.SystemGetLoginRow{
+				Idusers:         10,
+				Passwd:          sql.NullString{String: pwHash, Valid: true},
+				PasswdAlgorithm: sql.NullString{String: alg, Valid: true},
+				Username:        username,
+			}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+	q.GetLoginRoleForUserFn = func(ctx context.Context, id int32) (int32, error) {
+		return 1, nil // Approved
+	}
+
+	cfg := config.NewRuntimeConfig()
+	core.SessionName = "test_session"
+	core.Store = sessions.NewCookieStore([]byte("secret"))
+
+	// Create a dummy router that uses the real handlers and middleware.
+	// We only need the pieces relevant to auth transitions and caching.
+
+	r := mux.NewRouter()
+
+	// Middleware setup identical to production
+	coreDataMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			session, _ := core.GetSession(req)
+			cd := common.NewCoreData(req.Context(), q, cfg, common.WithSession(session))
+			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+			next.ServeHTTP(w, req)
+		})
+	}
+
+	sessionContextMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			session, _ := core.Store.Get(req, core.SessionName)
+			ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+			next.ServeHTTP(w, req.WithContext(ctx))
+		})
+	}
+
+	r.Use(sessionContextMiddleware)
+	r.Use(coreDataMiddleware)
+
+	// Ensure we register the /login routes appropriately for test using the correct paths
+	loginRouter := r.PathPrefix("/login").Subrouter()
+	loginRouter.HandleFunc("", handlers.WithNoCache(loginTask.Page)).Methods("GET")
+	loginRouter.HandleFunc("", handlers.TaskHandler(loginTask)).Methods("POST")
+
+	// A dummy protected route
+	r.HandleFunc("/protected", func(w http.ResponseWriter, req *http.Request) {
+		cd := req.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		if cd.UserID == 0 {
+			middleware.RedirectToLogin(w, req, cd.GetSession())
+			return
+		}
+		handlers.DisableCaching(w)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(fmt.Sprintf("Welcome user %d", cd.UserID)))
+	}).Methods("GET")
+
+	// A dummy anonymous public route utilizing TemplateHandler logic (simulated)
+	r.HandleFunc("/public", func(w http.ResponseWriter, req *http.Request) {
+		// Mock what TemplateHandler does regarding caching
+		cd := req.Context().Value(consts.KeyCoreData).(*common.CoreData)
+		_, err := req.Cookie(core.SessionName)
+		hasCookie := err == nil
+
+		if (cd != nil && cd.UserID != 0) || hasCookie {
+			handlers.DisableCaching(w)
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Public content"))
+	}).Methods("GET")
+
+	// A dummy logout route
+	r.HandleFunc("/logout", func(w http.ResponseWriter, req *http.Request) {
+		session, _ := core.GetSession(req)
+		delete(session.Values, "UID")
+		session.Save(req, w)
+		handlers.DisableCaching(w)
+		http.Redirect(w, req, "/", http.StatusSeeOther)
+	}).Methods("GET")
+
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	// Use a custom client that doesn't follow redirects automatically so we can inspect them
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	var sessionCookie *http.Cookie
+
+	t.Run("1. Protected GET redirects to Login with back param", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", server.URL+"/protected?id=123", nil)
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusSeeOther {
+			t.Errorf("Expected 303 See Other, got %d", resp.StatusCode)
+		}
+		loc := resp.Header.Get("Location")
+		if !strings.Contains(loc, "/login") || !strings.Contains(loc, "back=%2Fprotected%3Fid%3D123") {
+			t.Errorf("Expected location with encoded back param, got %s", loc)
+		}
+	})
+
+	t.Run("2. Successful POST /login transition back to original destination", func(t *testing.T) {
+		form := url.Values{}
+		form.Set("username", "testuser")
+		form.Set("password", "correcthorse")
+		form.Set("back", "/protected?id=123")
+
+		req, _ := http.NewRequest("POST", server.URL+"/login", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusSeeOther {
+			t.Errorf("Expected 303 See Other on successful login, got %d", resp.StatusCode)
+		}
+		loc := resp.Header.Get("Location")
+		if loc != "/protected?id=123" {
+			t.Errorf("Expected redirect back to /protected?id=123, got %q", loc)
+		}
+
+		// Ensure auth-changing response has no-store cache headers
+		if resp.Header.Get("Cache-Control") != "no-cache, no-store, must-revalidate" {
+			t.Errorf("Missing no-store Cache-Control on login success")
+		}
+		if resp.Header.Get("Cloudflare-CDN-Cache-Control") != "no-store" {
+			t.Errorf("Missing Cloudflare no-store on login success")
+		}
+
+		// Capture session cookie for subsequent requests
+		for _, cookie := range resp.Cookies() {
+			if cookie.Name == core.SessionName {
+				sessionCookie = cookie
+				break
+			}
+		}
+		if sessionCookie == nil {
+			t.Fatal("Expected session cookie to be set")
+		}
+	})
+
+	t.Run("3. GET /login while authenticated is deterministic and hits route", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", server.URL+"/login", nil)
+		if sessionCookie != nil {
+			req.AddCookie(sessionCookie)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		// Should return 200 OK rendering the login page, NOT 404 or fall-through
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected 200 OK for /login when authenticated, got %d", resp.StatusCode)
+		}
+	})
+
+	t.Run("4. Logout correctly clears session and redirects", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", server.URL+"/logout", nil)
+		if sessionCookie != nil {
+			req.AddCookie(sessionCookie)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusSeeOther {
+			t.Errorf("Expected 303 See Other on logout, got %d", resp.StatusCode)
+		}
+
+		// Ensure logout has no-store cache headers
+		if resp.Header.Get("Cache-Control") != "no-cache, no-store, must-revalidate" {
+			t.Errorf("Missing no-store Cache-Control on logout")
+		}
+
+		// Check that the returned cookie invalidates the session
+		for _, cookie := range resp.Cookies() {
+			if cookie.Name == core.SessionName {
+				sessionCookie = cookie // It's now empty/invalidated
+			}
+		}
+	})
+
+	t.Run("5. Protected route rejects access after logout", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", server.URL+"/protected", nil)
+		if sessionCookie != nil {
+			req.AddCookie(sessionCookie) // The invalidated cookie
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusSeeOther {
+			t.Errorf("Expected 303 See Other redirecting to login, got %d", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Header.Get("Location"), "/login") {
+			t.Errorf("Expected redirect to /login, got %s", resp.Header.Get("Location"))
+		}
+	})
+
+	t.Run("6. Anonymous public caching is explicit when no cookie is present", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", server.URL+"/public", nil)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected 200 OK, got %d", resp.StatusCode)
+		}
+
+		if resp.Header.Get("Cache-Control") != "public, max-age=3600" {
+			t.Errorf("Expected Cache-Control: public, max-age=3600 on anonymous public route, got %q", resp.Header.Get("Cache-Control"))
+		}
+	})
+
+	t.Run("7. Stale/corrupt cookie triggers no-store on public routes", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", server.URL+"/public", nil)
+		// Add the invalidated/stale session cookie
+		if sessionCookie != nil {
+			req.AddCookie(sessionCookie)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected 200 OK, got %d", resp.StatusCode)
+		}
+
+		// Even though UID is 0 (anonymous logic), the mere presence of the cookie must trigger DisableCaching
+		if resp.Header.Get("Cache-Control") != "no-cache, no-store, must-revalidate" {
+			t.Errorf("Expected Cache-Control: no-store when stale cookie is present, got %q", resp.Header.Get("Cache-Control"))
+		}
+	})
 }

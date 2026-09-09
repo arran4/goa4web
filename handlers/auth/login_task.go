@@ -20,15 +20,12 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// LoginTask handles rendering and processing of the login form.
 type LoginTask struct {
 	tasks.TaskString
 }
 
-// loginTask handles login requests.
 var loginTask = &LoginTask{TaskString: TaskLogin}
 
-// ensure LoginTask conforms to tasks.Task
 var _ tasks.Task = (*LoginTask)(nil)
 var _ tasks.TemplatesRequired = (*LoginTask)(nil)
 
@@ -37,12 +34,10 @@ const (
 	templatePasswordVerifyPage = "pages/auth/passwordVerifyPage.gohtml"
 )
 
-// Page serves the username/password login form.
 func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 	renderLoginForm(w, r, r.URL.Query().Get("error"), r.URL.Query().Get("notice"))
 }
 
-// Action processes the submitted login form.
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
@@ -162,7 +157,6 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	})
 }
 
-// RequiredTemplates declares the templates used by this task's pages.
 func (LoginTask) RequiredTemplates() []tasks.Template {
 	return []tasks.Template{
 		tasks.Template(templateLoginPage),

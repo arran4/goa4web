@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
@@ -59,21 +59,6 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 // RedirectToLogin stores the current URL then redirects to the login page.
 // It returns the HTTP status code used for the redirect.
 func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.Session) int {
-	if session != nil {
-		if err := session.Save(r, w); err != nil {
-			log.Printf("save session: %v", err)
-		}
-	}
-	vals := url.Values{}
-	vals.Set("back", r.URL.RequestURI())
-	if r.Method != http.MethodGet {
-		vals.Set("method", r.Method)
-		if err := r.ParseForm(); err == nil {
-			vals.Set("data", r.PostForm.Encode())
-		} else {
-			log.Printf("parse form: %v", err)
-		}
-	}
-	http.Redirect(w, r, "/login?"+vals.Encode(), http.StatusSeeOther)
+	core.RedirectToLogin(w, r, session)
 	return http.StatusSeeOther
 }

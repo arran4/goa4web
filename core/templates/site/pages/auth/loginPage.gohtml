@@ -11,17 +11,8 @@
         {{- if $.Back }}
         <input type="hidden" name="back" value="{{ $.Back }}">
         {{- end }}
-        {{- if $.BackSig }}
-        <input type="hidden" name="back_sig" value="{{ $.BackSig }}">
-        {{- end }}
-        {{- if $.BackTS }}
-        <input type="hidden" name="back_ts" value="{{ $.BackTS }}">
-        {{- end }}
         {{- if $.Method }}
         <input type="hidden" name="method" value="{{ $.Method }}">
-        {{- end }}
-        {{- if $.Data }}
-        <input type="hidden" name="data" value="{{ $.Data }}">
         {{- end }}
         {{- if $.Code }}
         <input type="hidden" name="code" value="{{ $.Code }}">

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -73,20 +74,5 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 }
 
 func loginRedirect(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	vals := url.Values{}
-	vals.Set("back", r.URL.RequestURI())
-	if r.Method != http.MethodGet {
-		if err := r.ParseForm(); err == nil {
-			vals.Set("method", r.Method)
-			if enc, err := cd.EncryptData(r.Form.Encode()); err == nil {
-				vals.Set("data", enc)
-			}
-		}
-	}
-	status := http.StatusSeeOther
-	if r.Method == http.MethodGet {
-		status = http.StatusTemporaryRedirect
-	}
-	http.Redirect(w, r, "/login?"+vals.Encode(), status)
+	core.RedirectToLogin(w, r, nil)
 }

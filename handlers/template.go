@@ -18,12 +18,16 @@ import (
 // accessible in templates as Funcs["cd"] (*common.CoreData).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any) error {
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd != nil && cd.UserID == 0 {
-		// Existing public pages accessible to those without an account should cache when there is no user logged in.
-		// A Vary: Cookie header ensures caches distinguish between logged-in and logged-out users,
-		// preventing a cached public page from being served to a logged-in user.
-		w.Header().Add("Vary", "Cookie")
-	} else {
+
+	sessionCookieName := "goa4web_session"
+	if cd != nil && cd.Config != nil && cd.Config.SessionName != "" {
+		sessionCookieName = cd.Config.SessionName
+	}
+
+	_, err := r.Cookie(sessionCookieName)
+	hasCookie := err == nil
+
+	if (cd != nil && cd.UserID != 0) || hasCookie {
 		DisableCaching(w)
 	}
 

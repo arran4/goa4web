@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -68,13 +67,19 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
+	session := cd.GetSession()
+	alreadyLoggedInMsg := ""
+	if _, ok := session.Values["UID"].(int32); ok {
+		alreadyLoggedInMsg = " You remain logged in as your current account."
+	}
+
 	row, err := cd.UserCredentials(username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			return loginFormHandler{msg: "Invalid username or password"}
+			return loginFormHandler{msg: "Invalid username or password." + alreadyLoggedInMsg}
 		}
 		return fmt.Errorf("LoginTask.Action: user credentials query: %w", err)
 	}
@@ -89,7 +94,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 					if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 						log.Printf("insert login attempt: %v", err)
 					}
-					return loginFormHandler{msg: "Invalid username or password"}
+					return loginFormHandler{msg: "Invalid username or password." + alreadyLoggedInMsg}
 				}
 			} else {
 				type Data struct {
@@ -104,13 +109,13 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			return loginFormHandler{msg: "Invalid username or password"}
+			return loginFormHandler{msg: "Invalid username or password." + alreadyLoggedInMsg}
 		}
 	}
 
 	if _, err := queries.GetLoginRoleForUser(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return loginFormHandler{msg: "approval is pending"}
+			return loginFormHandler{msg: "Approval is pending." + alreadyLoggedInMsg}
 		}
 		return fmt.Errorf("user role %w", err)
 	}
@@ -124,14 +129,20 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	session := cd.GetSession()
+	// Fully authenticated. Now replace session A with session B.
+	delete(session.Values, "UID")
+	delete(session.Values, "LoginTime")
+	delete(session.Values, "ExpiryTime")
+
+	if session.ID != "" && cd.SessionManager() != nil {
+		_ = cd.SessionManager().DeleteSessionByID(r.Context(), session.ID)
+	}
+
 	session.Values["UID"] = int32(row.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
-	backURL, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back"))
-	backMethod := r.FormValue("method")
-	backData := r.FormValue("data")
+	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 
 	if err := session.Save(r, w); err != nil {
 		return fmt.Errorf("session save %w", err)
@@ -141,22 +152,14 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("login success uid=%d session=%s", row.Idusers, handlers.HashSessionID(session.ID))
 	}
 
-	if backURL != "" {
-		if backMethod == "" || backMethod == http.MethodGet {
-			return handlers.RefreshDirectHandler{TargetURL: backURL}
-		}
-		var vals url.Values
-		if backData != "" {
-			if dec, err := cd.DecryptData(backData); err == nil {
-				vals, _ = url.ParseQuery(dec)
-			} else {
-				log.Printf("decrypt back data: %v", err)
-			}
-		}
-		return redirectBackPageHandler{BackURL: backURL, Method: backMethod, Values: vals}
+	target := backURL
+	if target == "" {
+		target = "/"
 	}
 
-	return handlers.RefreshDirectHandler{TargetURL: "/"}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target, http.StatusSeeOther)
+	})
 }
 
 // RequiredTemplates declares the templates used by this task's pages.

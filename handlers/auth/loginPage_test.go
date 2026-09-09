@@ -110,11 +110,11 @@ func TestLoginTask_Action(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handlers.TaskHandler(loginTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
+		if rr.Code != http.StatusSeeOther {
 			t.Fatalf("status=%d", rr.Code)
 		}
-		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url="+raw) {
-			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+		if loc := rr.Header().Get("Location"); loc != raw {
+			t.Fatalf("location=%q", loc)
 		}
 	})
 
@@ -275,12 +275,11 @@ func TestLoginTask_Action(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handlers.TaskHandler(loginTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
+		if rr.Code != http.StatusSeeOther {
 			t.Fatalf("status=%d", rr.Code)
 		}
-		body := rr.Body.String()
-		if !strings.Contains(body, "url=/") {
-			t.Fatalf("missing refresh to root: %q", body)
+		if loc := rr.Header().Get("Location"); loc != "/" {
+			t.Fatalf("location=%q", loc)
 		}
 	})
 

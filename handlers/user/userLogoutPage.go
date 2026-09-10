@@ -1,7 +1,6 @@
 package user
 
 import (
-	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
 
@@ -45,12 +44,11 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 
 	clearLoggedOutCoreData(cd)
 
-	_ = UserLogoutPage.Handle(w, r, struct{}{})
+	handlers.DisableCaching(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func clearLoggedOutCoreData(cd *common.CoreData) {
 	cd.UserID = 0
 	cd.CustomIndexItems = nil
 }
-
-const UserLogoutPage tasks.Template = "domains/user/logoutPage.gohtml"

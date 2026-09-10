@@ -27,7 +27,6 @@ var allPages = []tasks.Template{
 	user.AdminUserResetPasswordPage,
 	user.UserGalleryPage,
 	user.UserLangPage,
-	user.UserLogoutPage,
 	user.UserNotificationsPage,
 	user.UserNotificationOpenPage,
 	user.UserPagingPage,

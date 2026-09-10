@@ -33,15 +33,11 @@ func (RegisterTask) Page(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Register"
 	type Data struct {
-		Back   string
-		Method string
-		Data   string
+		Back string
 	}
 	back, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 	data := Data{
-		Back:   back,
-		Method: r.FormValue("method"),
-		Data:   r.FormValue("data"),
+		Back: back,
 	}
 	_ = RegisterPageTmpl.Handle(w, r, data)
 }
@@ -54,7 +50,7 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
 		log.Printf("registration attempt %s", r.PostFormValue("username"))
 	}
-	if err := handlers.ValidateForm(r, []string{"username", "password", "email", "back", "method", "data"}, []string{"username", "password", "email"}); err != nil {
+	if err := handlers.ValidateForm(r, []string{"username", "password", "email", "back"}, []string{"username", "password", "email"}); err != nil {
 		return fmt.Errorf("validation fail %w", err)
 	}
 	username := r.PostFormValue("username")
@@ -97,16 +93,14 @@ func (RegisterTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("registration success uid=%d", id)
 	}
 
-	target := "/login?notice=" + url.QueryEscape("approval is pending")
-	if back := r.PostFormValue("back"); back != "" {
-		target += "&back=" + url.QueryEscape(back)
+	query := url.Values{"notice": {"approval is pending"}}
+	if back, _ := cd.SanitizeBackURL(r, r.PostFormValue("back")); back != "" {
+		query.Set("back", back)
 	}
-	if method := r.PostFormValue("method"); method != "" {
-		target += "&method=" + url.QueryEscape(method)
-	}
-	if data := r.PostFormValue("data"); data != "" {
-		target += "&data=" + url.QueryEscape(data)
-	}
+	target := "/login?" + query.Encode()
 
-	return handlers.RefreshDirectHandler{TargetURL: target}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlers.DisableCaching(w)
+		http.Redirect(w, r, target, http.StatusSeeOther)
+	})
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -18,13 +19,24 @@ import (
 // accessible in templates as Funcs["cd"] (*common.CoreData).
 func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any) error {
 	cd, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if cd != nil && cd.UserID == 0 {
-		// Existing public pages accessible to those without an account should cache when there is no user logged in.
-		// A Vary: Cookie header ensures caches distinguish between logged-in and logged-out users,
-		// preventing a cached public page from being served to a logged-in user.
-		w.Header().Add("Vary", "Cookie")
-	} else {
+
+	sessionCookieName := "goa4web_session"
+	if cd != nil && cd.Config != nil && cd.Config.SessionName != "" {
+		sessionCookieName = cd.Config.SessionName
+	}
+
+	_, err := r.Cookie(sessionCookieName)
+	hasCookie := err == nil
+
+	if hasNonPublicCachePolicy(w.Header().Get("Cache-Control")) ||
+		hasNonPublicCachePolicy(w.Header().Get("Cloudflare-CDN-Cache-Control")) {
+		// A route-specific cache policy has already classified this response as
+		// sensitive. Template rendering must not weaken that policy.
+	} else if (cd != nil && cd.UserID != 0) || hasCookie {
 		DisableCaching(w)
+	} else if w.Header().Get("Cache-Control") == "" {
+		// Explicitly allow caching for purely anonymous, cookie-less requests
+		w.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if err := tmpl.TemplateExecute(w, r, data); err != nil {
@@ -43,6 +55,17 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any
 		return err
 	}
 	return nil
+}
+
+func hasNonPublicCachePolicy(value string) bool {
+	for directive := range strings.SplitSeq(value, ",") {
+		name, _, _ := strings.Cut(strings.TrimSpace(directive), "=")
+		switch strings.ToLower(name) {
+		case "no-cache", "no-store", "private":
+			return true
+		}
+	}
+	return false
 }
 
 // IndexMiddleware injects custom index items via fn before executing the next handler.

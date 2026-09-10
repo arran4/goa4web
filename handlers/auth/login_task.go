@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -21,15 +20,12 @@ import (
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-// LoginTask handles rendering and processing of the login form.
 type LoginTask struct {
 	tasks.TaskString
 }
 
-// loginTask handles login requests.
 var loginTask = &LoginTask{TaskString: TaskLogin}
 
-// ensure LoginTask conforms to tasks.Task
 var _ tasks.Task = (*LoginTask)(nil)
 var _ tasks.TemplatesRequired = (*LoginTask)(nil)
 
@@ -38,12 +34,10 @@ const (
 	templatePasswordVerifyPage = "pages/auth/passwordVerifyPage.gohtml"
 )
 
-// Page serves the username/password login form.
 func (LoginTask) Page(w http.ResponseWriter, r *http.Request) {
 	renderLoginForm(w, r, r.URL.Query().Get("error"), r.URL.Query().Get("notice"))
 }
 
-// Action processes the submitted login form.
 func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {
@@ -55,16 +49,22 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 	password := r.PostFormValue("password")
 
 	queries := cd.Queries()
-
 	cfg := cd.Config
 	ip := strings.Split(r.RemoteAddr, ":")[0]
+
+	session := cd.GetSession()
+	alreadyLoggedInMsg := ""
+	if _, ok := session.Values["UID"].(int32); ok {
+		alreadyLoggedInMsg = " You remain logged in as your current account."
+	}
+
 	if cfg.LoginAttemptThreshold > 0 {
 		since := time.Now().Add(-time.Duration(cfg.LoginAttemptWindow) * time.Minute)
 		cnt, err := queries.SystemCountRecentLoginAttempts(r.Context(), db.SystemCountRecentLoginAttemptsParams{Username: username, IpAddress: ip, CreatedAt: since})
 		if err != nil {
 			log.Printf("count login attempts: %v", err)
 		} else if cnt >= int64(cfg.LoginAttemptThreshold) {
-			return loginFormHandler{msg: "Too many failed attempts"}
+			return loginFormHandler{msg: "Too many failed attempts." + alreadyLoggedInMsg}
 		}
 	}
 
@@ -74,7 +74,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			return loginFormHandler{msg: "Invalid username or password"}
+			return loginFormHandler{msg: "Invalid username or password." + alreadyLoggedInMsg}
 		}
 		return fmt.Errorf("LoginTask.Action: user credentials query: %w", err)
 	}
@@ -89,7 +89,7 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 					if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 						log.Printf("insert login attempt: %v", err)
 					}
-					return loginFormHandler{msg: "Invalid username or password"}
+					return loginFormHandler{msg: "Invalid username or password." + alreadyLoggedInMsg}
 				}
 			} else {
 				type Data struct {
@@ -98,19 +98,20 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 				cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 				cd.PageTitle = "Verify Password"
 				data := Data{ID: reset.ID}
+				handlers.DisableCaching(w)
 				return handlers.TemplateWithDataHandler(templatePasswordVerifyPage, data)
 			}
 		} else {
 			if err := queries.SystemInsertLoginAttempt(r.Context(), db.SystemInsertLoginAttemptParams{Username: username, IpAddress: strings.Split(r.RemoteAddr, ":")[0]}); err != nil {
 				log.Printf("insert login attempt: %v", err)
 			}
-			return loginFormHandler{msg: "Invalid username or password"}
+			return loginFormHandler{msg: "Invalid username or password." + alreadyLoggedInMsg}
 		}
 	}
 
 	if _, err := queries.GetLoginRoleForUser(r.Context(), row.Idusers); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return loginFormHandler{msg: "approval is pending"}
+			return loginFormHandler{msg: "Approval is pending." + alreadyLoggedInMsg}
 		}
 		return fmt.Errorf("user role %w", err)
 	}
@@ -124,14 +125,19 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	session := cd.GetSession()
+	// Fully authenticated. Now replace session A with session B.
+	sm := cd.SessionManager()
+	if session.ID != "" && sm != nil {
+		_ = sm.DeleteSessionByID(r.Context(), session.ID)
+	}
+
+	// Deliberately start a new fresh map for security isolation
+	session.Values = make(map[any]any)
 	session.Values["UID"] = int32(row.Idusers)
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
-	backURL, _ := r.Context().Value(consts.KeyCoreData).(*common.CoreData).SanitizeBackURL(r, r.FormValue("back"))
-	backMethod := r.FormValue("method")
-	backData := r.FormValue("data")
+	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 
 	if err := session.Save(r, w); err != nil {
 		return fmt.Errorf("session save %w", err)
@@ -141,25 +147,17 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		log.Printf("login success uid=%d session=%s", row.Idusers, handlers.HashSessionID(session.ID))
 	}
 
-	if backURL != "" {
-		if backMethod == "" || backMethod == http.MethodGet {
-			return handlers.RefreshDirectHandler{TargetURL: backURL}
-		}
-		var vals url.Values
-		if backData != "" {
-			if dec, err := cd.DecryptData(backData); err == nil {
-				vals, _ = url.ParseQuery(dec)
-			} else {
-				log.Printf("decrypt back data: %v", err)
-			}
-		}
-		return redirectBackPageHandler{BackURL: backURL, Method: backMethod, Values: vals}
+	target := backURL
+	if target == "" {
+		target = "/"
 	}
 
-	return handlers.RefreshDirectHandler{TargetURL: "/"}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlers.DisableCaching(w)
+		http.Redirect(w, r, target, http.StatusSeeOther)
+	})
 }
 
-// RequiredTemplates declares the templates used by this task's pages.
 func (LoginTask) RequiredTemplates() []tasks.Template {
 	return []tasks.Template{
 		tasks.Template(templateLoginPage),

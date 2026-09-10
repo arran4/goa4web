@@ -1,38 +1,58 @@
 package core_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/gorilla/sessions"
-
 	"github.com/arran4/goa4web/core"
+	"github.com/gorilla/sessions"
 )
 
-var (
-	store       *sessions.CookieStore
-	sessionName = "test-session"
-)
+const sessionName = "test-session"
 
-func TestSessionMiddlewareBadSession(t *testing.T) {
-	store = sessions.NewCookieStore([]byte("test"))
+func TestGetSessionContext(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	session := &sessions.Session{Values: map[any]any{"foo": "bar"}}
+	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
+	req = req.WithContext(ctx)
+
+	sess, err := core.GetSession(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sess == nil {
+		t.Fatal("expected session, got nil")
+	}
+	if sess.Values["foo"] != "bar" {
+		t.Errorf("expected 'bar', got %v", sess.Values["foo"])
+	}
+}
+
+func TestGetSessionStore(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := core.GetSession(r); err != nil {
-			core.SessionErrorRedirect(w, r, err)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	})
 	req := httptest.NewRequest("GET", "/", nil)
-	req.AddCookie(&http.Cookie{Name: sessionName, Value: "bad"})
-	ctx := req.Context()
-	req = req.WithContext(ctx)
+	sess, err := core.GetSession(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sess == nil {
+		t.Fatal("expected session, got nil")
+	}
+}
+
+func TestSessionErrorRedirect(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
+	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
-	h.ServeHTTP(rr, req)
+	core.SessionErrorRedirect(rr, req, nil)
+
 	if rr.Code != http.StatusSeeOther {
 		t.Fatalf("expected redirect got %d", rr.Code)
 	}
@@ -40,10 +60,14 @@ func TestSessionMiddlewareBadSession(t *testing.T) {
 	if !strings.Contains(sc, "Max-Age=0") {
 		t.Errorf("expected cleared cookie, got %q", sc)
 	}
+	loc := rr.Header().Get("Location")
+	if loc != "/login?back=%2F" {
+		t.Errorf("unexpected location %q", loc)
+	}
 }
 
 func TestGetSessionOrFailBadSession(t *testing.T) {
-	store = sessions.NewCookieStore([]byte("test"))
+	store := sessions.NewCookieStore([]byte("test"))
 	core.Store = store
 	core.SessionName = sessionName
 	req := httptest.NewRequest("GET", "/", nil)
@@ -61,7 +85,22 @@ func TestGetSessionOrFailBadSession(t *testing.T) {
 		t.Errorf("expected cleared cookie, got %q", sc)
 	}
 	loc := rr.Header().Get("Location")
-	if loc != "/login" {
+	if loc != "/login?back=%2F" {
 		t.Errorf("unexpected location %q", loc)
+	}
+}
+
+func TestGetSessionOrFail(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = sessionName
+	req := httptest.NewRequest("GET", "/", nil)
+	rr := httptest.NewRecorder()
+	sess, ok := core.GetSessionOrFail(rr, req)
+	if !ok {
+		t.Fatalf("expected success")
+	}
+	if sess == nil {
+		t.Fatal("expected session")
 	}
 }

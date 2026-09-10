@@ -50,7 +50,7 @@ func TestRedirectToLoginIncludesBackAndQuery(t *testing.T) {
 	}
 }
 
-func TestRedirectToLoginPreservesPostData(t *testing.T) {
+func TestRedirectToLoginDiscardsPostData(t *testing.T) {
 	store := sessions.NewCookieStore([]byte("test"))
 	form := url.Values{"a": {"1"}, "b": {"2"}}
 	req := httptest.NewRequest(http.MethodPost, "/submit?foo=1", strings.NewReader(form.Encode()))
@@ -71,10 +71,7 @@ func TestRedirectToLoginPreservesPostData(t *testing.T) {
 	if got := q.Get("back"); got != "/submit?foo=1" {
 		t.Fatalf("back=%q", got)
 	}
-	if got := q.Get("method"); got != http.MethodPost {
-		t.Fatalf("method=%q", got)
-	}
-	if got := q.Get("data"); got != form.Encode() {
-		t.Fatalf("data=%q", got)
+	if q.Has("data") {
+		t.Fatalf("unexpected data parameter: %s", q.Get("data"))
 	}
 }

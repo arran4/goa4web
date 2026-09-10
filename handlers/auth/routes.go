@@ -18,9 +18,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 	rr.HandleFunc("", handlers.TaskHandler(registerTask)).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(registerTask.Matcher())
 
 	lr := r.PathPrefix("/login").Subrouter()
-	lr.HandleFunc("", handlers.WithNoCache(loginTask.Page)).Methods("GET").MatcherFunc(gml.Not(handlers.RequiresAnAccount()))
-	lr.HandleFunc("", handlers.TaskHandler(loginTask)).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(loginTask.Matcher())
-	lr.HandleFunc("/verify", handlers.TaskHandler(verifyPasswordTask)).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(verifyPasswordTask.Matcher())
+	lr.HandleFunc("", handlers.WithNoCache(loginTask.Page)).Methods("GET")
+	lr.HandleFunc("", handlers.TaskHandler(loginTask)).Methods("POST").MatcherFunc(loginTask.Matcher())
+	lr.HandleFunc("/verify", handlers.TaskHandler(verifyPasswordTask)).Methods("POST").MatcherFunc(verifyPasswordTask.Matcher())
 
 	lr.HandleFunc("/passkey/begin", HasWebAuthn(handlers.WithNoCache(loginPasskeyBegin))).Methods("GET")
 	lr.HandleFunc("/passkey/finish", HasWebAuthn(loginPasskeyFinish)).Methods("POST")

@@ -15,14 +15,14 @@ import (
 )
 
 func TestHappyPathAuthPages_CacheControl(t *testing.T) {
-	// Save original tasks.Handle and restore it after the test
-	originalHandle := tasks.Handle
+	originalTemplateExecute := tasks.TemplateExecute
 	defer func() {
-		tasks.Handle = originalHandle
+		tasks.TemplateExecute = originalTemplateExecute
 	}()
 
-	// Mock tasks.Handle to avoid template execution errors
-	tasks.Handle = func(w http.ResponseWriter, r *http.Request, p tasks.Template, data any) error {
+	// Keep the production TemplateHandler path while avoiding unrelated
+	// template data requirements in this cache-policy regression.
+	tasks.TemplateExecute = func(w http.ResponseWriter, r *http.Request, p tasks.Template, data any) error {
 		return nil
 	}
 
@@ -65,6 +65,9 @@ func TestHappyPathAuthPages_CacheControl(t *testing.T) {
 			}
 			if !strings.Contains(cc, "no-store") {
 				t.Errorf("expected Cache-Control: no-store, got %q", cc)
+			}
+			if got := rr.Header().Get("Cloudflare-CDN-Cache-Control"); got != "no-store" {
+				t.Errorf("expected Cloudflare-CDN-Cache-Control: no-store, got %q", got)
 			}
 			if pragma := rr.Header().Get("Pragma"); pragma != "no-cache" {
 				t.Errorf("expected Pragma: no-cache, got %q", pragma)

@@ -10,8 +10,6 @@ import (
 
 func TestPagesExist(t *testing.T) {
 	pages := []tasks.Template{
-		TaskDoneAutoRefreshPageTmpl,
-		RedirectBackPageTmpl,
 		LoginPageTmpl,
 		ForgotPasswordPageTmpl,
 		ForgotPasswordNoEmailPageTmpl,

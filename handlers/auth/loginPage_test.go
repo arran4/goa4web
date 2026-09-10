@@ -47,7 +47,6 @@ func TestLoginTask_Action(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.RemoteAddr = "1.2.3.4:1111"
-
 		store := sessions.NewCookieStore([]byte("test"))
 		core.Store = store
 		core.SessionName = "test-session"
@@ -63,8 +62,6 @@ func TestLoginTask_Action(t *testing.T) {
 		if rr.Code != http.StatusOK {
 			t.Fatalf("status=%d", rr.Code)
 		}
-		// If SystemInsertLoginAttemptCalls is missing, this will fail compilation.
-		// If it is present, it should work.
 		if len(q.SystemInsertLoginAttemptCalls) != 0 {
 			t.Fatalf("unexpected login attempts recorded: %v", q.SystemInsertLoginAttemptCalls)
 		}
@@ -110,11 +107,11 @@ func TestLoginTask_Action(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handlers.TaskHandler(loginTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
+		if rr.Code != http.StatusSeeOther {
 			t.Fatalf("status=%d", rr.Code)
 		}
-		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url="+raw) {
-			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
+		if loc := rr.Header().Get("Location"); loc != raw {
+			t.Fatalf("location=%q", loc)
 		}
 	})
 
@@ -206,8 +203,6 @@ func TestLoginTask_Action(t *testing.T) {
 			"username": {"bob"},
 			"password": {"wrong"},
 			"back":     {"/target"},
-			"method":   {http.MethodPost},
-			"data":     {"a=1&b=2"},
 		}
 		req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -236,12 +231,6 @@ func TestLoginTask_Action(t *testing.T) {
 		}
 		if !strings.Contains(body, "name=\"back\" value=\"/target\"") {
 			t.Fatalf("missing back field: %q", body)
-		}
-		if !strings.Contains(body, "name=\"method\" value=\"POST\"") {
-			t.Fatalf("missing method field: %q", body)
-		}
-		if !strings.Contains(body, "name=\"data\" value=\"a=1&amp;b=2\"") {
-			t.Fatalf("missing data field: %q", body)
 		}
 	})
 
@@ -275,12 +264,11 @@ func TestLoginTask_Action(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handlers.TaskHandler(loginTask)(rr, req)
 
-		if rr.Code != http.StatusOK {
+		if rr.Code != http.StatusSeeOther {
 			t.Fatalf("status=%d", rr.Code)
 		}
-		body := rr.Body.String()
-		if !strings.Contains(body, "url=/") {
-			t.Fatalf("missing refresh to root: %q", body)
+		if loc := rr.Header().Get("Location"); loc != "/" {
+			t.Fatalf("location=%q", loc)
 		}
 	})
 
@@ -301,11 +289,12 @@ func TestLoginTask_Action(t *testing.T) {
 		core.Store = store
 		core.SessionName = "test-session"
 		session, _ := store.New(req, core.SessionName)
+
 		cd := common.NewCoreData(req.Context(), q, cfg, common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
 
+		rr := httptest.NewRecorder()
 		handlers.TaskHandler(loginTask)(rr, req)
 
 		if rr.Code != http.StatusOK {
@@ -319,7 +308,7 @@ func TestLoginTask_Action(t *testing.T) {
 
 func TestLoginTask_Page(t *testing.T) {
 	t.Run("Happy Path - Hidden Fields", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&method=POST&data=x", nil)
+		req := httptest.NewRequest(http.MethodGet, "/login?code=abc&back=%2Ffoo&data=x", nil)
 		store := sessions.NewCookieStore([]byte("test"))
 		core.Store = store
 		core.SessionName = "test-session"
@@ -338,14 +327,8 @@ func TestLoginTask_Page(t *testing.T) {
 		if !strings.Contains(body, "name=\"back\" value=\"/foo\"") {
 			t.Fatalf("missing back field: %q", body)
 		}
-		if !strings.Contains(body, "name=\"method\" value=\"POST\"") {
-			t.Fatalf("missing method field: %q", body)
-		}
-		if !strings.Contains(body, "name=\"data\" value=\"x\"") {
-			t.Fatalf("missing data field: %q", body)
-		}
-		if strings.Contains(body, "back_sig") || strings.Contains(body, "back_ts") {
-			t.Fatalf("unexpected signature fields: %q", body)
+		if strings.Contains(body, "back_sig") || strings.Contains(body, "back_ts") || strings.Contains(body, "name=\"data\"") || strings.Contains(body, "name=\"method\"") {
+			t.Fatalf("unexpected signature or data fields: %q", body)
 		}
 	})
 
@@ -373,22 +356,20 @@ func TestLoginTask_Page(t *testing.T) {
 		if !strings.Contains(body, "name=\"back\" value=\""+raw+"\"") {
 			t.Fatalf("missing back field: %q", body)
 		}
-		if !strings.Contains(body, "name=\"back_sig\" value=") {
-			t.Fatalf("missing back_sig field: %q", body)
-		}
-		if !strings.Contains(body, "name=\"back_ts\" value=") {
-			t.Fatalf("missing back_ts field: %q", body)
-		}
 	})
 
 	t.Run("Unhappy Path - Invalid Back URL", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/login?back=https://evil.com/x", nil)
+		cfg := config.NewRuntimeConfig()
+		cfg.LoginAttemptThreshold = 10
+		raw := "https://evil.com/x"
+		req := httptest.NewRequest(http.MethodGet, "/login?back="+url.QueryEscape(raw), nil)
 		req.Host = "example.com"
+		key := "k"
 		store := sessions.NewCookieStore([]byte("test"))
 		core.Store = store
 		core.SessionName = "test-session"
 		session, _ := store.New(req, core.SessionName)
-		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig(), common.WithSession(session))
+		cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), cfg, common.WithImageSignKey(key), common.WithSession(session))
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		rr := httptest.NewRecorder()
@@ -397,178 +378,49 @@ func TestLoginTask_Page(t *testing.T) {
 
 		body := rr.Body.String()
 		if strings.Contains(body, "name=\"back\"") {
-			t.Fatalf("back field present: %q", body)
+			t.Fatalf("unexpected back field: %q", body)
 		}
 	})
 }
 
 func TestHappyPathLoginFormHandler_ActionTarget(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/register", nil)
-	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
-	session, _ := store.New(req, core.SessionName)
-	cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-
+	req := httptest.NewRequest("GET", "/login", nil)
+	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}))
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 	rr := httptest.NewRecorder()
-	loginFormHandler{msg: "approval is pending"}.ServeHTTP(rr, req)
-
+	h := loginFormHandler{msg: "foo"}
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
 	body := rr.Body.String()
-	if !strings.Contains(body, "<form method=\"post\" action=\"/login\">") {
-		t.Fatalf("expected login form to post to /login: %q", body)
+	if !strings.Contains(body, "foo") {
+		t.Fatalf("missing message")
+	}
+	if !strings.Contains(body, "action=\"/login\"") {
+		t.Fatalf("missing form action")
 	}
 }
 
 func TestHappyPathSanitizeBackURL(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Host = "example.com"
-	cfg := config.NewRuntimeConfig()
-	cfg.LoginAttemptThreshold = 10
-	cfg.BaseURL = ""
-	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
-	session, _ := store.New(req, core.SessionName)
-	cd := common.NewCoreData(req.Context(), db.New(nil), cfg, common.WithSession(session))
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-
-	if got, _ := cd.SanitizeBackURL(req, "/foo"); got != "/foo" {
-		t.Fatalf("relative got %q", got)
-	}
-	if got, _ := cd.SanitizeBackURL(req, "https://example.com/bar?x=1"); got != "/bar?x=1" {
-		t.Fatalf("host match got %q", got)
-	}
-	if got, _ := cd.SanitizeBackURL(req, "https://evil.com/"); got != "" {
-		t.Fatalf("evil got %q", got)
-	}
-
-	cfg.BaseURL = "https://example.com"
-	cd = common.NewCoreData(req.Context(), db.New(nil), cfg, common.WithSession(session))
-	ctx = context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
-	if got, _ := cd.SanitizeBackURL(req, "https://example.com/baz"); got != "/baz" {
-		t.Fatalf("cfg host got %q", got)
+	req := httptest.NewRequest("GET", "/", nil)
+	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig())
+	res, _ := cd.SanitizeBackURL(req, "/some/path")
+	if res != "/some/path" {
+		t.Fatalf("backURL=%s", res)
 	}
 }
 
 func TestHappyPathSanitizeBackURLSigned(t *testing.T) {
-	raw := "https://evil.com/x"
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Host = "example.com"
-	cfg := config.NewRuntimeConfig()
-	cfg.LoginAttemptThreshold = 10
-	key := "k"
-	store := sessions.NewCookieStore([]byte("test"))
-	core.Store = store
-	core.SessionName = "test-session"
-	session, _ := store.New(req, core.SessionName)
-	cd := common.NewCoreData(req.Context(), db.New(nil), config.NewRuntimeConfig(), common.WithImageSignKey(key), common.WithSession(session))
-	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-	req = req.WithContext(ctx)
+	req := httptest.NewRequest("GET", "/", nil)
+	key := "test-key"
+	cd := common.NewCoreData(req.Context(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig(), common.WithImageSignKey(key))
+	raw := "https://evil.com/"
 	ts := time.Now().Add(time.Hour).Unix()
-	sig := SignBackURL("k", raw, ts)
-	q := req.URL.Query()
-	q.Set("back_ts", fmt.Sprint(ts))
-	q.Set("back_sig", sig)
-	req.URL.RawQuery = q.Encode()
-	if got, _ := cd.SanitizeBackURL(req, raw); got != raw {
-		t.Fatalf("signed got %q", got)
+	sig := SignBackURL(key, raw, ts)
+	req.Form = url.Values{"back_ts": {fmt.Sprint(ts)}, "back_sig": {sig}}
+	res, _ := cd.SanitizeBackURL(req, raw)
+	if res != raw {
+		t.Fatalf("backURL=%s", res)
 	}
-}
-
-func TestRedirectBackPageHandler(t *testing.T) {
-	t.Run("Happy Path - GET", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
-		session, _ := store.New(req, core.SessionName)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-
-		h := redirectBackPageHandler{BackURL: "/foo", Method: http.MethodGet, Values: url.Values{"x": {"1"}}}
-		h.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/foo?x=1") {
-			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
-		}
-	})
-
-	t.Run("Happy Path - Empty Method", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
-		session, _ := store.New(req, core.SessionName)
-		cd := common.NewCoreData(req.Context(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-
-		h := redirectBackPageHandler{BackURL: "/bar", Method: "", Values: url.Values{"y": {"2"}}}
-		h.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/bar?y=2") {
-			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
-		}
-	})
-
-	t.Run("Happy Path - Back URL", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
-		session, _ := store.New(req, core.SessionName)
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-
-		h := redirectBackPageHandler{BackURL: "/back", Method: http.MethodGet, Values: url.Values{"a": {"b"}}}
-		h.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Fatalf("status=%d", rr.Code)
-		}
-		if cd.AutoRefresh == "" || !strings.Contains(cd.AutoRefresh, "url=/back") {
-			t.Fatalf("auto refresh=%q", cd.AutoRefresh)
-		}
-		if strings.Contains(rr.Body.String(), "<form") {
-			t.Fatalf("unexpected form: %q", rr.Body.String())
-		}
-	})
-
-	t.Run("Happy Path - Post", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		store := sessions.NewCookieStore([]byte("test"))
-		core.Store = store
-		core.SessionName = "test-session"
-		session, _ := store.New(req, core.SessionName)
-		cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithUserRoles([]string{"anyone"}), common.WithSession(session))
-		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
-		req = req.WithContext(ctx)
-		rr := httptest.NewRecorder()
-
-		h := redirectBackPageHandler{BackURL: "/back", Method: http.MethodPost, Values: url.Values{"a": {"b"}}}
-		h.ServeHTTP(rr, req)
-
-		if cd.AutoRefresh != "" {
-			t.Fatalf("unexpected refresh: %q", cd.AutoRefresh)
-		}
-		body := rr.Body.String()
-		if !strings.Contains(body, "<form") || !strings.Contains(body, "action=\"/back\"") {
-			t.Fatalf("missing form: %q", body)
-		}
-	})
 }

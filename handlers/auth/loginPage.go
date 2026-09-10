@@ -2,9 +2,7 @@ package auth
 
 import (
 	"github.com/arran4/goa4web/internal/tasks"
-	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/arran4/goa4web/core/consts"
 
@@ -15,78 +13,29 @@ import (
 type loginFormHandler struct{ msg string }
 
 func (l loginFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	handlers.DisableCaching(w)
 	renderLoginForm(w, r, l.msg, "")
 }
 
 var _ http.Handler = (*loginFormHandler)(nil)
 
-type redirectBackPageHandler struct {
-	BackURL string
-	Method  string
-	Values  url.Values
-}
-
-func (h redirectBackPageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if h.Method == "" || h.Method == http.MethodGet {
-		targetURL := h.BackURL
-		if len(h.Values) > 0 {
-			if u, err := url.Parse(targetURL); err == nil {
-				q := u.Query()
-				for k, vs := range h.Values {
-					for _, v := range vs {
-						q.Add(k, v)
-					}
-				}
-				u.RawQuery = q.Encode()
-				targetURL = u.String()
-			}
-		}
-		rdh := handlers.RefreshDirectHandler{TargetURL: targetURL}
-		cd.AutoRefresh = rdh.Content()
-		_ = TaskDoneAutoRefreshPageTmpl.Handle(w, r, rdh)
-		return
-	}
-
-	type Data struct {
-		BackURL string
-		Method  string
-		Values  url.Values
-	}
-	if err := RedirectBackPageTmpl.Handle(w, r, Data(h)); err != nil {
-		log.Printf("Template Error: %s", err)
-		handlers.RenderErrorPage(w, r, err)
-	}
-}
-
 const (
 	TaskDoneAutoRefreshPageTmpl tasks.Template = "pages/misc/taskDoneAutoRefreshPage.gohtml"
-	RedirectBackPageTmpl        tasks.Template = "pages/misc/redirectBackPage.gohtml"
 )
-
-var _ http.Handler = (*redirectBackPageHandler)(nil)
 
 func renderLoginForm(w http.ResponseWriter, r *http.Request, errMsg, noticeMsg string) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.SetCurrentError(errMsg)
 	cd.SetCurrentNotice(noticeMsg)
 	type Data struct {
-		Code    string
-		Back    string
-		BackSig string
-		BackTS  string
-		Method  string
-		Data    string
+		Code string
+		Back string
 	}
 	handlers.SetPageTitle(r, "Login")
 	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 	data := Data{
-		Code:    r.FormValue("code"),
-		Back:    backURL,
-		BackSig: r.FormValue("back_sig"),
-		BackTS:  r.FormValue("back_ts"),
-		Method:  r.FormValue("method"),
-		Data:    r.FormValue("data"),
+		Code: r.FormValue("code"),
+		Back: backURL,
 	}
 	_ = LoginPageTmpl.Handle(w, r, data)
 }

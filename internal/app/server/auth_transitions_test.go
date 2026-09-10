@@ -42,6 +42,10 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		}, nil
 	}
 	q.GetLoginRoleForUserFn = func(context.Context, int32) (int32, error) { return 1, nil }
+	q.SystemGetUserByUsernameErr = sql.ErrNoRows
+	q.SystemGetUserByEmailErr = sql.ErrNoRows
+	q.SystemInsertUserReturns = 20
+	q.GetPasswordResetByUserErr = sql.ErrNoRows
 
 	cfg := config.NewRuntimeConfig()
 	cfg.SessionName = "issue3095_session"
@@ -101,6 +105,78 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		assertIssue3095NoStore(t, sensitivePage)
 		if target == "/login" && !strings.Contains(sensitivePage.Body.String(), "window.addEventListener('pageshow'") {
 			t.Error("anonymous login page is missing the BFCache restoration safeguard")
+		}
+	}
+
+	registrationPage := request(http.MethodGet, "/register?back=%2Fnews%3Fview%3Dfull&method=POST&data=secret", nil, nil)
+	if !strings.Contains(registrationPage.Body.String(), `name="back" value="/news?view=full"`) {
+		t.Error("registration form did not retain its sanitized safe GET continuation")
+	}
+	for _, replayField := range []string{`name="method"`, `name="data"`} {
+		if strings.Contains(registrationPage.Body.String(), replayField) {
+			t.Errorf("registration form contains legacy replay field %q", replayField)
+		}
+	}
+
+	registration := request(http.MethodPost, "/register", url.Values{
+		"task":     {"Register"},
+		"username": {"new-user"},
+		"password": {"new-password"},
+		"email":    {"new-user@example.com"},
+		"back":     {"/news?view=full"},
+	}, nil)
+	if registration.Code != http.StatusSeeOther {
+		t.Fatalf("registration status = %d; want direct 303; body: %s", registration.Code, registration.Body.String())
+	}
+	registrationLocation, err := url.Parse(registration.Header().Get("Location"))
+	if err != nil {
+		t.Fatalf("parse registration Location: %v", err)
+	}
+	if registrationLocation.Path != "/login" || registrationLocation.Query().Get("notice") != "approval is pending" || registrationLocation.Query().Get("back") != "/news?view=full" {
+		t.Errorf("registration Location = %q; want login notice and safe back", registrationLocation.String())
+	}
+	if registrationLocation.Query().Has("method") || registrationLocation.Query().Has("data") {
+		t.Errorf("registration Location contains legacy replay state: %q", registrationLocation.String())
+	}
+	assertIssue3095NoStore(t, registration)
+	if strings.Contains(strings.ToLower(registration.Body.String()), "http-equiv=\"refresh\"") {
+		t.Error("registration rendered a meta-refresh transition")
+	}
+
+	failedRegistration := request(http.MethodPost, "/register", url.Values{
+		"task":     {"Register"},
+		"password": {"new-password"},
+		"email":    {"invalid-registration@example.com"},
+	}, nil)
+	assertIssue3095NoStore(t, failedRegistration)
+
+	replayRegistration := request(http.MethodPost, "/register", url.Values{
+		"task":     {"Register"},
+		"username": {"replay-user"},
+		"password": {"new-password"},
+		"email":    {"replay-user@example.com"},
+		"back":     {"/news"},
+		"method":   {"POST"},
+		"data":     {"secret=must-not-leak"},
+	}, nil)
+	assertIssue3095NoStore(t, replayRegistration)
+	if strings.Contains(replayRegistration.Header().Get("Location"), "secret") || strings.Contains(replayRegistration.Body.String(), "secret=must-not-leak") {
+		t.Error("registration response exposed rejected arbitrary POST replay data")
+	}
+
+	for _, authPost := range []url.Values{
+		{"task": {"Password Reset"}, "username": {"testuser"}},
+		{"task": {"Email Association Request"}, "username": {"testuser"}},
+		{"task": {"Login"}, "username": {"missing-user"}, "password": {"wrong"}},
+	} {
+		authPostResponse := request(http.MethodPost, map[string]string{
+			"Password Reset":            "/forgot",
+			"Email Association Request": "/forgot",
+			"Login":                     "/login",
+		}[authPost.Get("task")], authPost, nil)
+		assertIssue3095NoStore(t, authPostResponse)
+		if got := authPostResponse.Header().Get("Cache-Control"); got == "public, max-age=3600" {
+			t.Errorf("auth POST %q was publicly cacheable", authPost.Get("task"))
 		}
 	}
 

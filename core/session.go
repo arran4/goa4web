@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gorilla/sessions"
 )
@@ -69,15 +70,35 @@ func RedirectToLogin(w http.ResponseWriter, r *http.Request, session *sessions.S
 		}
 	}
 
-	vals := r.URL.Query()
-	back := vals.Get("back")
-	if back == "" {
-		back = r.URL.RequestURI()
+	back := r.URL.RequestURI()
+	if r.URL.Path == "/login" {
+		back = safeLoginContinuation(r, r.URL.Query().Get("back"))
 	}
 
 	newVals := url.Values{}
-	newVals.Set("back", back)
-	http.Redirect(w, r, "/login?"+newVals.Encode(), http.StatusSeeOther)
+	if back != "" {
+		newVals.Set("back", back)
+	}
+	target := "/login"
+	if query := newVals.Encode(); query != "" {
+		target += "?" + query
+	}
+	http.Redirect(w, r, target, http.StatusSeeOther)
+}
+
+func safeLoginContinuation(r *http.Request, raw string) string {
+	if raw == "" {
+		return ""
+	}
+	back, err := url.Parse(raw)
+	if err != nil || back.IsAbs() || back.Host != "" {
+		return ""
+	}
+	resolved := r.URL.ResolveReference(back)
+	if resolved.Path == "/login" || strings.HasPrefix(resolved.Path, "/login/") {
+		return ""
+	}
+	return raw
 }
 
 type ContextValues string

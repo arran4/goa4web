@@ -180,6 +180,10 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		}
 	}
 
+	protectedWithBack := request(http.MethodGet, "/usr?back=/news&view=compact", nil, nil)
+	assertIssue3095Redirect(t, protectedWithBack, "/login", "/usr?back=/news&view=compact")
+	assertIssue3095NoStore(t, protectedWithBack)
+
 	protected := request(http.MethodGet, "/usr?from=protected", nil, nil)
 	assertIssue3095Redirect(t, protected, "/login", "/usr?from=protected")
 	assertIssue3095NoStore(t, protected)
@@ -246,8 +250,9 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 	assertIssue3095NoStore(t, publicWithSessionCookie)
 
 	corruptCookie := &http.Cookie{Name: cfg.SessionName, Value: "corrupt-signed-session"}
-	corrupt := request(http.MethodGet, "/usr?corrupt=yes", nil, corruptCookie)
-	assertIssue3095Redirect(t, corrupt, "/login", "/usr?corrupt=yes")
+	corruptTarget := "/usr?back=/news&view=compact"
+	corrupt := request(http.MethodGet, corruptTarget, nil, corruptCookie)
+	assertIssue3095Redirect(t, corrupt, "/login", corruptTarget)
 	assertIssue3095NoStore(t, corrupt)
 	clearedCorruptCookie := issue3095Cookie(t, corrupt, cfg.SessionName)
 	if clearedCorruptCookie.MaxAge >= 0 {
@@ -257,21 +262,42 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		"task":     {"Login"},
 		"username": {"testuser"},
 		"password": {"correcthorse"},
-		"back":     {"/usr?corrupt=yes"},
+		"back":     {corruptTarget},
 	}, clearedCorruptCookie)
-	if corruptRecoveryLogin.Code != http.StatusSeeOther || corruptRecoveryLogin.Header().Get("Location") != "/usr?corrupt=yes" {
+	if corruptRecoveryLogin.Code != http.StatusSeeOther || corruptRecoveryLogin.Header().Get("Location") != corruptTarget {
 		t.Fatalf("corrupt-session recovery login = %d Location %q; want 303 to original URI", corruptRecoveryLogin.Code, corruptRecoveryLogin.Header().Get("Location"))
 	}
 	assertIssue3095NoStore(t, corruptRecoveryLogin)
 	recoveredCookie := issue3095Cookie(t, corruptRecoveryLogin, cfg.SessionName)
-	corruptContinuation := request(http.MethodGet, "/usr?corrupt=yes", nil, recoveredCookie)
+	corruptContinuation := request(http.MethodGet, corruptTarget, nil, recoveredCookie)
 	if corruptContinuation.Code != http.StatusOK || corruptContinuation.Header().Get("Location") != "" {
 		t.Fatalf("corrupt-session continuation = %d Location %q; want 200 without a login loop", corruptContinuation.Code, corruptContinuation.Header().Get("Location"))
 	}
 
+	loginRecoveryTarget := "/login?" + url.Values{"back": {"/usr?view=settings"}}.Encode()
+	loginRecovery := request(http.MethodGet, loginRecoveryTarget, nil, corruptCookie)
+	assertIssue3095Redirect(t, loginRecovery, "/login", "/usr?view=settings")
+	assertIssue3095NoStore(t, loginRecovery)
+	if strings.Contains(loginRecovery.Header().Get("Location"), "back=%2Flogin") {
+		t.Fatalf("login recovery nested the login route: %q", loginRecovery.Header().Get("Location"))
+	}
+	loginRecoveryCookie := issue3095Cookie(t, loginRecovery, cfg.SessionName)
+	loginRecoveryPage := request(http.MethodGet, loginRecovery.Header().Get("Location"), nil, loginRecoveryCookie)
+	if loginRecoveryPage.Code != http.StatusOK || loginRecoveryPage.Header().Get("Location") != "" {
+		t.Fatalf("login-route recovery = %d Location %q; want login form without a loop", loginRecoveryPage.Code, loginRecoveryPage.Header().Get("Location"))
+	}
+
+	for _, unsafeBack := range []string{"https://evil.example/steal", "//evil.example/steal", "/login?back=/usr?view=settings"} {
+		unsafeLoginTarget := "/login?" + url.Values{"back": {unsafeBack}}.Encode()
+		unsafeLoginRecovery := request(http.MethodGet, unsafeLoginTarget, nil, corruptCookie)
+		assertIssue3095Redirect(t, unsafeLoginRecovery, "/login", "")
+		assertIssue3095NoStore(t, unsafeLoginRecovery)
+	}
+
 	expiredCookie := issue3095ExpiredCookie(t, store, cfg.SessionName)
-	expired := request(http.MethodGet, "/usr?important=yes", nil, expiredCookie)
-	assertIssue3095Redirect(t, expired, "/login", "/usr?important=yes")
+	expiredTarget := "/usr?back=/news&view=compact"
+	expired := request(http.MethodGet, expiredTarget, nil, expiredCookie)
+	assertIssue3095Redirect(t, expired, "/login", expiredTarget)
 	assertIssue3095NoStore(t, expired)
 	expiredCookie = issue3095Cookie(t, expired, cfg.SessionName)
 	assertIssue3095SessionUnauthenticated(t, store, cfg.SessionName, expiredCookie)
@@ -280,15 +306,15 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		"task":     {"Login"},
 		"username": {"testuser"},
 		"password": {"correcthorse"},
-		"back":     {"/usr?important=yes"},
+		"back":     {expiredTarget},
 	}, expiredCookie)
-	if afterExpiryLogin.Code != http.StatusSeeOther || afterExpiryLogin.Header().Get("Location") != "/usr?important=yes" {
+	if afterExpiryLogin.Code != http.StatusSeeOther || afterExpiryLogin.Header().Get("Location") != expiredTarget {
 		t.Fatalf("post-expiry login response = %d Location %q; want 303 to original URI", afterExpiryLogin.Code, afterExpiryLogin.Header().Get("Location"))
 	}
 	assertIssue3095NoStore(t, afterExpiryLogin)
 	expiredCookie = issue3095Cookie(t, afterExpiryLogin, cfg.SessionName)
 
-	continued := request(http.MethodGet, "/usr?important=yes", nil, expiredCookie)
+	continued := request(http.MethodGet, expiredTarget, nil, expiredCookie)
 	if continued.Code != http.StatusOK || continued.Header().Get("Location") != "" {
 		t.Fatalf("continued protected request = %d Location %q; want 200 without another login redirect", continued.Code, continued.Header().Get("Location"))
 	}

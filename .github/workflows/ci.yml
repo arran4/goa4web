@@ -46,16 +46,14 @@ on:
         default: false
         type: boolean
   schedule:
-    # preferred heavy monthly run (quota reset strategy)
-    - cron: '17 3 1 * *'
-    # optional nightly lightweight checks
-    - cron: '41 2 * * *'
+    - cron: '0 19 1 * *'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.event.inputs.mode, 'release-') }}
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   route:
@@ -107,15 +105,10 @@ jobs:
             run_build=true
           elif [[ "$EVENT_NAME" == "schedule" ]]; then
             run_code_checks=true
-            if [[ "${{ github.event.schedule }}" == "17 3 1 * *" ]]; then
-               run_maintenance=true
-               is_monthly=true
-               mode="monthly-maintenance"
-            else
-               run_autofix=true
-               is_nightly=true
-               mode="lint-fix"
-            fi
+            run_build=true
+            run_maintenance=true
+            is_monthly=true
+            mode="monthly-maintenance"
           elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             mode="${INPUT_MODE:-build}"
             if [[ "$mode" == "lint-fix" ]]; then
@@ -135,6 +128,7 @@ jobs:
             elif [[ "$mode" == "monthly-maintenance" ]]; then
                run_maintenance=true
                run_code_checks=true
+               run_build=true
                is_monthly=true
             elif [[ "$mode" == "build" ]]; then
                run_code_checks=true
@@ -209,9 +203,52 @@ jobs:
             echo "profile=public" >> "$GITHUB_OUTPUT"
           fi
 
+
+  build:
+    name: Build Go App
+    needs: [route, discover]
+    if: ${{ needs.route.outputs.run_build == 'true' && needs.discover.outputs.has_go == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Build Code
+        run: go build -v ./...
+
+  maintenance:
+    name: Dependency Maintenance
+    needs: [route, discover]
+    if: ${{ needs.route.outputs.run_maintenance == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Go Mod Tidy
+        run: go mod tidy
+      - name: Create PR if go.mod changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then echo "No changes"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="ci/maintenance/${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore(deps): automated go mod tidy"
+          git push origin "$BRANCH"
+          gh pr create --title "chore(deps): automated go mod tidy" --body "Automated dependency maintenance" --base main --head "$BRANCH" --label "dependencies"
   release-ready:
     name: Release Quality Gates Passed
-    needs: [route, discover, gitleaks, gitleaks-full, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]
+    needs: [route, discover, build, gitleaks, gitleaks-full, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]
     if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     steps:
@@ -679,6 +716,7 @@ jobs:
     if: ${{ needs.route.outputs.run_cleanup == 'true' }}
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       pull-requests: write
     steps:
       - uses: actions/checkout@v7

@@ -9,15 +9,9 @@ on:
     # semantic version tags + rc/beta snapshots
     tags:
       - 'v*'
-      - 'v*.*.*'
-      - 'v*.*.*-rc*'
-      - 'v*.*.*-beta*'
-      - 'test-*'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, closed]
     branches: [main, master]
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       mode:
@@ -58,16 +52,10 @@ on:
     - cron: '41 2 * * *'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-permissions:
-  contents: write
-  discussions: write
-  pull-requests: write
-  checks: write
-  packages: write
-  security-events: write
+permissions: read-all
 
 jobs:
   route:
@@ -146,6 +134,7 @@ jobs:
                run_release=true
             elif [[ "$mode" == "monthly-maintenance" ]]; then
                run_maintenance=true
+               run_code_checks=true
                is_monthly=true
             elif [[ "$mode" == "build" ]]; then
                run_code_checks=true
@@ -360,7 +349,7 @@ jobs:
   gitleaks-full:
     name: Secret scan full
     needs: [route, discover]
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_history == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_history == true }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -506,6 +495,9 @@ jobs:
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_code_checks == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -543,6 +535,9 @@ jobs:
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_code_checks == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -619,8 +614,11 @@ jobs:
   autofix:
     name: Auto-format and open PR
     needs: [route, discover]
-    if: ${{ needs.route.outputs.run_autofix == 'true' && inputs.allow_prs != false }}
+    if: ${{ needs.route.outputs.run_autofix == 'true' && (github.event_name != 'workflow_dispatch' || inputs.allow_prs == true) }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
 
@@ -680,6 +678,8 @@ jobs:
     needs: [route]
     if: ${{ needs.route.outputs.run_cleanup == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
       - env:

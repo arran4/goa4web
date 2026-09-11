@@ -9,16 +9,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"os"
 )
 
 func TestScenarioServeCmd_CSRFCachingGuarantees(t *testing.T) {
 	ctx := context.Background()
 
-	os.Setenv("GOA4WEB_CSRF_ENABLED", "true")
-	os.Setenv("GOA4WEB_SESSION_SECRET", "testsecret")
-	defer os.Unsetenv("GOA4WEB_CSRF_ENABLED")
-	defer os.Unsetenv("GOA4WEB_SESSION_SECRET")
+	t.Setenv("GOA4WEB_CSRF_ENABLED", "true")
+	t.Setenv("GOA4WEB_SESSION_SECRET", "testsecret")
 
 	root, err := parseRoot([]string{"goa4web", "scenario", "serve", "../../testdata/scenarios/100-private-forum"})
 	if err != nil {

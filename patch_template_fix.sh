@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > handlers/template.go
 package handlers
 
 import (
@@ -134,3 +135,4 @@ func IndexMiddleware(fn func(*common.CoreData, *http.Request)) func(http.Handler
 		})
 	}
 }
+INNER_EOF

@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > core/session.go
 package core
 
 import (
@@ -116,3 +117,4 @@ func safeLoginContinuation(r *http.Request, raw string) string {
 	}
 	return raw
 }
+INNER_EOF

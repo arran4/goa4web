@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > internal/middleware/csrf/csrf.go
 package csrf
 
 import (
@@ -177,3 +178,4 @@ func readUID(uid any) int32 {
 		return 0
 	}
 }
+INNER_EOF

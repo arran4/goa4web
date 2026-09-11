@@ -36,14 +36,14 @@ type lazyCSRF struct {
 	token string
 }
 
-func (l *lazyCSRF) getToken() string {
+func (l *lazyCSRF) getToken(currentW http.ResponseWriter, currentR *http.Request) string {
 	if l.token != "" {
 		return l.token
 	}
 
-	session, err := core.GetSession(l.r)
+	session, err := core.GetSession(currentR)
 	if err != nil {
-		core.SessionErrorRedirect(l.w, l.r, err)
+		core.SessionErrorRedirect(currentW, currentR, err)
 		return ""
 	}
 	currentUID := readUID(session.Values["UID"])
@@ -54,19 +54,19 @@ func (l *lazyCSRF) getToken() string {
 		token, err = newToken()
 		if err != nil {
 			log.Printf("generate csrf token: %v", err)
-			http.Error(l.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(currentW, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return ""
 		}
 		session.Values[sessionTokenKey] = token
 		session.Values[sessionUserKey] = currentUID
-		if err := session.Save(l.r, l.w); err != nil {
+		if err := session.Save(currentR, currentW); err != nil {
 			log.Printf("save csrf token: %v", err)
-			http.Error(l.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(currentW, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return ""
 		}
 		// A new session/token was generated and saved to the browser.
 		// This must not be publicly cacheable.
-		core.DisableCaching(l.w)
+		core.DisableCaching(currentW)
 	}
 
 	l.token = token
@@ -105,7 +105,14 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 func Token(r *http.Request) string {
 	val := r.Context().Value(contextTokenKey)
 	if lazy, ok := val.(*lazyCSRF); ok {
-		return lazy.getToken()
+        // If we don't have the current writer, we just use the original one.
+        // Wait, how can we pass the current writer to Token(r)?
+        // We can look for it in the context!
+        cw := core.GetCurrentResponseWriter(r)
+        if cw == nil {
+            cw = lazy.w
+        }
+		return lazy.getToken(cw, r)
 	}
 	if token, ok := val.(string); ok {
 		return token

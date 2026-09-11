@@ -7,9 +7,9 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
+	"os"
 )
 
 func TestScenarioServeCmd_CSRFCachingGuarantees(t *testing.T) {

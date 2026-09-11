@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 )
@@ -50,6 +51,10 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any
 		ResponseWriter: w,
 		buf:            buf,
 	}
+
+	// Inject the buffered writer into the request context so lazy operations like CSRF
+	// can write to it (e.g. redirects or error handlers) instead of the outer writer.
+	r = r.WithContext(core.WithCurrentResponseWriter(r.Context(), bw))
 
 	if err := tmpl.TemplateExecute(bw, r, data); err != nil {
 		log.Printf("Template Error: %s", err)

@@ -6,12 +6,28 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+    "context"
 
 	"github.com/gorilla/sessions"
 )
 
 var SessionName string
 var Store *sessions.CookieStore
+
+type ContextValues string
+
+const currentResponseWriterKey ContextValues = "currentResponseWriter"
+
+func WithCurrentResponseWriter(ctx context.Context, w http.ResponseWriter) context.Context {
+    return context.WithValue(ctx, currentResponseWriterKey, w)
+}
+
+func GetCurrentResponseWriter(r *http.Request) http.ResponseWriter {
+    if w, ok := r.Context().Value(currentResponseWriterKey).(http.ResponseWriter); ok {
+        return w
+    }
+    return nil
+}
 
 func GetSession(r *http.Request) (*sessions.Session, error) {
 	if sessVal := r.Context().Value(ContextValues("session")); sessVal != nil {
@@ -100,5 +116,3 @@ func safeLoginContinuation(r *http.Request, raw string) string {
 	}
 	return raw
 }
-
-type ContextValues string

@@ -1,7 +1,23 @@
 -- +goose Up
--- Step 1: Drop the old 255-byte unique prefix index and modify url column to text.
+-- Step 1: Drop the old 255-byte unique prefix index when present and modify url column to text.
+-- Some long-lived databases already had external_links when migration 0051 ran, so CREATE TABLE IF NOT EXISTS did not add this index.
 -- Dropping the unique index first ensures subsequent canonicalization updates do not collide before duplicate consolidation.
-ALTER TABLE external_links DROP INDEX external_links_url_idx, MODIFY COLUMN url text NOT NULL;
+SET @external_links_url_idx_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'external_links'
+      AND index_name = 'external_links_url_idx'
+);
+SET @drop_external_links_url_idx_sql = IF(
+    @external_links_url_idx_exists > 0,
+    'ALTER TABLE external_links DROP INDEX external_links_url_idx',
+    'SELECT 1'
+);
+PREPARE drop_external_links_url_idx_stmt FROM @drop_external_links_url_idx_sql;
+EXECUTE drop_external_links_url_idx_stmt;
+DEALLOCATE PREPARE drop_external_links_url_idx_stmt;
+ALTER TABLE external_links MODIFY COLUMN url text NOT NULL;
 
 -- Step 2: Clean known tracking parameters from pre-existing URLs while preserving signed URLs, functional parameters, and query delimiters.
 UPDATE external_links

@@ -1,0 +1,43 @@
+name: MariaDB compatibility
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mariadb:
+    name: MariaDB ${{ matrix.version }} migrations and queries
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['10.11', '11.4']
+    services:
+      mariadb:
+        image: mariadb:${{ matrix.version }}
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: goa4web_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test migrations and database queries on MariaDB
+        env:
+          GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
+        run: go test -tags nosqlite ./migrations ./internal/db -v

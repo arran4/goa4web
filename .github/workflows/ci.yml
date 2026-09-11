@@ -124,6 +124,7 @@ jobs:
                fi
             elif [[ "$mode" == release-* ]]; then
                run_code_checks=true
+               run_build=true
                run_release=true
             elif [[ "$mode" == "monthly-maintenance" ]]; then
                run_maintenance=true
@@ -230,9 +231,12 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - name: Go Mod Tidy
-        run: go mod tidy
+      - name: Update Dependencies
+        run: |
+          go get -u ./...
+          go mod tidy
       - name: Create PR if go.mod changed
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.allow_prs == true }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -243,9 +247,9 @@ jobs:
           BRANCH="ci/maintenance/${{ github.run_id }}"
           git checkout -b "$BRANCH"
           git add -A
-          git commit -m "chore(deps): automated go mod tidy"
+          git commit -m "chore(deps): automated dependency update"
           git push origin "$BRANCH"
-          gh pr create --title "chore(deps): automated go mod tidy" --body "Automated dependency maintenance" --base main --head "$BRANCH" --label "dependencies"
+          gh pr create --title "chore(deps): automated dependency update" --body "Automated dependency freshness update" --base main --head "$BRANCH" --label "dependencies"
   release-ready:
     name: Release Quality Gates Passed
     needs: [route, discover, build, gitleaks, gitleaks-full, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]

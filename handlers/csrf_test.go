@@ -91,7 +91,8 @@ func TestCSRFAnonymousWithFormNoStore(t *testing.T) {
 		originalTemplateExecute := tasks.TemplateExecute
 		t.Cleanup(func() { tasks.TemplateExecute = originalTemplateExecute })
 		tasks.TemplateExecute = func(w2 http.ResponseWriter, req2 *http.Request, tmpl tasks.Template, data any) error {
-			// Simulating {{ csrfField }}
+			_, _ = w2.Write([]byte("start form... "))
+			// Simulating {{ csrfField }} being evaluated AFTER some output has been written
 			_ = csrf.TemplateField(req2)
 			_, _ = w2.Write([]byte("form rendered"))
 			return nil
@@ -124,12 +125,13 @@ func TestCSRFAnonymousWithFormNoStore(t *testing.T) {
 		t.Errorf("Expected application session cookie to be generated when CSRF token is requested")
 	}
 
-	cc := rr.Header().Get("Cache-Control")
+	res := rr.Result()
+	cc := res.Header.Get("Cache-Control")
 	expectedCC := "no-cache, no-store, must-revalidate"
 	if cc != expectedCC {
 		t.Errorf("Expected Cache-Control %q, got %q", expectedCC, cc)
 	}
-	cfcc := rr.Header().Get("Cloudflare-CDN-Cache-Control")
+	cfcc := res.Header.Get("Cloudflare-CDN-Cache-Control")
 	expectedCFCC := "no-store"
 	if cfcc != expectedCFCC {
 		t.Errorf("Expected Cloudflare-CDN-Cache-Control %q, got %q", expectedCFCC, cfcc)
@@ -176,11 +178,7 @@ func TestCSRFValidTokenSucceeds(t *testing.T) {
 
 	// POST request with token
 	data := url.Values{"gorilla.csrf.Token": {token}}
-	req2, _ := mockRequestWithCoreData(http.MethodPost, "http://example.com/post")
-	req2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req2.Header.Set("X-CSRF-Token", token)
-	// actually use strings.NewReader
-	req2 = httptest.NewRequest(http.MethodPost, "http://example.com/post", strings.NewReader(data.Encode()))
+	req2 := httptest.NewRequest(http.MethodPost, "http://example.com/post", strings.NewReader(data.Encode()))
 	// Reattach coredata context because NewRequest clears it
 	cfg := config.NewRuntimeConfig()
 	cfg.SessionName = "goa4web_session"

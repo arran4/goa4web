@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"bytes"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 )
@@ -39,7 +41,22 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any
 		w.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	if err := tmpl.TemplateExecute(w, r, data); err != nil {
+	// Buffer the template execution. This allows lazy operations (like csrf token generation)
+	// inside the template to set headers or cookies before we flush the first response byte.
+	buf := new(bytes.Buffer)
+
+	// Create a buffered response writer that delegates to w for headers,
+	// but writes body to buf.
+	bw := &bufferedResponseWriter{
+		ResponseWriter: w,
+		buf:            buf,
+	}
+
+	// Inject the buffered writer into the request context so lazy operations like CSRF
+	// can write to it (e.g. redirects or error handlers) instead of the outer writer.
+	rPrimary := r.WithContext(core.WithCurrentResponseWriter(r.Context(), bw))
+
+	if err := tmpl.TemplateExecute(bw, rPrimary, data); err != nil {
 		log.Printf("Template Error: %s", err)
 		errData := struct {
 			Error   string
@@ -48,13 +65,51 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request, tmpl Page, data any
 			Error:   err.Error(),
 			BackURL: r.Referer(),
 		}
-		if err2 := TaskErrorAcknowledgementPageTmpl.TemplateExecute(w, r, errData); err2 != nil {
+
+		// Render error template into a new buffer
+		errBuf := new(bytes.Buffer)
+		errBw := &bufferedResponseWriter{
+			ResponseWriter: w,
+			buf:            errBuf,
+		}
+
+		// Ensure any lazy generation during the error template renders to errBw, not bw.
+		rError := r.WithContext(core.WithCurrentResponseWriter(r.Context(), errBw))
+
+		if err2 := TaskErrorAcknowledgementPageTmpl.TemplateExecute(errBw, rError, errData); err2 != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			RenderErrorPage(w, r, common.ErrInternalServerError)
+		} else {
+			// Write the buffered error response to w
+			if errBw.status != 0 {
+				w.WriteHeader(errBw.status)
+			}
+			_, _ = errBuf.WriteTo(w)
 		}
 		return err
 	}
+
+	// Flush headers and body
+	if bw.status != 0 {
+		w.WriteHeader(bw.status)
+	}
+	_, _ = buf.WriteTo(w)
+
 	return nil
+}
+
+type bufferedResponseWriter struct {
+	http.ResponseWriter
+	buf    *bytes.Buffer
+	status int
+}
+
+func (rw *bufferedResponseWriter) Write(p []byte) (int, error) {
+	return rw.buf.Write(p)
+}
+
+func (rw *bufferedResponseWriter) WriteHeader(statusCode int) {
+	rw.status = statusCode
 }
 
 func hasNonPublicCachePolicy(value string) bool {

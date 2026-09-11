@@ -30,6 +30,49 @@ const (
 	formFieldName = "gorilla.csrf.Token"
 )
 
+type lazyCSRF struct {
+	w     http.ResponseWriter
+	r     *http.Request
+	token string
+}
+
+func (l *lazyCSRF) getToken(currentW http.ResponseWriter, currentR *http.Request) string {
+	if l.token != "" {
+		return l.token
+	}
+
+	session, err := core.GetSession(currentR)
+	if err != nil {
+		core.SessionErrorRedirect(currentW, currentR, err)
+		return ""
+	}
+	currentUID := readUID(session.Values["UID"])
+	tokenUID := readUID(session.Values[sessionUserKey])
+	token, _ := session.Values[sessionTokenKey].(string)
+
+	if token == "" || currentUID != tokenUID {
+		token, err = newToken()
+		if err != nil {
+			log.Printf("generate csrf token: %v", err)
+			http.Error(currentW, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return ""
+		}
+		session.Values[sessionTokenKey] = token
+		session.Values[sessionUserKey] = currentUID
+		if err := session.Save(currentR, currentW); err != nil {
+			log.Printf("save csrf token: %v", err)
+			http.Error(currentW, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return ""
+		}
+		// A new session/token was generated and saved to the browser.
+		// This must not be publicly cacheable.
+		core.DisableCaching(currentW)
+	}
+
+	l.token = token
+	return token
+}
+
 // NewCSRFMiddleware returns middleware enforcing CSRF protection using the
 // provided session secret and HTTP configuration. It also issues per-session
 // CSRF tokens that rotate when the authenticated user changes.
@@ -51,48 +94,27 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 		})
 		protected := protect(validatedNext)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			withToken, ok := attachToken(w, r)
-			if !ok {
-				return
-			}
-			protected.ServeHTTP(w, withToken)
+			lazy := &lazyCSRF{w: w, r: r}
+			ctx := context.WithValue(r.Context(), contextTokenKey, lazy)
+			protected.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func attachToken(w http.ResponseWriter, r *http.Request) (*http.Request, bool) {
-	session, err := core.GetSession(r)
-	if err != nil {
-		core.SessionErrorRedirect(w, r, err)
-		return nil, false
-	}
-	currentUID := readUID(session.Values["UID"])
-	tokenUID := readUID(session.Values[sessionUserKey])
-	token, _ := session.Values[sessionTokenKey].(string)
-
-	if token == "" || currentUID != tokenUID {
-		token, err = newToken()
-		if err != nil {
-			log.Printf("generate csrf token: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return nil, false
-		}
-		session.Values[sessionTokenKey] = token
-		session.Values[sessionUserKey] = currentUID
-		if err := session.Save(r, w); err != nil {
-			log.Printf("save csrf token: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return nil, false
-		}
-	}
-
-	ctx := context.WithValue(r.Context(), contextTokenKey, token)
-	return r.WithContext(ctx), true
-}
-
 // Token returns the request-specific CSRF token.
 func Token(r *http.Request) string {
-	if token, ok := r.Context().Value(contextTokenKey).(string); ok {
+	val := r.Context().Value(contextTokenKey)
+	if lazy, ok := val.(*lazyCSRF); ok {
+		// Use the currently active response writer from the context if available
+		// (e.g., a buffer provided by TemplateHandler) to ensure redirects or errors
+		// triggered by lazy generation do not bypass the buffering bounds.
+		cw := core.GetCurrentResponseWriter(r)
+		if cw == nil {
+			cw = lazy.w
+		}
+		return lazy.getToken(cw, r)
+	}
+	if token, ok := val.(string); ok {
 		return token
 	}
 	return ""

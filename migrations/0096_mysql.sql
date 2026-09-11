@@ -98,8 +98,9 @@ JOIN _merged_links ml ON el.url = ml.url AND el.id != ml.keep_id;
 
 DROP TEMPORARY TABLE IF EXISTS _merged_links;
 
--- Step 4: Add generated stored url_hash and full-URL unique index
-ALTER TABLE external_links ADD COLUMN url_hash binary(32) GENERATED ALWAYS AS (unhex(sha2(url, 256))) STORED NOT NULL, ADD UNIQUE KEY external_links_url_hash_idx (url_hash);
+-- Step 4: Add generated stored url_hash and full-URL unique index.
+-- MariaDB rejects NULL/NOT NULL attributes on generated columns, and url is already NOT NULL so this expression cannot produce NULL.
+ALTER TABLE external_links ADD COLUMN url_hash binary(32) GENERATED ALWAYS AS (unhex(sha2(url, 256))) STORED, ADD UNIQUE KEY external_links_url_hash_idx (url_hash);
 
 -- Step 5: Advance schema version
 UPDATE schema_version SET version = 96;

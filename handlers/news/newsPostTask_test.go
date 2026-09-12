@@ -3,13 +3,14 @@ package news
 import (
 	"context"
 	"database/sql"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
@@ -28,7 +29,12 @@ func (q *myQuerierStub) GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx con
 	return q.QuerierStub.GetNewsPostByIdWithWriterIdAndThreadCommentCount(ctx, arg)
 }
 
-func TestNewsPostTask_Get_DirectLookup(t *testing.T) {
+func TestLoadDirectNewsPost(t *testing.T) {
+	store := sessions.NewCookieStore([]byte("test"))
+	core.Store = store
+	core.SessionName = "test-session"
+	cfg := &config.RuntimeConfig{}
+
 	t.Run("Found", func(t *testing.T) {
 		q := &myQuerierStub{QuerierStub: *testhelpers.NewQuerierStub()}
 		called := false
@@ -42,27 +48,24 @@ func TestNewsPostTask_Get_DirectLookup(t *testing.T) {
 			}, nil
 		}
 
-		cd := common.NewCoreData(context.Background(), q, nil)
-		session := sessions.NewSession(sessions.NewCookieStore([]byte("secret")), "test-session")
-		cd.SetSession(session)
+		cd := common.NewCoreData(context.Background(), q, cfg)
 
 		req := httptest.NewRequest("GET", "/news/news/123", nil)
 		ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 		req = req.WithContext(ctx)
 		req = mux.SetURLVars(req, map[string]string{"news": "123"})
 
-		rr := httptest.NewRecorder()
+		session, _ := store.Get(req, core.SessionName)
+		cd.SetSession(session)
 
-		task := &newsPostTask{}
+		_, err := loadDirectNewsPost(req, cd, 123)
+		if err != nil {
+			t.Errorf("Expected nil error, got %v", err)
+		}
 
-		defer func() {
-			recover() // Ignore template panics
-			if !called {
-				t.Errorf("Expected direct lookup query to be called")
-			}
-		}()
-
-		task.Get(rr, req)
+		if !called {
+			t.Errorf("Expected direct lookup query to be called")
+		}
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
@@ -71,9 +74,7 @@ func TestNewsPostTask_Get_DirectLookup(t *testing.T) {
 			return nil, sql.ErrNoRows
 		}
 
-		cd := common.NewCoreData(context.Background(), q, nil)
-		session := sessions.NewSession(sessions.NewCookieStore([]byte("secret")), "test-session")
-		cd.SetSession(session)
+		cd := common.NewCoreData(context.Background(), q, cfg)
 
 		req := httptest.NewRequest("GET", "/news/news/404", nil)
 
@@ -81,17 +82,12 @@ func TestNewsPostTask_Get_DirectLookup(t *testing.T) {
 		req = req.WithContext(ctx)
 		req = mux.SetURLVars(req, map[string]string{"news": "404"})
 
-		rr := httptest.NewRecorder()
+		session, _ := store.Get(req, core.SessionName)
+		cd.SetSession(session)
 
-		task := &newsPostTask{}
-
-		defer func() {
-			recover()
-			if rr.Code != http.StatusNotFound {
-				t.Errorf("Expected status 404, got %d", rr.Code)
-			}
-		}()
-
-		task.Get(rr, req)
+		_, err := loadDirectNewsPost(req, cd, 404)
+		if err != sql.ErrNoRows {
+			t.Errorf("Expected sql.ErrNoRows, got %v", err)
+		}
 	})
 }

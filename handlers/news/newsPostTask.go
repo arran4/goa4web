@@ -72,22 +72,32 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	session := cd.GetSession()
 	uid, _ := session.Values["UID"].(int32)
 
-	posts, err := cd.LatestNewsList(0, 50)
+	postInfo, err := queries.GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+		ViewerID: uid,
+		ID:       int32(pid),
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
 	if err != nil {
-		log.Printf("LatestNewsList: %v", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			return
+		}
+		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCount: %v", err)
 		handlers.RenderErrorPage(w, r, err)
 		return
 	}
-	var post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-	for _, p := range posts {
-		if p.Idsitenews == int32(pid) {
-			post = p
-			break
-		}
-	}
-	if post == nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
+
+	post := &db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow{
+		Writername:    postInfo.Writername,
+		Writerid:      postInfo.Writerid,
+		Idsitenews:    postInfo.Idsitenews,
+		ForumthreadID: postInfo.ForumthreadID,
+		LanguageID:    postInfo.LanguageID,
+		UsersIdusers:  postInfo.UsersIdusers,
+		News:          postInfo.News,
+		Occurred:      postInfo.Occurred,
+		Timezone:      postInfo.Timezone,
+		Comments:      postInfo.Comments,
 	}
 
 	if post.Occurred.Valid {

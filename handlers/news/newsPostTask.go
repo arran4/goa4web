@@ -79,7 +79,7 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
 			return
 		}
 		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCount: %v", err)

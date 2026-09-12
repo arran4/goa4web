@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"database/sql"
 
 	"github.com/gorilla/mux"
+
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
@@ -33,6 +34,16 @@ func TestRequireGrantForPathInt_MuxRegression(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test/123", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	var match mux.RouteMatch
+	// Explicit r.Match check to ensure it doesn't fail on variables
+	if !r.Match(req, &match) {
+		t.Fatalf("Matcher failed to match route")
+	}
+
+	if match.Vars["id"] != "123" {
+		t.Errorf("Expected match.Vars['id'] to be '123', got '%s'", match.Vars["id"])
+	}
 
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
@@ -63,6 +74,12 @@ func TestRequireGrantForPathInt_MuxRegression_Deny(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test/123", nil)
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	var match mux.RouteMatch
+	// Explicit r.Match check to ensure it doesn't fail on variables
+	if !r.Match(req, &match) {
+		t.Fatalf("Matcher failed to match route")
+	}
 
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)

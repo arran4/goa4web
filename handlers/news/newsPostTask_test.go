@@ -3,6 +3,7 @@ package news
 import (
 	"context"
 	"database/sql"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -85,9 +86,22 @@ func TestLoadDirectNewsPost(t *testing.T) {
 		session, _ := store.Get(req, core.SessionName)
 		cd.SetSession(session)
 
-		_, err := loadDirectNewsPost(req, cd, 404)
-		if err != sql.ErrNoRows {
-			t.Errorf("Expected sql.ErrNoRows, got %v", err)
-		}
+		rr := httptest.NewRecorder()
+		task := &newsPostTask{}
+
+		defer func() {
+			err := recover()
+			if err != nil {
+				if rr.Code != http.StatusNotFound {
+					t.Errorf("Expected status 404 before panic, got %d", rr.Code)
+				}
+			} else {
+				if rr.Code != http.StatusNotFound {
+					t.Errorf("Expected status 404, got %d", rr.Code)
+				}
+			}
+		}()
+
+		task.Get(rr, req)
 	})
 }

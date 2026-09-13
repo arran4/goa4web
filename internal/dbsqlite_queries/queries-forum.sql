@@ -561,7 +561,7 @@ LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
-  AND (sqlc.arg(topic_id_null) IS NULL OR th.forumtopic_idforumtopic = sqlc.arg(topic_id_val))
+  AND (CAST(sqlc.narg(topic_id) AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = sqlc.narg(topic_id))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -629,7 +629,7 @@ FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE t.handler = 'private'
-  AND (sqlc.arg(topic_id_null) IS NULL OR th.forumtopic_idforumtopic = sqlc.arg(topic_id_val))
+  AND (CAST(sqlc.narg(topic_id) AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = sqlc.narg(topic_id))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'

@@ -576,16 +576,15 @@ WHERE t.handler = 'private'
 
 type CountUnreadPrivateThreadsForUserParams struct {
 	GranteeID   int32
-	TopicIDNull interface{}
-	TopicIDVal  int32
+	TopicID     sql.NullInt32
 	GrantUserID sql.NullInt32
 }
 
 func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countUnreadPrivateThreadsForUser,
 		arg.GranteeID,
-		arg.TopicIDNull,
-		arg.TopicIDVal,
+		arg.TopicID,
+		arg.TopicID,
 		arg.GrantUserID,
 		arg.GrantUserID,
 		arg.GranteeID,
@@ -1949,8 +1948,7 @@ LIMIT ? OFFSET ?
 
 type ListUnreadPrivateThreadsForUserParams struct {
 	GranteeID   int32
-	TopicIDNull interface{}
-	TopicIDVal  int32
+	TopicID     sql.NullInt32
 	GrantUserID sql.NullInt32
 	Limit       int32
 	Offset      int32
@@ -1974,8 +1972,8 @@ type ListUnreadPrivateThreadsForUserRow struct {
 func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
 		arg.GranteeID,
-		arg.TopicIDNull,
-		arg.TopicIDVal,
+		arg.TopicID,
+		arg.TopicID,
 		arg.GrantUserID,
 		arg.GrantUserID,
 		arg.GranteeID,

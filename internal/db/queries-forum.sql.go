@@ -560,7 +560,14 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?
+              (c.users_idusers != ? AND NOT EXISTS (
+                  SELECT 1 FROM content_private_labels cpl
+                  WHERE cpl.item = 'thread'
+                    AND cpl.item_id = th.idforumthread
+                    AND cpl.user_id = ?
+                    AND cpl.label = 'new'
+                    AND cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM content_private_labels cpl
                   WHERE cpl.item = 'thread'
@@ -576,18 +583,18 @@ WHERE t.handler = 'private'
 
 type CountUnreadPrivateThreadsForUserParams struct {
 	GranteeID   int32
-	TopicIDNull interface{}
-	TopicIDVal  int32
+	TopicID     sql.NullInt32
 	GrantUserID sql.NullInt32
 }
 
 func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countUnreadPrivateThreadsForUser,
 		arg.GranteeID,
-		arg.TopicIDNull,
-		arg.TopicIDVal,
+		arg.TopicID,
+		arg.TopicID,
 		arg.GrantUserID,
 		arg.GrantUserID,
+		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,
@@ -1487,7 +1494,14 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
                      AND cpl.invert = true
                )
                AND (
-                   c.users_idusers != ?
+                   (c.users_idusers != ? AND NOT EXISTS (
+                       SELECT 1 FROM content_private_labels cpl
+                       WHERE cpl.item = 'thread'
+                         AND cpl.item_id = t.idforumthread
+                         AND cpl.user_id = ?
+                         AND cpl.label = 'new'
+                         AND cpl.invert = true
+                   ))
                    OR EXISTS (
                        SELECT 1 FROM content_private_labels cpl
                        WHERE cpl.item = 'thread'
@@ -1630,6 +1644,7 @@ type GetReplyThreadsForListerRow struct {
 // expression intentionally matches ListUnreadPrivateThreadsForUser.
 func (q *Queries) GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, getReplyThreadsForLister,
+		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerID,
@@ -1931,7 +1946,14 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?
+              (c.users_idusers != ? AND NOT EXISTS (
+                  SELECT 1 FROM content_private_labels cpl
+                  WHERE cpl.item = 'thread'
+                    AND cpl.item_id = th.idforumthread
+                    AND cpl.user_id = ?
+                    AND cpl.label = 'new'
+                    AND cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM content_private_labels cpl
                   WHERE cpl.item = 'thread'
@@ -1949,8 +1971,7 @@ LIMIT ? OFFSET ?
 
 type ListUnreadPrivateThreadsForUserParams struct {
 	GranteeID   int32
-	TopicIDNull interface{}
-	TopicIDVal  int32
+	TopicID     sql.NullInt32
 	GrantUserID sql.NullInt32
 	Limit       int32
 	Offset      int32
@@ -1974,10 +1995,11 @@ type ListUnreadPrivateThreadsForUserRow struct {
 func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
 		arg.GranteeID,
-		arg.TopicIDNull,
-		arg.TopicIDVal,
+		arg.TopicID,
+		arg.TopicID,
 		arg.GrantUserID,
 		arg.GrantUserID,
+		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,

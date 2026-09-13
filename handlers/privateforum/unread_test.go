@@ -18,13 +18,11 @@ import (
 func TestUnreadPrivateThreadsFiltering(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	var listCalls int
-	var capturedTopicIDNull interface{}
-	var capturedTopicIDVal int32
+	var capturedTopicID interface{}
 
 	q.ListUnreadPrivateThreadsForUserFn = func(ctx context.Context, arg db.ListUnreadPrivateThreadsForUserParams) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
 		listCalls++
-		capturedTopicIDNull = arg.TopicIDNull
-		capturedTopicIDVal = arg.TopicIDVal
+		capturedTopicID = arg.TopicID
 		return []*db.ListUnreadPrivateThreadsForUserRow{
 			{
 				Idforumthread: 101,
@@ -64,24 +62,20 @@ func TestUnreadPrivateThreadsFiltering(t *testing.T) {
 		t.Fatalf("Expected ListUnreadPrivateThreadsForUser to be called exactly once, got %d", listCalls)
 	}
 
-	if val, ok := capturedTopicIDNull.(sql.NullInt32); ok {
+	if val, ok := capturedTopicID.(sql.NullInt32); ok {
 		if !val.Valid || val.Int32 != 1 {
-			t.Errorf("Expected TopicIDNull to be Valid and 1, got %v", val)
+			t.Errorf("Expected TopicID to be Valid and 1, got %v", val)
 		}
 	} else {
-		t.Errorf("Expected TopicIDNull to be sql.NullInt32, got %T", capturedTopicIDNull)
+		t.Errorf("Expected TopicID to be sql.NullInt32, got %T", capturedTopicID)
 	}
 
-	if capturedTopicIDVal != 1 {
-		t.Errorf("Expected TopicIDVal to be 1, got %d", capturedTopicIDVal)
-	}
 }
 
 func TestUnreadPrivateThreadsAllAccessible(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	var listCalls int
-	var capturedTopicIDNull interface{}
-	var capturedTopicIDVal int32
+	var capturedTopicID interface{}
 
 	q.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
 		if p.ViewerID == 1 && p.Section == "privateforum" && p.Item.String == "topic" && p.Action == "see" {
@@ -92,8 +86,7 @@ func TestUnreadPrivateThreadsAllAccessible(t *testing.T) {
 
 	q.ListUnreadPrivateThreadsForUserFn = func(ctx context.Context, arg db.ListUnreadPrivateThreadsForUserParams) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
 		listCalls++
-		capturedTopicIDNull = arg.TopicIDNull
-		capturedTopicIDVal = arg.TopicIDVal
+		capturedTopicID = arg.TopicID
 		return []*db.ListUnreadPrivateThreadsForUserRow{
 			{
 				Idforumthread: 101,
@@ -122,17 +115,14 @@ func TestUnreadPrivateThreadsAllAccessible(t *testing.T) {
 		t.Fatalf("Expected ListUnreadPrivateThreadsForUser to be called exactly once, got %d", listCalls)
 	}
 
-	if val, ok := capturedTopicIDNull.(sql.NullInt32); ok {
+	if val, ok := capturedTopicID.(sql.NullInt32); ok {
 		if val.Valid {
-			t.Errorf("Expected TopicIDNull to be Valid=false for unscoped unread, got %v", val)
+			t.Errorf("Expected TopicID to be Valid=false for unscoped unread, got %v", val)
 		}
-	} else if capturedTopicIDNull != nil {
-		t.Errorf("Expected TopicIDNull to be sql.NullInt32 with Valid=false or nil, got %v", capturedTopicIDNull)
+	} else if capturedTopicID != nil {
+		t.Errorf("Expected TopicID to be sql.NullInt32 with Valid=false or nil, got %v", capturedTopicID)
 	}
 
-	if capturedTopicIDVal != 0 {
-		t.Errorf("Expected TopicIDVal to be 0 for unscoped unread, got %d", capturedTopicIDVal)
-	}
 }
 
 func TestUnreadPrivateThreadsInaccessibleTopicDenied(t *testing.T) {

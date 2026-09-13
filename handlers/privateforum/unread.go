@@ -82,7 +82,7 @@ func UnreadThreadsPage(w http.ResponseWriter, r *http.Request) {
 	offset := int32(page-1) * limit
 
 	var currentError string
-	rows, err := cd.UnreadPrivateThreads(limit, offset, topicIDNull, topicIDVal)
+	rows, err := cd.UnreadPrivateThreads(limit, offset, topicIDNull)
 	if err != nil {
 		log.Printf("Error UnreadPrivateThreads: %v", err)
 		currentError = "Error loading unread threads."

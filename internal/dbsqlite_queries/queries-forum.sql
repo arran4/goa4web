@@ -561,7 +561,7 @@ LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
-  AND (sqlc.arg(topic_id_null) IS NULL OR th.forumtopic_idforumtopic = sqlc.arg(topic_id_val))
+  AND (CAST(sqlc.narg(topic_id) AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = sqlc.narg(topic_id))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -601,7 +601,12 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != sqlc.arg(grantee_id)
+              ((((c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM user_cpl
                   WHERE user_cpl.item_id = th.idforumthread
@@ -629,7 +634,7 @@ FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE t.handler = 'private'
-  AND (sqlc.arg(topic_id_null) IS NULL OR th.forumtopic_idforumtopic = sqlc.arg(topic_id_val))
+  AND (CAST(sqlc.narg(topic_id) AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = sqlc.narg(topic_id))
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -669,7 +674,12 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != sqlc.arg(grantee_id)
+              ((((c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM user_cpl
                   WHERE user_cpl.item_id = th.idforumthread
@@ -719,7 +729,7 @@ SELECT t.*,
                      AND user_cpl.invert = 1
                )
                AND (
-                   c.users_idusers != sqlc.arg(viewer_id)
+                   (((c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true))
                    OR EXISTS (
                        SELECT 1 FROM user_cpl
                        WHERE user_cpl.item_id = t.idforumthread
@@ -730,7 +740,7 @@ SELECT t.*,
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN sqlc.arg(viewer_id) != 0 AND (
-           (c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (
+           ((((c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
                SELECT 1 FROM user_cpl
                WHERE user_cpl.item_id = t.idforumthread
                  AND user_cpl.label = 'new'

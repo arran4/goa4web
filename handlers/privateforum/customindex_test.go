@@ -68,10 +68,10 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 	}
 	q.CountUnreadPrivateThreadsForUserFn = func(ctx context.Context, arg db.CountUnreadPrivateThreadsForUserParams) (int64, error) {
 		countUnreadCalls++
-		if val, ok := arg.TopicIDNull.(sql.NullInt32); ok && val.Valid && val.Int32 == 1 {
+		if arg.TopicID.Valid && arg.TopicID.Int32 == 1 {
 			return 1, nil
 		}
-		if val, ok := arg.TopicIDNull.(sql.NullInt32); ok && val.Valid && val.Int32 == 2 {
+		if arg.TopicID.Valid && arg.TopicID.Int32 == 2 {
 			return 2, nil
 		}
 		return 0, nil

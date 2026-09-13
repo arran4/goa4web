@@ -39,4 +39,10 @@ func TestProvider(t *testing.T) {
 	if err != nil || addr.Name != "Tester" {
 		t.Fatalf("unexpected From header: %s", m.Header.Get("From"))
 	}
+	if m.Header.Get("Date") == "" {
+		t.Fatalf("missing Date header")
+	}
+	if m.Header.Get("Message-ID") == "" {
+		t.Fatalf("missing Message-ID header")
+	}
 }

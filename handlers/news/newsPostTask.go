@@ -67,6 +67,13 @@ func loadDirectNewsPost(r *http.Request, cd *common.CoreData, pid int32) (*db.Ge
 	}, nil
 }
 
+func newsPostLookupError(err error) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		return handlers.ErrNotFound
+	}
+	return err
+}
+
 func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
@@ -98,12 +105,10 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 
 	post, err := loadDirectNewsPost(r, cd, int32(pid))
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-			return
+		if !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCount: %v", err)
 		}
-		log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCount: %v", err)
-		handlers.RenderErrorPage(w, r, err)
+		handlers.RenderErrorPage(w, r, newsPostLookupError(err))
 		return
 	}
 

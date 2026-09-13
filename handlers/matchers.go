@@ -85,19 +85,32 @@ func RequireGrant(section, item, action string, resolveItemID func(r *http.Reque
 	}
 }
 
-// RequireGrantForPathInt checks for a grant tied to an integer path parameter.
-func RequireGrantForPathInt(section, item, action, param string) mux.MatcherFunc {
-	return RequireGrant(section, item, action, func(r *http.Request, match *mux.RouteMatch) (int32, bool) {
-		if match != nil && match.Vars != nil {
-			if id, err := strconv.Atoi(match.Vars[param]); err == nil {
-				return int32(id), true
+// RequireGrantForPathInt checks for a grant tied to an integer path parameter using Gorilla mux routing variables.
+// It acts as middleware rather than a MatcherFunc to ensure route variables are populated.
+func RequireGrantForPathInt(section, item, action, param string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+			if !ok || cd == nil {
+				RenderErrorPage(w, r, ErrForbidden)
+				return
 			}
-		}
-		if vars := mux.Vars(r); vars != nil {
-			if id, err := strconv.Atoi(vars[param]); err == nil {
-				return int32(id), true
+			vars := mux.Vars(r)
+			val, ok := vars[param]
+			if !ok {
+				RenderErrorPage(w, r, ErrNotFound)
+				return
 			}
-		}
-		return 0, false
-	})
+			id, err := strconv.Atoi(val)
+			if err != nil {
+				RenderErrorPage(w, r, ErrNotFound)
+				return
+			}
+			if !cd.HasGrant(section, item, action, int32(id)) {
+				RenderErrorPage(w, r, ErrForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

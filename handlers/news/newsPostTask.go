@@ -41,6 +41,39 @@ func (t *newsPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return nil
 }
 
+// loadDirectNewsPost fetches the news post directly bypassing the LatestNewsList cache/search.
+func loadDirectNewsPost(r *http.Request, cd *common.CoreData, pid int32) (*db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow, error) {
+	session := cd.GetSession()
+	uid, _ := session.Values["UID"].(int32)
+	postInfo, err := cd.Queries().GetNewsPostByIdWithWriterIdAndThreadCommentCount(r.Context(), db.GetNewsPostByIdWithWriterIdAndThreadCommentCountParams{
+		ViewerID: uid,
+		ID:       pid,
+		UserID:   sql.NullInt32{Int32: uid, Valid: uid != 0},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow{
+		Writername:    postInfo.Writername,
+		Writerid:      postInfo.Writerid,
+		Idsitenews:    postInfo.Idsitenews,
+		ForumthreadID: postInfo.ForumthreadID,
+		LanguageID:    postInfo.LanguageID,
+		UsersIdusers:  postInfo.UsersIdusers,
+		News:          postInfo.News,
+		Occurred:      postInfo.Occurred,
+		Timezone:      postInfo.Timezone,
+		Comments:      postInfo.Comments,
+	}, nil
+}
+
+func newsPostLookupError(err error) error {
+	if errors.Is(err, sql.ErrNoRows) {
+		return handlers.ErrNotFound
+	}
+	return err
+}
+
 func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	type Data struct {
 		Post           *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
@@ -69,24 +102,13 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["news"])
-	session := cd.GetSession()
-	uid, _ := session.Values["UID"].(int32)
 
-	posts, err := cd.LatestNewsList(0, 50)
+	post, err := loadDirectNewsPost(r, cd, int32(pid))
 	if err != nil {
-		log.Printf("LatestNewsList: %v", err)
-		handlers.RenderErrorPage(w, r, err)
-		return
-	}
-	var post *db.GetNewsPostsWithWriterUsernameAndThreadCommentCountDescendingRow
-	for _, p := range posts {
-		if p.Idsitenews == int32(pid) {
-			post = p
-			break
+		if !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("GetNewsPostByIdWithWriterIdAndThreadCommentCount: %v", err)
 		}
-	}
-	if post == nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		handlers.RenderErrorPage(w, r, newsPostLookupError(err))
 		return
 	}
 
@@ -121,9 +143,9 @@ func (t *newsPostTask) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	threadRow, err := queries.GetThreadLastPosterAndPermsForUser(r.Context(), db.GetThreadLastPosterAndPermsForUserParams{
-		ViewerID:      uid,
+		ViewerID:      cd.UserID,
 		ThreadID:      int32(post.ForumthreadID),
-		ViewerMatchID: sql.NullInt32{Int32: uid, Valid: uid != 0},
+		ViewerMatchID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
 		switch {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -66,10 +67,22 @@ func requireGrantAllowed(t *testing.T) {
 	cd.UserID = 1
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
+	req = mux.SetURLVars(req, map[string]string{"news": "1"})
 
-	match := &mux.RouteMatch{Vars: map[string]string{"news": "1"}}
-	if !RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
-		t.Fatalf("expected grant-based matcher to allow request")
+	mw := RequireGrantForPathInt("news", "post", "edit", "news")
+	called := false
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	})
+
+	rr := httptest.NewRecorder()
+	mw(dummyHandler).ServeHTTP(rr, req)
+
+	if !called {
+		t.Fatalf("expected middleware to call next handler")
+	}
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rr.Code)
 	}
 	if len(q.SystemCheckGrantCalls) != 1 {
 		t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))
@@ -98,10 +111,22 @@ func requireGrantDenied(t *testing.T) {
 	cd.UserID = 2
 	ctx := context.WithValue(req.Context(), consts.KeyCoreData, cd)
 	req = req.WithContext(ctx)
+	req = mux.SetURLVars(req, map[string]string{"news": "2"})
 
-	match := &mux.RouteMatch{Vars: map[string]string{"news": "2"}}
-	if RequireGrantForPathInt("news", "post", "edit", "news")(req, match) {
-		t.Fatalf("expected grant-based matcher to reject request")
+	mw := RequireGrantForPathInt("news", "post", "edit", "news")
+	called := false
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	})
+
+	rr := httptest.NewRecorder()
+	mw(dummyHandler).ServeHTTP(rr, req)
+
+	if called {
+		t.Fatalf("expected middleware to reject request and not call next handler")
+	}
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("expected status 403, got %d", rr.Code)
 	}
 	if len(q.SystemCheckGrantCalls) != 1 {
 		t.Fatalf("expected one grant check, got %d", len(q.SystemCheckGrantCalls))

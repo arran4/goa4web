@@ -4161,7 +4161,7 @@ func (s *sqliteQuerier) ClearUnreadContentPrivateLabelExceptUser(ctx context.Con
 
 func (s *sqliteQuerier) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
 	res, err := s.q.CountUnreadPrivateThreadsForUser(ctx, dbsqlite.CountUnreadPrivateThreadsForUserParams{
-		TopicID:     sql.NullInt64{Int64: int64(arg.TopicID.Int32), Valid: arg.TopicID.Valid},
+		TopicID:     arg.TopicID,
 		GrantUserID: sql.NullInt64{Int64: int64(arg.GrantUserID.Int32), Valid: arg.GrantUserID.Valid},
 		GranteeID:   int64(arg.GranteeID),
 	})
@@ -9078,7 +9078,7 @@ func (s *sqliteQuerier) ListUnreadNotificationsForLister(ctx context.Context, ar
 
 func (s *sqliteQuerier) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
 	res, err := s.q.ListUnreadPrivateThreadsForUser(ctx, dbsqlite.ListUnreadPrivateThreadsForUserParams{
-		TopicID:     sql.NullInt64{Int64: int64(arg.TopicID.Int32), Valid: arg.TopicID.Valid},
+		TopicID:     arg.TopicID,
 		GrantUserID: sql.NullInt64{Int64: int64(arg.GrantUserID.Int32), Valid: arg.GrantUserID.Valid},
 		GranteeID:   int64(arg.GranteeID),
 		Offset:      int64(arg.Offset),

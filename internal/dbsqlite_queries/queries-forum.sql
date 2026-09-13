@@ -601,7 +601,12 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != sqlc.arg(grantee_id)
+              (c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM user_cpl
                   WHERE user_cpl.item_id = th.idforumthread
@@ -669,7 +674,12 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != sqlc.arg(grantee_id)
+              (c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM user_cpl
                   WHERE user_cpl.item_id = th.idforumthread

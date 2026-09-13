@@ -3,7 +3,8 @@ package news
 import (
 	"context"
 	"database/sql"
-	"net/http"
+	"errors"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
@@ -86,21 +87,33 @@ func TestLoadDirectNewsPost(t *testing.T) {
 		session, _ := store.Get(req, core.SessionName)
 		cd.SetSession(session)
 
-		// Directly verify the sql.ErrNoRows error mapping in isolation
-		// to avoid swallowing panics or requiring full template setup.
 		_, err := loadDirectNewsPost(req, cd, 404)
 		if err != sql.ErrNoRows {
 			t.Fatalf("Expected sql.ErrNoRows from direct lookup, got %v", err)
 		}
+	})
+}
 
-		// Verify the exact logic newsPostTask.Get uses to map this to 404
-		rr := httptest.NewRecorder()
-		if err == sql.ErrNoRows {
-			rr.WriteHeader(handlers.ErrNotFound.Status)
+func TestNewsPostLookupError(t *testing.T) {
+	t.Run("NotFound", func(t *testing.T) {
+		got := newsPostLookupError(sql.ErrNoRows)
+		if got != handlers.ErrNotFound {
+			t.Fatalf("Expected handlers.ErrNotFound, got %v", got)
 		}
+	})
 
-		if rr.Code != http.StatusNotFound {
-			t.Errorf("Expected status 404 from error mapping, got %d", rr.Code)
+	t.Run("WrappedNotFound", func(t *testing.T) {
+		got := newsPostLookupError(fmt.Errorf("lookup news post: %w", sql.ErrNoRows))
+		if got != handlers.ErrNotFound {
+			t.Fatalf("Expected handlers.ErrNotFound for wrapped sql.ErrNoRows, got %v", got)
+		}
+	})
+
+	t.Run("OtherError", func(t *testing.T) {
+		want := errors.New("boom")
+		got := newsPostLookupError(want)
+		if got != want {
+			t.Fatalf("Expected original error to pass through, got %v", got)
 		}
 	})
 }

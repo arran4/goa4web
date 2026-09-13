@@ -503,7 +503,7 @@ FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE t.handler = 'private'
-  AND (?1 IS NULL OR th.forumtopic_idforumtopic = ?1)
+  AND (CAST(?1 AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = ?1)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -543,7 +543,12 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?3
+              ((((c.users_idusers != ?3 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM user_cpl
                   WHERE user_cpl.item_id = th.idforumthread
@@ -556,7 +561,7 @@ WHERE t.handler = 'private'
 `
 
 type CountUnreadPrivateThreadsForUserParams struct {
-	TopicID     interface{}
+	TopicID     sql.NullInt64
 	GrantUserID sql.NullInt64
 	GranteeID   int64
 }
@@ -1402,7 +1407,7 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
                      AND user_cpl.invert = 1
                )
                AND (
-                   c.users_idusers != ?1
+                   (((c.users_idusers != ?1 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true))
                    OR EXISTS (
                        SELECT 1 FROM user_cpl
                        WHERE user_cpl.item_id = t.idforumthread
@@ -1413,7 +1418,7 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN ?1 != 0 AND (
-           (c.users_idusers != ?1 AND NOT EXISTS (
+           ((((c.users_idusers != ?1 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
                SELECT 1 FROM user_cpl
                WHERE user_cpl.item_id = t.idforumthread
                  AND user_cpl.label = 'new'
@@ -1778,7 +1783,7 @@ LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
-  AND (?1 IS NULL OR th.forumtopic_idforumtopic = ?1)
+  AND (CAST(?1 AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = ?1)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -1818,7 +1823,12 @@ WHERE t.handler = 'private'
           )
           AND (
               -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?3
+              ((((c.users_idusers != ?3 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
+                  SELECT 1 FROM user_cpl
+                  WHERE user_cpl.item_id = th.idforumthread
+                    AND user_cpl.label = 'new'
+                    AND user_cpl.invert = true
+              ))
               OR EXISTS (
                   SELECT 1 FROM user_cpl
                   WHERE user_cpl.item_id = th.idforumthread
@@ -1833,7 +1843,7 @@ LIMIT ?5 OFFSET ?4
 `
 
 type ListUnreadPrivateThreadsForUserParams struct {
-	TopicID     interface{}
+	TopicID     sql.NullInt64
 	GrantUserID sql.NullInt64
 	GranteeID   int64
 	Offset      int64

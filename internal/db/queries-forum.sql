@@ -771,6 +771,12 @@ SELECT t.*,
                    ))
                    OR EXISTS (
                        SELECT 1 FROM content_private_labels cpl
+                       WHERE cpl.item = 'thread'
+                         AND cpl.item_id = t.idforumthread
+                         AND cpl.user_id = sqlc.arg(viewer_id)
+                         AND cpl.label = 'new'
+                         AND cpl.invert = false
+                   )
                )
            )
        ) THEN 1 ELSE 0 END AS is_unread,

@@ -9,6 +9,8 @@ import (
 	"net/textproto"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // DefaultFromName is used when encoding From headers without a name component.
@@ -32,6 +34,13 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]
 	hdr.Set("To", to.String())
 	hdr.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	hdr.Set("MIME-Version", "1.0")
+	hdr.Set("Date", time.Now().Format(time.RFC1123Z))
+
+	domain := "localhost"
+	if parts := strings.Split(from.Address, "@"); len(parts) > 1 {
+		domain = parts[len(parts)-1]
+	}
+	hdr.Set("Message-ID", fmt.Sprintf("<%s@%s>", uuid.New().String(), domain))
 
 	if htmlBody != "" {
 		w := multipart.NewWriter(&msg)

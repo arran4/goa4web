@@ -29,6 +29,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ses v1.37.4
 	github.com/chzyer/readline v1.5.1
 	github.com/go-webauthn/webauthn v0.17.4
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/jedib0t/go-pretty/v6 v6.8.3
@@ -47,7 +48,6 @@ require (
 	github.com/go-webauthn/x v0.2.6 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect

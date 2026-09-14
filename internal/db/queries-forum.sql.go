@@ -558,25 +558,6 @@ WHERE t.handler = 'private'
                 AND cpl.label = 'unread'
                 AND cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              (c.users_idusers != ? AND NOT EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = ?
-                    AND cpl.label = 'new'
-                    AND cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = ?
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
-              )
-          )
       )
   )
 `
@@ -594,9 +575,6 @@ func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg Coun
 		arg.TopicID,
 		arg.GrantUserID,
 		arg.GrantUserID,
-		arg.GranteeID,
-		arg.GranteeID,
-		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,
 	)
@@ -1493,24 +1471,6 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
                      AND cpl.label = 'unread'
                      AND cpl.invert = true
                )
-               AND (
-                   (c.users_idusers != ? AND NOT EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = ?
-                         AND cpl.label = 'new'
-                         AND cpl.invert = true
-                   ))
-                   OR EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = ?
-                         AND cpl.label = 'new'
-                         AND cpl.invert = false
-                   )
-               )
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN ? != 0 AND (
@@ -1644,9 +1604,6 @@ type GetReplyThreadsForListerRow struct {
 // expression intentionally matches ListUnreadPrivateThreadsForUser.
 func (q *Queries) GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error) {
 	rows, err := q.db.QueryContext(ctx, getReplyThreadsForLister,
-		arg.ViewerID,
-		arg.ViewerID,
-		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerID,
 		arg.ViewerID,
@@ -1944,25 +1901,6 @@ WHERE t.handler = 'private'
                 AND cpl.label = 'unread'
                 AND cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              (c.users_idusers != ? AND NOT EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = ?
-                    AND cpl.label = 'new'
-                    AND cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = ?
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
-              )
-          )
       )
   )
 ORDER BY th.lastaddition DESC
@@ -1999,9 +1937,6 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 		arg.TopicID,
 		arg.GrantUserID,
 		arg.GrantUserID,
-		arg.GranteeID,
-		arg.GranteeID,
-		arg.GranteeID,
 		arg.GranteeID,
 		arg.GranteeID,
 		arg.Limit,

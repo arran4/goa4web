@@ -599,21 +599,6 @@ WHERE t.handler = 'private'
                 AND user_cpl.label = 'unread'
                 AND user_cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              ((((c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = false
-              )
-          )
       )
   )
 ORDER BY th.lastaddition DESC
@@ -672,21 +657,6 @@ WHERE t.handler = 'private'
                 AND user_cpl.label = 'unread'
                 AND user_cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              ((((c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = false
-              )
-          )
       )
   );
 
@@ -728,19 +698,10 @@ SELECT t.*,
                      AND user_cpl.label = 'unread'
                      AND user_cpl.invert = 1
                )
-               AND (
-                   (((c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true))
-                   OR EXISTS (
-                       SELECT 1 FROM user_cpl
-                       WHERE user_cpl.item_id = t.idforumthread
-                         AND user_cpl.label = 'new'
-                         AND user_cpl.invert = 0
-                   )
-               )
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN sqlc.arg(viewer_id) != 0 AND (
-           ((((c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
+           (c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (
                SELECT 1 FROM user_cpl
                WHERE user_cpl.item_id = t.idforumthread
                  AND user_cpl.label = 'new'

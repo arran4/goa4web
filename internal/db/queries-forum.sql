@@ -626,25 +626,6 @@ WHERE t.handler = 'private'
                 AND cpl.label = 'unread'
                 AND cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              (c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = sqlc.arg(grantee_id)
-                    AND cpl.label = 'new'
-                    AND cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = sqlc.arg(grantee_id)
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
-              )
-          )
       )
   )
 ORDER BY th.lastaddition DESC
@@ -703,25 +684,6 @@ WHERE t.handler = 'private'
                 AND cpl.label = 'unread'
                 AND cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              (c.users_idusers != sqlc.arg(grantee_id) AND NOT EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = sqlc.arg(grantee_id)
-                    AND cpl.label = 'new'
-                    AND cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM content_private_labels cpl
-                  WHERE cpl.item = 'thread'
-                    AND cpl.item_id = th.idforumthread
-                    AND cpl.user_id = sqlc.arg(grantee_id)
-                    AND cpl.label = 'new'
-                    AND cpl.invert = false
-              )
-          )
       )
   );
 
@@ -759,24 +721,6 @@ SELECT t.*,
                      AND cpl.user_id = sqlc.arg(viewer_id)
                      AND cpl.label = 'unread'
                      AND cpl.invert = true
-               )
-               AND (
-                   (c.users_idusers != sqlc.arg(viewer_id) AND NOT EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = sqlc.arg(viewer_id)
-                         AND cpl.label = 'new'
-                         AND cpl.invert = true
-                   ))
-                   OR EXISTS (
-                       SELECT 1 FROM content_private_labels cpl
-                       WHERE cpl.item = 'thread'
-                         AND cpl.item_id = t.idforumthread
-                         AND cpl.user_id = sqlc.arg(viewer_id)
-                         AND cpl.label = 'new'
-                         AND cpl.invert = false
-                   )
                )
            )
        ) THEN 1 ELSE 0 END AS is_unread,

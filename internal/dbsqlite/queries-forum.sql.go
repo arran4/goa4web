@@ -541,21 +541,6 @@ WHERE t.handler = 'private'
                 AND user_cpl.label = 'unread'
                 AND user_cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              ((((c.users_idusers != ?3 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = false
-              )
-          )
       )
   )
 `
@@ -1406,19 +1391,10 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
                      AND user_cpl.label = 'unread'
                      AND user_cpl.invert = 1
                )
-               AND (
-                   (((c.users_idusers != ?1 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true))
-                   OR EXISTS (
-                       SELECT 1 FROM user_cpl
-                       WHERE user_cpl.item_id = t.idforumthread
-                         AND user_cpl.label = 'new'
-                         AND user_cpl.invert = 0
-                   )
-               )
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN ?1 != 0 AND (
-           ((((c.users_idusers != ?1 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = t.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
+           (c.users_idusers != ?1 AND NOT EXISTS (
                SELECT 1 FROM user_cpl
                WHERE user_cpl.item_id = t.idforumthread
                  AND user_cpl.label = 'new'
@@ -1505,7 +1481,7 @@ ORDER BY is_unread DESC, t.lastaddition DESC
 `
 
 type GetReplyThreadsForListerParams struct {
-	ViewerID        int64
+	ViewerID        interface{}
 	ReplyToThreadID sql.NullInt64
 	ViewerMatchID   sql.NullInt64
 }
@@ -1756,13 +1732,13 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 
 const listUnreadPrivateThreadsForUser = `-- name: ListUnreadPrivateThreadsForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 ),
 user_cpl AS (
     SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
-    WHERE cpl.item = 'thread' AND cpl.user_id = ?3
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?5
 )
 SELECT th.idforumthread,
        th.forumtopic_idforumtopic as topic_id,
@@ -1821,33 +1797,18 @@ WHERE t.handler = 'private'
                 AND user_cpl.label = 'unread'
                 AND user_cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              ((((c.users_idusers != ?3 AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (SELECT 1 FROM user_cpl WHERE user_cpl.item_id = th.idforumthread AND user_cpl.label = 'new' AND user_cpl.invert = true)) AND NOT EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = true
-              ))
-              OR EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = false
-              )
-          )
       )
   )
 ORDER BY th.lastaddition DESC
-LIMIT ?5 OFFSET ?4
+LIMIT ?4 OFFSET ?3
 `
 
 type ListUnreadPrivateThreadsForUserParams struct {
 	TopicID     sql.NullInt64
 	GrantUserID sql.NullInt64
-	GranteeID   int64
 	Offset      int64
 	Limit       int64
+	GranteeID   int64
 }
 
 type ListUnreadPrivateThreadsForUserRow struct {
@@ -1869,9 +1830,9 @@ func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListU
 	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
 		arg.TopicID,
 		arg.GrantUserID,
-		arg.GranteeID,
 		arg.Offset,
 		arg.Limit,
+		arg.GranteeID,
 	)
 	if err != nil {
 		return nil, err

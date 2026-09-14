@@ -5,8 +5,8 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"net/http/cookiejar"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -55,14 +55,11 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 		t.Fatal("Alice's scenario credentials were rejected")
 	}
 
-    // Refresh CSRF token for subsequent tests if necessary
-    noRedirectClient := *client
-    noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	// Refresh CSRF token for subsequent tests if necessary
+	noRedirectClient := *client
+	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-
-	// Wait a moment for async processing (search indexing, etc) just in case
-	time.Sleep(200 * time.Millisecond)
 
 	// 1. Unscoped Unread
 	body := scenarioHTTPGet(t, client, httpServer.URL+"/private/unread")
@@ -77,7 +74,7 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 	require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice in unscoped All Unread list. Body: %s", body)
 	require.Contains(t, body, "Welcome to the staff room.", "Expected staff-welcome thread to be present")
 	require.Contains(t, body, "Coordination plan for Alice and Carol", "Expected coordination-plan thread to be present")
-	require.NotContains(t, body, "Weekly Check-in", "Expected bob-staff-check-in to NOT be present")
+	require.NotContains(t, body, "Bob opening a second Staff Room thread to exercise participant thread creation.", "Expected bob-staff-check-in to NOT be present")
 
 	// Verify Private Custom Index
 	body = scenarioHTTPGet(t, client, httpServer.URL+"/private")
@@ -105,16 +102,16 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 	require.Equal(t, 1, countMatches, "Expected 1 unread private thread for Alice in Coordination topic")
 	require.Contains(t, body, "Coordination plan for Alice and Carol", "Expected coordination-plan thread to be present")
 
-    // Inaccessible Project Room content remains absent (Topic 3)
-    resp, err := noRedirectClient.Get(httpServer.URL+"/private/topic/"+projectRoomTopicID+"/unread")
-    require.NoError(t, err)
-    resp.Body.Close()
+	// Inaccessible Project Room content remains absent (Topic 3)
+	resp, err := noRedirectClient.Get(httpServer.URL + "/private/topic/" + projectRoomTopicID + "/unread")
+	require.NoError(t, err)
+	resp.Body.Close()
 	require.Equal(t, http.StatusNotFound, resp.StatusCode, "Expected 404 for inaccessible topic unread")
 
-    // Verify Unread in Topic links
-    body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+staffRoomTopicID)
+	// Verify Unread in Topic links
+	body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+staffRoomTopicID)
 	require.Contains(t, body, "Unread in Topic (1)", "Expected CustomIndex to render Unread in Topic (1) for Staff Room")
 
-    body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+coordinationTopicID)
+	body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+coordinationTopicID)
 	require.Contains(t, body, "Unread in Topic (1)", "Expected CustomIndex to render Unread in Topic (1) for Coordination")
 }

@@ -1,0 +1,20 @@
+--- internal/db/querier_stub.go
++++ internal/db/querier_stub.go
+@@ -25,6 +25,7 @@
+ // QuerierStub records calls for selective db.Querier methods in tests.
+ type QuerierStub struct {
++	SystemGetSessionByIDFn func(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
+	AppendCommentInSectionForCommenterFn   func(context.Context, AppendCommentInSectionForCommenterParams) (int64, error)
+	SystemHasOtherUserReadItemAtOrBeyondFn func(context.Context, SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)
+
+@@ -3431,3 +3432,10 @@
+	}
+	return err
+ }
++
++func (s *QuerierStub) SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error) {
++	if s.SystemGetSessionByIDFn != nil {
++		return s.SystemGetSessionByIDFn(ctx, sessionID)
++	}
++	return &SystemGetSessionByIDRow{UsersIdusers: 42}, nil
++}

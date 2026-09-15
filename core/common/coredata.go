@@ -131,6 +131,7 @@ type NotFoundLink struct {
 type SessionManager interface {
 	InsertSession(ctx context.Context, sessionID string, userID int32) error
 	DeleteSessionByID(ctx context.Context, sessionID string) error
+	GetSessionUserID(ctx context.Context, sessionID string) (int32, error)
 }
 
 // MailProvider defines the interface required by CoreData for sending emails.

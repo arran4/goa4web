@@ -53,7 +53,7 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 		},
 	}))
 
-	session := &sessions.Session{ID: "sessid", Values: map[any]any{"UID": int32(1)}}
+	session := &sessions.Session{ID: "sessid", Values: map[any]any{"UID": int32(1), "SessionRef": "testref"}}
 	req := httptest.NewRequest("GET", "/", nil)
 	ctx := context.WithValue(req.Context(), core.ContextValues("session"), session)
 	req = req.WithContext(ctx)
@@ -77,6 +77,9 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	)
 	srv.CoreDataMiddleware()(handler).ServeHTTP(httptest.NewRecorder(), req)
 
+	if cdOut == nil {
+		t.Fatalf("Expected valid session, got nil CoreData")
+	}
 	want := []string{"anyone", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
@@ -132,4 +135,30 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	if sm.deleted[0] != "sessid" {
 		t.Fatalf("unexpected session delete: %s", sm.deleted[0])
 	}
+}
+
+
+func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {
+	if sessionID == core.HashSessionRef("testref") {
+		return 1, nil
+	}
+	for _, i := range sm.inserted {
+		if i.sessionID == sessionID {
+			return i.userID, nil
+		}
+	}
+	return 42, nil
+}
+
+
+func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {
+	if sessionID == core.HashSessionRef("testref") {
+		return 1, nil
+	}
+	for _, s := range sm.inserted {
+		if s.sessionID == sessionID {
+			return s.userID, nil
+		}
+	}
+	return 42, nil // default
 }

@@ -55,6 +55,24 @@ func (q *Queries) SystemDeleteSessionByID(ctx context.Context, sessionID string)
 	return err
 }
 
+const systemGetSessionByID = `-- name: SystemGetSessionByID :one
+SELECT session_id, users_idusers
+FROM sessions
+WHERE session_id = ?
+`
+
+type SystemGetSessionByIDRow struct {
+	SessionID    string
+	UsersIdusers int64
+}
+
+func (q *Queries) SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, systemGetSessionByID, sessionID)
+	var i SystemGetSessionByIDRow
+	err := row.Scan(&i.SessionID, &i.UsersIdusers)
+	return &i, err
+}
+
 const systemInsertSession = `-- name: SystemInsertSession :exec
 INSERT INTO sessions (session_id, users_idusers)
 VALUES (?, ?)

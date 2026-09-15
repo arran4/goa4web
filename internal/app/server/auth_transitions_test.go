@@ -31,11 +31,15 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		t.Fatalf("hash password: %v", err)
 	}
 	q.SystemGetLoginFn = func(_ context.Context, username sql.NullString) (*db.SystemGetLoginRow, error) {
-		if username.String != "testuser" {
+		if username.String != "testuser" && username.String != "admin" {
 			return nil, sql.ErrNoRows
 		}
+		uid := int32(10)
+		if username.String == "admin" {
+			uid = 20
+		}
 		return &db.SystemGetLoginRow{
-			Idusers:         10,
+			Idusers:         uid,
 			Passwd:          sql.NullString{String: passwordHash, Valid: true},
 			PasswdAlgorithm: sql.NullString{String: passwordAlgorithm, Valid: true},
 			Username:        username,
@@ -426,7 +430,6 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		t.Fatalf("GET /usr/logout should return 200, got %d", logoutGet.Code)
 	}
 
-
 	// 3103: Failed logout with invalid CSRF token
 	logoutFail := request(http.MethodPost, "/usr/logout_no_csrf", nil, cookieB)
 	if logoutFail.Code != http.StatusForbidden && logoutFail.Code != http.StatusBadRequest {
@@ -439,10 +442,51 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 	reqExp2 := httptest.NewRequest(http.MethodGet, "/", nil)
 	reqExp2.AddCookie(cookieB)
 	sessionExp2, _ := store.Get(reqExp2, cfg.SessionName)
-	refB := sessionExp2.Values["SessionRef"].(string)
+	_ = sessionExp2.Values["SessionRef"].(string)
+
+	// Test 3102: successful A -> B switch revokes A and creates B.
+	loginAdmin := request(http.MethodPost, "/login", url.Values{
+		"task":     {"Login"},
+		"username": {"admin"},
+		"password": {"correcthorse"},
+		"back":     {"/usr"},
+	}, cookieB)
+	cookieAdmin := issue3095Cookie(t, loginAdmin, cfg.SessionName)
+
+	authAdmin := request(http.MethodGet, "/usr", nil, cookieAdmin)
+	if authAdmin.Code != http.StatusOK {
+		t.Fatalf("authAdmin = %d; want 200 OK", authAdmin.Code)
+	}
+
+	authB_replay := request(http.MethodGet, "/usr", nil, cookieB)
+	if authB_replay.Code != http.StatusSeeOther {
+		t.Fatalf("authB_replay = %d; want 303 (redirect to login) because session was revoked on switch", authB_replay.Code)
+	}
+
+	// Test 3102: failed A -> B switch preserves A (actually testing admin -> bad)
+	loginFail := request(http.MethodPost, "/login", url.Values{
+		"task":     {"Login"},
+		"username": {"testuser"},
+		"password": {"wrong"},
+		"back":     {"/usr"},
+	}, cookieAdmin)
+	if loginFail.Code == http.StatusSeeOther {
+		t.Fatalf("Expected bad login to fail, got %d", loginFail.Code)
+	}
+
+	authAdmin2 := request(http.MethodGet, "/usr", nil, cookieAdmin)
+	if authAdmin2.Code != http.StatusOK {
+		t.Fatalf("authAdmin after failed login = %d; want 200 OK", authAdmin2.Code)
+	}
+
+	// Ensure the ref we check later matches our current admin cookie
+	reqExp3 := httptest.NewRequest(http.MethodGet, "/", nil)
+	reqExp3.AddCookie(cookieAdmin)
+	sessionExp3, _ := store.Get(reqExp3, cfg.SessionName)
+	refB := sessionExp3.Values["SessionRef"].(string)
 
 	// 3103: Successful logout
-	logoutSuccess := request(http.MethodPost, "/usr/logout", nil, cookieB)
+	logoutSuccess := request(http.MethodPost, "/usr/logout", nil, cookieAdmin)
 	if logoutSuccess.Code != http.StatusSeeOther {
 		t.Fatalf("POST /usr/logout should return 303, got %d", logoutSuccess.Code)
 	}

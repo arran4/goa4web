@@ -47,6 +47,19 @@ func userLogoutAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Issue 3104: explicit destruction of CSRF session state upon logout
+	csrfSessionName := core.SessionName + "_csrf"
+	csrfSession, _ := core.Store.Get(r, csrfSessionName)
+	if csrfSession != nil {
+		for k := range csrfSession.Values {
+			delete(csrfSession.Values, k)
+		}
+		csrfSession.Options.MaxAge = -1
+		if err := csrfSession.Save(r, w); err != nil {
+			log.Printf("csrf session save error: %v", err)
+		}
+	}
+
 	log.Printf("logout success uid=%d", uid)
 	clearLoggedOutCoreData(cd)
 	handlers.DisableCaching(w)

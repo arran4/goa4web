@@ -266,16 +266,30 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		core.SessionErrorRedirect(w, r, err)
 		return nil, nil
 	}
+	queries := s.Queries
+	if queries == nil {
+		if s.DB != nil {
+			queries = db.NewForDriver(s.DB, s.Config.DBDriver)
+		}
+	}
+	sm := s.SessionManager
+	if sm == nil && queries != nil {
+		sm = db.NewSessionProxy(queries)
+	}
+
 	var uid int32
+	var sessionUID int32
+	if v, ok := session.Values["UID"].(int32); ok {
+		sessionUID = v
+	}
 
 	// Issue 3102: Enforce SessionRef hash check.
 	// Only lookup UID from db based on HashSessionRef.
 	// Reject legacy or missing SessionRefs by clearing the session UID.
-	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" {
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
 		hash := core.HashSessionRef(ref)
-		sm := db.NewSessionProxy(s.Queries)
 		validUID, err := sm.GetSessionUserID(r.Context(), hash)
-		if err == nil && validUID > 0 {
+		if err == nil && validUID > 0 && sessionUID == validUID {
 			uid = validUID
 		} else {
 			// Failed to validate session ref (e.g. revoked).
@@ -305,42 +319,25 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			exp = int64(t)
 		}
 		if exp != 0 && time.Now().Unix() > exp {
-			delete(session.Values, "UID")
-			delete(session.Values, "LoginTime")
-			delete(session.Values, "ExpiryTime")
+			if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
+				_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref))
+			}
+			for k := range session.Values {
+				delete(session.Values, k)
+			}
 			_ = middleware.RedirectToLogin(w, r, session)
 			return nil, nil
 		}
 	}
-	queries := s.Queries
 	if queries == nil {
-		if s.DB == nil {
-			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
-			return nil, nil
-		}
-		queries = db.NewForDriver(s.DB, s.Config.DBDriver)
+		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+		log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+		handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
+		return nil, nil
 	}
 
-	sm := s.SessionManager
-	if sm == nil {
-		sm = db.NewSessionProxy(queries)
-	}
 	if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())
-	}
-
-	if session.ID != "" && sm != nil {
-		if uid != 0 {
-			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
-				log.Printf("insert session: %v", err)
-			}
-		} else {
-			if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
-				log.Printf("delete session: %v", err)
-			}
-		}
 	}
 
 	base := "http://" + r.Host

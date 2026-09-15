@@ -123,12 +123,6 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 
-	if len(sm.deleted) != 1 {
-		t.Fatalf("expected one session delete, got %d", len(sm.deleted))
-	}
-	if sm.deleted[0] != "sessid" {
-		t.Fatalf("unexpected session delete: %s", sm.deleted[0])
-	}
 }
 
 func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {

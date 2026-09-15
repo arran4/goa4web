@@ -127,8 +127,9 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	// Fully authenticated. Now replace session A with session B.
 	sm := cd.SessionManager()
-	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
-		_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref))
+	oldRef := ""
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" {
+		oldRef = ref
 	}
 
 	// Generate a secure SessionRef for the new session
@@ -137,7 +138,14 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("generate session ref: %w", err)
 	}
 	if sm != nil {
-		_ = sm.InsertSession(r.Context(), core.HashSessionRef(newRef), int32(row.Idusers))
+		if err := sm.InsertSession(r.Context(), core.HashSessionRef(newRef), int32(row.Idusers)); err != nil {
+			return fmt.Errorf("insert session: %w", err)
+		}
+	}
+
+	// Now that new session is safely recorded, revoke the old one
+	if oldRef != "" && sm != nil {
+		_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(oldRef))
 	}
 
 	// Deliberately start a new fresh map for security isolation
@@ -151,6 +159,17 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	if err := session.Save(r, w); err != nil {
 		return fmt.Errorf("session save %w", err)
+	}
+
+	// Rotate CSRF session state upon successful login
+	csrfSessionName := core.SessionName + "_csrf"
+	csrfSession, _ := core.Store.Get(r, csrfSessionName)
+	if csrfSession != nil {
+		for k := range csrfSession.Values {
+			delete(csrfSession.Values, k)
+		}
+		// The lazyCSRF middleware will regenerate this on the next protected form render.
+		_ = csrfSession.Save(r, w)
 	}
 
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {

@@ -51,7 +51,13 @@ func (l *lazyCSRF) getToken(currentW http.ResponseWriter, currentR *http.Request
 
 	// Issue 3104: Use a dedicated CSRF session cookie so public GETs aren't forced onto the auth path
 	csrfSessionName := core.SessionName + "_csrf"
-	csrfSession, _ := core.Store.Get(currentR, csrfSessionName)
+	csrfSession, err := core.Store.Get(currentR, csrfSessionName)
+	if err != nil {
+		// Decode error (e.g. malformed or tampered cookie).
+		// Clear it and start fresh.
+		csrfSession.Values = make(map[any]any)
+		// Log error, but proceed to generate a new token
+	}
 
 	tokenUID := readUID(csrfSession.Values[sessionUserKey])
 	token, _ := csrfSession.Values[sessionTokenKey].(string)

@@ -55,7 +55,7 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 		t.Fatal("Alice's scenario credentials were rejected")
 	}
 
-	// Refresh CSRF token for subsequent tests if necessary
+	// Copy client and disable redirect following so the inaccessible-topic 404 can be asserted directly
 	noRedirectClient := *client
 	noRedirectClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse

@@ -617,6 +617,7 @@ type Querier interface {
 	SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
 	SystemGetNewsPostByID(ctx context.Context, idsitenews int64) (int64, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lower string) (*Searchwordlist, error)
+	SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
 	SystemGetUserByEmail(ctx context.Context, email string) (*SystemGetUserByEmailRow, error)
 	SystemGetUserByID(ctx context.Context, idusers int64) (*SystemGetUserByIDRow, error)

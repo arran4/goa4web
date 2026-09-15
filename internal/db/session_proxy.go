@@ -22,3 +22,12 @@ func (sp *SessionProxy) InsertSession(ctx context.Context, sessionID string, use
 func (sp *SessionProxy) DeleteSessionByID(ctx context.Context, sessionID string) error {
 	return sp.SystemDeleteSessionByID(ctx, sessionID)
 }
+
+// GetSessionUserID looks up a session and returns the user ID.
+func (sp *SessionProxy) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {
+	row, err := sp.SystemGetSessionByID(ctx, sessionID)
+	if err != nil {
+		return 0, err
+	}
+	return row.UsersIdusers, nil
+}

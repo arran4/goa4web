@@ -41,14 +41,26 @@ func (l *lazyCSRF) getToken(currentW http.ResponseWriter, currentR *http.Request
 		return l.token
 	}
 
-	session, err := core.GetSession(currentR)
+	// Look up the application session purely to determine the active UID
+	appSession, err := core.Store.Get(currentR, core.SessionName)
 	if err != nil {
 		core.SessionErrorRedirect(currentW, currentR, err)
 		return ""
 	}
-	currentUID := readUID(session.Values["UID"])
-	tokenUID := readUID(session.Values[sessionUserKey])
-	token, _ := session.Values[sessionTokenKey].(string)
+	currentUID := readUID(appSession.Values["UID"])
+
+	// Issue 3104: Use a dedicated CSRF session cookie so public GETs aren't forced onto the auth path
+	csrfSessionName := core.SessionName + "_csrf"
+	csrfSession, err := core.Store.Get(currentR, csrfSessionName)
+	if err != nil {
+		// Decode error (e.g. malformed or tampered cookie).
+		// Clear it and start fresh.
+		csrfSession.Values = make(map[any]any)
+		// Log error, but proceed to generate a new token
+	}
+
+	tokenUID := readUID(csrfSession.Values[sessionUserKey])
+	token, _ := csrfSession.Values[sessionTokenKey].(string)
 
 	if token == "" || currentUID != tokenUID {
 		token, err = newToken()
@@ -57,9 +69,9 @@ func (l *lazyCSRF) getToken(currentW http.ResponseWriter, currentR *http.Request
 			http.Error(currentW, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return ""
 		}
-		session.Values[sessionTokenKey] = token
-		session.Values[sessionUserKey] = currentUID
-		if err := session.Save(currentR, currentW); err != nil {
+		csrfSession.Values[sessionTokenKey] = token
+		csrfSession.Values[sessionUserKey] = currentUID
+		if err := csrfSession.Save(currentR, currentW); err != nil {
 			log.Printf("save csrf token: %v", err)
 			http.Error(currentW, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return ""

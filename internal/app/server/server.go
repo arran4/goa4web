@@ -266,9 +266,40 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		core.SessionErrorRedirect(w, r, err)
 		return nil, nil
 	}
+	queries := s.Queries
+	if queries == nil {
+		if s.DB != nil {
+			queries = db.NewForDriver(s.DB, s.Config.DBDriver)
+		}
+	}
+	sm := s.SessionManager
+	if sm == nil && queries != nil {
+		sm = db.NewSessionProxy(queries)
+	}
+
 	var uid int32
+	var sessionUID int32
 	if v, ok := session.Values["UID"].(int32); ok {
-		uid = v
+		sessionUID = v
+	}
+
+	invalidated := false
+	// Issue 3102: Enforce SessionRef hash check.
+	// Only lookup UID from db based on HashSessionRef.
+	// Reject legacy or missing SessionRefs by clearing the session UID.
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
+		hash := core.HashSessionRef(ref)
+		validUID, err := sm.GetSessionUserID(r.Context(), hash)
+		if err == nil && validUID > 0 && sessionUID == validUID {
+			uid = validUID
+		} else {
+			invalidated = true
+		}
+	} else {
+		// Legacy cookie or missing SessionRef. Do not trust UID.
+		if _, ok := session.Values["UID"]; ok {
+			invalidated = true
+		}
 	}
 	if expi, ok := session.Values["ExpiryTime"]; ok {
 		var exp int64
@@ -281,42 +312,44 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			exp = int64(t)
 		}
 		if exp != 0 && time.Now().Unix() > exp {
-			delete(session.Values, "UID")
-			delete(session.Values, "LoginTime")
-			delete(session.Values, "ExpiryTime")
-			_ = middleware.RedirectToLogin(w, r, session)
-			return nil, nil
+			invalidated = true
 		}
-	}
-	queries := s.Queries
-	if queries == nil {
-		if s.DB == nil {
-			ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
-			log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
-			handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
-			return nil, nil
-		}
-		queries = db.NewForDriver(s.DB, s.Config.DBDriver)
 	}
 
-	sm := s.SessionManager
-	if sm == nil {
-		sm = db.NewSessionProxy(queries)
+	if invalidated {
+		// Canonical safe recovery path for missing/malformed/mismatched/revoked auth.
+		if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
+			if err := sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref)); err != nil {
+				log.Printf("failed to revoke expired/invalidated session: %v", err)
+			}
+		}
+		for k := range session.Values {
+			delete(session.Values, k)
+		}
+		session.Options.MaxAge = -1
+
+		// Clear CSRF session as well
+		csrfSessionName := core.SessionName + "_csrf"
+		if csrfSession, err := core.Store.Get(r, csrfSessionName); err == nil && csrfSession != nil {
+			for k := range csrfSession.Values {
+				delete(csrfSession.Values, k)
+			}
+			csrfSession.Options.MaxAge = -1
+			_ = csrfSession.Save(r, w)
+		}
+
+		_ = middleware.RedirectToLogin(w, r, session)
+		return nil, nil
 	}
+	if queries == nil {
+		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
+		log.Printf("%s: %v", ue.ErrorMessage, ue.Err)
+		handlers.RenderErrorPage(w, r, errors.New(ue.ErrorMessage))
+		return nil, nil
+	}
+
 	if s.Config.DBLogVerbosity > 0 && s.DB != nil {
 		log.Printf("db pool stats: %+v", s.DB.Stats())
-	}
-
-	if session.ID != "" && sm != nil {
-		if uid != 0 {
-			if err := sm.InsertSession(r.Context(), session.ID, uid); err != nil {
-				log.Printf("insert session: %v", err)
-			}
-		} else {
-			if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
-				log.Printf("delete session: %v", err)
-			}
-		}
 	}
 
 	base := "http://" + r.Host

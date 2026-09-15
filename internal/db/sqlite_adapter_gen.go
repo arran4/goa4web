@@ -10039,6 +10039,22 @@ func (s *sqliteQuerier) SystemGetSearchWordByWordLowercased(ctx context.Context,
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error) {
+	res, err := s.q.SystemGetSessionByID(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetSessionByIDRow) *SystemGetSessionByIDRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetSessionByIDRow{
+			SessionID:    v.SessionID,
+			UsersIdusers: int32(v.UsersIdusers),
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetTemplateOverride(ctx context.Context, name string) (string, error) {
 	res, err := s.q.SystemGetTemplateOverride(ctx, name)
 	if err != nil {

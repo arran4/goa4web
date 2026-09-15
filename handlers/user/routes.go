@@ -18,6 +18,7 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 	ur.Use(handlers.IndexMiddleware(CustomIndex))
 	ur.HandleFunc("", UserPage).Methods(http.MethodGet)
 	ur.HandleFunc("/logout", userLogoutPage).Methods(http.MethodGet)
+	ur.HandleFunc("/logout", userLogoutAction).Methods(http.MethodPost)
 	ur.HandleFunc("/lang", userLangPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/lang", handlers.TaskHandler(saveLanguagesTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveLanguagesTask.Matcher())
 	ur.HandleFunc("/lang", handlers.TaskHandler(saveLanguageTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveLanguageTask.Matcher())

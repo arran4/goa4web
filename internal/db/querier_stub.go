@@ -25,6 +25,8 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
+	SystemGetSessionByIDFn func(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
+
 	AppendCommentInSectionForCommenterFn   func(context.Context, AppendCommentInSectionForCommenterParams) (int64, error)
 	SystemHasOtherUserReadItemAtOrBeyondFn func(context.Context, SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)
 
@@ -3430,4 +3432,11 @@ func (s *QuerierStub) SystemCopyPrivateThreadGrantsToThread(ctx context.Context,
 		return fn(ctx, arg)
 	}
 	return err
+}
+
+func (s *QuerierStub) SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error) {
+	if s.SystemGetSessionByIDFn != nil {
+		return s.SystemGetSessionByIDFn(ctx, sessionID)
+	}
+	return &SystemGetSessionByIDRow{UsersIdusers: 42}, nil
 }

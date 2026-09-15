@@ -11,3 +11,8 @@ SELECT s.session_id, s.users_idusers, u.username
 FROM sessions s
 LEFT JOIN users u ON u.idusers = s.users_idusers
 ORDER BY s.session_id;
+
+-- name: SystemGetSessionByID :one
+SELECT session_id, users_idusers
+FROM sessions
+WHERE session_id = ?;

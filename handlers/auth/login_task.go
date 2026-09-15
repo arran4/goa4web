@@ -127,20 +127,58 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	// Fully authenticated. Now replace session A with session B.
 	sm := cd.SessionManager()
-	if session.ID != "" && sm != nil {
-		_ = sm.DeleteSessionByID(r.Context(), session.ID)
+	oldRef := ""
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" {
+		oldRef = ref
+	}
+
+	// Generate a secure SessionRef for the new session
+	newRef, err := core.NewSessionRef()
+	if err != nil {
+		return fmt.Errorf("generate session ref: %w", err)
+	}
+	if sm != nil {
+		if err := sm.InsertSession(r.Context(), core.HashSessionRef(newRef), int32(row.Idusers)); err != nil {
+			return fmt.Errorf("insert session: %w", err)
+		}
+	}
+
+	// Now that new session is safely recorded, revoke the old one
+	if oldRef != "" && sm != nil {
+		if err := sm.DeleteSessionByID(r.Context(), core.HashSessionRef(oldRef)); err != nil {
+			// Rollback new session if we couldn't destroy the old one to avoid leaked/duplicate sessions
+			_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(newRef))
+			return fmt.Errorf("failed to revoke previous session: %w", err)
+		}
 	}
 
 	// Deliberately start a new fresh map for security isolation
 	session.Values = make(map[any]any)
 	session.Values["UID"] = int32(row.Idusers)
+	session.Values["SessionRef"] = newRef
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 
 	backURL, _ := cd.SanitizeBackURL(r, r.FormValue("back"))
 
 	if err := session.Save(r, w); err != nil {
+		// Rollback session from db if we failed to save browser cookie
+		if sm != nil {
+			_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(newRef))
+		}
 		return fmt.Errorf("session save %w", err)
+	}
+
+	// Rotate CSRF session state upon successful login
+	csrfSessionName := core.SessionName + "_csrf"
+	if csrfSession, err := core.Store.Get(r, csrfSessionName); err == nil && csrfSession != nil {
+		for k := range csrfSession.Values {
+			delete(csrfSession.Values, k)
+		}
+		// The lazyCSRF middleware will regenerate this on the next protected form render.
+		if err := csrfSession.Save(r, w); err != nil {
+			log.Printf("csrf session save error during login: %v", err)
+		}
 	}
 
 	if cd.Config.LogFlags&config.LogFlagAuth != 0 {

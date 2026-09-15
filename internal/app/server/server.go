@@ -283,6 +283,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		sessionUID = v
 	}
 
+	invalidated := false
 	// Issue 3102: Enforce SessionRef hash check.
 	// Only lookup UID from db based on HashSessionRef.
 	// Reject legacy or missing SessionRefs by clearing the session UID.
@@ -292,20 +293,12 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		if err == nil && validUID > 0 && sessionUID == validUID {
 			uid = validUID
 		} else {
-			// Failed to validate session ref (e.g. revoked).
-			// Do NOT log out fully, just make this session unauthenticated.
-			for k := range session.Values {
-				delete(session.Values, k)
-			}
-			_ = session.Save(r, w)
+			invalidated = true
 		}
 	} else {
 		// Legacy cookie or missing SessionRef. Do not trust UID.
 		if _, ok := session.Values["UID"]; ok {
-			for k := range session.Values {
-				delete(session.Values, k)
-			}
-			_ = session.Save(r, w)
+			invalidated = true
 		}
 	}
 	if expi, ok := session.Values["ExpiryTime"]; ok {
@@ -319,15 +312,34 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			exp = int64(t)
 		}
 		if exp != 0 && time.Now().Unix() > exp {
-			if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
-				_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref))
-			}
-			for k := range session.Values {
-				delete(session.Values, k)
-			}
-			_ = middleware.RedirectToLogin(w, r, session)
-			return nil, nil
+			invalidated = true
 		}
+	}
+
+	if invalidated {
+		// Canonical safe recovery path for missing/malformed/mismatched/revoked auth.
+		if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
+			if err := sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref)); err != nil {
+				log.Printf("failed to revoke expired/invalidated session: %v", err)
+			}
+		}
+		for k := range session.Values {
+			delete(session.Values, k)
+		}
+		session.Options.MaxAge = -1
+
+		// Clear CSRF session as well
+		csrfSessionName := core.SessionName + "_csrf"
+		if csrfSession, err := core.Store.Get(r, csrfSessionName); err == nil && csrfSession != nil {
+			for k := range csrfSession.Values {
+				delete(csrfSession.Values, k)
+			}
+			csrfSession.Options.MaxAge = -1
+			_ = csrfSession.Save(r, w)
+		}
+
+		_ = middleware.RedirectToLogin(w, r, session)
+		return nil, nil
 	}
 	if queries == nil {
 		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}

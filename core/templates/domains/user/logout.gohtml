@@ -4,7 +4,7 @@
     <h2>Log Out</h2>
     <p>Are you sure you want to log out?</p>
     <form action="/usr/logout" method="POST">
-        {{ template "csrf" . }}
+        {{ csrfField }}
         <button type="submit" class="button">Log Out</button>
         <a href="/" class="button secondary">Cancel</a>
     </form>

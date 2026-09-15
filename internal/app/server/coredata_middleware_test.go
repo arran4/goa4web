@@ -80,6 +80,9 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	if cdOut == nil {
 		t.Fatalf("Expected valid session, got nil CoreData")
 	}
+	if cdOut == nil {
+		t.Fatalf("Expected valid session, got nil CoreData")
+	}
 	want := []string{"anyone", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
@@ -148,17 +151,4 @@ func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID st
 		}
 	}
 	return 42, nil
-}
-
-
-func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {
-	if sessionID == core.HashSessionRef("testref") {
-		return 1, nil
-	}
-	for _, s := range sm.inserted {
-		if s.sessionID == sessionID {
-			return s.userID, nil
-		}
-	}
-	return 42, nil // default
 }

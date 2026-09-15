@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/tasks"
 
 	"github.com/arran4/goa4web/core"
 )
@@ -16,23 +17,29 @@ import (
 func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Logout"
+	_ = tasks.Template("domains/user/logout.gohtml").Handle(w, r, nil)
+}
+
+func userLogoutAction(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	session, err := core.GetSession(r)
 	if err != nil {
 		core.SessionError(w, r, err)
 	}
 	uid, _ := session.Values["UID"].(int32)
-	log.Printf("logout request session=%s uid=%d", handlers.HashSessionID(session.ID), uid)
 
-	// session retrieved earlier
-	delete(session.Values, "UID")
-	delete(session.Values, "LoginTime")
-	delete(session.Values, "ExpiryTime")
 	sm := cd.SessionManager()
-	if session.ID != "" {
-		if err := sm.DeleteSessionByID(r.Context(), session.ID); err != nil {
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" {
+		if err := sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref)); err != nil {
 			log.Printf("delete session: %v", err)
 		}
 	}
+
+	// Clear all values
+	for k := range session.Values {
+		delete(session.Values, k)
+	}
+	session.Options.MaxAge = -1
 
 	if err := session.Save(r, w); err != nil {
 		log.Printf("session.Save Error: %s", err)
@@ -40,10 +47,8 @@ func userLogoutPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("logout success session=%s", handlers.HashSessionID(session.ID))
-
+	log.Printf("logout success uid=%d", uid)
 	clearLoggedOutCoreData(cd)
-
 	handlers.DisableCaching(w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

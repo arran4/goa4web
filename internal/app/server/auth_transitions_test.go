@@ -16,6 +16,7 @@ import (
 	"github.com/arran4/goa4web/handlers/news"
 	"github.com/arran4/goa4web/handlers/user"
 	"github.com/arran4/goa4web/internal/db"
+
 	"github.com/arran4/goa4web/internal/email"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
@@ -80,33 +81,52 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		WithSessionManager(sessionManager),
 	)
 	handler := srv.CoreDataMiddleware()(r)
+	// Add real CSRF middleware wrapping
+	// srv.Config.CSRFEnabled = false
+	// handler = csrfmw.NewCSRFMiddleware(cfg.SessionSecret, cfg.BaseURL, "test")(handler)
+
+	// Track the csrf cookie across requests implicitly like a jar.
+	var csrfCookie *http.Cookie
 
 	request := func(method, target string, form url.Values, cookie *http.Cookie) *httptest.ResponseRecorder {
 		t.Helper()
 
 		var csrfToken string
-		if method == http.MethodPost && target != "/usr/logout_no_csrf" { // allow testing missing csrf
-			// Fetch the token first via GET
-			getReq := httptest.NewRequest(http.MethodGet, target, nil)
+		if method == http.MethodPost && !strings.Contains(target, "_no_csrf") { // allow testing missing csrf
+			// Fetch the token first via GET from an anonymous page to be safe
+			getReq := httptest.NewRequest(http.MethodGet, "/login", nil)
 			if cookie != nil {
 				getReq.AddCookie(cookie)
 			}
+			if csrfCookie != nil {
+				getReq.AddCookie(csrfCookie)
+			}
+
 			getRr := httptest.NewRecorder()
 			handler.ServeHTTP(getRr, getReq)
-			if cookie == nil {
-				// Extract generated csrf cookie
-				for _, c := range getRr.Header().Values("Set-Cookie") {
-					if strings.HasPrefix(c, cfg.SessionName+"_csrf=") {
-						cookie = &http.Cookie{Name: cfg.SessionName + "_csrf", Value: strings.Split(c, "=")[1]}
-						// just split by ; to get raw value
-						cookie.Value = strings.Split(cookie.Value, ";")[0]
-					}
+			// Update internal jar
+			for _, c := range getRr.Header().Values("Set-Cookie") {
+				if strings.HasPrefix(c, cfg.SessionName+"_csrf=") {
+					csrfCookie = &http.Cookie{Name: cfg.SessionName + "_csrf", Value: strings.Split(c, "=")[1]}
+					csrfCookie.Value = strings.Split(csrfCookie.Value, ";")[0]
 				}
 			}
 			// Extracted token from custom header if we injected it, but f.io/csrf uses cookie + header
 			// To keep it simple, we use the library's mechanism.
-			// Actually gorilla/csrf puts it in the X-CSRF-Token header on the response when fetched?
-			csrfToken = getRr.Header().Get("X-CSRF-Token")
+			// We extract the actual token from the rendered form body: <input type="hidden" name="gorilla.csrf.Token" value="...">
+			bodyStr := getRr.Body.String()
+			tokenPrefix := "name=\"gorilla.csrf.Token\" value=\""
+			idx := strings.Index(bodyStr, tokenPrefix)
+			if idx != -1 {
+				val := bodyStr[idx+len(tokenPrefix):]
+				endIdx := strings.Index(val, "\"")
+				if endIdx != -1 {
+					csrfToken = val[:endIdx]
+				}
+			}
+			if csrfToken == "" {
+				csrfToken = getRr.Header().Get("X-CSRF-Token") // fallback
+			}
 		}
 
 		var body *strings.Reader
@@ -124,6 +144,16 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		}
 		if csrfToken != "" {
 			req.Header.Set("X-CSRF-Token", csrfToken)
+			if form != nil {
+				form.Set("gorilla.csrf.Token", csrfToken)
+				body = strings.NewReader(form.Encode())
+				req, _ = http.NewRequest(method, target, body)
+				if cookie != nil {
+					req.AddCookie(cookie)
+				}
+				req.Header.Set("X-CSRF-Token", csrfToken)
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			}
 		}
 
 		rr := httptest.NewRecorder()

@@ -307,4 +307,89 @@ func TestScenarioServeCmd_CSRFCachingGuarantees(t *testing.T) {
 			t.Fatalf("Replay of pre-logout cookie succeeded, expected failure")
 		}
 	})
+	t.Run("independent_csrf_jars", func(t *testing.T) {
+		// Jar A: Alice
+		reqA := httptest.NewRequest(http.MethodGet, "http://localhost/login", nil)
+		rrA := httptest.NewRecorder()
+		router.ServeHTTP(rrA, reqA)
+
+		var csrfCookieA *http.Cookie
+		for _, c := range rrA.Result().Cookies() {
+			if strings.HasPrefix(c.Name, "goa4web_session_csrf") || strings.HasPrefix(c.Name, "my-session_csrf") {
+				csrfCookieA = c
+				if strings.Contains(csrfCookieA.Value, ";") {
+					csrfCookieA.Value = strings.Split(csrfCookieA.Value, ";")[0]
+				}
+			}
+		}
+
+		bodyStr := rrA.Body.String()
+		tokenPrefix := "name=\"gorilla.csrf.Token\" value=\""
+		idx := strings.Index(bodyStr, tokenPrefix)
+		if idx == -1 {
+			t.Fatalf("Could not find CSRF token in login page A")
+		}
+		val := bodyStr[idx+len(tokenPrefix):]
+		tokenA := val[:strings.Index(val, "\"")]
+
+		// Jar B: Bob
+		reqB := httptest.NewRequest(http.MethodGet, "http://localhost/login", nil)
+		rrB := httptest.NewRecorder()
+		router.ServeHTTP(rrB, reqB)
+
+		var csrfCookieB *http.Cookie
+		for _, c := range rrB.Result().Cookies() {
+			if strings.HasPrefix(c.Name, "goa4web_session_csrf") || strings.HasPrefix(c.Name, "my-session_csrf") {
+				csrfCookieB = c
+				if strings.Contains(csrfCookieB.Value, ";") {
+					csrfCookieB.Value = strings.Split(csrfCookieB.Value, ";")[0]
+				}
+			}
+		}
+
+		bodyStr = rrB.Body.String()
+		idx = strings.Index(bodyStr, tokenPrefix)
+		if idx == -1 {
+			t.Fatalf("Could not find CSRF token in login page B")
+		}
+		val = bodyStr[idx+len(tokenPrefix):]
+		tokenB := val[:strings.Index(val, "\"")]
+
+		// Ensure token A does not work with Jar B's cookie
+		loginForm := url.Values{
+			"task":               {"Login"},
+			"username":           {"alice"},
+			"password":           {"alice-test"},
+			"gorilla.csrf.Token": {tokenA},
+		}
+		reqMismatched := httptest.NewRequest(http.MethodPost, "http://localhost/login", strings.NewReader(loginForm.Encode()))
+		reqMismatched.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		reqMismatched.Header.Set("X-CSRF-Token", tokenA)
+		if csrfCookieB != nil {
+			reqMismatched.AddCookie(csrfCookieB)
+		}
+		rrMismatched := httptest.NewRecorder()
+		router.ServeHTTP(rrMismatched, reqMismatched)
+
+		if rrMismatched.Result().StatusCode != http.StatusForbidden {
+			t.Fatalf("POST /login with mismatched CSRF jar should be 403, got %d", rrMismatched.Result().StatusCode)
+		}
+
+		// Ensure token B works with Jar B's cookie
+		loginForm.Set("gorilla.csrf.Token", tokenB)
+		loginForm.Set("username", "bob")
+		loginForm.Set("password", "bob-test")
+		reqValid := httptest.NewRequest(http.MethodPost, "http://localhost/login", strings.NewReader(loginForm.Encode()))
+		reqValid.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		reqValid.Header.Set("X-CSRF-Token", tokenB)
+		if csrfCookieB != nil {
+			reqValid.AddCookie(csrfCookieB)
+		}
+		rrValid := httptest.NewRecorder()
+		router.ServeHTTP(rrValid, reqValid)
+
+		if rrValid.Result().StatusCode != http.StatusSeeOther {
+			t.Fatalf("POST /login with valid CSRF jar should be 303, got %d", rrValid.Result().StatusCode)
+		}
+	})
 }

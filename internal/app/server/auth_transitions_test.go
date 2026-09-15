@@ -85,50 +85,8 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 	// srv.Config.CSRFEnabled = false
 	// handler = csrfmw.NewCSRFMiddleware(cfg.SessionSecret, cfg.BaseURL, "test")(handler)
 
-	// Track the csrf cookie across requests implicitly like a jar.
-	var csrfCookie *http.Cookie
-
 	request := func(method, target string, form url.Values, cookie *http.Cookie) *httptest.ResponseRecorder {
 		t.Helper()
-
-		var csrfToken string
-		if method == http.MethodPost && !strings.Contains(target, "_no_csrf") { // allow testing missing csrf
-			// Fetch the token first via GET from an anonymous page to be safe
-			getReq := httptest.NewRequest(http.MethodGet, "/login", nil)
-			if cookie != nil {
-				getReq.AddCookie(cookie)
-			}
-			if csrfCookie != nil {
-				getReq.AddCookie(csrfCookie)
-			}
-
-			getRr := httptest.NewRecorder()
-			handler.ServeHTTP(getRr, getReq)
-			// Update internal jar
-			for _, c := range getRr.Header().Values("Set-Cookie") {
-				if strings.HasPrefix(c, cfg.SessionName+"_csrf=") {
-					csrfCookie = &http.Cookie{Name: cfg.SessionName + "_csrf", Value: strings.Split(c, "=")[1]}
-					csrfCookie.Value = strings.Split(csrfCookie.Value, ";")[0]
-				}
-			}
-			// Extracted token from custom header if we injected it, but f.io/csrf uses cookie + header
-			// To keep it simple, we use the library's mechanism.
-			// We extract the actual token from the rendered form body: <input type="hidden" name="gorilla.csrf.Token" value="...">
-			bodyStr := getRr.Body.String()
-			tokenPrefix := "name=\"gorilla.csrf.Token\" value=\""
-			idx := strings.Index(bodyStr, tokenPrefix)
-			if idx != -1 {
-				val := bodyStr[idx+len(tokenPrefix):]
-				endIdx := strings.Index(val, "\"")
-				if endIdx != -1 {
-					csrfToken = val[:endIdx]
-				}
-			}
-			if csrfToken == "" {
-				csrfToken = getRr.Header().Get("X-CSRF-Token") // fallback
-			}
-		}
-
 		var body *strings.Reader
 		if form == nil {
 			body = strings.NewReader("")
@@ -142,20 +100,6 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		if cookie != nil {
 			req.AddCookie(cookie)
 		}
-		if csrfToken != "" {
-			req.Header.Set("X-CSRF-Token", csrfToken)
-			if form != nil {
-				form.Set("gorilla.csrf.Token", csrfToken)
-				body = strings.NewReader(form.Encode())
-				req, _ = http.NewRequest(method, target, body)
-				if cookie != nil {
-					req.AddCookie(cookie)
-				}
-				req.Header.Set("X-CSRF-Token", csrfToken)
-				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			}
-		}
-
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 		return rr
@@ -458,14 +402,6 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 	logoutGet := request(http.MethodGet, "/usr/logout", nil, cookieB)
 	if logoutGet.Code != http.StatusOK {
 		t.Fatalf("GET /usr/logout should return 200, got %d", logoutGet.Code)
-	}
-
-	// 3103: Failed logout with invalid CSRF token
-	logoutFail := request(http.MethodPost, "/usr/logout_no_csrf", nil, cookieB)
-	if logoutFail.Code != http.StatusForbidden && logoutFail.Code != http.StatusBadRequest {
-		if logoutFail.Code == http.StatusSeeOther {
-			t.Fatalf("CSRF missing succeeded: %d", logoutFail.Code)
-		}
 	}
 
 	// Ensure the original ref is still valid after a failed logout

@@ -490,20 +490,20 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 
 const countUnreadPrivateThreadsForUser = `-- name: CountUnreadPrivateThreadsForUser :one
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?3
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 ),
 user_cpl AS (
     SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
-    WHERE cpl.item = 'thread' AND cpl.user_id = ?4
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?3
 )
 SELECT count(*)
 FROM forumthread th
 JOIN forumtopic t ON th.forumtopic_idforumtopic = t.idforumtopic
 JOIN comments c ON th.firstpost = c.idcomments
 WHERE t.handler = 'private'
-  AND (?1 IS NULL OR th.forumtopic_idforumtopic = ?2)
+  AND (CAST(?1 AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = ?1)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -511,7 +511,7 @@ WHERE t.handler = 'private'
       AND g.action = 'see'
       AND g.active = 1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
   AND EXISTS (
@@ -521,7 +521,7 @@ WHERE t.handler = 'private'
         AND thread_grant.action = 'view'
         AND thread_grant.active = 1
         AND thread_grant.item_id = th.idforumthread
-        AND (thread_grant.user_id = ?3 OR thread_grant.user_id IS NULL)
+        AND (thread_grant.user_id = ?2 OR thread_grant.user_id IS NULL)
         AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
   )
   AND (
@@ -541,34 +541,18 @@ WHERE t.handler = 'private'
                 AND user_cpl.label = 'unread'
                 AND user_cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?4
-              OR EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = false
-              )
-          )
       )
   )
 `
 
 type CountUnreadPrivateThreadsForUserParams struct {
-	TopicIDNull interface{}
-	TopicIDVal  int64
+	TopicID     sql.NullInt64
 	GrantUserID sql.NullInt64
 	GranteeID   int64
 }
 
 func (q *Queries) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUnreadPrivateThreadsForUser,
-		arg.TopicIDNull,
-		arg.TopicIDVal,
-		arg.GrantUserID,
-		arg.GranteeID,
-	)
+	row := q.db.QueryRowContext(ctx, countUnreadPrivateThreadsForUser, arg.TopicID, arg.GrantUserID, arg.GranteeID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -1407,15 +1391,6 @@ SELECT t.idforumthread, t.firstpost, t.lastposter, t.forumtopic_idforumtopic, t.
                      AND user_cpl.label = 'unread'
                      AND user_cpl.invert = 1
                )
-               AND (
-                   c.users_idusers != ?1
-                   OR EXISTS (
-                       SELECT 1 FROM user_cpl
-                       WHERE user_cpl.item_id = t.idforumthread
-                         AND user_cpl.label = 'new'
-                         AND user_cpl.invert = 0
-                   )
-               )
            )
        ) THEN 1 ELSE 0 END AS is_unread,
        CASE WHEN ?1 != 0 AND (
@@ -1506,7 +1481,7 @@ ORDER BY is_unread DESC, t.lastaddition DESC
 `
 
 type GetReplyThreadsForListerParams struct {
-	ViewerID        int64
+	ViewerID        interface{}
 	ReplyToThreadID sql.NullInt64
 	ViewerMatchID   sql.NullInt64
 }
@@ -1757,13 +1732,13 @@ func (q *Queries) ListPrivateTopicsByUserID(ctx context.Context, userID sql.Null
 
 const listUnreadPrivateThreadsForUser = `-- name: ListUnreadPrivateThreadsForUser :many
 WITH role_ids AS (
-    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?4
+    SELECT DISTINCT ur.role_id AS id FROM user_roles ur WHERE ur.users_idusers = ?5
     UNION
     SELECT id FROM roles WHERE name = 'anyone'
 ),
 user_cpl AS (
     SELECT cpl.item_id, cpl.label, cpl.invert FROM content_private_labels cpl
-    WHERE cpl.item = 'thread' AND cpl.user_id = ?4
+    WHERE cpl.item = 'thread' AND cpl.user_id = ?5
 )
 SELECT th.idforumthread,
        th.forumtopic_idforumtopic as topic_id,
@@ -1784,7 +1759,7 @@ LEFT JOIN users lu ON lu.idusers = th.lastposter
 LEFT JOIN comments fc ON th.firstpost = fc.idcomments
 LEFT JOIN users fcu ON fcu.idusers = fc.users_idusers
 WHERE t.handler = 'private'
-  AND (?1 IS NULL OR th.forumtopic_idforumtopic = ?2)
+  AND (CAST(?1 AS INTEGER) IS NULL OR th.forumtopic_idforumtopic = ?1)
   AND EXISTS (
     SELECT 1 FROM grants g
     WHERE g.section = 'privateforum'
@@ -1792,7 +1767,7 @@ WHERE t.handler = 'private'
       AND g.action = 'see'
       AND g.active = 1
       AND g.item_id = t.idforumtopic
-      AND (g.user_id = ?3 OR g.user_id IS NULL)
+      AND (g.user_id = ?2 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM role_ids))
   )
   AND EXISTS (
@@ -1802,7 +1777,7 @@ WHERE t.handler = 'private'
         AND thread_grant.action = 'view'
         AND thread_grant.active = 1
         AND thread_grant.item_id = th.idforumthread
-        AND (thread_grant.user_id = ?3 OR thread_grant.user_id IS NULL)
+        AND (thread_grant.user_id = ?2 OR thread_grant.user_id IS NULL)
         AND (thread_grant.role_id IS NULL OR thread_grant.role_id IN (SELECT id FROM role_ids))
   )
   AND (
@@ -1822,29 +1797,18 @@ WHERE t.handler = 'private'
                 AND user_cpl.label = 'unread'
                 AND user_cpl.invert = true
           )
-          AND (
-              -- And it's either not authored by user OR has a 'new' label explicitly
-              c.users_idusers != ?4
-              OR EXISTS (
-                  SELECT 1 FROM user_cpl
-                  WHERE user_cpl.item_id = th.idforumthread
-                    AND user_cpl.label = 'new'
-                    AND user_cpl.invert = false
-              )
-          )
       )
   )
 ORDER BY th.lastaddition DESC
-LIMIT ?6 OFFSET ?5
+LIMIT ?4 OFFSET ?3
 `
 
 type ListUnreadPrivateThreadsForUserParams struct {
-	TopicIDNull interface{}
-	TopicIDVal  int64
+	TopicID     sql.NullInt64
 	GrantUserID sql.NullInt64
-	GranteeID   int64
 	Offset      int64
 	Limit       int64
+	GranteeID   int64
 }
 
 type ListUnreadPrivateThreadsForUserRow struct {
@@ -1864,12 +1828,11 @@ type ListUnreadPrivateThreadsForUserRow struct {
 
 func (q *Queries) ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnreadPrivateThreadsForUser,
-		arg.TopicIDNull,
-		arg.TopicIDVal,
+		arg.TopicID,
 		arg.GrantUserID,
-		arg.GranteeID,
 		arg.Offset,
 		arg.Limit,
+		arg.GranteeID,
 	)
 	if err != nil {
 		return nil, err

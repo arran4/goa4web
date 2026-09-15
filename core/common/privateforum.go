@@ -237,15 +237,14 @@ func WithPrivateForumTopics(topics []*PrivateTopic) CoreOption {
 }
 
 // UnreadPrivateThreads fetches the unread private threads for the current user.
-func (cd *CoreData) UnreadPrivateThreads(limit, offset int32, topicIDNull sql.NullInt32, topicIDVal int32) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
+func (cd *CoreData) UnreadPrivateThreads(limit, offset int32, topicIDNull sql.NullInt32) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
 	if cd.queries == nil {
 		return nil, nil
 	}
 	return cd.queries.ListUnreadPrivateThreadsForUser(cd.ctx, db.ListUnreadPrivateThreadsForUserParams{
 		GranteeID:   cd.UserID,
 		GrantUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		TopicIDNull: topicIDNull,
-		TopicIDVal:  topicIDVal,
+		TopicID:     topicIDNull,
 		Limit:       limit,
 		Offset:      offset,
 	})
@@ -257,15 +256,12 @@ func (cd *CoreData) UnreadPrivateThreadsCount(topicID int32) (int64, error) {
 		return 0, nil
 	}
 	var topicIDNull sql.NullInt32
-	var topicIDVal int32
 	if topicID > 0 {
 		topicIDNull = sql.NullInt32{Int32: topicID, Valid: true}
-		topicIDVal = topicID
 	}
 	return cd.queries.CountUnreadPrivateThreadsForUser(cd.ctx, db.CountUnreadPrivateThreadsForUserParams{
 		GranteeID:   cd.UserID,
 		GrantUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
-		TopicIDNull: topicIDNull,
-		TopicIDVal:  topicIDVal,
+		TopicID:     topicIDNull,
 	})
 }

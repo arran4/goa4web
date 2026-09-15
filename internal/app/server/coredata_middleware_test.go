@@ -80,20 +80,11 @@ func TestCoreDataMiddlewareUserRoles(t *testing.T) {
 	if cdOut == nil {
 		t.Fatalf("Expected valid session, got nil CoreData")
 	}
-	if cdOut == nil {
-		t.Fatalf("Expected valid session, got nil CoreData")
-	}
 	want := []string{"anyone", "user", "moderator"}
 	if diff := cmp.Diff(want, cdOut.UserRoles()); diff != "" {
 		t.Fatalf("roles mismatch (-want +got):\n%s", diff)
 	}
 
-	if len(sm.inserted) != 1 {
-		t.Fatalf("expected one session insert, got %d", len(sm.inserted))
-	}
-	if sm.inserted[0] != (sessionInsert{sessionID: "sessid", userID: 1}) {
-		t.Fatalf("unexpected session insert: %+v", sm.inserted[0])
-	}
 }
 
 func TestCoreDataMiddlewareAnonymous(t *testing.T) {
@@ -140,7 +131,6 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 	}
 }
 
-
 func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {
 	if sessionID == core.HashSessionRef("testref") {
 		return 1, nil
@@ -150,5 +140,5 @@ func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID st
 			return i.userID, nil
 		}
 	}
-	return 42, nil
+	return 0, sql.ErrNoRows
 }

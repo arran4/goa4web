@@ -1,0 +1,12 @@
+{{- /*gotype: github.com/arran4/goa4web/core/common.CoreData*/ -}}
+{{ template "header" . }}
+<div class="user-action-form">
+    <h2>Log Out</h2>
+    <p>Are you sure you want to log out?</p>
+    <form action="/usr/logout" method="POST">
+        {{ template "csrf" . }}
+        <button type="submit" class="button">Log Out</button>
+        <a href="/" class="button secondary">Cancel</a>
+    </form>
+</div>
+{{ template "tail" . }}

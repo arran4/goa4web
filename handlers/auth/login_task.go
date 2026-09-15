@@ -127,13 +127,23 @@ func (LoginTask) Action(w http.ResponseWriter, r *http.Request) any {
 
 	// Fully authenticated. Now replace session A with session B.
 	sm := cd.SessionManager()
-	if session.ID != "" && sm != nil {
-		_ = sm.DeleteSessionByID(r.Context(), session.ID)
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
+		_ = sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref))
+	}
+
+	// Generate a secure SessionRef for the new session
+	newRef, err := core.NewSessionRef()
+	if err != nil {
+		return fmt.Errorf("generate session ref: %w", err)
+	}
+	if sm != nil {
+		_ = sm.InsertSession(r.Context(), core.HashSessionRef(newRef), int32(row.Idusers))
 	}
 
 	// Deliberately start a new fresh map for security isolation
 	session.Values = make(map[any]any)
 	session.Values["UID"] = int32(row.Idusers)
+	session.Values["SessionRef"] = newRef
 	session.Values["LoginTime"] = time.Now().Unix()
 	session.Values["ExpiryTime"] = time.Now().AddDate(1, 0, 0).Unix()
 

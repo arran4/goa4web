@@ -267,8 +267,32 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		return nil, nil
 	}
 	var uid int32
-	if v, ok := session.Values["UID"].(int32); ok {
-		uid = v
+
+	// Issue 3102: Enforce SessionRef hash check.
+	// Only lookup UID from db based on HashSessionRef.
+	// Reject legacy or missing SessionRefs by clearing the session UID.
+	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" {
+		hash := core.HashSessionRef(ref)
+		sm := db.NewSessionProxy(s.Queries)
+		validUID, err := sm.GetSessionUserID(r.Context(), hash)
+		if err == nil && validUID > 0 {
+			uid = validUID
+		} else {
+			// Failed to validate session ref (e.g. revoked).
+			// Do NOT log out fully, just make this session unauthenticated.
+			for k := range session.Values {
+				delete(session.Values, k)
+			}
+			_ = session.Save(r, w)
+		}
+	} else {
+		// Legacy cookie or missing SessionRef. Do not trust UID.
+		if _, ok := session.Values["UID"]; ok {
+			for k := range session.Values {
+				delete(session.Values, k)
+			}
+			_ = session.Save(r, w)
+		}
 	}
 	if expi, ok := session.Values["ExpiryTime"]; ok {
 		var exp int64

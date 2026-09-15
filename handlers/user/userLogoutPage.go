@@ -32,6 +32,8 @@ func userLogoutAction(w http.ResponseWriter, r *http.Request) {
 	if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" {
 		if err := sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref)); err != nil {
 			log.Printf("delete session: %v", err)
+			handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
+			return
 		}
 	}
 

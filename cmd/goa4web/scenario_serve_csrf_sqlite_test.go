@@ -76,13 +76,20 @@ func TestScenarioServeCmd_CSRFCachingGuarantees(t *testing.T) {
 		}
 
 		hasAppCookie := false
+		hasMainCookie := false
 		for _, c := range res.Header.Values("Set-Cookie") {
 			if strings.HasPrefix(c, "my-session_csrf=") || strings.HasPrefix(c, "goa4web_session_csrf=") {
 				hasAppCookie = true
 			}
+			if strings.HasPrefix(c, "my-session=") || strings.HasPrefix(c, "goa4web_session=") {
+				hasMainCookie = true
+			}
 		}
 		if !hasAppCookie {
 			t.Errorf("Expected CSRF session cookie for /login because it contains a CSRF form")
+		}
+		if hasMainCookie {
+			t.Errorf("Expected NO main application cookie for /login because it only renders a CSRF form")
 		}
 
 		cc := res.Header.Get("Cache-Control")

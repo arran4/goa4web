@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/internal/tasks"
 
@@ -22,7 +23,8 @@ import (
 func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
+	verifiedPath := share.VerifyAndGetPath(r, cd.ShareSignKey)
+	if verifiedPath == "" {
 		log.Printf("[Share] Invalid signature for URL: %s", r.URL.String())
 		// No valid signature? If user is logged in, redirect to actual content (they might have perm).
 		// If not logged in, show 403.
@@ -38,12 +40,12 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	threadID, _ := strconv.Atoi(vars["thread"])
-	topicID, _ := strconv.Atoi(vars["topic"])
+	_ = vars["topic"]
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID)
-		http.Redirect(w, r, actualURL, http.StatusFound)
+		redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+		http.Redirect(w, r, redirectPath, http.StatusFound)
 		return
 	}
 
@@ -74,7 +76,8 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
-	renderSharedPreview(w, r, cd, fmt.Sprintf("/private/topic/%d/thread/%d", topicID, threadID),
+	redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+	renderSharedPreview(w, r, cd, redirectPath,
 		share.WithTitle(ogTitle),
 		share.WithBody(ogDescription),
 		share.WithSection("Private Forum Thread"),
@@ -87,12 +90,13 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	// Verify signature
-	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
+	verifiedPath := share.VerifyAndGetPath(r, cd.ShareSignKey)
+	if verifiedPath == "" {
 		log.Printf("[Private Forum Share] Invalid signature for URL: %s", r.URL.String())
 		if cd.UserID != 0 {
 			vars := mux.Vars(r)
 			topicID, _ := strconv.Atoi(vars["topic"])
-			actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
+			actualURL := fmt.Sprintf("/private/topic/%d", topicID)
 			http.Redirect(w, r, actualURL, http.StatusFound)
 			return
 		}
@@ -104,8 +108,8 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	topicID, _ := strconv.Atoi(vars["topic"])
 
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
-		http.Redirect(w, r, actualURL, http.StatusFound)
+		redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+		http.Redirect(w, r, redirectPath, http.StatusFound)
 		return
 	}
 
@@ -119,7 +123,8 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	ogTitle := cd.GetPrivateTopicDisplayTitle(topic.Idforumtopic, topic.Title.String)
 	ogDescription := topic.Description.String
 
-	renderSharedPreview(w, r, cd, fmt.Sprintf("/private/topic/%d", topicID),
+	redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+	renderSharedPreview(w, r, cd, redirectPath,
 		share.WithTitle(ogTitle),
 		share.WithBody(ogDescription),
 		share.WithSection("Private Forum Topic"),
@@ -204,10 +209,19 @@ func renderSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.Core
 		return
 	}
 
+	newVals := url.Values{}
+	if redirectPath != "" {
+		newVals.Set("back", redirectPath)
+	}
+	loginURL := "/login"
+	if encoded := newVals.Encode(); encoded != "" {
+		loginURL += "?" + encoded
+	}
+
 	_ = SharedPreviewLoginPageTmpl.Handle(w, r, struct {
-		RedirectURL string
+		LoginURL string
 	}{
-		RedirectURL: url.QueryEscape(redirectPath),
+		LoginURL: loginURL,
 	})
 }
 

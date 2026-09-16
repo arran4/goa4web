@@ -6,18 +6,21 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
+
 	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
 	"github.com/arran4/goa4web/internal/testhelpers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
 
 func TestSharedTopicPreviewPage_GuestRedirectsToLogin(t *testing.T) {
@@ -62,6 +65,8 @@ func TestSharedTopicPreviewPage_GuestRedirectsToLogin(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Call handler
+	core.Store = sessions.NewCookieStore([]byte("test"))
+	templates.GetCompiledSiteTemplates(cd.Funcs(req))
 	SharedTopicPreviewPage(w, req)
 
 	// Check response code
@@ -72,10 +77,8 @@ func TestSharedTopicPreviewPage_GuestRedirectsToLogin(t *testing.T) {
 	body := w.Body.String()
 
 	// Verify Meta Refresh
-	// The URL in meta refresh might be HTML escaped (e.g. & matches &amp;), but url.QueryEscape handles special chars.
-	// /login?return_url=...
-	expectedReturnURL := url.QueryEscape(reqURL)
-	expectedRefresh := fmt.Sprintf("content=\"0;url=/login?return_url=%s\"", expectedReturnURL)
+	// /login?back=... properly URL encoded.
+	expectedRefresh := fmt.Sprintf("content=\"0;url=/login?back=%%2Fforum%%2Ftopic%%2F%s\"", topicID)
 
 	if !strings.Contains(body, expectedRefresh) {
 		t.Errorf("Expected meta refresh to login. Got body:\n%s\nExpected to contain: %s", body, expectedRefresh)

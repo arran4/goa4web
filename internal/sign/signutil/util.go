@@ -101,6 +101,17 @@ func InjectShared(path string) string {
 }
 
 // GenerateNonce creates a random hex-encoded nonce.
+// RemoveShared removes "/shared" after the first path segment (module name).
+// e.g., "/private/shared/topic/2/thread/1?foo=bar" → "/private/topic/2/thread/1?foo=bar"
+func RemoveShared(path string) string {
+	parts := strings.SplitN(path, "/", 4)
+	if len(parts) >= 4 && parts[0] == "" && parts[2] == "shared" {
+		return "/" + parts[1] + "/" + parts[3]
+	}
+	return path
+}
+
+// GenerateNonce creates a random hex-encoded nonce.
 func GenerateNonce() string {
 	b := make([]byte, 16)
 	rand.Read(b)

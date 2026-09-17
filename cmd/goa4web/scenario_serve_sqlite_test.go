@@ -672,3 +672,265 @@ func TestScenarioServeCmd_GracefulShutdown(t *testing.T) {
 		t.Errorf("RunContext returned unexpected error on shutdown: %v", err)
 	}
 }
+
+func TestIssue3118_ShareLinkLoginContinuation(t *testing.T) {
+	ctx := context.Background()
+
+	root, err := parseRoot([]string{"goa4web", "--listen", "127.0.0.1:0", "scenario", "serve", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseRoot: %v", err)
+	}
+	defer root.Close()
+
+	parent, err := parseScenarioCmd(root, []string{"serve", "100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+
+	serveCmd, err := parseScenarioServeCmd(parent, []string{"100-private-forum"})
+	if err != nil {
+		t.Fatalf("parseScenarioServeCmd: %v", err)
+	}
+	serveCmd.fsys = scenarios.FS
+
+	srv, dbConn, cleanup, err := serveCmd.Bootstrap(ctx)
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+	defer cleanup()
+
+	httpServer := httptest.NewServer(srv.Router)
+	defer httpServer.Close()
+
+	srvURL := httpServer.URL
+
+	// 1. As Alice (authenticated), generate a share link
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatalf("cookiejar.New: %v", err)
+	}
+	aliceClient := &http.Client{Jar: jar}
+	aliceLoginPage := scenarioHTTPGet(t, aliceClient, srvURL+"/login")
+
+	aliceLoginForm := url.Values{
+		"username":           {"alice"},
+		"password":           {"pass"},
+		"task":               {"Login"},
+		"gorilla.csrf.Token": {scenarioCSRFToken(t, aliceLoginPage)},
+	}
+	scenarioHTTPPostForm(t, aliceClient, srvURL+"/login", aliceLoginForm)
+
+	// In the 100-private-forum scenario, Alice creates a topic "Staff Room". We need to find its ID.
+	var topicID int32
+	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&topicID); err != nil {
+		t.Fatalf("query Staff Room topic: %v", err)
+	}
+
+	topicPath := fmt.Sprintf("/private/topic/%d?foo=bar&view=full", topicID)
+
+	shareResp, err := aliceClient.Get(srvURL + "/api/forum/share?link=" + url.QueryEscape(topicPath))
+	if err != nil {
+		t.Fatalf("Failed to get share link: %v", err)
+	}
+	defer shareResp.Body.Close()
+
+	if shareResp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected 200 OK for generating share link, got %d", shareResp.StatusCode)
+	}
+
+	bodyBytes, err := io.ReadAll(shareResp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+	bodyStr := string(bodyBytes)
+
+	var signedURL string
+	if strings.Contains(bodyStr, "\"signed_url\":") {
+		parts := strings.Split(bodyStr, "\"signed_url\":")
+		if len(parts) > 1 {
+			val := strings.Split(parts[1], "\"")[1]
+			signedURL = strings.ReplaceAll(val, "\\u0026", "&")
+		}
+	}
+	if signedURL == "" {
+		t.Fatalf("Expected signed_url in response, got %s", bodyStr)
+	}
+
+	if !strings.HasPrefix(signedURL, "http") {
+		signedURL = srvURL + signedURL
+	} else {
+		u, _ := url.Parse(signedURL)
+		u.Host = httpServer.Listener.Addr().String()
+		signedURL = u.String()
+	}
+
+	// 2. As an unauthenticated user, access the share link
+	// We use a custom client that does not follow redirects
+	anonJar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatalf("cookiejar.New: %v", err)
+	}
+	anonClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Jar: anonJar,
+	}
+
+	anonResp, err := anonClient.Get(signedURL)
+	if err != nil {
+		t.Fatalf("Failed to get signed URL anonymously: %v", err)
+	}
+	defer anonResp.Body.Close()
+
+	if anonResp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected 200 OK for anonymous access to shared preview, got %d", anonResp.StatusCode)
+	}
+
+	bodyBytes, err = io.ReadAll(anonResp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read anonymous response body: %v", err)
+	}
+	body := string(bodyBytes)
+
+	// Since it's a private forum, it returns HTML with a Login button
+	expectedLoginURL := fmt.Sprintf("/login?back=%%2Fprivate%%2Ftopic%%2F%d%%3Ffoo%%3Dbar%%26view%%3Dfull", topicID)
+	if !strings.Contains(body, `href="`+expectedLoginURL+`"`) {
+		t.Fatalf("Expected login URL %q not found in HTML response. Body:\n%s", expectedLoginURL, body)
+	}
+
+	// 3. Login using the extracted canonical back URL
+	// We need to fetch the login page to get the CSRF token first
+	loginPageResp, err := anonClient.Get(srvURL + expectedLoginURL)
+	if err != nil {
+		t.Fatalf("Failed to GET login page: %v", err)
+	}
+	defer loginPageResp.Body.Close()
+
+	if loginPageResp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected 200 OK for GET login page, got %d", loginPageResp.StatusCode)
+	}
+
+	loginBodyBytes, err := io.ReadAll(loginPageResp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read login page body: %v", err)
+	}
+	loginBody := string(loginBodyBytes)
+	csrfToken := scenarioCSRFToken(t, loginBody)
+
+	// POST to login form
+	form := url.Values{}
+	form.Set("username", "alice")
+	form.Set("password", "alice-test")
+	form.Set("gorilla.csrf.Token", csrfToken)
+	form.Set("task", "Login")
+	form.Set("back", fmt.Sprintf("/private/topic/%d?foo=bar&view=full", topicID))
+
+	req, err := http.NewRequest(http.MethodPost, srvURL+"/login", strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatalf("Failed to create login POST request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", srvURL+expectedLoginURL)
+
+	loginResp, err := anonClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to POST login form: %v", err)
+	}
+	defer loginResp.Body.Close()
+
+	if loginResp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("Expected 303 See Other after login, got %d", loginResp.StatusCode)
+	}
+
+	loc := loginResp.Header.Get("Location")
+	expectedLoc := fmt.Sprintf("/private/topic/%d?foo=bar&view=full", topicID)
+	if loc != expectedLoc {
+		t.Fatalf("Expected login redirect to exactly %s, got %q", expectedLoc, loc)
+	}
+
+	// 4. Follow the redirect to verify content
+	finalReq, err := http.NewRequest(http.MethodGet, srvURL+loc, nil)
+	if err != nil {
+		t.Fatalf("Failed to create final GET request: %v", err)
+	}
+	finalClient := &http.Client{Jar: anonClient.Jar}
+	finalResp, err := finalClient.Do(finalReq)
+	if err != nil {
+		t.Fatalf("Failed to GET final resource: %v", err)
+	}
+	defer finalResp.Body.Close()
+
+	if finalResp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected 200 OK for final resource, got %d", finalResp.StatusCode)
+	}
+
+	// 5. As already authenticated Alice, GET the original signed URL directly
+	// Should 302 Found directly to the destination
+	authShareReq, err := http.NewRequest(http.MethodGet, signedURL, nil)
+	if err != nil {
+		t.Fatalf("Failed to create authenticated share request: %v", err)
+	}
+
+	authShareResp, err := anonClient.Do(authShareReq) // using anonClient which has Alice's cookie but disables following redirects
+	if err != nil {
+		t.Fatalf("Failed to GET signed URL authenticated: %v", err)
+	}
+	defer authShareResp.Body.Close()
+
+	if authShareResp.StatusCode != http.StatusFound {
+		t.Fatalf("Expected 302 Found for authenticated access to shared preview, got %d", authShareResp.StatusCode)
+	}
+
+	authLoc := authShareResp.Header.Get("Location")
+	if authLoc != expectedLoc {
+		t.Fatalf("Expected authenticated share redirect directly to %s, got %q", expectedLoc, authLoc)
+	}
+
+	// 6. Test Unsafe targets at continuation boundary
+	unsafeTargets := []string{
+		"https://evil.example/",
+		"http://evil.example/",
+		"//evil.example/",
+	}
+
+	for _, unsafe := range unsafeTargets {
+		unsafeLoginURL := "/login?back=" + url.QueryEscape(unsafe)
+		unsafePageResp, err := anonClient.Get(srvURL + unsafeLoginURL)
+		if err != nil {
+			t.Fatalf("Failed to GET unsafe login page: %v", err)
+		}
+		defer unsafePageResp.Body.Close()
+
+		unsafeBodyBytes, _ := io.ReadAll(unsafePageResp.Body)
+		unsafeCSRF := scenarioCSRFToken(t, string(unsafeBodyBytes))
+
+		unsafeForm := url.Values{}
+		unsafeForm.Set("username", "alice")
+		unsafeForm.Set("password", "alice-test")
+		unsafeForm.Set("gorilla.csrf.Token", unsafeCSRF)
+		unsafeForm.Set("task", "Login")
+		unsafeForm.Set("back", unsafe)
+
+		unsafeReq, _ := http.NewRequest(http.MethodPost, srvURL+"/login", strings.NewReader(unsafeForm.Encode()))
+		unsafeReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		unsafeReq.Header.Set("Referer", srvURL+unsafeLoginURL)
+
+		unsafeResp, err := anonClient.Do(unsafeReq)
+		if err != nil {
+			t.Fatalf("Failed to POST unsafe login: %v", err)
+		}
+		defer unsafeResp.Body.Close()
+
+		if unsafeResp.StatusCode != http.StatusSeeOther {
+			t.Fatalf("Expected 303 See Other for unsafe login, got %d", unsafeResp.StatusCode)
+		}
+
+		unsafeLoc := unsafeResp.Header.Get("Location")
+		if unsafeLoc == unsafe {
+			t.Errorf("Unsafe login continuation allowed! Redirected to %q", unsafeLoc)
+		} else if unsafeLoc != "/" {
+			t.Logf("Unsafe target normalized to %q (expected /)", unsafeLoc)
+		}
+	}
+}

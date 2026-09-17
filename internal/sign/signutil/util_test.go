@@ -66,3 +66,28 @@ func TestGetSignedData_MixedAuth_Expired(t *testing.T) {
 		t.Error("Expected Valid=false (expired), got true")
 	}
 }
+
+func TestRemoveShared(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected string
+	}{
+		{"Basic path", "/private/shared/topic/1", "/private/topic/1"},
+		{"Nested path", "/forum/shared/topic/1/thread/2", "/forum/topic/1/thread/2"},
+		{"Query params untouched", "/private/shared/topic/1?foo=bar&shared=true", "/private/topic/1?foo=bar&shared=true"},
+		{"Percent encoding untouched", "/private/shared/topic/1?foo=%20bar", "/private/topic/1?foo=%20bar"},
+		{"Without shared", "/private/topic/1", "/private/topic/1"},
+		{"Empty path", "", ""},
+		{"Root path", "/", "/"},
+		{"Short path", "/private", "/private"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := signutil.RemoveShared(tt.path); got != tt.expected {
+				t.Errorf("RemoveShared() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}

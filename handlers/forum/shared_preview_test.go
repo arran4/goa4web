@@ -65,7 +65,11 @@ func TestSharedTopicPreviewPage_GuestRedirectsToLogin(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Call handler
+	oldStore := core.Store
 	core.Store = sessions.NewCookieStore([]byte("test"))
+	t.Cleanup(func() {
+		core.Store = oldStore
+	})
 	templates.GetCompiledSiteTemplates(cd.Funcs(req))
 	SharedTopicPreviewPage(w, req)
 

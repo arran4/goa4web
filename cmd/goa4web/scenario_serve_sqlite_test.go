@@ -894,21 +894,29 @@ func TestIssue3118_ShareLinkLoginContinuation(t *testing.T) {
 	}
 
 	// 5.5 Tampered signature check
-	// Change a character in the signed URL
-	tamperedURL := signedURL[:len(signedURL)-5] + "XXXXX"
+	// Create a completely unauthenticated client specifically for this check
+	tamperedJar, _ := cookiejar.New(nil)
+	tamperedClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Jar: tamperedJar,
+	}
+	// Tamper specifically with the signature parameter (which is 64 hex chars), rather than blindly replacing the end of the URL
+	tamperedURL := strings.Replace(signedURL, "/sign/", "/sign/bad", 1)
 	var tamperedResp *http.Response
-	tamperedResp, err = anonClient.Get(tamperedURL)
+	tamperedResp, err = tamperedClient.Get(tamperedURL)
 	if err != nil {
 		t.Fatalf("Failed to get tampered URL anonymously: %v", err)
 	}
 	defer tamperedResp.Body.Close()
 
-	if tamperedResp.StatusCode != http.StatusForbidden && tamperedResp.StatusCode != http.StatusFound {
-		t.Fatalf("Expected 403 Forbidden or 302 Found (if login redirect is configured for anonymous) for tampered signature access, got %d", tamperedResp.StatusCode)
+	if tamperedResp.StatusCode != http.StatusForbidden {
+		t.Fatalf("Expected 403 Forbidden for tampered signature access, got %d", tamperedResp.StatusCode)
 	}
 	var tamperedBody []byte
 	tamperedBody, _ = io.ReadAll(tamperedResp.Body)
-	if tamperedResp.StatusCode == http.StatusForbidden && !strings.Contains(string(tamperedBody), "invalid signature") {
+	if !strings.Contains(string(tamperedBody), "invalid signature") {
 		t.Fatalf("Expected invalid signature rejection body for tampered URL, got: %s", string(tamperedBody))
 	}
 

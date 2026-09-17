@@ -1,4 +1,5 @@
 //go:build sqlite || sqlite3
+
 package db_test
 
 import (
@@ -8,8 +9,8 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
-	_ "modernc.org/sqlite"
 	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
 )
 
 func TestUnreadPrivateThreadsQueries(t *testing.T) {

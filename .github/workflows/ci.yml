@@ -115,8 +115,8 @@ jobs:
                run_autofix=true
             elif [[ "$mode" == "publish-tag" ]]; then
                if [[ "$REF_TYPE" == "tag" && "$GITHUB_REF" == refs/tags/v* ]]; then
-                  run_code_checks=false
-                  run_build=false
+                  run_code_checks=true
+                  run_build=true
                   run_publisher=true
                else
                   echo "Error: publish-tag mode requires a v* tag context. Found: $GITHUB_REF" >&2
@@ -136,6 +136,8 @@ jobs:
                run_build=true
             fi
           elif [[ "$EVENT_NAME" == "push" && "$REF_TYPE" == "tag" && "$GITHUB_REF" == refs/tags/v* ]]; then
+             run_code_checks=true
+             run_build=true
              run_publisher=true
           fi
 
@@ -252,17 +254,44 @@ jobs:
           gh pr create --title "chore(deps): automated dependency update" --body "Automated dependency freshness update" --base main --head "$BRANCH" --label "dependencies"
   release-ready:
     name: Release Quality Gates Passed
-    needs: [route, discover, build, gitleaks, gitleaks-full, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    needs: [route, discover, build, gitleaks, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]
+    if: ${{ always() && (needs.route.outputs.run_release == 'true' || needs.route.outputs.run_publisher == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "All release quality gates passed."
+      - name: Require release gates
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
+          GOLANGCI_RESULT: ${{ needs.golangci.result }}
+          GO_VET_RESULT: ${{ needs.go-vet.result }}
+          GO_TEST_RESULT: ${{ needs.go-test.result }}
+          GO_TEST_SQLITE_RESULT: ${{ needs.go-test-sqlite.result }}
+          GO_TEST_MYSQL_RESULT: ${{ needs.go-test-mysql.result }}
+          NODE_TEST_RESULT: ${{ needs.node-lint-test.result }}
+          SQLC_RESULT: ${{ needs.sqlc-update.result }}
+          CONFIG_RESULT: ${{ needs.config-examples-update.result }}
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_RESULT" == "success" ]]
+          [[ "$GITLEAKS_RESULT" == "success" ]]
+          [[ "$GOLANGCI_RESULT" == "success" ]]
+          [[ "$GO_VET_RESULT" == "success" ]]
+          [[ "$GO_TEST_RESULT" == "success" ]]
+          [[ "$GO_TEST_SQLITE_RESULT" == "success" ]]
+          [[ "$GO_TEST_MYSQL_RESULT" == "success" ]]
+          [[ "$NODE_TEST_RESULT" == "success" ]]
+          [[ "$SQLC_RESULT" == "success" ]]
+          [[ "$CONFIG_RESULT" == "success" ]]
+          echo "All release quality gates passed."
 
   prepare-release-tag:
     name: Prepare Release Tag
     needs: [route, release-ready]
-    if: ${{ needs.route.outputs.run_release == 'true' }}
+    if: ${{ needs.route.outputs.run_release == 'true' && needs.release-ready.result == 'success' }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-release-preparation
+      cancel-in-progress: false
     permissions:
       contents: write
       actions: write
@@ -279,18 +308,23 @@ jobs:
           mode: install
       - name: Verify Exact Origin/Main
         env:
-          GITHUB_REF_NAME: ${{ github.ref }}
+          GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_REF_NAME" != "refs/heads/main" ]]; then
-            echo "Error: Manual release preparation must run on refs/heads/main, got $GITHUB_REF_NAME"
-            exit 1
-          fi
-          git fetch origin main
-          MAIN_SHA=$(git rev-parse origin/main)
+          AUTHORITATIVE_BRANCH="${GITHUB_REF#refs/heads/}"
+          case "$AUTHORITATIVE_BRANCH" in
+            main|master) ;;
+            *)
+              echo "Error: Manual release preparation must run on main or master, got $AUTHORITATIVE_BRANCH" >&2
+              exit 1
+              ;;
+          esac
+          echo "AUTHORITATIVE_BRANCH=$AUTHORITATIVE_BRANCH" >> "$GITHUB_ENV"
+          git fetch origin "$AUTHORITATIVE_BRANCH"
+          MAIN_SHA=$(git rev-parse "origin/$AUTHORITATIVE_BRANCH")
           if [[ "$MAIN_SHA" != "$GITHUB_SHA" ]]; then
-            echo "Error: Requested release against $GITHUB_SHA but origin/main is at $MAIN_SHA"
+            echo "Error: Requested release against $GITHUB_SHA but origin/$AUTHORITATIVE_BRANCH is at $MAIN_SHA" >&2
             exit 1
           fi
       - name: Calculate or explicitly set version
@@ -299,7 +333,7 @@ jobs:
           RELEASE_VERSION_OVERRIDE: ${{ inputs.release_version_override }}
         run: |
           set -euo pipefail
-          export PATH="$(go env GOPATH)/bin:$PATH"
+          export PATH="/opt/git-tag-inc:$(go env GOBIN):$(go env GOPATH)/bin:$PATH"
           if [[ -n "$RELEASE_VERSION_OVERRIDE" ]]; then
              TAG="${RELEASE_VERSION_OVERRIDE#v}"
              TAG="v${TAG}"
@@ -344,10 +378,10 @@ jobs:
                 exit 1
              fi
           else
-             git fetch origin main
-             CURRENT_MAIN_SHA=$(git rev-parse origin/main)
+             git fetch origin "$AUTHORITATIVE_BRANCH"
+             CURRENT_MAIN_SHA=$(git rev-parse "origin/$AUTHORITATIVE_BRANCH")
              if [[ "$CURRENT_MAIN_SHA" != "$GITHUB_SHA" ]]; then
-                echo "Race condition: origin/main advanced to $CURRENT_MAIN_SHA before tagging"
+                echo "Race condition: origin/$AUTHORITATIVE_BRANCH advanced to $CURRENT_MAIN_SHA before tagging"
                 exit 1
              fi
 
@@ -614,8 +648,11 @@ jobs:
   publisher:
     name: Release Publisher
     needs: [route, release-ready]
-    if: ${{ needs.route.outputs.run_publisher == 'true' }}
+    if: ${{ needs.route.outputs.run_publisher == 'true' && needs.release-ready.result == 'success' }}
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-publish-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write
       packages: write

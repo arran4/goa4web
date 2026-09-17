@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sign/signutil"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -40,7 +41,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+		redirectPath := signutil.RemoveShared(verifiedPath)
 		http.Redirect(w, r, redirectPath, http.StatusFound)
 		return
 	}
@@ -76,7 +77,7 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
-	redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+	redirectPath := signutil.RemoveShared(verifiedPath)
 	renderPublicSharedPreview(w, r, cd, redirectPath,
 		share.WithTitle(ogTitle),
 		share.WithBody(ogDescription),
@@ -101,7 +102,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+		redirectPath := signutil.RemoveShared(verifiedPath)
 		http.Redirect(w, r, redirectPath, http.StatusFound)
 		return
 	}
@@ -119,7 +120,7 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 	ogDescription := topic.Description.String
 
-	redirectPath := strings.Replace(verifiedPath, "/shared", "", 1)
+	redirectPath := signutil.RemoveShared(verifiedPath)
 	renderPublicSharedPreview(w, r, cd, redirectPath, share.WithTitle(ogTitle), share.WithBody(ogDescription), share.WithSection("Public Forum Topic"), share.WithGeneratorType("forum"))
 }
 

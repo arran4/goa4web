@@ -887,6 +887,31 @@ func TestIssue3118_ShareLinkLoginContinuation(t *testing.T) {
 		t.Fatalf("Expected authenticated share redirect directly to %s, got %q", expectedLoc, authLoc)
 	}
 
+	var finalBodyBytes []byte
+	finalBodyBytes, _ = io.ReadAll(finalResp.Body)
+	if !strings.Contains(string(finalBodyBytes), "Staff Room") {
+		t.Fatalf("Expected intended Staff Room topic content after following redirect, got body: %s", string(finalBodyBytes))
+	}
+
+	// 5.5 Tampered signature check
+	// Change a character in the signed URL
+	tamperedURL := signedURL[:len(signedURL)-5] + "XXXXX"
+	var tamperedResp *http.Response
+	tamperedResp, err = anonClient.Get(tamperedURL)
+	if err != nil {
+		t.Fatalf("Failed to get tampered URL anonymously: %v", err)
+	}
+	defer tamperedResp.Body.Close()
+
+	if tamperedResp.StatusCode != http.StatusForbidden && tamperedResp.StatusCode != http.StatusFound {
+		t.Fatalf("Expected 403 Forbidden or 302 Found (if login redirect is configured for anonymous) for tampered signature access, got %d", tamperedResp.StatusCode)
+	}
+	var tamperedBody []byte
+	tamperedBody, _ = io.ReadAll(tamperedResp.Body)
+	if tamperedResp.StatusCode == http.StatusForbidden && !strings.Contains(string(tamperedBody), "invalid signature") {
+		t.Fatalf("Expected invalid signature rejection body for tampered URL, got: %s", string(tamperedBody))
+	}
+
 	// 6. Test Unsafe targets at continuation boundary
 	unsafeTargets := []string{
 		"https://evil.example/",
@@ -912,7 +937,8 @@ func TestIssue3118_ShareLinkLoginContinuation(t *testing.T) {
 		unsafeForm.Set("task", "Login")
 		unsafeForm.Set("back", unsafe)
 
-		unsafeReq, _ := http.NewRequest(http.MethodPost, srvURL+"/login", strings.NewReader(unsafeForm.Encode()))
+		var unsafeReq *http.Request
+		unsafeReq, _ = http.NewRequest(http.MethodPost, srvURL+"/login", strings.NewReader(unsafeForm.Encode()))
 		unsafeReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		unsafeReq.Header.Set("Referer", srvURL+unsafeLoginURL)
 
@@ -929,8 +955,9 @@ func TestIssue3118_ShareLinkLoginContinuation(t *testing.T) {
 		unsafeLoc := unsafeResp.Header.Get("Location")
 		if unsafeLoc == unsafe {
 			t.Errorf("Unsafe login continuation allowed! Redirected to %q", unsafeLoc)
-		} else if unsafeLoc != "/" {
-			t.Logf("Unsafe target normalized to %q (expected /)", unsafeLoc)
+		}
+		if unsafeLoc != "/" {
+			t.Errorf("Unsafe target should normalize to exact /, got %q", unsafeLoc)
 		}
 	}
 }

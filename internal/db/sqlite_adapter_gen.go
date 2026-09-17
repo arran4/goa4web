@@ -6837,7 +6837,7 @@ func (s *sqliteQuerier) GetPublicWritings(ctx context.Context, arg GetPublicWrit
 
 func (s *sqliteQuerier) GetReplyThreadsForLister(ctx context.Context, arg GetReplyThreadsForListerParams) ([]*GetReplyThreadsForListerRow, error) {
 	res, err := s.q.GetReplyThreadsForLister(ctx, dbsqlite.GetReplyThreadsForListerParams{
-		ViewerID:        int64(arg.ViewerID),
+		ViewerID:        arg.ViewerID,
 		ReplyToThreadID: sql.NullInt64{Int64: int64(arg.ReplyToThreadID.Int32), Valid: arg.ReplyToThreadID.Valid},
 		ViewerMatchID:   sql.NullInt64{Int64: int64(arg.ViewerMatchID.Int32), Valid: arg.ViewerMatchID.Valid},
 	})
@@ -9080,9 +9080,9 @@ func (s *sqliteQuerier) ListUnreadPrivateThreadsForUser(ctx context.Context, arg
 	res, err := s.q.ListUnreadPrivateThreadsForUser(ctx, dbsqlite.ListUnreadPrivateThreadsForUserParams{
 		TopicID:     sql.NullInt64{Int64: int64(arg.TopicID.Int32), Valid: arg.TopicID.Valid},
 		GrantUserID: sql.NullInt64{Int64: int64(arg.GrantUserID.Int32), Valid: arg.GrantUserID.Valid},
-		GranteeID:   int64(arg.GranteeID),
 		Offset:      int64(arg.Offset),
 		Limit:       int64(arg.Limit),
+		GranteeID:   int64(arg.GranteeID),
 	})
 	if err != nil {
 		return nil, err

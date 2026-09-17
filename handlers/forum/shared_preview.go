@@ -18,6 +18,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/sign/signutil"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
 )
@@ -27,7 +28,8 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	// Verify signature
-	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
+	verifiedPath := share.VerifyAndGetPath(r, cd.ShareSignKey)
+	if verifiedPath == "" {
 		log.Printf("[Forum Share] Invalid signature for URL: %s", r.URL.String())
 		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
@@ -35,12 +37,12 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	threadID, _ := strconv.Atoi(vars["thread"])
-	topicID, _ := strconv.Atoi(vars["topic"])
+	_, _ = strconv.Atoi(vars["topic"])
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/forum/topic/%d/thread/%d", topicID, threadID)
-		http.Redirect(w, r, actualURL, http.StatusFound)
+		redirectPath := signutil.RemoveShared(verifiedPath)
+		http.Redirect(w, r, redirectPath, http.StatusFound)
 		return
 	}
 
@@ -75,7 +77,8 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 		ogDescription = a4code.SnipText(comments[0].Text.String, 128)
 	}
 
-	renderPublicSharedPreview(w, r, cd,
+	redirectPath := signutil.RemoveShared(verifiedPath)
+	renderPublicSharedPreview(w, r, cd, redirectPath,
 		share.WithTitle(ogTitle),
 		share.WithBody(ogDescription),
 		share.WithSection("Public Forum Thread"),
@@ -87,7 +90,8 @@ func SharedThreadPreviewPage(w http.ResponseWriter, r *http.Request) {
 func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	if share.VerifyAndGetPath(r, cd.ShareSignKey) == "" {
+	verifiedPath := share.VerifyAndGetPath(r, cd.ShareSignKey)
+	if verifiedPath == "" {
 		log.Printf("[Forum Share] Invalid signature for URL: %s", r.URL.String())
 		handlers.RenderErrorPage(w, r, handlers.WrapForbidden(fmt.Errorf("invalid signature")))
 		return
@@ -98,8 +102,8 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 
 	// If user is logged in, redirect to actual content URL
 	if cd.UserID != 0 {
-		actualURL := fmt.Sprintf("/forum/topic/%d", topicID)
-		http.Redirect(w, r, actualURL, http.StatusFound)
+		redirectPath := signutil.RemoveShared(verifiedPath)
+		http.Redirect(w, r, redirectPath, http.StatusFound)
 		return
 	}
 
@@ -116,10 +120,11 @@ func SharedTopicPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 	ogDescription := topic.Description.String
 
-	renderPublicSharedPreview(w, r, cd, share.WithTitle(ogTitle), share.WithBody(ogDescription), share.WithSection("Public Forum Topic"), share.WithGeneratorType("forum"))
+	redirectPath := signutil.RemoveShared(verifiedPath)
+	renderPublicSharedPreview(w, r, cd, redirectPath, share.WithTitle(ogTitle), share.WithBody(ogDescription), share.WithSection("Public Forum Topic"), share.WithGeneratorType("forum"))
 }
 
-func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, ops ...any) {
+func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *common.CoreData, redirectPath string, ops ...any) {
 	// Determine auth style: check if mux vars for ts/nonce are present
 	vars := mux.Vars(r)
 	usePathAuth := vars["ts"] != "" || vars["nonce"] != ""
@@ -128,7 +133,14 @@ func renderPublicSharedPreview(w http.ResponseWriter, r *http.Request, cd *commo
 
 	// If the user is viewing this, they are likely a guest (or the caller logic didn't redirect them).
 	// We want to redirect guests to login, then back to here.
-	redirectURL := "/login?return_url=" + url.QueryEscape(r.URL.RequestURI())
+	newVals := url.Values{}
+	if redirectPath != "" {
+		newVals.Set("back", redirectPath)
+	}
+	redirectURL := "/login"
+	if encoded := newVals.Encode(); encoded != "" {
+		redirectURL += "?" + encoded
+	}
 
 	var title, desc string
 	var jsonLdType, datePublished, dateModified, author, authorURL string

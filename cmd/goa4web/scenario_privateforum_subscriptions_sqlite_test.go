@@ -104,6 +104,19 @@ func TestE2EPrivateForumSubscriptions(t *testing.T) {
 	err = sqlDB.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
 	require.NoError(t, err)
 
+	// Check auto-subscriptions!
+	// Alice created `staff-welcome` so she should be subscribed to it.
+	// Bob replied to `staff-welcome` so he should be subscribed to it.
+	aliceSubCount := 0
+	err = sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE users_idusers = (SELECT idusers FROM users WHERE username = 'alice') AND pattern LIKE '%thread/' || ? || '/%'", staffWelcomeThreadID).Scan(&aliceSubCount)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, aliceSubCount, 1, "Expected Alice to be auto-subscribed to the thread she created")
+
+	bobSubCount := 0
+	err = sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE users_idusers = (SELECT idusers FROM users WHERE username = 'bob') AND pattern LIKE '%thread/' || ? || '/%'", staffWelcomeThreadID).Scan(&bobSubCount)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, bobSubCount, 1, "Expected Bob to be auto-subscribed to the thread he replied to")
+
 	rows, err := sqlDB.QueryContext(ctx, "SELECT pattern FROM subscriptions WHERE users_idusers = (SELECT idusers FROM users WHERE username = 'alice')")
 	require.NoError(t, err)
 	defer rows.Close()

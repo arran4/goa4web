@@ -47,18 +47,28 @@ func TestPrivateForumIsolation(t *testing.T) {
 	require.NoError(t, err)
 
 	aliceCD := cd.ForUser(aliceID)
-
 	err = aliceCD.ReadForumThread(ctx, common.ReadForumThreadParams{
 		ActorID:  aliceID,
 		ThreadID: projectRoomThreadID,
 	})
 	require.Error(t, err, "Expected error when Alice tries to mark Project Room read")
 
+	// Ensure no read marker was created
+	marker, err := aliceCD.ThreadReadMarker(projectRoomThreadID)
+	require.NoError(t, err)
+	require.Equal(t, int32(0), marker, "Expected Alice to have no read marker for Project Room")
+
 	err = aliceCD.SubscribeForum(ctx, common.SubscribeForumParams{
 		ActorID: aliceID,
 		TopicID: projectRoomTopicID,
 	})
 	require.Error(t, err, "Expected error when Alice tries to subscribe to Project Room topic")
+
+	// Ensure no topic subscription was created
+	var count int
+	err = sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE users_idusers = ? AND pattern LIKE '%topic/' || ? || '/%'", aliceID, projectRoomTopicID).Scan(&count)
+	require.NoError(t, err)
+	require.Equal(t, 0, count, "Expected Alice to have no subscriptions to Project Room topic")
 
 	err = aliceCD.UnsubscribeForum(ctx, common.SubscribeForumParams{
 		ActorID: aliceID,

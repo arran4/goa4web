@@ -232,7 +232,10 @@ func topicSubscriptionPattern(topicID int32) string {
 	return fmt.Sprintf("%s:/forum/topic/%d/*", strings.ToLower("Create Thread"), topicID)
 }
 
-func threadSubscriptionPattern(topicID int32, threadID int32) string {
+func threadSubscriptionPattern(topicID int32, threadID int32, isPrivate bool) string {
+	if isPrivate {
+		return fmt.Sprintf("%s:/private/topic/%d/thread/%d/*", strings.ToLower("Write Reply"), topicID, threadID)
+	}
 	return fmt.Sprintf("%s:/forum/topic/%d/thread/%d/*", strings.ToLower("Write Reply"), topicID, threadID)
 }
 
@@ -253,19 +256,19 @@ func (cd *CoreData) UnsubscribeTopic(userID, topicID int32) error {
 }
 
 // SubscribeThread subscribes the current user to new threads in the given thread.
-func (cd *CoreData) SubscribeThread(topicID int32, threadID int32) error {
+func (cd *CoreData) SubscribeThread(topicID int32, threadID int32, isPrivate bool) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID), Method: "internal"})
+	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID, isPrivate), Method: "internal"})
 }
 
 // UnsubscribeThread removes the current user's subscription to a thread.
-func (cd *CoreData) UnsubscribeThread(topicID int32, threadID int32) error {
+func (cd *CoreData) UnsubscribeThread(topicID int32, threadID int32, isPrivate bool) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID), Method: "internal"})
+	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID, isPrivate), Method: "internal"})
 }
 
 // GrantForumCategory creates a grant for a forum category.

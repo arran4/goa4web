@@ -348,10 +348,12 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 	if isPrivate {
 		subjectPrefix = "Private Forum"
 	}
-	if evt := cd.Event(); evt != nil {
+	evt := cd.Event()
+	if evt != nil {
 		evt.Path = endURL
 	}
 	if err := cd.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
+		Event:            evt,
 		ThreadID:         threadID,
 		TopicID:          params.TopicID,
 		CommentID:        commentID,
@@ -607,7 +609,7 @@ func (cd *CoreData) SubscribeForum(ctx context.Context, params SubscribeForumPar
 			return fmt.Errorf("get forum thread for actor: %w", err)
 		}
 
-		return actorCD.SubscribeThread(params.TopicID, params.ThreadID)
+		return actorCD.SubscribeThread(params.TopicID, params.ThreadID, false)
 	} else if params.TopicID != 0 {
 		// Must have access to topic
 		_, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
@@ -639,7 +641,7 @@ func (cd *CoreData) UnsubscribeForum(ctx context.Context, params SubscribeForumP
 		if err != nil {
 			return fmt.Errorf("get forum thread for actor: %w", err)
 		}
-		return actorCD.UnsubscribeThread(params.TopicID, params.ThreadID)
+		return actorCD.UnsubscribeThread(params.TopicID, params.ThreadID, false)
 	} else if params.TopicID != 0 {
 		// Must have access to topic
 		_, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)

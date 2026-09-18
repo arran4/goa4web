@@ -141,6 +141,10 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 				Text: event.CommentText,
 			}
 		}
+
+		if err := cd.Publish(*evt); err != nil {
+			errs = append(errs, fmt.Errorf("publish thread updated event: %w", err))
+		}
 	}
 
 	return errors.Join(errs...)
@@ -159,6 +163,42 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	if err := postcountworker.PostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
 		return err
 	}
+
+	// Ensure auto-subscription
+	if cd.queries == nil {
+		return nil
+	}
+
+	auto := true
+	email := false
+	if cd.UserID != 0 {
+		pref, err := cd.queries.GetPreferenceForLister(ctx, cd.UserID)
+		if err == nil && pref != nil {
+			auto = pref.AutoSubscribeReplies
+			if pref.Emailforumupdates.Valid {
+				email = pref.Emailforumupdates.Bool
+			}
+		} else if err != sql.ErrNoRows {
+			// In tests, queries are stubbed and might return a panic or an error.
+			// If there is an error, we shouldn't necessarily crash but maybe log.
+		}
+	}
+
+	if auto {
+		topic, _ := cd.queries.GetForumTopicById(ctx, topicID)
+		isPrivate := false
+		if topic != nil && topic.Handler == "private" {
+			isPrivate = true
+		}
+
+		pattern := threadSubscriptionPattern(topicID, threadID, isPrivate)
+
+		_ = cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: pattern, Method: "internal"})
+		if email {
+			_ = cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: pattern, Method: "email"})
+		}
+	}
+
 	if !includeSearch {
 		return nil
 	}

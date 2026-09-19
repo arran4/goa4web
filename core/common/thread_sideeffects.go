@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"maps"
 	"time"
 
@@ -163,7 +162,7 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	}
 
 	if err := cd.EnsureAutoSubscription(ctx, topicID, threadID, cd.UserID); err != nil {
-		log.Printf("apply auto subscription for user: %v", err)
+		return fmt.Errorf("apply auto subscription for user: %w", err)
 	}
 
 	if !includeSearch {

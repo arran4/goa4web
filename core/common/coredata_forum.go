@@ -410,11 +410,12 @@ func EnsureSubscriptionIdempotent(ctx context.Context, q db.Querier, userID int3
 		return nil
 	}
 	ids, err := q.ListSubscribersForPattern(ctx, db.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
-	if err == nil {
-		for _, id := range ids {
-			if id == userID {
-				return nil
-			}
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("list subscribers: %w", err)
+	}
+	for _, id := range ids {
+		if id == userID {
+			return nil
 		}
 	}
 	return q.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method})

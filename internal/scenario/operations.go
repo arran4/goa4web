@@ -650,6 +650,9 @@ func (o *ForumPostOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeTopic, Symbol: topic, Field: "Topic"})
 	}
+	if thread := strings.TrimSpace(evt.Headers.Get("Thread")); thread != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: thread, Field: "Thread"})
+	}
 
 	return refs
 }

@@ -897,3 +897,38 @@ At: 2026-08-01T09:02:00Z
 		t.Errorf("unexpected d2: %+v", d2)
 	}
 }
+
+func TestValidateForumPostUndeclaredThread(t *testing.T) {
+	txt := `
+-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: test
+Description: test
+
+-- 01.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.com
+Password: password
+At: 2026-08-01T10:00:00Z
+
+-- 02.event --
+Op: forum.post
+Actor: alice
+Thread: undeclared-thread
+At: 2026-08-01T10:01:00Z
+`
+	sc, err := Parse([]byte(txt), nil)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	err = Validate(sc)
+	if err == nil {
+		t.Fatal("expected validation error for undeclared Thread reference, got nil")
+	}
+	if !strings.Contains(err.Error(), "undeclared-thread") {
+		t.Fatalf("expected error mentioning 'undeclared-thread', got %v", err)
+	}
+}

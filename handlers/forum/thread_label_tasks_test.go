@@ -2,8 +2,6 @@ package forum
 
 import (
 	"context"
-	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/testhelpers"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -12,12 +10,13 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/gorilla/mux"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
+	"github.com/gorilla/mux"
 )
 
 func TestMarkThreadReadTaskRedirect(t *testing.T) {

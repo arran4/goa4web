@@ -201,7 +201,11 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ActorID:  cd.UserID,
 		ThreadID: int32(threadID),
 	}
-	// `ReadForumThread` automatically computes the latest comment ID.
+	if last := r.FormValue("last_comment"); last != "" {
+		if cid, err := strconv.Atoi(last); err == nil && cid > 0 {
+			params.LastCommentID = int32(cid)
+		}
+	}
 
 	if err := cd.ReadForumThread(r.Context(), params); err != nil {
 		log.Printf("mark read: %v", err)

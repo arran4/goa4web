@@ -313,3 +313,33 @@ Thread: coordination-plan
 At: 2026-08-01T09:52:00+10:00
 
 Carol here. Coordination is visible without exposing either team's private room.
+
+# Stage 3: Read/Unread state
+
+-- 400-alice-read.event --
+Op: forum.thread.read
+Actor: alice
+Thread: staff-welcome
+At: 2026-08-01T09:55:00+10:00
+
+-- 410-bob-staff-reply.event --
+Op: forum.reply
+Ref: bob-staff-welcome-reply-2
+Actor: bob
+Thread: staff-welcome
+At: 2026-08-01T09:57:00+10:00
+
+Bob replies again to staff-welcome
+
+# Stage 3: Subscriptions
+
+-- 500-alice-unsubscribe.event --
+Op: forum.unsubscribe
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T10:05:00+10:00
+-- 510-alice-subscribe.event --
+Op: forum.subscribe
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T10:10:00+10:00

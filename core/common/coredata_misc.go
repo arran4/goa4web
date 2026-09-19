@@ -169,7 +169,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 				return 0, fmt.Errorf("create %s grant %w", act, err)
 			}
 		}
-		if err := actorCD.SubscribeTopic(uid, topicID); err != nil {
+		if err := actorCD.SubscribeTopic(uid, topicID, true); err != nil {
 			return 0, fmt.Errorf("subscribe topic %w", err)
 		}
 	}

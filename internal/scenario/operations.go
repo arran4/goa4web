@@ -57,6 +57,9 @@ func DefaultRegistry() *Registry {
 		&PrivateForumCreateOp{},
 		&ForumThreadCreateOp{},
 		&ForumReplyOp{},
+		&ForumThreadReadOp{},
+		&ForumSubscribeOp{},
+		&ForumUnsubscribeOp{},
 		&ForumPostOp{},
 	)
 }
@@ -428,6 +431,177 @@ func (o *ForumReplyOp) Parse(evt *Event) (OperationData, error) {
 	}, nil
 }
 
+// --- forum.thread.read ---
+
+// ForumThreadReadData holds the strongly-typed data for forum.thread.read.
+type ForumThreadReadData struct {
+	Actor  string
+	Thread string
+	At     time.Time
+}
+
+func (d *ForumThreadReadData) Op() string { return "forum.thread.read" }
+
+// ForumThreadReadOp implements Operation for explicit mark-read behavior.
+type ForumThreadReadOp struct{}
+
+func (o *ForumThreadReadOp) OpName() string { return "forum.thread.read" }
+
+func (o *ForumThreadReadOp) AllowedHeaders() []string {
+	return []string{"Op", "Actor", "Thread", "At"}
+}
+
+func (o *ForumThreadReadOp) RequiredHeaders() []string {
+	return []string{"Actor", "Thread"}
+}
+
+func (o *ForumThreadReadOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	return "", "", false
+}
+
+func (o *ForumThreadReadOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	return []SymbolRef{
+		{Type: RefTypeUser, Symbol: strings.TrimSpace(evt.Headers.Get("Actor")), Field: "Actor"},
+		{Type: RefTypeThread, Symbol: strings.TrimSpace(evt.Headers.Get("Thread")), Field: "Thread"},
+	}
+}
+
+func (o *ForumThreadReadOp) AssetPaths(evt *Event) []string { return nil }
+
+func (o *ForumThreadReadOp) Parse(evt *Event) (OperationData, error) {
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("forum.thread.read: missing required 'Actor'")
+	}
+	thread := strings.TrimSpace(evt.Headers.Get("Thread"))
+	if thread == "" {
+		return nil, fmt.Errorf("forum.thread.read: missing required 'Thread'")
+	}
+	return &ForumThreadReadData{
+		Actor: actor, Thread: thread, At: evt.At,
+	}, nil
+}
+
+// --- forum.subscribe ---
+
+// ForumSubscribeData holds the strongly-typed data for forum.subscribe.
+type ForumSubscribeData struct {
+	Actor string
+	Topic string
+
+	At time.Time
+}
+
+func (d *ForumSubscribeData) Op() string { return "forum.subscribe" }
+
+// ForumSubscribeOp implements Operation for explicit subscribe behavior.
+type ForumSubscribeOp struct{}
+
+func (o *ForumSubscribeOp) OpName() string { return "forum.subscribe" }
+
+func (o *ForumSubscribeOp) AllowedHeaders() []string {
+	return []string{"Op", "Actor", "Topic", "At"}
+}
+
+func (o *ForumSubscribeOp) RequiredHeaders() []string {
+	return []string{"Actor", "Topic"}
+}
+
+func (o *ForumSubscribeOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	return "", "", false
+}
+
+func (o *ForumSubscribeOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	var refs []SymbolRef
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
+	}
+	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeForum, Symbol: topic, Field: "Topic"})
+	}
+
+	return refs
+}
+
+func (o *ForumSubscribeOp) AssetPaths(evt *Event) []string { return nil }
+
+func (o *ForumSubscribeOp) Parse(evt *Event) (OperationData, error) {
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("forum.subscribe: missing required 'Actor'")
+	}
+	topic := strings.TrimSpace(evt.Headers.Get("Topic"))
+	if topic == "" {
+		return nil, fmt.Errorf("forum.subscribe: missing required 'Topic'")
+	}
+
+	return &ForumSubscribeData{
+		Actor: actor,
+		Topic: topic,
+		At:    evt.At,
+	}, nil
+}
+
+// --- forum.unsubscribe ---
+
+// ForumUnsubscribeData holds the strongly-typed data for forum.unsubscribe.
+type ForumUnsubscribeData struct {
+	Actor string
+	Topic string
+
+	At time.Time
+}
+
+func (d *ForumUnsubscribeData) Op() string { return "forum.unsubscribe" }
+
+// ForumUnsubscribeOp implements Operation for explicit unsubscribe behavior.
+type ForumUnsubscribeOp struct{}
+
+func (o *ForumUnsubscribeOp) OpName() string { return "forum.unsubscribe" }
+
+func (o *ForumUnsubscribeOp) AllowedHeaders() []string {
+	return []string{"Op", "Actor", "Topic", "At"}
+}
+
+func (o *ForumUnsubscribeOp) RequiredHeaders() []string {
+	return []string{"Actor", "Topic"}
+}
+
+func (o *ForumUnsubscribeOp) DeclaredRef(evt *Event) (RefType, string, bool) {
+	return "", "", false
+}
+
+func (o *ForumUnsubscribeOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	var refs []SymbolRef
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
+	}
+	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
+		refs = append(refs, SymbolRef{Type: RefTypeForum, Symbol: topic, Field: "Topic"})
+	}
+
+	return refs
+}
+
+func (o *ForumUnsubscribeOp) AssetPaths(evt *Event) []string { return nil }
+
+func (o *ForumUnsubscribeOp) Parse(evt *Event) (OperationData, error) {
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		return nil, fmt.Errorf("forum.unsubscribe: missing required 'Actor'")
+	}
+	topic := strings.TrimSpace(evt.Headers.Get("Topic"))
+	if topic == "" {
+		return nil, fmt.Errorf("forum.unsubscribe: missing required 'Topic'")
+	}
+
+	return &ForumUnsubscribeData{
+		Actor: actor,
+		Topic: topic,
+		At:    evt.At,
+	}, nil
+}
+
 // --- forum.post ---
 
 // ForumPostData holds the strongly-typed data for forum.post.
@@ -479,6 +653,7 @@ func (o *ForumPostOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if thread := strings.TrimSpace(evt.Headers.Get("Thread")); thread != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: thread, Field: "Thread"})
 	}
+
 	return refs
 }
 

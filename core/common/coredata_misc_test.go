@@ -61,7 +61,7 @@ func TestCreatePrivateTopicUsesProvidedUsernames(t *testing.T) {
 		mock.ExpectExec("INSERT INTO subscriptions").
 			WithArgs(
 				uid,
-				"create thread:/forum/topic/42/*",
+				"create thread:/private/topic/42/*",
 				"internal",
 			).WillReturnResult(sqlmock.NewResult(1, 1))
 	}
@@ -144,7 +144,7 @@ func TestCreatePrivateTopicBuildsUsernamesWhenMissing(t *testing.T) {
 		mock.ExpectExec("INSERT INTO subscriptions").
 			WithArgs(
 				uid,
-				"create thread:/forum/topic/7/*",
+				"create thread:/private/topic/7/*",
 				"internal",
 			).WillReturnResult(sqlmock.NewResult(1, 1))
 	}

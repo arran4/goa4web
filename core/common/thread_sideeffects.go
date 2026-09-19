@@ -141,6 +141,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 				Text: event.CommentText,
 			}
 		}
+
 	}
 
 	return errors.Join(errs...)
@@ -159,6 +160,11 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	if err := postcountworker.PostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
 		return err
 	}
+
+	if err := cd.EnsureAutoSubscription(ctx, topicID, threadID, cd.UserID); err != nil {
+		return fmt.Errorf("apply auto subscription for user: %w", err)
+	}
+
 	if !includeSearch {
 		return nil
 	}
@@ -167,4 +173,36 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 		ID:   commentID,
 		Text: text,
 	})
+}
+
+// EnsureAutoSubscription ensures a user is subscribed to a thread if they have auto-subscribe enabled.
+func (cd *CoreData) EnsureAutoSubscription(ctx context.Context, topicID, threadID, userID int32) error {
+	if cd == nil || cd.queries == nil {
+		return nil
+	}
+	auto, email, err := CheckAutoSubscribePreference(ctx, cd.queries, userID)
+	if err != nil && !errors.Is(err, ErrPreferenceNotFound) {
+		return fmt.Errorf("check auto subscribe preference: %w", err)
+	}
+	if !auto {
+		return nil
+	}
+
+	topic, err := cd.queries.GetForumTopicById(ctx, topicID)
+	if err != nil {
+		return fmt.Errorf("get forum topic for auto subscribe: %w", err)
+	}
+	isPrivate := topic != nil && topic.Handler == "private"
+
+	pattern := ThreadSubscriptionPattern(topicID, threadID, isPrivate)
+
+	if err := EnsureSubscriptionIdempotent(ctx, cd.queries, userID, pattern, "internal"); err != nil {
+		return fmt.Errorf("ensure internal subscription: %w", err)
+	}
+	if email {
+		if err := EnsureSubscriptionIdempotent(ctx, cd.queries, userID, pattern, "email"); err != nil {
+			return fmt.Errorf("ensure email subscription: %w", err)
+		}
+	}
+	return nil
 }

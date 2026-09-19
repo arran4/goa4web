@@ -196,17 +196,20 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.SetThreadPrivateLabelStatus(int32(threadID), false, false); err != nil {
-		log.Printf("mark read: %v", err)
-		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
+
+	params := common.ReadForumThreadParams{
+		ActorID:  cd.UserID,
+		ThreadID: int32(threadID),
 	}
 	if last := r.FormValue("last_comment"); last != "" {
-		if cid, err := strconv.Atoi(last); err == nil {
-			if err := cd.SetThreadReadMarker(int32(threadID), int32(cid)); err != nil {
-				log.Printf("set read marker: %v", err)
-				return fmt.Errorf("set read marker %w", handlers.ErrRedirectOnSamePageHandler(err))
-			}
+		if cid, err := strconv.Atoi(last); err == nil && cid > 0 {
+			params.LastCommentID = int32(cid)
 		}
+	}
+
+	if err := cd.ReadForumThread(r.Context(), params); err != nil {
+		log.Printf("mark read: %v", err)
+		return fmt.Errorf("mark read %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	target := r.FormValue("redirect")

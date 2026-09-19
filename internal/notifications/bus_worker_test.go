@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -11,12 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/arran4/goa4web/internal/tasks"
-
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/stats"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
@@ -655,4 +655,97 @@ func assertNotifications(t *testing.T, calls []db.SystemCreateNotificationParams
 			t.Fatalf("missing notification for user %d", id)
 		}
 	}
+}
+
+type mockQuerierNotifier struct {
+	db.QuerierStub
+	ListSubscribersForPatternFn func(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error)
+	InsertSubscriptionFn        func(ctx context.Context, arg db.InsertSubscriptionParams) error
+}
+
+func (m *mockQuerierNotifier) ListSubscribersForPattern(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error) {
+	if m.ListSubscribersForPatternFn != nil {
+		return m.ListSubscribersForPatternFn(ctx, arg)
+	}
+	return nil, sql.ErrNoRows
+}
+
+func (m *mockQuerierNotifier) InsertSubscription(ctx context.Context, arg db.InsertSubscriptionParams) error {
+	if m.InsertSubscriptionFn != nil {
+		return m.InsertSubscriptionFn(ctx, arg)
+	}
+	return nil
+}
+
+func TestHandleAutoSubscribeErrors(t *testing.T) {
+	n := &Notifier{Config: &config.RuntimeConfig{NotificationsEnabled: true}}
+	ctx := context.Background()
+	evt := eventbus.TaskEvent{UserID: 42}
+	tp := autoSubTask{TaskString: "AutoSub"}
+
+	// 1. Preference lookup failure (non-ErrNoRows)
+	t.Run("PreferenceLookupFailure", func(t *testing.T) {
+		qs := &mockQuerierNotifier{
+			QuerierStub: db.QuerierStub{
+				GetPreferenceForListerFn: func(ctx context.Context, listerID int32) (*db.Preference, error) {
+					return nil, errors.New("db offline")
+				},
+			},
+		}
+		n.Queries = qs
+		err := n.handleAutoSubscribe(ctx, evt, tp)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "db offline") {
+			t.Fatalf("expected error containing 'db offline', got: %v", err)
+		}
+	})
+
+	// 2. Subscription insertion failure
+	t.Run("InsertionFailure", func(t *testing.T) {
+		qs := &mockQuerierNotifier{
+			QuerierStub: db.QuerierStub{
+				GetPreferenceForListerFn: func(ctx context.Context, listerID int32) (*db.Preference, error) {
+					return &db.Preference{AutoSubscribeReplies: true}, nil
+				},
+			},
+			ListSubscribersForPatternFn: func(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error) {
+				return nil, sql.ErrNoRows
+			},
+			InsertSubscriptionFn: func(ctx context.Context, arg db.InsertSubscriptionParams) error {
+				return errors.New("insert failed")
+			},
+		}
+		n.Queries = qs
+		err := n.handleAutoSubscribe(ctx, evt, tp)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "insert failed") {
+			t.Fatalf("expected error containing 'insert failed', got: %v", err)
+		}
+	})
+
+	// 3. Subscription lookup failure (non-ErrNoRows)
+	t.Run("LookupFailure", func(t *testing.T) {
+		qs := &mockQuerierNotifier{
+			QuerierStub: db.QuerierStub{
+				GetPreferenceForListerFn: func(ctx context.Context, listerID int32) (*db.Preference, error) {
+					return &db.Preference{AutoSubscribeReplies: true}, nil
+				},
+			},
+			ListSubscribersForPatternFn: func(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error) {
+				return nil, errors.New("lookup failed")
+			},
+		}
+		n.Queries = qs
+		err := n.handleAutoSubscribe(ctx, evt, tp)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "lookup failed") {
+			t.Fatalf("expected error containing 'lookup failed', got: %v", err)
+		}
+	})
 }

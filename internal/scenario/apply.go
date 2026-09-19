@@ -69,6 +69,9 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 			"private-forum.create": true,
 			"forum.thread.create":  true,
 			"forum.reply":          true,
+			"forum.thread.read":    true,
+			"forum.subscribe":      true,
+			"forum.unsubscribe":    true,
 		},
 	}
 	for _, opt := range opts {
@@ -168,6 +171,26 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 		}
 		return r.applyForumReply(ctx, data)
 
+	case "forum.thread.read":
+		data, ok := evt.OpData.(*ForumThreadReadData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for forum.thread.read")
+		}
+		return r.applyForumThreadRead(ctx, data)
+
+	case "forum.subscribe":
+		data, ok := evt.OpData.(*ForumSubscribeData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for forum.subscribe")
+		}
+		return r.applyForumSubscribe(ctx, data)
+
+	case "forum.unsubscribe":
+		data, ok := evt.OpData.(*ForumUnsubscribeData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for forum.unsubscribe")
+		}
+		return r.applyForumUnsubscribe(ctx, data)
 	default:
 		return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 	}
@@ -341,5 +364,88 @@ func (r *Runner) applyUserGrant(ctx context.Context, data *UserGrantData) error 
 	if err := r.coreData.GrantUser(uid, data.Section, data.Item, data.Action); err != nil {
 		return fmt.Errorf("grant user %s (%d) (%s/%s/%s): %w", data.User, uid, data.Section, data.Item, data.Action, err)
 	}
+	return nil
+}
+
+func (r *Runner) applyForumThreadRead(ctx context.Context, data *ForumThreadReadData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve actor %q", data.Actor)
+	}
+	threadID, ok := r.resolveInt32Ref(RefTypeThread, data.Thread)
+	if !ok {
+		return fmt.Errorf("cannot resolve thread %q", data.Thread)
+	}
+
+	actorCD := r.coreData.ForUser(actorID)
+
+	err := actorCD.ReadForumThread(ctx, common.ReadForumThreadParams{
+		ActorID:  actorID,
+		ThreadID: threadID,
+	})
+	if err != nil {
+		return fmt.Errorf("read forum thread: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) applyForumSubscribe(ctx context.Context, data *ForumSubscribeData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve actor %q", data.Actor)
+	}
+
+	actorCD := r.coreData.ForUser(actorID)
+
+	var topicID int32
+	if data.Topic != "" {
+		tid, ok := r.resolveInt32Ref(RefTypeForum, data.Topic)
+		if !ok {
+			return fmt.Errorf("cannot resolve topic %q", data.Topic)
+		}
+		topicID = tid
+	}
+
+
+	err := actorCD.SubscribeForum(ctx, common.SubscribeForumParams{
+		ActorID:  actorID,
+		TopicID:  topicID,
+
+	})
+	if err != nil {
+		return fmt.Errorf("subscribe forum: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) applyForumUnsubscribe(ctx context.Context, data *ForumUnsubscribeData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve actor %q", data.Actor)
+	}
+
+	actorCD := r.coreData.ForUser(actorID)
+
+	var topicID int32
+	if data.Topic != "" {
+		tid, ok := r.resolveInt32Ref(RefTypeForum, data.Topic)
+		if !ok {
+			return fmt.Errorf("cannot resolve topic %q", data.Topic)
+		}
+		topicID = tid
+	}
+
+
+	err := actorCD.UnsubscribeForum(ctx, common.SubscribeForumParams{
+		ActorID:  actorID,
+		TopicID:  topicID,
+
+	})
+	if err != nil {
+		return fmt.Errorf("unsubscribe forum: %w", err)
+	}
+
 	return nil
 }

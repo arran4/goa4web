@@ -177,3 +177,68 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 		}
 	}
 }
+
+
+
+func TestPrivateForumCustomIndexPrivateTopicSubscription(t *testing.T) {
+	q := testhelpers.NewQuerierStub(
+		testhelpers.WithDefaultGrantAllowed(true),
+	)
+	q.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		if arg.Idforumtopic == 42 {
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: 42,
+				Handler:      "private",
+			}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+
+	cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+	cd.UserID = 7
+
+	req := httptest.NewRequest("GET", "/private/topic/42", nil)
+	req = mux.SetURLVars(req, map[string]string{"topic": "42"})
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+	CustomIndex(cd, req)
+	items := cd.CustomIndexItems
+
+	// Should see "Subscribe To Topic" since user is not subscribed
+	foundSub := false
+	for _, item := range items {
+		if item.Name == "Subscribe To Topic" {
+			foundSub = true
+		}
+	}
+	if !foundSub {
+		t.Errorf("Expected 'Subscribe To Topic' item but did not find it")
+	}
+
+	// Recreate cd with the subscription
+	q2 := testhelpers.NewQuerierStub(
+		testhelpers.WithDefaultGrantAllowed(true),
+		testhelpers.WithSubscriptions([]*db.ListSubscriptionsByUserRow{
+			{Pattern: "create thread:/private/topic/42/*", Method: "internal"},
+		}),
+	)
+	q2.GetForumTopicByIdForUserFn = q.GetForumTopicByIdForUserFn
+
+	cd2 := common.NewCoreData(context.Background(), q2, config.NewRuntimeConfig())
+	cd2.UserID = 7
+
+	req2 := req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd2))
+	CustomIndex(cd2, req2)
+	items = cd2.CustomIndexItems
+
+	// Should see "Unsubscribe From Topic" since user IS subscribed
+	foundUnsub := false
+	for _, item := range items {
+		if item.Name == "Unsubscribe From Topic" {
+			foundUnsub = true
+		}
+	}
+	if !foundUnsub {
+		t.Errorf("Expected 'Unsubscribe From Topic' item but did not find it")
+	}
+}

@@ -348,10 +348,12 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 	if isPrivate {
 		subjectPrefix = "Private Forum"
 	}
-	if evt := cd.Event(); evt != nil {
+	evt := cd.Event()
+	if evt != nil {
 		evt.Path = endURL
 	}
 	if err := cd.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
+		Event:            evt,
 		ThreadID:         threadID,
 		TopicID:          params.TopicID,
 		CommentID:        commentID,
@@ -532,4 +534,128 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		URL:       endURL,
 		Appended:  appendResult.appended,
 	}, nil
+}
+
+// ReadForumThreadParams describes the parameters to mark a thread as read.
+type ReadForumThreadParams struct {
+	ActorID       int32
+	ThreadID      int32
+	LastCommentID int32
+}
+
+// ReadForumThread marks a thread as read for the actor, clearing new/unread status and setting the read marker.
+func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("read forum thread: no queries")
+	}
+
+	thread, err := cd.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+		ViewerID:      params.ActorID,
+		ThreadID:      params.ThreadID,
+		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err == sql.ErrNoRows || thread == nil {
+		return ForumResourceNotFoundError{Resource: "thread"}
+	}
+	if err != nil {
+		return fmt.Errorf("get forum thread for actor: %w", err)
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+
+	markerID := params.LastCommentID
+	if markerID <= 0 {
+		comments, err := cd.ThreadComments(params.ThreadID)
+		if err != nil {
+			return fmt.Errorf("fetch thread comments: %w", err)
+		}
+		if len(comments) == 0 {
+			return fmt.Errorf("thread %d has no comments", params.ThreadID)
+		}
+		markerID = comments[len(comments)-1].Idcomments
+	}
+
+	if err := actorCD.SetThreadPrivateLabelStatus(params.ThreadID, false, false); err != nil {
+		return fmt.Errorf("set thread private label status: %w", err)
+	}
+
+	if err := actorCD.SetThreadReadMarker(params.ThreadID, markerID); err != nil {
+		return fmt.Errorf("set thread read marker: %w", err)
+	}
+
+	return nil
+}
+
+// SubscribeForumParams describes the parameters for subscribing to a topic or thread.
+type SubscribeForumParams struct {
+	ActorID  int32
+	TopicID  int32
+	ThreadID int32
+}
+
+// SubscribeForum subscribes the actor to a topic or thread.
+func (cd *CoreData) SubscribeForum(ctx context.Context, params SubscribeForumParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("subscribe forum: no queries")
+	}
+	actorCD := cd.ForUser(params.ActorID)
+
+	if params.ThreadID != 0 {
+		// Must have access to thread
+		thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+			ViewerID:      params.ActorID,
+			ThreadID:      params.ThreadID,
+			ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+		})
+		if err == sql.ErrNoRows || thread == nil {
+			return ForumResourceNotFoundError{Resource: "thread"}
+		}
+		if err != nil {
+			return fmt.Errorf("get forum thread for actor: %w", err)
+		}
+
+		return actorCD.SubscribeThread(params.TopicID, params.ThreadID, false)
+	} else if params.TopicID != 0 {
+		// Must have access to topic
+		topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+		if err != nil {
+			return err
+		}
+		isPrivate := topic.Handler == "private"
+		return cd.SubscribeTopic(params.ActorID, params.TopicID, isPrivate)
+	}
+	return nil
+}
+
+// UnsubscribeForum unsubscribes the actor from a topic or thread.
+func (cd *CoreData) UnsubscribeForum(ctx context.Context, params SubscribeForumParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("unsubscribe forum: no queries")
+	}
+	actorCD := cd.ForUser(params.ActorID)
+
+	if params.ThreadID != 0 {
+		// Must have access to thread
+		thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+			ViewerID:      params.ActorID,
+			ThreadID:      params.ThreadID,
+			ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+		})
+		if err == sql.ErrNoRows || thread == nil {
+			return ForumResourceNotFoundError{Resource: "thread"}
+		}
+		if err != nil {
+			return fmt.Errorf("get forum thread for actor: %w", err)
+		}
+		return actorCD.UnsubscribeThread(params.TopicID, params.ThreadID, false)
+	} else if params.TopicID != 0 {
+		// Must have access to topic
+		topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+		if err != nil {
+			return err
+		}
+		isPrivate := topic.Handler == "private"
+		return cd.UnsubscribeTopic(params.ActorID, params.TopicID, isPrivate)
+	}
+	return nil
 }

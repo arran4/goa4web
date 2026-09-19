@@ -538,8 +538,9 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 
 // ReadForumThreadParams describes the parameters to mark a thread as read.
 type ReadForumThreadParams struct {
-	ActorID  int32
-	ThreadID int32
+	ActorID       int32
+	ThreadID      int32
+	LastCommentID int32
 }
 
 // ReadForumThread marks a thread as read for the actor, clearing new/unread status and setting the read marker.
@@ -562,19 +563,23 @@ func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadP
 
 	actorCD := cd.ForUser(params.ActorID)
 
+	markerID := params.LastCommentID
+	if markerID <= 0 {
+		comments, err := cd.ThreadComments(params.ThreadID)
+		if err != nil {
+			return fmt.Errorf("fetch thread comments: %w", err)
+		}
+		if len(comments) == 0 {
+			return fmt.Errorf("thread %d has no comments", params.ThreadID)
+		}
+		markerID = comments[len(comments)-1].Idcomments
+	}
+
 	if err := actorCD.SetThreadPrivateLabelStatus(params.ThreadID, false, false); err != nil {
 		return fmt.Errorf("set thread private label status: %w", err)
 	}
 
-	comments, err := cd.ThreadComments(params.ThreadID)
-	if err != nil {
-		return fmt.Errorf("fetch thread comments: %w", err)
-	}
-	if len(comments) == 0 {
-		return fmt.Errorf("thread %d has no comments", params.ThreadID)
-	}
-	lastComment := comments[len(comments)-1]
-	if err := actorCD.SetThreadReadMarker(params.ThreadID, lastComment.Idcomments); err != nil {
+	if err := actorCD.SetThreadReadMarker(params.ThreadID, markerID); err != nil {
 		return fmt.Errorf("set thread read marker: %w", err)
 	}
 

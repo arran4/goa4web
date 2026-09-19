@@ -13,9 +13,9 @@ func topicSubscriptionPattern(topicID int32) string {
 }
 
 // subscribedToTopic reports whether cd follows new threads in topicID.
-func subscribedToTopic(cd *common.CoreData, topicID int32) bool {
+func subscribedToTopic(cd *common.CoreData, topicID int32, isPrivate bool) bool {
 	if cd == nil || cd.UserID == 0 {
 		return false
 	}
-	return cd.Subscribed(topicSubscriptionPattern(topicID), "internal")
+	return cd.Subscribed(common.TopicSubscriptionPattern(topicID, isPrivate), "internal")
 }

@@ -125,7 +125,7 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 		}
 		if cd.UserID != 0 {
 			if tid, err := strconv.Atoi(topicID); err == nil {
-				if subscribedToTopic(cd, int32(tid)) {
+				if subscribedToTopic(cd, int32(tid), strings.HasPrefix(base, "/private")) {
 					items = append(items,
 						common.IndexItem{
 							Name:    "Unsubscribe From Topic",

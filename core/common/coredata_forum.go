@@ -1,10 +1,11 @@
 package common
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/core/consts"
@@ -228,18 +229,18 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	return nil
 }
 
-func topicSubscriptionPattern(topicID int32, isPrivate bool) string {
+func TopicSubscriptionPattern(topicID int32, isPrivate bool) string {
 	if isPrivate {
 		return fmt.Sprintf("create thread:/private/topic/%d/*", topicID)
 	}
 	return fmt.Sprintf("create thread:/forum/topic/%d/*", topicID)
 }
 
-func threadSubscriptionPattern(topicID int32, threadID int32, isPrivate bool) string {
+func ThreadSubscriptionPattern(topicID, threadID int32, isPrivate bool) string {
 	if isPrivate {
-		return fmt.Sprintf("%s:/private/topic/%d/thread/%d/*", strings.ToLower("Write Reply"), topicID, threadID)
+		return fmt.Sprintf("reply:/private/topic/%d/thread/%d/*", topicID, threadID)
 	}
-	return fmt.Sprintf("%s:/forum/topic/%d/thread/%d/*", strings.ToLower("Write Reply"), topicID, threadID)
+	return fmt.Sprintf("reply:/forum/topic/%d/thread/%d/*", topicID, threadID)
 }
 
 // SubscribeTopic subscribes the current user to new threads in the given topic.
@@ -247,7 +248,7 @@ func (cd *CoreData) SubscribeTopic(userID, topicID int32, isPrivate bool) error 
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: topicSubscriptionPattern(topicID, isPrivate), Method: "internal"})
+	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: TopicSubscriptionPattern(topicID, isPrivate), Method: "internal"})
 }
 
 // UnsubscribeTopic removes the current user's subscription to a topic.
@@ -255,7 +256,7 @@ func (cd *CoreData) UnsubscribeTopic(userID, topicID int32, isPrivate bool) erro
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: userID, Pattern: topicSubscriptionPattern(topicID, isPrivate), Method: "internal"})
+	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: userID, Pattern: TopicSubscriptionPattern(topicID, isPrivate), Method: "internal"})
 }
 
 // SubscribeThread subscribes the current user to new threads in the given thread.
@@ -263,7 +264,7 @@ func (cd *CoreData) SubscribeThread(topicID int32, threadID int32, isPrivate boo
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID, isPrivate), Method: "internal"})
+	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: ThreadSubscriptionPattern(topicID, threadID, isPrivate), Method: "internal"})
 }
 
 // UnsubscribeThread removes the current user's subscription to a thread.
@@ -271,7 +272,7 @@ func (cd *CoreData) UnsubscribeThread(topicID int32, threadID int32, isPrivate b
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: threadSubscriptionPattern(topicID, threadID, isPrivate), Method: "internal"})
+	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: cd.UserID, Pattern: ThreadSubscriptionPattern(topicID, threadID, isPrivate), Method: "internal"})
 }
 
 // GrantForumCategory creates a grant for a forum category.
@@ -377,4 +378,44 @@ func (cd *CoreData) RevokeForumThread(grantID int32) error {
 		return nil
 	}
 	return cd.queries.AdminDeleteGrant(cd.ctx, grantID)
+}
+
+var ErrPreferenceNotFound = errors.New("preference not found")
+
+// CheckAutoSubscribePreference resolves the user's auto-subscribe preference.
+func CheckAutoSubscribePreference(ctx context.Context, q db.Querier, userID int32) (auto, email bool, err error) {
+	if q == nil {
+		return true, false, ErrPreferenceNotFound
+	}
+	pref, err := q.GetPreferenceForLister(ctx, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return true, false, ErrPreferenceNotFound // Honor the database default of true for auto_subscribe_replies
+		}
+		return false, false, err
+	}
+	if pref == nil {
+		return true, false, ErrPreferenceNotFound
+	}
+	auto = pref.AutoSubscribeReplies
+	if pref.Emailforumupdates.Valid {
+		email = pref.Emailforumupdates.Bool
+	}
+	return auto, email, nil
+}
+
+// EnsureSubscriptionIdempotent ensures the exact pattern/method exists without blind insertion.
+func EnsureSubscriptionIdempotent(ctx context.Context, q db.Querier, userID int32, pattern, method string) error {
+	if q == nil || userID == 0 {
+		return nil
+	}
+	ids, err := q.ListSubscribersForPattern(ctx, db.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
+	if err == nil {
+		for _, id := range ids {
+			if id == userID {
+				return nil
+			}
+		}
+	}
+	return q.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method})
 }

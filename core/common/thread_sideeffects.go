@@ -2,10 +2,10 @@ package common
 
 import (
 	"context"
-	"log"
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"maps"
 	"time"
 
@@ -143,7 +143,6 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			}
 		}
 
-
 	}
 
 	return errors.Join(errs...)
@@ -177,22 +176,14 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	})
 }
 
-
 // EnsureAutoSubscription ensures a user is subscribed to a thread if they have auto-subscribe enabled.
 func (cd *CoreData) EnsureAutoSubscription(ctx context.Context, topicID, threadID, userID int32) error {
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	auto := true
-	email := false
-	if userID != 0 {
-		pref, err := cd.queries.GetPreferenceForLister(ctx, userID)
-		if err == nil && pref != nil {
-			auto = pref.AutoSubscribeReplies
-			if pref.Emailforumupdates.Valid {
-				email = pref.Emailforumupdates.Bool
-			}
-		}
+	auto, email, err := CheckAutoSubscribePreference(ctx, cd.queries, userID)
+	if err != nil && !errors.Is(err, ErrPreferenceNotFound) {
+		return fmt.Errorf("check auto subscribe preference: %w", err)
 	}
 	if !auto {
 		return nil
@@ -204,14 +195,14 @@ func (cd *CoreData) EnsureAutoSubscription(ctx context.Context, topicID, threadI
 	}
 	isPrivate := topic != nil && topic.Handler == "private"
 
-	pattern := threadSubscriptionPattern(topicID, threadID, isPrivate)
+	pattern := ThreadSubscriptionPattern(topicID, threadID, isPrivate)
 
-	if err := cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: "internal"}); err != nil {
-		return fmt.Errorf("insert internal subscription: %w", err)
+	if err := EnsureSubscriptionIdempotent(ctx, cd.queries, userID, pattern, "internal"); err != nil {
+		return fmt.Errorf("ensure internal subscription: %w", err)
 	}
 	if email {
-		if err := cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: "email"}); err != nil {
-			return fmt.Errorf("insert email subscription: %w", err)
+		if err := EnsureSubscriptionIdempotent(ctx, cd.queries, userID, pattern, "email"); err != nil {
+			return fmt.Errorf("ensure email subscription: %w", err)
 		}
 	}
 	return nil

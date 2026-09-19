@@ -4,7 +4,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -14,13 +16,11 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"database/sql"
-	"io/fs"
 
-	"github.com/arran4/goa4web/internal/scenario"
-	"github.com/arran4/goa4web/testdata/scenarios"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/scenario"
+	"github.com/arran4/goa4web/testdata/scenarios"
 	"github.com/stretchr/testify/require"
 )
 
@@ -110,7 +110,7 @@ func runScenarioAndAssert(t *testing.T, eventsToRun int, assertFunc func(*testin
 }
 
 func coreDataForUser(ctx context.Context, cd *common.CoreData, userID int32) *common.CoreData {
-    return cd.ForUser(userID)
+	return cd.ForUser(userID)
 }
 
 func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
@@ -141,17 +141,17 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice initially")
 
 			var aliceID int32
-			err := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
-			require.NoError(t, err)
+			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, errAlice)
 
 			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
 
 			var staffRoomTopicID int32
-			err = sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
-			require.NoError(t, err)
+			errStaff := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			require.NoError(t, errStaff)
 			var coordinationTopicID int32
-			err = sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
-			require.NoError(t, err)
+			errCoord := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+			require.NoError(t, errCoord)
 			var projectRoomTopicID int32
 			err = sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Project Room'").Scan(&projectRoomTopicID)
 			require.NoError(t, err)
@@ -167,6 +167,15 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			pattern3 := fmt.Sprintf("create thread:/private/topic/%d/*", projectRoomTopicID)
 			hasSub = aliceCD.HasSubscription(pattern3, "internal")
 			require.False(t, hasSub, "Alice should have no Project Room subscription")
+
+			var staffWelcomeThreadID int32
+			err = sqlDB.QueryRow("SELECT forumthread_id FROM comments WHERE text LIKE '%Welcome to the staff room%' LIMIT 1").Scan(&staffWelcomeThreadID)
+			require.NoError(t, err)
+
+			aliceThreadPattern := fmt.Sprintf("reply:/private/topic/%d/thread/%d/*", staffRoomTopicID, staffWelcomeThreadID)
+			hasSub = aliceCD.HasSubscription(aliceThreadPattern, "internal")
+
+			require.True(t, hasSub, "Alice should be automatically subscribed to staff-welcome thread")
 		})
 	})
 
@@ -178,8 +187,8 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			require.NotContains(t, body, "Welcome to the staff room.", "Staff Room unread should be cleared")
 
 			var aliceID int32
-			err := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
-			require.NoError(t, err)
+			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, errAlice)
 
 			var staffWelcomeThreadID int32
 			err = sqlDB.QueryRow("SELECT forumthread_id FROM comments WHERE text LIKE '%Welcome to the staff room%' LIMIT 1").Scan(&staffWelcomeThreadID)
@@ -205,8 +214,10 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice after bob replied")
 
 			var aliceID, bobID int32
-			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
-			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'bob'").Scan(&bobID)
+			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, errAlice)
+			errBob := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'bob'").Scan(&bobID)
+			require.NoError(t, errBob)
 
 			var staffWelcomeThreadID int32
 			err = sqlDB.QueryRow("SELECT forumthread_id FROM comments WHERE text LIKE '%Welcome to the staff room%' LIMIT 1").Scan(&staffWelcomeThreadID)
@@ -229,19 +240,37 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 
 			require.Equal(t, bobFirstReplyID, aliceMarker, "Alice's marker remains exactly Bob's first reply")
 			require.Equal(t, newReplyID, bobMarker, "Bob's marker equals the new reply")
+
+			var staffRoomTopicID int32
+			errStaff := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			require.NoError(t, errStaff)
+
+			bobThreadPattern := fmt.Sprintf("reply:/private/topic/%d/thread/%d/*", staffRoomTopicID, staffWelcomeThreadID)
+			hasSub := bobCD.HasSubscription(bobThreadPattern, "internal")
+			require.True(t, hasSub, "Bob should be automatically subscribed to staff-welcome thread after replying")
+
+			var daveID int32
+			errDave := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'dave'").Scan(&daveID)
+			require.NoError(t, errDave)
+			daveCD := coreDataForUser(context.Background(), cd, daveID)
+			hasSub = daveCD.HasSubscription(bobThreadPattern, "internal")
+			require.False(t, hasSub, "Dave should not be subscribed to staff-welcome thread")
 		})
 	})
 
 	t.Run("Unsubscribe", func(t *testing.T) {
 		runScenarioAndAssert(t, unsubEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
 			var aliceID int32
-			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, errAlice)
 
 			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
 
 			var staffRoomTopicID, coordinationTopicID int32
-			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
-			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+			errStaff := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			require.NoError(t, errStaff)
+			errCoord := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+			require.NoError(t, errCoord)
 
 			pattern1 := fmt.Sprintf("create thread:/private/topic/%d/*", staffRoomTopicID)
 			hasSub := aliceCD.HasSubscription(pattern1, "internal")
@@ -256,13 +285,16 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 	t.Run("Subscribe", func(t *testing.T) {
 		runScenarioAndAssert(t, subEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
 			var aliceID int32
-			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, errAlice)
 
 			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
 
 			var staffRoomTopicID, coordinationTopicID int32
-			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
-			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+			errStaff := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			require.NoError(t, errStaff)
+			errCoord := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+			require.NoError(t, errCoord)
 
 			pattern1 := fmt.Sprintf("create thread:/private/topic/%d/*", staffRoomTopicID)
 			hasSub := aliceCD.HasSubscription(pattern1, "internal")

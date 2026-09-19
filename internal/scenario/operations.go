@@ -486,10 +486,10 @@ func (o *ForumThreadReadOp) Parse(evt *Event) (OperationData, error) {
 
 // ForumSubscribeData holds the strongly-typed data for forum.subscribe.
 type ForumSubscribeData struct {
-	Actor  string
-	Topic  string
+	Actor string
+	Topic string
 
-	At     time.Time
+	At time.Time
 }
 
 func (d *ForumSubscribeData) Op() string { return "forum.subscribe" }
@@ -504,7 +504,7 @@ func (o *ForumSubscribeOp) AllowedHeaders() []string {
 }
 
 func (o *ForumSubscribeOp) RequiredHeaders() []string {
-	return []string{"Actor"}
+	return []string{"Actor", "Topic"}
 }
 
 func (o *ForumSubscribeOp) DeclaredRef(evt *Event) (RefType, string, bool) {
@@ -536,9 +536,9 @@ func (o *ForumSubscribeOp) Parse(evt *Event) (OperationData, error) {
 	}
 
 	return &ForumSubscribeData{
-		Actor:  actor,
-		Topic:  topic,
-		At:     evt.At,
+		Actor: actor,
+		Topic: topic,
+		At:    evt.At,
 	}, nil
 }
 
@@ -546,10 +546,10 @@ func (o *ForumSubscribeOp) Parse(evt *Event) (OperationData, error) {
 
 // ForumUnsubscribeData holds the strongly-typed data for forum.unsubscribe.
 type ForumUnsubscribeData struct {
-	Actor  string
-	Topic  string
+	Actor string
+	Topic string
 
-	At     time.Time
+	At time.Time
 }
 
 func (d *ForumUnsubscribeData) Op() string { return "forum.unsubscribe" }
@@ -564,7 +564,7 @@ func (o *ForumUnsubscribeOp) AllowedHeaders() []string {
 }
 
 func (o *ForumUnsubscribeOp) RequiredHeaders() []string {
-	return []string{"Actor"}
+	return []string{"Actor", "Topic"}
 }
 
 func (o *ForumUnsubscribeOp) DeclaredRef(evt *Event) (RefType, string, bool) {
@@ -596,9 +596,9 @@ func (o *ForumUnsubscribeOp) Parse(evt *Event) (OperationData, error) {
 	}
 
 	return &ForumUnsubscribeData{
-		Actor:  actor,
-		Topic:  topic,
-		At:     evt.At,
+		Actor: actor,
+		Topic: topic,
+		At:    evt.At,
 	}, nil
 }
 
@@ -624,7 +624,7 @@ type ForumPostOp struct{}
 func (o *ForumPostOp) OpName() string { return "forum.post" }
 
 func (o *ForumPostOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "Forum", "Topic", "Attachment", "At"}
+	return []string{"Op", "Ref", "Actor", "Forum", "Topic", "Thread", "Attachment", "At"}
 }
 
 func (o *ForumPostOp) RequiredHeaders() []string {

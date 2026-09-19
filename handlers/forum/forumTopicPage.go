@@ -181,7 +181,7 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
 
-	if subscribedToTopic(cd, topicRow.Idforumtopic) {
+	if subscribedToTopic(cd, topicRow.Idforumtopic, topicRow.Handler == "private") {
 		data.Subscribed = true
 	}
 

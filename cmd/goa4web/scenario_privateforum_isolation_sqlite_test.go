@@ -75,4 +75,7 @@ func TestPrivateForumIsolation(t *testing.T) {
 		TopicID: projectRoomTopicID,
 	})
 	require.Error(t, err, "Expected error when Alice tries to unsubscribe from Project Room topic")
+
+	hasSubAfter := aliceCD.HasSubscription(pattern, "")
+	require.False(t, hasSubAfter, "Expected Alice to still have no subscriptions to Project Room topic after failed unsubscribe")
 }

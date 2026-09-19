@@ -488,7 +488,7 @@ func (o *ForumThreadReadOp) Parse(evt *Event) (OperationData, error) {
 type ForumSubscribeData struct {
 	Actor  string
 	Topic  string
-	Thread string
+
 	At     time.Time
 }
 
@@ -500,7 +500,7 @@ type ForumSubscribeOp struct{}
 func (o *ForumSubscribeOp) OpName() string { return "forum.subscribe" }
 
 func (o *ForumSubscribeOp) AllowedHeaders() []string {
-	return []string{"Op", "Actor", "Topic", "Thread", "At"}
+	return []string{"Op", "Actor", "Topic", "At"}
 }
 
 func (o *ForumSubscribeOp) RequiredHeaders() []string {
@@ -519,9 +519,7 @@ func (o *ForumSubscribeOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeForum, Symbol: topic, Field: "Topic"})
 	}
-	if thread := strings.TrimSpace(evt.Headers.Get("Thread")); thread != "" {
-		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: thread, Field: "Thread"})
-	}
+
 	return refs
 }
 
@@ -533,15 +531,13 @@ func (o *ForumSubscribeOp) Parse(evt *Event) (OperationData, error) {
 		return nil, fmt.Errorf("forum.subscribe: missing required 'Actor'")
 	}
 	topic := strings.TrimSpace(evt.Headers.Get("Topic"))
-	thread := strings.TrimSpace(evt.Headers.Get("Thread"))
-	if topic == "" && thread == "" {
-		return nil, fmt.Errorf("forum.subscribe: one of 'Topic' or 'Thread' is required")
+	if topic == "" {
+		return nil, fmt.Errorf("forum.subscribe: missing required 'Topic'")
 	}
 
 	return &ForumSubscribeData{
 		Actor:  actor,
 		Topic:  topic,
-		Thread: thread,
 		At:     evt.At,
 	}, nil
 }
@@ -552,7 +548,7 @@ func (o *ForumSubscribeOp) Parse(evt *Event) (OperationData, error) {
 type ForumUnsubscribeData struct {
 	Actor  string
 	Topic  string
-	Thread string
+
 	At     time.Time
 }
 
@@ -564,7 +560,7 @@ type ForumUnsubscribeOp struct{}
 func (o *ForumUnsubscribeOp) OpName() string { return "forum.unsubscribe" }
 
 func (o *ForumUnsubscribeOp) AllowedHeaders() []string {
-	return []string{"Op", "Actor", "Topic", "Thread", "At"}
+	return []string{"Op", "Actor", "Topic", "At"}
 }
 
 func (o *ForumUnsubscribeOp) RequiredHeaders() []string {
@@ -583,9 +579,7 @@ func (o *ForumUnsubscribeOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeForum, Symbol: topic, Field: "Topic"})
 	}
-	if thread := strings.TrimSpace(evt.Headers.Get("Thread")); thread != "" {
-		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: thread, Field: "Thread"})
-	}
+
 	return refs
 }
 
@@ -597,15 +591,13 @@ func (o *ForumUnsubscribeOp) Parse(evt *Event) (OperationData, error) {
 		return nil, fmt.Errorf("forum.unsubscribe: missing required 'Actor'")
 	}
 	topic := strings.TrimSpace(evt.Headers.Get("Topic"))
-	thread := strings.TrimSpace(evt.Headers.Get("Thread"))
-	if topic == "" && thread == "" {
-		return nil, fmt.Errorf("forum.unsubscribe: one of 'Topic' or 'Thread' is required")
+	if topic == "" {
+		return nil, fmt.Errorf("forum.unsubscribe: missing required 'Topic'")
 	}
 
 	return &ForumUnsubscribeData{
 		Actor:  actor,
 		Topic:  topic,
-		Thread: thread,
 		At:     evt.At,
 	}, nil
 }
@@ -632,7 +624,7 @@ type ForumPostOp struct{}
 func (o *ForumPostOp) OpName() string { return "forum.post" }
 
 func (o *ForumPostOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "Forum", "Topic", "Thread", "Attachment", "At"}
+	return []string{"Op", "Ref", "Actor", "Forum", "Topic", "Attachment", "At"}
 }
 
 func (o *ForumPostOp) RequiredHeaders() []string {
@@ -658,9 +650,7 @@ func (o *ForumPostOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if topic := strings.TrimSpace(evt.Headers.Get("Topic")); topic != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeTopic, Symbol: topic, Field: "Topic"})
 	}
-	if thread := strings.TrimSpace(evt.Headers.Get("Thread")); thread != "" {
-		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: thread, Field: "Thread"})
-	}
+
 	return refs
 }
 

@@ -28,7 +28,11 @@ func (subscribeTopicTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	vars := mux.Vars(r)
 	topicID, _ := strconv.Atoi(vars["topic"])
-	if err := cd.SubscribeTopic(cd.UserID, int32(topicID)); err != nil {
+
+	if err := cd.SubscribeForum(r.Context(), common.SubscribeForumParams{
+		ActorID: cd.UserID,
+		TopicID: int32(topicID),
+	}); err != nil {
 		log.Printf("insert subscription: %v", err)
 		return fmt.Errorf("insert subscription %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

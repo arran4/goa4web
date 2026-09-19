@@ -224,7 +224,7 @@ At: 2026-08-01T09:10:00Z
 				).WillReturnResult(sqlmock.NewResult(1, 1))
 		}
 		mock.ExpectExec("(?s).*InsertSubscription.*").
-			WithArgs(uid, "create thread:/forum/topic/100/*", "internal").
+			WithArgs(uid, "create thread:/private/topic/100/*", "internal").
 			WillReturnResult(sqlmock.NewResult(1, 1))
 	}
 

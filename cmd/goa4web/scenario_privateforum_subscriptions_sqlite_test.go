@@ -4,36 +4,86 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+	"database/sql"
+	"io/fs"
 
+	"github.com/arran4/goa4web/internal/scenario"
 	"github.com/arran4/goa4web/testdata/scenarios"
+	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/stretchr/testify/require"
 )
 
-func TestE2EPrivateForumSubscriptions(t *testing.T) {
+func buildScenarioTxtar(sc *scenario.Scenario) string {
+	var sb strings.Builder
+	sb.WriteString("-- scenario.meta --\n")
+	sb.WriteString("Format: " + sc.Meta.Format + "\n")
+	sb.WriteString("Name: " + sc.Meta.Name + "\n")
+	sb.WriteString("Description: " + sc.Meta.Description + "\n\n")
+
+	for _, evt := range sc.Events {
+		sb.WriteString("-- " + evt.File + " --\n")
+		sb.WriteString("Op: " + evt.Op + "\n")
+		for _, k := range evt.Headers.Keys() {
+			for _, v := range evt.Headers.Values(k) {
+				if k != "Op" {
+					sb.WriteString(k + ": " + v + "\n")
+				}
+			}
+		}
+		if evt.Body != "" {
+			sb.WriteString("\n" + evt.Body + "\n")
+		}
+		sb.WriteString("\n")
+	}
+	return sb.String()
+}
+
+func runScenarioAndAssert(t *testing.T, eventsToRun int, assertFunc func(*testing.T, *http.Client, string, *sql.DB, *common.CoreData)) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	root, err := parseRoot([]string{"goa4web", "scenario", "serve", "100-private-forum"})
+	data, err := fs.ReadFile(scenarios.FS, "100-private-forum/scenario.txtar")
+	require.NoError(t, err)
+
+	sc, err := scenario.Parse(data, scenarios.FS)
+	require.NoError(t, err)
+
+	sc.Events = sc.Events[:eventsToRun]
+	txtarContent := buildScenarioTxtar(sc)
+
+	tmpDir := t.TempDir()
+	scenarioFile := filepath.Join(tmpDir, "scenario.txtar")
+	err = os.WriteFile(scenarioFile, []byte(txtarContent), 0644)
+	require.NoError(t, err)
+
+	root, err := parseRoot([]string{"goa4web", "scenario", "serve", scenarioFile})
 	require.NoError(t, err)
 	defer root.Close()
 
-	parent, err := parseScenarioCmd(root, []string{"serve", "100-private-forum"})
+	parent, err := parseScenarioCmd(root, []string{"serve", scenarioFile})
 	require.NoError(t, err)
-	serveCmd, err := parseScenarioServeCmd(parent, []string{"100-private-forum"})
+	serveCmd, err := parseScenarioServeCmd(parent, []string{scenarioFile})
 	require.NoError(t, err)
-	serveCmd.fsys = scenarios.FS
+
+	// Since we are writing to real FS, we can use nil fsys
+	serveCmd.fsys = nil
 
 	srv, sqlDB, cleanup, err := serveCmd.Bootstrap(ctx)
 	require.NoError(t, err)
 	defer cleanup()
+
+	cd := common.NewCoreData(ctx, db.NewForDriver(sqlDB, "sqlite3"), srv.Config)
 
 	httpServer := httptest.NewServer(srv.Router)
 	defer httpServer.Close()
@@ -53,85 +103,174 @@ func TestE2EPrivateForumSubscriptions(t *testing.T) {
 	}
 	loginResponse := scenarioHTTPPostForm(t, client, httpServer.URL+"/login", loginForm)
 	if strings.Contains(loginResponse, "Invalid username or password") {
-		t.Fatal("Alice's scenario credentials were rejected")
+		t.Fatalf("Alice's scenario credentials were rejected because test state wasn't persistent? Oh, it's starting fresh each time! %d events run", eventsToRun)
 	}
 
-	// Fetch read markers for Staff Welcome thread
-	var staffWelcomeThreadID int32
-	err = sqlDB.QueryRowContext(ctx, "SELECT forumthread_id FROM comments WHERE text LIKE '%Welcome to the staff room%' LIMIT 1").Scan(&staffWelcomeThreadID)
+	assertFunc(t, client, httpServer.URL, sqlDB, cd)
+}
+
+func coreDataForUser(ctx context.Context, cd *common.CoreData, userID int32) *common.CoreData {
+    return cd.ForUser(userID)
+}
+
+func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
+	data, err := fs.ReadFile(scenarios.FS, "100-private-forum/scenario.txtar")
 	require.NoError(t, err)
 
-	// Fetch alice marker
-	var aliceMarker sql.NullInt32
-	err = sqlDB.QueryRowContext(ctx, "SELECT last_comment_id FROM content_read_markers WHERE user_id = (SELECT idusers FROM users WHERE username = 'alice') AND item_id = ?", staffWelcomeThreadID).Scan(&aliceMarker)
-	require.NoError(t, err)
-	// Fetch bob marker
-	var bobMarker sql.NullInt32
-	err = sqlDB.QueryRowContext(ctx, "SELECT last_comment_id FROM content_read_markers WHERE user_id = (SELECT idusers FROM users WHERE username = 'bob') AND item_id = ?", staffWelcomeThreadID).Scan(&bobMarker)
+	sc, err := scenario.Parse(data, scenarios.FS)
 	require.NoError(t, err)
 
-	// Fetch comment IDs
-	var firstPostID int32
-	err = sqlDB.QueryRowContext(ctx, "SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written ASC LIMIT 1", staffWelcomeThreadID).Scan(&firstPostID)
-	require.NoError(t, err)
-	var latestPostID int32
-	err = sqlDB.QueryRowContext(ctx, "SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written DESC LIMIT 1", staffWelcomeThreadID).Scan(&latestPostID)
-	require.NoError(t, err)
-
-	// After Alice read staff-welcome in the scenario, her marker advanced to Bob's *first* reply. Then Bob replied *again*.
-	// Therefore Bob's marker should be latestPostID. Alice's should be the previous one.
-	require.True(t, bobMarker.Valid)
-	require.Equal(t, latestPostID, bobMarker.Int32, "Bob's marker should be at his latest reply")
-
-	require.True(t, aliceMarker.Valid)
-	require.NotEqual(t, latestPostID, aliceMarker.Int32, "Alice's marker should NOT advance to Bob's new reply")
-
-	// 1. Unread state after reading and then receiving a reply
-	// In the scenario:
-	// - alice-read.event: marks staff-welcome as read.
-	// - bob-staff-reply.event: Bob replies to staff-welcome, making it unread again.
-	body := scenarioHTTPGet(t, client, httpServer.URL+"/private/unread")
-
-	// Alice has 2 unread threads total now:
-	// staff-welcome, coordination-plan
-	countMatches := strings.Count(body, "class=\"thread\"")
-	require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice in unscoped All Unread list. Body: %s", body)
-	require.Contains(t, body, "Welcome to the staff room.", "Expected staff-welcome thread to be present")
-	require.Contains(t, body, "Coordination plan for Alice and Carol", "Expected coordination-plan thread to be present")
-	require.NotContains(t, body, "Bob opening a second Staff Room thread to exercise participant thread creation.", "Expected bob-staff-check-in to NOT be present")
-
-	var staffRoomTopicID string
-	err = sqlDB.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
-	require.NoError(t, err)
-
-	// Check auto-subscriptions!
-	// Alice created `staff-welcome` so she should be subscribed to it.
-	// Bob replied to `staff-welcome` so he should be subscribed to it.
-	aliceSubCount := 0
-	err = sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE users_idusers = (SELECT idusers FROM users WHERE username = 'alice') AND pattern LIKE '%thread/' || ? || '/%'", staffWelcomeThreadID).Scan(&aliceSubCount)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, aliceSubCount, 1, "Expected Alice to be auto-subscribed to the thread she created")
-
-	bobSubCount := 0
-	err = sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE users_idusers = (SELECT idusers FROM users WHERE username = 'bob') AND pattern LIKE '%thread/' || ? || '/%'", staffWelcomeThreadID).Scan(&bobSubCount)
-	require.NoError(t, err)
-	require.GreaterOrEqual(t, bobSubCount, 1, "Expected Bob to be auto-subscribed to the thread he replied to")
-
-	rows, err := sqlDB.QueryContext(ctx, "SELECT pattern FROM subscriptions WHERE users_idusers = (SELECT idusers FROM users WHERE username = 'alice')")
-	require.NoError(t, err)
-	defer rows.Close()
-	var patterns []string
-	for rows.Next() {
-		var p string
-		require.NoError(t, rows.Scan(&p))
-		patterns = append(patterns, p)
-	}
-
-	hasStaffRoomTopicSub := false
-	for _, p := range patterns {
-		if strings.Contains(p, "topic/"+staffRoomTopicID+"/*") && strings.Contains(p, "create thread") {
-			hasStaffRoomTopicSub = true
+	var baseEventsCount, readEventCount, replyEventCount, unsubEventCount, subEventCount int
+	for i, e := range sc.Events {
+		if strings.Contains(e.File, "400-alice-read.event") {
+			baseEventsCount = i
+			readEventCount = i + 1
+		} else if strings.Contains(e.File, "410-bob-staff-reply.event") {
+			replyEventCount = i + 1
+		} else if strings.Contains(e.File, "500-alice-unsubscribe.event") {
+			unsubEventCount = i + 1
+		} else if strings.Contains(e.File, "510-alice-subscribe.event") {
+			subEventCount = i + 1
 		}
 	}
-	require.False(t, hasStaffRoomTopicSub, "Expected Alice to have no topic subscriptions to staff-room due to unsubscribe")
+
+	t.Run("Base", func(t *testing.T) {
+		runScenarioAndAssert(t, baseEventsCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
+			body := scenarioHTTPGet(t, client, url+"/private/unread")
+			countMatches := strings.Count(body, "class=\"thread\"")
+			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice initially")
+
+			var aliceID int32
+			err := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, err)
+
+			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
+
+			var staffRoomTopicID int32
+			err = sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			require.NoError(t, err)
+			var coordinationTopicID int32
+			err = sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+			require.NoError(t, err)
+			var projectRoomTopicID int32
+			err = sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Project Room'").Scan(&projectRoomTopicID)
+			require.NoError(t, err)
+
+			pattern1 := fmt.Sprintf("create thread:/private/topic/%d/*", staffRoomTopicID)
+			hasSub := aliceCD.HasSubscription(pattern1, "internal")
+			require.True(t, hasSub, "Alice should be automatically subscribed to Staff Room")
+
+			pattern2 := fmt.Sprintf("create thread:/private/topic/%d/*", coordinationTopicID)
+			hasSub = aliceCD.HasSubscription(pattern2, "internal")
+			require.True(t, hasSub, "Alice should be automatically subscribed to Coordination")
+
+			pattern3 := fmt.Sprintf("create thread:/private/topic/%d/*", projectRoomTopicID)
+			hasSub = aliceCD.HasSubscription(pattern3, "internal")
+			require.False(t, hasSub, "Alice should have no Project Room subscription")
+		})
+	})
+
+	t.Run("Read", func(t *testing.T) {
+		runScenarioAndAssert(t, readEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
+			body := scenarioHTTPGet(t, client, url+"/private/unread")
+			countMatches := strings.Count(body, "class=\"thread\"")
+			require.Equal(t, 1, countMatches, "Expected 1 unread private thread for Alice after reading staff-welcome")
+			require.NotContains(t, body, "Welcome to the staff room.", "Staff Room unread should be cleared")
+
+			var aliceID int32
+			err := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			require.NoError(t, err)
+
+			var staffWelcomeThreadID int32
+			err = sqlDB.QueryRow("SELECT forumthread_id FROM comments WHERE text LIKE '%Welcome to the staff room%' LIMIT 1").Scan(&staffWelcomeThreadID)
+			require.NoError(t, err)
+
+			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
+
+			marker, err := aliceCD.ThreadReadMarker(staffWelcomeThreadID)
+			require.NoError(t, err)
+
+			var bobFirstReplyID int32
+			err = sqlDB.QueryRow("SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written DESC LIMIT 1", staffWelcomeThreadID).Scan(&bobFirstReplyID)
+			require.NoError(t, err)
+
+			require.Equal(t, bobFirstReplyID, marker, "Alice's marker should equal Bob's first reply exactly")
+		})
+	})
+
+	t.Run("Reply", func(t *testing.T) {
+		runScenarioAndAssert(t, replyEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
+			body := scenarioHTTPGet(t, client, url+"/private/unread")
+			countMatches := strings.Count(body, "class=\"thread\"")
+			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice after bob replied")
+
+			var aliceID, bobID int32
+			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'bob'").Scan(&bobID)
+
+			var staffWelcomeThreadID int32
+			err = sqlDB.QueryRow("SELECT forumthread_id FROM comments WHERE text LIKE '%Welcome to the staff room%' LIMIT 1").Scan(&staffWelcomeThreadID)
+			require.NoError(t, err)
+
+			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
+			bobCD := coreDataForUser(context.Background(), cd, bobID)
+
+			aliceMarker, err := aliceCD.ThreadReadMarker(staffWelcomeThreadID)
+			require.NoError(t, err)
+			bobMarker, err := bobCD.ThreadReadMarker(staffWelcomeThreadID)
+			require.NoError(t, err)
+
+			var bobFirstReplyID, newReplyID int32
+			// The thread has 3 comments: alice welcome, bob reply 1, bob reply 2
+			err = sqlDB.QueryRow("SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written ASC LIMIT 1 OFFSET 1", staffWelcomeThreadID).Scan(&bobFirstReplyID)
+			require.NoError(t, err)
+			err = sqlDB.QueryRow("SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written DESC LIMIT 1", staffWelcomeThreadID).Scan(&newReplyID)
+			require.NoError(t, err)
+
+			require.Equal(t, bobFirstReplyID, aliceMarker, "Alice's marker remains exactly Bob's first reply")
+			require.Equal(t, newReplyID, bobMarker, "Bob's marker equals the new reply")
+		})
+	})
+
+	t.Run("Unsubscribe", func(t *testing.T) {
+		runScenarioAndAssert(t, unsubEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
+			var aliceID int32
+			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+
+			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
+
+			var staffRoomTopicID, coordinationTopicID int32
+			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+
+			pattern1 := fmt.Sprintf("create thread:/private/topic/%d/*", staffRoomTopicID)
+			hasSub := aliceCD.HasSubscription(pattern1, "internal")
+			require.False(t, hasSub, "Staff Room private-topic subscription is absent")
+
+			pattern2 := fmt.Sprintf("create thread:/private/topic/%d/*", coordinationTopicID)
+			hasSub = aliceCD.HasSubscription(pattern2, "internal")
+			require.True(t, hasSub, "Coordination subscription is unchanged")
+		})
+	})
+
+	t.Run("Subscribe", func(t *testing.T) {
+		runScenarioAndAssert(t, subEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
+			var aliceID int32
+			sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
+
+			aliceCD := coreDataForUser(context.Background(), cd, aliceID)
+
+			var staffRoomTopicID, coordinationTopicID int32
+			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+			sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
+
+			pattern1 := fmt.Sprintf("create thread:/private/topic/%d/*", staffRoomTopicID)
+			hasSub := aliceCD.HasSubscription(pattern1, "internal")
+			require.True(t, hasSub, "Staff Room subscription is restored with the exact private pattern")
+
+			pattern2 := fmt.Sprintf("create thread:/private/topic/%d/*", coordinationTopicID)
+			hasSub = aliceCD.HasSubscription(pattern2, "internal")
+			require.True(t, hasSub, "Coordination subscription is unchanged")
+		})
+	})
 }

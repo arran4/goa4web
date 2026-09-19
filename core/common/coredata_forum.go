@@ -228,8 +228,11 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	return nil
 }
 
-func topicSubscriptionPattern(topicID int32) string {
-	return fmt.Sprintf("%s:/forum/topic/%d/*", strings.ToLower("Create Thread"), topicID)
+func topicSubscriptionPattern(topicID int32, isPrivate bool) string {
+	if isPrivate {
+		return fmt.Sprintf("create thread:/private/topic/%d/*", topicID)
+	}
+	return fmt.Sprintf("create thread:/forum/topic/%d/*", topicID)
 }
 
 func threadSubscriptionPattern(topicID int32, threadID int32, isPrivate bool) string {
@@ -240,19 +243,19 @@ func threadSubscriptionPattern(topicID int32, threadID int32, isPrivate bool) st
 }
 
 // SubscribeTopic subscribes the current user to new threads in the given topic.
-func (cd *CoreData) SubscribeTopic(userID, topicID int32) error {
+func (cd *CoreData) SubscribeTopic(userID, topicID int32, isPrivate bool) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
+	return cd.queries.InsertSubscription(cd.ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: topicSubscriptionPattern(topicID, isPrivate), Method: "internal"})
 }
 
 // UnsubscribeTopic removes the current user's subscription to a topic.
-func (cd *CoreData) UnsubscribeTopic(userID, topicID int32) error {
+func (cd *CoreData) UnsubscribeTopic(userID, topicID int32, isPrivate bool) error {
 	if cd.queries == nil {
 		return nil
 	}
-	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: userID, Pattern: topicSubscriptionPattern(topicID), Method: "internal"})
+	return cd.queries.DeleteSubscriptionForSubscriber(cd.ctx, db.DeleteSubscriptionForSubscriberParams{SubscriberID: userID, Pattern: topicSubscriptionPattern(topicID, isPrivate), Method: "internal"})
 }
 
 // SubscribeThread subscribes the current user to new threads in the given thread.

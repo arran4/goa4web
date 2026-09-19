@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"log"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -142,9 +143,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			}
 		}
 
-		if err := cd.Publish(*evt); err != nil {
-			errs = append(errs, fmt.Errorf("publish thread updated event: %w", err))
-		}
+
 	}
 
 	return errors.Join(errs...)
@@ -164,39 +163,8 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 		return err
 	}
 
-	// Ensure auto-subscription
-	if cd.queries == nil {
-		return nil
-	}
-
-	auto := true
-	email := false
-	if cd.UserID != 0 {
-		pref, err := cd.queries.GetPreferenceForLister(ctx, cd.UserID)
-		if err == nil && pref != nil {
-			auto = pref.AutoSubscribeReplies
-			if pref.Emailforumupdates.Valid {
-				email = pref.Emailforumupdates.Bool
-			}
-		} else if err != sql.ErrNoRows {
-			// In tests, queries are stubbed and might return a panic or an error.
-			// If there is an error, we shouldn't necessarily crash but maybe log.
-		}
-	}
-
-	if auto {
-		topic, _ := cd.queries.GetForumTopicById(ctx, topicID)
-		isPrivate := false
-		if topic != nil && topic.Handler == "private" {
-			isPrivate = true
-		}
-
-		pattern := threadSubscriptionPattern(topicID, threadID, isPrivate)
-
-		_ = cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: pattern, Method: "internal"})
-		if email {
-			_ = cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: cd.UserID, Pattern: pattern, Method: "email"})
-		}
+	if err := cd.EnsureAutoSubscription(ctx, topicID, threadID, cd.UserID); err != nil {
+		log.Printf("apply auto subscription for user: %v", err)
 	}
 
 	if !includeSearch {
@@ -207,4 +175,44 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 		ID:   commentID,
 		Text: text,
 	})
+}
+
+
+// EnsureAutoSubscription ensures a user is subscribed to a thread if they have auto-subscribe enabled.
+func (cd *CoreData) EnsureAutoSubscription(ctx context.Context, topicID, threadID, userID int32) error {
+	if cd == nil || cd.queries == nil {
+		return nil
+	}
+	auto := true
+	email := false
+	if userID != 0 {
+		pref, err := cd.queries.GetPreferenceForLister(ctx, userID)
+		if err == nil && pref != nil {
+			auto = pref.AutoSubscribeReplies
+			if pref.Emailforumupdates.Valid {
+				email = pref.Emailforumupdates.Bool
+			}
+		}
+	}
+	if !auto {
+		return nil
+	}
+
+	topic, err := cd.queries.GetForumTopicById(ctx, topicID)
+	if err != nil {
+		return fmt.Errorf("get forum topic for auto subscribe: %w", err)
+	}
+	isPrivate := topic != nil && topic.Handler == "private"
+
+	pattern := threadSubscriptionPattern(topicID, threadID, isPrivate)
+
+	if err := cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: "internal"}); err != nil {
+		return fmt.Errorf("insert internal subscription: %w", err)
+	}
+	if email {
+		if err := cd.queries.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: "email"}); err != nil {
+			return fmt.Errorf("insert email subscription: %w", err)
+		}
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package forum
 
 import (
 	"context"
+	"github.com/arran4/goa4web/internal/db"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,8 +19,16 @@ import (
 )
 
 func TestSubscribeTopicTaskAction(t *testing.T) {
-	qs := testhelpers.NewQuerierStub()
+	qs := testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(true))
+	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return &db.GetForumTopicByIdForUserRow{
+			Idforumtopic: arg.Idforumtopic,
+			Handler:      "forum",
+		}, nil
+	}
 	cfg := config.NewRuntimeConfig()
+	qs.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{Idforumtopic: 12, Handler: "forum"}
+	qs.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{Idforumtopic: 9, Handler: "forum"}
 	cd := common.NewCoreData(context.Background(), qs, cfg)
 	cd.UserID = 42
 
@@ -61,7 +70,13 @@ func TestSubscribeTopicTaskAction(t *testing.T) {
 }
 
 func TestUnsubscribeTopicTaskAction(t *testing.T) {
-	qs := testhelpers.NewQuerierStub()
+	qs := testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(true))
+	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return &db.GetForumTopicByIdForUserRow{
+			Idforumtopic: arg.Idforumtopic,
+			Handler:      "forum",
+		}, nil
+	}
 	cfg := config.NewRuntimeConfig()
 	cd := common.NewCoreData(context.Background(), qs, cfg)
 	cd.UserID = 24

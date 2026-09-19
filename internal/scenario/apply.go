@@ -398,7 +398,7 @@ func (r *Runner) applyForumSubscribe(ctx context.Context, data *ForumSubscribeDa
 
 	actorCD := r.coreData.ForUser(actorID)
 
-	var topicID, threadID int32
+	var topicID int32
 	if data.Topic != "" {
 		tid, ok := r.resolveInt32Ref(RefTypeForum, data.Topic)
 		if !ok {
@@ -406,18 +406,12 @@ func (r *Runner) applyForumSubscribe(ctx context.Context, data *ForumSubscribeDa
 		}
 		topicID = tid
 	}
-	if data.Thread != "" {
-		tid, ok := r.resolveInt32Ref(RefTypeThread, data.Thread)
-		if !ok {
-			return fmt.Errorf("cannot resolve thread %q", data.Thread)
-		}
-		threadID = tid
-	}
+
 
 	err := actorCD.SubscribeForum(ctx, common.SubscribeForumParams{
 		ActorID:  actorID,
 		TopicID:  topicID,
-		ThreadID: threadID,
+
 	})
 	if err != nil {
 		return fmt.Errorf("subscribe forum: %w", err)
@@ -434,7 +428,7 @@ func (r *Runner) applyForumUnsubscribe(ctx context.Context, data *ForumUnsubscri
 
 	actorCD := r.coreData.ForUser(actorID)
 
-	var topicID, threadID int32
+	var topicID int32
 	if data.Topic != "" {
 		tid, ok := r.resolveInt32Ref(RefTypeForum, data.Topic)
 		if !ok {
@@ -442,18 +436,12 @@ func (r *Runner) applyForumUnsubscribe(ctx context.Context, data *ForumUnsubscri
 		}
 		topicID = tid
 	}
-	if data.Thread != "" {
-		tid, ok := r.resolveInt32Ref(RefTypeThread, data.Thread)
-		if !ok {
-			return fmt.Errorf("cannot resolve thread %q", data.Thread)
-		}
-		threadID = tid
-	}
+
 
 	err := actorCD.UnsubscribeForum(ctx, common.SubscribeForumParams{
 		ActorID:  actorID,
 		TopicID:  topicID,
-		ThreadID: threadID,
+
 	})
 	if err != nil {
 		return fmt.Errorf("unsubscribe forum: %w", err)

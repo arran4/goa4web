@@ -1,6 +1,8 @@
 package privateforum
 
 import (
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/testhelpers"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +23,19 @@ func TestPrivateLabelRoutes(t *testing.T) {
 
 	t.Run("Happy Path", func(t *testing.T) {
 		t.Run("uses redirect parameter", func(t *testing.T) {
-			cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+			qs := testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(true))
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+			Idforumthread:          1,
+			ForumtopicIdforumtopic: 1,
+		}, nil
+	}
+	qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{
+			{Idcomments: 101},
+		}, nil
+	}
+	cd := common.NewCoreData(context.Background(), qs, config.NewRuntimeConfig())
 			cd.UserID = 1
 			cd.ForumBasePath = "/private"
 
@@ -41,7 +55,19 @@ func TestPrivateLabelRoutes(t *testing.T) {
 		})
 
 		t.Run("falls back without redirect parameter", func(t *testing.T) {
-			cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig())
+			qs := testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(true))
+	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+		return &db.GetThreadLastPosterAndPermsForUserRow{
+			Idforumthread:          1,
+			ForumtopicIdforumtopic: 1,
+		}, nil
+	}
+	qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{
+			{Idcomments: 101},
+		}, nil
+	}
+	cd := common.NewCoreData(context.Background(), qs, config.NewRuntimeConfig())
 			cd.UserID = 1
 			cd.ForumBasePath = "/private"
 

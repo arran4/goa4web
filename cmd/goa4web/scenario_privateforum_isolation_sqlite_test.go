@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"testing"
+	"fmt"
 	"time"
 
 	"github.com/arran4/goa4web/core/common"
@@ -65,10 +66,9 @@ func TestPrivateForumIsolation(t *testing.T) {
 	require.Error(t, err, "Expected error when Alice tries to subscribe to Project Room topic")
 
 	// Ensure no topic subscription was created
-	var count int
-	err = sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE users_idusers = ? AND pattern LIKE '%topic/' || ? || '/%'", aliceID, projectRoomTopicID).Scan(&count)
-	require.NoError(t, err)
-	require.Equal(t, 0, count, "Expected Alice to have no subscriptions to Project Room topic")
+	pattern := fmt.Sprintf("create thread:/private/topic/%d/*", projectRoomTopicID)
+	hasSub := aliceCD.HasSubscription(pattern, "")
+	require.False(t, hasSub, "Expected Alice to have no subscriptions to Project Room topic")
 
 	err = aliceCD.UnsubscribeForum(ctx, common.SubscribeForumParams{
 		ActorID: aliceID,

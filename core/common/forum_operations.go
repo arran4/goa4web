@@ -566,16 +566,16 @@ func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadP
 		return fmt.Errorf("set thread private label status: %w", err)
 	}
 
-	// We can use the last post as the read marker
-	// But thread has no Lastpost, maybe Firstpost? Let's check comments and use Lastposter?
-	// The DB query has Comments, but not last comment ID. Let's just use 0 or not set it for now?
-	// No, SetThreadReadMarker wants a commentID. Let's get the latest comment ID for the thread.
 	comments, err := cd.ThreadComments(params.ThreadID)
-	if err == nil && len(comments) > 0 {
-		lastComment := comments[len(comments)-1]
-		if err := actorCD.SetThreadReadMarker(params.ThreadID, lastComment.Idcomments); err != nil {
-			return fmt.Errorf("set thread read marker: %w", err)
-		}
+	if err != nil {
+		return fmt.Errorf("fetch thread comments: %w", err)
+	}
+	if len(comments) == 0 {
+		return fmt.Errorf("thread %d has no comments", params.ThreadID)
+	}
+	lastComment := comments[len(comments)-1]
+	if err := actorCD.SetThreadReadMarker(params.ThreadID, lastComment.Idcomments); err != nil {
+		return fmt.Errorf("set thread read marker: %w", err)
 	}
 
 	return nil
@@ -612,11 +612,12 @@ func (cd *CoreData) SubscribeForum(ctx context.Context, params SubscribeForumPar
 		return actorCD.SubscribeThread(params.TopicID, params.ThreadID, false)
 	} else if params.TopicID != 0 {
 		// Must have access to topic
-		_, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+		topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
 		if err != nil {
 			return err
 		}
-		return cd.SubscribeTopic(params.ActorID, params.TopicID)
+		isPrivate := topic.Handler == "private"
+		return cd.SubscribeTopic(params.ActorID, params.TopicID, isPrivate)
 	}
 	return nil
 }
@@ -644,11 +645,12 @@ func (cd *CoreData) UnsubscribeForum(ctx context.Context, params SubscribeForumP
 		return actorCD.UnsubscribeThread(params.TopicID, params.ThreadID, false)
 	} else if params.TopicID != 0 {
 		// Must have access to topic
-		_, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+		topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
 		if err != nil {
 			return err
 		}
-		return cd.UnsubscribeTopic(params.ActorID, params.TopicID)
+		isPrivate := topic.Handler == "private"
+		return cd.UnsubscribeTopic(params.ActorID, params.TopicID, isPrivate)
 	}
 	return nil
 }

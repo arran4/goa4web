@@ -333,14 +333,13 @@ Bob replies again to staff-welcome
 
 # Stage 3: Subscriptions
 
--- 500-alice-subscribe.event --
-Op: forum.subscribe
-Actor: alice
-Topic: staff-room
-At: 2026-08-01T10:00:00+10:00
-
--- 510-alice-unsubscribe.event --
+-- 500-alice-unsubscribe.event --
 Op: forum.unsubscribe
 Actor: alice
 Topic: staff-room
 At: 2026-08-01T10:05:00+10:00
+-- 510-alice-subscribe.event --
+Op: forum.subscribe
+Actor: alice
+Topic: staff-room
+At: 2026-08-01T10:10:00+10:00

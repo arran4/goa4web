@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"github.com/arran4/goa4web/core/common"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -502,21 +503,12 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 }
 
 func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEvent, tp AutoSubscribeProvider) error {
-	var auto bool
-	var email bool
-	pref, err := n.Queries.GetPreferenceForLister(ctx, evt.UserID)
+	auto, email, err := common.CheckAutoSubscribePreference(ctx, n.Queries, evt.UserID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, common.ErrPreferenceNotFound) {
 			stats.IncrementAutoSubscribePreferenceFailures()
-			// Honor the database default of true for auto_subscribe_replies
-			auto = true
 		} else {
 			return fmt.Errorf("get preference by user_id: %w", err)
-		}
-	} else {
-		auto = pref.AutoSubscribeReplies
-		if pref.Emailforumupdates.Valid {
-			email = pref.Emailforumupdates.Bool
 		}
 	}
 	if auto {
@@ -527,10 +519,14 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 		}
 		pattern := buildPatterns(tasks.TaskString(task), path)[0]
 		if n.Config.NotificationsEnabled {
-			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "internal")
+			if err := common.EnsureSubscriptionIdempotent(ctx, n.Queries, evt.UserID, pattern, "internal"); err != nil {
+				return fmt.Errorf("ensure internal subscription: %w", err)
+			}
 		}
 		if email {
-			ensureSubscription(ctx, n.Queries, evt.UserID, pattern, "email")
+			if err := common.EnsureSubscriptionIdempotent(ctx, n.Queries, evt.UserID, pattern, "email"); err != nil {
+				return fmt.Errorf("ensure email subscription: %w", err)
+			}
 		}
 	}
 	return nil

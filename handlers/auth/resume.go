@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,10 +30,12 @@ func ResumePage(w http.ResponseWriter, r *http.Request) {
 		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
 		return
 	}
+	tokenHash := sha256.Sum256([]byte(token))
+	tokenHashHex := hex.EncodeToString(tokenHash[:])
 
 	browserID := core.GetBrowserID(w, r)
 
-	action, err := cd.Queries().GetPendingAction(r.Context(), token)
+	action, err := cd.Queries().GetPendingAction(r.Context(), tokenHashHex)
 	if err != nil {
 		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
 		return
@@ -57,10 +61,12 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	if token == "" {
 		return handlers.ErrNotFound
 	}
+	tokenHash := sha256.Sum256([]byte(token))
+	tokenHashHex := hex.EncodeToString(tokenHash[:])
 
 	browserID := core.GetBrowserID(w, r)
 
-	action, err := cd.Queries().GetPendingAction(r.Context(), token)
+	action, err := cd.Queries().GetPendingAction(r.Context(), tokenHashHex)
 	if err != nil {
 		return handlers.ErrNotFound
 	}
@@ -69,7 +75,7 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrForbidden
 	}
 
-	rows, err := cd.Queries().ConsumePendingAction(r.Context(), token)
+	rows, err := cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
 	if err != nil || rows == 0 {
 		return handlers.ErrNotFound
 	}
@@ -96,6 +102,5 @@ type ResumeTask struct {
 var resumeTask = ResumeTask{TaskString: "resumeTask"}
 
 func (ResumeTask) Action(w http.ResponseWriter, r *http.Request) any {
-	ResumeTaskAction(w, r)
-	return nil
+	return ResumeTaskAction(w, r)
 }

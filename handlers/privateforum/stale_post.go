@@ -2,6 +2,7 @@ package privateforum
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 
@@ -31,23 +32,22 @@ func interceptStalePost(w http.ResponseWriter, r *http.Request) bool {
 
 	formNonce := r.PostFormValue("resume_nonce")
 	if formNonce == "" {
-		log.Printf("stale post intercepted failed")
 		return false
 	}
+	formNonceHash := sha256.Sum256([]byte(formNonce))
+	formNonceHashHex := hex.EncodeToString(formNonceHash[:])
 
 	cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !ok || cd == nil {
-		log.Printf("stale post intercepted failed")
 		return false
 	}
 
 	browserID := core.GetBrowserID(w, r)
 	if browserID == "" {
-		log.Printf("stale post intercepted failed")
 		return false
 	}
 
-	pendingAction, err := cd.Queries().GetPendingAction(r.Context(), formNonce)
+	pendingAction, err := cd.Queries().GetPendingAction(r.Context(), formNonceHashHex)
 	if err != nil {
 		log.Printf("GetPendingAction error: %v", err)
 		return false
@@ -69,17 +69,18 @@ func interceptStalePost(w http.ResponseWriter, r *http.Request) bool {
 
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
-		log.Printf("stale post intercepted failed")
 		return false
 	}
 	resumeToken := hex.EncodeToString(b)
+	resumeTokenHash := sha256.Sum256([]byte(resumeToken))
+	resumeTokenHashHex := hex.EncodeToString(resumeTokenHash[:])
 
-	if _, err := cd.Queries().UpdatePendingActionData(r.Context(), db.UpdatePendingActionDataParams{
+	rows, err := cd.Queries().UpdatePendingActionData(r.Context(), db.UpdatePendingActionDataParams{
 		FormData: string(formDataBytes),
-		ID:       resumeToken,
-		ID_2:     formNonce,
-	}); err != nil {
-		log.Printf("stale post intercepted failed")
+		ID:       resumeTokenHashHex,
+		ID_2:     formNonceHashHex,
+	})
+	if err != nil || rows == 0 {
 		return false
 	}
 

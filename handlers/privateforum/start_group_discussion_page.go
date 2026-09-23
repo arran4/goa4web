@@ -2,6 +2,7 @@ package privateforum
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"log"
@@ -28,9 +29,10 @@ func StartGroupDiscussionPage(w http.ResponseWriter, r *http.Request) {
 	var formNonce string
 	if _, err := rand.Read(b); err == nil {
 		formNonce = hex.EncodeToString(b)
+		formNonceHash := sha256.Sum256([]byte(formNonce))
 		browserID := core.GetBrowserID(w, r)
 		if err := cd.Queries().InsertPendingAction(r.Context(), db.InsertPendingActionParams{
-			ID:         formNonce,
+			ID:         hex.EncodeToString(formNonceHash[:]),
 			Uid:        cd.UserID,
 			BrowserID:  browserID,
 			ActionType: string(TaskPrivateTopicCreate),

@@ -50,7 +50,8 @@ func loginUserFunc(t *testing.T, serverURL, username, password string, client *h
 	require.NoError(t, err)
 	defer resp1.Body.Close()
 
-	body1, _ := io.ReadAll(resp1.Body)
+	body1, err := io.ReadAll(resp1.Body)
+	require.NoError(t, err)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(body1)))
 	require.NoError(t, err)
 	csrf, _ := doc.Find("input[name='gorilla.csrf.Token']").Attr("value")
@@ -109,8 +110,10 @@ func TestResumeStalePost(t *testing.T) {
 
 	// 2. Render Form
 	reqRender, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respRender, _ := clientA.Do(reqRender)
-	bodyRender, _ := io.ReadAll(respRender.Body)
+	respRender, err := clientA.Do(reqRender)
+	require.NoError(t, err)
+	bodyRender, err := io.ReadAll(respRender.Body)
+	require.NoError(t, err)
 	respRender.Body.Close()
 
 	nonce := extractNonce(string(bodyRender))
@@ -143,7 +146,8 @@ func TestResumeStalePost(t *testing.T) {
 	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respStale, _ := clientA.PostForm(serverURL+"/private/topic/new", formStale)
+	respStale, err := clientA.PostForm(serverURL+"/private/topic/new", formStale)
+	require.NoError(t, err)
 	defer respStale.Body.Close()
 	clientA.CheckRedirect = nil
 
@@ -162,7 +166,8 @@ func TestResumeStalePost(t *testing.T) {
 	clientB.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respBResume, _ := clientB.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}})
+	respBResume, err := clientB.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}})
+	require.NoError(t, err)
 	respBResume.Body.Close()
 	clientB.CheckRedirect = nil
 	assert.Equal(t, http.StatusForbidden, respBResume.StatusCode, "UserB should not be able to resume")
@@ -171,16 +176,20 @@ func TestResumeStalePost(t *testing.T) {
 	loginUserFunc(t, serverURL, "alice", "alice-test", clientA)
 	// 7. UserA resumes the action
 	reqResumeGet, _ := http.NewRequest("GET", serverURL+"/resume?token="+resumeToken, nil)
-	respResumeGet, _ := clientA.Do(reqResumeGet)
-	bodyResumeGet, _ := io.ReadAll(respResumeGet.Body)
+	respResumeGet, err := clientA.Do(reqResumeGet)
+	require.NoError(t, err)
+	bodyResumeGet, err := io.ReadAll(respResumeGet.Body)
+	require.NoError(t, err)
 	respResumeGet.Body.Close()
-	docResumeGet, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGet)))
+	docResumeGet, err := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGet)))
+	require.NoError(t, err)
 	csrfResume, _ := docResumeGet.Find("input[name='gorilla.csrf.Token']").Attr("value")
 
 	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respResumeAction, _ := clientA.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}})
+	respResumeAction, err := clientA.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}})
+	require.NoError(t, err)
 	respResumeAction.Body.Close()
 	clientA.CheckRedirect = nil
 
@@ -192,9 +201,10 @@ func TestResumeStalePost(t *testing.T) {
 	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respResumeAgain, _ := clientA.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}})
+	respResumeAgain, err := clientA.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}})
+	require.NoError(t, err)
 	respResumeAgain.Body.Close()
-	assert.Equal(t, http.StatusOK, respResumeAgain.StatusCode)
+	assert.Equal(t, http.StatusNotFound, respResumeAgain.StatusCode)
 	countAfter2, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countAfter, countAfter2, "Topic should not be created twice")
 }
@@ -234,14 +244,16 @@ func TestResumeNegativePaths(t *testing.T) {
 	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respStale1, _ := clientA.PostForm(serverURL+"/private/topic/new", formStaleNoNonce)
+	respStale1, err := clientA.PostForm(serverURL+"/private/topic/new", formStaleNoNonce)
+	require.NoError(t, err)
 	respStale1.Body.Close()
 	assert.Equal(t, http.StatusForbidden, respStale1.StatusCode, "Should reject stale POST missing nonce")
 
 	// 2. Unsupported Content-Type Validation
 	reqStale2, _ := http.NewRequest("POST", serverURL+"/private/topic/new", strings.NewReader(`{"task": "privateTopicCreate", "resume_nonce": "badnonce"}`))
 	reqStale2.Header.Set("Content-Type", "application/json")
-	respStale2, _ := clientA.Do(reqStale2)
+	respStale2, err := clientA.Do(reqStale2)
+	require.NoError(t, err)
 	respStale2.Body.Close()
 	assert.Equal(t, http.StatusForbidden, respStale2.StatusCode, "Should reject unsupported content-type")
 

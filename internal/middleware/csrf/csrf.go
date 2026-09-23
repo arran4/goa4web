@@ -99,6 +99,13 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 	return func(next http.Handler) http.Handler {
 		validatedNext := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if requiresToken(r.Method) && !validateRequestToken(r) {
+				if r.URL.Path == "/private/topic/new" && r.Method == http.MethodPost {
+					if StalePostInterceptor != nil {
+						if intercepted := StalePostInterceptor(w, r); intercepted {
+							return
+						}
+					}
+				}
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 				return
 			}
@@ -196,3 +203,5 @@ func readUID(uid any) int32 {
 		return 0
 	}
 }
+
+var StalePostInterceptor func(w http.ResponseWriter, r *http.Request) bool

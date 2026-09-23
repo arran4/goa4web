@@ -14,12 +14,13 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	golang.org/x/crypto v0.54.0
-	golang.org/x/net v0.57.0
+	golang.org/x/crypto v0.55.0
+	golang.org/x/net v0.58.0
 	golang.org/x/term v0.45.0
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/anthonynsimon/bild v0.17.0
 	github.com/arran4/go-be-lazy v0.3.2
 	github.com/arran4/go-pattern v0.0.7
@@ -41,6 +42,7 @@ require (
 )
 
 require (
+	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
@@ -87,6 +89,6 @@ require (
 	github.com/sethvargo/go-retry v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

@@ -459,6 +459,17 @@ type Password struct {
 	CreatedAt       time.Time
 }
 
+type PendingAction struct {
+	ID         string
+	Uid        int32
+	BrowserID  string
+	ActionType string
+	FormData   string
+	CreatedAt  time.Time
+	ExpiresAt  time.Time
+	ConsumedAt sql.NullTime
+}
+
 type PendingEmail struct {
 	ID          int32
 	ToUserID    sql.NullInt32

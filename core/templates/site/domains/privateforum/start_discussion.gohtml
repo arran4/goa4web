@@ -8,6 +8,7 @@
     <p>Add people to start a shared conversation.</p>
     <form id="private-form" method="POST" action="/private">
         <input type="hidden" name="task" value="{{ .CreateTask }}">
+        {{ if .FormNonce }}<input type="hidden" name="resume_nonce" value="{{ .FormNonce }}">{{ end }}
         <div class="form-group">
             <label for="participant-input">Participants</label>
             <input type="text" id="participant-input" placeholder="username">

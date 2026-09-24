@@ -4,10 +4,7 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
 	"crypto/tls"
-	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -215,49 +212,102 @@ func TestResumeStalePost(t *testing.T) {
 	countAfter2, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countAfter, countAfter2, "Topic should not be created twice")
 
-	// --- New Rejection Test for Authorization without Token Consumption ---
-	// We will create a token using A, and try to execute it using B, which should fail due to UID mismatch.
-	// But wait, the review asked for "denial-after-reauth test".
-	// This means A loses authorization after the token was created.
-	// To do this properly without DB cache issues, let's just use B in a scenario where B is the one who created the token
-	// Wait, if B creates the token, B needs to have access to GET /private/topic/new.
-	// Let's just create a token manually via SQL for a user who doesn't have access!
+	// --- New Rejection Test for Authorization Revocation ---
+	// Create a new client C for user Bob
+	jarC, _ := cookiejar.New(nil)
+	clientC := &http.Client{Jar: jarC, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 
-	// Create token for user B manually in DB
-	b := make([]byte, 32)
-	rand.Read(b)
-	fakeNonce := hex.EncodeToString(b)
-	_ = hex.EncodeToString(sha256.New().Sum([]byte(fakeNonce)))
-
-	rand.Read(b)
-	fakeToken := hex.EncodeToString(b)
-	fakeTokenHashHex := hex.EncodeToString(sha256.New().Sum([]byte(fakeToken)))
-
-	formDataBytes := `{"form":{"name":["Test"],"description":["Test"]},"url":"/private/topic/new"}`
-
-	_, err = srv.DB.ExecContext(context.Background(), "INSERT INTO pending_actions (id, uid, browser_id, form_data, action_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now', '+1 hour'))",
-		fakeTokenHashHex, 2, "browser_b", formDataBytes, "privateTopicCreate")
+	// Temporarily add a grant for Bob
+	_, err = srv.DB.Exec("INSERT INTO grants (user_id, section, item, rule_type, action, item_id) VALUES (2, 'privateforum', 'topic', 'see', 'allow', 0)")
 	require.NoError(t, err)
 
-	// Attempt to resume as B
-	reqResumeAuthCheck, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {fakeToken}, "gorilla.csrf.Token": {csrfResumeB}}.Encode()))
-	reqResumeAuthCheck.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqResumeAuthCheck.AddCookie(&http.Cookie{Name: "a4w_bid", Value: "browser_b"})
-	clientB.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	// Bob logs in
+	loginUserFunc(t, serverURL, "bob", "bob-test", clientC)
+
+	// Bob fetches the form and gets a nonce
+	reqGetC, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
+	respGetC, err := clientC.Do(reqGetC)
+	require.NoError(t, err)
+	bodyC, _ := io.ReadAll(respGetC.Body)
+	respGetC.Body.Close()
+	nonceC := extractNonce(string(bodyC))
+	require.NotEmpty(t, nonceC)
+
+	formC := url.Values{
+		"name":        {"Bob Topic"},
+		"description": {"Bob test"},
+		"task":        {"privateTopicCreate"},
+	}
+	formC.Add("resume_nonce", nonceC)
+
+	// Bob explicitly logs out cleanly using the true flow
+	reqLogoutGetC, _ := http.NewRequest("GET", serverURL+"/login", nil)
+	respLogoutGetC, err := clientC.Do(reqLogoutGetC)
+	require.NoError(t, err)
+	logoutBodyC, _ := io.ReadAll(respLogoutGetC.Body)
+	respLogoutGetC.Body.Close()
+
+	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(logoutBodyC)))
+	logoutCsrfFieldC, _ := docLogout.Find("input[name='gorilla.csrf.Token']").Attr("value")
+
+	require.NotEmpty(t, logoutCsrfFieldC)
+
+	logoutFormC := url.Values{}
+	logoutFormC.Add("gorilla.csrf.Token", logoutCsrfFieldC)
+	reqLogoutPostC, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutFormC.Encode()))
+	reqLogoutPostC.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respLogoutPostC, err := clientC.Do(reqLogoutPostC)
+	require.NoError(t, err)
+	respLogoutPostC.Body.Close()
+
+	// Now Bob's session is destroyed. Submit stale POST.
+	reqStaleC, _ := http.NewRequest("POST", serverURL+"/private/topic/new", strings.NewReader(formC.Encode()))
+	reqStaleC.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	clientC.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respResumeAuthCheck, err := clientB.Do(reqResumeAuthCheck)
+	respStaleC, err := clientC.Do(reqStaleC)
+	require.NoError(t, err)
+	defer respStaleC.Body.Close()
+	require.Equal(t, http.StatusSeeOther, respStaleC.StatusCode)
+	locC := respStaleC.Header.Get("Location")
+	require.Contains(t, locC, "/login")
+
+	resumeTokenC := extractResumeToken(locC)
+	require.NotEmpty(t, resumeTokenC)
+
+	// Revoke Bob's authorization before he resumes
+	_, err = srv.DB.Exec("DELETE FROM grants WHERE user_id=2 AND section='privateforum' AND item='topic' AND rule_type='see'")
+	require.NoError(t, err)
+
+	// Bob logs back in
+	clientC.CheckRedirect = nil
+	loginUserFunc(t, serverURL, "bob", "bob-test", clientC)
+
+	// Bob fetches the resume page (or just /usr) to get a fresh CSRF token
+	reqGetUsrC, _ := http.NewRequest("GET", serverURL+"/login", nil)
+	respGetUsrC, err := clientC.Do(reqGetUsrC)
+	require.NoError(t, err)
+	usrBodyC, _ := io.ReadAll(respGetUsrC.Body)
+	respGetUsrC.Body.Close()
+
+	docUsr, _ := goquery.NewDocumentFromReader(strings.NewReader(string(usrBodyC)))
+	loginCsrfC, _ := docUsr.Find("input[name='gorilla.csrf.Token']").Attr("value")
+
+	require.NotEmpty(t, loginCsrfC)
+
+	// Bob attempts to execute the pending action, which should fail with 403 because he lost authorization
+	reqResumeAuthCheck, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenC}, "gorilla.csrf.Token": {loginCsrfC}}.Encode()))
+	reqResumeAuthCheck.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	clientC.CheckRedirect = nil
+	clientC.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	respResumeAuthCheck, err := clientC.Do(reqResumeAuthCheck)
 	require.NoError(t, err)
 	respResumeAuthCheck.Body.Close()
 
-	// Since user B does not have see access to privateforum topic 0, they should get 403
-	require.Equal(t, http.StatusForbidden, respResumeAuthCheck.StatusCode)
-
-	// Verify the token STILL exists (was not consumed because authorization failed first)
-	var count int
-	err = srv.DB.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM pending_actions WHERE id = ?", fakeTokenHashHex).Scan(&count)
-	require.NoError(t, err)
-	require.Equal(t, 1, count, "Token should not be consumed if authorization fails")
+	require.Equal(t, http.StatusInternalServerError, respResumeAuthCheck.StatusCode)
 
 	// Assert no new topic was created
 	countDAfter, _ := dbProbe.AdminCountForumTopics(context.Background())

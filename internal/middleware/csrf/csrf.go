@@ -98,16 +98,21 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 	protect := csrf.Protect(key[:], csrf.Secure(version != "dev"), csrf.TrustedOrigins(origins))
 	return func(next http.Handler) http.Handler {
 		validatedNext := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if requiresToken(r.Method) && !validateRequestToken(r) {
+			if requiresToken(r.Method) {
 				if r.URL.Path == "/private/topic/new" && r.Method == http.MethodPost {
-					if StalePostInterceptor != nil {
-						if intercepted := StalePostInterceptor(w, r); intercepted {
-							return
+					r.Body = http.MaxBytesReader(w, r.Body, 1024*64)
+				}
+				if !validateRequestToken(r) {
+					if r.URL.Path == "/private/topic/new" && r.Method == http.MethodPost {
+						if StalePostInterceptor != nil {
+							if intercepted := StalePostInterceptor(w, r); intercepted {
+								return
+							}
 						}
 					}
+					http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+					return
 				}
-				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
-				return
 			}
 			next.ServeHTTP(w, r)
 		})

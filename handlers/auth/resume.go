@@ -80,18 +80,38 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrNotFound
 	}
 
-	var formData map[string][]string
-	if err := json.Unmarshal([]byte(action.FormData), &formData); err != nil {
+	var storageMap struct {
+		Form url.Values `json:"form"`
+		URL  string     `json:"url"`
+	}
+	if err := json.Unmarshal([]byte(action.FormData), &storageMap); err != nil {
 		return fmt.Errorf("invalid form data")
 	}
 
-	u, _ := url.Parse("/private/topic/new")
-	newReq := r.Clone(r.Context())
-	newReq.URL = u
-	newReq.Method = http.MethodPost
-	newReq.PostForm = formData
+	targetURL, err := url.Parse(storageMap.URL)
+	if err != nil || targetURL.IsAbs() || targetURL.Host != "" {
+		return handlers.ErrForbidden
+	}
 
-	return privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
+	newReq := r.Clone(r.Context())
+	newReq.URL = targetURL
+	newReq.Method = http.MethodPost
+	newReq.PostForm = storageMap.Form
+
+	// Execute action. To ensure exactly-once semantics without premature consumption,
+	// we execute the task first. If it succeeds without error, we atomically consume the action.
+	// If it fails, we leave the action unconsumed so the user can retry.
+	// (Note: concurrent execution of the same valid resume token is prevented natively by the database
+	// if the task itself has unique constraints, but otherwise concurrent submissions might execute twice
+	// before the token is consumed. This failure-retry semantics is documented here).
+
+	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
+
+	if _, isErr := taskResult.(error); !isErr {
+		_, _ = cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
+	}
+
+	return taskResult
 }
 
 type ResumeTask struct {

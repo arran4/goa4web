@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -93,7 +94,7 @@ func TestResumeStalePost(t *testing.T) {
 	}
 	defer cleanup()
 
-	httpServer := httptest.NewServer(srv.Router)
+	httpServer := httptest.NewTLSServer(srv.Router)
 	defer httpServer.Close()
 	serverURL := httpServer.URL
 	dbProbe := srv.Queries
@@ -102,7 +103,7 @@ func TestResumeStalePost(t *testing.T) {
 	// We use the browser-like helpers to login
 
 	jarA, _ := cookiejar.New(nil)
-	clientA := &http.Client{Jar: jarA}
+	clientA := &http.Client{Jar: jarA, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	core.SessionName = "session"
 
 	// Login UserA (alice)
@@ -159,14 +160,21 @@ func TestResumeStalePost(t *testing.T) {
 
 	// 5. UserB logs in on a DIFFERENT browser
 	jarB, _ := cookiejar.New(nil)
-	clientB := &http.Client{Jar: jarB}
+	clientB := &http.Client{Jar: jarB, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	loginUserFunc(t, serverURL, "bob", "bob-test", clientB)
 
 	// UserB attempts to resume UserA's action
+	reqResumeGetB, _ := http.NewRequest("GET", serverURL+"/resume?token="+resumeToken, nil)
+	respResumeGetB, _ := clientB.Do(reqResumeGetB)
+	bodyResumeGetB, _ := io.ReadAll(respResumeGetB.Body)
+	respResumeGetB.Body.Close()
+	docResumeGetB, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGetB)))
+	csrfResumeB, _ := docResumeGetB.Find("input[name='gorilla.csrf.Token']").Attr("value")
+
 	clientB.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respBResume, err := clientB.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}})
+	respBResume, err := clientB.PostForm(serverURL+"/resume", url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResumeB}})
 	require.NoError(t, err)
 	respBResume.Body.Close()
 	clientB.CheckRedirect = nil
@@ -228,12 +236,17 @@ func TestResumeNegativePaths(t *testing.T) {
 	}
 	defer cleanup()
 
-	httpServer := httptest.NewServer(srv.Router)
+	httpServer := httptest.NewTLSServer(srv.Router)
 	defer httpServer.Close()
 	serverURL := httpServer.URL
 
 	jarA, _ := cookiejar.New(nil)
-	clientA := &http.Client{Jar: jarA}
+	clientA := &http.Client{
+		Jar: jarA,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
 
 	// 1. Missing Nonce Validation
 	formStaleNoNonce := url.Values{

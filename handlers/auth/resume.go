@@ -91,8 +91,7 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	newReq.Method = http.MethodPost
 	newReq.PostForm = formData
 
-	handlers.TaskHandler(privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate})(w, newReq)
-	return nil
+	return privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 }
 
 type ResumeTask struct {

@@ -3,6 +3,30 @@ import re
 with open("handlers/auth/resume.go", "r") as f:
     content = f.read()
 
+# We need to change the resume task action to use cd.HasGrant BEFORE consumption and throw a true 403!
+# And it should use `cd.HasGrant("privateforum", "topic", "create", 0)` too since the action checks for it!
+# Wait, why was `TaskHandler` throwing 500 when it returned `handlers.ErrForbidden`?
+# In `handlers/taskhandler.go`:
+# `case error:`
+# `var ue interface { error, UserErrorMessage() string }`
+# `if errors.As(result, &ue) { ... TaskErrorAcknowledgementPage(w, r) return }`
+# `handlers.ErrForbidden` IS an error. It does NOT have `UserErrorMessage()`.
+# So it falls through to `RenderErrorPage(w, r, result)`.
+# `RenderErrorPage` does:
+# `var he *HTTPError`
+# `if errors.As(err, &he) { status = he.Status }`
+# BUT `handlers.ErrForbidden` is `*HTTPError` and has `Status = 403`.
+# So `RenderErrorPage` sets `status = 403` and calls `w.WriteHeader(403)`.
+# Then it renders the template `TaskErrorAcknowledgementPageTmpl`.
+# If `cd.ExecuteSiteTemplate` fails, it writes 500.
+# WHY WOULD IT FAIL?
+# Wait! In the logs: `task action: create private topic permission denied`
+# This means `ResumeTaskAction` returned `fmt.Errorf("create private topic permission denied")`!
+# Ah! It didn't return `handlers.ErrForbidden`. It returned an error from `PrivateTopicCreateTask.Action`!
+# Because the `see` grant passed, so `ResumeTaskAction` did NOT return `handlers.ErrForbidden`. It proceeded to consumption, and then the task action failed on the `create` grant check!
+# THIS means we consumed the token, and then got a 500 from the task failing!
+# So to fix this, we MUST check `cd.HasGrant("privateforum", "topic", "create", 0)` BEFORE consumption!
+
 new_action = """func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
@@ -41,14 +65,16 @@ new_action = """func ResumeTaskAction(w http.ResponseWriter, r *http.Request) an
 		return handlers.ErrForbidden
 	}
 
-	// 1. Explicitly check current authorization BEFORE consuming the token
-	// This ensures we do not burn the token if the user lacks authorization right now
-	if !cd.HasGrant("privateforum", "topic", "see", 0) {
+	// 1. Explicitly check current authorization BEFORE consuming the token.
+	// We want to preserve the token if the user is legitimate but simply unauthorized right now.
+	if !cd.HasGrant("privateforum", "topic", "see", 0) || !cd.HasGrant("privateforum", "topic", "create", 0) {
 		return handlers.ErrForbidden
 	}
 
-	// 2. Consume atomically AFTER authorization, but BEFORE execution
-	// This ensures exactly-once execution (at-most-once under crashes)
+	// 2. Consume atomically AFTER authorization checks to ensure exactly-once semantics.
+	// Since we don't have global explicit multi-statement transactions in the app's framework
+	// for arbitrary actions, we at least prevent duplicate submission concurrency natively via
+	// the Consume SQL query, and error cleanly on partial failure without duplicate topics.
 	rows, err := cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
 	if err != nil || rows == 0 {
 		return handlers.ErrNotFound
@@ -59,8 +85,8 @@ new_action = """func ResumeTaskAction(w http.ResponseWriter, r *http.Request) an
 	newReq.Method = http.MethodPost
 	newReq.PostForm = storageMap.Form
 
-	// Execute action directly. We explicitly propagated the necessary authorization checks above.
-	// We handle the result response to ensure it maps correctly in the outer TaskHandler.
+	// Execute action directly, returning its result properly to the outer TaskHandler
+	// since we already explicitly checked the authorization constraint above.
 	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 
 	return taskResult

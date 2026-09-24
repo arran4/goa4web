@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 
 	"github.com/arran4/goa4web/core"
@@ -93,21 +92,10 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrForbidden
 	}
 
-	// 1. Explicitly invoke the exact original authorization boundary
-	authBoundary := privateforum.EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Inside the boundary, authorization succeeded.
-	}))
-
-	// Create a dummy writer to capture any early rejection without writing to the real client yet
-	rw := httptest.NewRecorder()
-	authBoundary.ServeHTTP(rw, r)
-
-	if rw.Code == http.StatusForbidden {
+	// 1. Explicitly check current authorization BEFORE consuming the token.
+	// We want to preserve the token if the user is legitimate but simply unauthorized right now.
+	if !cd.HasGrant("privateforum", "topic", "see", 0) || !cd.HasGrant("privateforum", "topic", "create", 0) {
 		return handlers.ErrForbidden
-	}
-	if rw.Code != http.StatusOK {
-		// If the middleware rejected it with some other code, propagate an error
-		return fmt.Errorf("authorization rejected with code %d", rw.Code)
 	}
 
 	// 2. Consume atomically AFTER authorization checks to ensure exactly-once semantics.
@@ -124,7 +112,8 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	newReq.Method = http.MethodPost
 	newReq.PostForm = storageMap.Form
 
-	// Execute action directly, returning its result properly to the outer TaskHandler.
+	// Execute action directly, returning its result properly to the outer TaskHandler
+	// since we already explicitly checked the authorization constraint above.
 	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 
 	return taskResult

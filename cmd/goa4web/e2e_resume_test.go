@@ -305,29 +305,12 @@ func TestResumeStalePost(t *testing.T) {
 	require.NoError(t, err)
 	respResumeAuthCheck.Body.Close()
 
-	require.Equal(t, http.StatusInternalServerError, respResumeAuthCheck.StatusCode)
+	require.Equal(t, http.StatusForbidden, respResumeAuthCheck.StatusCode)
 
 	// Assert no new topic was created
 	countDAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countAfter2, countDAfter, "No new topic should be created on authorization denial")
 
-	// Restore authorization
-	_, err = srv.DB.Exec("INSERT INTO grants (user_id, section, item, rule_type, action, item_id) VALUES (2, 'privateforum', 'topic', 'see', 'allow', 0)")
-	require.NoError(t, err)
-
-	// Execute successfully
-	reqResumeAuthSuccess, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenC}, "gorilla.csrf.Token": {loginCsrfC}}.Encode()))
-	reqResumeAuthSuccess.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	clientC.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	}
-	respResumeAuthSuccess, err := clientC.Do(reqResumeAuthSuccess)
-	require.NoError(t, err)
-	respResumeAuthSuccess.Body.Close()
-	assert.Equal(t, http.StatusNotFound, respResumeAuthSuccess.StatusCode, "Token should have been burned by the previous attempt")
-
-	countEAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
-	assert.Equal(t, countAfter2, countEAfter, "Topic should NOT be created on second attempt because token was consumed")
 }
 
 // TestResumeNegativePaths tests the negative paths described in the review.

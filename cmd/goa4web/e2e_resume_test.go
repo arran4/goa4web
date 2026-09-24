@@ -120,18 +120,14 @@ func TestResumeStalePost(t *testing.T) {
 	nonce := extractNonce(string(bodyRender))
 	require.NotEmpty(t, nonce, "Nonce should be generated on form render")
 
-	// 3. Simulating logout / session expiry: clear the Session cookie, keep browser_id
-	u, _ := url.Parse(serverURL)
-	var keptCookies []*http.Cookie
-	for _, c := range clientA.Jar.Cookies(u) {
-		if c.Name != core.SessionName {
-			keptCookies = append(keptCookies, c)
-		}
-	}
-	t.Logf("Kept cookies: %v", keptCookies)
-	jarA, _ = cookiejar.New(nil)
-	jarA.SetCookies(u, keptCookies)
-	clientA.Jar = jarA
+	// 3. Authentication disappears via real logout
+	reqLogout, _ := http.NewRequest("GET", serverURL+"/logout", nil)
+	respLogout, _ := clientA.Do(reqLogout)
+	respLogout.Body.Close()
+	// This will clear the session cookie in clientA's jar, but preserve browser_id
+
+
+	countBefore, _ := dbProbe.AdminCountForumTopics(context.Background())
 
 	// 4. Submit stale POST
 	formStale := url.Values{
@@ -164,12 +160,12 @@ func TestResumeStalePost(t *testing.T) {
 	loginUserFunc(t, serverURL, "bob", "bob-test", clientB)
 
 	// UserB attempts to resume UserA's action
-	reqResumeGetB, _ := http.NewRequest("GET", serverURL+"/resume?token="+resumeToken, nil)
-	respResumeGetB, _ := clientB.Do(reqResumeGetB)
-	bodyResumeGetB, _ := io.ReadAll(respResumeGetB.Body)
-	respResumeGetB.Body.Close()
-	docResumeGetB, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGetB)))
-	csrfResumeB, _ := docResumeGetB.Find("input[name='gorilla.csrf.Token']").Attr("value")
+	reqIndexGetB, _ := http.NewRequest("GET", serverURL+"/", nil)
+	respIndexGetB, _ := clientB.Do(reqIndexGetB)
+	bodyIndexGetB, _ := io.ReadAll(respIndexGetB.Body)
+	respIndexGetB.Body.Close()
+	docIndexGetB, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyIndexGetB)))
+	csrfResumeB, _ := docIndexGetB.Find("input[name='gorilla.csrf.Token']").Attr("value")
 
 	clientB.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
@@ -204,6 +200,7 @@ func TestResumeStalePost(t *testing.T) {
 	assert.Equal(t, http.StatusOK, respResumeAction.StatusCode) // TaskDoneAutoRefreshPage
 
 	countAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
+	assert.Equal(t, countBefore+1, countAfter, "Exactly one topic should be created after resume")
 
 	// 8. Try to resume AGAIN (should fail)
 	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {

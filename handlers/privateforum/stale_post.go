@@ -61,9 +61,12 @@ func interceptStalePost(w http.ResponseWriter, r *http.Request) bool {
 	r.PostForm.Del("gorilla.csrf.Token")
 	r.PostForm.Del("resume_nonce")
 
-	formDataBytes, err := json.Marshal(r.PostForm)
+	storageMap := map[string]any{
+		"form": r.PostForm,
+		"url":  r.URL.RequestURI(),
+	}
+	formDataBytes, err := json.Marshal(storageMap)
 	if err != nil {
-		log.Printf("stale post intercepted failed")
 		return false
 	}
 

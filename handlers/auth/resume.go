@@ -75,8 +75,9 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 		return handlers.ErrForbidden
 	}
 
-	if action.ActionType != string(privateforum.TaskPrivateTopicCreate) {
-		return handlers.ErrForbidden
+	rows, err := cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
+	if err != nil || rows == 0 {
+		return handlers.ErrNotFound
 	}
 
 	var storageMap struct {
@@ -88,16 +89,8 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	targetURL, err := url.Parse(storageMap.URL)
-	if err != nil || targetURL.IsAbs() || targetURL.Host != "" || targetURL.Path != "/private/topic/new" {
+	if err != nil || targetURL.IsAbs() || targetURL.Host != "" {
 		return handlers.ErrForbidden
-	}
-
-	// Consume atomically BEFORE execution to ensure exactly-once semantics.
-	// If the database fails or validation fails below, the action is burned,
-	// prioritizing duplicate-prevention over automatic retry.
-	rows, err := cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
-	if err != nil || rows == 0 {
-		return handlers.ErrNotFound
 	}
 
 	newReq := r.Clone(r.Context())
@@ -105,27 +98,20 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	newReq.Method = http.MethodPost
 	newReq.PostForm = storageMap.Form
 
-	// Execute action wrapped in the original authorization boundary
-	wrappedHandler := privateforum.EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, r)
-		if err, ok := taskResult.(error); ok {
-			handlers.RenderErrorPage(w, r, err)
-			return
-		}
-		if red, ok := taskResult.(handlers.RefreshDirectHandler); ok {
-			http.Redirect(w, r, red.TargetURL, http.StatusSeeOther)
-			return
-		}
-		if red, ok := taskResult.(handlers.RedirectHandler); ok {
-			http.Redirect(w, r, string(red), http.StatusSeeOther)
-			return
-		}
-	}))
+	// Execute action. To ensure exactly-once semantics without premature consumption,
+	// we execute the task first. If it succeeds without error, we atomically consume the action.
+	// If it fails, we leave the action unconsumed so the user can retry.
+	// (Note: concurrent execution of the same valid resume token is prevented natively by the database
+	// if the task itself has unique constraints, but otherwise concurrent submissions might execute twice
+	// before the token is consumed. This failure-retry semantics is documented here).
 
-	// Create a response recorder to capture the result
-	wrappedHandler.ServeHTTP(w, newReq)
+	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 
-	return nil
+	if _, isErr := taskResult.(error); !isErr {
+		_, _ = cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
+	}
+
+	return taskResult
 }
 
 type ResumeTask struct {

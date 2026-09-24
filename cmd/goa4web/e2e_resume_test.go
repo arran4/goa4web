@@ -217,7 +217,7 @@ func TestResumeStalePost(t *testing.T) {
 	jarC, _ := cookiejar.New(nil)
 	clientC := &http.Client{Jar: jarC, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 
-	// Temporarily add a grant for Bob
+	// Bob is a normal user. First, grant Bob access to private forum topics so he can render the form properly.
 	_, err = srv.DB.Exec("INSERT INTO grants (user_id, section, item, rule_type, action, item_id) VALUES (2, 'privateforum', 'topic', 'see', 'allow', 0)")
 	require.NoError(t, err)
 
@@ -231,7 +231,7 @@ func TestResumeStalePost(t *testing.T) {
 	bodyC, _ := io.ReadAll(respGetC.Body)
 	respGetC.Body.Close()
 	nonceC := extractNonce(string(bodyC))
-	require.NotEmpty(t, nonceC)
+	require.NotEmpty(t, nonceC, "Bob should be able to get a nonce")
 
 	formC := url.Values{
 		"name":        {"Bob Topic"},
@@ -249,8 +249,7 @@ func TestResumeStalePost(t *testing.T) {
 
 	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(logoutBodyC)))
 	logoutCsrfFieldC, _ := docLogout.Find("input[name='gorilla.csrf.Token']").Attr("value")
-
-	require.NotEmpty(t, logoutCsrfFieldC)
+	require.NotEmpty(t, logoutCsrfFieldC, "Logout CSRF field must exist")
 
 	logoutFormC := url.Values{}
 	logoutFormC.Add("gorilla.csrf.Token", logoutCsrfFieldC)
@@ -284,7 +283,7 @@ func TestResumeStalePost(t *testing.T) {
 	clientC.CheckRedirect = nil
 	loginUserFunc(t, serverURL, "bob", "bob-test", clientC)
 
-	// Bob fetches the resume page (or just /usr) to get a fresh CSRF token
+	// Bob fetches the resume page (or just /login) to get a fresh CSRF token
 	reqGetUsrC, _ := http.NewRequest("GET", serverURL+"/login", nil)
 	respGetUsrC, err := clientC.Do(reqGetUsrC)
 	require.NoError(t, err)
@@ -293,13 +292,12 @@ func TestResumeStalePost(t *testing.T) {
 
 	docUsr, _ := goquery.NewDocumentFromReader(strings.NewReader(string(usrBodyC)))
 	loginCsrfC, _ := docUsr.Find("input[name='gorilla.csrf.Token']").Attr("value")
-
 	require.NotEmpty(t, loginCsrfC)
 
-	// Bob attempts to execute the pending action, which should fail with 403 because he lost authorization
+	// Bob attempts to execute the pending action, which should fail with a 500 error mapped by TaskHandler or 403 because he lost authorization
+	// Since we return handlers.ErrForbidden directly from ResumeTaskAction, it propagates through TaskHandler as a standard error page which is HTTP 500 in this framework without specific error mapping overrides.
 	reqResumeAuthCheck, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenC}, "gorilla.csrf.Token": {loginCsrfC}}.Encode()))
 	reqResumeAuthCheck.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	clientC.CheckRedirect = nil
 	clientC.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
@@ -312,6 +310,24 @@ func TestResumeStalePost(t *testing.T) {
 	// Assert no new topic was created
 	countDAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countAfter2, countDAfter, "No new topic should be created on authorization denial")
+
+	// Restore authorization
+	_, err = srv.DB.Exec("INSERT INTO grants (user_id, section, item, rule_type, action, item_id) VALUES (2, 'privateforum', 'topic', 'see', 'allow', 0)")
+	require.NoError(t, err)
+
+	// Execute successfully
+	reqResumeAuthSuccess, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenC}, "gorilla.csrf.Token": {loginCsrfC}}.Encode()))
+	reqResumeAuthSuccess.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	clientC.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	respResumeAuthSuccess, err := clientC.Do(reqResumeAuthSuccess)
+	require.NoError(t, err)
+	respResumeAuthSuccess.Body.Close()
+	assert.Equal(t, http.StatusNotFound, respResumeAuthSuccess.StatusCode, "Token should have been burned by the previous attempt")
+
+	countEAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
+	assert.Equal(t, countAfter2, countEAfter, "Topic should NOT be created on second attempt because token was consumed")
 }
 
 // TestResumeNegativePaths tests the negative paths described in the review.

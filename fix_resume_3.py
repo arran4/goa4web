@@ -1,61 +1,24 @@
-package auth
+import re
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
+with open("handlers/auth/resume.go", "r") as f:
+    content = f.read()
 
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/privateforum"
-	"github.com/arran4/goa4web/internal/tasks"
-)
+# We need to use `EnforcePrivateForumTopicSeeAccess` as requested: "rather than through the prior EnforcePrivateForumTopicSeeAccess boundary... validate payload and current grants before performing the write, with no route that bypasses the original authorization boundary."
+# We can do this by creating a wrapper that DOES the consumption inside the authenticated boundary!
+# But wait, we want to return the result to TaskHandler!
+# Wait! ResumeTaskAction IS a task action.
+# So we can't easily use an `http.Handler` middleware without dealing with response writers.
+# But `privateforum.EnforcePrivateForumTopicSeeAccess` is just an `http.Handler` middleware.
 
-var ResumeInterstitialPageTmpl tasks.Template = "domains/user/resume_interstitial.gohtml"
+# To satisfy "validate payload and current grants before performing the write, with no route that bypasses the original authorization boundary. Claim/consume once, atomically"
+# Let's write the response properly using a recorder OR just let TaskHandler do it.
+# Actually, the best way to enforce it is to route the request through the actual Router!
+# But then we get infinite loops or double task execution?
+# "Restore strict checks for owner UID, same browser, expected ActionType, and an exact safe relative /private/topic/new target; validate payload and current grants before performing the write, with no route that bypasses the original authorization boundary."
 
-func ResumePage(w http.ResponseWriter, r *http.Request) {
-	cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if !ok || cd == nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
+# Let's use `EnforcePrivateForumTopicSeeAccess` manually but correctly intercept the error.
 
-	token := r.URL.Query().Get("token")
-	if token == "" {
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-	tokenHash := sha256.Sum256([]byte(token))
-	tokenHashHex := hex.EncodeToString(tokenHash[:])
-
-	browserID := core.GetBrowserID(w, r)
-
-	action, err := cd.Queries().GetPendingAction(r.Context(), tokenHashHex)
-	if err != nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-
-	if action.Uid != cd.UserID || action.BrowserID != browserID {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
-	data := struct {
-		Token      string
-		ActionType string
-	}{Token: token, ActionType: action.ActionType}
-
-	_ = ResumeInterstitialPageTmpl.Handle(w, r, data)
-}
-
-func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
+new_action = """func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	token := r.PostFormValue("token")
@@ -94,8 +57,10 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	// 1. Explicitly invoke the exact original authorization boundary
+	var authErr error
 	authBoundary := privateforum.EnforcePrivateForumTopicSeeAccess(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Inside the boundary, authorization succeeded.
+		authErr = nil
 	}))
 
 	// Create a dummy writer to capture any early rejection without writing to the real client yet
@@ -128,14 +93,12 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 
 	return taskResult
-}
+}"""
 
-type ResumeTask struct {
-	tasks.TaskString
-}
+content = re.sub(r"func ResumeTaskAction\(w http.ResponseWriter, r \*http.Request\) any \{.*?\n\}\n\ntype ResumeTask", new_action + "\n\ntype ResumeTask", content, flags=re.DOTALL)
 
-var resumeTask = ResumeTask{TaskString: "resumeTask"}
+if '"net/http/httptest"' not in content:
+    content = content.replace('"net/url"', '"net/url"\n\t"net/http/httptest"')
 
-func (ResumeTask) Action(w http.ResponseWriter, r *http.Request) any {
-	return ResumeTaskAction(w, r)
-}
+with open("handlers/auth/resume.go", "w") as f:
+    f.write(content)

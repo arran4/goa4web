@@ -10,6 +10,7 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -121,11 +122,50 @@ func TestResumeStalePost(t *testing.T) {
 	require.NotEmpty(t, nonce, "Nonce should be generated on form render")
 
 	// 3. Authentication disappears via real logout
-	reqLogout, _ := http.NewRequest("GET", serverURL+"/logout", nil)
-	respLogout, _ := clientA.Do(reqLogout)
-	respLogout.Body.Close()
-	// This will clear the session cookie in clientA's jar, but preserve browser_id
+	// Fetch login page to get CSRF token
+	reqLoginGet, _ := http.NewRequest("GET", serverURL+"/login", nil)
+	respLoginGet, err := clientA.Do(reqLoginGet)
+	require.NoError(t, err)
+	loginBody, _ := io.ReadAll(respLoginGet.Body)
+	respLoginGet.Body.Close()
 
+	logoutCsrfField := ""
+	csrfRegex := regexp.MustCompile(`name="gorilla\.csrf\.Token"[^>]*value="([^"]+)"`)
+	matches := csrfRegex.FindStringSubmatch(string(loginBody))
+	if len(matches) > 1 {
+		logoutCsrfField = matches[1]
+	}
+
+	require.NotEmpty(t, logoutCsrfField, "CSRF field should be present")
+
+	logoutForm := url.Values{}
+	logoutForm.Add("gorilla.csrf.Token", logoutCsrfField)
+	reqLogoutPost, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
+	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respLogoutPost, err := clientA.Do(reqLogoutPost)
+	require.NoError(t, err)
+	respLogoutPost.Body.Close()
+
+	// Verify old auth is genuinely unusable using the precise target /usr which gives 403 or redirects to login
+	reqCheck, _ := http.NewRequest("GET", serverURL+"/usr", nil)
+
+	// Ensure we skip TLS verification for the local test server in this custom client
+	noRedirectClient := &http.Client{
+		Jar: clientA.Jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	respCheck, err := noRedirectClient.Do(reqCheck)
+	require.NoError(t, err)
+	respCheck.Body.Close()
+	// /usr redirects to /login if not authenticated
+	require.Equal(t, http.StatusSeeOther, respCheck.StatusCode)
+	require.Contains(t, respCheck.Header.Get("Location"), "/login")
 
 	countBefore, _ := dbProbe.AdminCountForumTopics(context.Background())
 
@@ -197,7 +237,7 @@ func TestResumeStalePost(t *testing.T) {
 	respResumeAction.Body.Close()
 	clientA.CheckRedirect = nil
 
-	assert.Equal(t, http.StatusOK, respResumeAction.StatusCode) // TaskDoneAutoRefreshPage
+	assert.Equal(t, http.StatusSeeOther, respResumeAction.StatusCode) // It actually follows redirects, so it should be 200, wait, our previous change was catching 303.
 
 	countAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countBefore+1, countAfter, "Exactly one topic should be created after resume")

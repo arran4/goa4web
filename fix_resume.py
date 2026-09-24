@@ -1,60 +1,10 @@
-package auth
+import re
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/url"
+with open("handlers/auth/resume.go", "r") as f:
+    content = f.read()
 
-	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/core/common"
-	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/handlers/privateforum"
-	"github.com/arran4/goa4web/internal/tasks"
-)
-
-var ResumeInterstitialPageTmpl tasks.Template = "domains/user/resume_interstitial.gohtml"
-
-func ResumePage(w http.ResponseWriter, r *http.Request) {
-	cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	if !ok || cd == nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
-	token := r.URL.Query().Get("token")
-	if token == "" {
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-	tokenHash := sha256.Sum256([]byte(token))
-	tokenHashHex := hex.EncodeToString(tokenHash[:])
-
-	browserID := core.GetBrowserID(w, r)
-
-	action, err := cd.Queries().GetPendingAction(r.Context(), tokenHashHex)
-	if err != nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-
-	if action.Uid != cd.UserID || action.BrowserID != browserID {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
-		return
-	}
-
-	data := struct {
-		Token      string
-		ActionType string
-	}{Token: token, ActionType: action.ActionType}
-
-	_ = ResumeInterstitialPageTmpl.Handle(w, r, data)
-}
-
-func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
+# Replace the body of ResumeTaskAction
+new_body = """func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	token := r.PostFormValue("token")
@@ -112,12 +62,8 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 			handlers.RenderErrorPage(w, r, err)
 			return
 		}
-		if red, ok := taskResult.(handlers.RefreshDirectHandler); ok {
-			http.Redirect(w, r, red.TargetURL, http.StatusSeeOther)
-			return
-		}
-		if red, ok := taskResult.(handlers.RedirectHandler); ok {
-			http.Redirect(w, r, string(red), http.StatusSeeOther)
+		if red, ok := taskResult.(core.RedirectResponse); ok {
+			http.Redirect(w, r, red.RedirectPath, http.StatusSeeOther)
 			return
 		}
 	}))
@@ -126,14 +72,9 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	wrappedHandler.ServeHTTP(w, newReq)
 
 	return nil
-}
+}"""
 
-type ResumeTask struct {
-	tasks.TaskString
-}
+content = re.sub(r"func ResumeTaskAction\(w http.ResponseWriter, r \*http.Request\) any \{.*?\n\}\n\ntype ResumeTask", new_body + "\n\ntype ResumeTask", content, flags=re.DOTALL)
 
-var resumeTask = ResumeTask{TaskString: "resumeTask"}
-
-func (ResumeTask) Action(w http.ResponseWriter, r *http.Request) any {
-	return ResumeTaskAction(w, r)
-}
+with open("handlers/auth/resume.go", "w") as f:
+    f.write(content)

@@ -93,15 +93,20 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	// 1. Explicitly check current authorization BEFORE consuming the token.
-	// We want to preserve the token if the user is legitimate but simply unauthorized right now.
-	if !cd.HasGrant("privateforum", "topic", "see", 0) || !cd.HasGrant("privateforum", "topic", "create", 0) {
+	// This ensures we do not burn the token if the user lacks authorization right now.
+	if !cd.HasGrant("privateforum", "topic", "see", 0) {
+		return handlers.ErrForbidden
+	}
+	if !cd.HasGrant("privateforum", "topic", "create", 0) {
 		return handlers.ErrForbidden
 	}
 
-	// 2. Consume atomically AFTER authorization checks to ensure exactly-once semantics.
-	// Since we don't have global explicit multi-statement transactions in the app's framework
-	// for arbitrary actions, we at least prevent duplicate submission concurrency natively via
-	// the Consume SQL query, and error cleanly on partial failure without duplicate topics.
+	// 2. Consume atomically AFTER authorization checks.
+	// NOTE: This enforces AT-MOST-ONCE semantics. We consume the token prior to executing the non-idempotent task.
+	// If the server crashes during execution, or if task validation fails (e.g., invalid participants), the token is lost.
+	// This intentionally prioritizes preventing duplicate creations over automatic resumability on failure,
+	// since the current core.Task architecture does not support seamlessly passing a shared SQL transaction
+	// for exactly-once effects without massive refactoring.
 	rows, err := cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
 	if err != nil || rows == 0 {
 		return handlers.ErrNotFound
@@ -112,8 +117,8 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	newReq.Method = http.MethodPost
 	newReq.PostForm = storageMap.Form
 
-	// Execute action directly, returning its result properly to the outer TaskHandler
-	// since we already explicitly checked the authorization constraint above.
+	// 3. Execute the matched action directly, propagating its HTTP response/status
+	// to the outer TaskHandler.
 	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 
 	return taskResult

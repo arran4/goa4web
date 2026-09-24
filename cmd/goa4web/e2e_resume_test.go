@@ -311,6 +311,86 @@ func TestResumeStalePost(t *testing.T) {
 	countDAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countAfter2, countDAfter, "No new topic should be created on authorization denial")
 
+	// --- New Validation Failure Test (At-Most-Once verification) ---
+	// Alice creates a valid POST but with invalid participants (which fails validation AFTER token consumption)
+	formInvalid := url.Values{
+		"name":         {"Validation Fail Topic"},
+		"description":  {"Should burn token without creating"},
+		"participants": {"non_existent_user_xyz_123"},
+		"task":         {"privateTopicCreate"},
+	}
+
+	reqGetInv, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
+	respGetInv, err := clientA.Do(reqGetInv)
+	require.NoError(t, err)
+	bodyInv, _ := io.ReadAll(respGetInv.Body)
+	respGetInv.Body.Close()
+	nonceInv := extractNonce(string(bodyInv))
+	require.NotEmpty(t, nonceInv)
+
+	formInvalid.Add("resume_nonce", nonceInv)
+
+	// Temporarily log out A to trigger intercept
+	reqLogoutGetInv, _ := http.NewRequest("GET", serverURL+"/login", nil)
+	respLogoutGetInv, _ := clientA.Do(reqLogoutGetInv)
+	logoutBodyInv, _ := io.ReadAll(respLogoutGetInv.Body)
+	respLogoutGetInv.Body.Close()
+
+	docLogoutInv, _ := goquery.NewDocumentFromReader(strings.NewReader(string(logoutBodyInv)))
+	logoutCsrfFieldInv, _ := docLogoutInv.Find("input[name='gorilla.csrf.Token']").Attr("value")
+
+	logoutFormInv := url.Values{}
+	logoutFormInv.Add("gorilla.csrf.Token", logoutCsrfFieldInv)
+	reqLogoutPostInv, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutFormInv.Encode()))
+	reqLogoutPostInv.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respLogoutPostInv, _ := clientA.Do(reqLogoutPostInv)
+	respLogoutPostInv.Body.Close()
+
+	// Post the invalid form, which will be intercepted
+	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	reqStaleInv, _ := http.NewRequest("POST", serverURL+"/private/topic/new", strings.NewReader(formInvalid.Encode()))
+	reqStaleInv.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respStaleInv, _ := clientA.Do(reqStaleInv)
+	respStaleInv.Body.Close()
+	locInv := respStaleInv.Header.Get("Location")
+	resumeTokenInv := extractResumeToken(locInv)
+	require.NotEmpty(t, resumeTokenInv)
+
+	// Log back in as A
+	clientA.CheckRedirect = nil
+	loginUserFunc(t, serverURL, "alice", "alice-test", clientA)
+
+	reqGetUsrInv, _ := http.NewRequest("GET", serverURL+"/login", nil)
+	respGetUsrInv, _ := clientA.Do(reqGetUsrInv)
+	usrBodyInv, _ := io.ReadAll(respGetUsrInv.Body)
+	respGetUsrInv.Body.Close()
+
+	docUsrInv, _ := goquery.NewDocumentFromReader(strings.NewReader(string(usrBodyInv)))
+	loginCsrfInv, _ := docUsrInv.Find("input[name='gorilla.csrf.Token']").Attr("value")
+
+	// Execute the token!
+	// It will consume the token, then fail validation, rendering the page instead of redirecting!
+	reqResumeInv, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenInv}, "gorilla.csrf.Token": {loginCsrfInv}}.Encode()))
+	reqResumeInv.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	respResumeInv, _ := clientA.Do(reqResumeInv)
+	respResumeInv.Body.Close()
+
+	// Assert no new topic was created
+	countInvAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
+	assert.Equal(t, countAfter2, countInvAfter, "No new topic should be created on validation failure")
+
+	// Try to execute the token AGAIN, it should be 404 because it was burned!
+	reqResumeInvRetry, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenInv}, "gorilla.csrf.Token": {loginCsrfInv}}.Encode()))
+	reqResumeInvRetry.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respResumeInvRetry, _ := clientA.Do(reqResumeInvRetry)
+	respResumeInvRetry.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, respResumeInvRetry.StatusCode, "Token should have been burned by the previous validation failure")
 }
 
 // TestResumeNegativePaths tests the negative paths described in the review.

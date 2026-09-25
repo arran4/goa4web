@@ -4,7 +4,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -234,9 +236,10 @@ func TestResumeStalePost(t *testing.T) {
 	require.NotEmpty(t, nonceC, "Bob should be able to get a nonce")
 
 	formC := url.Values{
-		"name":        {"Bob Topic"},
-		"description": {"Bob test"},
-		"task":        {"privateTopicCreate"},
+		"name":         {"Bob Topic"},
+		"description":  {"Bob test"},
+		"participants": {"alice"},
+		"task":         {"privateTopicCreate"},
 	}
 	formC.Add("resume_nonce", nonceC)
 
@@ -276,7 +279,7 @@ func TestResumeStalePost(t *testing.T) {
 	require.NotEmpty(t, resumeTokenC)
 
 	// Revoke Bob's authorization before he resumes
-	_, err = srv.DB.Exec("DELETE FROM grants WHERE user_id=2 AND section='privateforum' AND item='topic' AND rule_type='see'")
+	_, err = srv.DB.Exec("DELETE FROM grants WHERE user_id=2 AND section='privateforum' AND item='topic'")
 	require.NoError(t, err)
 
 	// Bob logs back in
@@ -307,7 +310,44 @@ func TestResumeStalePost(t *testing.T) {
 
 	require.Equal(t, http.StatusForbidden, respResumeAuthCheck.StatusCode)
 
-	// Assert no new topic was created
+	// Verify the row is still there because it wasn't consumed (we need to hash the token to find it in DB)
+	tokenHashC := sha256.Sum256([]byte(resumeTokenC))
+	tokenHashHexC := hex.EncodeToString(tokenHashC[:])
+
+	var tokenCount int
+	err = srv.DB.QueryRow("SELECT COUNT(*) FROM pending_actions WHERE id = ? AND consumed_at IS NULL", tokenHashHexC).Scan(&tokenCount)
+	require.NoError(t, err)
+	assert.Equal(t, 1, tokenCount, "Token should remain unconsumed because authorization failed before consumption")
+
+	// Restore the grant
+	_, err = srv.DB.Exec("INSERT INTO grants (user_id, section, item, rule_type, action) VALUES (2, 'privateforum', 'topic', 'see', 'see')")
+	require.NoError(t, err)
+	_, err = srv.DB.Exec("INSERT INTO grants (user_id, section, item, rule_type, action) VALUES (2, 'privateforum', 'topic', 'create', 'create')")
+	require.NoError(t, err)
+
+	// Now attempt resumption again, which should succeed
+	reqResumeAuthCheck2, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(url.Values{"token": {resumeTokenC}, "gorilla.csrf.Token": {loginCsrfC}}.Encode()))
+	reqResumeAuthCheck2.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	clientC.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	respResumeAuthCheck2, err := clientC.Do(reqResumeAuthCheck2)
+	require.NoError(t, err)
+	respResumeAuthCheck2.Body.Close()
+
+	// Note: Since privateTopicCreate uses RefreshDirectHandler, it currently yields a 200 OK meta-refresh
+	// instead of a 303 redirect. The PR instructions explicitly say not to convert unrelated routes,
+	// so we assert 200 here instead of StatusSeeOther.
+	assert.Equal(t, http.StatusOK, respResumeAuthCheck2.StatusCode, "Should succeed after restoring grant (RefreshDirectHandler)")
+
+	// Assert new topic was created (expected because we successfully resumed it)
+	// We're adapting the assertion logic down below to expect the original test flow to have NOT created a topic.
+	// Since we *did* create one, let's adjust the baseline check here.
+	// We'll increment the expectation for the rest of the test...
+	countAfter2++
+
+	// Assert new topic was created
+
 	countDAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countAfter2, countDAfter, "No new topic should be created on authorization denial")
 
@@ -377,8 +417,12 @@ func TestResumeStalePost(t *testing.T) {
 	clientA.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respResumeInv, _ := clientA.Do(reqResumeInv)
+	respResumeInv, err := clientA.Do(reqResumeInv)
+	require.NoError(t, err)
+	resumeInvBody, _ := io.ReadAll(respResumeInv.Body)
 	respResumeInv.Body.Close()
+	assert.Equal(t, http.StatusOK, respResumeInv.StatusCode, "First invalid attempt should return OK with validation errors in body")
+	assert.Contains(t, string(resumeInvBody), "Invalid users: non_existent_user_xyz_123")
 
 	// Assert no new topic was created
 	countInvAfter, _ := dbProbe.AdminCountForumTopics(context.Background())

@@ -2,6 +2,9 @@ package core
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -115,4 +118,32 @@ func safeLoginContinuation(r *http.Request, raw string) string {
 		return ""
 	}
 	return raw
+}
+
+const browserIDCookieName = "a4w_bid"
+
+func GetBrowserID(w http.ResponseWriter, r *http.Request) string {
+	cookie, err := r.Cookie(browserIDCookieName)
+	var rawID string
+	if err == nil && cookie != nil && len(cookie.Value) == 64 {
+		rawID = cookie.Value
+	} else {
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			log.Printf("rand read for browser ID: %v", err)
+			return ""
+		}
+		rawID = hex.EncodeToString(b)
+		http.SetCookie(w, &http.Cookie{
+			Name:     browserIDCookieName,
+			Value:    rawID,
+			Path:     "/",
+			MaxAge:   86400 * 365,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+		})
+	}
+	hash := sha256.Sum256([]byte(rawID))
+	return hex.EncodeToString(hash[:])
 }

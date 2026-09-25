@@ -247,16 +247,20 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	r.NotFoundHandler = srv.NotFoundHandler
 
 	taskEventMW := middleware.NewTaskEventMiddleware(o.Bus)
-	handler := middleware.NewMiddlewareChain(
+
+	chain := []func(http.Handler) http.Handler{
 		middleware.RecoverMiddleware,
 		srv.CoreDataMiddleware(),
+	}
+	if cfg.CSRFEnabled {
+		chain = append(chain, csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.BaseURL, goa4web.Version))
+	}
+	chain = append(chain,
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
-	).Wrap(r)
-	if cfg.CSRFEnabled {
-		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.BaseURL, goa4web.Version)(handler)
-	}
+	)
+	handler := middleware.NewMiddlewareChain(chain...).Wrap(r)
 
 	srv.Router = handler
 

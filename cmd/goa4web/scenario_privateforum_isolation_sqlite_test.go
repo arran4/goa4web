@@ -4,8 +4,8 @@ package main
 
 import (
 	"context"
-	"testing"
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/arran4/goa4web/core/common"

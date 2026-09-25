@@ -1,0 +1,11 @@
+{{ define "domains/user/resume_interstitial.gohtml" }}
+    {{ template "head" $ }}
+    <h1>Confirm Submission</h1>
+    <p>You have a pending action. Please confirm to submit it.</p>
+    <form method="POST" action="/resume">
+        {{ csrfField }}
+        <input type="hidden" name="token" value="{{ .Token }}">
+        <button type="submit">Submit</button>
+    </form>
+    {{ template "tail" $ }}
+{{ end }}

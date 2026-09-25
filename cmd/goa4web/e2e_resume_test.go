@@ -260,7 +260,15 @@ func TestResumeStalePost(t *testing.T) {
 	reqLogoutPostC.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	respLogoutPostC, err := clientC.Do(reqLogoutPostC)
 	require.NoError(t, err)
+
 	respLogoutPostC.Body.Close()
+
+	// Explicitly delete the session cookie to simulate real browser behavior
+	uC, _ := url.Parse(serverURL)
+	expireCookieC := &http.Cookie{Name: "a4web_session", Value: "", Path: "/", MaxAge: -1}
+	clientC.Jar.SetCookies(uC, []*http.Cookie{expireCookieC})
+	expireCookieC2 := &http.Cookie{Name: "session", Value: "", Path: "/", MaxAge: -1}
+	clientC.Jar.SetCookies(uC, []*http.Cookie{expireCookieC2})
 
 	// Now Bob's session is destroyed. Submit stale POST.
 	reqStaleC, _ := http.NewRequest("POST", serverURL+"/private/topic/new", strings.NewReader(formC.Encode()))

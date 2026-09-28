@@ -41,6 +41,10 @@ func loginUserFunc(t *testing.T, serverURL, username, password string, client *h
 	reqPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	respPost, err := client.Do(reqPost)
 	require.NoError(t, err)
+	if respPost.StatusCode == http.StatusOK {
+	    bodyPost, _ := io.ReadAll(respPost.Body)
+	    require.NotContains(t, string(bodyPost), "Invalid credentials", "Login must succeed without invalid credentials error")
+	}
 	respPost.Body.Close()
 	if respPost.StatusCode != http.StatusOK && respPost.StatusCode != http.StatusNotFound {
 		t.Fatalf("Login failed with status %d", respPost.StatusCode)
@@ -252,6 +256,13 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 	require.NoError(t, err)
 	bodyResumeGet, _ := io.ReadAll(respResumeGet.Body)
 	respResumeGet.Body.Close()
+
+	// Assert the pending row still exists and is unconsumed
+	var consumedAt *string
+	err = srv.DB.QueryRow("SELECT consumed_at FROM pending_actions").Scan(&consumedAt)
+	require.NoError(t, err)
+	require.Nil(t, consumedAt, "GET must never consume the pending action")
+
 	docResumeGet, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGet)))
 	csrfResume, exists := docResumeGet.Find("input[name='gorilla.csrf.Token']").Attr("value")
 	if !exists {
@@ -277,6 +288,12 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 
 	countAfter, _ := dbProbe.AdminCountForumTopics(context.Background())
 	assert.Equal(t, countBefore+1, countAfter, "Exactly one topic should be created after resume")
+
+	// Assert the pending row was consumed
+	var consumedAtAfter *string
+	err = srv.DB.QueryRow("SELECT consumed_at FROM pending_actions").Scan(&consumedAtAfter)
+	require.NoError(t, err)
+	require.NotNil(t, consumedAtAfter, "POST must consume the pending action")
 
 	var latestTitle string
 	_ = srv.DB.QueryRow("SELECT title FROM forumtopic ORDER BY idforumtopic DESC LIMIT 1").Scan(&latestTitle)
@@ -560,6 +577,28 @@ func TestResume_MismatchedTask(t *testing.T) {
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
 	respLogoutPost, _ := client.Do(reqLogoutPost)
 	respLogoutPost.Body.Close()
+
+	// DB Action Type Mismatch
+	res, err := srv.DB.Exec("UPDATE pending_actions SET action_type='invalidType' WHERE form_data=''")
+	require.NoError(t, err)
+	rows, _ := res.RowsAffected()
+	require.Greater(t, rows, int64(0), "UPDATE pending_actions must affect at least 1 row")
+
+	formStaleDbmismatch := url.Values{
+		"task":               {"Private topic create"},
+		"participants":       {"bob"},
+		"gorilla.csrf.Token": {"stale-csrf-token"},
+		"resume_nonce":       {nonce},
+	}
+	reqStaleDbMismatch, _ := http.NewRequest("POST", actionURL.String(), strings.NewReader(formStaleDbmismatch.Encode()))
+	reqStaleDbMismatch.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respStaleDbMismatch, _ := client.Do(reqStaleDbMismatch)
+	respStaleDbMismatch.Body.Close()
+	assert.Equal(t, http.StatusForbidden, respStaleDbMismatch.StatusCode, "Mismatched DB action type must be rejected")
+
+	// Restore DB action type
+	_, err = srv.DB.Exec("UPDATE pending_actions SET action_type='Private topic create' WHERE form_data=''")
+	require.NoError(t, err)
 
 	// Task mismatch
 	formMismatched := url.Values{

@@ -71,8 +71,11 @@ func interceptStalePost(w http.ResponseWriter, r *http.Request) bool {
 	// But actually, we just need to verify it matches our expected target.
 	// The DB stores ActionType as the task's display string, or something else.
 	// Actually, wait! The original DB stored "Private topic create"
-	// The DB might store "Private topic create", but the form submits "privateTopicCreate"
+	// The DB must store the correct action type and the form must submit the corresponding task
 	expectedTask := string(TaskPrivateTopicCreate)
+	if pendingAction.ActionType != expectedTask {
+		return false
+	}
 	if taskName != expectedTask {
 		log.Printf("action type mismatch. Form task=%s expected=%s", taskName, expectedTask)
 		return false

@@ -122,7 +122,8 @@ func TestResume_AuthenticatedInvalidCSRFRejection(t *testing.T) {
 
 	// Fetch form
 	reqGet, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGet, _ := client.Do(reqGet)
+	respGet, err := client.Do(reqGet)
+	require.NoError(t, err)
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 
@@ -181,7 +182,8 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 	countBefore, _ := dbProbe.AdminCountForumTopics(context.Background())
 
 	reqGet, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGet, _ := client.Do(reqGet)
+	respGet, err := client.Do(reqGet)
+	require.NoError(t, err)
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
@@ -195,7 +197,8 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 
 	// True logout flow
 	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, _ := client.Do(reqLogoutGet)
+	respLogoutGet, err := client.Do(reqLogoutGet)
+	require.NoError(t, err)
 	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
 	respLogoutGet.Body.Close()
 
@@ -217,7 +220,8 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	respLogoutPost, _ := client.Do(reqLogoutPost)
+	respLogoutPost, err := client.Do(reqLogoutPost)
+	require.NoError(t, err)
 	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode, "True logout should return 303")
 	respLogoutPost.Body.Close()
 
@@ -328,7 +332,8 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 	countBefore, _ := dbProbe.AdminCountForumTopics(context.Background())
 
 	reqGet, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGet, _ := client.Do(reqGet)
+	respGet, err := client.Do(reqGet)
+	require.NoError(t, err)
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
@@ -342,7 +347,8 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 
 	// True logout
 	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, _ := client.Do(reqLogoutGet)
+	respLogoutGet, err := client.Do(reqLogoutGet)
+	require.NoError(t, err)
 	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
 	respLogoutGet.Body.Close()
 
@@ -361,7 +367,9 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
 	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, _ := client.Do(reqLogoutPost)
+	respLogoutPost, err := client.Do(reqLogoutPost)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
 	respLogoutPost.Body.Close()
 
 	formStale := url.Values{
@@ -380,7 +388,7 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 	respStale.Body.Close()
 
 	// Revoke auth
-	_, err := srv.DB.Exec("DELETE FROM grants WHERE user_id=1 AND section='privateforum' AND item='topic'")
+	_, err = srv.DB.Exec("DELETE FROM grants WHERE user_id=1 AND section='privateforum' AND item='topic'")
 	require.NoError(t, err)
 
 	client.CheckRedirect = nil
@@ -445,7 +453,8 @@ func TestResume_ValidationFailure(t *testing.T) {
 	countBefore, _ := dbProbe.AdminCountForumTopics(context.Background())
 
 	reqGet, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGet, _ := client.Do(reqGet)
+	respGet, err := client.Do(reqGet)
+	require.NoError(t, err)
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
@@ -457,7 +466,8 @@ func TestResume_ValidationFailure(t *testing.T) {
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
 	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, _ := client.Do(reqLogoutGet)
+	respLogoutGet, err := client.Do(reqLogoutGet)
+	require.NoError(t, err)
 	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
 	respLogoutGet.Body.Close()
 
@@ -476,7 +486,9 @@ func TestResume_ValidationFailure(t *testing.T) {
 	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
 	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, _ := client.Do(reqLogoutPost)
+	respLogoutPost, err := client.Do(reqLogoutPost)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
 	respLogoutPost.Body.Close()
 
 	// Validation failure: invalid participants
@@ -541,10 +553,11 @@ func TestResume_MismatchedTask(t *testing.T) {
 	serverURL := httpServer.URL
 
 	client := createClient()
-	loginUserFunc(t, serverURL, "bob", "bob-test", client)
+	loginUserFunc(t, serverURL, "alice", "alice-test", client)
 
 	reqGet, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGet, _ := client.Do(reqGet)
+	respGet, err := client.Do(reqGet)
+	require.NoError(t, err)
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
@@ -556,7 +569,8 @@ func TestResume_MismatchedTask(t *testing.T) {
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
 	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, _ := client.Do(reqLogoutGet)
+	respLogoutGet, err := client.Do(reqLogoutGet)
+	require.NoError(t, err)
 	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
 	respLogoutGet.Body.Close()
 
@@ -575,7 +589,9 @@ func TestResume_MismatchedTask(t *testing.T) {
 	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
 	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, _ := client.Do(reqLogoutPost)
+	respLogoutPost, err := client.Do(reqLogoutPost)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
 	respLogoutPost.Body.Close()
 
 	// DB Action Type Mismatch
@@ -592,7 +608,8 @@ func TestResume_MismatchedTask(t *testing.T) {
 	}
 	reqStaleDbMismatch, _ := http.NewRequest("POST", actionURL.String(), strings.NewReader(formStaleDbmismatch.Encode()))
 	reqStaleDbMismatch.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	respStaleDbMismatch, _ := client.Do(reqStaleDbMismatch)
+	respStaleDbMismatch, err := client.Do(reqStaleDbMismatch)
+	require.NoError(t, err)
 	respStaleDbMismatch.Body.Close()
 	assert.Equal(t, http.StatusForbidden, respStaleDbMismatch.StatusCode, "Mismatched DB action type must be rejected")
 
@@ -603,25 +620,26 @@ func TestResume_MismatchedTask(t *testing.T) {
 	// Task mismatch
 	formMismatched := url.Values{
 		"task":               {"fakeTaskCreate"},
-		"participants":       {"bob"},
+		"participants":       {"alice"},
 		"gorilla.csrf.Token": {"stale-csrf-token"},
 		"resume_nonce":       {nonce},
 	}
 	reqStaleMismatch, _ := http.NewRequest("POST", actionURL.String(), strings.NewReader(formMismatched.Encode()))
 	reqStaleMismatch.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	respStaleMismatch, _ := client.Do(reqStaleMismatch)
+	respStaleMismatch, err := client.Do(reqStaleMismatch)
+	require.NoError(t, err)
 	respStaleMismatch.Body.Close()
 	assert.Equal(t, http.StatusForbidden, respStaleMismatch.StatusCode, "Mismatched task should be rejected")
 
-	// Wrong user
-	clientBob := createClient()
-	loginUserFunc(t, serverURL, "bob", "bob-test", clientBob)
+	// Wrong user (same browser, Bob authenticates in same browser)
+	client.CheckRedirect = nil
+	loginUserFunc(t, serverURL, "bob", "bob-test", client)
 	reqGetBob, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGetBob, _ := clientBob.Do(reqGetBob)
+	respGetBob, err := client.Do(reqGetBob)
+	require.NoError(t, err)
 	bodyGetBob, _ := io.ReadAll(respGetBob.Body)
 	respGetBob.Body.Close()
-	// nonceBob := extractNonce(string(bodyGetBob))
 	docBob, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGetBob)))
 	formActionBob, existsBob := docBob.Find("form#private-form").Attr("action")
 	require.True(t, existsBob)
@@ -638,25 +656,63 @@ func TestResume_MismatchedTask(t *testing.T) {
 
 	// Bob logs out
 	reqLogoutGetBob, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGetBob, _ := clientBob.Do(reqLogoutGetBob)
+	respLogoutGetBob, err := client.Do(reqLogoutGetBob)
+	require.NoError(t, err)
 	bodyLogoutGetBob, _ := io.ReadAll(respLogoutGetBob.Body)
 	respLogoutGetBob.Body.Close()
 	docLogoutBob, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGetBob)))
-	logoutCsrfFieldBob, _ := docLogoutBob.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
+	logoutCsrfFieldBob, existsBob := docLogoutBob.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
+	require.True(t, existsBob)
+	require.NotEmpty(t, logoutCsrfFieldBob)
 
 	logoutFormBob := url.Values{}
 	logoutFormBob.Add("gorilla.csrf.Token", logoutCsrfFieldBob)
 	reqLogoutPostBob, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutFormBob.Encode()))
 	reqLogoutPostBob.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqLogoutPostBob.Header.Set("X-CSRF-Token", logoutCsrfFieldBob)
-	clientBob.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPostBob, _ := clientBob.Do(reqLogoutPostBob)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
+	respLogoutPostBob, err := client.Do(reqLogoutPostBob)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, respLogoutPostBob.StatusCode, "Bob logout POST should be 303")
 	respLogoutPostBob.Body.Close()
 
 	reqStaleWrongUser, _ := http.NewRequest("POST", actionURLBob.String(), strings.NewReader(formStaleWrongUser.Encode()))
 	reqStaleWrongUser.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	respStaleWrongUser, _ := clientBob.Do(reqStaleWrongUser)
+	respStaleWrongUser, err := client.Do(reqStaleWrongUser)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, respStaleWrongUser.StatusCode, "Wrong user stealing nonce should be intercepted (same browser)")
+	locationBob := respStaleWrongUser.Header.Get("Location")
+	resumeTokenBob := extractResumeToken(locationBob)
 	respStaleWrongUser.Body.Close()
-	assert.Equal(t, http.StatusForbidden, respStaleWrongUser.StatusCode, "Wrong user stealing nonce should be rejected")
+
+	// Bob logs back in
+	client.CheckRedirect = nil
+	loginUserFunc(t, serverURL, "bob", "bob-test", client)
+
+	// Bob tries to GET /resume
+	reqResumeGetBob, _ := http.NewRequest("GET", serverURL+"/resume?token="+resumeTokenBob, nil)
+	respResumeGetBob, err := client.Do(reqResumeGetBob)
+	require.NoError(t, err)
+	bodyResumeGetBob, _ := io.ReadAll(respResumeGetBob.Body)
+	respResumeGetBob.Body.Close()
+
+	docResumeGetBob, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGetBob)))
+	csrfResumeBob, existsBob := docResumeGetBob.Find("input[name='gorilla.csrf.Token']").Attr("value")
+
+	// GET should return 403 Forbidden because action.Uid != cd.UserID
+	// So we don't necessarily have a CSRF token, but let's test POST anyway if we can (or just assert GET is 403)
+	if respResumeGetBob.StatusCode != http.StatusForbidden {
+		t.Logf("Bob GET /resume body:\n%s", string(bodyResumeGetBob))
+	}
+	require.Equal(t, http.StatusForbidden, respResumeGetBob.StatusCode, "Bob getting Alice's resume token should be 403")
+
+	// Even if Bob POSTs, it should be 403
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
+	resumeValsBob := url.Values{"token": {resumeTokenBob}, "gorilla.csrf.Token": {csrfResumeBob}}
+	reqResumeActionBob, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(resumeValsBob.Encode()))
+	reqResumeActionBob.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respResumeActionBob, _ := client.Do(reqResumeActionBob)
+	respResumeActionBob.Body.Close()
+	assert.Equal(t, http.StatusForbidden, respResumeActionBob.StatusCode, "Bob posting Alice's resume token should be 403")
 }

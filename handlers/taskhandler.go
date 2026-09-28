@@ -33,7 +33,10 @@ func TaskHandler(t tasks.Task) func(http.ResponseWriter, *http.Request) {
 		case RefreshDirectHandler:
 			cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 			cd.AutoRefresh = result.Content()
-			_ = TaskDoneAutoRefreshPageTmpl.Handle(w, r, result)
+			if err := TaskDoneAutoRefreshPageTmpl.Handle(w, r, result); err != nil {
+				log.Printf("template render failure: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		case TextByteWriter:
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			if _, err := w.Write([]byte(result)); err != nil {

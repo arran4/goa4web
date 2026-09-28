@@ -103,6 +103,7 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 					r.Body = http.MaxBytesReader(w, r.Body, 1024*64)
 				}
 				if !validateRequestToken(r) {
+					log.Printf("validateRequestToken returned false for URL=%s Method=%s", r.URL.Path, r.Method)
 					if r.URL.Path == "/private/topic/new" && r.Method == http.MethodPost {
 						if StalePostInterceptor != nil {
 							if intercepted := StalePostInterceptor(w, r); intercepted {

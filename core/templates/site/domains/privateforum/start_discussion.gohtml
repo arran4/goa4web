@@ -6,7 +6,7 @@
     {{ end }}
     <h2>Start group discussion</h2>
     <p>Add people to start a shared conversation.</p>
-    <form id="private-form" method="POST" action="/private">
+    <form id="private-form" method="POST" action="/private/topic/new">
         <input type="hidden" name="task" value="{{ .CreateTask }}">
         {{ if .FormNonce }}<input type="hidden" name="resume_nonce" value="{{ .FormNonce }}">{{ end }}
         <div class="form-group">

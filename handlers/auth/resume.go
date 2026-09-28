@@ -95,10 +95,10 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	// 1. Explicitly check current authorization BEFORE consuming the token.
 	// This ensures we do not burn the token if the user lacks authorization right now.
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-		return handlers.ErrForbidden
+				return handlers.ErrForbidden
 	}
 	if !cd.HasGrant("privateforum", "topic", "create", 0) {
-		return handlers.ErrForbidden
+				return handlers.ErrForbidden
 	}
 
 	// 2. Consume atomically AFTER authorization checks.

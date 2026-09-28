@@ -4,7 +4,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -545,7 +547,7 @@ func TestResume_ValidationFailure(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, respResumeRetry.StatusCode, "Token should be burned")
 }
 
-// 5. Mismatched task / wrong user
+// 5. Mismatched task
 func TestResume_MismatchedTask(t *testing.T) {
 	httpServer, srv, cleanup := setupTestServer(t)
 	defer cleanup()
@@ -561,7 +563,8 @@ func TestResume_MismatchedTask(t *testing.T) {
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
-			doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
+
+	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
 	formAction, exists := doc.Find("form#private-form").Attr("action")
 	require.True(t, exists, "Form action attribute must exist")
 	require.Equal(t, "/private/topic/new", formAction, "Form action must be exactly /private/topic/new")
@@ -574,12 +577,8 @@ func TestResume_MismatchedTask(t *testing.T) {
 	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
 	respLogoutGet.Body.Close()
 
-	require.Equal(t, 200, respLogoutGet.StatusCode)
-
-
 	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGet)))
 	logoutCsrfField, _ := docLogout.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-			require.NotEmpty(t, logoutCsrfField)
 
 	logoutForm := url.Values{}
 	logoutForm.Add("gorilla.csrf.Token", logoutCsrfField)
@@ -587,7 +586,6 @@ func TestResume_MismatchedTask(t *testing.T) {
 	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
 	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
 	respLogoutPost, err := client.Do(reqLogoutPost)
 	require.NoError(t, err)
@@ -631,88 +629,105 @@ func TestResume_MismatchedTask(t *testing.T) {
 	require.NoError(t, err)
 	respStaleMismatch.Body.Close()
 	assert.Equal(t, http.StatusForbidden, respStaleMismatch.StatusCode, "Mismatched task should be rejected")
+}
 
-	// Wrong user (same browser, Bob authenticates in same browser)
-	client.CheckRedirect = nil
-	loginUserFunc(t, serverURL, "bob", "bob-test", client)
-	reqGetBob, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
-	respGetBob, err := client.Do(reqGetBob)
+func TestResume_SameBrowserWrongUser(t *testing.T) {
+	httpServer, srv, cleanup := setupTestServer(t)
+	defer cleanup()
+	serverURL := httpServer.URL
+	client := createClient()
+
+	loginUserFunc(t, serverURL, "alice", "alice-test", client)
+
+	countBefore, err := srv.Queries.AdminCountForumTopics(context.Background())
 	require.NoError(t, err)
-	bodyGetBob, _ := io.ReadAll(respGetBob.Body)
-	respGetBob.Body.Close()
-	docBob, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGetBob)))
-	formActionBob, existsBob := docBob.Find("form#private-form").Attr("action")
-	require.True(t, existsBob)
-	parsedActionBob, _ := url.Parse(formActionBob)
-	actionURLBob := reqGetBob.URL.ResolveReference(parsedActionBob)
 
-	// Bob steals Alice's nonce
-	formStaleWrongUser := url.Values{
+	// Alice renders the resumable form.
+	reqGet, err := http.NewRequest(http.MethodGet, serverURL+"/private/topic/new", nil)
+	require.NoError(t, err)
+	respGet, err := client.Do(reqGet)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, respGet.StatusCode)
+	bodyGet, err := io.ReadAll(respGet.Body)
+	require.NoError(t, err)
+	respGet.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
+	require.NoError(t, err)
+	formAction, exists := doc.Find("form#private-form").Attr("action")
+	require.True(t, exists)
+	require.Equal(t, "/private/topic/new", formAction)
+	nonce := extractNonce(string(bodyGet))
+	require.NotEmpty(t, nonce)
+	parsedAction, err := url.Parse(formAction)
+	require.NoError(t, err)
+	actionURL := reqGet.URL.ResolveReference(parsedAction)
+
+	// Genuine Alice logout.
+	reqLogoutGet, err := http.NewRequest(http.MethodGet, serverURL+"/usr/logout", nil)
+	require.NoError(t, err)
+	respLogoutGet, err := client.Do(reqLogoutGet)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, respLogoutGet.StatusCode)
+	logoutBody, err := io.ReadAll(respLogoutGet.Body)
+	require.NoError(t, err)
+	respLogoutGet.Body.Close()
+	logoutDoc, err := goquery.NewDocumentFromReader(strings.NewReader(string(logoutBody)))
+	require.NoError(t, err)
+	logoutCSRF, exists := logoutDoc.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
+	require.True(t, exists)
+	require.NotEmpty(t, logoutCSRF)
+
+	logoutForm := url.Values{"gorilla.csrf.Token": {logoutCSRF}}
+	reqLogoutPost, err := http.NewRequest(http.MethodPost, serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
+	require.NoError(t, err)
+	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCSRF)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
+	respLogoutPost, err := client.Do(reqLogoutPost)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
+	respLogoutPost.Body.Close()
+
+	// Alice's already-rendered stale form is captured while unauthenticated.
+	formStale := url.Values{
 		"task":               {"Private topic create"},
-		"participants":       {"alice"},
+		"participants":       {"bob"},
+		"title":              {"Account switch must not replay"},
+		"description":        {"same browser"},
 		"gorilla.csrf.Token": {"stale-csrf-token"},
-		"resume_nonce":       {nonce}, // Alice's nonce
+		"resume_nonce":       {nonce},
 	}
-
-	// Bob logs out
-	reqLogoutGetBob, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGetBob, err := client.Do(reqLogoutGetBob)
+	reqStale, err := http.NewRequest(http.MethodPost, actionURL.String(), strings.NewReader(formStale.Encode()))
 	require.NoError(t, err)
-	bodyLogoutGetBob, _ := io.ReadAll(respLogoutGetBob.Body)
-	respLogoutGetBob.Body.Close()
-	docLogoutBob, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGetBob)))
-	logoutCsrfFieldBob, existsBob := docLogoutBob.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-	require.True(t, existsBob)
-	require.NotEmpty(t, logoutCsrfFieldBob)
-
-	logoutFormBob := url.Values{}
-	logoutFormBob.Add("gorilla.csrf.Token", logoutCsrfFieldBob)
-	reqLogoutPostBob, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutFormBob.Encode()))
-	reqLogoutPostBob.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqLogoutPostBob.Header.Set("X-CSRF-Token", logoutCsrfFieldBob)
-	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPostBob, err := client.Do(reqLogoutPostBob)
+	reqStale.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	respStale, err := client.Do(reqStale)
 	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respLogoutPostBob.StatusCode, "Bob logout POST should be 303")
-	respLogoutPostBob.Body.Close()
+	require.Equal(t, http.StatusSeeOther, respStale.StatusCode)
+	resumeToken := extractResumeToken(respStale.Header.Get("Location"))
+	respStale.Body.Close()
+	require.NotEmpty(t, resumeToken)
 
-	reqStaleWrongUser, _ := http.NewRequest("POST", actionURLBob.String(), strings.NewReader(formStaleWrongUser.Encode()))
-	reqStaleWrongUser.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	tokenHash := sha256.Sum256([]byte(resumeToken))
+	tokenHashHex := hex.EncodeToString(tokenHash[:])
 
-	respStaleWrongUser, err := client.Do(reqStaleWrongUser)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respStaleWrongUser.StatusCode, "Wrong user stealing nonce should be intercepted (same browser)")
-	locationBob := respStaleWrongUser.Header.Get("Location")
-	resumeTokenBob := extractResumeToken(locationBob)
-	respStaleWrongUser.Body.Close()
-
-	// Bob logs back in
+	// Bob logs into the same browser/cookie jar: browser ID is unchanged.
 	client.CheckRedirect = nil
 	loginUserFunc(t, serverURL, "bob", "bob-test", client)
 
-	// Bob tries to GET /resume
-	reqResumeGetBob, _ := http.NewRequest("GET", serverURL+"/resume?token="+resumeTokenBob, nil)
-	respResumeGetBob, err := client.Do(reqResumeGetBob)
+	reqResume, err := http.NewRequest(http.MethodGet, serverURL+"/resume?token="+url.QueryEscape(resumeToken), nil)
 	require.NoError(t, err)
-	bodyResumeGetBob, _ := io.ReadAll(respResumeGetBob.Body)
-	respResumeGetBob.Body.Close()
+	respResume, err := client.Do(reqResume)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusForbidden, respResume.StatusCode, "different UID in same browser must not resume Alice's action")
+	respResume.Body.Close()
 
-	docResumeGetBob, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGetBob)))
-	csrfResumeBob, existsBob := docResumeGetBob.Find("input[name='gorilla.csrf.Token']").Attr("value")
+	countAfter, err := srv.Queries.AdminCountForumTopics(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, countBefore, countAfter, "identity denial must create no topic")
 
-	// GET should return 403 Forbidden because action.Uid != cd.UserID
-	// So we don't necessarily have a CSRF token, but let's test POST anyway if we can (or just assert GET is 403)
-	if respResumeGetBob.StatusCode != http.StatusForbidden {
-		t.Logf("Bob GET /resume body:\n%s", string(bodyResumeGetBob))
-	}
-	require.Equal(t, http.StatusForbidden, respResumeGetBob.StatusCode, "Bob getting Alice's resume token should be 403")
-
-	// Even if Bob POSTs, it should be 403
-	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	resumeValsBob := url.Values{"token": {resumeTokenBob}, "gorilla.csrf.Token": {csrfResumeBob}}
-	reqResumeActionBob, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(resumeValsBob.Encode()))
-	reqResumeActionBob.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	respResumeActionBob, _ := client.Do(reqResumeActionBob)
-	respResumeActionBob.Body.Close()
-	assert.Equal(t, http.StatusForbidden, respResumeActionBob.StatusCode, "Bob posting Alice's resume token should be 403")
+	var consumedAt *string
+	err = srv.DB.QueryRow("SELECT consumed_at FROM pending_actions WHERE id = ?", tokenHashHex).Scan(&consumedAt)
+	require.NoError(t, err)
+	require.Nil(t, consumedAt, "identity denial must not consume Alice's token")
 }

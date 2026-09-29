@@ -19,10 +19,12 @@ func CreateTopicPageWithPostTask(w http.ResponseWriter, r *http.Request, postTas
 	type Data struct {
 		CreateTask tasks.TaskString
 		FormData   *CreateTopicPageForm
+		BasePath   string
 	}
 	data := Data{
 		CreateTask: postTask,
 		FormData:   formData,
+		BasePath:   "/private", // Provide a reasonable default for base path
 	}
 	_ = ForumCreateTopicPageTmpl.Handle(w, r, data)
 }

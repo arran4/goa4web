@@ -407,11 +407,9 @@ func (r *Runner) applyForumSubscribe(ctx context.Context, data *ForumSubscribeDa
 		topicID = tid
 	}
 
-
 	err := actorCD.SubscribeForum(ctx, common.SubscribeForumParams{
-		ActorID:  actorID,
-		TopicID:  topicID,
-
+		ActorID: actorID,
+		TopicID: topicID,
 	})
 	if err != nil {
 		return fmt.Errorf("subscribe forum: %w", err)
@@ -437,11 +435,9 @@ func (r *Runner) applyForumUnsubscribe(ctx context.Context, data *ForumUnsubscri
 		topicID = tid
 	}
 
-
 	err := actorCD.UnsubscribeForum(ctx, common.SubscribeForumParams{
-		ActorID:  actorID,
-		TopicID:  topicID,
-
+		ActorID: actorID,
+		TopicID: topicID,
 	})
 	if err != nil {
 		return fmt.Errorf("unsubscribe forum: %w", err)

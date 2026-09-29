@@ -299,6 +299,7 @@ type Querier interface {
 	AppendCommentInSectionForCommenter(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, error)
 	CheckUserHasGrant(ctx context.Context, arg CheckUserHasGrantParams) (bool, error)
 	ClearUnreadContentPrivateLabelExceptUser(ctx context.Context, arg ClearUnreadContentPrivateLabelExceptUserParams) error
+	ConsumePendingAction(ctx context.Context, id string) (int64, error)
 	CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
@@ -324,6 +325,7 @@ type Querier interface {
 	DeleteImageCacheEntry(ctx context.Context, id string) error
 	DeleteNotificationForLister(ctx context.Context, arg DeleteNotificationForListerParams) error
 	DeletePasskey(ctx context.Context, arg DeletePasskeyParams) error
+	DeletePendingActionsForUser(ctx context.Context, uid int32) error
 	DeletePendingPassword(ctx context.Context, userID int32) error
 	DeleteSubscriptionArchetypesByRoleAndName(ctx context.Context, arg DeleteSubscriptionArchetypesByRoleAndNameParams) error
 	DeleteSubscriptionByIDForSubscriber(ctx context.Context, arg DeleteSubscriptionByIDForSubscriberParams) error
@@ -414,6 +416,7 @@ type Querier interface {
 	GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error)
 	GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)
 	GetPasswordResetByUser(ctx context.Context, arg GetPasswordResetByUserParams) (*PendingPassword, error)
+	GetPendingAction(ctx context.Context, id string) (*PendingAction, error)
 	GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error)
 	GetPendingPassword(ctx context.Context, userID int32) (*PendingPassword, error)
 	GetPendingPasswordByCode(ctx context.Context, verificationCode string) (*PendingPassword, error)
@@ -472,6 +475,7 @@ type Querier interface {
 	InsertFAQRevisionForUser(ctx context.Context, arg InsertFAQRevisionForUserParams) error
 	InsertPasskey(ctx context.Context, arg InsertPasskeyParams) error
 	InsertPassword(ctx context.Context, arg InsertPasswordParams) error
+	InsertPendingAction(ctx context.Context, arg InsertPendingActionParams) error
 	InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error
 	InsertPreferenceForLister(ctx context.Context, arg InsertPreferenceForListerParams) error
 	InsertSubscription(ctx context.Context, arg InsertSubscriptionParams) error
@@ -684,6 +688,7 @@ type Querier interface {
 	UpdateNewsPostForWriter(ctx context.Context, arg UpdateNewsPostForWriterParams) error
 	UpdateNotificationDigestPreferences(ctx context.Context, arg UpdateNotificationDigestPreferencesParams) error
 	UpdatePasskeyAfterLogin(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
+	UpdatePendingActionData(ctx context.Context, arg UpdatePendingActionDataParams) (int64, error)
 	UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error
 	UpdatePublicProfileEnabledAtForUser(ctx context.Context, arg UpdatePublicProfileEnabledAtForUserParams) error
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error

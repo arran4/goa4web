@@ -25,7 +25,12 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
-	SystemGetSessionByIDFn func(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
+	DeletePendingActionsForUserFn func(ctx context.Context, uid int32) error
+	GetPendingActionFn            func(ctx context.Context, id string) (*PendingAction, error)
+	InsertPendingActionFn         func(ctx context.Context, arg InsertPendingActionParams) error
+	UpdatePendingActionDataFn     func(ctx context.Context, arg UpdatePendingActionDataParams) (int64, error)
+	ConsumePendingActionFn        func(ctx context.Context, id string) (int64, error)
+	SystemGetSessionByIDFn        func(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
 
 	AppendCommentInSectionForCommenterFn   func(context.Context, AppendCommentInSectionForCommenterParams) (int64, error)
 	SystemHasOtherUserReadItemAtOrBeyondFn func(context.Context, SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)
@@ -3439,4 +3444,39 @@ func (s *QuerierStub) SystemGetSessionByID(ctx context.Context, sessionID string
 		return s.SystemGetSessionByIDFn(ctx, sessionID)
 	}
 	return &SystemGetSessionByIDRow{UsersIdusers: 42}, nil
+}
+
+func (q *QuerierStub) DeletePendingActionsForUser(ctx context.Context, uid int32) error {
+	if q.DeletePendingActionsForUserFn != nil {
+		return q.DeletePendingActionsForUserFn(ctx, uid)
+	}
+	return nil
+}
+
+func (q *QuerierStub) GetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
+	if q.GetPendingActionFn != nil {
+		return q.GetPendingActionFn(ctx, id)
+	}
+	return nil, errors.New("unconfigured stub")
+}
+
+func (q *QuerierStub) InsertPendingAction(ctx context.Context, arg InsertPendingActionParams) error {
+	if q.InsertPendingActionFn != nil {
+		return q.InsertPendingActionFn(ctx, arg)
+	}
+	return errors.New("unconfigured stub")
+}
+
+func (q *QuerierStub) UpdatePendingActionData(ctx context.Context, arg UpdatePendingActionDataParams) (int64, error) {
+	if q.UpdatePendingActionDataFn != nil {
+		return q.UpdatePendingActionDataFn(ctx, arg)
+	}
+	return 0, errors.New("unconfigured stub")
+}
+
+func (q *QuerierStub) ConsumePendingAction(ctx context.Context, id string) (int64, error) {
+	if q.ConsumePendingActionFn != nil {
+		return q.ConsumePendingActionFn(ctx, id)
+	}
+	return 0, errors.New("unconfigured stub")
 }

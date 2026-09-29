@@ -2,10 +2,10 @@ package notifications
 
 import (
 	"context"
-	"github.com/arran4/goa4web/core/common"
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/arran4/goa4web/core/common"
 	"log"
 	"slices"
 	"strings"

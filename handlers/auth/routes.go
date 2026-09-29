@@ -29,6 +29,9 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 	fr.HandleFunc("", handlers.WithNoCache(forgotPasswordTask.Page)).Methods("GET").MatcherFunc(gml.Not(handlers.RequiresAnAccount()))
 	fr.HandleFunc("", handlers.WithNoCache(handlers.TaskHandler(emailAssociationRequestTask))).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(emailAssociationRequestTask.Matcher())
 	fr.HandleFunc("", handlers.WithNoCache(handlers.TaskHandler(forgotPasswordTask))).Methods("POST").MatcherFunc(gml.Not(handlers.RequiresAnAccount())).MatcherFunc(forgotPasswordTask.Matcher())
+	res := r.PathPrefix("/resume").Subrouter()
+	res.HandleFunc("", handlers.WithNoCache(ResumePage)).Methods("GET").MatcherFunc(handlers.RequiresAnAccount())
+	res.HandleFunc("", handlers.WithNoCache(handlers.TaskHandler(resumeTask))).Methods("POST").MatcherFunc(handlers.RequiresAnAccount())
 	return nil
 }
 

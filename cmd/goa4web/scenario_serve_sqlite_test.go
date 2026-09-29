@@ -132,8 +132,8 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("query goose_db_version: %v", err)
 	}
-	if currentVersion != 98 {
-		t.Errorf("expected migrated schema version 98, got %d", currentVersion)
+	if currentVersion != 99 {
+		t.Errorf("expected migrated schema version 99, got %d", currentVersion)
 	}
 
 	// 3. Verify language English is seeded

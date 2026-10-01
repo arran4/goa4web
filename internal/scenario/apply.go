@@ -420,11 +420,9 @@ func (r *Runner) applyForumSubscribe(ctx context.Context, data *ForumSubscribeDa
 		topicID = tid
 	}
 
-
 	err := actorCD.SubscribeForum(ctx, common.SubscribeForumParams{
-		ActorID:  actorID,
-		TopicID:  topicID,
-
+		ActorID: actorID,
+		TopicID: topicID,
 	})
 	if err != nil {
 		return fmt.Errorf("subscribe forum: %w", err)
@@ -450,11 +448,9 @@ func (r *Runner) applyForumUnsubscribe(ctx context.Context, data *ForumUnsubscri
 		topicID = tid
 	}
 
-
 	err := actorCD.UnsubscribeForum(ctx, common.SubscribeForumParams{
-		ActorID:  actorID,
-		TopicID:  topicID,
-
+		ActorID: actorID,
+		TopicID: topicID,
 	})
 	if err != nil {
 		return fmt.Errorf("unsubscribe forum: %w", err)
@@ -503,10 +499,11 @@ func (r *Runner) applyForumReplyEdit(ctx context.Context, e *Event, data *ForumR
 
 	cd := r.coreData.ForUser(actorID)
 	err := cd.EditForumCommentAction(ctx, common.EditForumCommentParams{
-		ActorID:    actorID,
-		CommentID:  postID,
-		LanguageID: 1, // default language
-		Text:       data.Text,
+		ActorID:                actorID,
+		CommentID:              postID,
+		LanguageID:             0,
+		Text:                   data.Text,
+		SynchronousSideEffects: true,
 	})
 	if err != nil {
 		return fmt.Errorf("edit forum reply: %w", err)

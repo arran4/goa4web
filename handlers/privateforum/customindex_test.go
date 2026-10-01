@@ -178,8 +178,6 @@ func TestPrivateForumCustomIndexPrivateTopicAccess(t *testing.T) {
 	}
 }
 
-
-
 func TestPrivateForumCustomIndexPrivateTopicSubscription(t *testing.T) {
 	q := testhelpers.NewQuerierStub(
 		testhelpers.WithDefaultGrantAllowed(true),

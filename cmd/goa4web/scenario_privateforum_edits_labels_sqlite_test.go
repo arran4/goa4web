@@ -64,7 +64,7 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 		}
 
 		bobCD := appCD.ForUser(bobID)
-		bobReply, err := bobCD.Queries().GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{ ViewerID: bobID, ID: bobWelcomeReplyID, UserID: sql.NullInt32{Int32: bobID, Valid: bobID != 0} })
+		bobReply, err := bobCD.Queries().GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{ViewerID: bobID, ID: bobWelcomeReplyID, UserID: sql.NullInt32{Int32: bobID, Valid: bobID != 0}})
 		if err != nil {
 			t.Fatalf("Failed to fetch bob's reply: %v", err)
 		}
@@ -74,7 +74,38 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 		}
 	})
 
-	// 2. Verify Private Label Isolation
+	// 2. Verify Search Indexing Side Effects
+	t.Run("Verify Search Indexing Side Effects", func(t *testing.T) {
+		bobCD := appCD.ForUser(bobID)
+		bobReply, err := bobCD.Queries().GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
+			ViewerID: bobID,
+			ID:       bobWelcomeReplyID,
+			UserID:   sql.NullInt32{Int32: bobID, Valid: bobID != 0},
+		})
+		require.NoError(t, err)
+		if !bobReply.LastIndex.Valid {
+			t.Errorf("Expected bob's reply to have LastIndex set by search index worker")
+		}
+
+		wordCounts, err := appCD.Queries().AdminWordListWithCountsByPrefix(ctx, db.AdminWordListWithCountsByPrefixParams{
+			Prefix: "edited",
+			Limit:  10,
+			Offset: 0,
+		})
+		require.NoError(t, err)
+		foundWord := false
+		for _, wc := range wordCounts {
+			if wc.Word.String == "edited" && wc.Count > 0 {
+				foundWord = true
+				break
+			}
+		}
+		if !foundWord {
+			t.Errorf("Expected word 'edited' to be indexed in comments_search with count > 0, got %v", wordCounts)
+		}
+	})
+
+	// 3. Verify Private Label Isolation
 	t.Run("Verify Private Label Isolation", func(t *testing.T) {
 		aliceCD := appCD.ForUser(aliceID)
 		// Instead of thread.Labels, we use the specific label retrieval methods on CD.
@@ -106,7 +137,90 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 		}
 	})
 
-	// 3. Verify Unauthorized Mutations are Rejected
+	// 4. Verify Public Label Lifecycle and Authorization
+	t.Run("Verify Public Label Lifecycle and Authorization", func(t *testing.T) {
+		aliceCD := appCD.ForUser(aliceID)
+		bobCD := appCD.ForUser(bobID)
+
+		// 1. Alice (with privateforum topic label grant) adds public label
+		err := aliceCD.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{
+			ActorID:  aliceID,
+			ThreadID: staffWelcomeThreadID,
+			Label:    "staff-announcement",
+		})
+		require.NoError(t, err)
+
+		// 2. Both Alice and Bob can see the public label
+		alicePublic, _, err := aliceCD.ThreadPublicLabels(staffWelcomeThreadID)
+		require.NoError(t, err)
+		hasLabel := false
+		for _, lbl := range alicePublic {
+			if lbl == "staff-announcement" {
+				hasLabel = true
+				break
+			}
+		}
+		if !hasLabel {
+			t.Errorf("Expected Alice to see public label 'staff-announcement', got %v", alicePublic)
+		}
+
+		bobPublic, _, err := bobCD.ThreadPublicLabels(staffWelcomeThreadID)
+		require.NoError(t, err)
+		hasLabel = false
+		for _, lbl := range bobPublic {
+			if lbl == "staff-announcement" {
+				hasLabel = true
+				break
+			}
+		}
+		if !hasLabel {
+			t.Errorf("Expected Bob to see public label 'staff-announcement', got %v", bobPublic)
+		}
+
+		// 3. Bob lacks privateforum topic label grant, attempt to add public label should fail
+		err = bobCD.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{
+			ActorID:  bobID,
+			ThreadID: staffWelcomeThreadID,
+			Label:    "bob-illegal-public",
+		})
+		if err == nil {
+			t.Error("Expected error when Bob adds public label without grant, got nil")
+		}
+
+		// Fresh user-scoped read confirms Bob's label was not added
+		freshAliceCD := appCD.ForUser(aliceID)
+		labels, _, _ := freshAliceCD.ThreadPublicLabels(staffWelcomeThreadID)
+		for _, lbl := range labels {
+			if lbl == "bob-illegal-public" {
+				t.Errorf("Bob's unauthorized public label was present")
+			}
+		}
+
+		// 4. Alice removes the public label
+		err = aliceCD.RemoveThreadPublicLabelAction(ctx, common.ThreadLabelParams{
+			ActorID:  aliceID,
+			ThreadID: staffWelcomeThreadID,
+			Label:    "staff-announcement",
+		})
+		require.NoError(t, err)
+
+		// 5. Neither Alice nor Bob see it anymore
+		labelsAfter, _, _ := freshAliceCD.ThreadPublicLabels(staffWelcomeThreadID)
+		for _, lbl := range labelsAfter {
+			if lbl == "staff-announcement" {
+				t.Errorf("Public label 'staff-announcement' still present for Alice after removal")
+			}
+		}
+		freshBobCD := appCD.ForUser(bobID)
+		bobLabelsAfter, _, _ := freshBobCD.ThreadPublicLabels(staffWelcomeThreadID)
+		for _, lbl := range bobLabelsAfter {
+			if lbl == "staff-announcement" {
+				t.Errorf("Public label 'staff-announcement' still present for Bob after removal")
+			}
+		}
+	})
+
+	// 5. Verify Unauthorized Mutations are Rejected
 	t.Run("Verify Unauthorized Mutations Rejected", func(t *testing.T) {
 		daveCD := appCD.ForUser(daveID) // Dave is not a participant
 
@@ -142,9 +256,29 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 
 		// Verify state did not change
 		freshBobCD := appCD.ForUser(bobID)
-		bobReply, _ := freshBobCD.Queries().GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{ ViewerID: bobID, ID: bobWelcomeReplyID, UserID: sql.NullInt32{Int32: bobID, Valid: bobID != 0} })
+		bobReply, _ := freshBobCD.Queries().GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{ViewerID: bobID, ID: bobWelcomeReplyID, UserID: sql.NullInt32{Int32: bobID, Valid: bobID != 0}})
 		if strings.Contains(bobReply.Text.String, "Carol edited this") {
 			t.Error("Carol successfully mutated Bob's reply text")
+		}
+
+		// Attempt to add private label to a thread Dave cannot view
+		err = daveCD.AddThreadPrivateLabelAction(ctx, common.ThreadLabelParams{
+			ActorID:  daveID,
+			ThreadID: staffWelcomeThreadID,
+			Label:    "dave-private-hack",
+		})
+		if err == nil {
+			t.Error("Expected error when Dave private-labels a thread he cannot view, got nil")
+		}
+
+		// Attempt to add public label by Dave
+		err = daveCD.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{
+			ActorID:  daveID,
+			ThreadID: staffWelcomeThreadID,
+			Label:    "dave-public-hack",
+		})
+		if err == nil {
+			t.Error("Expected error when Dave public-labels a thread he cannot view/label, got nil")
 		}
 	})
 }

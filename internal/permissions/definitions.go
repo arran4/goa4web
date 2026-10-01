@@ -59,7 +59,6 @@ var (
 	PrivateforumTopicReply  = &GrantDefinition{"privateforum", "topic", "reply", "Allows replying to threads in a private topic.", false}
 	PrivateforumTopicEdit   = &GrantDefinition{"privateforum", "topic", "edit", "Allows editing topics.", false}
 	PrivateforumTopicLabel  = &GrantDefinition{"privateforum", "topic", "label", "Allows labeling private topics.", false}
-	PrivateforumTopicLabelAny = &GrantDefinition{"privateforum", "topic", "label-any", "Allows labeling private topics.", false}
 	PrivateforumThreadView  = &GrantDefinition{
 		consts.PermissionSectionPrivateForumThread.String(),
 		consts.PermissionItemThread.String(),
@@ -79,6 +78,20 @@ var (
 		consts.PermissionItemThread.String(),
 		"append",
 		"Allows appending to own consecutive replies in a private forum thread.",
+		true,
+	}
+	PrivateforumThreadEdit = &GrantDefinition{
+		consts.PermissionSectionPrivateForumThread.String(),
+		consts.PermissionItemThread.String(),
+		consts.PermissionActionEdit.String(),
+		"Allows editing own posts in a private forum thread.",
+		true,
+	}
+	PrivateforumThreadEditAny = &GrantDefinition{
+		consts.PermissionSectionPrivateForumThread.String(),
+		consts.PermissionItemThread.String(),
+		consts.PermissionActionEditAny.String(),
+		"Allows editing any post in a private forum thread.",
 		true,
 	}
 
@@ -145,10 +158,11 @@ var Definitions = []*GrantDefinition{
 	PrivateforumTopicReply,
 	PrivateforumTopicEdit,
 	PrivateforumTopicLabel,
-	PrivateforumTopicLabelAny,
 	PrivateforumThreadView,
 	PrivateforumThreadReply,
 	PrivateforumThreadAppend,
+	PrivateforumThreadEdit,
+	PrivateforumThreadEditAny,
 
 	// ImageBBS
 	ImagebbsBoardView,

@@ -196,6 +196,9 @@ WHERE topic.idforumtopic = sqlc.arg(topic_id)
 -- name: SystemSetForumTopicHandlerByID :exec
 UPDATE forumtopic SET handler = sqlc.arg(handler) WHERE idforumtopic = sqlc.arg(id);
 
+-- name: SystemUpdateForumTopicTitleAndDescription :exec
+UPDATE forumtopic SET title = sqlc.arg(title), description = sqlc.arg(description) WHERE idforumtopic = sqlc.arg(id);
+
 -- name: AdminListTopicsWithUserGrantsNoRoles :many
 SELECT t.idforumtopic, t.title
 FROM forumtopic t

@@ -2025,3 +2025,18 @@ func (q *Queries) SystemSetForumTopicHandlerByID(ctx context.Context, arg System
 	_, err := q.db.ExecContext(ctx, systemSetForumTopicHandlerByID, arg.Handler, arg.ID)
 	return err
 }
+
+const systemUpdateForumTopicTitleAndDescription = `-- name: SystemUpdateForumTopicTitleAndDescription :exec
+UPDATE forumtopic SET title = ?1, description = ?2 WHERE idforumtopic = ?3
+`
+
+type SystemUpdateForumTopicTitleAndDescriptionParams struct {
+	Title       sql.NullString
+	Description sql.NullString
+	ID          int64
+}
+
+func (q *Queries) SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error {
+	_, err := q.db.ExecContext(ctx, systemUpdateForumTopicTitleAndDescription, arg.Title, arg.Description, arg.ID)
+	return err
+}

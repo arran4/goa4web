@@ -948,7 +948,7 @@ func (o *ForumLabelRemoveOp) ReferencedSymbols(evt *Event) []SymbolRef {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
 	}
 	if item := strings.TrimSpace(evt.Headers.Get("ItemRef")); item != "" {
-		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: item, Field: "ItemRef"}) 
+		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: item, Field: "ItemRef"})
 	}
 	return refs
 }

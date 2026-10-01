@@ -195,6 +195,24 @@ ItemRef: staff-welcome
 Action: append
 At: 2026-08-01T09:15:20+10:00
 
+-- 110c-bob-edit-staff-welcome.event --
+Op: user.grant
+User: bob
+Section: privateforum_thread
+Item: thread
+ItemRef: staff-welcome
+Action: edit
+At: 2026-08-01T09:15:30+10:00
+
+-- 110d-alice-edit-staff-welcome.event --
+Op: user.grant
+User: alice
+Section: privateforum_thread
+Item: thread
+ItemRef: staff-welcome
+Action: edit
+At: 2026-08-01T09:15:40+10:00
+
 -- 111-bob-welcome-reply.event --
 Op: forum.reply
 Ref: bob-welcome-reply
@@ -360,32 +378,6 @@ Op: forum.subscribe
 Actor: alice
 Topic: staff-room
 At: 2026-08-01T10:10:00+10:00
-
-# Stage 4 additions
-
--- 600-alice-edits-topic.event --
-Op: private-forum.edit
-Actor: alice
-ItemRef: staff-room
-At: 2026-08-02T10:00:00Z
-Title: Staff Room - Edited Title
-Description: Confidential team discussions. Edited.
-
--- 610-bob-edits-reply.event --
-Op: forum.reply.edit
-Actor: bob
-ItemRef: bob-welcome-reply
-At: 2026-08-02T10:05:00Z
-
-Thanks Alice! Edited.
-
--- 620-alice-adds-private-label.event --
-Op: forum.label.add
-Actor: alice
-ItemRef: staff-welcome
-Label: alice-followup
-Private: true
-At: 2026-08-02T10:10:00Z
 
 # Stage 4 additions
 

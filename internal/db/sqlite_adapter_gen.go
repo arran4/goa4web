@@ -10706,6 +10706,14 @@ func (s *sqliteQuerier) SystemUpdateDeadLetter(ctx context.Context, arg SystemUp
 	})
 }
 
+func (s *sqliteQuerier) SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error {
+	return s.q.SystemUpdateForumTopicTitleAndDescription(ctx, dbsqlite.SystemUpdateForumTopicTitleAndDescriptionParams{
+		Title:       arg.Title,
+		Description: arg.Description,
+		ID:          int64(arg.ID),
+	})
+}
+
 func (s *sqliteQuerier) SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error {
 	return s.q.SystemUpdateVerificationCode(ctx, dbsqlite.SystemUpdateVerificationCodeParams{
 		LastVerificationCode:  arg.LastVerificationCode,

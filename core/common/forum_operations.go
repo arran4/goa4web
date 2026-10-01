@@ -685,7 +685,8 @@ func (cd *CoreData) EditPrivateTopic(ctx context.Context, params EditPrivateTopi
 		return ForumHandlerMismatchError{ExpectedPrivate: true}
 	}
 
-	if !actorCD.HasGrant("privateforum", "topic", "edit", 0) {
+	if !actorCD.HasGrant("privateforum", "topic", "edit", 0) &&
+		!actorCD.HasGrant("privateforum", "topic", "edit", params.TopicID) {
 		return ForumOperationForbiddenError{Action: "edit private topic"}
 	}
 
@@ -693,12 +694,10 @@ func (cd *CoreData) EditPrivateTopic(ctx context.Context, params EditPrivateTopi
 		return fmt.Errorf("title cannot be empty")
 	}
 
-	err = cd.queries.AdminUpdateForumTopic(ctx, db.AdminUpdateForumTopicParams{
-		Title:                        sql.NullString{String: params.Title, Valid: true},
-		Description:                  sql.NullString{String: params.Description, Valid: true},
-		ForumcategoryIdforumcategory: topic.ForumcategoryIdforumcategory,
-		TopicLanguageID:              topic.LanguageID,
-		Idforumtopic:                 params.TopicID,
+	err = cd.queries.SystemUpdateForumTopicTitleAndDescription(ctx, db.SystemUpdateForumTopicTitleAndDescriptionParams{
+		Title:       sql.NullString{String: params.Title, Valid: true},
+		Description: sql.NullString{String: params.Description, Valid: true},
+		ID:          params.TopicID,
 	})
 	if err != nil {
 		return fmt.Errorf("update private topic: %w", err)
@@ -709,10 +708,11 @@ func (cd *CoreData) EditPrivateTopic(ctx context.Context, params EditPrivateTopi
 
 // EditForumCommentParams describes the parameters for editing a forum comment.
 type EditForumCommentParams struct {
-	ActorID    int32
-	CommentID  int32
-	LanguageID int32
-	Text       string
+	ActorID                int32
+	CommentID              int32
+	LanguageID             int32
+	Text                   string
+	SynchronousSideEffects bool
 }
 
 // EditForumCommentAction updates an existing forum comment, enforcing authorization and emitting side effects.
@@ -751,14 +751,14 @@ func (cd *CoreData) EditForumCommentAction(ctx context.Context, params EditForum
 	if err != nil {
 		return fmt.Errorf("load topic: %w", err)
 	}
-	
+
 	// Set the correct section on the actorCD so CanEditComment works correctly.
 	if topic.Handler == "private" {
 		actorCD.SetCurrentSection(consts.PermissionSectionPrivateForum.String())
 	} else {
 		actorCD.SetCurrentSection(consts.PermissionSectionForum.String())
 	}
-	
+
 	// Ensure the current topic is set so CanEditCommentTarget works correctly.
 	actorCD.SetCurrentThreadAndTopic(thread.Idforumthread, topic.Idforumtopic)
 
@@ -766,19 +766,43 @@ func (cd *CoreData) EditForumCommentAction(ctx context.Context, params EditForum
 		return ForumOperationForbiddenError{Action: "edit forum comment"}
 	}
 
-	if err := actorCD.UpdateForumComment(params.CommentID, params.LanguageID, params.Text); err != nil {
+	langID := params.LanguageID
+	if langID == 0 && fullComment.LanguageID.Valid {
+		langID = fullComment.LanguageID.Int32
+	}
+
+	if err := actorCD.UpdateForumComment(params.CommentID, langID, params.Text); err != nil {
 		return fmt.Errorf("update forum comment: %w", err)
+	}
+
+	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", thread.ForumtopicIdforumtopic, fullComment.ForumthreadID, params.CommentID)
+	if topic.Handler == "private" {
+		basePath := "/private"
+		if cd.ForumBasePath != "" {
+			basePath = cd.ForumBasePath
+		}
+		endURL = fmt.Sprintf("%s/topic/%d/thread/%d#comment-%d", basePath, thread.ForumtopicIdforumtopic, fullComment.ForumthreadID, params.CommentID)
 	}
 
 	if err := actorCD.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
 		ThreadID:             fullComment.ForumthreadID,
 		TopicID:              thread.ForumtopicIdforumtopic,
 		CommentID:            params.CommentID,
+		TopicTitle:           topic.Title.String,
+		CommentText:          params.Text,
+		CommentURL:           cd.AbsoluteURL(endURL),
 		ClearUnreadForOthers: true,
 		MarkThreadRead:       true,
 		IncludePostCount:     true,
+		IncludeSearch:        true,
 	}); err != nil {
 		log.Printf("thread comment update side effects: %v", err)
+	}
+
+	if params.SynchronousSideEffects {
+		if err := actorCD.applyForumMutationWorkers(ctx, fullComment.ForumthreadID, thread.ForumtopicIdforumtopic, params.CommentID, params.Text, true); err != nil {
+			return fmt.Errorf("apply forum edit workers: %w", err)
+		}
 	}
 
 	return nil
@@ -809,7 +833,7 @@ func (cd *CoreData) AddThreadPublicLabelAction(ctx context.Context, params Threa
 	if err != nil {
 		return fmt.Errorf("get forum thread for actor: %w", err)
 	}
-	
+
 	topic, err := actorCD.forumTopicForActor(ctx, thread.ForumtopicIdforumtopic, params.ActorID)
 	if err != nil {
 		return fmt.Errorf("load topic: %w", err)
@@ -820,7 +844,8 @@ func (cd *CoreData) AddThreadPublicLabelAction(ctx context.Context, params Threa
 		section = consts.PermissionSectionPrivateForum
 	}
 
-	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), thread.ForumtopicIdforumtopic) {
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), thread.ForumtopicIdforumtopic) {
 		return ForumOperationForbiddenError{Action: "label thread"}
 	}
 
@@ -856,7 +881,8 @@ func (cd *CoreData) RemoveThreadPublicLabelAction(ctx context.Context, params Th
 		section = consts.PermissionSectionPrivateForum
 	}
 
-	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), thread.ForumtopicIdforumtopic) {
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), thread.ForumtopicIdforumtopic) {
 		return ForumOperationForbiddenError{Action: "label thread"}
 	}
 
@@ -934,7 +960,8 @@ func (cd *CoreData) AddTopicPublicLabelAction(ctx context.Context, params TopicL
 		section = consts.PermissionSectionPrivateForum
 	}
 
-	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
 		return ForumOperationForbiddenError{Action: "label topic"}
 	}
 
@@ -958,7 +985,8 @@ func (cd *CoreData) RemoveTopicPublicLabelAction(ctx context.Context, params Top
 		section = consts.PermissionSectionPrivateForum
 	}
 
-	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
 		return ForumOperationForbiddenError{Action: "label topic"}
 	}
 
@@ -990,7 +1018,8 @@ func (cd *CoreData) SetTopicLabelsAction(ctx context.Context, params SetTopicLab
 		section = consts.PermissionSectionPrivateForum
 	}
 
-	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
 		return ForumOperationForbiddenError{Action: "label topic"}
 	}
 

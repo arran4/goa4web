@@ -8,8 +8,10 @@ import (
 
 func TestDefinitionsIncludePrivateForumThreadPermissions(t *testing.T) {
 	want := map[consts.PermissionAction]bool{
-		consts.PermissionActionView:  false,
-		consts.PermissionActionReply: false,
+		consts.PermissionActionView:    false,
+		consts.PermissionActionReply:   false,
+		consts.PermissionActionEdit:    false,
+		consts.PermissionActionEditAny: false,
 	}
 	for _, definition := range Definitions {
 		if definition.Section != consts.PermissionSectionPrivateForumThread.String() || definition.Item != consts.PermissionItemThread.String() {

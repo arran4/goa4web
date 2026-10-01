@@ -88,6 +88,22 @@ func TestPermissionLookupAndGlobalValidity(t *testing.T) {
 			wantRequireID: true,
 		},
 		{
+			name:          "privateforum_thread thread edit requires item ID",
+			section:       consts.PermissionSectionPrivateForumThread.String(),
+			item:          consts.PermissionItemThread.String(),
+			action:        consts.PermissionActionEdit.String(),
+			wantFound:     true,
+			wantRequireID: true,
+		},
+		{
+			name:          "privateforum_thread thread edit-any requires item ID",
+			section:       consts.PermissionSectionPrivateForumThread.String(),
+			item:          consts.PermissionItemThread.String(),
+			action:        consts.PermissionActionEditAny.String(),
+			wantFound:     true,
+			wantRequireID: true,
+		},
+		{
 			name:          "forum topic append requires item ID",
 			section:       "forum",
 			item:          "topic",

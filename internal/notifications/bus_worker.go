@@ -2,15 +2,14 @@ package notifications
 
 import (
 	"context"
-	"github.com/arran4/goa4web/core/common"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log"
-	"slices"
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/eventbus"
@@ -439,11 +438,11 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 			// Find who is subscribed to the current event with "autosub_*"
 			autoInternalSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_internal")
 			if err != nil {
-				log.Printf("collect auto internal subs: %v", err)
+				return fmt.Errorf("collect auto internal subs: %w", err)
 			}
 			autoEmailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "autosub_email")
 			if err != nil {
-				log.Printf("collect auto email subs: %v", err)
+				return fmt.Errorf("collect auto email subs: %w", err)
 			}
 
 			// We need to build the new pattern for the target subscription
@@ -453,13 +452,10 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 
 				reqs, err := asp.AutoSubscribeGrants(evt)
 				if err != nil {
-					log.Printf("auto subscribe grants: %v", err)
+					return fmt.Errorf("auto subscribe grants: %w", err)
 				}
 
 				checkGrants := func(userID int32) bool {
-					if err != nil {
-						return false
-					}
 					if len(reqs) == 0 {
 						return true
 					}
@@ -484,7 +480,9 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 						continue
 					}
 					if checkGrants(id) {
-						ensureSubscription(ctx, n.Queries, id, newPattern, "internal")
+						if err := common.EnsureSubscriptionIdempotent(ctx, n.Queries, id, newPattern, "internal"); err != nil {
+							return fmt.Errorf("ensure auto internal subscription: %w", err)
+						}
 					}
 				}
 				for id := range autoEmailSubs {
@@ -492,7 +490,9 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 						continue
 					}
 					if checkGrants(id) {
-						ensureSubscription(ctx, n.Queries, id, newPattern, "email")
+						if err := common.EnsureSubscriptionIdempotent(ctx, n.Queries, id, newPattern, "email"); err != nil {
+							return fmt.Errorf("ensure auto email subscription: %w", err)
+						}
 					}
 				}
 			}
@@ -530,21 +530,6 @@ func (n *Notifier) handleAutoSubscribe(ctx context.Context, evt eventbus.TaskEve
 		}
 	}
 	return nil
-}
-
-func ensureSubscription(ctx context.Context, q db.Querier, userID int32, pattern, method string) {
-	if q == nil || userID == 0 {
-		return
-	}
-	ids, err := q.ListSubscribersForPattern(ctx, db.ListSubscribersForPatternParams{Pattern: pattern, Method: method})
-	if err == nil {
-		if slices.Contains(ids, userID) {
-			return
-		}
-	}
-	if err := q.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method}); err != nil {
-		log.Printf("insert subscription: %v", err)
-	}
 }
 
 func notifyMissingEmail(ctx context.Context, q db.Querier, userID int32) error {

@@ -3810,7 +3810,6 @@ func (s *sqliteQuerier) AdminUpdateForumTopic(ctx context.Context, arg AdminUpda
 		Title:                        arg.Title,
 		Description:                  arg.Description,
 		ForumcategoryIdforumcategory: int64(arg.ForumcategoryIdforumcategory),
-		TopicLanguageID:              sql.NullInt64{Int64: int64(arg.TopicLanguageID.Int32), Valid: arg.TopicLanguageID.Valid},
 		Idforumtopic:                 int64(arg.Idforumtopic),
 	})
 }

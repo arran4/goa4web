@@ -57,6 +57,9 @@ var (
 	PrivateforumTopicCreate = &GrantDefinition{"privateforum", "topic", "create", "Allows creating private topics.", false}
 	PrivateforumTopicPost   = &GrantDefinition{"privateforum", "topic", "post", "Allows posting new threads in a private topic.", false}
 	PrivateforumTopicReply  = &GrantDefinition{"privateforum", "topic", "reply", "Allows replying to threads in a private topic.", false}
+	PrivateforumTopicEdit   = &GrantDefinition{"privateforum", "topic", "edit", "Allows editing topics.", false}
+	PrivateforumTopicLabel  = &GrantDefinition{"privateforum", "topic", "label", "Allows labeling private topics.", false}
+	PrivateforumTopicLabelAny = &GrantDefinition{"privateforum", "topic", "label-any", "Allows labeling private topics.", false}
 	PrivateforumThreadView  = &GrantDefinition{
 		consts.PermissionSectionPrivateForumThread.String(),
 		consts.PermissionItemThread.String(),
@@ -140,6 +143,9 @@ var Definitions = []*GrantDefinition{
 	PrivateforumTopicCreate,
 	PrivateforumTopicPost,
 	PrivateforumTopicReply,
+	PrivateforumTopicEdit,
+	PrivateforumTopicLabel,
+	PrivateforumTopicLabelAny,
 	PrivateforumThreadView,
 	PrivateforumThreadReply,
 	PrivateforumThreadAppend,

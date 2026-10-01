@@ -90,7 +90,7 @@ WHERE
     AND g.item_id = ?;
 
 -- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.arg(topic_language_id) WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH user_lang AS (

@@ -72,6 +72,10 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 			"forum.thread.read":    true,
 			"forum.subscribe":      true,
 			"forum.unsubscribe":    true,
+			"private-forum.edit":   true,
+			"forum.reply.edit":     true,
+			"forum.label.add":      true,
+			"forum.label.remove":   true,
 		},
 	}
 	for _, opt := range opts {
@@ -191,6 +195,15 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 			return fmt.Errorf("invalid operation data for forum.unsubscribe")
 		}
 		return r.applyForumUnsubscribe(ctx, data)
+	case "private-forum.edit":
+		data, _ := evt.OpData.(*PrivateForumEditData)
+		return r.applyPrivateForumEdit(ctx, evt, data)
+	case "forum.reply.edit":
+		data, _ := evt.OpData.(*ForumReplyEditData)
+		return r.applyForumReplyEdit(ctx, evt, data)
+	case "forum.label.add", "forum.label.remove":
+		data, _ := evt.OpData.(*forumLabelDataWithOp)
+		return r.applyForumLabel(ctx, evt, data)
 	default:
 		return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 	}
@@ -445,6 +458,97 @@ func (r *Runner) applyForumUnsubscribe(ctx context.Context, data *ForumUnsubscri
 	})
 	if err != nil {
 		return fmt.Errorf("unsubscribe forum: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) applyPrivateForumEdit(ctx context.Context, e *Event, data *PrivateForumEditData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("actor reference %q not found", data.Actor)
+	}
+
+	topicIDRaw, ok := r.refRegistry.Resolve(RefTypeForum, data.ItemRef)
+	if !ok {
+		return fmt.Errorf("forum topic reference %q not found", data.ItemRef)
+	}
+	topicID := topicIDRaw.(int32)
+
+	cd := r.coreData.ForUser(actorID)
+	err := cd.EditPrivateTopic(ctx, common.EditPrivateTopicParams{
+		ActorID:     actorID,
+		TopicID:     topicID,
+		Title:       data.Title,
+		Description: data.Description,
+	})
+	if err != nil {
+		return fmt.Errorf("edit private topic: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) applyForumReplyEdit(ctx context.Context, e *Event, data *ForumReplyEditData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("actor reference %q not found", data.Actor)
+	}
+
+	postIDRaw, ok := r.refRegistry.Resolve(RefTypePost, data.ItemRef)
+	if !ok {
+		return fmt.Errorf("post reference %q not found", data.ItemRef)
+	}
+	postID := postIDRaw.(int32)
+
+	cd := r.coreData.ForUser(actorID)
+	err := cd.EditForumCommentAction(ctx, common.EditForumCommentParams{
+		ActorID:    actorID,
+		CommentID:  postID,
+		LanguageID: 1, // default language
+		Text:       data.Text,
+	})
+	if err != nil {
+		return fmt.Errorf("edit forum reply: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Runner) applyForumLabel(ctx context.Context, e *Event, data *forumLabelDataWithOp) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("actor reference %q not found", data.Actor)
+	}
+
+	// We currently only support thread labels based on the spec
+	threadIDRaw, ok := r.refRegistry.Resolve(RefTypeThread, data.ItemRef)
+	if !ok {
+		return fmt.Errorf("thread reference %q not found", data.ItemRef)
+	}
+	threadID := threadIDRaw.(int32)
+
+	cd := r.coreData.ForUser(actorID)
+
+	var err error
+	if data.Op() == "forum.label.add" {
+		if data.Private {
+			err = cd.AddThreadPrivateLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+		} else {
+			err = cd.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+		}
+	} else if data.Op() == "forum.label.remove" {
+		if data.Private {
+			err = cd.RemoveThreadPrivateLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+		} else {
+			err = cd.RemoveThreadPublicLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+		}
+	} else {
+		return fmt.Errorf("unknown label op: %s", data.Op())
+	}
+
+	if err != nil {
+		return fmt.Errorf("%s: %w", data.Op(), err)
 	}
 
 	return nil

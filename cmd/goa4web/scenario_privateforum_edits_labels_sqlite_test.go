@@ -51,7 +51,11 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 	// 1. Verify permitted edits changed state
 	t.Run("Verify Permitted Edits", func(t *testing.T) {
 		aliceCD := appCD.ForUser(aliceID)
-		topic, err := aliceCD.Queries().GetForumTopicById(ctx, staffRoomTopicID)
+		topic, err := aliceCD.Queries().GetForumTopicByIdForUser(ctx, db.GetForumTopicByIdForUserParams{
+			ViewerID:      aliceID,
+			Idforumtopic:  staffRoomTopicID,
+			ViewerMatchID: sql.NullInt32{Int32: aliceID, Valid: aliceID != 0},
+		})
 		if err != nil {
 			t.Fatalf("Failed to fetch staff-room topic: %v", err)
 		}
@@ -235,11 +239,19 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 			t.Error("Expected error when Dave edits private topic, got nil")
 		}
 
-		// Verify state did not change
+		// Verify state did not change via fresh Alice-scoped access-controlled read
 		freshAliceCD := appCD.ForUser(aliceID)
-		topic, _ := freshAliceCD.Queries().GetForumTopicById(ctx, staffRoomTopicID)
+		topic, err := freshAliceCD.Queries().GetForumTopicByIdForUser(ctx, db.GetForumTopicByIdForUserParams{
+			ViewerID:      aliceID,
+			Idforumtopic:  staffRoomTopicID,
+			ViewerMatchID: sql.NullInt32{Int32: aliceID, Valid: aliceID != 0},
+		})
+		require.NoError(t, err)
 		if topic.Title.String == "Dave's Hack" {
 			t.Error("Dave successfully mutated topic title")
+		}
+		if topic.Title.String != "Staff Room - Edited Title" {
+			t.Errorf("Expected topic title 'Staff Room - Edited Title', got %q", topic.Title.String)
 		}
 
 		// Attempt to edit Bob's reply as Carol (Carol is participant but not author, no edit-any grant)
@@ -271,6 +283,21 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 			t.Error("Expected error when Dave private-labels a thread he cannot view, got nil")
 		}
 
+		// Verify dave-private-hack was not written to Dave's state or Alice's state
+		freshDaveCD := appCD.ForUser(daveID)
+		davePrivate, _ := freshDaveCD.ThreadPrivateLabels(staffWelcomeThreadID, 0)
+		for _, lbl := range davePrivate {
+			if lbl == "dave-private-hack" {
+				t.Errorf("Dave's unauthorized private label was written to Dave's private state")
+			}
+		}
+		alicePrivate, _ := freshAliceCD.ThreadPrivateLabels(staffWelcomeThreadID, 0)
+		for _, lbl := range alicePrivate {
+			if lbl == "dave-private-hack" {
+				t.Errorf("Dave's unauthorized private label was written to Alice's private state")
+			}
+		}
+
 		// Attempt to add public label by Dave
 		err = daveCD.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{
 			ActorID:  daveID,
@@ -279,6 +306,24 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 		})
 		if err == nil {
 			t.Error("Expected error when Dave public-labels a thread he cannot view/label, got nil")
+		}
+
+		// Verify dave-public-hack was not written to public thread labels
+		freshAliceCDAfter := appCD.ForUser(aliceID)
+		publicLabels, _, err := freshAliceCDAfter.ThreadPublicLabels(staffWelcomeThreadID)
+		require.NoError(t, err)
+		for _, lbl := range publicLabels {
+			if lbl == "dave-public-hack" {
+				t.Errorf("Dave's unauthorized public label was written to public thread labels")
+			}
+		}
+		freshBobCDAfter := appCD.ForUser(bobID)
+		bobPublicLabels, _, err := freshBobCDAfter.ThreadPublicLabels(staffWelcomeThreadID)
+		require.NoError(t, err)
+		for _, lbl := range bobPublicLabels {
+			if lbl == "dave-public-hack" {
+				t.Errorf("Dave's unauthorized public label was visible to Bob")
+			}
 		}
 	})
 }

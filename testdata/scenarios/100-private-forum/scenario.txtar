@@ -400,7 +400,35 @@ Thanks Alice! Edited.
 -- 620-alice-adds-private-label.event --
 Op: forum.label.add
 Actor: alice
+ItemType: thread
 ItemRef: staff-welcome
 Label: alice-followup
 Private: true
 At: 2026-08-02T10:10:00Z
+
+-- 630-alice-adds-topic-label.event --
+Op: forum.label.add
+Actor: alice
+ItemType: topic
+ItemRef: staff-room
+Label: staff-priority
+Private: false
+At: 2026-08-02T10:15:00Z
+
+-- 631-alice-adds-topic-temp-label.event --
+Op: forum.label.add
+Actor: alice
+ItemType: topic
+ItemRef: staff-room
+Label: temporary-topic-label
+Private: false
+At: 2026-08-02T10:16:00Z
+
+-- 632-alice-removes-topic-temp-label.event --
+Op: forum.label.remove
+Actor: alice
+ItemType: topic
+ItemRef: staff-room
+Label: temporary-topic-label
+Private: false
+At: 2026-08-02T10:17:00Z

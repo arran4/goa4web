@@ -224,8 +224,98 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 		}
 	})
 
-	// 5. Verify Unauthorized Mutations are Rejected
-	t.Run("Verify Unauthorized Mutations Rejected", func(t *testing.T) {
+	// 5. Verify Topic Label Lifecycle and Authorization
+	t.Run("Verify Topic Label Lifecycle and Authorization", func(t *testing.T) {
+		aliceCD := appCD.ForUser(aliceID)
+		bobCD := appCD.ForUser(bobID)
+
+		// 1. Verify scenario-backed topic label was applied (event 630)
+		aliceTopicPub, _, err := aliceCD.TopicPublicLabels(staffRoomTopicID)
+		require.NoError(t, err)
+		hasStaffPriority := false
+		for _, lbl := range aliceTopicPub {
+			if lbl == "staff-priority" {
+				hasStaffPriority = true
+			}
+			if lbl == "temporary-topic-label" {
+				t.Errorf("temporary-topic-label should have been removed by event 632, but was found in Alice's view")
+			}
+		}
+		if !hasStaffPriority {
+			t.Errorf("Expected Alice to see topic public label 'staff-priority', got %v", aliceTopicPub)
+		}
+
+		// 2. Bob (fellow participant in staff-room) observes the public topic label
+		bobTopicPub, _, err := bobCD.TopicPublicLabels(staffRoomTopicID)
+		require.NoError(t, err)
+		hasStaffPriorityBob := false
+		for _, lbl := range bobTopicPub {
+			if lbl == "staff-priority" {
+				hasStaffPriorityBob = true
+			}
+			if lbl == "temporary-topic-label" {
+				t.Errorf("temporary-topic-label should have been removed by event 632, but was found in Bob's view")
+			}
+		}
+		if !hasStaffPriorityBob {
+			t.Errorf("Expected Bob to see topic public label 'staff-priority', got %v", bobTopicPub)
+		}
+
+		// 3. Bob lacks privateforum topic label grant; attempting to add a public topic label must fail
+		err = bobCD.AddTopicPublicLabelAction(ctx, common.TopicLabelParams{
+			ActorID: bobID,
+			TopicID: staffRoomTopicID,
+			Label:   "bob-illegal-topic",
+		})
+		require.Error(t, err, "Expected error when Bob adds topic label without label grant")
+
+		// Verify state did not change via fresh Alice-scoped read
+		freshAliceCD := appCD.ForUser(aliceID)
+		labels, _, err := freshAliceCD.TopicPublicLabels(staffRoomTopicID)
+		require.NoError(t, err)
+		for _, lbl := range labels {
+			if lbl == "bob-illegal-topic" {
+				t.Errorf("Bob's unauthorized public topic label was present")
+			}
+		}
+
+		// 4. Alice removes the public topic label
+		err = aliceCD.RemoveTopicPublicLabelAction(ctx, common.TopicLabelParams{
+			ActorID: aliceID,
+			TopicID: staffRoomTopicID,
+			Label:   "staff-priority",
+		})
+		require.NoError(t, err)
+
+		// 5. Neither Alice nor Bob sees staff-priority anymore
+		freshAliceCDAfter := appCD.ForUser(aliceID)
+		labelsAfter, _, err := freshAliceCDAfter.TopicPublicLabels(staffRoomTopicID)
+		require.NoError(t, err)
+		for _, lbl := range labelsAfter {
+			if lbl == "staff-priority" {
+				t.Errorf("Topic label 'staff-priority' still present for Alice after removal")
+			}
+		}
+		freshBobCDAfter := appCD.ForUser(bobID)
+		bobLabelsAfter, _, err := freshBobCDAfter.TopicPublicLabels(staffRoomTopicID)
+		require.NoError(t, err)
+		for _, lbl := range bobLabelsAfter {
+			if lbl == "staff-priority" {
+				t.Errorf("Topic label 'staff-priority' still present for Bob after removal")
+			}
+		}
+
+		// Re-add for consistency
+		err = aliceCD.AddTopicPublicLabelAction(ctx, common.TopicLabelParams{
+			ActorID: aliceID,
+			TopicID: staffRoomTopicID,
+			Label:   "staff-priority",
+		})
+		require.NoError(t, err)
+	})
+
+	// 6. Verify Unauthorized Mutations are Rejected and Invariants Enforced
+	t.Run("Verify Unauthorized Mutations Rejected and Invariants Enforced", func(t *testing.T) {
 		daveCD := appCD.ForUser(daveID) // Dave is not a participant
 
 		// Attempt to edit a topic Dave cannot access
@@ -298,7 +388,7 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 			}
 		}
 
-		// Attempt to add public label by Dave
+		// Attempt to add public thread label by Dave
 		err = daveCD.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{
 			ActorID:  daveID,
 			ThreadID: staffWelcomeThreadID,
@@ -323,6 +413,59 @@ func TestE2EPrivateForumEditsAndLabels(t *testing.T) {
 		for _, lbl := range bobPublicLabels {
 			if lbl == "dave-public-hack" {
 				t.Errorf("Dave's unauthorized public label was visible to Bob")
+			}
+		}
+
+		// Attempt to add topic labels by Dave (who cannot view staff-room)
+		err = daveCD.AddTopicPublicLabelAction(ctx, common.TopicLabelParams{
+			ActorID: daveID,
+			TopicID: staffRoomTopicID,
+			Label:   "dave-topic-public-hack",
+		})
+		require.Error(t, err, "Expected error when Dave public-labels a topic he cannot view")
+
+		err = daveCD.AddTopicPrivateLabelAction(ctx, common.TopicLabelParams{
+			ActorID: daveID,
+			TopicID: staffRoomTopicID,
+			Label:   "dave-topic-private-hack",
+		})
+		require.Error(t, err, "Expected error when Dave private-labels a topic he cannot view")
+
+		// AUTHORIZATION INVARIANT TEST:
+		// Grant Dave an unscoped privateforum topic label capability.
+		// An unscoped capability grant must NOT itself grant access to a specific private topic!
+		_, err = appCD.Queries().SystemCreateGrant(ctx, db.SystemCreateGrantParams{
+			UserID:  sql.NullInt32{Int32: daveID, Valid: true},
+			Section: "privateforum",
+			Item:    sql.NullString{String: "topic", Valid: true},
+			Action:  "label",
+		})
+		require.NoError(t, err)
+
+		// Dave now has the capability grant, but is NOT a participant in staff-room.
+		// Mutating staff-room labels must still be denied!
+		freshDaveCDWithGrant := appCD.ForUser(daveID)
+		err = freshDaveCDWithGrant.AddTopicPublicLabelAction(ctx, common.TopicLabelParams{
+			ActorID: daveID,
+			TopicID: staffRoomTopicID,
+			Label:   "dave-cap-grant-hack",
+		})
+		require.Error(t, err, "Dave with unscoped label capability must still be denied mutating inaccessible private topic")
+
+		err = freshDaveCDWithGrant.AddTopicPrivateLabelAction(ctx, common.TopicLabelParams{
+			ActorID: daveID,
+			TopicID: staffRoomTopicID,
+			Label:   "dave-cap-grant-private-hack",
+		})
+		require.Error(t, err, "Dave with unscoped label capability must still be denied private-labeling inaccessible private topic")
+
+		// Verify state remained unchanged on staff-room
+		freshAliceCDFinal := appCD.ForUser(aliceID)
+		aliceTopicFinal, _, err := freshAliceCDFinal.TopicPublicLabels(staffRoomTopicID)
+		require.NoError(t, err)
+		for _, lbl := range aliceTopicFinal {
+			if lbl == "dave-topic-public-hack" || lbl == "dave-cap-grant-hack" {
+				t.Errorf("Dave's unauthorized topic label %q was written to staff-room", lbl)
 			}
 		}
 	})

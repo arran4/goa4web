@@ -878,10 +878,11 @@ func (o *ForumReplyEditOp) Parse(evt *Event) (OperationData, error) {
 }
 
 type ForumLabelData struct {
-	Actor   string
-	ItemRef string
-	Label   string
-	Private bool
+	Actor    string
+	ItemType string
+	ItemRef  string
+	Label    string
+	Private  bool
 }
 
 func (d *ForumLabelData) Op() string { return "forum.label" }
@@ -891,7 +892,7 @@ type ForumLabelAddOp struct{}
 func (o *ForumLabelAddOp) OpName() string { return "forum.label.add" }
 
 func (o *ForumLabelAddOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "ItemRef", "Label", "Private", "At"}
+	return []string{"Op", "Ref", "Actor", "ItemType", "ItemRef", "Label", "Private", "At"}
 }
 
 func (o *ForumLabelAddOp) RequiredHeaders() []string {
@@ -907,8 +908,13 @@ func (o *ForumLabelAddOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
 	}
+	itemType := strings.ToLower(strings.TrimSpace(evt.Headers.Get("ItemType")))
+	refType := RefTypeThread
+	if itemType == "topic" {
+		refType = RefTypeForum
+	}
 	if item := strings.TrimSpace(evt.Headers.Get("ItemRef")); item != "" {
-		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: item, Field: "ItemRef"}) // We assume thread for labels for now based on context, although it can be topic too. Let's resolve as thread for staff-welcome.
+		refs = append(refs, SymbolRef{Type: refType, Symbol: item, Field: "ItemRef"})
 	}
 	return refs
 }
@@ -916,11 +922,19 @@ func (o *ForumLabelAddOp) ReferencedSymbols(evt *Event) []SymbolRef {
 func (o *ForumLabelAddOp) AssetPaths(evt *Event) []string { return nil }
 
 func (o *ForumLabelAddOp) Parse(evt *Event) (OperationData, error) {
+	itemType := strings.ToLower(strings.TrimSpace(evt.Headers.Get("ItemType")))
+	if itemType == "" {
+		itemType = "thread"
+	}
+	if itemType != "topic" && itemType != "thread" {
+		return nil, fmt.Errorf("forum.label.add: invalid ItemType %q, expected 'topic' or 'thread'", itemType)
+	}
 	d := &ForumLabelData{
-		Actor:   strings.TrimSpace(evt.Headers.Get("Actor")),
-		ItemRef: strings.TrimSpace(evt.Headers.Get("ItemRef")),
-		Label:   strings.TrimSpace(evt.Headers.Get("Label")),
-		Private: evt.Headers.Get("Private") == "true",
+		Actor:    strings.TrimSpace(evt.Headers.Get("Actor")),
+		ItemType: itemType,
+		ItemRef:  strings.TrimSpace(evt.Headers.Get("ItemRef")),
+		Label:    strings.TrimSpace(evt.Headers.Get("Label")),
+		Private:  evt.Headers.Get("Private") == "true",
 	}
 	// override the Op returned by ForumLabelData so dispatch works
 	return &forumLabelDataWithOp{ForumLabelData: *d, op: "forum.label.add"}, nil
@@ -931,7 +945,7 @@ type ForumLabelRemoveOp struct{}
 func (o *ForumLabelRemoveOp) OpName() string { return "forum.label.remove" }
 
 func (o *ForumLabelRemoveOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "ItemRef", "Label", "Private", "At"}
+	return []string{"Op", "Ref", "Actor", "ItemType", "ItemRef", "Label", "Private", "At"}
 }
 
 func (o *ForumLabelRemoveOp) RequiredHeaders() []string {
@@ -947,8 +961,13 @@ func (o *ForumLabelRemoveOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" {
 		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
 	}
+	itemType := strings.ToLower(strings.TrimSpace(evt.Headers.Get("ItemType")))
+	refType := RefTypeThread
+	if itemType == "topic" {
+		refType = RefTypeForum
+	}
 	if item := strings.TrimSpace(evt.Headers.Get("ItemRef")); item != "" {
-		refs = append(refs, SymbolRef{Type: RefTypeThread, Symbol: item, Field: "ItemRef"})
+		refs = append(refs, SymbolRef{Type: refType, Symbol: item, Field: "ItemRef"})
 	}
 	return refs
 }
@@ -956,11 +975,19 @@ func (o *ForumLabelRemoveOp) ReferencedSymbols(evt *Event) []SymbolRef {
 func (o *ForumLabelRemoveOp) AssetPaths(evt *Event) []string { return nil }
 
 func (o *ForumLabelRemoveOp) Parse(evt *Event) (OperationData, error) {
+	itemType := strings.ToLower(strings.TrimSpace(evt.Headers.Get("ItemType")))
+	if itemType == "" {
+		itemType = "thread"
+	}
+	if itemType != "topic" && itemType != "thread" {
+		return nil, fmt.Errorf("forum.label.remove: invalid ItemType %q, expected 'topic' or 'thread'", itemType)
+	}
 	d := &ForumLabelData{
-		Actor:   strings.TrimSpace(evt.Headers.Get("Actor")),
-		ItemRef: strings.TrimSpace(evt.Headers.Get("ItemRef")),
-		Label:   strings.TrimSpace(evt.Headers.Get("Label")),
-		Private: evt.Headers.Get("Private") == "true",
+		Actor:    strings.TrimSpace(evt.Headers.Get("Actor")),
+		ItemType: itemType,
+		ItemRef:  strings.TrimSpace(evt.Headers.Get("ItemRef")),
+		Label:    strings.TrimSpace(evt.Headers.Get("Label")),
+		Private:  evt.Headers.Get("Private") == "true",
 	}
 	return &forumLabelDataWithOp{ForumLabelData: *d, op: "forum.label.remove"}, nil
 }

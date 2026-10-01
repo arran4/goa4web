@@ -518,30 +518,63 @@ func (r *Runner) applyForumLabel(ctx context.Context, e *Event, data *forumLabel
 		return fmt.Errorf("actor reference %q not found", data.Actor)
 	}
 
-	// We currently only support thread labels based on the spec
-	threadIDRaw, ok := r.refRegistry.Resolve(RefTypeThread, data.ItemRef)
-	if !ok {
-		return fmt.Errorf("thread reference %q not found", data.ItemRef)
-	}
-	threadID := threadIDRaw.(int32)
-
 	cd := r.coreData.ForUser(actorID)
-
 	var err error
-	if data.Op() == "forum.label.add" {
-		if data.Private {
-			err = cd.AddThreadPrivateLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
-		} else {
-			err = cd.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+
+	itemType := data.ItemType
+	if itemType == "" {
+		itemType = "thread"
+	}
+
+	switch itemType {
+	case "topic":
+		topicIDRaw, ok := r.refRegistry.Resolve(RefTypeForum, data.ItemRef)
+		if !ok {
+			return fmt.Errorf("topic reference %q not found", data.ItemRef)
 		}
-	} else if data.Op() == "forum.label.remove" {
-		if data.Private {
-			err = cd.RemoveThreadPrivateLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+		topicID := topicIDRaw.(int32)
+
+		if data.Op() == "forum.label.add" {
+			if data.Private {
+				err = cd.AddTopicPrivateLabelAction(ctx, common.TopicLabelParams{ActorID: actorID, TopicID: topicID, Label: data.Label})
+			} else {
+				err = cd.AddTopicPublicLabelAction(ctx, common.TopicLabelParams{ActorID: actorID, TopicID: topicID, Label: data.Label})
+			}
+		} else if data.Op() == "forum.label.remove" {
+			if data.Private {
+				err = cd.RemoveTopicPrivateLabelAction(ctx, common.TopicLabelParams{ActorID: actorID, TopicID: topicID, Label: data.Label})
+			} else {
+				err = cd.RemoveTopicPublicLabelAction(ctx, common.TopicLabelParams{ActorID: actorID, TopicID: topicID, Label: data.Label})
+			}
 		} else {
-			err = cd.RemoveThreadPublicLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+			return fmt.Errorf("unknown label op: %s", data.Op())
 		}
-	} else {
-		return fmt.Errorf("unknown label op: %s", data.Op())
+
+	case "thread":
+		threadIDRaw, ok := r.refRegistry.Resolve(RefTypeThread, data.ItemRef)
+		if !ok {
+			return fmt.Errorf("thread reference %q not found", data.ItemRef)
+		}
+		threadID := threadIDRaw.(int32)
+
+		if data.Op() == "forum.label.add" {
+			if data.Private {
+				err = cd.AddThreadPrivateLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+			} else {
+				err = cd.AddThreadPublicLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+			}
+		} else if data.Op() == "forum.label.remove" {
+			if data.Private {
+				err = cd.RemoveThreadPrivateLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+			} else {
+				err = cd.RemoveThreadPublicLabelAction(ctx, common.ThreadLabelParams{ActorID: actorID, ThreadID: threadID, Label: data.Label})
+			}
+		} else {
+			return fmt.Errorf("unknown label op: %s", data.Op())
+		}
+
+	default:
+		return fmt.Errorf("unsupported ItemType: %s", itemType)
 	}
 
 	if err != nil {

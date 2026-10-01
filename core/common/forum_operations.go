@@ -938,9 +938,11 @@ func (cd *CoreData) RemoveThreadPrivateLabelAction(ctx context.Context, params T
 
 // TopicLabelParams describes the parameters to add or remove a label on a topic.
 type TopicLabelParams struct {
-	ActorID int32
-	TopicID int32
-	Label   string
+	ActorID        int32
+	TopicID        int32
+	Label          string
+	Private        bool
+	EnforceHandler bool
 }
 
 // AddTopicPublicLabelAction adds a public label to a topic, checking authorization first.
@@ -955,8 +957,13 @@ func (cd *CoreData) AddTopicPublicLabelAction(ctx context.Context, params TopicL
 		return err
 	}
 
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
 	section := consts.PermissionSectionForum
-	if topic.Handler == "private" {
+	if isPrivate {
 		section = consts.PermissionSectionPrivateForum
 	}
 
@@ -980,8 +987,13 @@ func (cd *CoreData) RemoveTopicPublicLabelAction(ctx context.Context, params Top
 		return err
 	}
 
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
 	section := consts.PermissionSectionForum
-	if topic.Handler == "private" {
+	if isPrivate {
 		section = consts.PermissionSectionPrivateForum
 	}
 
@@ -993,12 +1005,54 @@ func (cd *CoreData) RemoveTopicPublicLabelAction(ctx context.Context, params Top
 	return actorCD.RemoveTopicPublicLabel(params.TopicID, params.Label)
 }
 
+// AddTopicPrivateLabelAction adds a private label to a topic, checking authorization first.
+func (cd *CoreData) AddTopicPrivateLabelAction(ctx context.Context, params TopicLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("add topic private label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	return actorCD.AddTopicPrivateLabel(params.TopicID, params.Label)
+}
+
+// RemoveTopicPrivateLabelAction removes a private label from a topic, checking authorization first.
+func (cd *CoreData) RemoveTopicPrivateLabelAction(ctx context.Context, params TopicLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("remove topic private label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	return actorCD.RemoveTopicPrivateLabel(params.TopicID, params.Label)
+}
+
 // SetTopicLabelsParams describes the parameters to replace all labels on a topic.
 type SetTopicLabelsParams struct {
-	ActorID       int32
-	TopicID       int32
-	PublicLabels  []string
-	PrivateLabels []string
+	ActorID        int32
+	TopicID        int32
+	PublicLabels   []string
+	PrivateLabels  []string
+	Private        bool
+	EnforceHandler bool
 }
 
 // SetTopicLabelsAction replaces all public and private labels on a topic, checking authorization first.
@@ -1013,8 +1067,13 @@ func (cd *CoreData) SetTopicLabelsAction(ctx context.Context, params SetTopicLab
 		return err
 	}
 
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
 	section := consts.PermissionSectionForum
-	if topic.Handler == "private" {
+	if isPrivate {
 		section = consts.PermissionSectionPrivateForum
 	}
 

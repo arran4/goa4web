@@ -80,3 +80,53 @@ func TestCoreData_PrivateForumTopics_ShowsTopicLabels(t *testing.T) {
 		t.Errorf("Expected 'PrivateTag' label of type 'private', but not found.")
 	}
 }
+
+func TestAddTopicPublicLabelAction_AuthorizationInvariant(t *testing.T) {
+	// User 2 has unscoped privateforum topic label capability
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("privateforum", "topic", "label"))
+	cd := NewTestCoreData(t, q)
+	cd.UserID = 2
+
+	ctx := context.Background()
+	topicID := int32(42)
+
+	// User 2 is NOT a participant in topic 42 (GetForumTopicByIdForUser returns ErrNoRows)
+	q.GetForumTopicByIdForUserErr = sql.ErrNoRows
+
+	err := cd.AddTopicPublicLabelAction(ctx, TopicLabelParams{
+		ActorID: 2,
+		TopicID: topicID,
+		Label:   "unauthorized-tag",
+	})
+	if err == nil {
+		t.Fatal("expected error for user who has label capability but cannot access target topic, got nil")
+	}
+
+	// Verify state remained unchanged (no public labels added)
+	pubLabels, err := q.ListContentPublicLabels(ctx, db.ListContentPublicLabelsParams{
+		Item:   "topic",
+		ItemID: topicID,
+	})
+	if err != nil {
+		t.Fatalf("failed to query public labels: %v", err)
+	}
+	if len(pubLabels) > 0 {
+		t.Errorf("expected 0 public labels, got %d", len(pubLabels))
+	}
+
+	// Now make User 2 a participant in topic 42 (GetForumTopicByIdForUser returns topic)
+	q.GetForumTopicByIdForUserErr = nil
+	q.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+		Idforumtopic: topicID,
+		Handler:      "private",
+	}
+
+	err = cd.AddTopicPublicLabelAction(ctx, TopicLabelParams{
+		ActorID: 2,
+		TopicID: topicID,
+		Label:   "authorized-tag",
+	})
+	if err != nil {
+		t.Fatalf("expected successful label add for authorized participant with capability, got: %v", err)
+	}
+}

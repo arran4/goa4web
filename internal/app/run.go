@@ -225,6 +225,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
+		server.WithAuthenticationInterruptionHandler(privateforum.InterceptStalePrivateTopicPost),
 		server.WithConfigFile(ConfigFile),
 	)
 	share.RegisterShareRoutes(r, cfg, o.ShareSignSecret)
@@ -251,8 +252,8 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 
 	chain := []func(http.Handler) http.Handler{
 		middleware.RecoverMiddleware,
-		srv.CoreDataMiddleware(),
 		privateforum.LimitResumablePrivateTopicPost,
+		srv.CoreDataMiddleware(),
 	}
 	if cfg.CSRFEnabled {
 		chain = append(chain, csrfmw.NewCSRFMiddleware(

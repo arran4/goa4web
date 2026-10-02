@@ -21,7 +21,9 @@ import (
 
 	"github.com/arran4/goa4web/core"
 	authhandlers "github.com/arran4/goa4web/handlers/auth"
+	privateforumhandlers "github.com/arran4/goa4web/handlers/privateforum"
 	"github.com/arran4/goa4web/internal/app"
+	"github.com/arran4/goa4web/internal/eventbus"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 	"github.com/stretchr/testify/require"
 )
@@ -249,6 +251,15 @@ func TestResume_CancellationFreshCSRFAndNoStore(t *testing.T) {
 	require.NoError(t, srv.DB.QueryRow("SELECT consumed_at FROM pending_actions WHERE id = ?", hashOpaque(token)).Scan(&consumed))
 	require.False(t, consumed.Valid)
 
+	var eventMu sync.Mutex
+	events := make([]eventbus.TaskEvent, 0, 1)
+	srv.Bus.SyncPublish = func(message eventbus.Message) {
+		if evt, ok := message.(eventbus.TaskEvent); ok {
+			eventMu.Lock()
+			events = append(events, evt)
+			eventMu.Unlock()
+		}
+	}
 	cancel := postEncoded(t, client, httpServer.URL+"/resume", url.Values{
 		"token": {token}, "operation": {"cancel"}, "gorilla.csrf.Token": {csrfToken},
 	})
@@ -256,6 +267,11 @@ func TestResume_CancellationFreshCSRFAndNoStore(t *testing.T) {
 	require.Equal(t, "/private/topic/new", cancel.Header.Get("Location"))
 	requireNoStore(t, cancel)
 	cancel.Body.Close()
+	eventMu.Lock()
+	require.Len(t, events, 1)
+	_, isPrivateTopicCreate := events[0].Task.(*privateforumhandlers.PrivateTopicCreateTask)
+	eventMu.Unlock()
+	require.False(t, isPrivateTopicCreate, "cancellation must not publish as private-topic-create")
 
 	used := postEncoded(t, client, httpServer.URL+"/resume", url.Values{
 		"token": {token}, "operation": {"resume"}, "gorilla.csrf.Token": {csrfToken},

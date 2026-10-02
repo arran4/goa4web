@@ -244,11 +244,16 @@ func TestResume_AuthenticatedInvalidCSRFRejection(t *testing.T) {
 	defer respStale.Body.Close()
 
 	assert.Equal(t, http.StatusForbidden, respStale.StatusCode, "Authenticated users with invalid CSRF must be rejected with 403, not captured")
+	assert.Empty(t, respStale.Header.Get("Location"), "bad CSRF must not generate a login continuation")
+	requireNoStore(t, respStale)
 
-	// Verify no token was created
+	// Verify no resumable payload was captured.
 	var count int
 	_ = srv.DB.QueryRow("SELECT COUNT(*) FROM pending_actions").Scan(&count)
 	assert.Equal(t, 1, count, "No new pending action should be stored for authenticated user, only the one from GET")
+	var formData string
+	require.NoError(t, srv.DB.QueryRow("SELECT form_data FROM pending_actions WHERE id = ?", hashOpaque(nonce)).Scan(&formData))
+	assert.Empty(t, formData, "authenticated bad CSRF must leave the form nonce uncaptured")
 }
 
 // 2. Genuine logout -> stale capture -> same-user resume

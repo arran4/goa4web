@@ -79,6 +79,12 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	if err != nil || rows == 0 {
 		return handlers.ErrNotFound
 	}
+	originalTask := &privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}
+	cd.SetEventTask(originalTask)
+	if evt := cd.Event(); evt != nil {
+		evt.Path = targetURL.Path
+		evt.UserID = cd.UserID
+	}
 
 	newReq := r.Clone(r.Context())
 	newReq.URL = targetURL
@@ -88,7 +94,7 @@ func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	newReq.Form = storedForm
 	newReq.PostForm = storedForm
 
-	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
+	taskResult := originalTask.Action(w, newReq)
 
 	return taskResult
 }

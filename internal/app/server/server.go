@@ -35,6 +35,10 @@ import (
 	"github.com/arran4/goa4web/workers"
 )
 
+// AuthenticationInterruptionHandler may handle a request after its previously
+// authenticated session has been invalidated and before the login redirect.
+type AuthenticationInterruptionHandler func(http.ResponseWriter, *http.Request) bool
+
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
 	RouterReg       *router.Registry
@@ -55,13 +59,14 @@ type Server struct {
 	LinkSignKey  string
 	ShareSignKey string
 
-	SessionManager common.SessionManager
-	TasksReg       *tasks.Registry
-	DBReg          *dbdrivers.Registry
-	DLQReg         *dlq.Registry
-	Websocket      *websocket.Module
-	LanguageCache  *common.LanguageCache
-	HTTPClient     *http.Client
+	SessionManager  common.SessionManager
+	TasksReg        *tasks.Registry
+	DBReg           *dbdrivers.Registry
+	DLQReg          *dlq.Registry
+	Websocket       *websocket.Module
+	LanguageCache   *common.LanguageCache
+	HTTPClient      *http.Client
+	authInterrupted AuthenticationInterruptionHandler
 
 	WorkerCancel context.CancelFunc
 
@@ -194,6 +199,12 @@ func WithSessionManager(sm common.SessionManager) Option {
 	return func(s *Server) { s.SessionManager = sm }
 }
 
+// WithAuthenticationInterruptionHandler offers invalidated authenticated
+// requests to h before the normal login redirect discards their request body.
+func WithAuthenticationInterruptionHandler(h AuthenticationInterruptionHandler) Option {
+	return func(s *Server) { s.authInterrupted = h }
+}
+
 // WithDBRegistry sets the database driver registry.
 func WithDBRegistry(r *dbdrivers.Registry) Option { return func(s *Server) { s.DBReg = r } }
 
@@ -317,6 +328,7 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	}
 
 	if invalidated {
+		uid = 0
 		// Canonical safe recovery path for missing/malformed/mismatched/revoked auth.
 		if ref, ok := session.Values["SessionRef"].(string); ok && ref != "" && sm != nil {
 			if err := sm.DeleteSessionByID(r.Context(), core.HashSessionRef(ref)); err != nil {
@@ -337,9 +349,10 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 			csrfSession.Options.MaxAge = -1
 			_ = csrfSession.Save(r, w)
 		}
-
-		_ = middleware.RedirectToLogin(w, r, session)
-		return nil, nil
+		if s.authInterrupted == nil {
+			_ = middleware.RedirectToLogin(w, r, session)
+			return nil, nil
+		}
 	}
 	if queries == nil {
 		ue := common.UserError{Err: fmt.Errorf("db not initialized"), ErrorMessage: "database unavailable"}
@@ -411,7 +424,19 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 		cd.NotificationCount = int32(cd.UnreadNotificationCount())
 	}
 	ctx := context.WithValue(r.Context(), consts.KeyCoreData, cd)
-	return cd, r.WithContext(ctx)
+	rCtx := r.WithContext(ctx)
+	if invalidated {
+		if s.authInterrupted != nil {
+			if err := session.Save(rCtx, w); err != nil {
+				log.Printf("save invalidated session before interruption handler: %v", err)
+			} else if s.authInterrupted(w, rCtx) {
+				return nil, nil
+			}
+		}
+		_ = middleware.RedirectToLogin(w, rCtx, session)
+		return nil, nil
+	}
+	return cd, rCtx
 }
 
 func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {

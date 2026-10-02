@@ -85,7 +85,7 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 	var projectRoomTopicID string
 
 	// Since we know the titles, let's just get the DB IDs to be safe
-	err = sqlDB.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
+	err = sqlDB.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room' OR title = 'Staff Room - Edited Title'").Scan(&staffRoomTopicID)
 	require.NoError(t, err)
 	err = sqlDB.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Coordination'").Scan(&coordinationTopicID)
 	require.NoError(t, err)

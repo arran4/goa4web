@@ -34,12 +34,14 @@ import (
 // scenarioServeCmd starts a disposable Goa4Web HTTP server populated from a scenario.
 type scenarioServeCmd struct {
 	*scenarioCmd
-	fs      *flag.FlagSet
-	Path    string
-	Listen  string
-	fsys    fs.FS
-	dbConn  *sql.DB
-	tempDir string
+	fs       *flag.FlagSet
+	Path     string
+	Listen   string
+	fsys     fs.FS
+	dbConn   *sql.DB
+	tempDir  string
+	Registry *scenario.RefRegistry
+	CoreData *common.CoreData
 }
 
 func parseScenarioServeCmd(parent *scenarioCmd, args []string) (*scenarioServeCmd, error) {
@@ -231,6 +233,8 @@ func (c *scenarioServeCmd) Bootstrap(ctx context.Context) (*server.Server, *sql.
 		cleanupTempDir()
 		return nil, nil, nil, fmt.Errorf("apply scenario: %w", err)
 	}
+	c.Registry = res.Registry
+	c.CoreData = cd
 	c.Infof("scenario %q applied successfully (%d events)", res.ScenarioName, res.EventsApplied)
 
 	// Process-local generated session and signing secrets

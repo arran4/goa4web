@@ -2,10 +2,12 @@ package privateforum
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -26,7 +28,8 @@ func TopicEditPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("privateforum", "topic", "edit", int32(topicID)) {
+	if !cd.HasGrant("privateforum", "topic", "edit", int32(topicID)) &&
+		!cd.HasGrant("privateforum", "topic", "edit", 0) {
 		handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
 		return
 	}
@@ -65,11 +68,6 @@ func TopicEditSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cd.HasGrant("privateforum", "topic", "edit", int32(topicID)) {
-		handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
-		return
-	}
-
 	if err := r.ParseForm(); err != nil {
 		handlers.RenderErrorPage(w, r, err)
 		return
@@ -84,24 +82,23 @@ func TopicEditSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load existing topic to get category and lang
-	topic, err := cd.Queries().GetForumTopicById(r.Context(), int32(topicID))
-	if err != nil {
-		log.Printf("GetForumTopicById: %v", err)
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-
-	err = cd.Queries().AdminUpdateForumTopic(r.Context(), db.AdminUpdateForumTopicParams{
-		Title:                        sql.NullString{String: title, Valid: true},
-		Description:                  sql.NullString{String: description, Valid: true},
-		ForumcategoryIdforumcategory: topic.ForumcategoryIdforumcategory,
-		TopicLanguageID:              topic.LanguageID,
-		Idforumtopic:                 int32(topicID),
+	err = cd.EditPrivateTopic(r.Context(), common.EditPrivateTopicParams{
+		ActorID:     cd.UserID,
+		TopicID:     int32(topicID),
+		Title:       title,
+		Description: description,
 	})
-
 	if err != nil {
-		log.Printf("AdminUpdateForumTopic: %v", err)
+		if errors.Is(err, common.ForumResourceNotFoundError{Resource: "topic"}) || strings.Contains(err.Error(), "not found") {
+			handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
+			return
+		}
+		var forbidden common.ForumOperationForbiddenError
+		if errors.As(err, &forbidden) {
+			handlers.RenderErrorPage(w, r, fmt.Errorf("permission denied"))
+			return
+		}
+		log.Printf("EditPrivateTopic: %v", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}

@@ -197,7 +197,7 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 
 	// Verify topic
 	var topicID int32
-	err = dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room';").Scan(&topicID)
+	err = dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room - Edited Title';").Scan(&topicID)
 	if err != nil {
 		t.Fatalf("query Staff Room topic: %v", err)
 	}
@@ -205,11 +205,11 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetForumTopicById: %v", err)
 	}
-	if topic.Title.String != "Staff Room" {
-		t.Errorf("topic title = %q, want 'Staff Room'", topic.Title.String)
+	if topic.Title.String != "Staff Room - Edited Title" {
+		t.Errorf("topic title = %q, want 'Staff Room - Edited Title'", topic.Title.String)
 	}
-	if topic.Description.String != "Private discussion for Alice and Bob" {
-		t.Errorf("topic description = %q, want 'Private discussion for Alice and Bob'", topic.Description.String)
+	if topic.Description.String != "Confidential team discussions. Edited." {
+		t.Errorf("topic description = %q, want 'Confidential team discussions. Edited.'", topic.Description.String)
 	}
 
 	// Verify topic-specific participant grants
@@ -496,7 +496,7 @@ func TestScenarioServeCmd_PrivateForumCreateThreadHTTP(t *testing.T) {
 	}
 
 	privatePage := scenarioHTTPGet(t, client, httpServer.URL+"/private")
-	for _, visible := range []string{"Staff Room", "Coordination"} {
+	for _, visible := range []string{"Staff Room - Edited Title", "Coordination"} {
 		if !strings.Contains(privatePage, visible) {
 			t.Fatalf("authenticated private page does not contain %q", visible)
 		}
@@ -506,7 +506,7 @@ func TestScenarioServeCmd_PrivateForumCreateThreadHTTP(t *testing.T) {
 	}
 
 	var staffTopicID int32
-	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffTopicID); err != nil {
+	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room - Edited Title'").Scan(&staffTopicID); err != nil {
 		t.Fatalf("query Staff Room: %v", err)
 	}
 	createURL := fmt.Sprintf("%s/private/topic/%d/thread", httpServer.URL, staffTopicID)
@@ -722,7 +722,7 @@ func TestIssue3118_ShareLinkLoginContinuation(t *testing.T) {
 
 	// In the 100-private-forum scenario, Alice creates a topic "Staff Room". We need to find its ID.
 	var topicID int32
-	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&topicID); err != nil {
+	if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room - Edited Title'").Scan(&topicID); err != nil {
 		t.Fatalf("query Staff Room topic: %v", err)
 	}
 

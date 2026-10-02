@@ -55,21 +55,25 @@ func (AddTopicPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) an
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if !cd.IsAdmin() {
-		section := topicLabelPermissionSection(cd, r)
-		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
-		if err != nil {
-			log.Printf("UserCanLabelTopic error: %v", err)
-			return fmt.Errorf("check permission fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if !canLabel {
-			return fmt.Errorf("permission denied")
-		}
-	}
-
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.AddTopicPublicLabel(int32(topicID), label); err != nil {
+		isPrivate := topicLabelPermissionSection(cd, r) == consts.PermissionSectionPrivateForum
+		if err := cd.AddTopicPublicLabelAction(r.Context(), common.TopicLabelParams{
+			ActorID:        int32(cd.UserID),
+			TopicID:        int32(topicID),
+			Label:          label,
+			Private:        isPrivate,
+			EnforceHandler: true,
+		}); err != nil {
+			if _, ok := err.(common.ForumOperationForbiddenError); ok {
+				return fmt.Errorf("permission denied")
+			}
+			if _, ok := err.(common.ForumResourceNotFoundError); ok {
+				return fmt.Errorf("permission denied")
+			}
+			if _, ok := err.(common.ForumHandlerMismatchError); ok {
+				return fmt.Errorf("permission denied")
+			}
 			log.Printf("add topic public label: %v", err)
 			return fmt.Errorf("add topic public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -88,21 +92,25 @@ func (RemoveTopicPublicLabelTask) Action(w http.ResponseWriter, r *http.Request)
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if !cd.IsAdmin() {
-		section := topicLabelPermissionSection(cd, r)
-		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
-		if err != nil {
-			log.Printf("UserCanLabelTopic error: %v", err)
-			return fmt.Errorf("check permission fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if !canLabel {
-			return fmt.Errorf("permission denied")
-		}
-	}
-
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.RemoveTopicPublicLabel(int32(topicID), label); err != nil {
+		isPrivate := topicLabelPermissionSection(cd, r) == consts.PermissionSectionPrivateForum
+		if err := cd.RemoveTopicPublicLabelAction(r.Context(), common.TopicLabelParams{
+			ActorID:        int32(cd.UserID),
+			TopicID:        int32(topicID),
+			Label:          label,
+			Private:        isPrivate,
+			EnforceHandler: true,
+		}); err != nil {
+			if _, ok := err.(common.ForumOperationForbiddenError); ok {
+				return fmt.Errorf("permission denied")
+			}
+			if _, ok := err.(common.ForumResourceNotFoundError); ok {
+				return fmt.Errorf("permission denied")
+			}
+			if _, ok := err.(common.ForumHandlerMismatchError); ok {
+				return fmt.Errorf("permission denied")
+			}
 			log.Printf("remove topic public label: %v", err)
 			return fmt.Errorf("remove topic public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -121,28 +129,29 @@ func (SetTopicLabelsTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if !cd.IsAdmin() {
-		section := topicLabelPermissionSection(cd, r)
-		canLabel, err := UserCanLabelTopic(r.Context(), cd.Queries(), section, int32(topicID), int32(cd.UserID))
-		if err != nil {
-			log.Printf("UserCanLabelTopic error: %v", err)
-			return fmt.Errorf("check permission fail %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if !canLabel {
-			return fmt.Errorf("permission denied")
-		}
-	}
-
 	pub := r.PostForm["public"]
 	priv := r.PostForm["private"]
 
-	if err := cd.SetTopicPublicLabels(int32(topicID), pub); err != nil {
-		log.Printf("set topic public labels: %v", err)
-		return fmt.Errorf("set topic public labels %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if err := cd.SetTopicPrivateLabels(int32(topicID), priv); err != nil {
-		log.Printf("set topic private labels: %v", err)
-		return fmt.Errorf("set topic private labels %w", handlers.ErrRedirectOnSamePageHandler(err))
+	isPrivate := topicLabelPermissionSection(cd, r) == consts.PermissionSectionPrivateForum
+	if err := cd.SetTopicLabelsAction(r.Context(), common.SetTopicLabelsParams{
+		ActorID:        int32(cd.UserID),
+		TopicID:        int32(topicID),
+		PublicLabels:   pub,
+		PrivateLabels:  priv,
+		Private:        isPrivate,
+		EnforceHandler: true,
+	}); err != nil {
+		if _, ok := err.(common.ForumOperationForbiddenError); ok {
+			return fmt.Errorf("permission denied")
+		}
+		if _, ok := err.(common.ForumResourceNotFoundError); ok {
+			return fmt.Errorf("permission denied")
+		}
+		if _, ok := err.(common.ForumHandlerMismatchError); ok {
+			return fmt.Errorf("permission denied")
+		}
+		log.Printf("set topic labels: %v", err)
+		return fmt.Errorf("set topic labels %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	return topicLabelsRedirect(r)

@@ -3208,6 +3208,9 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
 	userCD.ForumBasePath = cd.ForumBasePath
+	if cd.UserID == userID {
+		userCD.AdminMode = cd.AdminMode
+	}
 	return userCD
 }
 

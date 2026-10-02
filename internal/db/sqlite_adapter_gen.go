@@ -9638,6 +9638,18 @@ func (s *sqliteQuerier) SystemAssignWritingThreadID(ctx context.Context, arg Sys
 	})
 }
 
+func (s *sqliteQuerier) SystemCapturePendingAction(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error) {
+	res, err := s.q.SystemCapturePendingAction(ctx, dbsqlite.SystemCapturePendingActionParams{
+		FormData: arg.FormData,
+		ID:       arg.ID,
+		ID_2:     arg.ID_2,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
 	res, err := s.q.SystemCheckGrant(ctx, dbsqlite.SystemCheckGrantParams{
 		Section:  arg.Section,
@@ -9677,6 +9689,14 @@ func (s *sqliteQuerier) SystemClearContentPrivateLabel(ctx context.Context, arg 
 		ItemID: int64(arg.ItemID),
 		Label:  arg.Label,
 	})
+}
+
+func (s *sqliteQuerier) SystemConsumePendingAction(ctx context.Context, id string) (int64, error) {
+	res, err := s.q.SystemConsumePendingAction(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
@@ -9796,6 +9816,14 @@ func (s *sqliteQuerier) SystemDeleteCommentsSearch(ctx context.Context) error {
 
 func (s *sqliteQuerier) SystemDeleteDeadLetter(ctx context.Context, id int32) error {
 	return s.q.SystemDeleteDeadLetter(ctx, int64(id))
+}
+
+func (s *sqliteQuerier) SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error) {
+	res, err := s.q.SystemDeleteExpiredPendingActions(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemDeleteImagePostSearch(ctx context.Context) error {
@@ -10022,6 +10050,28 @@ func (s *sqliteQuerier) SystemGetNewsPostByID(ctx context.Context, idsitenews in
 	return int32(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
+	res, err := s.q.SystemGetPendingAction(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.PendingAction) *PendingAction {
+		if v == nil {
+			return nil
+		}
+		return &PendingAction{
+			ID:         v.ID,
+			Uid:        int32(v.Uid),
+			BrowserID:  v.BrowserID,
+			ActionType: v.ActionType,
+			FormData:   toString(v.FormData),
+			CreatedAt:  v.CreatedAt,
+			ExpiresAt:  v.ExpiresAt,
+			ConsumedAt: toNullTime(v.ConsumedAt),
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {
 	res, err := s.q.SystemGetSearchWordByWordLowercased(ctx, lcase)
 	if err != nil {
@@ -10181,6 +10231,18 @@ func (s *sqliteQuerier) SystemInsertLoginAttempt(ctx context.Context, arg System
 	return s.q.SystemInsertLoginAttempt(ctx, dbsqlite.SystemInsertLoginAttemptParams{
 		Username:  arg.Username,
 		IpAddress: arg.IpAddress,
+	})
+}
+
+func (s *sqliteQuerier) SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error {
+	return s.q.SystemInsertPendingAction(ctx, dbsqlite.SystemInsertPendingActionParams{
+		ID:         arg.ID,
+		Uid:        int64(arg.Uid),
+		BrowserID:  arg.BrowserID,
+		ActionType: arg.ActionType,
+		FormData:   arg.FormData,
+		CreatedAt:  arg.CreatedAt,
+		ExpiresAt:  arg.ExpiresAt,
 	})
 }
 

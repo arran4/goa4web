@@ -561,10 +561,12 @@ type Querier interface {
 	SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
 	SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
 	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
+	SystemCapturePendingAction(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error)
 	SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int64, error)
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int64, error)
 	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
 	SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
+	SystemConsumePendingAction(ctx context.Context, id string) (int64, error)
 	SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error
 	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
@@ -591,6 +593,7 @@ type Querier interface {
 	// This query deletes all data from the "comments_search" table.
 	SystemDeleteCommentsSearch(ctx context.Context) error
 	SystemDeleteDeadLetter(ctx context.Context, id int64) error
+	SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error)
 	SystemDeleteImagePostSearch(ctx context.Context) error
 	// This query deletes all data from the "linker_search" table.
 	SystemDeleteLinkerSearch(ctx context.Context) error
@@ -616,6 +619,7 @@ type Querier interface {
 	SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
 	SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
 	SystemGetNewsPostByID(ctx context.Context, idsitenews int64) (int64, error)
+	SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lower string) (*Searchwordlist, error)
 	SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
@@ -629,6 +633,7 @@ type Querier interface {
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
+	SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error
 	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
 	SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error)
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)

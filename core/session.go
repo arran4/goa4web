@@ -2,6 +2,9 @@ package core
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -115,4 +118,47 @@ func safeLoginContinuation(r *http.Request, raw string) string {
 		return ""
 	}
 	return raw
+}
+
+const (
+	// browserIDCookieName identifies the durable browser-binding cookie.
+	browserIDCookieName = "a4w_bid"
+	// browserIDCookieMaxAge keeps the binding across logout and session rotation.
+	browserIDCookieMaxAge = 365 * 24 * 60 * 60
+)
+
+// GetBrowserID returns the hash of a persistent browser-binding cookie,
+// creating the cookie with the configured session policy when necessary.
+func GetBrowserID(w http.ResponseWriter, r *http.Request) string {
+	cookie, err := r.Cookie(browserIDCookieName)
+	var rawID string
+	if err == nil && cookie != nil && len(cookie.Value) == 64 {
+		if decoded, decodeErr := hex.DecodeString(cookie.Value); decodeErr == nil && len(decoded) == 32 {
+			rawID = cookie.Value
+		}
+	}
+	if rawID == "" {
+		cookieOptions := &sessions.Options{Path: "/", HttpOnly: true}
+		if Store != nil && Store.Options != nil {
+			cookieOptions = Store.Options
+		}
+
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			log.Printf("rand read for browser ID: %v", err)
+			return ""
+		}
+		rawID = hex.EncodeToString(b)
+		http.SetCookie(w, &http.Cookie{
+			Name:     browserIDCookieName,
+			Value:    rawID,
+			Path:     cookieOptions.Path,
+			MaxAge:   browserIDCookieMaxAge,
+			HttpOnly: cookieOptions.HttpOnly,
+			Secure:   cookieOptions.Secure,
+			SameSite: cookieOptions.SameSite,
+		})
+	}
+	hash := sha256.Sum256([]byte(rawID))
+	return hex.EncodeToString(hash[:])
 }

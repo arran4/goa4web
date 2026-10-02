@@ -14,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/privateforum"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/app/server"
 
@@ -224,6 +225,7 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 		server.WithWebsocket(wsMod),
 		server.WithTasksRegistry(o.TasksReg),
 		server.WithSessionManager(sm),
+		server.WithAuthenticationInterruptionHandler(privateforum.InterceptStalePrivateTopicPost),
 		server.WithConfigFile(ConfigFile),
 	)
 	share.RegisterShareRoutes(r, cfg, o.ShareSignSecret)
@@ -247,16 +249,26 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	r.NotFoundHandler = srv.NotFoundHandler
 
 	taskEventMW := middleware.NewTaskEventMiddleware(o.Bus)
-	handler := middleware.NewMiddlewareChain(
+
+	chain := []func(http.Handler) http.Handler{
 		middleware.RecoverMiddleware,
+		privateforum.LimitResumablePrivateTopicPost,
 		srv.CoreDataMiddleware(),
+	}
+	if cfg.CSRFEnabled {
+		chain = append(chain, csrfmw.NewCSRFMiddleware(
+			o.SessionSecret,
+			cfg.BaseURL,
+			goa4web.Version,
+			privateforum.InterceptStalePrivateTopicPost,
+		))
+	}
+	chain = append(chain,
 		middleware.RequestLoggerMiddleware,
 		taskEventMW.Middleware,
 		middleware.SecurityHeadersMiddleware,
-	).Wrap(r)
-	if cfg.CSRFEnabled {
-		handler = csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.BaseURL, goa4web.Version)(handler)
-	}
+	)
+	handler := middleware.NewMiddlewareChain(chain...).Wrap(r)
 
 	srv.Router = handler
 

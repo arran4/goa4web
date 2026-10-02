@@ -668,6 +668,7 @@ type Querier interface {
 	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error
 	SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error
 	SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error
+	SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error
 	SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error
 	TouchImageCacheEntry(ctx context.Context, arg TouchImageCacheEntryParams) error
 	UpdateAPIKeyLastUsed(ctx context.Context, id int32) error

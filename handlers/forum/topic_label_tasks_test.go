@@ -51,6 +51,10 @@ func TestTopicLabelTasksPermissionSectionSelection(t *testing.T) {
 			var checkedSection string
 
 			q := testhelpers.NewQuerierStub()
+			q.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: topicID,
+				Handler:      "forum",
+			}
 			q.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
 				checkedSection = p.Section
 				if p.Section == "forum" && p.Item.String == "topic" && p.Action == "label" && p.ItemID.Int32 == topicID {
@@ -82,6 +86,10 @@ func TestTopicLabelTasksPermissionSectionSelection(t *testing.T) {
 			var checkedSection string
 
 			q := testhelpers.NewQuerierStub()
+			q.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: topicID,
+				Handler:      "private",
+			}
 			q.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
 				checkedSection = p.Section
 				// User only has privateforum / topic / label grant, NOT forum / topic / label
@@ -113,6 +121,10 @@ func TestTopicLabelTasksPermissionSectionSelection(t *testing.T) {
 			topicID := int32(5)
 
 			q := testhelpers.NewQuerierStub()
+			q.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: topicID,
+				Handler:      "forum",
+			}
 			q.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
 				if p.Section == "privateforum" && p.Item.String == "topic" && p.Action == "label" && p.ItemID.Int32 == topicID {
 					return 1, nil
@@ -133,6 +145,32 @@ func TestTopicLabelTasksPermissionSectionSelection(t *testing.T) {
 			err, isErr := res.(error)
 			if !isErr || err == nil || !strings.Contains(err.Error(), "permission denied") {
 				t.Fatalf("expected permission denied error, got %v", res)
+			}
+		})
+
+		t.Run(tt.name+" Route and topic handler mismatch is denied", func(t *testing.T) {
+			topicID := int32(5)
+
+			q := testhelpers.NewQuerierStub()
+			// Topic is private, but route is public /forum
+			q.GetForumTopicByIdForUserReturns = &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: topicID,
+				Handler:      "private",
+			}
+
+			cd := common.NewCoreData(context.Background(), q, config.NewRuntimeConfig())
+			cd.UserID = 42
+			cd.ForumBasePath = "/forum"
+
+			req := httptest.NewRequest(http.MethodPost, "/forum/topic/5/labels", strings.NewReader(tt.form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req = mux.SetURLVars(req, map[string]string{"topic": "5"})
+			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+
+			res := tt.task.Action(httptest.NewRecorder(), req)
+			err, isErr := res.(error)
+			if !isErr || err == nil || !strings.Contains(err.Error(), "permission denied") {
+				t.Fatalf("expected permission denied error on route mismatch, got %v", res)
 			}
 		})
 	}

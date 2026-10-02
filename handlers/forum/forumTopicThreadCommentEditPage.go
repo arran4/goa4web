@@ -2,7 +2,6 @@ package forum
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -36,22 +35,15 @@ func TopicThreadCommentEditActionPage(w http.ResponseWriter, r *http.Request) {
 	}
 	commentId, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
-	err = cd.UpdateForumComment(int32(commentId), int32(languageId), text)
+	err = cd.EditForumCommentAction(r.Context(), common.EditForumCommentParams{
+		ActorID:    cd.UserID,
+		CommentID:  int32(commentId),
+		LanguageID: int32(languageId),
+		Text:       text,
+	})
 	if err != nil {
 		handlers.RedirectSeeOtherWithError(w, r, "", err)
 		return
-	}
-
-	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             threadRow.Idforumthread,
-		TopicID:              topicRow.Idforumtopic,
-		CommentID:            int32(commentId),
-		CommentURL:           cd.AbsoluteURL(fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId)),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
-	}); err != nil {
-		log.Printf("thread comment edit side effects: %v", err)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", topicRow.Idforumtopic, threadRow.Idforumthread, commentId), http.StatusSeeOther)

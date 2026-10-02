@@ -3810,7 +3810,6 @@ func (s *sqliteQuerier) AdminUpdateForumTopic(ctx context.Context, arg AdminUpda
 		Title:                        arg.Title,
 		Description:                  arg.Description,
 		ForumcategoryIdforumcategory: int64(arg.ForumcategoryIdforumcategory),
-		TopicLanguageID:              sql.NullInt64{Int64: int64(arg.TopicLanguageID.Int32), Valid: arg.TopicLanguageID.Valid},
 		Idforumtopic:                 int64(arg.Idforumtopic),
 	})
 }
@@ -10750,6 +10749,14 @@ func (s *sqliteQuerier) SystemUpdateDeadLetter(ctx context.Context, arg SystemUp
 	return s.q.SystemUpdateDeadLetter(ctx, dbsqlite.SystemUpdateDeadLetterParams{
 		Message: arg.Message,
 		ID:      int64(arg.ID),
+	})
+}
+
+func (s *sqliteQuerier) SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error {
+	return s.q.SystemUpdateForumTopicTitleAndDescription(ctx, dbsqlite.SystemUpdateForumTopicTitleAndDescriptionParams{
+		Title:       arg.Title,
+		Description: arg.Description,
+		ID:          int64(arg.ID),
 	})
 }
 

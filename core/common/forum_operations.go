@@ -659,3 +659,436 @@ func (cd *CoreData) UnsubscribeForum(ctx context.Context, params SubscribeForumP
 	}
 	return nil
 }
+
+// EditPrivateTopicParams describes the parameters for editing a private topic.
+type EditPrivateTopicParams struct {
+	ActorID     int32
+	TopicID     int32
+	Title       string
+	Description string
+}
+
+// EditPrivateTopic updates a private topic title and description, verifying authorization and emitting necessary side effects.
+func (cd *CoreData) EditPrivateTopic(ctx context.Context, params EditPrivateTopicParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("edit private topic: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err // forumTopicForActor returns ForumResourceNotFoundError if not visible
+	}
+
+	if topic.Handler != "private" {
+		return ForumHandlerMismatchError{ExpectedPrivate: true}
+	}
+
+	if !actorCD.HasGrant("privateforum", "topic", "edit", 0) &&
+		!actorCD.HasGrant("privateforum", "topic", "edit", params.TopicID) {
+		return ForumOperationForbiddenError{Action: "edit private topic"}
+	}
+
+	if params.Title == "" {
+		return fmt.Errorf("title cannot be empty")
+	}
+
+	err = cd.queries.SystemUpdateForumTopicTitleAndDescription(ctx, db.SystemUpdateForumTopicTitleAndDescriptionParams{
+		Title:       sql.NullString{String: params.Title, Valid: true},
+		Description: sql.NullString{String: params.Description, Valid: true},
+		ID:          params.TopicID,
+	})
+	if err != nil {
+		return fmt.Errorf("update private topic: %w", err)
+	}
+
+	return nil
+}
+
+// EditForumCommentParams describes the parameters for editing a forum comment.
+type EditForumCommentParams struct {
+	ActorID                int32
+	CommentID              int32
+	LanguageID             int32
+	Text                   string
+	SynchronousSideEffects bool
+}
+
+// EditForumCommentAction updates an existing forum comment, enforcing authorization and emitting side effects.
+// The name "EditForumCommentAction" distinguishes it from the existing lower-level "EditForumComment" method in CoreData.
+func (cd *CoreData) EditForumCommentAction(ctx context.Context, params EditForumCommentParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("edit forum comment: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+
+	// We load the comment and thread to ensure we have permission and needed IDs for side effects.
+	fullComment, err := actorCD.queries.GetCommentByIdForUser(ctx, db.GetCommentByIdForUserParams{
+		ViewerID: params.ActorID,
+		ID:       params.CommentID,
+		UserID:   sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ForumResourceNotFoundError{Resource: "comment"}
+		}
+		return fmt.Errorf("get comment for actor: %w", err)
+	}
+
+	// We need to resolve the topic to ensure we can edit in the right section.
+	thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+		ViewerID:      params.ActorID,
+		ThreadID:      fullComment.ForumthreadID,
+		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err != nil {
+		return fmt.Errorf("load thread: %w", err)
+	}
+
+	topic, err := actorCD.forumTopicForActor(ctx, thread.ForumtopicIdforumtopic, params.ActorID)
+	if err != nil {
+		return fmt.Errorf("load topic: %w", err)
+	}
+
+	// Set the correct section on the actorCD so CanEditComment works correctly.
+	if topic.Handler == "private" {
+		actorCD.SetCurrentSection(consts.PermissionSectionPrivateForum.String())
+	} else {
+		actorCD.SetCurrentSection(consts.PermissionSectionForum.String())
+	}
+
+	// Ensure the current topic is set so CanEditCommentTarget works correctly.
+	actorCD.SetCurrentThreadAndTopic(thread.Idforumthread, topic.Idforumtopic)
+
+	if !actorCD.CanEditCommentTarget(fullComment.Idcomments, fullComment.ForumthreadID, fullComment.UsersIdusers) {
+		return ForumOperationForbiddenError{Action: "edit forum comment"}
+	}
+
+	langID := params.LanguageID
+	if langID == 0 && fullComment.LanguageID.Valid {
+		langID = fullComment.LanguageID.Int32
+	}
+
+	if err := actorCD.UpdateForumComment(params.CommentID, langID, params.Text); err != nil {
+		return fmt.Errorf("update forum comment: %w", err)
+	}
+
+	endURL := fmt.Sprintf("/forum/topic/%d/thread/%d#comment-%d", thread.ForumtopicIdforumtopic, fullComment.ForumthreadID, params.CommentID)
+	if topic.Handler == "private" {
+		basePath := "/private"
+		if cd.ForumBasePath != "" {
+			basePath = cd.ForumBasePath
+		}
+		endURL = fmt.Sprintf("%s/topic/%d/thread/%d#comment-%d", basePath, thread.ForumtopicIdforumtopic, fullComment.ForumthreadID, params.CommentID)
+	}
+
+	if err := actorCD.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
+		ThreadID:             fullComment.ForumthreadID,
+		TopicID:              thread.ForumtopicIdforumtopic,
+		CommentID:            params.CommentID,
+		TopicTitle:           topic.Title.String,
+		CommentText:          params.Text,
+		CommentURL:           cd.AbsoluteURL(endURL),
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		log.Printf("thread comment update side effects: %v", err)
+	}
+
+	if params.SynchronousSideEffects {
+		if err := actorCD.applyForumMutationWorkers(ctx, fullComment.ForumthreadID, thread.ForumtopicIdforumtopic, params.CommentID, params.Text, true); err != nil {
+			return fmt.Errorf("apply forum edit workers: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// ThreadLabelParams describes the parameters to add or remove a label on a thread.
+type ThreadLabelParams struct {
+	ActorID  int32
+	ThreadID int32
+	Label    string
+}
+
+// AddThreadPublicLabelAction adds a public label to a thread, checking authorization first.
+func (cd *CoreData) AddThreadPublicLabelAction(ctx context.Context, params ThreadLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("add thread public label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+		ViewerID:      params.ActorID,
+		ThreadID:      params.ThreadID,
+		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err == sql.ErrNoRows || thread == nil {
+		return ForumResourceNotFoundError{Resource: "thread"}
+	}
+	if err != nil {
+		return fmt.Errorf("get forum thread for actor: %w", err)
+	}
+
+	topic, err := actorCD.forumTopicForActor(ctx, thread.ForumtopicIdforumtopic, params.ActorID)
+	if err != nil {
+		return fmt.Errorf("load topic: %w", err)
+	}
+
+	section := consts.PermissionSectionForum
+	if topic.Handler == "private" {
+		section = consts.PermissionSectionPrivateForum
+	}
+
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), thread.ForumtopicIdforumtopic) {
+		return ForumOperationForbiddenError{Action: "label thread"}
+	}
+
+	return actorCD.AddThreadPublicLabel(params.ThreadID, params.Label)
+}
+
+// RemoveThreadPublicLabelAction removes a public label from a thread, checking authorization first.
+func (cd *CoreData) RemoveThreadPublicLabelAction(ctx context.Context, params ThreadLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("remove thread public label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+		ViewerID:      params.ActorID,
+		ThreadID:      params.ThreadID,
+		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err == sql.ErrNoRows || thread == nil {
+		return ForumResourceNotFoundError{Resource: "thread"}
+	}
+	if err != nil {
+		return fmt.Errorf("get forum thread for actor: %w", err)
+	}
+
+	topic, err := actorCD.forumTopicForActor(ctx, thread.ForumtopicIdforumtopic, params.ActorID)
+	if err != nil {
+		return fmt.Errorf("load topic: %w", err)
+	}
+
+	section := consts.PermissionSectionForum
+	if topic.Handler == "private" {
+		section = consts.PermissionSectionPrivateForum
+	}
+
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), thread.ForumtopicIdforumtopic) {
+		return ForumOperationForbiddenError{Action: "label thread"}
+	}
+
+	return actorCD.RemoveThreadPublicLabel(params.ThreadID, params.Label)
+}
+
+// AddThreadPrivateLabelAction adds a private label to a thread, checking authorization first.
+func (cd *CoreData) AddThreadPrivateLabelAction(ctx context.Context, params ThreadLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("add thread private label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+		ViewerID:      params.ActorID,
+		ThreadID:      params.ThreadID,
+		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err == sql.ErrNoRows || thread == nil {
+		return ForumResourceNotFoundError{Resource: "thread"}
+	}
+	if err != nil {
+		return fmt.Errorf("get forum thread for actor: %w", err)
+	}
+
+	// As long as they can fetch the thread (which we just did successfully using their context), they can privately label it.
+	// Note: We avoid an additional query here since GetThreadLastPosterAndPermsForUser already enforces visibility!
+
+	return actorCD.AddThreadPrivateLabel(params.ThreadID, params.Label)
+}
+
+// RemoveThreadPrivateLabelAction removes a private label from a thread, checking authorization first.
+func (cd *CoreData) RemoveThreadPrivateLabelAction(ctx context.Context, params ThreadLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("remove thread private label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	thread, err := actorCD.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+		ViewerID:      params.ActorID,
+		ThreadID:      params.ThreadID,
+		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+	})
+	if err == sql.ErrNoRows || thread == nil {
+		return ForumResourceNotFoundError{Resource: "thread"}
+	}
+	if err != nil {
+		return fmt.Errorf("get forum thread for actor: %w", err)
+	}
+
+	return actorCD.RemoveThreadPrivateLabel(params.ThreadID, params.Label)
+}
+
+// TopicLabelParams describes the parameters to add or remove a label on a topic.
+type TopicLabelParams struct {
+	ActorID        int32
+	TopicID        int32
+	Label          string
+	Private        bool
+	EnforceHandler bool
+}
+
+// AddTopicPublicLabelAction adds a public label to a topic, checking authorization first.
+func (cd *CoreData) AddTopicPublicLabelAction(ctx context.Context, params TopicLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("add topic public label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	section := consts.PermissionSectionForum
+	if isPrivate {
+		section = consts.PermissionSectionPrivateForum
+	}
+
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
+		return ForumOperationForbiddenError{Action: "label topic"}
+	}
+
+	return actorCD.AddTopicPublicLabel(params.TopicID, params.Label)
+}
+
+// RemoveTopicPublicLabelAction removes a public label from a topic, checking authorization first.
+func (cd *CoreData) RemoveTopicPublicLabelAction(ctx context.Context, params TopicLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("remove topic public label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	section := consts.PermissionSectionForum
+	if isPrivate {
+		section = consts.PermissionSectionPrivateForum
+	}
+
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
+		return ForumOperationForbiddenError{Action: "label topic"}
+	}
+
+	return actorCD.RemoveTopicPublicLabel(params.TopicID, params.Label)
+}
+
+// AddTopicPrivateLabelAction adds a private label to a topic, checking authorization first.
+func (cd *CoreData) AddTopicPrivateLabelAction(ctx context.Context, params TopicLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("add topic private label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	return actorCD.AddTopicPrivateLabel(params.TopicID, params.Label)
+}
+
+// RemoveTopicPrivateLabelAction removes a private label from a topic, checking authorization first.
+func (cd *CoreData) RemoveTopicPrivateLabelAction(ctx context.Context, params TopicLabelParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("remove topic private label: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	return actorCD.RemoveTopicPrivateLabel(params.TopicID, params.Label)
+}
+
+// SetTopicLabelsParams describes the parameters to replace all labels on a topic.
+type SetTopicLabelsParams struct {
+	ActorID        int32
+	TopicID        int32
+	PublicLabels   []string
+	PrivateLabels  []string
+	Private        bool
+	EnforceHandler bool
+}
+
+// SetTopicLabelsAction replaces all public and private labels on a topic, checking authorization first.
+func (cd *CoreData) SetTopicLabelsAction(ctx context.Context, params SetTopicLabelsParams) error {
+	if cd == nil || cd.queries == nil {
+		return fmt.Errorf("set topic labels: no queries")
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	topic, err := actorCD.forumTopicForActor(ctx, params.TopicID, params.ActorID)
+	if err != nil {
+		return err
+	}
+
+	isPrivate := topic.Handler == "private"
+	if params.EnforceHandler && params.Private != isPrivate {
+		return ForumHandlerMismatchError{ExpectedPrivate: params.Private}
+	}
+
+	section := consts.PermissionSectionForum
+	if isPrivate {
+		section = consts.PermissionSectionPrivateForum
+	}
+
+	if !actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), 0) &&
+		!actorCD.HasGrant(section.String(), consts.PermissionItemTopic.String(), consts.PermissionActionLabel.String(), params.TopicID) {
+		return ForumOperationForbiddenError{Action: "label topic"}
+	}
+
+	if err := actorCD.SetTopicPublicLabels(params.TopicID, params.PublicLabels); err != nil {
+		return fmt.Errorf("set topic public labels: %w", err)
+	}
+
+	if err := actorCD.SetTopicPrivateLabels(params.TopicID, params.PrivateLabels); err != nil {
+		return fmt.Errorf("set topic private labels: %w", err)
+	}
+
+	return nil
+}

@@ -83,7 +83,11 @@ func (AddPublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.AddThreadPublicLabel(int32(threadID), label); err != nil {
+		if err := cd.AddThreadPublicLabelAction(r.Context(), common.ThreadLabelParams{
+			ActorID:  cd.UserID,
+			ThreadID: int32(threadID),
+			Label:    label,
+		}); err != nil {
 			log.Printf("add public label: %v", err)
 			return fmt.Errorf("add public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -100,7 +104,11 @@ func (RemovePublicLabelTask) Action(w http.ResponseWriter, r *http.Request) any 
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.RemoveThreadPublicLabel(int32(threadID), label); err != nil {
+		if err := cd.RemoveThreadPublicLabelAction(r.Context(), common.ThreadLabelParams{
+			ActorID:  cd.UserID,
+			ThreadID: int32(threadID),
+			Label:    label,
+		}); err != nil {
 			log.Printf("remove public label: %v", err)
 			return fmt.Errorf("remove public label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -117,7 +125,11 @@ func (AddPrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.AddThreadPrivateLabel(int32(threadID), label); err != nil {
+		if err := cd.AddThreadPrivateLabelAction(r.Context(), common.ThreadLabelParams{
+			ActorID:  cd.UserID,
+			ThreadID: int32(threadID),
+			Label:    label,
+		}); err != nil {
 			log.Printf("add private label: %v", err)
 			return fmt.Errorf("add private label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
@@ -134,7 +146,11 @@ func (RemovePrivateLabelTask) Action(w http.ResponseWriter, r *http.Request) any
 	}
 	label := r.PostFormValue("label")
 	if label != "" {
-		if err := cd.RemoveThreadPrivateLabel(int32(threadID), label); err != nil {
+		if err := cd.RemoveThreadPrivateLabelAction(r.Context(), common.ThreadLabelParams{
+			ActorID:  cd.UserID,
+			ThreadID: int32(threadID),
+			Label:    label,
+		}); err != nil {
 			log.Printf("remove private label: %v", err)
 			return fmt.Errorf("remove private label %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}

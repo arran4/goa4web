@@ -90,7 +90,7 @@ WHERE
     AND g.item_id = ?;
 
 -- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = sqlc.arg(topic_language_id) WHERE idforumtopic = ?;
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = ? WHERE idforumtopic = ?;
 
 -- name: GetAllForumTopicsByCategoryIdForUserWithLastPosterName :many
 WITH user_lang AS (
@@ -195,6 +195,9 @@ WHERE topic.idforumtopic = sqlc.arg(topic_id)
 
 -- name: SystemSetForumTopicHandlerByID :exec
 UPDATE forumtopic SET handler = sqlc.arg(handler) WHERE idforumtopic = sqlc.arg(id);
+
+-- name: SystemUpdateForumTopicTitleAndDescription :exec
+UPDATE forumtopic SET title = sqlc.arg(title), description = sqlc.arg(description) WHERE idforumtopic = sqlc.arg(id);
 
 -- name: AdminListTopicsWithUserGrantsNoRoles :many
 SELECT t.idforumtopic, t.title

@@ -466,14 +466,14 @@ func (q *Queries) AdminUpdateForumCategory(ctx context.Context, arg AdminUpdateF
 }
 
 const adminUpdateForumTopic = `-- name: AdminUpdateForumTopic :exec
-UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = ?5 WHERE idforumtopic = ?
+UPDATE forumtopic SET title = ?, description = ?, forumcategory_idforumcategory = ?, language_id = ? WHERE idforumtopic = ?
 `
 
 type AdminUpdateForumTopicParams struct {
 	Title                        sql.NullString
 	Description                  sql.NullString
 	ForumcategoryIdforumcategory int64
-	TopicLanguageID              sql.NullInt64
+	LanguageID                   sql.NullInt64
 	Idforumtopic                 int64
 }
 
@@ -482,7 +482,7 @@ func (q *Queries) AdminUpdateForumTopic(ctx context.Context, arg AdminUpdateForu
 		arg.Title,
 		arg.Description,
 		arg.ForumcategoryIdforumcategory,
-		arg.TopicLanguageID,
+		arg.LanguageID,
 		arg.Idforumtopic,
 	)
 	return err
@@ -2023,5 +2023,20 @@ type SystemSetForumTopicHandlerByIDParams struct {
 
 func (q *Queries) SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error {
 	_, err := q.db.ExecContext(ctx, systemSetForumTopicHandlerByID, arg.Handler, arg.ID)
+	return err
+}
+
+const systemUpdateForumTopicTitleAndDescription = `-- name: SystemUpdateForumTopicTitleAndDescription :exec
+UPDATE forumtopic SET title = ?1, description = ?2 WHERE idforumtopic = ?3
+`
+
+type SystemUpdateForumTopicTitleAndDescriptionParams struct {
+	Title       sql.NullString
+	Description sql.NullString
+	ID          int64
+}
+
+func (q *Queries) SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error {
+	_, err := q.db.ExecContext(ctx, systemUpdateForumTopicTitleAndDescription, arg.Title, arg.Description, arg.ID)
 	return err
 }

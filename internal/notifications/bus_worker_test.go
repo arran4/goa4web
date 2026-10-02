@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/stats"
@@ -746,6 +747,150 @@ func TestHandleAutoSubscribeErrors(t *testing.T) {
 		}
 		if !strings.Contains(err.Error(), "lookup failed") {
 			t.Fatalf("expected error containing 'lookup failed', got: %v", err)
+		}
+	})
+}
+
+type mockAutoSubTask struct {
+	tasks.TaskString
+	reqs []GrantRequirement
+}
+
+func (mockAutoSubTask) Action(http.ResponseWriter, *http.Request) any { return nil }
+func (mockAutoSubTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
+	return "forum", "/topic/1/thread/1", nil
+}
+func (m mockAutoSubTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]GrantRequirement, error) {
+	return m.reqs, nil
+}
+func (mockAutoSubTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
+	return nil
+}
+func (mockAutoSubTask) SubscribedEmailTemplate(evt eventbus.TaskEvent) (*EmailTemplates, bool) {
+	return nil, false
+}
+
+func TestNotifySubscribersAutoSubscribe(t *testing.T) {
+	ctx := context.Background()
+	task := mockAutoSubTask{
+		TaskString: "forum",
+		reqs: []GrantRequirement{
+			{Section: consts.PermissionSectionForum, Action: consts.PermissionActionView},
+		},
+	}
+	evt := eventbus.TaskEvent{
+		Path:   "/topic/1",
+		Task:   task,
+		UserID: 1, // Actor
+	}
+
+	t.Run("SuccessGrantsAndIdempotency", func(t *testing.T) {
+		var inserts []db.InsertSubscriptionParams
+		qs := &mockQuerierNotifier{
+			QuerierStub: db.QuerierStub{
+				ListSubscribersForPatternsFn: func(ctx context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
+					switch arg.Method {
+					case "autosub_internal":
+						return []int32{1, 2, 3}, nil // 1 is actor (skip), 2 and 3 eligible
+					case "autosub_email":
+						return []int32{3, 4}, nil // 3 eligible, 4 lacks grant
+					default:
+						return nil, nil
+					}
+				},
+				SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+					if arg.ViewerID == 4 {
+						return 0, sql.ErrNoRows // User 4 lacks grant
+					}
+					return 1, nil
+				},
+			},
+			ListSubscribersForPatternFn: func(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error) {
+				// User 2 already subscribed to target internal pattern
+				if arg.Method == "internal" {
+					return []int32{2}, nil
+				}
+				return nil, sql.ErrNoRows
+			},
+			InsertSubscriptionFn: func(ctx context.Context, arg db.InsertSubscriptionParams) error {
+				inserts = append(inserts, arg)
+				return nil
+			},
+		}
+
+		n := &Notifier{Config: &config.RuntimeConfig{NotificationsEnabled: true}, Queries: qs}
+		if err := n.notifySubscribers(ctx, evt, task); err != nil {
+			t.Fatalf("notifySubscribers failed: %v", err)
+		}
+
+		// Expected inserts: user 3 internal, user 3 email
+		if len(inserts) != 2 {
+			t.Fatalf("expected 2 inserts, got %d: %+v", len(inserts), inserts)
+		}
+		if inserts[0].UsersIdusers != 3 || inserts[0].Method != "internal" {
+			t.Errorf("expected insert[0] for user 3 internal, got %+v", inserts[0])
+		}
+		if inserts[1].UsersIdusers != 3 || inserts[1].Method != "email" {
+			t.Errorf("expected insert[1] for user 3 email, got %+v", inserts[1])
+		}
+	})
+
+	t.Run("LookupFailure", func(t *testing.T) {
+		qs := &mockQuerierNotifier{
+			QuerierStub: db.QuerierStub{
+				ListSubscribersForPatternsFn: func(ctx context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
+					if arg.Method == "autosub_internal" {
+						return []int32{2}, nil
+					}
+					return nil, nil
+				},
+				SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+					return 1, nil
+				},
+			},
+			ListSubscribersForPatternFn: func(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error) {
+				return nil, errors.New("db disconnect during lookup")
+			},
+		}
+
+		n := &Notifier{Config: &config.RuntimeConfig{NotificationsEnabled: true}, Queries: qs}
+		err := n.notifySubscribers(ctx, evt, task)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "db disconnect during lookup") {
+			t.Fatalf("expected error containing 'db disconnect during lookup', got %v", err)
+		}
+	})
+
+	t.Run("InsertionFailure", func(t *testing.T) {
+		qs := &mockQuerierNotifier{
+			QuerierStub: db.QuerierStub{
+				ListSubscribersForPatternsFn: func(ctx context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
+					if arg.Method == "autosub_internal" {
+						return []int32{2}, nil
+					}
+					return nil, nil
+				},
+				SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+					return 1, nil
+				},
+			},
+			ListSubscribersForPatternFn: func(ctx context.Context, arg db.ListSubscribersForPatternParams) ([]int32, error) {
+				return nil, sql.ErrNoRows
+			},
+			InsertSubscriptionFn: func(ctx context.Context, arg db.InsertSubscriptionParams) error {
+				return errors.New("unique constraint violation during insert")
+			},
+		}
+
+		n := &Notifier{Config: &config.RuntimeConfig{NotificationsEnabled: true}, Queries: qs}
+		err := n.notifySubscribers(ctx, evt, task)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "unique constraint violation during insert") {
+			t.Fatalf("expected error containing 'unique constraint violation during insert', got %v", err)
 		}
 	})
 }

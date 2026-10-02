@@ -55,7 +55,7 @@ func getTopicAndThreadIDForUser(ctx context.Context, t *testing.T, dbConn db.DBT
 		t.Fatalf("query user: %v", err)
 	}
 	var topicID, threadID int32
-	err = dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room';").Scan(&topicID)
+	err = dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room' OR title = 'Staff Room - Edited Title';").Scan(&topicID)
 	if err != nil {
 		t.Fatalf("query Staff Room topic: %v", err)
 	}

@@ -41,12 +41,23 @@ func TestCreatePrivateForumCommentUsesPrivateThreadGrant(t *testing.T) {
 }
 
 func TestPrivateForumThreadActions(t *testing.T) {
-	for _, action := range []string{consts.PermissionActionView.String(), consts.PermissionActionReply.String()} {
+	for _, action := range []string{
+		consts.PermissionActionView.String(),
+		consts.PermissionActionReply.String(),
+		consts.PermissionActionEdit.String(),
+		consts.PermissionActionEditAny.String(),
+		"append",
+	} {
 		if !isPrivateForumThreadAction(action) {
 			t.Errorf("isPrivateForumThreadAction(%q) = false, want true", action)
 		}
 	}
-	for _, action := range []string{consts.PermissionActionSee.String(), consts.PermissionActionPost.String(), consts.PermissionActionEdit.String()} {
+	for _, action := range []string{
+		consts.PermissionActionSee.String(),
+		consts.PermissionActionPost.String(),
+		consts.PermissionActionCreate.String(),
+		consts.PermissionActionLabel.String(),
+	} {
 		if isPrivateForumThreadAction(action) {
 			t.Errorf("isPrivateForumThreadAction(%q) = true, want false", action)
 		}

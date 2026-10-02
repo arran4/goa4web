@@ -2,7 +2,6 @@ package forum
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -42,19 +41,13 @@ func (topicThreadCommentEditActionTask) Action(w http.ResponseWriter, r *http.Re
 	}
 	commentID, _ := strconv.Atoi(mux.Vars(r)["comment"])
 
-	if err = cd.UpdateForumComment(int32(commentID), int32(languageID), text); err != nil {
-		return fmt.Errorf("update comment %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
-	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             threadRow.Idforumthread,
-		TopicID:              topicRow.Idforumtopic,
-		CommentID:            int32(commentID),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
+	if err = cd.EditForumCommentAction(r.Context(), common.EditForumCommentParams{
+		ActorID:    cd.UserID,
+		CommentID:  int32(commentID),
+		LanguageID: int32(languageID),
+		Text:       text,
 	}); err != nil {
-		log.Printf("thread comment update side effects: %v", err)
+		return fmt.Errorf("update comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	base := cd.ForumBasePath

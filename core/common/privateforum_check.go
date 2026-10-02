@@ -67,8 +67,12 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 			continue
 		}
 
-		// Rule 2: Must specify an item_id
+		// Rule 2: Resource grants must specify an item_id.
+		// Unscoped capability grants (e.g. edit, label on privateforum topic) are permitted without an item_id.
 		if !grant.ItemID.Valid {
+			if isPrivateForumCapabilityGrant(grant.Section, grant.Item.String, grant.Action) {
+				continue
+			}
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -84,29 +88,12 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 			continue
 		}
 
-		// Rule 2.5: Clean up legacy 'edit' topic grants
-		if grant.Section == consts.PermissionSectionPrivateForum.String() && grant.Item.String == consts.PermissionItemTopic.String() && grant.Action == consts.PermissionActionEdit.String() {
-			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
-				ID:        fmt.Sprintf("delete-%d", grant.ID),
-				GrantID:   grant.ID,
-				Section:   grant.Section,
-				Item:      grant.Item.String,
-				Action:    grant.Action,
-				ItemID:    grant.ItemID.Int32,
-				RoleName:  roleName,
-				UserID:    userID,
-				Username:  username,
-				Issue:     "Legacy 'edit' action on topic no longer supported",
-				FixAction: "Delete grant",
-			})
-			continue
-		}
-
 		// Track user access
 		if grant.UserID.Valid {
 			if grant.Section == consts.PermissionSectionPrivateForum.String() &&
 				grant.Item.String == consts.PermissionItemTopic.String() &&
-				grant.Action == consts.PermissionActionView.String() {
+				grant.Action == consts.PermissionActionView.String() &&
+				grant.ItemID.Valid {
 				if userTopicViewAccess[userID] == nil {
 					userTopicViewAccess[userID] = make(map[int32]bool)
 				}
@@ -126,7 +113,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		threadToTopic[thread.Idforumthread] = thread.Idforumtopic
 	}
 
-	// Rule 3: Fine-grained thread view and reply grants require parent topic view.
+	// Rule 3: Item-specific private-thread permissions require parent topic view access.
 	for _, grant := range grants {
 		if !grant.UserID.Valid || grant.Section != consts.PermissionSectionPrivateForumThread.String() || grant.Item.String != consts.PermissionItemThread.String() || !grant.ItemID.Valid {
 			continue
@@ -136,9 +123,7 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 		threadID := grant.ItemID.Int32
 		topicID, exists := threadToTopic[threadID]
 
-		missingParentView := isPrivateForumThreadAction(grant.Action) && !userTopicViewAccess[userID][topicID]
-		// Also clean up any legacy 'edit' thread grants even if they have topic view.
-		if exists && (missingParentView || grant.Action == consts.PermissionActionEdit.String()) {
+		if !exists {
 			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
 				ID:        fmt.Sprintf("delete-%d", grant.ID),
 				GrantID:   grant.ID,
@@ -149,7 +134,40 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 				RoleName:  "",
 				UserID:    userID,
 				Username:  grant.Username.String,
-				Issue:     fmt.Sprintf("User has %s access to thread %d without view access to parent topic %d", grant.Action, threadID, topicID),
+				Issue:     fmt.Sprintf("Thread %d does not exist (orphaned grant)", threadID),
+				FixAction: "Delete grant",
+			})
+			continue
+		}
+
+		if isPrivateForumThreadAction(grant.Action) {
+			if !userTopicViewAccess[userID][topicID] {
+				inconsistencies = append(inconsistencies, PrivateForumInconsistency{
+					ID:        fmt.Sprintf("delete-%d", grant.ID),
+					GrantID:   grant.ID,
+					Section:   grant.Section,
+					Item:      grant.Item.String,
+					Action:    grant.Action,
+					ItemID:    threadID,
+					RoleName:  "",
+					UserID:    userID,
+					Username:  grant.Username.String,
+					Issue:     fmt.Sprintf("User has %s access to thread %d without view access to parent topic %d", grant.Action, threadID, topicID),
+					FixAction: "Delete grant",
+				})
+			}
+		} else {
+			inconsistencies = append(inconsistencies, PrivateForumInconsistency{
+				ID:        fmt.Sprintf("delete-%d", grant.ID),
+				GrantID:   grant.ID,
+				Section:   grant.Section,
+				Item:      grant.Item.String,
+				Action:    grant.Action,
+				ItemID:    threadID,
+				RoleName:  "",
+				UserID:    userID,
+				Username:  grant.Username.String,
+				Issue:     fmt.Sprintf("Unsupported action %s on private forum thread %d", grant.Action, threadID),
 				FixAction: "Delete grant",
 			})
 		}
@@ -180,6 +198,31 @@ func (cd *CoreData) CheckAndFixPrivateForumInconsistencies(ctx context.Context, 
 	return inconsistencies, nil
 }
 
+func isPrivateForumCapabilityGrant(section, item, action string) bool {
+	if section == consts.PermissionSectionPrivateForum.String() && item == consts.PermissionItemTopic.String() {
+		switch action {
+		case consts.PermissionActionEdit.String(),
+			consts.PermissionActionLabel.String(),
+			consts.PermissionActionCreate.String(),
+			consts.PermissionActionSee.String(),
+			consts.PermissionActionView.String(),
+			consts.PermissionActionPost.String(),
+			consts.PermissionActionReply.String():
+			return true
+		}
+	}
+	return false
+}
+
 func isPrivateForumThreadAction(action string) bool {
-	return action == consts.PermissionActionView.String() || action == consts.PermissionActionReply.String()
+	switch action {
+	case consts.PermissionActionView.String(),
+		consts.PermissionActionReply.String(),
+		consts.PermissionActionEdit.String(),
+		consts.PermissionActionEditAny.String(),
+		"append":
+		return true
+	default:
+		return false
+	}
 }

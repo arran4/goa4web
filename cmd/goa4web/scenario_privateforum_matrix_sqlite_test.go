@@ -46,8 +46,8 @@ func TestScenarioServePrivateForumPermissionMatrix(t *testing.T) {
 	threadIDs := loadScenarioThreadIDs(t, ctx, dbConn)
 
 	wantTopics := map[string][]string{
-		"alice": {"Coordination", "Staff Room"},
-		"bob":   {"Staff Room"},
+		"alice": {"Coordination", "Staff Room - Edited Title"},
+		"bob":   {"Staff Room - Edited Title"},
 		"carol": {"Coordination", "Project Room"},
 		"dave":  {"Project Room"},
 	}
@@ -73,14 +73,14 @@ func TestScenarioServePrivateForumPermissionMatrix(t *testing.T) {
 	}
 
 	members := map[string]map[string]bool{
-		"alice": {"Staff Room": true, "Coordination": true},
-		"bob":   {"Staff Room": true},
+		"alice": {"Staff Room - Edited Title": true, "Coordination": true},
+		"bob":   {"Staff Room - Edited Title": true},
 		"carol": {"Project Room": true, "Coordination": true},
 		"dave":  {"Project Room": true},
 	}
 	threadTopics := map[string]string{
-		"staff-welcome":     "Staff Room",
-		"staff-check-in":    "Staff Room",
+		"staff-welcome":     "Staff Room - Edited Title",
+		"staff-check-in":    "Staff Room - Edited Title",
 		"project-kickoff":   "Project Room",
 		"coordination-plan": "Coordination",
 	}
@@ -212,7 +212,7 @@ func loadScenarioUserIDs(t *testing.T, ctx context.Context, dbConn *sql.DB) map[
 func loadScenarioTopicIDs(t *testing.T, ctx context.Context, dbConn *sql.DB) map[string]int32 {
 	t.Helper()
 	ids := make(map[string]int32)
-	for _, title := range []string{"Staff Room", "Project Room", "Coordination"} {
+	for _, title := range []string{"Staff Room - Edited Title", "Project Room", "Coordination"} {
 		var id int32
 		if err := dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = ?", title).Scan(&id); err != nil {
 			t.Fatalf("query topic %q: %v", title, err)

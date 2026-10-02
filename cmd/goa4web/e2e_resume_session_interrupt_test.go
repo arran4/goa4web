@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +18,32 @@ import (
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/stretchr/testify/require"
 )
+
+func recordTaskEvents(bus *eventbus.Bus) <-chan eventbus.TaskEvent {
+	events := make(chan eventbus.TaskEvent, 4)
+	bus.SyncPublish = func(message eventbus.Message) {
+		if evt, ok := message.(eventbus.TaskEvent); ok {
+			events <- evt
+		}
+	}
+	return events
+}
+
+func requireSingleTaskEvent(t *testing.T, events <-chan eventbus.TaskEvent) eventbus.TaskEvent {
+	t.Helper()
+	var evt eventbus.TaskEvent
+	select {
+	case evt = <-events:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for task event")
+	}
+	select {
+	case extra := <-events:
+		t.Fatalf("unexpected additional task event: %#v", extra)
+	case <-time.After(50 * time.Millisecond):
+	}
+	return evt
+}
 
 func authenticatedSession(t *testing.T, serverURL string, client *http.Client) (*url.URL, *http.Request, map[any]any) {
 	t.Helper()
@@ -165,25 +190,14 @@ func TestResume_SuccessRestoresOriginalTaskEvent(t *testing.T) {
 	csrfToken, interstitial := resumeCSRF(t, httpServer.URL, token, client)
 	interstitial.Body.Close()
 
-	var eventMu sync.Mutex
-	events := make([]eventbus.TaskEvent, 0, 1)
-	srv.Bus.SyncPublish = func(message eventbus.Message) {
-		if evt, ok := message.(eventbus.TaskEvent); ok {
-			eventMu.Lock()
-			events = append(events, evt)
-			eventMu.Unlock()
-		}
-	}
+	events := recordTaskEvents(srv.Bus)
 	resume := postEncoded(t, client, httpServer.URL+"/resume", url.Values{
 		"token": {token}, "operation": {"resume"}, "gorilla.csrf.Token": {csrfToken},
 	})
 	require.Equal(t, http.StatusOK, resume.StatusCode)
 	resume.Body.Close()
 
-	eventMu.Lock()
-	require.Len(t, events, 1)
-	evt := events[0]
-	eventMu.Unlock()
+	evt := requireSingleTaskEvent(t, events)
 	task, ok := evt.Task.(*privateforumhandlers.PrivateTopicCreateTask)
 	require.True(t, ok, "event task type = %T", evt.Task)
 	require.Equal(t, string(privateforumhandlers.TaskPrivateTopicCreate), task.Name())

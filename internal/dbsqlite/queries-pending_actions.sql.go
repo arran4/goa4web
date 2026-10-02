@@ -10,38 +10,61 @@ import (
 	"time"
 )
 
-const consumePendingAction = `-- name: ConsumePendingAction :execrows
+const systemCapturePendingAction = `-- name: SystemCapturePendingAction :execrows
 UPDATE pending_actions
-SET consumed_at = CURRENT_TIMESTAMP
+SET form_data = ?, id = ?
 WHERE id = ? AND consumed_at IS NULL AND expires_at > CURRENT_TIMESTAMP
 `
 
-func (q *Queries) ConsumePendingAction(ctx context.Context, id string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, consumePendingAction, id)
+type SystemCapturePendingActionParams struct {
+	FormData interface{}
+	ID       string
+	ID_2     string
+}
+
+func (q *Queries) SystemCapturePendingAction(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCapturePendingAction, arg.FormData, arg.ID, arg.ID_2)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected()
 }
 
-const deletePendingActionsForUser = `-- name: DeletePendingActionsForUser :exec
-DELETE FROM pending_actions
-WHERE uid = ?
+const systemConsumePendingAction = `-- name: SystemConsumePendingAction :execrows
+UPDATE pending_actions
+SET consumed_at = CURRENT_TIMESTAMP
+WHERE id = ? AND consumed_at IS NULL AND expires_at > CURRENT_TIMESTAMP
 `
 
-func (q *Queries) DeletePendingActionsForUser(ctx context.Context, uid int64) error {
-	_, err := q.db.ExecContext(ctx, deletePendingActionsForUser, uid)
-	return err
+func (q *Queries) SystemConsumePendingAction(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemConsumePendingAction, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
-const getPendingAction = `-- name: GetPendingAction :one
+const systemDeleteExpiredPendingActions = `-- name: SystemDeleteExpiredPendingActions :execrows
+DELETE FROM pending_actions
+WHERE expires_at <= CURRENT_TIMESTAMP
+`
+
+func (q *Queries) SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemDeleteExpiredPendingActions)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const systemGetPendingAction = `-- name: SystemGetPendingAction :one
 SELECT id, uid, browser_id, action_type, form_data, created_at, expires_at, consumed_at
 FROM pending_actions
 WHERE id = ? AND expires_at > CURRENT_TIMESTAMP AND consumed_at IS NULL
 `
 
-func (q *Queries) GetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
-	row := q.db.QueryRowContext(ctx, getPendingAction, id)
+func (q *Queries) SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
+	row := q.db.QueryRowContext(ctx, systemGetPendingAction, id)
 	var i PendingAction
 	err := row.Scan(
 		&i.ID,
@@ -56,12 +79,12 @@ func (q *Queries) GetPendingAction(ctx context.Context, id string) (*PendingActi
 	return &i, err
 }
 
-const insertPendingAction = `-- name: InsertPendingAction :exec
+const systemInsertPendingAction = `-- name: SystemInsertPendingAction :exec
 INSERT INTO pending_actions (id, uid, browser_id, action_type, form_data, created_at, expires_at)
 VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
-type InsertPendingActionParams struct {
+type SystemInsertPendingActionParams struct {
 	ID         string
 	Uid        int64
 	BrowserID  string
@@ -71,8 +94,8 @@ type InsertPendingActionParams struct {
 	ExpiresAt  time.Time
 }
 
-func (q *Queries) InsertPendingAction(ctx context.Context, arg InsertPendingActionParams) error {
-	_, err := q.db.ExecContext(ctx, insertPendingAction,
+func (q *Queries) SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error {
+	_, err := q.db.ExecContext(ctx, systemInsertPendingAction,
 		arg.ID,
 		arg.Uid,
 		arg.BrowserID,
@@ -82,24 +105,4 @@ func (q *Queries) InsertPendingAction(ctx context.Context, arg InsertPendingActi
 		arg.ExpiresAt,
 	)
 	return err
-}
-
-const updatePendingActionData = `-- name: UpdatePendingActionData :execrows
-UPDATE pending_actions
-SET form_data = ?, id = ?
-WHERE id = ? AND consumed_at IS NULL AND expires_at > CURRENT_TIMESTAMP
-`
-
-type UpdatePendingActionDataParams struct {
-	FormData interface{}
-	ID       string
-	ID_2     string
-}
-
-func (q *Queries) UpdatePendingActionData(ctx context.Context, arg UpdatePendingActionDataParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, updatePendingActionData, arg.FormData, arg.ID, arg.ID_2)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
 }

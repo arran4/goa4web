@@ -14,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
+	"github.com/arran4/goa4web/handlers/privateforum"
 	"github.com/arran4/goa4web/handlers/share"
 	"github.com/arran4/goa4web/internal/app/server"
 
@@ -251,9 +252,15 @@ func NewServer(ctx context.Context, cfg *config.RuntimeConfig, ah *adminhandlers
 	chain := []func(http.Handler) http.Handler{
 		middleware.RecoverMiddleware,
 		srv.CoreDataMiddleware(),
+		privateforum.LimitResumablePrivateTopicPost,
 	}
 	if cfg.CSRFEnabled {
-		chain = append(chain, csrfmw.NewCSRFMiddleware(o.SessionSecret, cfg.BaseURL, goa4web.Version))
+		chain = append(chain, csrfmw.NewCSRFMiddleware(
+			o.SessionSecret,
+			cfg.BaseURL,
+			goa4web.Version,
+			privateforum.InterceptStalePrivateTopicPost,
+		))
 	}
 	chain = append(chain,
 		middleware.RequestLoggerMiddleware,

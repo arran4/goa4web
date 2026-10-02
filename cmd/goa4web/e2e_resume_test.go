@@ -15,11 +15,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/testdata/scenarios"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/html"
 )
 
 func loginUserFunc(t *testing.T, serverURL, username, password string, client *http.Client) {
@@ -32,10 +32,7 @@ func loginUserFunc(t *testing.T, serverURL, username, password string, client *h
 	require.NoError(t, err)
 	respGet.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(body)))
-	require.NoError(t, err)
-	csrfField, exists := doc.Find("input[name='gorilla.csrf.Token']").Attr("value")
-	require.True(t, exists, "CSRF field must exist on login page")
+	csrfField := inputValue(string(body), "gorilla.csrf.Token")
 	require.NotEmpty(t, csrfField)
 
 	form := url.Values{}
@@ -63,7 +60,7 @@ func loginUserFunc(t *testing.T, serverURL, username, password string, client *h
 	// Prove that the same cookie jar now represents an authenticated session.
 	// Keep redirects disabled so an unauthenticated redirect to /login cannot
 	// masquerade as a successful 200 response.
-	reqVerify, err := http.NewRequest(http.MethodGet, serverURL+"/usr/logout", nil)
+	reqVerify, err := http.NewRequest(http.MethodGet, serverURL+"/usr/lang", nil)
 	require.NoError(t, err)
 	respVerify, err := client.Do(reqVerify)
 	require.NoError(t, err)
@@ -74,12 +71,79 @@ func loginUserFunc(t *testing.T, serverURL, username, password string, client *h
 }
 
 func extractNonce(body string) string {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
-	if err != nil {
-		return ""
+	return inputValue(body, "resume_nonce")
+}
+
+func parseHTML(body string) *html.Node {
+	root, _ := html.Parse(strings.NewReader(body))
+	return root
+}
+
+func nodeAttribute(node *html.Node, name string) (string, bool) {
+	if node == nil {
+		return "", false
 	}
-	nonce, _ := doc.Find("input[name='resume_nonce']").Attr("value")
-	return nonce
+	for _, attr := range node.Attr {
+		if attr.Key == name {
+			return attr.Val, true
+		}
+	}
+	return "", false
+}
+
+func findElement(root *html.Node, tag string, attributes map[string]string) *html.Node {
+	if root == nil {
+		return nil
+	}
+	if root.Type == html.ElementNode && root.Data == tag {
+		matches := true
+		for name, want := range attributes {
+			got, ok := nodeAttribute(root, name)
+			if !ok || got != want {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			return root
+		}
+	}
+	for child := root.FirstChild; child != nil; child = child.NextSibling {
+		if found := findElement(child, tag, attributes); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+func inputValue(body, name string) string {
+	input := findElement(parseHTML(body), "input", map[string]string{"name": name})
+	value, _ := nodeAttribute(input, "value")
+	return value
+}
+
+func formAction(body, id string) string {
+	form := findElement(parseHTML(body), "form", map[string]string{"id": id})
+	action, _ := nodeAttribute(form, "action")
+	return action
+}
+
+func logoutUserFunc(t *testing.T, serverURL, csrfToken string, client *http.Client) *http.Response {
+	t.Helper()
+	require.NotEmpty(t, csrfToken)
+	form := url.Values{"gorilla.csrf.Token": {csrfToken}}
+	req, err := http.NewRequest(http.MethodPost, serverURL+"/usr/logout", strings.NewReader(form.Encode()))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-CSRF-Token", csrfToken)
+	req.Header.Set("Referer", serverURL+"/usr/logout")
+	oldRedirect := client.CheckRedirect
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSeeOther, resp.StatusCode)
+	client.CheckRedirect = oldRedirect
+	return resp
 }
 
 func extractResumeToken(loc string) string {
@@ -89,7 +153,7 @@ func extractResumeToken(loc string) string {
 	}
 	backURL, err := url.Parse(u.Query().Get("back"))
 	if err != nil {
-	    return ""
+		return ""
 	}
 	return backURL.Query().Get("token")
 }
@@ -155,9 +219,8 @@ func TestResume_AuthenticatedInvalidCSRFRejection(t *testing.T) {
 	}
 	require.NotEmpty(t, nonce)
 
-		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
-	formAction, exists := doc.Find("form#private-form").Attr("action")
-	require.True(t, exists, "Form action attribute must exist")
+	formAction := formAction(string(bodyGet), "private-form")
+	require.NotEmpty(t, formAction, "Form action attribute must exist")
 	require.Equal(t, "/private/topic/new", formAction, "Form action must be exactly /private/topic/new")
 	parsedAction, _ := url.Parse(formAction)
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
@@ -210,47 +273,20 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
 
-		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
-	formAction, exists := doc.Find("form#private-form").Attr("action")
-	require.True(t, exists, "Form action attribute must exist")
+	formAction := formAction(string(bodyGet), "private-form")
+	require.NotEmpty(t, formAction, "Form action attribute must exist")
 	require.Equal(t, "/private/topic/new", formAction, "Form action must be exactly /private/topic/new")
 	parsedAction, _ := url.Parse(formAction)
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
-	// True logout flow
-	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, err := client.Do(reqLogoutGet)
-	require.NoError(t, err)
-	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
-	respLogoutGet.Body.Close()
-
-	require.Equal(t, 200, respLogoutGet.StatusCode)
-
-
-	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGet)))
-	logoutCsrfField, _ := docLogout.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-			require.NotEmpty(t, logoutCsrfField)
-
-	logoutForm := url.Values{}
-	logoutForm.Add("gorilla.csrf.Token", logoutCsrfField)
-	reqLogoutPost, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
-	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
-	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
-
-	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	}
-	respLogoutPost, err := client.Do(reqLogoutPost)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode, "True logout should return 303")
-	respLogoutPost.Body.Close()
+	respLogout := logoutUserFunc(t, serverURL, inputValue(string(bodyGet), "gorilla.csrf.Token"), client)
+	respLogout.Body.Close()
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
 
 	// Verify unauthenticated by fetching a protected page
 	reqTestAuth, _ := http.NewRequest("GET", serverURL+"/private/topic/new", nil)
 	respTestAuth, _ := client.Do(reqTestAuth)
-				require.Equal(t, http.StatusForbidden, respTestAuth.StatusCode, "Should be redirected to login because unauthenticated")
+	require.Equal(t, http.StatusForbidden, respTestAuth.StatusCode, "Should be redirected to login because unauthenticated")
 	respTestAuth.Body.Close()
 
 	// Submit stale POST
@@ -270,7 +306,7 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 
 	assert.Equal(t, http.StatusSeeOther, respStale.StatusCode, "Stale POST should be captured and return 303")
 	location := respStale.Header.Get("Location")
-		resumeToken := extractResumeToken(location)
+	resumeToken := extractResumeToken(location)
 	require.NotEmpty(t, resumeToken, "Resume token should be generated")
 
 	client.CheckRedirect = nil
@@ -289,18 +325,16 @@ func TestResume_GenuineLogoutAndResume(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, consumedAt, "GET must never consume the pending action")
 
-	docResumeGet, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGet)))
-	csrfResume, exists := docResumeGet.Find("input[name='gorilla.csrf.Token']").Attr("value")
-	if !exists {
+	csrfResume := inputValue(string(bodyResumeGet), "gorilla.csrf.Token")
+	if csrfResume == "" {
 		t.Logf("GET /resume Body: %s", string(bodyResumeGet))
 	}
-	require.True(t, exists, "CSRF field must exist on resume page")
 	require.NotEmpty(t, csrfResume, "CSRF field must not be empty on resume page")
 
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	resumeVals := url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}}
+	resumeVals := url.Values{"token": {resumeToken}, "operation": {"resume"}, "gorilla.csrf.Token": {csrfResume}}
 	reqResumeAction, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(resumeVals.Encode()))
 	reqResumeAction.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqResumeAction.Header.Set("Sec-Fetch-Site", "same-origin")
@@ -360,39 +394,15 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
 
-		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
-	formAction, exists := doc.Find("form#private-form").Attr("action")
-	require.True(t, exists, "Form action attribute must exist")
+	formAction := formAction(string(bodyGet), "private-form")
+	require.NotEmpty(t, formAction, "Form action attribute must exist")
 	require.Equal(t, "/private/topic/new", formAction, "Form action must be exactly /private/topic/new")
 	parsedAction, _ := url.Parse(formAction)
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
-	// True logout
-	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, err := client.Do(reqLogoutGet)
-	require.NoError(t, err)
-	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
-	respLogoutGet.Body.Close()
-
-	require.Equal(t, 200, respLogoutGet.StatusCode)
-
-
-	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGet)))
-	logoutCsrfField, _ := docLogout.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-			require.NotEmpty(t, logoutCsrfField)
-
-	logoutForm := url.Values{}
-	logoutForm.Add("gorilla.csrf.Token", logoutCsrfField)
-	reqLogoutPost, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
-	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
-	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
+	respLogout := logoutUserFunc(t, serverURL, inputValue(string(bodyGet), "gorilla.csrf.Token"), client)
+	respLogout.Body.Close()
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, err := client.Do(reqLogoutPost)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
-	respLogoutPost.Body.Close()
 
 	formStale := url.Values{
 		"task":               {"Private topic create"},
@@ -406,7 +416,7 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 	reqStale.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	respStale, _ := client.Do(reqStale)
 	location := respStale.Header.Get("Location")
-		resumeToken := extractResumeToken(location)
+	resumeToken := extractResumeToken(location)
 	respStale.Body.Close()
 
 	// Revoke auth
@@ -420,18 +430,16 @@ func TestResume_RevokedThenRestored(t *testing.T) {
 	respResumeGet, _ := client.Do(reqResumeGet)
 	bodyResumeGet, _ := io.ReadAll(respResumeGet.Body)
 	respResumeGet.Body.Close()
-	docResumeGet, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGet)))
-	csrfResume, exists := docResumeGet.Find("input[name='gorilla.csrf.Token']").Attr("value")
-	if !exists {
+	csrfResume := inputValue(string(bodyResumeGet), "gorilla.csrf.Token")
+	if csrfResume == "" {
 		t.Logf("GET /resume Body: %s", string(bodyResumeGet))
 	}
-	require.True(t, exists, "CSRF field must exist on resume page")
 	require.NotEmpty(t, csrfResume, "CSRF field must not be empty on resume page")
 
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
 
 	// Attempt resume - should fail 403
-	resumeVals := url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}}
+	resumeVals := url.Values{"token": {resumeToken}, "operation": {"resume"}, "gorilla.csrf.Token": {csrfResume}}
 	reqResumeAction, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(resumeVals.Encode()))
 	reqResumeAction.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqResumeAction.Header.Set("Sec-Fetch-Site", "same-origin")
@@ -480,38 +488,15 @@ func TestResume_ValidationFailure(t *testing.T) {
 	bodyGet, _ := io.ReadAll(respGet.Body)
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
-			doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
-	formAction, exists := doc.Find("form#private-form").Attr("action")
-	require.True(t, exists, "Form action attribute must exist")
+	formAction := formAction(string(bodyGet), "private-form")
+	require.NotEmpty(t, formAction, "Form action attribute must exist")
 	require.Equal(t, "/private/topic/new", formAction, "Form action must be exactly /private/topic/new")
 	parsedAction, _ := url.Parse(formAction)
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
-	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, err := client.Do(reqLogoutGet)
-	require.NoError(t, err)
-	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
-	respLogoutGet.Body.Close()
-
-	require.Equal(t, 200, respLogoutGet.StatusCode)
-
-
-	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGet)))
-	logoutCsrfField, _ := docLogout.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-			require.NotEmpty(t, logoutCsrfField)
-
-	logoutForm := url.Values{}
-	logoutForm.Add("gorilla.csrf.Token", logoutCsrfField)
-	reqLogoutPost, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
-	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
-	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
+	respLogout := logoutUserFunc(t, serverURL, inputValue(string(bodyGet), "gorilla.csrf.Token"), client)
+	respLogout.Body.Close()
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, err := client.Do(reqLogoutPost)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
-	respLogoutPost.Body.Close()
 
 	// Validation failure: invalid participants
 	formStale := url.Values{
@@ -526,7 +511,7 @@ func TestResume_ValidationFailure(t *testing.T) {
 	reqStale.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	respStale, _ := client.Do(reqStale)
 	location := respStale.Header.Get("Location")
-		resumeToken := extractResumeToken(location)
+	resumeToken := extractResumeToken(location)
 	respStale.Body.Close()
 
 	client.CheckRedirect = nil
@@ -536,16 +521,14 @@ func TestResume_ValidationFailure(t *testing.T) {
 	respResumeGet, _ := client.Do(reqResumeGet)
 	bodyResumeGet, _ := io.ReadAll(respResumeGet.Body)
 	respResumeGet.Body.Close()
-	docResumeGet, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyResumeGet)))
-	csrfResume, exists := docResumeGet.Find("input[name='gorilla.csrf.Token']").Attr("value")
-	if !exists {
+	csrfResume := inputValue(string(bodyResumeGet), "gorilla.csrf.Token")
+	if csrfResume == "" {
 		t.Logf("GET /resume Body: %s", string(bodyResumeGet))
 	}
-	require.True(t, exists, "CSRF field must exist on resume page")
 	require.NotEmpty(t, csrfResume, "CSRF field must not be empty on resume page")
 
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	resumeVals := url.Values{"token": {resumeToken}, "gorilla.csrf.Token": {csrfResume}}
+	resumeVals := url.Values{"token": {resumeToken}, "operation": {"resume"}, "gorilla.csrf.Token": {csrfResume}}
 	reqResumeAction, _ := http.NewRequest("POST", serverURL+"/resume", strings.NewReader(resumeVals.Encode()))
 	reqResumeAction.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	reqResumeAction.Header.Set("Sec-Fetch-Site", "same-origin")
@@ -584,33 +567,15 @@ func TestResume_MismatchedTask(t *testing.T) {
 	respGet.Body.Close()
 	nonce := extractNonce(string(bodyGet))
 
-	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
-	formAction, exists := doc.Find("form#private-form").Attr("action")
-	require.True(t, exists, "Form action attribute must exist")
+	formAction := formAction(string(bodyGet), "private-form")
+	require.NotEmpty(t, formAction, "Form action attribute must exist")
 	require.Equal(t, "/private/topic/new", formAction, "Form action must be exactly /private/topic/new")
 	parsedAction, _ := url.Parse(formAction)
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
-	reqLogoutGet, _ := http.NewRequest("GET", serverURL+"/usr/logout", nil)
-	respLogoutGet, err := client.Do(reqLogoutGet)
-	require.NoError(t, err)
-	bodyLogoutGet, _ := io.ReadAll(respLogoutGet.Body)
-	respLogoutGet.Body.Close()
-
-	docLogout, _ := goquery.NewDocumentFromReader(strings.NewReader(string(bodyLogoutGet)))
-	logoutCsrfField, _ := docLogout.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-
-	logoutForm := url.Values{}
-	logoutForm.Add("gorilla.csrf.Token", logoutCsrfField)
-	reqLogoutPost, _ := http.NewRequest("POST", serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
-	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCsrfField)
-	reqLogoutPost.Header.Set("Referer", serverURL+"/usr/logout")
+	respLogout := logoutUserFunc(t, serverURL, inputValue(string(bodyGet), "gorilla.csrf.Token"), client)
+	respLogout.Body.Close()
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, err := client.Do(reqLogoutPost)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
-	respLogoutPost.Body.Close()
 
 	// DB Action Type Mismatch
 	res, err := srv.DB.Exec("UPDATE pending_actions SET action_type='invalidType' WHERE form_data=''")
@@ -672,10 +637,8 @@ func TestResume_SameBrowserWrongUser(t *testing.T) {
 	require.NoError(t, err)
 	respGet.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(bodyGet)))
-	require.NoError(t, err)
-	formAction, exists := doc.Find("form#private-form").Attr("action")
-	require.True(t, exists)
+	formAction := formAction(string(bodyGet), "private-form")
+	require.NotEmpty(t, formAction)
 	require.Equal(t, "/private/topic/new", formAction)
 	nonce := extractNonce(string(bodyGet))
 	require.NotEmpty(t, nonce)
@@ -683,31 +646,9 @@ func TestResume_SameBrowserWrongUser(t *testing.T) {
 	require.NoError(t, err)
 	actionURL := reqGet.URL.ResolveReference(parsedAction)
 
-	// Genuine Alice logout.
-	reqLogoutGet, err := http.NewRequest(http.MethodGet, serverURL+"/usr/logout", nil)
-	require.NoError(t, err)
-	respLogoutGet, err := client.Do(reqLogoutGet)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, respLogoutGet.StatusCode)
-	logoutBody, err := io.ReadAll(respLogoutGet.Body)
-	require.NoError(t, err)
-	respLogoutGet.Body.Close()
-	logoutDoc, err := goquery.NewDocumentFromReader(strings.NewReader(string(logoutBody)))
-	require.NoError(t, err)
-	logoutCSRF, exists := logoutDoc.Find("form[action='/usr/logout'] input[name='gorilla.csrf.Token']").Attr("value")
-	require.True(t, exists)
-	require.NotEmpty(t, logoutCSRF)
-
-	logoutForm := url.Values{"gorilla.csrf.Token": {logoutCSRF}}
-	reqLogoutPost, err := http.NewRequest(http.MethodPost, serverURL+"/usr/logout", strings.NewReader(logoutForm.Encode()))
-	require.NoError(t, err)
-	reqLogoutPost.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	reqLogoutPost.Header.Set("X-CSRF-Token", logoutCSRF)
+	respLogout := logoutUserFunc(t, serverURL, inputValue(string(bodyGet), "gorilla.csrf.Token"), client)
+	respLogout.Body.Close()
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
-	respLogoutPost, err := client.Do(reqLogoutPost)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusSeeOther, respLogoutPost.StatusCode)
-	respLogoutPost.Body.Close()
 
 	// Alice's already-rendered stale form is captured while unauthenticated.
 	formStale := url.Values{

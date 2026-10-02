@@ -13,4 +13,11 @@ CREATE TABLE IF NOT EXISTS pending_actions (
 );
 CREATE INDEX idx_pending_actions_expires_at ON pending_actions (expires_at);
 CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
+UPDATE schema_version SET version = 99;
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE IF EXISTS pending_actions;
+UPDATE schema_version SET version = 98;
 -- +goose StatementEnd

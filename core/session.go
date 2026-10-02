@@ -120,14 +120,29 @@ func safeLoginContinuation(r *http.Request, raw string) string {
 	return raw
 }
 
-const browserIDCookieName = "a4w_bid"
+const (
+	// browserIDCookieName identifies the durable browser-binding cookie.
+	browserIDCookieName = "a4w_bid"
+	// browserIDCookieMaxAge keeps the binding across logout and session rotation.
+	browserIDCookieMaxAge = 365 * 24 * 60 * 60
+)
 
+// GetBrowserID returns the hash of a persistent browser-binding cookie,
+// creating the cookie with the configured session policy when necessary.
 func GetBrowserID(w http.ResponseWriter, r *http.Request) string {
 	cookie, err := r.Cookie(browserIDCookieName)
 	var rawID string
 	if err == nil && cookie != nil && len(cookie.Value) == 64 {
-		rawID = cookie.Value
-	} else {
+		if decoded, decodeErr := hex.DecodeString(cookie.Value); decodeErr == nil && len(decoded) == 32 {
+			rawID = cookie.Value
+		}
+	}
+	if rawID == "" {
+		cookieOptions := &sessions.Options{Path: "/", HttpOnly: true}
+		if Store != nil && Store.Options != nil {
+			cookieOptions = Store.Options
+		}
+
 		b := make([]byte, 32)
 		if _, err := rand.Read(b); err != nil {
 			log.Printf("rand read for browser ID: %v", err)
@@ -137,11 +152,11 @@ func GetBrowserID(w http.ResponseWriter, r *http.Request) string {
 		http.SetCookie(w, &http.Cookie{
 			Name:     browserIDCookieName,
 			Value:    rawID,
-			Path:     "/",
-			MaxAge:   86400 * 365,
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
+			Path:     cookieOptions.Path,
+			MaxAge:   browserIDCookieMaxAge,
+			HttpOnly: cookieOptions.HttpOnly,
+			Secure:   cookieOptions.Secure,
+			SameSite: cookieOptions.SameSite,
 		})
 	}
 	hash := sha256.Sum256([]byte(rawID))

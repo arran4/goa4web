@@ -61,12 +61,14 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 
 	if len(invalidUsers) > 0 {
 		cd.SetCurrentError(fmt.Sprintf("Invalid users: %s", strings.Join(invalidUsers, ", ")))
-		forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+		if err := renderStartGroupDiscussionPage(w, r, &forumhandlers.CreateTopicPageForm{
 			Participants:        participantsInput,
 			InvalidParticipants: strings.Join(invalidUsers, ","),
 			Title:               title,
 			Description:         description,
-		})
+		}); err != nil {
+			return fmt.Errorf("render corrected private topic form: %w", err)
+		}
 		return nil
 	}
 
@@ -80,21 +82,25 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 		var errInvalid *common.ErrInvalidParticipants
 		if errors.As(err, &errInvalid) {
 			cd.SetCurrentError(fmt.Sprintf("Invalid users: %s", strings.Join(errInvalid.Usernames, ", ")))
-			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			if err := renderStartGroupDiscussionPage(w, r, &forumhandlers.CreateTopicPageForm{
 				Participants:        participantsInput,
 				InvalidParticipants: strings.Join(errInvalid.Usernames, ","),
 				Title:               title,
 				Description:         description,
-			})
+			}); err != nil {
+				return fmt.Errorf("render corrected private topic form: %w", err)
+			}
 			return nil
 		}
 		if strings.Contains(err.Error(), "at least one other participant") {
 			cd.SetCurrentError("You must invite at least one other member")
-			forumhandlers.CreateTopicPageWithPostTask(w, r, TaskPrivateTopicCreate, &forumhandlers.CreateTopicPageForm{
+			if err := renderStartGroupDiscussionPage(w, r, &forumhandlers.CreateTopicPageForm{
 				Participants: participantsInput,
 				Title:        title,
 				Description:  description,
-			})
+			}); err != nil {
+				return fmt.Errorf("render corrected private topic form: %w", err)
+			}
 			return nil
 		}
 		return fmt.Errorf("create private topic %w", handlers.ErrRedirectOnSamePageHandler(err))

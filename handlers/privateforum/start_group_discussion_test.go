@@ -23,7 +23,10 @@ func TestStartGroupDiscussionPage_RouterGrantFailure(t *testing.T) {
 	q.SystemCheckGrantFn = func(params db.SystemCheckGrantParams) (int32, error) {
 		return 1, nil // Grant is allowed
 	}
-	q.InsertPendingActionFn = func(ctx context.Context, arg db.InsertPendingActionParams) error {
+	q.SystemDeleteExpiredPendingActionsFn = func(ctx context.Context) (int64, error) {
+		return 0, nil
+	}
+	q.SystemInsertPendingActionFn = func(ctx context.Context, arg db.SystemInsertPendingActionParams) error {
 		return nil
 	}
 	cd := common.NewCoreData(req.Context(), q, config.NewRuntimeConfig())

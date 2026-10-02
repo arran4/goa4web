@@ -13,11 +13,14 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/handlers/privateforum"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
-var ResumeInterstitialPageTmpl tasks.Template = "domains/user/resume_interstitial.gohtml"
+// ResumeInterstitialPageTmpl renders the pending-action confirmation page.
+const ResumeInterstitialPageTmpl tasks.Template = "domains/user/resume_interstitial.gohtml"
 
+// ResumePage renders the confirmation interstitial for a bound pending action.
 func ResumePage(w http.ResponseWriter, r *http.Request) {
 	cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !ok || cd == nil {
@@ -26,23 +29,9 @@ func ResumePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := r.URL.Query().Get("token")
-	if token == "" {
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-	tokenHash := sha256.Sum256([]byte(token))
-	tokenHashHex := hex.EncodeToString(tokenHash[:])
-
-	browserID := core.GetBrowserID(w, r)
-
-	action, err := cd.Queries().GetPendingAction(r.Context(), tokenHashHex)
+	action, _, _, _, err := validatedResumeAction(w, r, cd, token)
 	if err != nil {
-		handlers.RenderErrorPage(w, r, handlers.ErrNotFound)
-		return
-	}
-
-	if action.Uid != cd.UserID || action.BrowserID != browserID {
-		handlers.RenderErrorPage(w, r, handlers.ErrForbidden)
+		handlers.RenderErrorPage(w, r, err)
 		return
 	}
 
@@ -54,81 +43,92 @@ func ResumePage(w http.ResponseWriter, r *http.Request) {
 	_ = ResumeInterstitialPageTmpl.Handle(w, r, data)
 }
 
+// ResumeTaskAction cancels or claims and executes a bound pending action.
 func ResumeTaskAction(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
 	token := r.PostFormValue("token")
-	if token == "" {
-		return handlers.ErrNotFound
-	}
-	tokenHash := sha256.Sum256([]byte(token))
-	tokenHashHex := hex.EncodeToString(tokenHash[:])
-
-	browserID := core.GetBrowserID(w, r)
-
-	action, err := cd.Queries().GetPendingAction(r.Context(), tokenHashHex)
+	_, targetURL, storedForm, tokenHashHex, err := validatedResumeAction(w, r, cd, token)
 	if err != nil {
-		return handlers.ErrNotFound
+		return err
 	}
 
-	if action.Uid != cd.UserID || action.BrowserID != browserID {
+	switch r.PostFormValue("operation") {
+	case "cancel":
+		rows, consumeErr := cd.ConsumePendingAction(r.Context(), tokenHashHex)
+		if consumeErr != nil || rows != 1 {
+			return handlers.ErrNotFound
+		}
+		return handlers.RedirectHandler("/private/topic/new")
+	case "resume":
+	default:
 		return handlers.ErrForbidden
 	}
 
-	if action.ActionType != string(privateforum.TaskPrivateTopicCreate) {
-		return handlers.ErrForbidden
-	}
-
-	var storageMap struct {
-		Form url.Values `json:"form"`
-		URL  string     `json:"url"`
-	}
-	if err := json.Unmarshal([]byte(action.FormData), &storageMap); err != nil {
-		return fmt.Errorf("invalid form data")
-	}
-
-	targetURL, err := url.Parse(storageMap.URL)
-	if err != nil || targetURL.IsAbs() || targetURL.Host != "" || targetURL.Path != "/private/topic/new" {
-		return handlers.ErrForbidden
-	}
-
-	// 1. Explicitly check current authorization BEFORE consuming the token.
-	// This ensures we do not burn the token if the user lacks authorization right now.
 	if !cd.HasGrant("privateforum", "topic", "see", 0) {
-				return handlers.ErrForbidden
+		return handlers.ErrForbidden
 	}
 	if !cd.HasGrant("privateforum", "topic", "create", 0) {
-				return handlers.ErrForbidden
+		return handlers.ErrForbidden
 	}
 
-	// 2. Consume atomically AFTER authorization checks.
-	// NOTE: This enforces AT-MOST-ONCE semantics. We consume the token prior to executing the non-idempotent task.
-	// If the server crashes during execution, or if task validation fails (e.g., invalid participants), the token is lost.
-	// This intentionally prioritizes preventing duplicate creations over automatic resumability on failure,
-	// since the current core.Task architecture does not support seamlessly passing a shared SQL transaction
-	// for exactly-once effects without massive refactoring.
-	rows, err := cd.Queries().ConsumePendingAction(r.Context(), tokenHashHex)
+	// Claim before the non-idempotent action. This intentionally provides an
+	// at-most-once attempt: validation, database, or process failure after this
+	// point can lose the pending submission rather than execute it twice.
+	rows, err := cd.ConsumePendingAction(r.Context(), tokenHashHex)
 	if err != nil || rows == 0 {
 		return handlers.ErrNotFound
 	}
 
 	newReq := r.Clone(r.Context())
 	newReq.URL = targetURL
+	newReq.RequestURI = targetURL.RequestURI()
 	newReq.Method = http.MethodPost
-	newReq.PostForm = storageMap.Form
+	newReq.Body = http.NoBody
+	newReq.Form = storedForm
+	newReq.PostForm = storedForm
 
-	// 3. Execute the matched action directly, propagating its HTTP response/status
-	// to the outer TaskHandler.
 	taskResult := privateforum.PrivateTopicCreateTask{TaskString: privateforum.TaskPrivateTopicCreate}.Action(w, newReq)
 
 	return taskResult
 }
 
+func validatedResumeAction(w http.ResponseWriter, r *http.Request, cd *common.CoreData, token string) (*db.PendingAction, *url.URL, url.Values, string, error) {
+	if token == "" {
+		return nil, nil, nil, "", handlers.ErrNotFound
+	}
+	tokenHash := sha256.Sum256([]byte(token))
+	tokenHashHex := hex.EncodeToString(tokenHash[:])
+	action, err := cd.PendingAction(r.Context(), tokenHashHex)
+	if err != nil {
+		return nil, nil, nil, "", handlers.ErrNotFound
+	}
+	if action.Uid != cd.UserID || action.BrowserID != core.GetBrowserID(w, r) {
+		return nil, nil, nil, "", handlers.ErrForbidden
+	}
+	if action.ActionType != string(privateforum.TaskPrivateTopicCreate) || action.FormData == "" {
+		return nil, nil, nil, "", handlers.ErrForbidden
+	}
+
+	var stored struct {
+		Form url.Values `json:"form"`
+		URL  string     `json:"url"`
+	}
+	if err := json.Unmarshal([]byte(action.FormData), &stored); err != nil {
+		return nil, nil, nil, "", fmt.Errorf("decode pending action: %w", handlers.ErrForbidden)
+	}
+	targetURL, err := url.Parse(stored.URL)
+	if err != nil || targetURL.IsAbs() || targetURL.Host != "" || targetURL.Opaque != "" ||
+		targetURL.User != nil || targetURL.Path != "/private/topic/new" || targetURL.Fragment != "" {
+		return nil, nil, nil, "", handlers.ErrForbidden
+	}
+	return action, targetURL, stored.Form, tokenHashHex, nil
+}
+
+// ResumeTask adapts pending-action confirmation to the task handler.
 type ResumeTask struct {
 	tasks.TaskString
 }
-
-var resumeTask = ResumeTask{TaskString: "resumeTask"}
 
 func (ResumeTask) Action(w http.ResponseWriter, r *http.Request) any {
 	return ResumeTaskAction(w, r)

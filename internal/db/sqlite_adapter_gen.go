@@ -4158,14 +4158,6 @@ func (s *sqliteQuerier) ClearUnreadContentPrivateLabelExceptUser(ctx context.Con
 	})
 }
 
-func (s *sqliteQuerier) ConsumePendingAction(ctx context.Context, id string) (int64, error) {
-	res, err := s.q.ConsumePendingAction(ctx, id)
-	if err != nil {
-		return 0, err
-	}
-	return res, nil
-}
-
 func (s *sqliteQuerier) CountUnreadPrivateThreadsForUser(ctx context.Context, arg CountUnreadPrivateThreadsForUserParams) (int64, error) {
 	res, err := s.q.CountUnreadPrivateThreadsForUser(ctx, dbsqlite.CountUnreadPrivateThreadsForUserParams{
 		TopicID:     sql.NullInt64{Int64: int64(arg.TopicID.Int32), Valid: arg.TopicID.Valid},
@@ -4456,10 +4448,6 @@ func (s *sqliteQuerier) DeletePasskey(ctx context.Context, arg DeletePasskeyPara
 		ID:     int64(arg.ID),
 		UserID: int64(arg.UserID),
 	})
-}
-
-func (s *sqliteQuerier) DeletePendingActionsForUser(ctx context.Context, uid int32) error {
-	return s.q.DeletePendingActionsForUser(ctx, int64(uid))
 }
 
 func (s *sqliteQuerier) DeletePendingPassword(ctx context.Context, userID int32) error {
@@ -6639,28 +6627,6 @@ func (s *sqliteQuerier) GetPasswordResetByUser(ctx context.Context, arg GetPassw
 	}(res), nil
 }
 
-func (s *sqliteQuerier) GetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
-	res, err := s.q.GetPendingAction(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return func(v *dbsqlite.PendingAction) *PendingAction {
-		if v == nil {
-			return nil
-		}
-		return &PendingAction{
-			ID:         v.ID,
-			Uid:        int32(v.Uid),
-			BrowserID:  v.BrowserID,
-			ActionType: v.ActionType,
-			FormData:   toString(v.FormData),
-			CreatedAt:  v.CreatedAt,
-			ExpiresAt:  v.ExpiresAt,
-			ConsumedAt: toNullTime(v.ConsumedAt),
-		}
-	}(res), nil
-}
-
 func (s *sqliteQuerier) GetPendingEmailErrorCount(ctx context.Context, id int32) (int32, error) {
 	res, err := s.q.GetPendingEmailErrorCount(ctx, int64(id))
 	if err != nil {
@@ -7561,18 +7527,6 @@ func (s *sqliteQuerier) InsertPassword(ctx context.Context, arg InsertPasswordPa
 		UsersIdusers:    int64(arg.UsersIdusers),
 		Passwd:          arg.Passwd,
 		PasswdAlgorithm: arg.PasswdAlgorithm,
-	})
-}
-
-func (s *sqliteQuerier) InsertPendingAction(ctx context.Context, arg InsertPendingActionParams) error {
-	return s.q.InsertPendingAction(ctx, dbsqlite.InsertPendingActionParams{
-		ID:         arg.ID,
-		Uid:        int64(arg.Uid),
-		BrowserID:  arg.BrowserID,
-		ActionType: arg.ActionType,
-		FormData:   arg.FormData,
-		CreatedAt:  arg.CreatedAt,
-		ExpiresAt:  arg.ExpiresAt,
 	})
 }
 
@@ -9684,6 +9638,18 @@ func (s *sqliteQuerier) SystemAssignWritingThreadID(ctx context.Context, arg Sys
 	})
 }
 
+func (s *sqliteQuerier) SystemCapturePendingAction(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error) {
+	res, err := s.q.SystemCapturePendingAction(ctx, dbsqlite.SystemCapturePendingActionParams{
+		FormData: arg.FormData,
+		ID:       arg.ID,
+		ID_2:     arg.ID_2,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error) {
 	res, err := s.q.SystemCheckGrant(ctx, dbsqlite.SystemCheckGrantParams{
 		Section:  arg.Section,
@@ -9723,6 +9689,14 @@ func (s *sqliteQuerier) SystemClearContentPrivateLabel(ctx context.Context, arg 
 		ItemID: int64(arg.ItemID),
 		Label:  arg.Label,
 	})
+}
+
+func (s *sqliteQuerier) SystemConsumePendingAction(ctx context.Context, id string) (int64, error) {
+	res, err := s.q.SystemConsumePendingAction(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error {
@@ -9842,6 +9816,14 @@ func (s *sqliteQuerier) SystemDeleteCommentsSearch(ctx context.Context) error {
 
 func (s *sqliteQuerier) SystemDeleteDeadLetter(ctx context.Context, id int32) error {
 	return s.q.SystemDeleteDeadLetter(ctx, int64(id))
+}
+
+func (s *sqliteQuerier) SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error) {
+	res, err := s.q.SystemDeleteExpiredPendingActions(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemDeleteImagePostSearch(ctx context.Context) error {
@@ -10068,6 +10050,28 @@ func (s *sqliteQuerier) SystemGetNewsPostByID(ctx context.Context, idsitenews in
 	return int32(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
+	res, err := s.q.SystemGetPendingAction(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.PendingAction) *PendingAction {
+		if v == nil {
+			return nil
+		}
+		return &PendingAction{
+			ID:         v.ID,
+			Uid:        int32(v.Uid),
+			BrowserID:  v.BrowserID,
+			ActionType: v.ActionType,
+			FormData:   toString(v.FormData),
+			CreatedAt:  v.CreatedAt,
+			ExpiresAt:  v.ExpiresAt,
+			ConsumedAt: toNullTime(v.ConsumedAt),
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetSearchWordByWordLowercased(ctx context.Context, lcase string) (*Searchwordlist, error) {
 	res, err := s.q.SystemGetSearchWordByWordLowercased(ctx, lcase)
 	if err != nil {
@@ -10227,6 +10231,18 @@ func (s *sqliteQuerier) SystemInsertLoginAttempt(ctx context.Context, arg System
 	return s.q.SystemInsertLoginAttempt(ctx, dbsqlite.SystemInsertLoginAttemptParams{
 		Username:  arg.Username,
 		IpAddress: arg.IpAddress,
+	})
+}
+
+func (s *sqliteQuerier) SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error {
+	return s.q.SystemInsertPendingAction(ctx, dbsqlite.SystemInsertPendingActionParams{
+		ID:         arg.ID,
+		Uid:        int64(arg.Uid),
+		BrowserID:  arg.BrowserID,
+		ActionType: arg.ActionType,
+		FormData:   arg.FormData,
+		CreatedAt:  arg.CreatedAt,
+		ExpiresAt:  arg.ExpiresAt,
 	})
 }
 
@@ -10947,18 +10963,6 @@ func (s *sqliteQuerier) UpdatePasskeyAfterLogin(ctx context.Context, arg UpdateP
 		BackupState:    arg.BackupState,
 		CredentialID:   arg.CredentialID,
 	})
-}
-
-func (s *sqliteQuerier) UpdatePendingActionData(ctx context.Context, arg UpdatePendingActionDataParams) (int64, error) {
-	res, err := s.q.UpdatePendingActionData(ctx, dbsqlite.UpdatePendingActionDataParams{
-		FormData: arg.FormData,
-		ID:       arg.ID,
-		ID_2:     arg.ID_2,
-	})
-	if err != nil {
-		return 0, err
-	}
-	return res, nil
 }
 
 func (s *sqliteQuerier) UpdatePreferenceForLister(ctx context.Context, arg UpdatePreferenceForListerParams) error {

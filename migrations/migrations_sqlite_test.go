@@ -83,6 +83,72 @@ func sqliteMigrationUpSQL(t *testing.T, version int) string {
 	return strings.Join(cleanLines, "\n")
 }
 
+func sqliteMigrationDownSQL(t *testing.T, version int) string {
+	t.Helper()
+	filename := fmt.Sprintf("%04d_sqlite.sql", version)
+	content, err := migrations.FS.ReadFile(filename)
+	if err != nil {
+		t.Fatalf("read migration %s: %v", filename, err)
+	}
+	rawSQL := string(content)
+	if idx := strings.Index(rawSQL, "-- +goose Down"); idx != -1 {
+		rawSQL = rawSQL[idx:]
+	}
+	lines := strings.Split(rawSQL, "\n")
+	cleanLines := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "-- +goose") {
+			continue
+		}
+		cleanLines = append(cleanLines, line)
+	}
+	return strings.Join(cleanLines, "\n")
+}
+
+func TestSQLiteMigration0099UpAndDown(t *testing.T) {
+	ctx := context.Background()
+	dsn := fmt.Sprintf("file:migration_0099_%p?mode=memory&cache=shared", t)
+	dbConn, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		t.Fatalf("open SQLite database: %v", err)
+	}
+	t.Cleanup(func() { _ = dbConn.Close() })
+
+	for version := 1; version <= 98; version++ {
+		if _, err := dbConn.ExecContext(ctx, sqliteMigrationUpSQL(t, version)); err != nil {
+			t.Fatalf("apply historical SQLite migration %04d: %v", version, err)
+		}
+	}
+	if _, err := dbConn.ExecContext(ctx, sqliteMigrationUpSQL(t, 99)); err != nil {
+		t.Fatalf("apply SQLite migration 0099: %v", err)
+	}
+
+	var version int
+	if err := dbConn.QueryRowContext(ctx, `SELECT version FROM schema_version`).Scan(&version); err != nil || version != 99 {
+		t.Fatalf("schema version after Up = %d, err %v; want 99", version, err)
+	}
+	if _, err := dbConn.ExecContext(ctx, `INSERT INTO users (idusers, username) VALUES (1, 'migration-user')`); err != nil {
+		t.Fatalf("seed pending-action owner: %v", err)
+	}
+	if _, err := dbConn.ExecContext(ctx, `INSERT INTO pending_actions (id, uid, browser_id, action_type, form_data, expires_at) VALUES ('form', 1, 'browser', 'privateTopicCreate', '', DATETIME('now', '+1 hour'))`); err != nil {
+		t.Fatalf("insert pending action: %v", err)
+	}
+
+	if _, err := dbConn.ExecContext(ctx, sqliteMigrationDownSQL(t, 99)); err != nil {
+		t.Fatalf("roll back SQLite migration 0099: %v", err)
+	}
+	if err := dbConn.QueryRowContext(ctx, `SELECT version FROM schema_version`).Scan(&version); err != nil || version != 98 {
+		t.Fatalf("schema version after Down = %d, err %v; want 98", version, err)
+	}
+	var tableCount int
+	if err := dbConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'pending_actions'`).Scan(&tableCount); err != nil {
+		t.Fatalf("inspect pending_actions table: %v", err)
+	}
+	if tableCount != 0 {
+		t.Fatal("pending_actions remains after Down migration")
+	}
+}
+
 func TestSQLiteMigration0098RepairsNullableColumnsAndParticipantQuery(t *testing.T) {
 	ctx := context.Background()
 	dsn := fmt.Sprintf("file:migration_0098_%p?mode=memory&cache=shared", t)

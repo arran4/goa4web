@@ -85,10 +85,13 @@ func (l *lazyCSRF) getToken(currentW http.ResponseWriter, currentR *http.Request
 	return token
 }
 
+// InvalidRequestInterceptor may handle a request after CSRF validation fails.
+type InvalidRequestInterceptor func(http.ResponseWriter, *http.Request) bool
+
 // NewCSRFMiddleware returns middleware enforcing CSRF protection using the
 // provided session secret and HTTP configuration. It also issues per-session
 // CSRF tokens that rotate when the authenticated user changes.
-func NewCSRFMiddleware(secret string, hostname string, version string) func(http.Handler) http.Handler {
+func NewCSRFMiddleware(secret string, hostname string, version string, interceptors ...InvalidRequestInterceptor) func(http.Handler) http.Handler {
 	key := sha256.Sum256([]byte(secret))
 	origins := []string{}
 	if u, err := url.Parse(hostname); err == nil && u.Host != "" {
@@ -99,17 +102,13 @@ func NewCSRFMiddleware(secret string, hostname string, version string) func(http
 	return func(next http.Handler) http.Handler {
 		validatedNext := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if requiresToken(r.Method) {
-				if r.URL.Path == "/private/topic/new" && r.Method == http.MethodPost {
-					r.Body = http.MaxBytesReader(w, r.Body, 1024*64)
-				}
 				if !validateRequestToken(r) {
-					if r.URL.Path == "/private/topic/new" && r.Method == http.MethodPost {
-						if StalePostInterceptor != nil {
-							if intercepted := StalePostInterceptor(w, r); intercepted {
-								return
-							}
+					for _, interceptor := range interceptors {
+						if interceptor != nil && interceptor(w, r) {
+							return
 						}
 					}
+					core.DisableCaching(w)
 					http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 					return
 				}
@@ -208,5 +207,3 @@ func readUID(uid any) int32 {
 		return 0
 	}
 }
-
-var StalePostInterceptor func(w http.ResponseWriter, r *http.Request) bool

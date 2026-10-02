@@ -211,6 +211,84 @@ func TestMigration0095ExecutesSuccessfully(t *testing.T) {
 	}
 }
 
+func TestMigration0099ExecutesSuccessfully(t *testing.T) {
+	dsn := os.Getenv("GOA4WEB_TEST_MYSQL_DSN")
+	if dsn == "" {
+		t.Skip("set GOA4WEB_TEST_MYSQL_DSN to run MySQL/MariaDB migration execution tests")
+	}
+	db := openTemporaryMySQLDatabase(t, dsn)
+	if _, err := db.Exec(`CREATE TABLE users (idusers INT NOT NULL PRIMARY KEY)`); err != nil {
+		t.Fatalf("create users table: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO users (idusers) VALUES (1)`); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	if _, err := db.Exec(`CREATE TABLE schema_version (version INT NOT NULL)`); err != nil {
+		t.Fatalf("create schema_version: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO schema_version (version) VALUES (98)`); err != nil {
+		t.Fatalf("seed schema_version: %v", err)
+	}
+
+	contents, err := FS.ReadFile("0099_mysql.sql")
+	if err != nil {
+		t.Fatalf("read migration: %v", err)
+	}
+	upSQL, downSQL := migrationSections(string(contents))
+	for _, statement := range strings.Split(upSQL, ";") {
+		if statement = strings.TrimSpace(statement); statement != "" {
+			if _, err := db.Exec(statement); err != nil {
+				t.Fatalf("execute Up statement %q: %v", statement, err)
+			}
+		}
+	}
+
+	var version int
+	if err := db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&version); err != nil || version != 99 {
+		t.Fatalf("expected schema version 99 after Up migration, got %d, err %v", version, err)
+	}
+	if _, err := db.Exec(`INSERT INTO pending_actions (id, uid, browser_id, action_type, form_data, expires_at) VALUES ('form', 1, 'browser', 'privateTopicCreate', '', DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 1 HOUR))`); err != nil {
+		t.Fatalf("insert pending action: %v", err)
+	}
+
+	for _, statement := range strings.Split(downSQL, ";") {
+		if statement = strings.TrimSpace(statement); statement != "" {
+			if _, err := db.Exec(statement); err != nil {
+				t.Fatalf("execute Down statement %q: %v", statement, err)
+			}
+		}
+	}
+	if err := db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&version); err != nil || version != 98 {
+		t.Fatalf("expected schema version 98 after Down migration, got %d, err %v", version, err)
+	}
+	var tableCount int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'pending_actions'`).Scan(&tableCount); err != nil {
+		t.Fatalf("inspect pending_actions table: %v", err)
+	}
+	if tableCount != 0 {
+		t.Fatalf("pending_actions remains after Down migration")
+	}
+}
+
+func migrationSections(rawSQL string) (upSQL, downSQL string) {
+	parts := strings.SplitN(rawSQL, "-- +goose Down", 2)
+	upSQL = parts[0]
+	if len(parts) == 2 {
+		downSQL = parts[1]
+	}
+	stripDirectives := func(section string) string {
+		lines := strings.Split(section, "\n")
+		clean := lines[:0]
+		for _, line := range lines {
+			if !strings.HasPrefix(strings.TrimSpace(line), "-- +goose") {
+				clean = append(clean, line)
+			}
+		}
+		return strings.Join(clean, "\n")
+	}
+	return stripDirectives(upSQL), stripDirectives(downSQL)
+}
+
 func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 	dsn := os.Getenv("GOA4WEB_TEST_MYSQL_DSN")
 	if dsn == "" {

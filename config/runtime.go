@@ -84,14 +84,16 @@ func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
 	}
 }
 
-// SmallestThumbnailSize returns the configured thumbnail bound with the smallest area.
-// It is useful for compact image presentations such as external-link cards while
-// keeping ThumbnailSizes()[0] as the normal/default image thumbnail.
+// SmallestThumbnailSize returns the configured thumbnail bound with the smallest
+// maximum dimension, using area as a tie-breaker. This avoids selecting a very
+// wide but short derivative for compact presentations such as external-link cards.
 func (c *RuntimeConfig) SmallestThumbnailSize() ThumbnailSize {
 	sizes := c.ThumbnailSizes()
 	smallest := sizes[0]
 	for _, size := range sizes[1:] {
-		if size.Width*size.Height < smallest.Width*smallest.Height {
+		sizeMax := max(size.Width, size.Height)
+		smallestMax := max(smallest.Width, smallest.Height)
+		if sizeMax < smallestMax || (sizeMax == smallestMax && size.Width*size.Height < smallest.Width*smallest.Height) {
 			smallest = size
 		}
 	}

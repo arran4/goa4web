@@ -44,8 +44,11 @@ func TestRuntimeConfigDefaultsFromOptions(t *testing.T) {
 	if cfg.ImageCachePlaceholderMinWidth != config.DefaultImageCachePlaceholderMinWidth || cfg.ImageCachePlaceholderMinHeight != config.DefaultImageCachePlaceholderMinHeight {
 		t.Fatalf("image cache placeholder defaults = %dx%d", cfg.ImageCachePlaceholderMinWidth, cfg.ImageCachePlaceholderMinHeight)
 	}
-	if sizes := cfg.ThumbnailSizes(); len(sizes) != 2 || sizes[0] != (config.ThumbnailSize{Width: config.DefaultImageThumbnailWidth, Height: config.DefaultImageThumbnailHeight}) || sizes[1] != (config.ThumbnailSize{Width: 2048, Height: 1600}) {
+	if sizes := cfg.ThumbnailSizes(); len(sizes) != 3 || sizes[0] != (config.ThumbnailSize{Width: config.DefaultImageThumbnailWidth, Height: config.DefaultImageThumbnailHeight}) || sizes[1] != (config.ThumbnailSize{Width: config.DefaultCardImageThumbnailWidth, Height: config.DefaultCardImageThumbnailHeight}) || sizes[2] != (config.ThumbnailSize{Width: 2048, Height: 1600}) {
 		t.Fatalf("thumbnail sizes = %v", sizes)
+	}
+	if size := cfg.SmallestThumbnailSize(); size != (config.ThumbnailSize{Width: config.DefaultCardImageThumbnailWidth, Height: config.DefaultCardImageThumbnailHeight}) {
+		t.Fatalf("smallest thumbnail size = %v", size)
 	}
 	if cfg.LoginAttemptWindow != 15 || cfg.LoginAttemptThreshold != 5 {
 		t.Fatalf("login attempt defaults = %d/%d", cfg.LoginAttemptWindow, cfg.LoginAttemptThreshold)
@@ -91,6 +94,15 @@ func TestForumAppendWindowConfigurationPrecedenceAndIndependence(t *testing.T) {
 	)
 	if envOnly.ForumPostAppendWindow != 60 || envOnly.PrivateForumPostAppendWindow != 0 {
 		t.Fatalf("independent env append windows = %d/%d", envOnly.ForumPostAppendWindow, envOnly.PrivateForumPostAppendWindow)
+	}
+}
+
+func TestSmallestThumbnailSize(t *testing.T) {
+	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "1024x800, 300x300, 640x100"}
+	got := cfg.SmallestThumbnailSize()
+	want := config.ThumbnailSize{Width: 300, Height: 300}
+	if got != want {
+		t.Fatalf("smallest thumbnail size = %v, want %v", got, want)
 	}
 }
 

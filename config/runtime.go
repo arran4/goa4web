@@ -77,7 +77,11 @@ func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
 			return []ThumbnailSize{{Width: c.ImageThumbnailSize, Height: c.ImageThumbnailSize}}
 		}
 	}
-	return []ThumbnailSize{{Width: DefaultImageThumbnailWidth, Height: DefaultImageThumbnailHeight}}
+	return []ThumbnailSize{
+		{Width: DefaultImageThumbnailWidth, Height: DefaultImageThumbnailHeight},
+		{Width: DefaultCardImageThumbnailWidth, Height: DefaultCardImageThumbnailHeight},
+		{Width: 2048, Height: 1600},
+	}
 }
 
 // SmallestThumbnailSize returns the configured thumbnail bound with the smallest area.

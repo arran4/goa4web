@@ -184,7 +184,7 @@ func TestMapImageURLUsesDefaultThumbnailForLargeCachedImage(t *testing.T) {
 			Height: sql.NullInt32{Int32: 1200, Valid: true},
 		}, nil
 	}
-	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "800x400"}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "800x400,300x300"}
 	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
 
 	mapped := cd.MapImageURL("img", "cache:"+imageID)
@@ -194,6 +194,15 @@ func TestMapImageURLUsesDefaultThumbnailForLargeCachedImage(t *testing.T) {
 	}
 	if parsed.Path != "/images/cache/abcd1234_thumb_800x400.jpg" {
 		t.Fatalf("mapped path = %q", parsed.Path)
+	}
+
+	compact := cd.MapImageURLWithThumbnailSize("img", "cache:"+imageID, config.ThumbnailSize{Width: 300, Height: 300})
+	compactParsed, err := url.Parse(compact)
+	if err != nil {
+		t.Fatalf("parse compact mapped URL: %v", err)
+	}
+	if compactParsed.Path != "/images/cache/abcd1234_thumb_300x300.jpg" {
+		t.Fatalf("compact mapped path = %q", compactParsed.Path)
 	}
 
 	full := cd.MapFullImageURL("img", "cache:"+imageID)

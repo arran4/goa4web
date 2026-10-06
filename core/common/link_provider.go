@@ -110,7 +110,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 			imageURL = link.CardImage.String
 			duration = link.CardDuration.String
 			if link.CardImageCache.Valid && link.CardImageCache.String != "" {
-				imageURL = p.cd.MapImageURL("img", link.CardImageCache.String)
+				imageURL = p.cd.MapImageURLWithThumbnailSize("img", link.CardImageCache.String, p.cd.Config.SmallestThumbnailSize())
 			}
 			if link.FaviconCache.Valid && link.FaviconCache.String != "" {
 				faviconURL = p.cd.MapImageURL("img", link.FaviconCache.String)

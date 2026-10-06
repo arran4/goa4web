@@ -25,6 +25,10 @@ const (
 	DefaultImageThumbnailWidth = 1024
 	// DefaultImageThumbnailHeight is the default thumbnail height bound.
 	DefaultImageThumbnailHeight = 800
+	// DefaultCardImageThumbnailWidth is the default link-card thumbnail width bound.
+	DefaultCardImageThumbnailWidth = 300
+	// DefaultCardImageThumbnailHeight is the default link-card thumbnail height bound.
+	DefaultCardImageThumbnailHeight = 300
 )
 
 // ThumbnailSize represents a thumbnail's maximum width and height.
@@ -74,6 +78,20 @@ func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
 		}
 	}
 	return []ThumbnailSize{{Width: DefaultImageThumbnailWidth, Height: DefaultImageThumbnailHeight}}
+}
+
+// SmallestThumbnailSize returns the configured thumbnail bound with the smallest area.
+// It is useful for compact image presentations such as external-link cards while
+// keeping ThumbnailSizes()[0] as the normal/default image thumbnail.
+func (c *RuntimeConfig) SmallestThumbnailSize() ThumbnailSize {
+	sizes := c.ThumbnailSizes()
+	smallest := sizes[0]
+	for _, size := range sizes[1:] {
+		if size.Width*size.Height < smallest.Width*smallest.Height {
+			smallest = size
+		}
+	}
+	return smallest
 }
 
 // SafeImageDimensions returns the user-selectable resize dimensions from the thumbnail configuration.

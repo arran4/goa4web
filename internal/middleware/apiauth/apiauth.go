@@ -52,6 +52,12 @@ func APIKeyAuthMiddleware(next http.Handler) http.Handler {
 		// Create a fully hydrated CoreData for the user rather than mutating the anonymous one
 		userCD := cd.ForUser(apiKey.UsersIdusers)
 
+		// Preserve request event if one exists from prior middleware (e.g., TaskEventMiddleware)
+		if evt := cd.Event(); evt != nil {
+			evt.UserID = apiKey.UsersIdusers
+			userCD.SetEvent(evt)
+		}
+
 		// Store scopes in context for specific handlers to check
 		ctx := context.WithValue(r.Context(), consts.KeyCoreData, userCD)
 		ctx = context.WithValue(ctx, consts.KeyAPIScopes, scopeMap)

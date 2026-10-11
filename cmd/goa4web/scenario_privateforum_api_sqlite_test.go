@@ -1,4 +1,5 @@
 //go:build sqlite || sqlite3
+
 package main
 
 import (
@@ -123,24 +124,68 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 	bobID, ok := env.registry.ResolveUser("bob")
 	require.True(t, ok)
 
+	ctx := context.Background()
+
 	// We need to create an API key for Alice
 	apiKey := "test-api-key-alice"
 	apiKeyHash := sha256.Sum256([]byte(apiKey))
-	_, err := env.db.Exec(`
-		INSERT INTO api_keys (users_idusers, api_key, name, scopes, expires_at, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		aliceID, hex.EncodeToString(apiKeyHash[:]), "testkey", "private_forum:read,private_forum:write", time.Now().Add(24*time.Hour), time.Now(),
-	)
+	_, err := env.cd.Queries().CreateAPIKey(ctx, db.CreateAPIKeyParams{
+		UsersIdusers: aliceID,
+		ApiKey:       hex.EncodeToString(apiKeyHash[:]),
+		Name:         "testkey",
+		Scopes:       "private_forum:read,private_forum:write",
+		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
 	require.NoError(t, err)
 
 	// Create API key for Bob
 	bobApiKey := "test-api-key-bob"
 	bobApiKeyHash := sha256.Sum256([]byte(bobApiKey))
-	_, err = env.db.Exec(`
-		INSERT INTO api_keys (users_idusers, api_key, name, scopes, expires_at, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
-		bobID, hex.EncodeToString(bobApiKeyHash[:]), "testkeybob", "private_forum:read,private_forum:write", time.Now().Add(24*time.Hour), time.Now(),
-	)
+	_, err = env.cd.Queries().CreateAPIKey(ctx, db.CreateAPIKeyParams{
+		UsersIdusers: bobID,
+		ApiKey:       hex.EncodeToString(bobApiKeyHash[:]),
+		Name:         "bobkey",
+		Scopes:       "private_forum:read,private_forum:write",
+		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
+	require.NoError(t, err)
+
+	// Create scoped API keys for testing layer limits
+	aliceReadApiKey := "test-api-key-alice-read"
+	aliceReadApiKeyHash := sha256.Sum256([]byte(aliceReadApiKey))
+	_, err = env.cd.Queries().CreateAPIKey(ctx, db.CreateAPIKeyParams{
+		UsersIdusers: aliceID,
+		ApiKey:       hex.EncodeToString(aliceReadApiKeyHash[:]),
+		Name:         "alicereadkey",
+		Scopes:       "private_forum:read",
+		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
+	require.NoError(t, err)
+
+	aliceWriteApiKey := "test-api-key-alice-write"
+	aliceWriteApiKeyHash := sha256.Sum256([]byte(aliceWriteApiKey))
+	_, err = env.cd.Queries().CreateAPIKey(ctx, db.CreateAPIKeyParams{
+		UsersIdusers: aliceID,
+		ApiKey:       hex.EncodeToString(aliceWriteApiKeyHash[:]),
+		Name:         "alicewritekey",
+		Scopes:       "private_forum:write",
+		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
+	require.NoError(t, err)
+
+	daveID, ok := env.registry.ResolveUser("dave")
+	require.True(t, ok)
+
+	// Create API key for Dave (Non-Participant in Staff Room, but with valid forum API scopes)
+	daveApiKey := "test-api-key-dave"
+	daveApiKeyHash := sha256.Sum256([]byte(daveApiKey))
+	_, err = env.cd.Queries().CreateAPIKey(ctx, db.CreateAPIKeyParams{
+		UsersIdusers: daveID,
+		ApiKey:       hex.EncodeToString(daveApiKeyHash[:]),
+		Name:         "davekey",
+		Scopes:       "private_forum:read,private_forum:write",
+		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+	})
 	require.NoError(t, err)
 
 	t.Run("create-topic", func(t *testing.T) {

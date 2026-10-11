@@ -12,6 +12,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	forumhandlers "github.com/arran4/goa4web/handlers/forum"
 	"github.com/gorilla/mux"
 )
 
@@ -334,6 +335,8 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid thread ID", http.StatusBadRequest)
 		return
 	}
+
+	cd.SetEventTask(forumhandlers.ReplyTaskHandler)
 
 	// Enforce topic/thread relationship and basic visibility before mutation
 	thread, err := cd.ForumThreadByID(int32(threadID))

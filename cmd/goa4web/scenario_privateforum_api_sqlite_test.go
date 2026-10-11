@@ -91,6 +91,8 @@ func setupAPITestEnv(t *testing.T) (*privateForumAPITestEnv, func()) {
 	require.Same(t, sqlDB, srv.DB)
 	require.True(t, srv.Config.CSRFEnabled)
 
+	srv.StartWorkers(ctx)
+
 	httpServer := httptest.NewServer(srv.Router)
 
 	client := httpServer.Client()

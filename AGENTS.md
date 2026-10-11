@@ -66,7 +66,7 @@ Environment variable names are centralised in `config/env.go`. Example configura
 
 All `const` declarations must include a short comment describing their purpose.
 
-Tests must not interact with the real file system. Use in-memory file systems from `io/fs` or mocks when file access is required. Run all tests with:
+Routine unit tests must not depend on the real filesystem merely to construct data. Prefer `io/fs`, named embedded fixtures and narrow fakes for pure logic. **Preserve focused OS/filesystem integration tests** when behaviour under test is permissions, symlinks, renames, uploads, migration files or other real-disk semantics; isolate their temporary storage and document why the OS is necessary (see #3141). Run all tests with:
 
 ```
 go test ./...
@@ -78,7 +78,7 @@ SQL query files are compiled using `sqlc`. Do not manually edit the generated `*
 Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.
 
 
-Errors in critical functions like `main()` or `run()` must be logged or wrapped using `fmt.Errorf` with context. Prefer doing both when errors propagate.
+At executable entry points such as `main()` or `run()`, report failures once at the responsible boundary. Wrap with `fmt.Errorf` and `%w` when adding actionable operation context or preserving a caller-relevant error identity; do not mechanically log **and** return the same failure or add wrappers that convey no new information (see #3077).
 
 All default HTML or text templates must exist as standalone files and be embedded using `//go:embed` rather than inline string constants.
 
@@ -290,3 +290,6 @@ Field types in `Dot` are automatically fixed:
   - **workers/postcountworker**
   - **workers/searchworker**
 - When generating sqlc files, always ensure that the version of sqlc used is equal to or newer than the version previously used to generate the files (check the generated `*.sql.go` files for the last used version).
+## Engineering guidance and agent audit
+
+Use https://arran4.github.io/blog/post/2026/055-suggested-coding-standards-for-repositories-and-agents/ selectively, without superseding the more specific rules above. A coding agent must inspect implementation/tests, distinguish verified gaps from hypotheses, and record results and existing issue overlap at https://github.com/arran4/goa4web/issues/3147. Do not equate adding instructions with completing the implementation audit; do not merge automatically.

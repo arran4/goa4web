@@ -117,6 +117,13 @@ func NewCSRFMiddleware(secret string, hostname string, version string, intercept
 		})
 		protected := protect(validatedNext)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Bypass CSRF for explicitly authenticated API requests via Bearer token
+			authHeader := r.Header.Get("Authorization")
+			if len(authHeader) > 7 && (authHeader[:7] == "Bearer " || authHeader[:7] == "bearer ") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			lazy := &lazyCSRF{w: w, r: r}
 			ctx := context.WithValue(r.Context(), contextTokenKey, lazy)
 			protected.ServeHTTP(w, r.WithContext(ctx))

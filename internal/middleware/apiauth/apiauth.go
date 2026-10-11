@@ -49,11 +49,13 @@ func APIKeyAuthMiddleware(next http.Handler) http.Handler {
 			scopeMap[strings.TrimSpace(s)] = true
 		}
 
-		// Set UserID in CoreData to act as the user
-		cd.UserID = apiKey.UsersIdusers
+		// Create a fully hydrated CoreData for the user rather than mutating the anonymous one
+		userCD := cd.ForUser(apiKey.UsersIdusers)
 
 		// Store scopes in context for specific handlers to check
-		ctx := context.WithValue(r.Context(), consts.KeyAPIScopes, scopeMap)
+		ctx := context.WithValue(r.Context(), consts.KeyCoreData, userCD)
+		ctx = context.WithValue(ctx, consts.KeyAPIScopes, scopeMap)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

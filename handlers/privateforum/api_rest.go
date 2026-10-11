@@ -311,28 +311,34 @@ func mapAPIError(w http.ResponseWriter, err error) {
 func APIPostComment(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
+	w.Header().Set("Content-Type", "application/json")
+
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "error", "message": err.Error()})
 		return
 	}
 
 	text := strings.TrimSpace(r.FormValue("text"))
 	if text == "" {
-		http.Error(w, "Text is required", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "error", "message": "Text is required"})
 		return
 	}
 
 	topicIDStr := mux.Vars(r)["topic"]
 	topicID, err := strconv.Atoi(topicIDStr)
 	if err != nil || topicID <= 0 {
-		http.Error(w, "Invalid topic ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "error", "message": "Invalid topic ID"})
 		return
 	}
 
 	threadIDStr := mux.Vars(r)["thread"]
 	threadID, err := strconv.Atoi(threadIDStr)
 	if err != nil || threadID <= 0 {
-		http.Error(w, "Invalid thread ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "error", "message": "Invalid thread ID"})
 		return
 	}
 
@@ -341,12 +347,14 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 	// Enforce topic/thread relationship and basic visibility before mutation
 	thread, err := cd.ForumThreadByID(int32(threadID))
 	if err != nil || thread == nil {
-		http.Error(w, "Thread not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "error", "message": "Thread not found"})
 		return
 	}
 	if thread.ForumtopicIdforumtopic != int32(topicID) {
 		// Visible thread belongs to a different topic, reject it
-		http.Error(w, "Thread not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "error", "message": "Thread not found"})
 		return
 	}
 

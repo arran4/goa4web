@@ -66,19 +66,35 @@ Environment variable names are centralised in `config/env.go`. Example configura
 
 All `const` declarations must include a short comment describing their purpose.
 
-Tests must not interact with the real file system. Use in-memory file systems from `io/fs` or mocks when file access is required. Run all tests with:
+### Filesystem and OS Boundary Testing
+
+- Prefer in-memory file systems (`io/fs`, `fstest.MapFS`), narrow interfaces, or embedded fixtures (`//go:embed`) for unit tests and business logic.
+- Deliberate OS integration tests that verify real OS or filesystem contracts (e.g., local upload storage, DLQ directory storage, SQLite disk file creation/migrations, or path/permission/rename semantics) are explicitly permitted and should use `t.TempDir()`.
+- Treat environment variables, process globals, and credential paths as external dependencies. Resolve them at application boundaries and pass typed options or narrow dependencies inward rather than reconstructing synthetic desktop or XDG sessions in routine unit tests.
+
+For rationale, see [Stop Rebuilding XDG Directories in Go Tests](https://arran4.github.io/blog/post/2026/054-stop-rebuilding-xdg-directories-in-go-tests/) and [Suggested Coding Standards](https://arran4.github.io/blog/post/2026/055-suggested-coding-standards-for-repositories-and-agents/).
+
+### Error Contracts and Logging
+
+- Wrap errors with actionable context (`fmt.Errorf("...: %w", err)`) or use typed error sentinels (`errors.Is`/`errors.As`) when adding caller-relevant context or preserving error identity.
+- Log or handle errors at critical boundary entry points (`main()`, `run()`, background workers, or top-level HTTP/task handlers) to ensure failures are diagnosable.
+- Avoid mechanical double-wrapping or duplicated logging at every internal function call or stack frame.
+
+### Test Execution
+
+Run all tests with:
 
 ```
 go test ./...
 ```
 
-To streamline the human approval process, run a full test suite with `go test ./...` instead of testing individual files or modules. This allows for a single, pre-approved overall test, which is faster for human verification.
+To streamline the human approval process, run a full test suite with `go test ./...` (and `go test -tags sqlite ./...` when testing SQLite functionality) instead of testing individual files or modules. This allows for a single, pre-approved overall test, which is faster for human verification.
+
+### SQL and Code Generation
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated `*.sql.go` files; instead edit the `.sql` files under `internal/db/` and run `sqlc generate`.
 Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.
-
-
-Errors in critical functions like `main()` or `run()` must be logged or wrapped using `fmt.Errorf` with context. Prefer doing both when errors propagate.
+Always preserve SQL permission rules (`specs/permissions.md`), query naming conventions (`specs/query_naming.md`), and migration synchronization rules intact.
 
 All default HTML or text templates must exist as standalone files and be embedded using `//go:embed` rather than inline string constants.
 

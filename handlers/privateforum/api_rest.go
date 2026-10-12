@@ -133,6 +133,8 @@ func APICreateTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cd.SetEventTask(privateTopicCreateTask)
+
 	topicID, err := cd.CreatePrivateTopic(common.CreatePrivateTopicParams{
 		CreatorID:    cd.UserID,
 		Participants: participants,

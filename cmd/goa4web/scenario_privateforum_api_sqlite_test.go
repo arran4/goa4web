@@ -21,6 +21,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/app/server"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/scenario"
 	"github.com/arran4/goa4web/testdata/scenarios"
 	_ "github.com/mattn/go-sqlite3"
@@ -204,6 +205,13 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, int64(1), int64(grantRow))
 
+				// We want to test event publication by capturing from the actual event bus.
+				sub := env.server.Bus.SubscribeWithOptions(
+					eventbus.WithTypes(eventbus.TaskMessageType),
+					eventbus.WithBufferSize(8),
+				)
+				defer sub.Close()
+
 			form := url.Values{}
 			form.Add("title", "API Test Topic")
 			form.Add("description", "Created via API")
@@ -228,6 +236,39 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, "success", respBody["status"])
 			assert.NotNil(t, respBody["topicID"])
+
+				select {
+				case envelope, open := <-sub.Channel():
+					require.True(t, open, "subscription closed")
+					envelope.Ack()
+
+					evt, ok := envelope.Msg.(eventbus.TaskEvent)
+					require.Truef(t, ok, "unexpected event type %T", envelope.Msg)
+
+					require.Equal(t, aliceID, evt.UserID)
+					require.Equal(t, eventbus.TaskOutcomeSuccess, evt.Outcome)
+					require.NotNil(t, evt.Task)
+
+				case <-time.After(2 * time.Second):
+					t.Fatal("No task event published")
+				}
+			})
+
+			t.Run("bob-denied-by-domain-permission", func(t *testing.T) {
+				form := url.Values{}
+				form.Add("title", "Bob API Test Topic")
+				form.Add("description", "Created via API")
+				form.Add("participants", "alice")
+
+				req, _ := http.NewRequest("POST", env.http.URL+"/private/api/topics", strings.NewReader(form.Encode()))
+				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+				req.Header.Set("Authorization", "Bearer "+bobApiKey) // Bob lacks domain grant to create topics in this setup
+
+				resp, err := env.client.Do(req)
+				require.NoError(t, err)
+				defer resp.Body.Close()
+
+				assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Bob should be denied creating topics by domain permission")
 		})
 	})
 
@@ -292,6 +333,12 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, allowed, "Direct CanReplyForumThread must be true")
 
+		sub := env.server.Bus.SubscribeWithOptions(
+			eventbus.WithTypes(eventbus.TaskMessageType),
+			eventbus.WithBufferSize(8),
+		)
+		defer sub.Close()
+
 		// Post reply as participant (Alice)
 		form := url.Values{}
 		form.Add("text", "This is an API reply")
@@ -316,6 +363,23 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		assert.Equal(t, float64(threadID), respBody["thread_id"])
 		assert.Equal(t, float64(topicID), respBody["topic_id"])
 		assert.NotNil(t, respBody["comment_id"])
+
+		select {
+		case envelope, open := <-sub.Channel():
+			require.True(t, open, "subscription closed")
+			envelope.Ack()
+
+			evt, ok := envelope.Msg.(eventbus.TaskEvent)
+			require.Truef(t, ok, "unexpected event type %T", envelope.Msg)
+
+			require.Equal(t, aliceID, evt.UserID)
+			require.Equal(t, eventbus.TaskOutcomeSuccess, evt.Outcome)
+			require.NotNil(t, evt.Task)
+			require.Contains(t, evt.Data, "CommentURL", "Event data should be populated with reply metadata")
+
+		case <-time.After(2 * time.Second):
+			t.Fatal("No task event published")
+		}
 
 		// Another participant (Bob) can read the thread and see the reply
 		req, _ = http.NewRequest("GET", fmt.Sprintf("%s/private/api/topic/%d/thread/%d", env.http.URL, topicID, threadID), nil)

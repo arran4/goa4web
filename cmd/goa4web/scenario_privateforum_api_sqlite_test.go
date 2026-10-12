@@ -24,6 +24,7 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/scenario"
 	"github.com/arran4/goa4web/testdata/scenarios"
+	"github.com/arran4/goa4web/workers/postcountworker"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,8 +92,6 @@ func setupAPITestEnv(t *testing.T) (*privateForumAPITestEnv, func()) {
 
 	require.Same(t, sqlDB, srv.DB)
 	require.True(t, srv.Config.CSRFEnabled)
-
-	srv.StartWorkers(ctx)
 
 	httpServer := httptest.NewServer(srv.Router)
 
@@ -237,6 +236,8 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			assert.Equal(t, "success", respBody["status"])
 			assert.NotNil(t, respBody["topicID"])
 
+			expectedTopicPath := "/private/api/topics"
+
 				select {
 				case envelope, open := <-sub.Channel():
 					require.True(t, open, "subscription closed")
@@ -245,6 +246,7 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 					evt, ok := envelope.Msg.(eventbus.TaskEvent)
 					require.Truef(t, ok, "unexpected event type %T", envelope.Msg)
 
+						require.Equal(t, expectedTopicPath, evt.Path)
 					require.Equal(t, aliceID, evt.UserID)
 					require.Equal(t, eventbus.TaskOutcomeSuccess, evt.Outcome)
 					require.NotNil(t, evt.Task)
@@ -364,6 +366,9 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		assert.Equal(t, float64(topicID), respBody["topic_id"])
 		assert.NotNil(t, respBody["comment_id"])
 
+		commentID := int32(respBody["comment_id"].(float64))
+		expectedReplyPath := fmt.Sprintf("/private/api/topic/%d/thread/%d/reply", topicID, threadID)
+
 		select {
 		case envelope, open := <-sub.Channel():
 			require.True(t, open, "subscription closed")
@@ -372,13 +377,19 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			evt, ok := envelope.Msg.(eventbus.TaskEvent)
 			require.Truef(t, ok, "unexpected event type %T", envelope.Msg)
 
+			require.Equal(t, expectedReplyPath, evt.Path)
 			require.Equal(t, aliceID, evt.UserID)
 			require.Equal(t, eventbus.TaskOutcomeSuccess, evt.Outcome)
 			require.NotNil(t, evt.Task)
-			require.Contains(t, evt.Data, "CommentURL", "Event data should be populated with reply metadata")
+
+			post, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData)
+			require.Truef(t, ok, "missing/wrong postcount event payload: %#v", evt.Data)
+			require.Equal(t, threadID, post.ThreadID)
+			require.Equal(t, topicID, post.TopicID)
+			require.Equal(t, commentID, post.CommentID)
 
 		case <-time.After(2 * time.Second):
-			t.Fatal("No task event published")
+			t.Fatal("no reply event: check HTTP status, event task attachment, and bus identity")
 		}
 
 		// Another participant (Bob) can read the thread and see the reply

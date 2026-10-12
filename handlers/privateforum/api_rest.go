@@ -184,9 +184,17 @@ func APIListThreads(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasMore := len(rows) > pageSize
-	if hasMore {
-		rows = rows[:pageSize]
+	startIdx := (page - 1) * pageSize
+	endIdx := startIdx + pageSize
+
+	hasMore := len(rows) > endIdx
+
+	if startIdx >= len(rows) {
+		rows = nil
+	} else if endIdx > len(rows) {
+		rows = rows[startIdx:]
+	} else {
+		rows = rows[startIdx:endIdx]
 	}
 
 	w.Header().Set("Content-Type", "application/json")

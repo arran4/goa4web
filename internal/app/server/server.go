@@ -449,8 +449,8 @@ func (s *Server) CoreDataMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-// StartWorkers launches the background workers when the server starts.
-func (s *Server) StartWorkers(ctx context.Context) {
+// startWorkers launches the background workers when the server starts.
+func (s *Server) startWorkers(ctx context.Context) {
 	if s.WorkerCancel != nil {
 		return
 	}
@@ -526,6 +526,6 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 
 // RunContext starts the server using the configured HTTPListen address.
 func (s *Server) RunContext(ctx context.Context) error {
-	s.StartWorkers(ctx)
+	s.startWorkers(ctx)
 	return Run(ctx, s, s.Config.HTTPListen)
 }

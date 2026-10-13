@@ -2566,6 +2566,17 @@ func (cd *CoreData) SetEventTask(t tasks.Task) {
 	}
 }
 
+// SetEventData adds request-scoped data for the task event, when one exists.
+func (cd *CoreData) SetEventData(key string, value any) {
+	if cd.event == nil {
+		return
+	}
+	if cd.event.Data == nil {
+		cd.event.Data = make(map[string]any)
+	}
+	cd.event.Data[key] = value
+}
+
 // SetSession stores s on cd for later retrieval.
 func (cd *CoreData) SetSession(s *sessions.Session) { cd.session = s }
 

@@ -4,13 +4,19 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/handlers"
 )
+
+func writeAPIError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": message})
+}
 
 // APIKeyAuthMiddleware checks for a Bearer token, validates it, and sets the user identity.
 func APIKeyAuthMiddleware(next http.Handler) http.Handler {
@@ -25,7 +31,7 @@ func APIKeyAuthMiddleware(next http.Handler) http.Handler {
 
 		token := strings.TrimSpace(authHeader[7:])
 		if token == "" {
-			handlers.RenderErrorPage(w, r, handlers.ErrUnauthorized)
+			writeAPIError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 
@@ -35,7 +41,7 @@ func APIKeyAuthMiddleware(next http.Handler) http.Handler {
 		apiKey, err := cd.Queries().GetAPIKeyByHash(r.Context(), tokenHash)
 		if err != nil {
 			// Token not found or invalid
-			handlers.RenderErrorPage(w, r, handlers.ErrUnauthorized)
+			writeAPIError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 
@@ -72,7 +78,7 @@ func RequireScope(scope string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			scopes, ok := r.Context().Value(consts.KeyAPIScopes).(map[string]bool)
 			if !ok || !scopes[scope] {
-				handlers.RenderErrorPage(w, r, handlers.ErrUnauthorized)
+				writeAPIError(w, http.StatusForbidden, "required API scope is missing")
 				return
 			}
 			next.ServeHTTP(w, r)

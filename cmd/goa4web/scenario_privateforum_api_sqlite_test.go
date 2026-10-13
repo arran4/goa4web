@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +26,6 @@ import (
 	"github.com/arran4/goa4web/internal/scenario"
 	"github.com/arran4/goa4web/testdata/scenarios"
 	"github.com/arran4/goa4web/workers/postcountworker"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -115,6 +115,51 @@ func setupAPITestEnv(t *testing.T) (*privateForumAPITestEnv, func()) {
 	return env, cleanup
 }
 
+func apiRequest(t *testing.T, env *privateForumAPITestEnv, method, path, token string, form url.Values) (*http.Response, map[string]any) {
+	t.Helper()
+	var body io.Reader
+	if form != nil {
+		body = strings.NewReader(form.Encode())
+	}
+	req, err := http.NewRequest(method, env.http.URL+path, body)
+	require.NoError(t, err)
+	if form != nil {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := env.client.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+	require.Contains(t, resp.Header.Get("Content-Type"), "application/json")
+	decoded := map[string]any{}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&decoded))
+	return resp, decoded
+}
+
+func topicIDs(response map[string]any) []int32 {
+	topics, _ := response["topics"].([]any)
+	ids := make([]int32, 0, len(topics))
+	for _, raw := range topics {
+		topic, _ := raw.(map[string]any)
+		if id, ok := topic["id"].(float64); ok {
+			ids = append(ids, int32(id))
+		}
+	}
+	return ids
+}
+
+func requireContainsID(t *testing.T, ids []int32, want int32) {
+	t.Helper()
+	assert.Contains(t, ids, want)
+}
+
+func requireNotContainsID(t *testing.T, ids []int32, unwanted int32) {
+	t.Helper()
+	assert.NotContains(t, ids, unwanted)
+}
+
 func TestE2EPrivateForumAPI(t *testing.T) {
 	env, cleanup := setupAPITestEnv(t)
 	defer cleanup()
@@ -139,6 +184,10 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
 	})
 	require.NoError(t, err)
+	storedAliceKey, err := env.cd.Queries().GetAPIKeyByHash(ctx, hex.EncodeToString(apiKeyHash[:]))
+	require.NoError(t, err)
+	assert.Equal(t, aliceID, storedAliceKey.UsersIdusers)
+	assert.Equal(t, "private_forum:read,private_forum:write", storedAliceKey.Scopes)
 
 	// Create API key for Bob
 	bobApiKey := "test-api-key-bob"
@@ -190,6 +239,93 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	carolID, ok := env.registry.ResolveUser("carol")
+	require.True(t, ok)
+	staffTopicID := requireScenarioID(t, env.registry, scenario.RefTypeForum, "staff-room")
+	projectTopicID := requireScenarioID(t, env.registry, scenario.RefTypeForum, "project-room")
+	coordinationTopicID := requireScenarioID(t, env.registry, scenario.RefTypeForum, "coordination")
+	staffThreadID := requireScenarioID(t, env.registry, scenario.RefTypeThread, "staff-welcome")
+	projectThreadID := requireScenarioID(t, env.registry, scenario.RefTypeThread, "project-kickoff")
+
+	t.Run("scope-and-private-resource-isolation", func(t *testing.T) {
+		t.Run("visibility-matrix", func(t *testing.T) {
+			for _, tc := range []struct {
+				name      string
+				token     string
+				visible   []int32
+				invisible []int32
+			}{
+				{name: "alice", token: apiKey, visible: []int32{staffTopicID, coordinationTopicID}, invisible: []int32{projectTopicID}},
+				{name: "bob", token: bobApiKey, visible: []int32{staffTopicID}, invisible: []int32{projectTopicID, coordinationTopicID}},
+				{name: "dave", token: daveApiKey, visible: []int32{projectTopicID}, invisible: []int32{staffTopicID, coordinationTopicID}},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					resp, body := apiRequest(t, env, http.MethodGet, "/private/api/topics", tc.token, nil)
+					require.Equal(t, http.StatusOK, resp.StatusCode)
+					ids := topicIDs(body)
+					for _, id := range tc.visible {
+						requireContainsID(t, ids, id)
+					}
+					for _, id := range tc.invisible {
+						requireNotContainsID(t, ids, id)
+					}
+				})
+			}
+
+			carolKey := "test-api-key-carol"
+			carolHash := sha256.Sum256([]byte(carolKey))
+			_, err := env.cd.Queries().CreateAPIKey(ctx, db.CreateAPIKeyParams{
+				UsersIdusers: carolID,
+				ApiKey:       hex.EncodeToString(carolHash[:]),
+				Name:         "carolkey",
+				Scopes:       "private_forum:read",
+				ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
+			})
+			require.NoError(t, err)
+			resp, body := apiRequest(t, env, http.MethodGet, "/private/api/topics", carolKey, nil)
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			ids := topicIDs(body)
+			requireContainsID(t, ids, projectTopicID)
+			requireContainsID(t, ids, coordinationTopicID)
+			requireNotContainsID(t, ids, staffTopicID)
+		})
+
+		t.Run("scopes-are-independent-of-resource-grants", func(t *testing.T) {
+			resp, _ := apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(staffTopicID))+"/threads", aliceReadApiKey, nil)
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+
+			resp, body := apiRequest(t, env, http.MethodPost, "/private/api/topics", aliceReadApiKey, url.Values{"title": {"read-only must not create"}, "participants": {"bob"}})
+			require.Equal(t, http.StatusForbidden, resp.StatusCode)
+			assert.Equal(t, "error", body["status"])
+
+			resp, body = apiRequest(t, env, http.MethodGet, "/private/api/topics", aliceWriteApiKey, nil)
+			require.Equal(t, http.StatusForbidden, resp.StatusCode)
+			assert.Equal(t, "error", body["status"])
+
+			resp, _ = apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(projectTopicID))+"/threads", daveApiKey, nil)
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			resp, body = apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(staffTopicID))+"/threads", daveApiKey, nil)
+			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+			assert.Equal(t, "error", body["status"])
+
+			resp, _ = apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(staffTopicID))+"/thread/"+strconv.Itoa(int(staffThreadID)), daveApiKey, nil)
+			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+			resp, _ = apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(projectTopicID))+"/thread/"+strconv.Itoa(int(staffThreadID)), daveApiKey, nil)
+			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+			beforeReplies := int64(0)
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM comments WHERE forumthread_idforumthread = ?", staffThreadID).Scan(&beforeReplies))
+			resp, _ = apiRequest(t, env, http.MethodPost, "/private/api/topic/"+strconv.Itoa(int(staffTopicID))+"/thread/"+strconv.Itoa(int(staffThreadID))+"/reply", daveApiKey, url.Values{"text": {"unauthorized dave reply"}})
+			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+			afterReplies := int64(0)
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM comments WHERE forumthread_idforumthread = ?", staffThreadID).Scan(&afterReplies))
+			assert.Equal(t, beforeReplies, afterReplies)
+
+			resp, _ = apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(projectTopicID))+"/thread/"+strconv.Itoa(int(projectThreadID)), daveApiKey, nil)
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+		})
+	})
+
 	t.Run("create-topic", func(t *testing.T) {
 		t.Run("alice-api-key-persisted-create-grant", func(t *testing.T) {
 			grantRow, err := env.cd.Queries().SystemCheckGrant(context.Background(), db.SystemCheckGrantParams{
@@ -204,12 +340,12 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, int64(1), int64(grantRow))
 
-				// We want to test event publication by capturing from the actual event bus.
-				sub := env.server.Bus.SubscribeWithOptions(
-					eventbus.WithTypes(eventbus.TaskMessageType),
-					eventbus.WithBufferSize(8),
-				)
-				defer sub.Close()
+			// We want to test event publication by capturing from the actual event bus.
+			sub := env.server.Bus.SubscribeWithOptions(
+				eventbus.WithTypes(eventbus.TaskMessageType),
+				eventbus.WithBufferSize(8),
+			)
+			defer sub.Close()
 
 			form := url.Values{}
 			form.Add("title", "API Test Topic")
@@ -218,7 +354,7 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 
 			req, _ := http.NewRequest("POST", env.http.URL+"/private/api/topics", strings.NewReader(form.Encode()))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			req.Header.Set("Authorization", "Bearer "+apiKey)
+			req.Header.Set("Authorization", "Bearer "+aliceWriteApiKey)
 
 			resp, err := env.client.Do(req)
 			require.NoError(t, err)
@@ -235,42 +371,100 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, "success", respBody["status"])
 			assert.NotNil(t, respBody["topicID"])
+			createdTopicID := int32(respBody["topicID"].(float64))
+
+			var participantGrantCount int
+			require.NoError(t, env.db.QueryRow(`
+				SELECT COUNT(*) FROM grants
+				WHERE section = 'privateforum' AND item = 'topic' AND item_id = ?
+				  AND user_id IN (?, ?) AND active = 1 AND rule_type = 'allow'
+			`, createdTopicID, aliceID, bobID).Scan(&participantGrantCount))
+			assert.GreaterOrEqual(t, participantGrantCount, 8, "creator and invitee receive topic grants")
+			var subscriptionCount int
+			require.NoError(t, env.db.QueryRow(`
+				SELECT COUNT(*) FROM subscriptions
+				WHERE users_idusers IN (?, ?) AND pattern = ? AND method = 'internal'
+			`, aliceID, bobID, fmt.Sprintf("create thread:/private/topic/%d/*", createdTopicID)).Scan(&subscriptionCount))
+			assert.Equal(t, 2, subscriptionCount, "creator and invitee subscribe to the created topic")
 
 			expectedTopicPath := "/private/api/topics"
 
-				select {
-				case envelope, open := <-sub.Channel():
-					require.True(t, open, "subscription closed")
-					envelope.Ack()
+			select {
+			case envelope, open := <-sub.Channel():
+				require.True(t, open, "subscription closed")
+				envelope.Ack()
 
-					evt, ok := envelope.Msg.(eventbus.TaskEvent)
-					require.Truef(t, ok, "unexpected event type %T", envelope.Msg)
+				evt, ok := envelope.Msg.(eventbus.TaskEvent)
+				require.Truef(t, ok, "unexpected event type %T", envelope.Msg)
 
-						require.Equal(t, expectedTopicPath, evt.Path)
-					require.Equal(t, aliceID, evt.UserID)
-					require.Equal(t, eventbus.TaskOutcomeSuccess, evt.Outcome)
-					require.NotNil(t, evt.Task)
+				require.Equal(t, expectedTopicPath, evt.Path)
+				require.Equal(t, aliceID, evt.UserID)
+				require.Equal(t, eventbus.TaskOutcomeSuccess, evt.Outcome)
+				require.NotNil(t, evt.Task)
+				require.NotNil(t, evt.Data["privateforum.topic-create"])
 
-				case <-time.After(2 * time.Second):
-					t.Fatal("No task event published")
-				}
-			})
+			case <-time.After(2 * time.Second):
+				t.Fatal("No task event published")
+			}
+		})
 
-			t.Run("bob-denied-by-domain-permission", func(t *testing.T) {
-				form := url.Values{}
-				form.Add("title", "Bob API Test Topic")
-				form.Add("description", "Created via API")
-				form.Add("participants", "alice")
+		t.Run("invalid-create-input-leaves-no-partial-state", func(t *testing.T) {
+			outsiderID, err := env.cd.CreateUserWithEmail("private-api-outsider", "private-api-outsider@example.test", "hash", "bcrypt")
+			require.NoError(t, err)
+			require.NotZero(t, outsiderID)
 
-				req, _ := http.NewRequest("POST", env.http.URL+"/private/api/topics", strings.NewReader(form.Encode()))
-				req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-				req.Header.Set("Authorization", "Bearer "+bobApiKey) // Bob lacks domain grant to create topics in this setup
+			assertRejectedCreate := func(t *testing.T, participants string) {
+				t.Helper()
+				var topicsBefore, grantsBefore, subscriptionsBefore int
+				require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM forumtopic").Scan(&topicsBefore))
+				require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM grants").Scan(&grantsBefore))
+				require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM subscriptions").Scan(&subscriptionsBefore))
+				resp, body := apiRequest(t, env, http.MethodPost, "/private/api/topics", apiKey, url.Values{"title": {"must not persist"}, "participants": {participants}})
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+				assert.Equal(t, "error", body["status"])
+				var topicsAfter, grantsAfter, subscriptionsAfter int
+				require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM forumtopic").Scan(&topicsAfter))
+				require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM grants").Scan(&grantsAfter))
+				require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM subscriptions").Scan(&subscriptionsAfter))
+				assert.Equal(t, topicsBefore, topicsAfter)
+				assert.Equal(t, grantsBefore, grantsAfter)
+				assert.Equal(t, subscriptionsBefore, subscriptionsAfter)
+			}
 
-				resp, err := env.client.Do(req)
-				require.NoError(t, err)
-				defer resp.Body.Close()
+			t.Run("nonexistent-user", func(t *testing.T) { assertRejectedCreate(t, "does-not-exist") })
+			t.Run("ineligible-existing-user", func(t *testing.T) { assertRejectedCreate(t, "private-api-outsider") })
+			t.Run("no-other-participant", func(t *testing.T) { assertRejectedCreate(t, "") })
+		})
 
-				assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Bob should be denied creating topics by domain permission")
+		t.Run("bob-denied-by-domain-permission", func(t *testing.T) {
+			var topicsBefore, grantsBefore, subscriptionsBefore int
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM forumtopic").Scan(&topicsBefore))
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM grants").Scan(&grantsBefore))
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM subscriptions").Scan(&subscriptionsBefore))
+
+			form := url.Values{}
+			form.Add("title", "Bob API Test Topic")
+			form.Add("description", "Created via API")
+			form.Add("participants", "alice")
+
+			req, _ := http.NewRequest("POST", env.http.URL+"/private/api/topics", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.Header.Set("Authorization", "Bearer "+bobApiKey) // Bob lacks domain grant to create topics in this setup
+
+			resp, err := env.client.Do(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusForbidden, resp.StatusCode, "Bob should be denied creating topics by domain permission")
+			assert.Contains(t, resp.Header.Get("Content-Type"), "application/json")
+
+			var topicsAfter, grantsAfter, subscriptionsAfter int
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM forumtopic").Scan(&topicsAfter))
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM grants").Scan(&grantsAfter))
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM subscriptions").Scan(&subscriptionsAfter))
+			assert.Equal(t, topicsBefore, topicsAfter)
+			assert.Equal(t, grantsBefore, grantsAfter)
+			assert.Equal(t, subscriptionsBefore, subscriptionsAfter)
 		})
 	})
 
@@ -294,6 +488,63 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		topics, ok := respBody["topics"].([]interface{})
 		assert.True(t, ok)
 		assert.GreaterOrEqual(t, len(topics), 1)
+	})
+
+	t.Run("list-threads-pagination-and-private-boundaries", func(t *testing.T) {
+		pageSize := env.cd.PageSize()
+		for i := 0; i < pageSize; i++ {
+			_, err := env.cd.ForUser(aliceID).CreateForumThread(ctx, common.CreateForumThreadParams{
+				ActorID:        aliceID,
+				TopicID:        staffTopicID,
+				LanguageID:     1,
+				Text:           fmt.Sprintf("pagination fixture thread %d", i),
+				Private:        true,
+				EnforceHandler: true,
+				BasePath:       "/private",
+			})
+			require.NoError(t, err)
+		}
+
+		threadIDs := func(t *testing.T, body map[string]any) []int32 {
+			t.Helper()
+			rows, ok := body["threads"].([]any)
+			require.True(t, ok)
+			ids := make([]int32, 0, len(rows))
+			for _, raw := range rows {
+				row, ok := raw.(map[string]any)
+				require.True(t, ok)
+				id, ok := row["Idforumthread"].(float64)
+				require.True(t, ok, "thread response should expose its ID")
+				ids = append(ids, int32(id))
+			}
+			return ids
+		}
+
+		resp, firstPage := apiRequest(t, env, http.MethodGet, fmt.Sprintf("/private/api/topic/%d/threads?page=1", staffTopicID), apiKey, nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, true, firstPage["has_more"])
+		firstIDs := threadIDs(t, firstPage)
+		assert.Len(t, firstIDs, pageSize)
+
+		resp, secondPage := apiRequest(t, env, http.MethodGet, fmt.Sprintf("/private/api/topic/%d/threads?page=2", staffTopicID), apiKey, nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, false, secondPage["has_more"])
+		secondIDs := threadIDs(t, secondPage)
+		assert.NotEmpty(t, secondIDs)
+		for _, id := range secondIDs {
+			assert.NotContains(t, firstIDs, id)
+		}
+
+		resp, outOfRange := apiRequest(t, env, http.MethodGet, fmt.Sprintf("/private/api/topic/%d/threads?page=99", staffTopicID), apiKey, nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		threads, ok := outOfRange["threads"].([]any)
+		require.True(t, ok, "out-of-range page must encode threads as [] rather than null")
+		assert.Empty(t, threads)
+
+		resp, _ = apiRequest(t, env, http.MethodGet, fmt.Sprintf("/private/api/topic/%d/threads", projectTopicID), apiKey, nil)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		resp, _ = apiRequest(t, env, http.MethodGet, "/private/api/topic/999999/threads", apiKey, nil)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 	t.Run("reply-thread", func(t *testing.T) {

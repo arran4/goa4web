@@ -114,15 +114,18 @@ func TestCSRFBearerBypass(t *testing.T) {
 	core.SessionName = sessionName
 
 	r := mux.NewRouter()
-	r.HandleFunc("/api/data", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/private/api/data", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("POST")
+	r.HandleFunc("/account/data", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods("POST")
 
 	handler := NewCSRFMiddleware("testsecret", "https://example.com", "prod")(r)
 
 	// Test 1: Empty bearer fails due to missing CSRF token
-	req1 := httptest.NewRequest("POST", "https://example.com/api/data", nil)
-	req1.Header.Set("Authorization", "Bearer ") // empty bearer
+	req1 := httptest.NewRequest("POST", "https://example.com/private/api/data", nil)
+	req1.Header.Set("Authorization", "BEARER \t ") // whitespace-only bearer
 	rr1 := httptest.NewRecorder()
 	handler.ServeHTTP(rr1, req1)
 	if rr1.Code != http.StatusForbidden {
@@ -130,21 +133,37 @@ func TestCSRFBearerBypass(t *testing.T) {
 	}
 
 	// Test 2: Valid Bearer skips CSRF check
-	req2 := httptest.NewRequest("POST", "https://example.com/api/data", nil)
-	req2.Header.Set("Authorization", "Bearer my-secret-token")
+	req2 := httptest.NewRequest("POST", "https://example.com/private/api/data", nil)
+	req2.Header.Set("Authorization", "bEaReR my-secret-token")
 	rr2 := httptest.NewRecorder()
 	handler.ServeHTTP(rr2, req2)
 	if rr2.Code != http.StatusOK {
 		t.Fatalf("expected 200 OK for valid bearer, got %d", rr2.Code)
 	}
 
-	// Test 3: Basic Auth does not skip CSRF check
-	req3 := httptest.NewRequest("POST", "https://example.com/api/data", nil)
+	// Test 3: unrelated and malformed schemes do not skip CSRF checks.
+	req3 := httptest.NewRequest("POST", "https://example.com/private/api/data", nil)
 	req3.Header.Set("Authorization", "Basic user:pass")
 	rr3 := httptest.NewRecorder()
 	handler.ServeHTTP(rr3, req3)
 	if rr3.Code != http.StatusForbidden {
 		t.Fatalf("expected forbidden for basic auth, got %d", rr3.Code)
+	}
+	reqMalformed := httptest.NewRequest("POST", "https://example.com/private/api/data", nil)
+	reqMalformed.Header.Set("Authorization", "BearerX my-secret-token")
+	rrMalformed := httptest.NewRecorder()
+	handler.ServeHTTP(rrMalformed, reqMalformed)
+	if rrMalformed.Code != http.StatusForbidden {
+		t.Fatalf("expected forbidden for malformed bearer scheme, got %d", rrMalformed.Code)
+	}
+
+	// A syntactically valid Bearer header does not disable CSRF on browser routes.
+	req4 := httptest.NewRequest("POST", "https://example.com/account/data", nil)
+	req4.Header.Set("Authorization", "Bearer my-secret-token")
+	rr4 := httptest.NewRecorder()
+	handler.ServeHTTP(rr4, req4)
+	if rr4.Code != http.StatusForbidden {
+		t.Fatalf("expected forbidden for bearer header outside private API, got %d", rr4.Code)
 	}
 }
 

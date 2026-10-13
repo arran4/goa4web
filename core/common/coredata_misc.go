@@ -36,6 +36,14 @@ type ErrInvalidParticipants struct {
 	Usernames []string
 }
 
+// ErrPrivateTopicParticipantRequired reports an attempt to create a private
+// topic without inviting someone other than its creator.
+type ErrPrivateTopicParticipantRequired struct{}
+
+func (ErrPrivateTopicParticipantRequired) Error() string {
+	return "at least one other participant is required"
+}
+
 func (e *ErrInvalidParticipants) Error() string {
 	if len(e.Usernames) > 0 {
 		return fmt.Sprintf("ineligible participants: %s", strings.Join(e.Usernames, ", "))
@@ -67,7 +75,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 	}
 	if !actorCD.HasGrant("privateforum", "topic", "create", 0) {
 		log.Printf("private topic create denied: user=%d", p.CreatorID)
-		return 0, fmt.Errorf("permission denied")
+		return 0, ForumOperationForbiddenError{Action: "private topic creation"}
 	}
 
 	participants := p.Participants
@@ -92,7 +100,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		}
 	}
 	if !hasOtherMember {
-		return 0, fmt.Errorf("at least one other participant is required")
+		return 0, ErrPrivateTopicParticipantRequired{}
 	}
 
 	var invalidIDs []int32

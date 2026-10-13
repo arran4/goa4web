@@ -314,11 +314,11 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			require.Equal(t, http.StatusNotFound, resp.StatusCode)
 
 			beforeReplies := int64(0)
-			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM comments WHERE forumthread_idforumthread = ?", staffThreadID).Scan(&beforeReplies))
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", staffThreadID).Scan(&beforeReplies))
 			resp, _ = apiRequest(t, env, http.MethodPost, "/private/api/topic/"+strconv.Itoa(int(staffTopicID))+"/thread/"+strconv.Itoa(int(staffThreadID))+"/reply", daveApiKey, url.Values{"text": {"unauthorized dave reply"}})
 			require.Equal(t, http.StatusNotFound, resp.StatusCode)
 			afterReplies := int64(0)
-			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM comments WHERE forumthread_idforumthread = ?", staffThreadID).Scan(&afterReplies))
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM comments WHERE forumthread_id = ?", staffThreadID).Scan(&afterReplies))
 			assert.Equal(t, beforeReplies, afterReplies)
 
 			resp, _ = apiRequest(t, env, http.MethodGet, "/private/api/topic/"+strconv.Itoa(int(projectTopicID))+"/thread/"+strconv.Itoa(int(projectThreadID)), daveApiKey, nil)

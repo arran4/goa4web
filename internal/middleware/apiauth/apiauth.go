@@ -77,7 +77,11 @@ func RequireScope(scope string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			scopes, ok := r.Context().Value(consts.KeyAPIScopes).(map[string]bool)
-			if !ok || !scopes[scope] {
+			if !ok {
+				writeAPIError(w, http.StatusUnauthorized, "unauthorized")
+				return
+			}
+			if !scopes[scope] {
 				writeAPIError(w, http.StatusForbidden, "required API scope is missing")
 				return
 			}

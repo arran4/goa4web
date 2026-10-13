@@ -3,8 +3,10 @@ package email
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"mime"
 	"mime/multipart"
+	"mime/quotedprintable"
 	"net/mail"
 	"net/textproto"
 	"strings"
@@ -55,28 +57,50 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]
 			}
 		}
 		msg.WriteString("\r\n")
-		part, err := w.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/plain; charset=utf-8"}})
+		part, err := w.CreatePart(textproto.MIMEHeader{
+			"Content-Type":              {"text/plain; charset=utf-8"},
+			"Content-Transfer-Encoding": {"quoted-printable"},
+		})
 		if err != nil {
 			return nil, err
 		}
-		_, _ = part.Write([]byte(textBody))
-		part, err = w.CreatePart(textproto.MIMEHeader{"Content-Type": {"text/html; charset=utf-8"}})
+		if err := writeQuotedPrintable(part, textBody); err != nil {
+			return nil, err
+		}
+		part, err = w.CreatePart(textproto.MIMEHeader{
+			"Content-Type":              {"text/html; charset=utf-8"},
+			"Content-Transfer-Encoding": {"quoted-printable"},
+		})
 		if err != nil {
 			return nil, err
 		}
-		_, _ = part.Write([]byte(htmlBody))
+		if err := writeQuotedPrintable(part, htmlBody); err != nil {
+			return nil, err
+		}
 		if err := w.Close(); err != nil {
 			return nil, err
 		}
 	} else {
 		hdr.Set("Content-Type", "text/plain; charset=utf-8")
+		hdr.Set("Content-Transfer-Encoding", "quoted-printable")
 		for k, v := range hdr {
 			for _, vv := range v {
 				fmt.Fprintf(&msg, "%s: %s\r\n", k, vv)
 			}
 		}
 		msg.WriteString("\r\n")
-		msg.WriteString(textBody)
+		if err := writeQuotedPrintable(&msg, textBody); err != nil {
+			return nil, err
+		}
 	}
 	return msg.Bytes(), nil
+}
+
+// writeQuotedPrintable encodes body as MIME quoted-printable text.
+func writeQuotedPrintable(dst io.Writer, body string) error {
+	writer := quotedprintable.NewWriter(dst)
+	if _, err := io.WriteString(writer, body); err != nil {
+		return err
+	}
+	return writer.Close()
 }

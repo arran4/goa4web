@@ -713,4 +713,4 @@ CREATE TABLE IF NOT EXISTS pending_actions (
 CREATE INDEX idx_pending_actions_expires_at ON pending_actions (expires_at);
 CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
 
-INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);

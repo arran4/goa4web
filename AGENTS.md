@@ -72,7 +72,7 @@ Routine unit tests must not depend on the real filesystem merely to construct da
 go test ./...
 ```
 
-To streamline the human approval process, run a full test suite with `go test ./...` instead of testing individual files or modules. This allows for a single, pre-approved overall test, which is faster for human verification.
+To streamline the human approval process, run a full test suite with `go test ./...` instead of testing individual files or modules. This allows for a single, pre-approved overall test, which is faster for human verification. When a change touches SQLite-specific behaviour, also run `go test -tags sqlite ./...`.
 
 SQL query files are compiled using `sqlc`. Do not manually edit the generated `*.sql.go` files; instead edit the `.sql` files under `internal/db/` and run `sqlc generate`.
 Avoid using the `overrides` section in `sqlc.yaml`; prefer Go type aliases if a different struct name is required.

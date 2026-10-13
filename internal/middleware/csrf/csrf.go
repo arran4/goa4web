@@ -3,6 +3,7 @@ package csrf
 import (
 	"context"
 	"crypto/rand"
+	"strings"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
@@ -119,9 +120,12 @@ func NewCSRFMiddleware(secret string, hostname string, version string, intercept
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Bypass CSRF for explicitly authenticated API requests via Bearer token
 			authHeader := r.Header.Get("Authorization")
-			if len(authHeader) > 7 && (authHeader[:7] == "Bearer " || authHeader[:7] == "bearer ") {
-				next.ServeHTTP(w, r)
-				return
+			if len(authHeader) > 7 && strings.ToLower(authHeader[:7]) == "bearer " {
+				// Reject whitespace-only tokens to avoid inadvertent bypass with empty credentials
+				if strings.TrimSpace(authHeader[7:]) != "" {
+					next.ServeHTTP(w, r)
+					return
+				}
 			}
 
 			lazy := &lazyCSRF{w: w, r: r}

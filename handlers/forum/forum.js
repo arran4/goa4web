@@ -165,6 +165,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
+    function getFilterClickTarget(target) {
+        return target.closest('.label, .participant, .poster-name');
+    }
+
     // Label filtering
     const labelFilter = document.querySelector('.label-filter');
     if (labelFilter) {
@@ -184,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const labels = Array.from(item.querySelectorAll('.label')).map(el => el.textContent.toLowerCase());
                 const participants = Array.from(item.querySelectorAll('.participant')).map(el => el.textContent.toLowerCase());
                 const posters = Array.from(item.querySelectorAll('.poster-name')).map(el => el.textContent.toLowerCase());
-                const topics = Array.from(item.querySelectorAll('.topic-name-filter')).map(el => el.textContent.toLowerCase());
+                const topics = Array.from(item.querySelectorAll('.topic-name-search')).map(el => el.textContent.toLowerCase());
 
                 if (evaluateAST(ast, labels, participants, posters, topics)) {
                     item.style.display = '';
@@ -194,9 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Allow clicking on labels/participants to add them to the filter
+        // Only explicitly filterable controls add text to the filter. Topic titles navigate.
         document.addEventListener('click', (e) => {
-            const targetEl = e.target.closest('.label, .participant, .poster-name, .topic-name-filter');
+            const targetEl = getFilterClickTarget(e.target);
             if (targetEl) {
                 const text = targetEl.textContent.trim();
 
@@ -204,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (targetEl.matches('.label')) prefix = 'label:';
                 else if (targetEl.matches('.participant')) prefix = 'participant:';
                 else if (targetEl.matches('.poster-name')) prefix = 'poster:';
-                else if (targetEl.matches('.topic-name-filter')) prefix = 'topic:';
 
                 const hasSpaces = /\s/.test(text);
                 const safeText = hasSpaces ? `"${text}"` : text;

@@ -70,6 +70,18 @@ func TestScenarioServeCmd_ParseCLI(t *testing.T) {
 	if serveCmdListen.Path != "testdata/scenarios/100-private-forum" {
 		t.Errorf("expected path testdata/scenarios/100-private-forum, got %q", serveCmdListen.Path)
 	}
+
+	// 5. Ordered scenario composition with a trailing flag remains unambiguous.
+	serveCmdComposed, err := parseScenarioServeCmd(parent, []string{"base", "feature", "--listen", ":9091"})
+	if err != nil {
+		t.Fatalf("parse composed scenario serve: %v", err)
+	}
+	if got, want := strings.Join(serveCmdComposed.Paths, ","), "base,feature"; got != want {
+		t.Errorf("paths = %q, want %q", got, want)
+	}
+	if serveCmdComposed.Listen != ":9091" {
+		t.Errorf("expected listen :9091, got %q", serveCmdComposed.Listen)
+	}
 }
 
 func TestScenarioServeCmd_DeriveScenarioBaseURL(t *testing.T) {

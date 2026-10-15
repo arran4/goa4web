@@ -142,6 +142,7 @@ type Event struct {
 	Headers Header        // All headers
 	Body    string        // Optional multiline body
 	OpData  OperationData // Parsed operation data, if available
+	FS      fs.FS         // Adjacent filesystem context for this event's asset resolution.
 }
 
 // Scenario represents a complete parsed scenario with its metadata and ordered events.

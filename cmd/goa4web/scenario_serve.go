@@ -36,6 +36,7 @@ type scenarioServeCmd struct {
 	*scenarioCmd
 	fs       *flag.FlagSet
 	Path     string
+	Paths    []string
 	Listen   string
 	fsys     fs.FS
 	dbConn   *sql.DB
@@ -49,13 +50,40 @@ func parseScenarioServeCmd(parent *scenarioCmd, args []string) (*scenarioServeCm
 	c.fs = newFlagSet("serve")
 	c.fs.Usage = c.Usage
 	c.fs.StringVar(&c.Listen, "listen", "", "The address and port for the HTTP server to listen on.")
-	if err := c.fs.Parse(args); err != nil {
+	flagArgs, paths, err := splitScenarioServeArgs(args)
+	if err != nil {
 		return nil, err
 	}
-	if len(c.fs.Args()) > 0 {
-		c.Path = c.fs.Arg(0)
+	if err := c.fs.Parse(flagArgs); err != nil {
+		return nil, err
+	}
+	c.Paths = paths
+	if len(c.Paths) > 0 {
+		c.Path = c.Paths[0]
 	}
 	return c, nil
+}
+
+func splitScenarioServeArgs(args []string) ([]string, []string, error) {
+	flagArgs := make([]string, 0, len(args))
+	paths := make([]string, 0, len(args))
+	for idx := 0; idx < len(args); idx++ {
+		arg := args[idx]
+		if arg == "-listen" || arg == "--listen" {
+			if idx+1 == len(args) {
+				return nil, nil, fmt.Errorf("-listen requires an address")
+			}
+			flagArgs = append(flagArgs, arg, args[idx+1])
+			idx++
+			continue
+		}
+		if strings.HasPrefix(arg, "-listen=") || strings.HasPrefix(arg, "--listen=") {
+			flagArgs = append(flagArgs, arg)
+			continue
+		}
+		paths = append(paths, arg)
+	}
+	return flagArgs, paths, nil
 }
 
 func generateEphemeralSecret(explicitSecret string) (string, error) {
@@ -97,7 +125,7 @@ func (c *scenarioServeCmd) Bootstrap(ctx context.Context) (*server.Server, *sql.
 		return nil, nil, nil, fmt.Errorf("scenario path required")
 	}
 
-	sc, err := loadScenarioPath(c.fsys, c.Path)
+	sc, err := loadScenarioPaths(c.fsys, c.Paths)
 	if err != nil {
 		return nil, nil, nil, err
 	}

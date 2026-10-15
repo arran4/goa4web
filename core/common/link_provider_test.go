@@ -32,6 +32,7 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 				CardDescription: sql.NullString{String: "Card Desc", Valid: true},
 				CardImage:       sql.NullString{String: "http://example.com/image.jpg?sig=asset_sig_123", Valid: true},
 				CardImageCache:  sql.NullString{String: "cache:abcd1234.jpg", Valid: true},
+				CardDuration:    sql.NullString{String: "PT1M", Valid: true},
 				FaviconCache:    sql.NullString{String: "favicon.ico", Valid: true},
 			},
 			"https://www.bloomberg.com/news/sample?accessToken=token123": {
@@ -132,5 +133,8 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 	}
 
 	cardOpen, cardClose, _ := provider.RenderLink("http://example.com/card", true, true)
-	assert.Contains(t, cardOpen+cardClose, "/images/cache/abcd1234_thumb_300x300.jpg")
+	cardHTML := cardOpen + cardClose
+	assert.Contains(t, cardHTML, "/images/cache/abcd1234_thumb_300x300.jpg")
+	assert.Contains(t, cardHTML, `<div class="external-link-image-container"><img`)
+	assert.Contains(t, cardHTML, `class="external-link-image" /><span class="external-link-duration">1:00</span></div>`)
 }

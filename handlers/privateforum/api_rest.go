@@ -45,13 +45,6 @@ func writeAPIError(w http.ResponseWriter, status int, message string) {
 func APIListTopics(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	if page < 1 {
-		page = 1
-	}
-	pageSize := cd.PageSize()
-	offset := (page - 1) * pageSize
-
 	// Retrieve topics via CoreData PrivateForumTopics which resolves access rights
 	topics, err := cd.PrivateForumTopics()
 	if err != nil {
@@ -74,17 +67,21 @@ func APIListTopics(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Poor-man's pagination logic for the returned slice
-	hasMore := false
-	if len(apiTopics) > offset {
-		end := offset + pageSize
-		if len(apiTopics) > end {
-			hasMore = true
-		} else {
-			end = len(apiTopics)
+	startIdx, endIdx, hasMore, err := privateAPIPageOffset(r.URL.Query().Get("page"), cd.PageSize(), len(apiTopics))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	page := 1
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if p, e := strconv.Atoi(pageStr); e == nil {
+			page = p
 		}
-		apiTopics = apiTopics[offset:end]
-	} else {
+	}
+
+	apiTopics = apiTopics[startIdx:endIdx]
+	if len(apiTopics) == 0 {
 		apiTopics = []apiTopic{}
 	}
 
@@ -93,6 +90,44 @@ func APIListTopics(w http.ResponseWriter, r *http.Request) {
 		"has_more": hasMore,
 		"page":     page,
 	})
+}
+
+// parsePrivateAPIID safely extracts and validates an ID for private forum API resources,
+// rejecting zeroes, negatives, malformed input, and values exceeding 32-bit storage limits.
+func parsePrivateAPIID(raw string) (int32, error) {
+	parsed, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil || parsed <= 0 {
+		return 0, errors.New("invalid ID")
+	}
+	return int32(parsed), nil
+}
+
+// privateAPIPageOffset validates a requested pagination page, computes its safe zero-indexed
+// slice offset bounds for a given slice length, and indicates whether more pages exist.
+// Returns boundaries (start, end) bounded safely to avoid slice panic.
+func privateAPIPageOffset(pageStr string, pageSize int, collectionLength int) (int, int, bool, error) {
+	page := 1
+	if pageStr != "" {
+		parsed, err := strconv.ParseInt(pageStr, 10, 32)
+		if err != nil || parsed <= 0 {
+			return 0, 0, false, errors.New("invalid page")
+		}
+		page = int(parsed)
+	}
+	if pageSize <= 0 {
+		return 0, 0, false, errors.New("invalid page size")
+	}
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	hasMore := collectionLength > end
+
+	if start >= collectionLength {
+		return collectionLength, collectionLength, false, nil
+	}
+	if end > collectionLength {
+		end = collectionLength
+	}
+	return start, end, hasMore, nil
 }
 
 // APICreateTopic handles POST /api/privateforum/topics
@@ -110,6 +145,12 @@ func APICreateTopic(w http.ResponseWriter, r *http.Request) {
 
 	if title == "" {
 		writeAPIError(w, http.StatusBadRequest, "title is required")
+		return
+	}
+
+	// Pre-flight permission check to prevent username enumeration by unauthorized actors.
+	if err := cd.CheckPrivateTopicCreatePermission(cd.UserID); err != nil {
+		mapAPIError(w, err)
 		return
 	}
 
@@ -165,27 +206,20 @@ func APICreateTopic(w http.ResponseWriter, r *http.Request) {
 // APIListThreads handles GET /api/privateforum/topic/{topic}/threads
 func APIListThreads(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	topicIDStr := mux.Vars(r)["topic"]
-	topicID, err := strconv.Atoi(topicIDStr)
-	if err != nil || topicID <= 0 {
+	topicID, err := parsePrivateAPIID(mux.Vars(r)["topic"])
+	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid topic ID")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	if page < 1 {
-		page = 1
-	}
-	pageSize := cd.PageSize()
-
-	topic, err := cd.ForumTopicByID(int32(topicID))
+	topic, err := cd.ForumTopicByID(topicID)
 	if err != nil || topic == nil || topic.Handler != "private" {
 		// Do not disclose whether an inaccessible ID exists.
 		writeAPIError(w, http.StatusNotFound, "topic not found")
 		return
 	}
 
-	rows, err := cd.ForumThreads(int32(topicID))
+	rows, err := cd.ForumThreads(topicID)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -196,17 +230,22 @@ func APIListThreads(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	startIdx := (page - 1) * pageSize
-	endIdx := startIdx + pageSize
+	startIdx, endIdx, hasMore, err := privateAPIPageOffset(r.URL.Query().Get("page"), cd.PageSize(), len(rows))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
-	hasMore := len(rows) > endIdx
+	page := 1
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if p, e := strconv.Atoi(pageStr); e == nil {
+			page = p
+		}
+	}
 
-	if startIdx >= len(rows) {
+	rows = rows[startIdx:endIdx]
+	if len(rows) == 0 {
 		rows = []*db.GetForumThreadsByForumTopicIdForUserWithFirstAndLastPosterAndFirstPostTextRow{}
-	} else if endIdx > len(rows) {
-		rows = rows[startIdx:]
-	} else {
-		rows = rows[startIdx:endIdx]
 	}
 
 	writeAPIJSON(w, http.StatusOK, map[string]any{
@@ -220,56 +259,52 @@ func APIListThreads(w http.ResponseWriter, r *http.Request) {
 func APIShowComments(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
-	topicIDStr := mux.Vars(r)["topic"]
-	topicID, err := strconv.Atoi(topicIDStr)
-	if err != nil || topicID <= 0 {
+	topicID, err := parsePrivateAPIID(mux.Vars(r)["topic"])
+	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid topic ID")
 		return
 	}
 
-	threadIDStr := mux.Vars(r)["thread"]
-	threadID, err := strconv.Atoi(threadIDStr)
-	if err != nil || threadID <= 0 {
+	threadID, err := parsePrivateAPIID(mux.Vars(r)["thread"])
+	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid thread ID")
 		return
 	}
 
 	// Enforce topic/thread relationship and basic visibility before reading
-	thread, err := cd.ForumThreadByID(int32(threadID))
+	thread, err := cd.ForumThreadByID(threadID)
 	if err != nil || thread == nil {
 		writeAPIError(w, http.StatusNotFound, "thread not found")
 		return
 	}
-	if thread.ForumtopicIdforumtopic != int32(topicID) {
+	if thread.ForumtopicIdforumtopic != topicID {
 		// Visible thread belongs to a different topic, reject it
 		writeAPIError(w, http.StatusNotFound, "thread not found")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	if page < 1 {
-		page = 1
-	}
-	pageSize := cd.PageSize()
-
-	comments, err := cd.ThreadComments(int32(threadID))
+	comments, err := cd.ThreadComments(threadID)
 
 	if err != nil && err != sql.ErrNoRows {
 		writeAPIError(w, http.StatusInternalServerError, "unable to list comments")
 		return
 	}
 
-	offset := (page - 1) * pageSize
-	hasMore := false
-	if len(comments) > offset {
-		end := offset + pageSize
-		if len(comments) > end {
-			hasMore = true
-		} else {
-			end = len(comments)
+	startIdx, endIdx, hasMore, err := privateAPIPageOffset(r.URL.Query().Get("page"), cd.PageSize(), len(comments))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	page := 1
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if p, e := strconv.Atoi(pageStr); e == nil {
+			page = p
 		}
-		comments = comments[offset:end]
-	} else {
+	}
+
+	comments = comments[startIdx:endIdx]
+	if len(comments) == 0 {
 		comments = []*db.GetCommentsByThreadIdForUserRow{}
 	}
 
@@ -346,16 +381,14 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicIDStr := mux.Vars(r)["topic"]
-	topicID, err := strconv.Atoi(topicIDStr)
-	if err != nil || topicID <= 0 {
+	topicID, err := parsePrivateAPIID(mux.Vars(r)["topic"])
+	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid topic ID")
 		return
 	}
 
-	threadIDStr := mux.Vars(r)["thread"]
-	threadID, err := strconv.Atoi(threadIDStr)
-	if err != nil || threadID <= 0 {
+	threadID, err := parsePrivateAPIID(mux.Vars(r)["thread"])
+	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid thread ID")
 		return
 	}
@@ -363,12 +396,12 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 	cd.SetEventTask(forumhandlers.ReplyTaskHandler)
 
 	// Enforce topic/thread relationship and basic visibility before mutation
-	thread, err := cd.ForumThreadByID(int32(threadID))
+	thread, err := cd.ForumThreadByID(threadID)
 	if err != nil || thread == nil {
 		writeAPIError(w, http.StatusNotFound, "thread not found")
 		return
 	}
-	if thread.ForumtopicIdforumtopic != int32(topicID) {
+	if thread.ForumtopicIdforumtopic != topicID {
 		// Visible thread belongs to a different topic, reject it
 		writeAPIError(w, http.StatusNotFound, "thread not found")
 		return
@@ -382,7 +415,7 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 
 	result, err := cd.ReplyForumThread(r.Context(), common.ReplyForumThreadParams{
 		ActorID:        cd.UserID,
-		ThreadID:       int32(threadID),
+		ThreadID:       threadID,
 		LanguageID:     int32(langID),
 		Text:           text,
 		Private:        true,

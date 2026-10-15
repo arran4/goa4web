@@ -327,6 +327,52 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 	})
 
 	t.Run("create-topic", func(t *testing.T) {
+		t.Run("permission-first-username-nonenumeration", func(t *testing.T) {
+			var before, after int
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM forumtopic").Scan(&before))
+			for _, username := range []string{"alice", "username-that-does-not-exist-3146"} {
+				resp, body := apiRequest(t, env, http.MethodPost, "/private/api/topics", bobApiKey,
+					url.Values{"title": {"must not create"}, "participants": {username}})
+				require.Equal(t, http.StatusForbidden, resp.StatusCode, "username=%s", username)
+				require.Equal(t, "permission denied", body["message"], "username=%s", username)
+			}
+			require.NoError(t, env.db.QueryRow("SELECT COUNT(*) FROM forumtopic").Scan(&after))
+			require.Equal(t, before, after)
+		})
+
+		t.Run("api-numeric-id-and-page-boundaries", func(t *testing.T) {
+			hugeID := "4294967297"
+			staffTopic := strconv.Itoa(int(staffTopicID))
+			staffThread := strconv.Itoa(int(staffThreadID))
+			for _, tc := range []struct {
+				method string
+				path string
+				form url.Values
+			}{
+				{http.MethodGet, "/private/api/topic/" + hugeID + "/threads", nil},
+				{http.MethodGet, "/private/api/topic/" + hugeID + "/thread/" + staffThread, nil},
+				{http.MethodGet, "/private/api/topic/" + staffTopic + "/thread/" + hugeID, nil},
+				{http.MethodPost, "/private/api/topic/" + hugeID + "/thread/" + staffThread + "/reply", url.Values{"text": {"must not post"}}},
+				{http.MethodPost, "/private/api/topic/" + staffTopic + "/thread/" + hugeID + "/reply", url.Values{"text": {"must not post"}}},
+			} {
+				resp, body := apiRequest(t, env, tc.method, tc.path, apiKey, tc.form)
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode, "request %s %s: %#v", tc.method, tc.path, body)
+			}
+
+			// Make sure invalid pages cannot overflow any of the three list slices.
+			// Scenario page size is expected to exceed one.
+			require.Greater(t, env.cd.PageSize(), 1)
+			hugePage := strconv.Itoa(int(^uint(0) >> 1))
+			for _, path := range []string{
+				"/private/api/topics?page=" + hugePage,
+				"/private/api/topic/" + staffTopic + "/threads?page=" + hugePage,
+				"/private/api/topic/" + staffTopic + "/thread/" + staffThread + "?page=" + hugePage,
+			} {
+				resp, body := apiRequest(t, env, http.MethodGet, path, apiKey, nil)
+				require.Equal(t, http.StatusBadRequest, resp.StatusCode, "request %s: %#v", path, body)
+			}
+		})
+
 		t.Run("alice-api-key-persisted-create-grant", func(t *testing.T) {
 			grantRow, err := env.cd.Queries().SystemCheckGrant(context.Background(), db.SystemCheckGrantParams{
 				ViewerID:               aliceID,

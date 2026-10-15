@@ -117,13 +117,21 @@ func privateAPIPageOffset(pageStr string, pageSize int, collectionLength int) (i
 	if pageSize <= 0 {
 		return 0, 0, false, errors.New("invalid page size")
 	}
+
+	// Avoid overflow on 32-bit arch by bounds checking before multiplying
+	if collectionLength <= 0 {
+		return 0, 0, false, nil
+	}
+	if (page - 1) > (collectionLength - 1) / pageSize {
+		return collectionLength, collectionLength, false, nil
+	}
+
 	start := (page - 1) * pageSize
+	// Avoid overflow on `end` addition. It is already safe since `start < collectionLength` and `pageSize` is bound,
+	// but for explicitness we bound `end` logically.
 	end := start + pageSize
 	hasMore := collectionLength > end
 
-	if start >= collectionLength {
-		return collectionLength, collectionLength, false, nil
-	}
 	if end > collectionLength {
 		end = collectionLength
 	}

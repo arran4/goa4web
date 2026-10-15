@@ -68,6 +68,7 @@ func TestPrivateAPIPageOffset(t *testing.T) {
 		{"Invalid page size (zero)", "1", 0, 25, 0, 0, false, true},
 		{"Invalid page size (negative)", "1", -10, 25, 0, 0, false, true},
 		{"Page number overflow", strconv.Itoa(math.MaxInt64) + "0", 10, 25, 0, 0, false, true},
+		{"Valid 32-bit max page without panic", "2147483647", 20, 25, 25, 25, false, false},
 	}
 
 	for _, tt := range tests {

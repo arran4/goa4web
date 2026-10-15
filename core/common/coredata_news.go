@@ -68,6 +68,11 @@ func (cd *CoreData) ThreadInfo(post *db.GetNewsPostByIdWithWriterIdAndThreadComm
 
 // CreateNewsReply creates a comment for a news post ensuring the thread exists.
 func (cd *CoreData) CreateNewsReply(commenterID, postID, languageID int32, text string) (int64, ThreadInfo, error) {
+	return cd.CreateNewsReplyAt(commenterID, postID, languageID, text, time.Now().UTC())
+}
+
+// CreateNewsReplyAt creates a timestamped comment for a news post ensuring the thread exists.
+func (cd *CoreData) CreateNewsReplyAt(commenterID, postID, languageID int32, text string, writtenAt time.Time) (int64, ThreadInfo, error) {
 	if cd.queries == nil {
 		return 0, ThreadInfo{}, nil
 	}
@@ -83,11 +88,15 @@ func (cd *CoreData) CreateNewsReply(commenterID, postID, languageID int32, text 
 	if err != nil {
 		return 0, ThreadInfo{}, err
 	}
-	cid, err := cd.CreateNewsCommentForCommenter(commenterID, ti.ThreadID, postID, languageID, text)
+	cid, err := cd.createNewsCommentForCommenterAt(commenterID, ti.ThreadID, postID, languageID, text, writtenAt)
 	if err != nil {
 		return 0, ThreadInfo{}, err
 	}
 	return cid, ti, nil
+}
+
+func (cd *CoreData) createNewsCommentForCommenterAt(commenterID, threadID, postID, languageID int32, text string, writtenAt time.Time) (int64, error) {
+	return cd.createCommentInSectionForCommenterAt("news", "post", "reply", postID, threadID, commenterID, languageID, text, writtenAt)
 }
 
 // UpdateNewsReply updates an existing comment and returns thread information.
@@ -162,17 +171,25 @@ func (cd *CoreData) DeleteNewsPost(postID int32) error {
 
 // CreateNewsPost inserts a new news post and grants edit rights to the author.
 func (cd *CoreData) CreateNewsPost(languageID, userID int32, text string) (int64, error) {
+	return cd.CreateNewsPostAt(languageID, userID, text, time.Now().UTC())
+}
+
+// CreateNewsPostAt inserts a new news post at occurred and grants edit rights to the author.
+func (cd *CoreData) CreateNewsPostAt(languageID, userID int32, text string, occurred time.Time) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
 	}
 	if err := cd.validateCodeImagesForUser(userID, text); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
 	}
+	if occurred.IsZero() {
+		occurred = time.Now().UTC()
+	}
 	id, err := cd.queries.CreateNewsPostForWriter(cd.ctx, db.CreateNewsPostForWriterParams{
 		LanguageID: sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		News:       sql.NullString{String: text, Valid: true},
 		WriterID:   userID,
-		Occurred:   sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		Occurred:   sql.NullTime{Time: occurred.UTC(), Valid: true},
 		GranteeID:  sql.NullInt32{Int32: userID, Valid: true},
 		Timezone:   sql.NullString{String: cd.Location().String(), Valid: true},
 	})

@@ -7,6 +7,7 @@ import (
 	"html"
 	htemplate "html/template"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -54,6 +55,7 @@ type EmailData struct {
 	Item           any
 	Recipient      *db.SystemGetUserByIDRow
 	Automatic      bool
+	Subscription   bool
 }
 
 // EmailOption configures EmailData prior to rendering.
@@ -72,6 +74,11 @@ func WithRecipient(u *db.SystemGetUserByIDRow) EmailOption {
 // WithAutomaticDelivery marks an email as application-generated notification mail.
 func WithAutomaticDelivery() EmailOption {
 	return func(d *EmailData) { d.Automatic = true }
+}
+
+// WithSubscriptionDelivery marks an email as originating from a user subscription.
+func WithSubscriptionDelivery() EmailOption {
+	return func(d *EmailData) { d.Subscription = true }
 }
 
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
@@ -151,7 +158,21 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 	if data.Automatic {
 		messageOptions = append(messageOptions, email.WithAutoSubmitted())
 	}
+	if data.Subscription {
+		if unsubscribeURL := n.subscriptionUnsubscribeURL(); unsubscribeURL != "" {
+			messageOptions = append(messageOptions, email.WithListUnsubscribe(unsubscribeURL))
+		}
+	}
 	return email.BuildMessage(from, to, subject, textBody, htmlBody, messageOptions...)
+}
+
+// subscriptionUnsubscribeURL returns a safe, authenticated subscription-management URL.
+func (n *Notifier) subscriptionUnsubscribeURL() string {
+	baseURL, err := url.Parse(n.Config.BaseURL)
+	if err != nil || baseURL.Scheme != "https" || baseURL.Host == "" {
+		return ""
+	}
+	return strings.TrimRight(baseURL.String(), "/") + "/usr/subscriptions"
 }
 
 func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, msg []byte) error {
@@ -186,5 +207,5 @@ func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt ev
 	if et == nil {
 		return nil
 	}
-	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data, WithRecipient(user))
+	return n.renderAndQueueEmailFromTemplates(ctx, &userID, user.Email.String, et, evt.Data, WithRecipient(user), WithSubscriptionDelivery())
 }

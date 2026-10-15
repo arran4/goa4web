@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"net/mail"
@@ -88,6 +89,13 @@ func TestNotifierNotifyAdmins(t *testing.T) {
 	}
 	if q.InsertPendingEmailCalls[0].Body == "" {
 		t.Fatalf("expected non-empty email body")
+	}
+	message, err := mail.ReadMessage(bytes.NewBufferString(q.InsertPendingEmailCalls[0].Body))
+	if err != nil {
+		t.Fatalf("read queued admin email: %v", err)
+	}
+	if got := message.Header.Get("List-Unsubscribe"); got != "" {
+		t.Errorf("admin List-Unsubscribe=%q, want empty", got)
 	}
 }
 

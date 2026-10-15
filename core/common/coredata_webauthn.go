@@ -23,7 +23,7 @@ type WebAuthnUser struct {
 
 // WebAuthnID returns the user's ID
 func (u *WebAuthnUser) WebAuthnID() []byte {
-	return []byte(fmt.Sprintf("%d", u.Idusers))
+	return fmt.Appendf(nil, "%d", u.Idusers)
 }
 
 // WebAuthnName returns the user's username

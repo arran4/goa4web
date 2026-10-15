@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -143,10 +144,5 @@ func authorityRejectedRequest(t *testing.T, srv *Server, cookie *http.Cookie) *h
 }
 
 func authorityStringPresent(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, want)
 }

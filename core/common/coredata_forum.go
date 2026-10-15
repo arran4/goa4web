@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 
 	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/core/consts"
@@ -413,10 +414,8 @@ func EnsureSubscriptionIdempotent(ctx context.Context, q db.Querier, userID int3
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("list subscribers: %w", err)
 	}
-	for _, id := range ids {
-		if id == userID {
-			return nil
-		}
+	if slices.Contains(ids, userID) {
+		return nil
 	}
 	return q.InsertSubscription(ctx, db.InsertSubscriptionParams{UsersIdusers: userID, Pattern: pattern, Method: method})
 }

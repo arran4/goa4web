@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -126,10 +127,8 @@ func TestCoreDataMiddlewareAnonymous(t *testing.T) {
 }
 
 func (sm *sessionManagerStub) GetSessionUserID(ctx context.Context, sessionID string) (int32, error) {
-	for _, d := range sm.deleted {
-		if d == sessionID {
-			return 0, sql.ErrNoRows
-		}
+	if slices.Contains(sm.deleted, sessionID) {
+		return 0, sql.ErrNoRows
 	}
 	if sessionID == core.HashSessionRef("testref") {
 		return 1, nil

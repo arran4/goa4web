@@ -18,7 +18,7 @@ import (
 func TestUnreadPrivateThreadsFiltering(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	var listCalls int
-	var capturedTopicID interface{}
+	var capturedTopicID any
 
 	q.ListUnreadPrivateThreadsForUserFn = func(ctx context.Context, arg db.ListUnreadPrivateThreadsForUserParams) ([]*db.ListUnreadPrivateThreadsForUserRow, error) {
 		listCalls++
@@ -75,7 +75,7 @@ func TestUnreadPrivateThreadsFiltering(t *testing.T) {
 func TestUnreadPrivateThreadsAllAccessible(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	var listCalls int
-	var capturedTopicID interface{}
+	var capturedTopicID any
 
 	q.SystemCheckGrantFn = func(p db.SystemCheckGrantParams) (int32, error) {
 		if p.ViewerID == 1 && p.Section == "privateforum" && p.Item.String == "topic" && p.Action == "see" {

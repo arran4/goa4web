@@ -1,0 +1,103 @@
+# Representative transitional News coverage using the current shared discussion bridge.
+# It deliberately leaves legacy News categories, announcements, promotion, and moderation
+# unmodelled; those are not part of the active shared publication/read/reply lifecycle.
+
+-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: news
+Description: Published News item with a reader-visible shared discussion reply
+
+-- 010-writer.event --
+Op: user.create
+Ref: writer
+Username: news-writer
+Email: news-writer@example.test
+Password: writer-test
+At: 2026-08-03T08:00:00Z
+
+-- 011-enable-writer.event --
+Op: user.enable
+Actor: admin
+User: writer
+At: 2026-08-03T08:01:00Z
+
+-- 012-writer-post.event --
+Op: user.grant
+User: writer
+Section: news
+Item: post
+Action: post
+At: 2026-08-03T08:02:00Z
+
+-- 013-writer-see.event --
+Op: user.grant
+User: writer
+Section: news
+Item: post
+Action: see
+At: 2026-08-03T08:03:00Z
+
+-- 014-writer-view.event --
+Op: user.grant
+User: writer
+Section: news
+Item: post
+Action: view
+At: 2026-08-03T08:04:00Z
+
+-- 020-reader.event --
+Op: user.create
+Ref: reader
+Username: news-reader
+Email: news-reader@example.test
+Password: reader-test
+At: 2026-08-03T08:10:00Z
+
+-- 021-enable-reader.event --
+Op: user.enable
+Actor: admin
+User: reader
+At: 2026-08-03T08:11:00Z
+
+-- 022-reader-see.event --
+Op: user.grant
+User: reader
+Section: news
+Item: post
+Action: see
+At: 2026-08-03T08:12:00Z
+
+-- 023-reader-view.event --
+Op: user.grant
+User: reader
+Section: news
+Item: post
+Action: view
+At: 2026-08-03T08:13:00Z
+
+-- 024-reader-reply.event --
+Op: user.grant
+User: reader
+Section: news
+Item: post
+Action: reply
+At: 2026-08-03T08:14:00Z
+
+-- 100-launch.event --
+Op: news.post.create
+Ref: launch
+Actor: writer
+Language: 1
+At: 2026-08-03T09:00:00Z
+
+Goa4Web 2.0 is now available.
+
+-- 110-reader-reply.event --
+Op: news.reply
+Ref: reader-launch-reply
+Actor: reader
+News: launch
+Language: 1
+At: 2026-08-03T10:00:00Z
+
+Congratulations to everyone involved!

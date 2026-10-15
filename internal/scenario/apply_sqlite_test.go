@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"strings"
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/sqlutil"
 	"github.com/arran4/goa4web/migrations"
+	"github.com/arran4/goa4web/testdata/scenarios"
 )
 
 func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
@@ -313,5 +315,83 @@ func TestSeedSQLDoesNotContainPrivateForumGrants(t *testing.T) {
 		if strings.Contains(seed, "privateforum") {
 			t.Errorf("seed SQL for driver %q must not contain privateforum grants", driver)
 		}
+	}
+}
+
+func TestApplyCommittedNewsScenarioWithRealSQLiteDB(t *testing.T) {
+	ctx := context.Background()
+	dbConn, err := sql.Open("sqlite", "file:scenario_news_sqlite_test?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("sql.Open sqlite: %v", err)
+	}
+	t.Cleanup(func() { _ = dbConn.Close() })
+
+	if err := dbstart.Apply(ctx, dbConn, migrations.FS, false, "sqlite3"); err != nil {
+		t.Fatalf("dbstart.Apply: %v", err)
+	}
+	if err := sqlutil.RunStatements(ctx, dbConn, strings.NewReader(string(database.SeedSQLForDriver("sqlite3")))); err != nil {
+		t.Fatalf("run seed SQL: %v", err)
+	}
+	if _, err := dbConn.ExecContext(ctx, `INSERT INTO language (id, nameof) VALUES (1, 'English');`); err != nil {
+		t.Fatalf("insert default language: %v", err)
+	}
+
+	sc, err := ParseFS(scenarios.FS, "200-news/scenario.txtar")
+	if err != nil {
+		t.Fatalf("ParseFS committed news scenario: %v", err)
+	}
+	querier := db.NewForDriver(dbConn, "sqlite3")
+	cd := common.NewCoreData(ctx, querier, &config.RuntimeConfig{DBDriver: "sqlite3"})
+	result, err := NewRunner(cd).Apply(ctx, sc)
+	if err != nil {
+		t.Fatalf("apply committed news scenario: %v", err)
+	}
+	if result.EventsApplied != 12 {
+		t.Errorf("events applied = %d, want 12", result.EventsApplied)
+	}
+
+	readerID, ok := result.Registry.ResolveUser("reader")
+	if !ok {
+		t.Fatal("reader reference was not bound")
+	}
+	newsValue, ok := result.Registry.Resolve(RefTypeNews, "launch")
+	if !ok {
+		t.Fatal("news reference was not bound")
+	}
+	newsID, ok := newsValue.(int32)
+	if !ok {
+		t.Fatalf("news reference type = %T, want int32", newsValue)
+	}
+
+	readerCD := cd.ForUser(readerID)
+	posts, err := readerCD.LatestNewsList(0, 10)
+	if err != nil {
+		t.Fatalf("list news through CoreData: %v", err)
+	}
+	if len(posts) != 1 || posts[0].Idsitenews != newsID {
+		t.Fatalf("listed news = %#v, want post %d", posts, newsID)
+	}
+	post := posts[0]
+	if post.News.String != "Goa4Web 2.0 is now available." || post.LanguageID.Int32 != 1 {
+		t.Errorf("listed post = %#v, want expected text and language", post)
+	}
+	wantPublishedAt := time.Date(2026, time.August, 3, 9, 0, 0, 0, time.UTC)
+	if !post.Occurred.Valid || !post.Occurred.Time.Equal(wantPublishedAt) {
+		t.Errorf("post occurred = %v, want %v", post.Occurred, wantPublishedAt)
+	}
+	if post.ForumthreadID == 0 {
+		t.Fatal("news reply did not create a backing discussion thread")
+	}
+
+	comments, err := readerCD.SectionThreadComments("news", "post", post.ForumthreadID)
+	if err != nil {
+		t.Fatalf("view backing news discussion: %v", err)
+	}
+	if len(comments) != 1 || comments[0].Text.String != "Congratulations to everyone involved!" {
+		t.Fatalf("news discussion comments = %#v", comments)
+	}
+	wantReplyAt := time.Date(2026, time.August, 3, 10, 0, 0, 0, time.UTC)
+	if !comments[0].Written.Valid || !comments[0].Written.Time.Equal(wantReplyAt) {
+		t.Errorf("reply written = %v, want %v", comments[0].Written, wantReplyAt)
 	}
 }

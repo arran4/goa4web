@@ -575,6 +575,7 @@ type Querier interface {
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
+	SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error
 	SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error)
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
 	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int64) (int64, error)

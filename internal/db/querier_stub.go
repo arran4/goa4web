@@ -245,8 +245,10 @@ type QuerierStub struct {
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
 
-	SystemCreateNotificationErr   error
-	SystemCreateNotificationCalls []SystemCreateNotificationParams
+	SystemCreateNotificationErr              error
+	SystemCreateNotificationCalls            []SystemCreateNotificationParams
+	SystemCreateNotificationForActivityErr   error
+	SystemCreateNotificationForActivityCalls []SystemCreateNotificationForActivityParams
 
 	SystemCreateThreadCalls                    []int32
 	SystemCreateThreadReturns                  int64
@@ -2601,6 +2603,19 @@ func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCr
 	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, arg)
 	s.mu.Unlock()
 	return s.SystemCreateNotificationErr
+}
+
+// SystemCreateNotificationForActivity records the activity-keyed notification upsert.
+func (s *QuerierStub) SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error {
+	s.mu.Lock()
+	s.SystemCreateNotificationForActivityCalls = append(s.SystemCreateNotificationForActivityCalls, arg)
+	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, SystemCreateNotificationParams{
+		RecipientID: arg.RecipientID,
+		Link:        arg.Link,
+		Message:     arg.Message,
+	})
+	s.mu.Unlock()
+	return s.SystemCreateNotificationForActivityErr
 }
 
 func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {

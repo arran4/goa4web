@@ -446,6 +446,8 @@ type Notification struct {
 	UsersIdusers int64
 	Link         sql.NullString
 	Message      sql.NullString
+	ActivityKey  sql.NullString
+	Priority     int64
 	CreatedAt    time.Time
 	ReadAt       sql.NullTime
 }

@@ -108,3 +108,25 @@ func TestPrivateAPIPageOffset(t *testing.T) {
 		})
 	}
 }
+
+func TestPrivateAPIPageOffsetEndOverflow(t *testing.T) {
+	// Specifically test the case where start + pageSize could overflow int32/int64
+	// resulting in a negative end if unchecked.
+	start, end, hasMore, err := privateAPIPageOffset("2", math.MaxInt-1, math.MaxInt)
+	if err != nil {
+		t.Fatalf("Unexpected error for end overflow case: %v", err)
+	}
+
+	expectedStart := math.MaxInt - 1
+	expectedEnd := math.MaxInt
+
+	if start != expectedStart {
+		t.Errorf("Expected start %d, got %d", expectedStart, start)
+	}
+	if end != expectedEnd {
+		t.Errorf("Expected end %d, got %d", expectedEnd, end)
+	}
+	if hasMore != false {
+		t.Errorf("Expected hasMore false, got %v", hasMore)
+	}
+}

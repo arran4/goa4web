@@ -127,13 +127,11 @@ func privateAPIPageOffset(pageStr string, pageSize int, collectionLength int) (i
 	}
 
 	start := (page - 1) * pageSize
-	// Avoid overflow on `end` addition. It is already safe since `start < collectionLength` and `pageSize` is bound,
-	// but for explicitness we bound `end` logically.
-	end := start + pageSize
-	hasMore := collectionLength > end
-
-	if end > collectionLength {
-		end = collectionLength
+	end := collectionLength
+	hasMore := false
+	if pageSize < collectionLength-start {
+		end = start + pageSize
+		hasMore = true
 	}
 	return start, end, hasMore, nil
 }

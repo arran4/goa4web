@@ -146,7 +146,7 @@ func TestWorker_BurstReliabilityWithoutJobLoss(t *testing.T) {
 	}()
 	<-ready
 
-	for i := 0; i < burstCount; i++ {
+	for i := range burstCount {
 		task := &countingTask{
 			TaskString: "test:count",
 			id:         i,
@@ -233,7 +233,7 @@ func TestWorker_BoundedConcurrency(t *testing.T) {
 	}()
 	<-ready
 
-	for i := 0; i < taskCount; i++ {
+	for i := range taskCount {
 		task := &concurrencyTask{
 			TaskString:  "test:concurrency",
 			active:      &active,
@@ -326,7 +326,7 @@ func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 	}
 
 	// Publish 5 real BackgroundTasker tasks that enter and sit in the worker's reliable queue
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		err := bus.Publish(eventbus.TaskEvent{
 			Task:    &queuedBgTask{TaskString: "test:queued_bg", id: i},
 			Outcome: eventbus.TaskOutcomeSuccess,
@@ -377,8 +377,7 @@ func TestWorker_FiltersIrrelevantTaskEvents(t *testing.T) {
 	bus := eventbus.NewBus()
 	qs := testhelpers.NewQuerierStub()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	var bgExecuted bool
 	bgDone := make(chan struct{})
@@ -392,7 +391,7 @@ func TestWorker_FiltersIrrelevantTaskEvents(t *testing.T) {
 	<-ready
 
 	// Publish 50 plain tasks (NOT BackgroundTasker)
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		err := bus.Publish(eventbus.TaskEvent{
 			Task:    &plainNonBackgroundTask{TaskString: "plain:task"},
 			Outcome: eventbus.TaskOutcomeSuccess,
@@ -450,8 +449,7 @@ func TestWorker_FollowUpTaskPublishing(t *testing.T) {
 	defer sub.Close()
 	subCh := sub.Channel()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ready := make(chan struct{})
 	go Worker(ctx, bus, qs, nil, WithReady(ready))

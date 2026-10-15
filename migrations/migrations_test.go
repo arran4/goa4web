@@ -184,7 +184,7 @@ func TestMigration0095ExecutesSuccessfully(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read migration: %v", err)
 	}
-	for _, statement := range strings.Split(string(contents), ";") {
+	for statement := range strings.SplitSeq(string(contents), ";") {
 		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Up", ""))
 		if statement == "" {
 			continue
@@ -235,7 +235,7 @@ func TestMigration0099ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("read migration: %v", err)
 	}
 	upSQL, downSQL := migrationSections(string(contents))
-	for _, statement := range strings.Split(upSQL, ";") {
+	for statement := range strings.SplitSeq(upSQL, ";") {
 		if statement = strings.TrimSpace(statement); statement != "" {
 			if _, err := db.Exec(statement); err != nil {
 				t.Fatalf("execute Up statement %q: %v", statement, err)
@@ -251,7 +251,7 @@ func TestMigration0099ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("insert pending action: %v", err)
 	}
 
-	for _, statement := range strings.Split(downSQL, ";") {
+	for statement := range strings.SplitSeq(downSQL, ";") {
 		if statement = strings.TrimSpace(statement); statement != "" {
 			if _, err := db.Exec(statement); err != nil {
 				t.Fatalf("execute Down statement %q: %v", statement, err)
@@ -480,11 +480,11 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 
 	rawSQL := string(contents)
 	upSection := rawSQL
-	if idx := strings.Index(rawSQL, "-- +goose Down"); idx != -1 {
-		upSection = rawSQL[:idx]
+	if before, _, ok := strings.Cut(rawSQL, "-- +goose Down"); ok {
+		upSection = before
 	}
 
-	for _, statement := range strings.Split(upSection, ";") {
+	for statement := range strings.SplitSeq(upSection, ";") {
 		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Up", ""))
 		if statement == "" {
 			continue
@@ -616,7 +616,7 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 	// Test guarded Down rollback with >255-byte URLs
 	downSection := rawSQL[strings.Index(rawSQL, "-- +goose Down"):]
 	guardStmt := ""
-	for _, stmt := range strings.Split(downSection, ";") {
+	for stmt := range strings.SplitSeq(downSection, ";") {
 		stmt = strings.TrimSpace(strings.ReplaceAll(stmt, "-- +goose Down", ""))
 		if strings.Contains(stmt, "@guard") {
 			guardStmt = stmt
@@ -643,7 +643,7 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 		t.Fatalf("delete long urls: %v", err)
 	}
 
-	for _, statement := range strings.Split(downSection, ";") {
+	for statement := range strings.SplitSeq(downSection, ";") {
 		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Down", ""))
 		if statement == "" {
 			continue

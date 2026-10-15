@@ -389,8 +389,11 @@ id INTEGER PRIMARY KEY AUTOINCREMENT,
 users_idusers int NOT NULL,
 link TEXT,
 message TEXT,
+activity_key TEXT,
+priority INTEGER NOT NULL DEFAULT 0,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-read_at DATETIME DEFAULT NULL
+read_at DATETIME DEFAULT NULL,
+UNIQUE (users_idusers, activity_key)
 );
 
 CREATE TABLE IF NOT EXISTS dead_letters (
@@ -714,3 +717,4 @@ CREATE INDEX idx_pending_actions_expires_at ON pending_actions (expires_at);
 CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
 
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);

@@ -905,3 +905,72 @@ func TestRunnerApplyPositiveUserGrant(t *testing.T) {
 		t.Errorf("AdminCreateGrantFn was not called")
 	}
 }
+
+func TestRunnerApplyUserRoleAssignByStableName(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+
+	q := db.New(conn)
+	mock.ExpectQuery("SELECT id, name, can_login").WithArgs("moderator").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "can_login", "is_admin", "private_labels", "public_profile_allowed_at"}).
+			AddRow(7, "moderator", false, false, false, nil))
+	mock.ExpectExec("INSERT INTO user_roles").WithArgs(int32(3), int32(7)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	r := NewRunner(common.NewCoreData(context.Background(), q, config.NewRuntimeConfig()))
+	if err := r.refRegistry.Declare(RefTypeUser, "alice"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.refRegistry.Bind(RefTypeUser, "alice", int32(3)); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.applyUserRoleAssign(context.Background(), &UserRoleAssignData{Actor: "admin", User: "alice", Role: "moderator"}); err != nil {
+		t.Fatalf("apply role assignment: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestRunnerPreflightUserRoleAssignRejectsUnknownRoleBeforeMutation(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+
+	userHeaders := NewHeader()
+	userHeaders.Set("Op", "user.create")
+	userHeaders.Set("Ref", "alice")
+	userHeaders.Set("Username", "alice")
+	userHeaders.Set("Email", "alice@example.com")
+	userHeaders.Set("Password", "password")
+	userHeaders.Set("At", "2026-10-15T12:00:00Z")
+	roleHeaders := NewHeader()
+	roleHeaders.Set("Op", "user.role.assign")
+	roleHeaders.Set("Actor", "admin")
+	roleHeaders.Set("User", "alice")
+	roleHeaders.Set("Role", "missing-role")
+	roleHeaders.Set("At", "2026-10-15T12:01:00Z")
+	at := time.Date(2026, time.October, 15, 12, 0, 0, 0, time.UTC)
+	s := &Scenario{
+		Meta: Meta{Format: FormatV1, Name: "role-preflight", Headers: NewHeader()},
+		Events: []*Event{
+			{Op: "user.create", At: at, Headers: userHeaders, File: "001-user.event"},
+			{Op: "user.role.assign", At: at.Add(time.Minute), Headers: roleHeaders, File: "002-role.event"},
+		},
+	}
+	mock.ExpectQuery("SELECT id, name, can_login").WithArgs("missing-role").WillReturnError(sql.ErrNoRows)
+
+	r := NewRunner(common.NewCoreData(context.Background(), db.New(conn), config.NewRuntimeConfig()))
+	err = r.Preflight(s)
+	if err == nil || !strings.Contains(err.Error(), `role "missing-role" is not available`) {
+		t.Fatalf("expected unknown role preflight error, got %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}

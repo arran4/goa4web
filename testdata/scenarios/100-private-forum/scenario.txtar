@@ -43,6 +43,14 @@ Item: topic
 Action: create
 At: 2026-08-01T09:00:40+10:00
 
+-- 015-alice-image-upload.event --
+Op: user.grant
+User: alice
+Section: images
+Item: upload
+Action: post
+At: 2026-08-01T09:00:50+10:00
+
 -- 020-bob.event --
 Op: user.create
 Ref: bob
@@ -173,6 +181,7 @@ Op: forum.thread.create
 Ref: staff-welcome
 Actor: alice
 Topic: staff-room
+Asset: assets/welcome.jpg
 At: 2026-08-01T09:15:00+10:00
 
 Welcome to the staff room. This conversation is for Alice and Bob.

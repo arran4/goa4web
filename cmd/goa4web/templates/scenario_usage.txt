@@ -25,6 +25,7 @@ Examples:
 
 The representative 100-private-forum scenario creates four loginable users, three
 private conversations with overlapping membership, and real threads and replies.
-Image attachment ingestion is not currently supported.
+Thread creation may include repeated Asset headers pointing to adjacent image files.
+Assets are validated and imported through the normal image upload pipeline.
 
 {{template "flag_groups_section" .FlagGroups}}

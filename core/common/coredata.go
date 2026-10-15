@@ -1170,6 +1170,9 @@ func (cd *CoreData) HTTPClient() *http.Client {
 // Event returns the event associated with the request, if any.
 func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
 
+// EventBus returns the event bus used by this request, if configured.
+func (cd *CoreData) EventBus() *eventbus.Bus { return cd.bus }
+
 // Publish publishes an event to the event bus.
 func (cd *CoreData) Publish(msg eventbus.Message) error {
 	if cd.bus == nil {

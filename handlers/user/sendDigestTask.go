@@ -56,6 +56,7 @@ func (t *SendDigestTask) Action(w http.ResponseWriter, r *http.Request) any {
 		notifications.WithCustomQueries(cd.CustomQueries()),
 		notifications.WithConfig(cd.Config),
 		notifications.WithEmailProvider(ep),
+		notifications.WithBus(cd.EventBus()),
 	)
 
 	preview := t.TaskString == TaskSendDigestPreview

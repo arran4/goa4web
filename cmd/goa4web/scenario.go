@@ -119,12 +119,28 @@ func loadScenarioPath(fsys fs.FS, rawPath string) (*scenario.Scenario, error) {
 	return scenario.ParseFS(fsys, targetPath)
 }
 
+func loadScenarioPaths(fsys fs.FS, paths []string) (*scenario.Scenario, error) {
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("at least one scenario path required")
+	}
+	scenarios := make([]*scenario.Scenario, 0, len(paths))
+	for _, scenarioPath := range paths {
+		sc, err := loadScenarioPath(fsys, scenarioPath)
+		if err != nil {
+			return nil, fmt.Errorf("load scenario %q: %w", scenarioPath, err)
+		}
+		scenarios = append(scenarios, sc)
+	}
+	return scenario.Compose(scenarios...)
+}
+
 // scenarioValidateCmd implements "scenario validate <path>".
 type scenarioValidateCmd struct {
 	*scenarioCmd
-	fs   *flag.FlagSet
-	Path string
-	fsys fs.FS
+	fs    *flag.FlagSet
+	Path  string
+	Paths []string
+	fsys  fs.FS
 }
 
 func parseScenarioValidateCmd(parent *scenarioCmd, args []string) (*scenarioValidateCmd, error) {
@@ -134,8 +150,9 @@ func parseScenarioValidateCmd(parent *scenarioCmd, args []string) (*scenarioVali
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	if len(c.fs.Args()) > 0 {
-		c.Path = c.fs.Arg(0)
+	c.Paths = c.fs.Args()
+	if len(c.Paths) > 0 {
+		c.Path = c.Paths[0]
 	}
 	return c, nil
 }
@@ -146,7 +163,7 @@ func (c *scenarioValidateCmd) Run() error {
 		return fmt.Errorf("scenario path required")
 	}
 
-	sc, err := loadScenarioPath(c.fsys, c.Path)
+	sc, err := loadScenarioPaths(c.fsys, c.Paths)
 	if err != nil {
 		return err
 	}
@@ -174,6 +191,7 @@ type scenarioApplyCmd struct {
 	*scenarioCmd
 	fs      *flag.FlagSet
 	Path    string
+	Paths   []string
 	fsys    fs.FS
 	querier db.Querier
 }
@@ -185,8 +203,9 @@ func parseScenarioApplyCmd(parent *scenarioCmd, args []string) (*scenarioApplyCm
 	if err := c.fs.Parse(args); err != nil {
 		return nil, err
 	}
-	if len(c.fs.Args()) > 0 {
-		c.Path = c.fs.Arg(0)
+	c.Paths = c.fs.Args()
+	if len(c.Paths) > 0 {
+		c.Path = c.Paths[0]
 	}
 	return c, nil
 }
@@ -197,7 +216,7 @@ func (c *scenarioApplyCmd) Run() error {
 		return fmt.Errorf("scenario path required")
 	}
 
-	sc, err := loadScenarioPath(c.fsys, c.Path)
+	sc, err := loadScenarioPaths(c.fsys, c.Paths)
 	if err != nil {
 		return err
 	}

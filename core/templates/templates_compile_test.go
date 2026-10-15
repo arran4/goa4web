@@ -1,15 +1,20 @@
 package templates_test
 
 import (
+	"bytes"
+	"context"
 	"embed"
 	"html/template"
+	"io"
 	"io/fs"
+	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 )
@@ -54,6 +59,24 @@ func TestCompiledSiteTemplatesContainEveryEmbeddedTemplate(t *testing.T) {
 		if compiled.Lookup(name) == nil {
 			t.Errorf("compiled templates are missing %q", name)
 		}
+	}
+}
+
+func TestCompiledSiteTemplatesRenderIncludeViaInjectedRenderer(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	var compiled *template.Template
+	cd := common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig(), common.WithSiteTemplateRenderer(func(_ *common.CoreData, w io.Writer, _ *http.Request, name string, data any) error {
+		return compiled.ExecuteTemplate(w, name, data)
+	}))
+	compiled = templates.GetCompiledSiteTemplates(cd.Funcs(req), templates.WithSilence(true))
+	cd.CustomIndexItems = []common.IndexItem{{TemplateName: "footer"}}
+
+	var rendered bytes.Buffer
+	if err := compiled.ExecuteTemplate(&rendered, "index", cd); err != nil {
+		t.Fatalf("render compiled index template: %v", err)
+	}
+	if !strings.Contains(rendered.String(), "Date and time is now:") {
+		t.Fatalf("included footer was not rendered: %s", rendered.String())
 	}
 }
 

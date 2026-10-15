@@ -73,7 +73,7 @@ const upsertContentReadMarker = `-- name: UpsertContentReadMarker :exec
 INSERT INTO content_read_markers (
     item, item_id, user_id, last_comment_id
 ) VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE last_comment_id = VALUES(last_comment_id)
+ON DUPLICATE KEY UPDATE last_comment_id = GREATEST(last_comment_id, VALUES(last_comment_id))
 `
 
 type UpsertContentReadMarkerParams struct {

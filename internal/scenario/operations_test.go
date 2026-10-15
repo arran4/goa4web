@@ -209,3 +209,30 @@ func TestForumLabelOperations(t *testing.T) {
 		}
 	}
 }
+
+func TestForumThreadReadRequiresCapturedComment(t *testing.T) {
+	op := &ForumThreadReadOp{}
+	headers := NewHeader()
+	headers.Set("Actor", "alice")
+	headers.Set("Thread", "staff-welcome")
+	event := &Event{Headers: headers}
+
+	if _, err := op.Parse(event); err == nil || !strings.Contains(err.Error(), "Comment") {
+		t.Fatalf("expected missing captured comment error, got %v", err)
+	}
+
+	headers.Set("Comment", "bob-welcome-reply")
+	event.Headers = headers
+	data, err := op.Parse(event)
+	if err != nil {
+		t.Fatalf("parse captured position: %v", err)
+	}
+	read, ok := data.(*ForumThreadReadData)
+	if !ok || read.Comment != "bob-welcome-reply" {
+		t.Fatalf("parsed read data = %#v, want captured comment", data)
+	}
+	refs := op.ReferencedSymbols(event)
+	if len(refs) != 3 || refs[2].Type != RefTypePost || refs[2].Symbol != "bob-welcome-reply" {
+		t.Fatalf("referenced symbols = %#v, want post reference", refs)
+	}
+}

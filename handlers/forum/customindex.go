@@ -59,14 +59,22 @@ func ForumCustomIndexItems(cd *common.CoreData, r *http.Request) []common.IndexI
 				Link: fmt.Sprintf("/admin/forum/topics/topic/%s", topicID),
 			})
 		}
-		if hasThreadUnread(cd, threadID) {
+		lastCommentID := int32(0)
+		if tid, err := strconv.Atoi(threadID); err == nil {
+			if comments, err := cd.ThreadComments(int32(tid)); err != nil {
+				log.Printf("fetch thread %d for read marker: %v", tid, err)
+			} else if len(comments) > 0 {
+				lastCommentID = comments[len(comments)-1].Idcomments
+			}
+		}
+		if hasThreadUnread(cd, threadID) && lastCommentID != 0 {
 			items = append(items,
 				common.IndexItem{
 					Name: "Mark as read", Icon: "✔️",
-					Link: markThreadReadLink(base, threadID, r.URL.RequestURI()),
+					Link: markThreadReadLink(base, threadID, r.URL.RequestURI(), lastCommentID),
 				},
 				common.IndexItem{
-					Name: "Mark as read and go back", Icon: "🔙", Link: markThreadReadLink(base, threadID, fmt.Sprintf("%s/topic/%s", base, topicID)),
+					Name: "Mark as read and go back", Icon: "🔙", Link: markThreadReadLink(base, threadID, fmt.Sprintf("%s/topic/%s", base, topicID), lastCommentID),
 				},
 			)
 		}
@@ -178,8 +186,11 @@ func hasThreadUnread(cd *common.CoreData, threadID string) bool {
 	return false
 }
 
-func markThreadReadLink(base, threadID, redirect string) string {
+func markThreadReadLink(base, threadID, redirect string, lastCommentID int32) string {
 	link := fmt.Sprintf("%s/thread/%s/labels?task=%s", base, threadID, url.QueryEscape(string(TaskMarkThreadRead)))
+	if lastCommentID > 0 {
+		link = fmt.Sprintf("%s&last_comment=%d", link, lastCommentID)
+	}
 	if redirect != "" {
 		link = fmt.Sprintf("%s&redirect=%s", link, url.QueryEscape(redirect))
 	}

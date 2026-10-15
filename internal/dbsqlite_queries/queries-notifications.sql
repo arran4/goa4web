@@ -3,12 +3,24 @@ INSERT INTO notifications (users_idusers, link, message)
 VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message));
 
 -- name: SystemCreateNotificationForActivity :exec
-INSERT INTO notifications (users_idusers, link, message, activity_key, priority)
-VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message), sqlc.arg(activity_key), sqlc.arg(priority))
+INSERT INTO notifications (users_idusers, link, message, activity_key, priority, resource_type, resource_id, activity_position, read_at)
+VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message), sqlc.arg(activity_key), sqlc.arg(priority), sqlc.arg(resource_type), sqlc.arg(resource_id), sqlc.arg(activity_position), sqlc.arg(read_at))
 ON CONFLICT(users_idusers, activity_key) DO UPDATE SET
     link = CASE WHEN excluded.priority > notifications.priority THEN excluded.link ELSE notifications.link END,
     message = CASE WHEN excluded.priority > notifications.priority THEN excluded.message ELSE notifications.message END,
-    priority = MAX(notifications.priority, excluded.priority);
+    priority = MAX(notifications.priority, excluded.priority),
+    resource_type = COALESCE(notifications.resource_type, excluded.resource_type),
+    resource_id = COALESCE(notifications.resource_id, excluded.resource_id),
+    activity_position = COALESCE(notifications.activity_position, excluded.activity_position);
+
+-- name: SystemAcknowledgeNotificationsForResource :exec
+UPDATE notifications
+SET read_at = CURRENT_TIMESTAMP
+WHERE users_idusers = sqlc.arg(recipient_id)
+  AND resource_type = sqlc.arg(resource_type)
+  AND resource_id = sqlc.arg(resource_id)
+  AND activity_position <= sqlc.arg(activity_position)
+  AND read_at IS NULL;
 
 -- GetUnreadNotificationCountForLister returns the number of unread notifications for a
 -- lister.

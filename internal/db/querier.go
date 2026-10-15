@@ -550,6 +550,7 @@ type Querier interface {
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
 	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
+	SystemAcknowledgeNotificationsForResource(ctx context.Context, arg SystemAcknowledgeNotificationsForResourceParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
 	SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) error

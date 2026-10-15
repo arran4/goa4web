@@ -31,7 +31,7 @@ func TestNotificationsQueries(t *testing.T) {
 	if c, err := q.GetUnreadNotificationCountForLister(context.Background(), 1); err != nil || c != 1 {
 		t.Fatalf("count=%d err=%v", c, err)
 	}
-	mock.ExpectQuery("SELECT notifications.id, notifications.users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", nil, 0, time.Now(), nil))
+	mock.ExpectQuery("SELECT notifications.id, notifications.users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", nil, 0, nil, nil, nil, time.Now(), nil))
 	if _, err := q.ListUnreadNotificationsForLister(context.Background(), db.ListUnreadNotificationsForListerParams{ListerID: 1, Limit: 10, Offset: 0}); err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -109,7 +109,11 @@ func TestNotifierInitialization(t *testing.T) {
 func TestSendInternalNotificationForEventUsesStableActivityKey(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	n := New(WithQueries(q), WithConfig(config.NewRuntimeConfig()))
-	evt := eventbus.TaskEvent{Task: tasks.TaskString("Reply"), ActivityID: "comment:42"}
+	q.GetContentReadMarkerRow = &db.GetContentReadMarkerRow{LastCommentID: 42}
+	evt := eventbus.TaskEvent{
+		Task: tasks.TaskString("Reply"), ActivityID: "comment:42",
+		ResourceType: "thread", ResourceID: 2, ActivityPosition: 42,
+	}
 
 	if err := n.sendInternalNotificationForEvent(context.Background(), evt, 7, "/forum/topic/1/thread/2#c42", "subscriber message", notificationPrioritySubscriber); err != nil {
 		t.Fatalf("send subscriber contribution: %v", err)
@@ -124,6 +128,12 @@ func TestSendInternalNotificationForEventUsesStableActivityKey(t *testing.T) {
 	first := q.SystemCreateNotificationForActivityCalls[0]
 	if first.ActivityKey.String != "reply:comment:42" || first.Priority != notificationPrioritySubscriber {
 		t.Errorf("subscriber activity upsert = %#v", first)
+	}
+	if first.ResourceType.String != "thread" || first.ResourceID.Int32 != 2 || first.ActivityPosition.Int32 != 42 {
+		t.Errorf("subscriber resource = %#v", first)
+	}
+	if !first.ReadAt.Valid {
+		t.Error("late notification for acknowledged activity was unread")
 	}
 	second := q.SystemCreateNotificationForActivityCalls[1]
 	if second.Priority != notificationPriorityAdmin {

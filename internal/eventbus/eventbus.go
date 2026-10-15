@@ -44,13 +44,16 @@ func (e *Envelope) Ack() {
 
 // TaskEvent represents a task or notification that occurred in the application.
 type TaskEvent struct {
-	Path       string         // Path or URI describing the event source
-	Task       tasks.Task     // Name of the action/task performed
-	UserID     int32          // ID of the user performing the action
-	Time       time.Time      // Time the event occurred
-	ActivityID string         // Stable identity of the activity represented by the event.
-	Data       map[string]any // Optional template data associated with the event
-	Outcome    string         // Outcome describes the result of the task run
+	Path             string         // Path or URI describing the event source
+	Task             tasks.Task     // Name of the action/task performed
+	UserID           int32          // ID of the user performing the action
+	Time             time.Time      // Time the event occurred
+	ActivityID       string         // Stable identity of the activity represented by the event.
+	ResourceType     string         // Stable type of the resource containing the activity.
+	ResourceID       int32          // Stable identifier of the resource containing the activity.
+	ActivityPosition int32          // Monotonic activity position within the resource.
+	Data             map[string]any // Optional template data associated with the event
+	Outcome          string         // Outcome describes the result of the task run
 }
 
 const (

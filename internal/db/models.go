@@ -443,14 +443,17 @@ type LoginAttempt struct {
 }
 
 type Notification struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
+	ID               int32
+	UsersIdusers     int32
+	Link             sql.NullString
+	Message          sql.NullString
+	ActivityKey      sql.NullString
+	Priority         uint8
+	ResourceType     sql.NullString
+	ResourceID       sql.NullInt32
+	ActivityPosition sql.NullInt32
+	CreatedAt        time.Time
+	ReadAt           sql.NullTime
 }
 
 type Password struct {

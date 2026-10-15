@@ -37,6 +37,7 @@ func TestMarkThreadReadTaskRedirect(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/2")
+	form.Set("last_comment", "102")
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
@@ -68,7 +69,9 @@ func TestMarkThreadReadTaskRefererFallback(t *testing.T) {
 	}
 	cd := common.NewCoreData(context.Background(), qs, config.NewRuntimeConfig())
 
-	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", nil)
+	form := url.Values{}
+	form.Set("last_comment", "102")
+	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", "/private/topic/1/thread/1")
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
@@ -145,6 +148,7 @@ func TestSetLabelsTaskUpdatesSpecialLabels(t *testing.T) {
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
 	form.Set("task", string(TaskMarkThreadRead))
+	form.Set("last_comment", "101")
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
@@ -192,6 +196,7 @@ func TestMarkThreadReadTaskRedirectWithThread(t *testing.T) {
 	form := url.Values{}
 	form.Set("redirect", "/private/topic/1/thread/3")
 	form.Set("task", string(TaskMarkThreadRead))
+	form.Set("last_comment", "102")
 	req := httptest.NewRequest(http.MethodPost, "/private/topic/1/thread/1/labels", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -248,9 +253,16 @@ func TestMarkThreadReadTaskExplicitLastComment(t *testing.T) {
 	if marker.LastCommentID != 101 {
 		t.Fatalf("expected explicit LastCommentID to be 101, got %d", marker.LastCommentID)
 	}
+	if len(qs.SystemAcknowledgeNotificationsForResourceCalls) != 1 {
+		t.Fatalf("expected 1 notification acknowledgement, got %d", len(qs.SystemAcknowledgeNotificationsForResourceCalls))
+	}
+	ack := qs.SystemAcknowledgeNotificationsForResourceCalls[0]
+	if !ack.ResourceType.Valid || ack.ResourceType.String != "thread" || !ack.ResourceID.Valid || ack.ResourceID.Int32 != 1 || !ack.ActivityPosition.Valid || ack.ActivityPosition.Int32 != 101 {
+		t.Fatalf("notification acknowledgement = %#v, want thread 1 through comment 101", ack)
+	}
 }
 
-func TestMarkThreadReadTaskFallbackLastComment(t *testing.T) {
+func TestMarkThreadReadTaskRejectsMissingLastComment(t *testing.T) {
 	qs := testhelpers.NewQuerierStub(testhelpers.WithDefaultGrantAllowed(true))
 	qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
 		return &db.GetThreadLastPosterAndPermsForUserRow{
@@ -275,21 +287,11 @@ func TestMarkThreadReadTaskFallbackLastComment(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
-	rdh, ok := res.(handlers.RefreshDirectHandler)
-	if !ok {
-		t.Fatalf("expected RefreshDirectHandler, got %T", res)
+	if res := (MarkThreadReadTask{}).Action(httptest.NewRecorder(), req); res == nil {
+		t.Fatal("expected missing position to fail")
 	}
-	if rdh.TargetURL != "/private/topic/1/thread/2" {
-		t.Fatalf("expected redirect to /private/topic/1/thread/2 got %s", rdh.TargetURL)
-	}
-
-	if len(qs.UpsertContentReadMarkerCalls) != 1 {
-		t.Fatalf("expected 1 UpsertContentReadMarker, got %d", len(qs.UpsertContentReadMarkerCalls))
-	}
-	marker := qs.UpsertContentReadMarkerCalls[0]
-	if marker.LastCommentID != 102 {
-		t.Fatalf("expected fallback LastCommentID to be 102, got %d", marker.LastCommentID)
+	if len(qs.UpsertContentReadMarkerCalls) != 0 {
+		t.Fatalf("expected no read marker, got %d", len(qs.UpsertContentReadMarkerCalls))
 	}
 }
 
@@ -318,20 +320,10 @@ func TestMarkThreadReadTaskInvalidLastComment(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"topic": "1", "thread": "1"})
 	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 
-	res := MarkThreadReadTask{}.Action(httptest.NewRecorder(), req)
-	rdh, ok := res.(handlers.RefreshDirectHandler)
-	if !ok {
-		t.Fatalf("expected RefreshDirectHandler, got %T", res)
+	if res := (MarkThreadReadTask{}).Action(httptest.NewRecorder(), req); res == nil {
+		t.Fatal("expected invalid position to fail")
 	}
-	if rdh.TargetURL != "/private/topic/1/thread/2" {
-		t.Fatalf("expected redirect to /private/topic/1/thread/2 got %s", rdh.TargetURL)
-	}
-
-	if len(qs.UpsertContentReadMarkerCalls) != 1 {
-		t.Fatalf("expected 1 UpsertContentReadMarker, got %d", len(qs.UpsertContentReadMarkerCalls))
-	}
-	marker := qs.UpsertContentReadMarkerCalls[0]
-	if marker.LastCommentID != 102 {
-		t.Fatalf("expected fallback LastCommentID to be 102 for invalid input, got %d", marker.LastCommentID)
+	if len(qs.UpsertContentReadMarkerCalls) != 0 {
+		t.Fatalf("expected no read marker, got %d", len(qs.UpsertContentReadMarkerCalls))
 	}
 }

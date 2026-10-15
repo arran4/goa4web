@@ -57,8 +57,8 @@ func TestNotificationDigestWorker_SendDigest(t *testing.T) {
 	emailAddr := "user@example.com"
 
 	// Expect ListUnreadNotifications
-	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "created_at", "read_at"}).
-		AddRow(1, userID, "/link", "Test Notification", nil, 0, time.Now(), nil)
+	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at"}).
+		AddRow(1, userID, "/link", "Test Notification", nil, 0, nil, nil, nil, time.Now(), nil)
 	mock.ExpectQuery("SELECT notifications.id, notifications.users_idusers").
 		WithArgs(userID, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(rows)

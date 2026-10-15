@@ -59,7 +59,7 @@ func getTopicAndThreadIDForUser(ctx context.Context, t *testing.T, dbConn db.DBT
 	if err != nil {
 		t.Fatalf("query Staff Room topic: %v", err)
 	}
-	err = dbConn.QueryRowContext(ctx, "SELECT forumthread_id FROM comments WHERE text = 'Welcome to the staff room. This conversation is for Alice and Bob.';").Scan(&threadID)
+	err = dbConn.QueryRowContext(ctx, "SELECT forumthread_id FROM comments WHERE text LIKE 'Welcome to the staff room. This conversation is for Alice and Bob.%';").Scan(&threadID)
 	if err != nil {
 		t.Fatalf("query staff-welcome thread via comment: %v", err)
 	}

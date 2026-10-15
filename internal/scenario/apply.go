@@ -3,6 +3,8 @@ package scenario
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"path"
 	"strings"
 
 	"github.com/arran4/goa4web/config"
@@ -103,6 +105,11 @@ func (r *Runner) Preflight(s *Scenario) error {
 	}
 
 	for _, evt := range s.Events {
+		if data, ok := evt.OpData.(*ForumThreadCreateData); ok {
+			if err := preflightImageAssets(s.FS, data.Assets); err != nil {
+				return fmt.Errorf("preflight %s: %w", evt.File, err)
+			}
+		}
 		if !r.supportedOps[evt.Op] {
 			return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 		}
@@ -118,7 +125,7 @@ func (r *Runner) Apply(ctx context.Context, s *Scenario) (*ApplyResult, error) {
 
 	applied := 0
 	for _, evt := range s.Events {
-		if err := r.applyEvent(ctx, evt); err != nil {
+		if err := r.applyEvent(ctx, s.FS, evt); err != nil {
 			return nil, fmt.Errorf("apply event %s (%s): %w", evt.File, evt.Op, err)
 		}
 		applied++
@@ -131,7 +138,7 @@ func (r *Runner) Apply(ctx context.Context, s *Scenario) (*ApplyResult, error) {
 	}, nil
 }
 
-func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
+func (r *Runner) applyEvent(ctx context.Context, assets fs.FS, evt *Event) error {
 	switch evt.Op {
 	case "user.create":
 		data, ok := evt.OpData.(*UserCreateData)
@@ -166,7 +173,7 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 		if !ok {
 			return fmt.Errorf("invalid operation data for forum.thread.create")
 		}
-		return r.applyForumThreadCreate(ctx, data)
+		return r.applyForumThreadCreate(ctx, assets, data)
 
 	case "forum.reply":
 		data, ok := evt.OpData.(*ForumReplyData)
@@ -299,7 +306,7 @@ func (r *Runner) resolveInt32Ref(typ RefType, symbol string) (int32, bool) {
 	}
 }
 
-func (r *Runner) applyForumThreadCreate(ctx context.Context, data *ForumThreadCreateData) error {
+func (r *Runner) applyForumThreadCreate(ctx context.Context, assets fs.FS, data *ForumThreadCreateData) error {
 	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
 	if !ok {
 		return fmt.Errorf("cannot resolve actor %q", data.Actor)
@@ -309,8 +316,12 @@ func (r *Runner) applyForumThreadCreate(ctx context.Context, data *ForumThreadCr
 		return fmt.Errorf("cannot resolve topic %q", data.Topic)
 	}
 	actorCD := r.coreData.ForUser(actorID)
+	text, err := withScenarioImageAssets(assets, actorCD, actorID, data.Body, data.Assets)
+	if err != nil {
+		return fmt.Errorf("store scenario image assets: %w", err)
+	}
 	result, err := actorCD.CreateForumThread(ctx, common.CreateForumThreadParams{
-		ActorID: actorID, TopicID: topicID, Text: data.Body, At: data.At,
+		ActorID: actorID, TopicID: topicID, Text: text, At: data.At,
 		SynchronousSideEffects: true,
 	})
 	if err != nil {
@@ -322,6 +333,55 @@ func (r *Runner) applyForumThreadCreate(ctx context.Context, data *ForumThreadCr
 		}
 	}
 	return nil
+}
+
+func preflightImageAssets(assets fs.FS, assetPaths []string) error {
+	for _, assetPath := range assetPaths {
+		cleanPath, err := ValidateAsset(assets, assetPath)
+		if err != nil {
+			return err
+		}
+		if assets == nil {
+			return fmt.Errorf("asset filesystem is unavailable for %q", cleanPath)
+		}
+		data, err := fs.ReadFile(assets, cleanPath)
+		if err != nil {
+			return fmt.Errorf("read asset %q: %w", cleanPath, err)
+		}
+		if _, err := common.PrepareImageUpload(data, path.Base(cleanPath)); err != nil {
+			return fmt.Errorf("validate image asset %q: %w", cleanPath, err)
+		}
+	}
+	return nil
+}
+
+func withScenarioImageAssets(assets fs.FS, actorCD *common.CoreData, actorID int32, body string, assetPaths []string) (string, error) {
+	if len(assetPaths) == 0 {
+		return body, nil
+	}
+	imageRefs := make([]string, 0, len(assetPaths))
+	for _, assetPath := range assetPaths {
+		cleanPath, err := ValidateAsset(assets, assetPath)
+		if err != nil {
+			return "", err
+		}
+		if assets == nil {
+			return "", fmt.Errorf("asset filesystem is unavailable for %q", cleanPath)
+		}
+		data, err := fs.ReadFile(assets, cleanPath)
+		if err != nil {
+			return "", fmt.Errorf("read asset %q: %w", cleanPath, err)
+		}
+		filename, err := actorCD.StoreUploadedImage(data, path.Base(cleanPath), actorID)
+		if err != nil {
+			return "", fmt.Errorf("upload asset %q: %w", cleanPath, err)
+		}
+		imageRefs = append(imageRefs, "[img=image:"+filename+"]")
+	}
+	if body == "" {
+		return strings.Join(imageRefs, "\n"), nil
+	}
+	return body + "\n\n" + strings.Join(imageRefs, "\n"), nil
 }
 
 func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) error {

@@ -1,13 +1,7 @@
 package images
 
 import (
-	"bytes"
-	"crypto/sha256"
 	"fmt"
-	"image"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
 	"io"
 	"net/http"
 	"strings"
@@ -17,7 +11,6 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/tasks"
 )
 
@@ -58,22 +51,12 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("read file %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	img, _, err := image.Decode(bytes.NewReader(data))
+	prepared, err := common.PrepareImageUpload(data, header.Filename)
 	if err != nil {
-		return fmt.Errorf("decode image %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-
-	hash := sha256.Sum256(data)
-	id := fmt.Sprintf("%x", hash[:20])
-	ext, err := intimages.CleanExtension(header.Filename)
-	if err != nil {
-		return fmt.Errorf("invalid extension %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if !intimages.ValidID(id) {
-		return fmt.Errorf("invalid id %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("bad id")))
+		return fmt.Errorf("invalid image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	uid := cd.UserID
-	fname, err := cd.StoreImage(common.StoreImageParams{ID: id, Ext: ext, Data: data, Image: img, UploaderID: uid})
+	fname, err := cd.StorePreparedImage(prepared, uid)
 	if err != nil {
 		return fmt.Errorf("store image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}

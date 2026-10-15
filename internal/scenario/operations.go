@@ -323,11 +323,12 @@ func (o *PrivateForumCreateOp) Parse(evt *Event) (OperationData, error) {
 
 // ForumThreadCreateData holds the strongly-typed data for forum.thread.create.
 type ForumThreadCreateData struct {
-	Ref   string
-	Actor string
-	Topic string
-	Body  string
-	At    time.Time
+	Ref    string
+	Actor  string
+	Topic  string
+	Assets []string
+	Body   string
+	At     time.Time
 }
 
 func (d *ForumThreadCreateData) Op() string { return "forum.thread.create" }
@@ -338,7 +339,7 @@ type ForumThreadCreateOp struct{}
 func (o *ForumThreadCreateOp) OpName() string { return "forum.thread.create" }
 
 func (o *ForumThreadCreateOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "Topic", "At"}
+	return []string{"Op", "Ref", "Actor", "Topic", "Asset", "At"}
 }
 
 func (o *ForumThreadCreateOp) RequiredHeaders() []string {
@@ -360,7 +361,7 @@ func (o *ForumThreadCreateOp) ReferencedSymbols(evt *Event) []SymbolRef {
 	}
 }
 
-func (o *ForumThreadCreateOp) AssetPaths(evt *Event) []string { return nil }
+func (o *ForumThreadCreateOp) AssetPaths(evt *Event) []string { return evt.Headers.Values("Asset") }
 
 func (o *ForumThreadCreateOp) Parse(evt *Event) (OperationData, error) {
 	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
@@ -373,7 +374,7 @@ func (o *ForumThreadCreateOp) Parse(evt *Event) (OperationData, error) {
 	}
 	return &ForumThreadCreateData{
 		Ref: strings.TrimSpace(evt.Headers.Get("Ref")), Actor: actor, Topic: topic,
-		Body: strings.TrimRight(evt.Body, "\r\n"), At: evt.At,
+		Assets: evt.Headers.Values("Asset"), Body: strings.TrimRight(evt.Body, "\r\n"), At: evt.At,
 	}, nil
 }
 

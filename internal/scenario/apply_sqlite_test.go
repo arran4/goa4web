@@ -3,10 +3,17 @@
 package scenario
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"fmt"
+	"image"
+	"image/color"
+	"image/jpeg"
+	"path"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	_ "modernc.org/sqlite"
 
@@ -17,8 +24,44 @@ import (
 	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/sqlutil"
+	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/migrations"
 )
+
+// scenarioMemoryUploadProviderName identifies the filesystem-free test upload provider.
+const scenarioMemoryUploadProviderName = "scenario-memory-test-upload"
+
+type memoryScenarioUploadProvider struct {
+	files map[string][]byte
+}
+
+func (p *memoryScenarioUploadProvider) Check(context.Context) error { return nil }
+
+func (p *memoryScenarioUploadProvider) Write(_ context.Context, name string, data []byte) error {
+	p.files[name] = bytes.Clone(data)
+	return nil
+}
+
+func (p *memoryScenarioUploadProvider) Read(_ context.Context, name string) ([]byte, error) {
+	data, ok := p.files[name]
+	if !ok {
+		return nil, fmt.Errorf("file %q not found", name)
+	}
+	return bytes.Clone(data), nil
+}
+
+func (p *memoryScenarioUploadProvider) Cleanup(context.Context, int64) error { return nil }
+
+func scenarioJPEG(t *testing.T) []byte {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 4, 3))
+	img.Set(0, 0, color.RGBA{R: 0x20, G: 0x70, B: 0xb0, A: 0xff})
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, nil); err != nil {
+		t.Fatalf("encode scenario JPEG: %v", err)
+	}
+	return buf.Bytes()
+}
 
 func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 	ctx := context.Background()
@@ -48,7 +91,15 @@ func TestApplyScenarioWithRealSQLiteDB(t *testing.T) {
 	}
 
 	querier := db.NewForDriver(dbConn, "sqlite3")
-	cfg := &config.RuntimeConfig{DBDriver: "sqlite3"}
+	uploadProvider := &memoryScenarioUploadProvider{files: make(map[string][]byte)}
+	upload.RegisterProvider(scenarioMemoryUploadProviderName, func(*config.RuntimeConfig) upload.Provider {
+		return uploadProvider
+	})
+	cfg := &config.RuntimeConfig{
+		DBDriver:            "sqlite3",
+		ImageUploadProvider: scenarioMemoryUploadProviderName,
+		ImageCacheProvider:  scenarioMemoryUploadProviderName,
+	}
 	cd := common.NewCoreData(ctx, querier, cfg)
 
 	// Step A: Security boundary verification before scenario apply.
@@ -125,6 +176,14 @@ Item: topic
 Action: create
 At: 2026-08-01T09:01:45Z
 
+-- 025-grant-alice-image-upload.event --
+Op: user.grant
+User: alice
+Section: images
+Item: upload
+Action: post
+At: 2026-08-01T09:01:50Z
+
 -- 03-bob.event --
 Op: user.create
 Ref: bob
@@ -169,6 +228,7 @@ Op: forum.thread.create
 Ref: staff-thread
 Actor: alice
 Topic: staff-room
+Asset: assets/welcome.jpg
 At: 2026-08-01T09:10:00Z
 
 -- 07-grant-alice-append.event --
@@ -181,7 +241,10 @@ Action: append
 At: 2026-08-01T09:15:00Z
 `
 
-	sc, err := Parse([]byte(scenarioTxt), nil)
+	assetData := scenarioJPEG(t)
+	sc, err := Parse([]byte(scenarioTxt), fstest.MapFS{
+		"assets/welcome.jpg": &fstest.MapFile{Data: assetData},
+	})
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
@@ -191,8 +254,8 @@ At: 2026-08-01T09:15:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 12 {
-		t.Errorf("expected 12 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 13 {
+		t.Errorf("expected 13 events applied, got %d", res.EventsApplied)
 	}
 
 	// Step C: Verify that baseline user STILL has no privateforum permissions after scenario apply
@@ -285,6 +348,33 @@ At: 2026-08-01T09:15:00Z
 
 	if !aliceCD.HasGrant("privateforum_thread", "thread", "append", threadID) {
 		t.Errorf("expected Alice to have explicitly granted 'append' permission on thread %d", threadID)
+	}
+
+	prepared, err := common.PrepareImageUpload(assetData, "welcome.jpg")
+	if err != nil {
+		t.Fatalf("prepare expected scenario image: %v", err)
+	}
+	imageName := prepared.ID + prepared.Ext
+	uploadName := path.Join(prepared.ID[:2], prepared.ID[2:4], imageName)
+	if stored, err := uploadProvider.Read(ctx, uploadName); err != nil || !bytes.Equal(stored, assetData) {
+		t.Fatalf("normal upload storage did not retain scenario image: data=%d err=%v", len(stored), err)
+	}
+	if len(uploadProvider.files) < 2 {
+		t.Fatalf("expected original image and generated thumbnail in provider, got %d files", len(uploadProvider.files))
+	}
+	comments, err := querier.GetCommentsByThreadIdForUser(ctx, db.GetCommentsByThreadIdForUserParams{
+		ViewerID: aliceUID,
+		ThreadID: threadID,
+		UserID:   sql.NullInt32{Int32: aliceUID, Valid: true},
+	})
+	if err != nil || len(comments) != 1 {
+		t.Fatalf("load scenario thread comment: comments=%d err=%v", len(comments), err)
+	}
+	if !strings.Contains(comments[0].Text.String, "[img=image:"+imageName+"]") {
+		t.Errorf("thread content does not reference stored image: %q", comments[0].Text.String)
+	}
+	if rendered := aliceCD.MapImageURL("img", "image:"+imageName); !strings.Contains(rendered, "/images/image/"+imageName) {
+		t.Errorf("stored image does not map to normal HTTP image route: %q", rendered)
 	}
 
 	// Verify passwords in real database

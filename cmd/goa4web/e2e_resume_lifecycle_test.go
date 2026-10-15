@@ -289,7 +289,7 @@ func TestResume_ExpiryCleanup(t *testing.T) {
 		loginUserFunc(t, httpServer.URL, "alice", "alice-test", client)
 		form := fetchResumableForm(t, httpServer.URL, client)
 		formHash := hashOpaque(form.nonce)
-		_, err := srv.DB.Exec("UPDATE pending_actions SET expires_at = ? WHERE id = ?", time.Now().Add(-time.Hour), formHash)
+		_, err := srv.DB.Exec("UPDATE pending_actions SET expires_at = ? WHERE id = ?", time.Now().UTC().Add(-time.Hour), formHash)
 		require.NoError(t, err)
 		logoutResp := logoutUserFunc(t, httpServer.URL, form.csrf, client)
 		logoutResp.Body.Close()
@@ -315,7 +315,7 @@ func TestResume_ExpiryCleanup(t *testing.T) {
 		token, _, captureResp := capturePrivateTopic(t, httpServer.URL, client, "expired resume", "")
 		captureResp.Body.Close()
 		tokenHash := hashOpaque(token)
-		_, err := srv.DB.Exec("UPDATE pending_actions SET expires_at = ? WHERE id = ?", time.Now().Add(-time.Hour), tokenHash)
+		_, err := srv.DB.Exec("UPDATE pending_actions SET expires_at = ? WHERE id = ?", time.Now().UTC().Add(-time.Hour), tokenHash)
 		require.NoError(t, err)
 		client.CheckRedirect = nil
 		loginUserFunc(t, httpServer.URL, "alice", "alice-test", client)

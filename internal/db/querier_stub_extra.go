@@ -470,6 +470,30 @@ func (s *QuerierStub) SystemMarkPendingEmailSent(ctx context.Context, id int32) 
 	return err
 }
 
+func (s *QuerierStub) SystemAcknowledgeDigestNotificationsForPendingEmail(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.SystemAcknowledgeDigestNotificationsForPendingEmailCalls = append(s.SystemAcknowledgeDigestNotificationsForPendingEmailCalls, id)
+	fn := s.SystemAcknowledgeDigestNotificationsForPendingEmailFn
+	err := s.SystemAcknowledgeDigestNotificationsForPendingEmailErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
+func (s *QuerierStub) SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error {
+	s.mu.Lock()
+	s.SystemMarkDigestDeliveryAcknowledgedForPendingEmailCalls = append(s.SystemMarkDigestDeliveryAcknowledgedForPendingEmailCalls, id)
+	fn := s.SystemMarkDigestDeliveryAcknowledgedForPendingEmailFn
+	err := s.SystemMarkDigestDeliveryAcknowledgedForPendingEmailErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, id)
+	}
+	return err
+}
+
 func (s *QuerierStub) AdminDeletePendingEmail(ctx context.Context, id int32) error {
 	s.mu.Lock()
 	s.AdminDeletePendingEmailCalls = append(s.AdminDeletePendingEmailCalls, id)

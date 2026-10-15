@@ -550,6 +550,7 @@ type Querier interface {
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
 	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
+	SystemAcknowledgeDigestNotificationsForPendingEmail(ctx context.Context, id int32) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
 	SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) error
@@ -573,6 +574,8 @@ type Querier interface {
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
+	SystemCreateDigestDelivery(ctx context.Context, arg SystemCreateDigestDeliveryParams) (int64, error)
+	SystemCreateDigestDeliveryNotification(ctx context.Context, arg SystemCreateDigestDeliveryNotificationParams) error
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error)
@@ -632,6 +635,7 @@ type Querier interface {
 	SystemIncrementPendingEmailError(ctx context.Context, id int32) error
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
+	SystemInsertDigestPendingEmail(ctx context.Context, arg SystemInsertDigestPendingEmailParams) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
 	SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error
 	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
@@ -653,6 +657,7 @@ type Querier interface {
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error
 	SystemMarkPasswordResetVerified(ctx context.Context, id int32) error
 	SystemMarkPendingEmailSent(ctx context.Context, id int32) error
 	SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error

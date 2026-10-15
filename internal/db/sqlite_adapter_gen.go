@@ -9555,6 +9555,10 @@ func (s *sqliteQuerier) SetVerificationCodeForLister(ctx context.Context, arg Se
 	})
 }
 
+func (s *sqliteQuerier) SystemAcknowledgeDigestNotificationsForPendingEmail(ctx context.Context, id int32) error {
+	return s.q.SystemAcknowledgeDigestNotificationsForPendingEmail(ctx, int64(id))
+}
+
 func (s *sqliteQuerier) SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error {
 	return s.q.SystemAddToBlogsSearch(ctx, dbsqlite.SystemAddToBlogsSearchParams{
 		BlogID:                         int64(arg.BlogID),
@@ -9736,6 +9740,29 @@ func (s *sqliteQuerier) SystemCountRecentLoginAttempts(ctx context.Context, arg 
 		return 0, err
 	}
 	return res, nil
+}
+
+func (s *sqliteQuerier) SystemCreateDigestDelivery(ctx context.Context, arg SystemCreateDigestDeliveryParams) (int64, error) {
+	res, err := s.q.SystemCreateDigestDelivery(ctx, dbsqlite.SystemCreateDigestDeliveryParams{
+		UserID: int64(arg.UserID),
+		DismissNotifications: func(b bool) int64 {
+			if b {
+				return 1
+			}
+			return 0
+		}(arg.DismissNotifications),
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemCreateDigestDeliveryNotification(ctx context.Context, arg SystemCreateDigestDeliveryNotificationParams) error {
+	return s.q.SystemCreateDigestDeliveryNotification(ctx, dbsqlite.SystemCreateDigestDeliveryNotificationParams{
+		DigestDeliveryID: int64(arg.DigestDeliveryID),
+		NotificationID:   int64(arg.NotificationID),
+	})
 }
 
 func (s *sqliteQuerier) SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error) {
@@ -10227,6 +10254,20 @@ func (s *sqliteQuerier) SystemInsertDeadLetter(ctx context.Context, message stri
 	return s.q.SystemInsertDeadLetter(ctx, message)
 }
 
+func (s *sqliteQuerier) SystemInsertDigestPendingEmail(ctx context.Context, arg SystemInsertDigestPendingEmailParams) error {
+	return s.q.SystemInsertDigestPendingEmail(ctx, dbsqlite.SystemInsertDigestPendingEmailParams{
+		ToUserID: sql.NullInt64{Int64: int64(arg.ToUserID.Int32), Valid: arg.ToUserID.Valid},
+		Body:     arg.Body,
+		DirectEmail: func(b bool) int64 {
+			if b {
+				return 1
+			}
+			return 0
+		}(arg.DirectEmail),
+		DigestDeliveryID: sql.NullInt64{Int64: int64(arg.DigestDeliveryID.Int32), Valid: arg.DigestDeliveryID.Valid},
+	})
+}
+
 func (s *sqliteQuerier) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error {
 	return s.q.SystemInsertLoginAttempt(ctx, dbsqlite.SystemInsertLoginAttemptParams{
 		Username:  arg.Username,
@@ -10466,12 +10507,13 @@ func (s *sqliteQuerier) SystemListPendingEmails(ctx context.Context, arg SystemL
 				continue
 			}
 			out[i] = &SystemListPendingEmailsRow{
-				ID:          int32(item.ID),
-				ToUserID:    sql.NullInt32{Int32: int32(item.ToUserID.Int64), Valid: item.ToUserID.Valid},
-				Body:        item.Body,
-				ErrorCount:  int32(item.ErrorCount),
-				DirectEmail: (item.DirectEmail != 0),
-				CreatedAt:   item.CreatedAt,
+				ID:               int32(item.ID),
+				ToUserID:         sql.NullInt32{Int32: int32(item.ToUserID.Int64), Valid: item.ToUserID.Valid},
+				Body:             item.Body,
+				ErrorCount:       int32(item.ErrorCount),
+				DirectEmail:      (item.DirectEmail != 0),
+				CreatedAt:        item.CreatedAt,
+				DigestDeliveryID: sql.NullInt32{Int32: int32(item.DigestDeliveryID.Int64), Valid: item.DigestDeliveryID.Valid},
 			}
 		}
 		return out
@@ -10693,6 +10735,10 @@ func (s *sqliteQuerier) SystemListWritingCategories(ctx context.Context, arg Sys
 		}
 		return out
 	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error {
+	return s.q.SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx, int64(id))
 }
 
 func (s *sqliteQuerier) SystemMarkPasswordResetVerified(ctx context.Context, id int32) error {

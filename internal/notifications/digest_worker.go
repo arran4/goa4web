@@ -257,48 +257,40 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 		DigestTitle:   digestTitle,
 	}
 
-	if err := n.renderAndQueueEmailFromTemplates(ctx, &userID, email, et, data); err != nil {
+	msg, err := n.RenderEmailFromTemplates(ctx, email, et, data)
+	if err != nil {
+		return err
+	}
+	if preview {
+		return n.queueEmail(ctx, &userID, false, msg)
+	}
+	if err := n.queueDigestEmail(ctx, userID, markRead, notifs, msg); err != nil {
 		return err
 	}
 
-	if !preview {
-		now := time.Now().UTC()
-		// Update last sent time based on type
-		switch dtype {
-		case DigestDaily:
-			if err := n.Queries.UpdateLastDigestSentAt(ctx, db.UpdateLastDigestSentAtParams{
-				SentAt:   sql.NullTime{Time: now, Valid: true},
-				ListerID: userID,
-			}); err != nil {
-				log.Printf("UpdateLastDigestSentAt: %v", err)
-			}
-		case DigestWeekly:
-			if err := n.Queries.UpdateLastWeeklyDigestSentAt(ctx, db.UpdateLastWeeklyDigestSentAtParams{
-				SentAt:   sql.NullTime{Time: now, Valid: true},
-				ListerID: userID,
-			}); err != nil {
-				log.Printf("UpdateLastWeeklyDigestSentAt: %v", err)
-			}
-		case DigestMonthly:
-			if err := n.Queries.UpdateLastMonthlyDigestSentAt(ctx, db.UpdateLastMonthlyDigestSentAtParams{
-				SentAt:   sql.NullTime{Time: now, Valid: true},
-				ListerID: userID,
-			}); err != nil {
-				log.Printf("UpdateLastMonthlyDigestSentAt: %v", err)
-			}
+	now := time.Now().UTC()
+	// Update last sent time based on type.
+	switch dtype {
+	case DigestDaily:
+		if err := n.Queries.UpdateLastDigestSentAt(ctx, db.UpdateLastDigestSentAtParams{
+			SentAt:   sql.NullTime{Time: now, Valid: true},
+			ListerID: userID,
+		}); err != nil {
+			log.Printf("UpdateLastDigestSentAt: %v", err)
 		}
-
-		if markRead {
-			ids := make([]int32, len(notifs))
-			for i, n := range notifs {
-				ids[i] = n.ID
-			}
-			if err := n.Queries.SetNotificationsReadForListerBatch(ctx, db.SetNotificationsReadForListerBatchParams{
-				ListerID: userID,
-				Ids:      ids,
-			}); err != nil {
-				log.Printf("Mark read error: %v", err)
-			}
+	case DigestWeekly:
+		if err := n.Queries.UpdateLastWeeklyDigestSentAt(ctx, db.UpdateLastWeeklyDigestSentAtParams{
+			SentAt:   sql.NullTime{Time: now, Valid: true},
+			ListerID: userID,
+		}); err != nil {
+			log.Printf("UpdateLastWeeklyDigestSentAt: %v", err)
+		}
+	case DigestMonthly:
+		if err := n.Queries.UpdateLastMonthlyDigestSentAt(ctx, db.UpdateLastMonthlyDigestSentAtParams{
+			SentAt:   sql.NullTime{Time: now, Valid: true},
+			ListerID: userID,
+		}); err != nil {
+			log.Printf("UpdateLastMonthlyDigestSentAt: %v", err)
 		}
 	}
 	return nil

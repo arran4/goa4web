@@ -39,7 +39,7 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	var usernames []string
-	for _, part := range strings.Split(strings.ReplaceAll(usernamesInput, "\n", ","), ",") {
+	for part := range strings.SplitSeq(strings.ReplaceAll(usernamesInput, "\n", ","), ",") {
 		username := strings.TrimSpace(part)
 		if username != "" {
 			usernames = append(usernames, username)

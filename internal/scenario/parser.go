@@ -190,16 +190,16 @@ func ParseHeadersAndBody(data []byte) (Header, string, error) {
 			continue
 		}
 
-		colonIdx := strings.IndexByte(trimmed, ':')
-		if colonIdx == -1 {
+		before, after, ok := strings.Cut(trimmed, ":")
+		if !ok {
 			return headers, "", fmt.Errorf("line %d: malformed header %q (missing ':')", lineNum, trimmed)
 		}
 
-		key := strings.TrimSpace(trimmed[:colonIdx])
+		key := strings.TrimSpace(before)
 		if key == "" {
 			return headers, "", fmt.Errorf("line %d: empty header key in %q", lineNum, trimmed)
 		}
-		val := strings.TrimSpace(trimmed[colonIdx+1:])
+		val := strings.TrimSpace(after)
 
 		headers.Add(key, val)
 	}

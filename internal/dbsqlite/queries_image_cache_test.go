@@ -68,4 +68,28 @@ func TestImageCacheEntryUpsertsUseSQLiteConflictSyntax(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("insert pending image cache entry: %v", err)
 	}
+
+	threadImage := sql.NullString{String: "/ab/cd/example.jpg", Valid: true}
+	if err := queries.CreateThreadImage(ctx, dbsqlite.CreateThreadImageParams{
+		ThreadID: 42,
+		Path:     threadImage,
+	}); err != nil {
+		t.Fatalf("insert thread image: %v", err)
+	}
+	if err := queries.CreateThreadImage(ctx, dbsqlite.CreateThreadImageParams{
+		ThreadID: 42,
+		Path:     threadImage,
+	}); err != nil {
+		t.Fatalf("repeat thread image insert: %v", err)
+	}
+	paths, err := queries.ListThreadImagePaths(ctx, dbsqlite.ListThreadImagePathsParams{
+		ForumthreadID: 42,
+		Paths:         []sql.NullString{threadImage},
+	})
+	if err != nil {
+		t.Fatalf("list thread image: %v", err)
+	}
+	if len(paths) != 1 || !paths[0].Valid || paths[0].String != threadImage.String {
+		t.Errorf("thread image paths = %#v, want %#v", paths, []sql.NullString{threadImage})
+	}
 }

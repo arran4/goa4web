@@ -4369,7 +4369,8 @@ func (s *sqliteQuerier) CreateSubscriptionArchetype(ctx context.Context, arg Cre
 
 func (s *sqliteQuerier) CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error {
 	return s.q.CreateThreadImage(ctx, dbsqlite.CreateThreadImageParams{
-		Path: arg.Path,
+		ThreadID: int64(arg.ThreadID),
+		Path:     arg.Path,
 	})
 }
 

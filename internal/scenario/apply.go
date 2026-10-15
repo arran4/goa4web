@@ -333,9 +333,16 @@ func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) erro
 	if !ok {
 		return fmt.Errorf("cannot resolve thread %q", data.Thread)
 	}
+	lastDisplayedCommentID := int32(0)
+	if data.LastDisplayedComment != "" {
+		lastDisplayedCommentID, ok = r.resolveInt32Ref(RefTypePost, data.LastDisplayedComment)
+		if !ok {
+			return fmt.Errorf("cannot resolve last displayed comment %q", data.LastDisplayedComment)
+		}
+	}
 	actorCD := r.coreData.ForUser(actorID)
 	result, err := actorCD.ReplyForumThread(ctx, common.ReplyForumThreadParams{
-		ActorID: actorID, ThreadID: threadID, Text: data.Body, At: data.At,
+		ActorID: actorID, ThreadID: threadID, LastDisplayedCommentID: lastDisplayedCommentID, Text: data.Body, At: data.At,
 		SynchronousSideEffects: true,
 	})
 	if err != nil {
@@ -389,12 +396,17 @@ func (r *Runner) applyForumThreadRead(ctx context.Context, data *ForumThreadRead
 	if !ok {
 		return fmt.Errorf("cannot resolve thread %q", data.Thread)
 	}
+	commentID, ok := r.resolveInt32Ref(RefTypePost, data.Comment)
+	if !ok {
+		return fmt.Errorf("cannot resolve comment %q", data.Comment)
+	}
 
 	actorCD := r.coreData.ForUser(actorID)
 
 	err := actorCD.ReadForumThread(ctx, common.ReadForumThreadParams{
-		ActorID:  actorID,
-		ThreadID: threadID,
+		ActorID:       actorID,
+		ThreadID:      threadID,
+		LastCommentID: commentID,
 	})
 	if err != nil {
 		return fmt.Errorf("read forum thread: %w", err)

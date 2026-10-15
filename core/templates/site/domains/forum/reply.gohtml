@@ -35,6 +35,9 @@
                 {{ with $.BasePath }}{{ $base = . }}{{ end }}
                 <form method="post" action="{{$base}}/topic/{{$.Topic.Idforumtopic}}/thread/{{$.Thread.Idforumthread}}/reply">
                     {{ csrfField }}
+                    {{ if gt (len $comments) 0 }}
+                    <input type="hidden" name="last_comment" value="{{ (index $comments (add (len $comments) -1)).Idcomments }}">
+                    {{ end }}
                     {{ template "a4codeControls" dict "TargetID" "reply" }}
                     <textarea id="reply" name="replytext" cols="40" rows="20" data-gallery-target="#gallery-target">{{$.Text}}</textarea><br>
                     {{ template "languageCombobox" }}

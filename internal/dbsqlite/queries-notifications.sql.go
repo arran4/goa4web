@@ -31,7 +31,7 @@ func (q *Queries) AdminDeleteNotificationsByMessage(ctx context.Context, message
 }
 
 const adminGetNotification = `-- name: AdminGetNotification :one
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE id = ?1
 `
@@ -46,6 +46,9 @@ func (q *Queries) AdminGetNotification(ctx context.Context, id int64) (*Notifica
 		&i.Message,
 		&i.ActivityKey,
 		&i.Priority,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.ActivityPosition,
 		&i.CreatedAt,
 		&i.ReadAt,
 	)
@@ -53,7 +56,7 @@ func (q *Queries) AdminGetNotification(ctx context.Context, id int64) (*Notifica
 }
 
 const adminListRecentNotifications = `-- name: AdminListRecentNotifications :many
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 ORDER BY id DESC LIMIT ?1
 `
@@ -74,6 +77,9 @@ func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int64)
 			&i.Message,
 			&i.ActivityKey,
 			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
 			&i.CreatedAt,
 			&i.ReadAt,
 		); err != nil {
@@ -151,7 +157,7 @@ func (q *Queries) GetNotificationCountForLister(ctx context.Context, listerID in
 }
 
 const getNotificationForLister = `-- name: GetNotificationForLister :one
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE id = ?1 AND users_idusers = ?2
 `
@@ -171,6 +177,9 @@ func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificat
 		&i.Message,
 		&i.ActivityKey,
 		&i.Priority,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.ActivityPosition,
 		&i.CreatedAt,
 		&i.ReadAt,
 	)
@@ -195,7 +204,7 @@ func (q *Queries) GetUnreadNotificationCountForLister(ctx context.Context, liste
 }
 
 const listNotificationsForLister = `-- name: ListNotificationsForLister :many
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = ?1
 ORDER BY id DESC
@@ -224,6 +233,9 @@ func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotifi
 			&i.Message,
 			&i.ActivityKey,
 			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
 			&i.CreatedAt,
 			&i.ReadAt,
 		); err != nil {
@@ -241,7 +253,7 @@ func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotifi
 }
 
 const listUnreadNotificationsForLister = `-- name: ListUnreadNotificationsForLister :many
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = ?1 AND read_at IS NULL
 ORDER BY id DESC
@@ -270,6 +282,9 @@ func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg List
 			&i.Message,
 			&i.ActivityKey,
 			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
 			&i.CreatedAt,
 			&i.ReadAt,
 		); err != nil {
@@ -346,6 +361,33 @@ func (q *Queries) SetNotificationsReadForListerBatch(ctx context.Context, arg Se
 	return err
 }
 
+const systemAcknowledgeNotificationsForResource = `-- name: SystemAcknowledgeNotificationsForResource :exec
+UPDATE notifications
+SET read_at = CURRENT_TIMESTAMP
+WHERE users_idusers = ?1
+  AND resource_type = ?2
+  AND resource_id = ?3
+  AND activity_position <= ?4
+  AND read_at IS NULL
+`
+
+type SystemAcknowledgeNotificationsForResourceParams struct {
+	RecipientID      int64
+	ResourceType     sql.NullString
+	ResourceID       sql.NullInt64
+	ActivityPosition sql.NullInt64
+}
+
+func (q *Queries) SystemAcknowledgeNotificationsForResource(ctx context.Context, arg SystemAcknowledgeNotificationsForResourceParams) error {
+	_, err := q.db.ExecContext(ctx, systemAcknowledgeNotificationsForResource,
+		arg.RecipientID,
+		arg.ResourceType,
+		arg.ResourceID,
+		arg.ActivityPosition,
+	)
+	return err
+}
+
 const systemCreateNotification = `-- name: SystemCreateNotification :exec
 INSERT INTO notifications (users_idusers, link, message)
 VALUES (?1, ?2, ?3)
@@ -363,20 +405,27 @@ func (q *Queries) SystemCreateNotification(ctx context.Context, arg SystemCreate
 }
 
 const systemCreateNotificationForActivity = `-- name: SystemCreateNotificationForActivity :exec
-INSERT INTO notifications (users_idusers, link, message, activity_key, priority)
-VALUES (?1, ?2, ?3, ?4, ?5)
+INSERT INTO notifications (users_idusers, link, message, activity_key, priority, resource_type, resource_id, activity_position, read_at)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
 ON CONFLICT(users_idusers, activity_key) DO UPDATE SET
     link = CASE WHEN excluded.priority > notifications.priority THEN excluded.link ELSE notifications.link END,
     message = CASE WHEN excluded.priority > notifications.priority THEN excluded.message ELSE notifications.message END,
-    priority = MAX(notifications.priority, excluded.priority)
+    priority = MAX(notifications.priority, excluded.priority),
+    resource_type = COALESCE(notifications.resource_type, excluded.resource_type),
+    resource_id = COALESCE(notifications.resource_id, excluded.resource_id),
+    activity_position = COALESCE(notifications.activity_position, excluded.activity_position)
 `
 
 type SystemCreateNotificationForActivityParams struct {
-	RecipientID int64
-	Link        sql.NullString
-	Message     sql.NullString
-	ActivityKey sql.NullString
-	Priority    int64
+	RecipientID      int64
+	Link             sql.NullString
+	Message          sql.NullString
+	ActivityKey      sql.NullString
+	Priority         int64
+	ResourceType     sql.NullString
+	ResourceID       sql.NullInt64
+	ActivityPosition sql.NullInt64
+	ReadAt           sql.NullTime
 }
 
 func (q *Queries) SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error {
@@ -386,12 +435,16 @@ func (q *Queries) SystemCreateNotificationForActivity(ctx context.Context, arg S
 		arg.Message,
 		arg.ActivityKey,
 		arg.Priority,
+		arg.ResourceType,
+		arg.ResourceID,
+		arg.ActivityPosition,
+		arg.ReadAt,
 	)
 	return err
 }
 
 const systemGetLastNotificationForRecipientByMessage = `-- name: SystemGetLastNotificationForRecipientByMessage :one
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = ?1 AND message = ?2
 ORDER BY id DESC LIMIT 1
@@ -412,6 +465,9 @@ func (q *Queries) SystemGetLastNotificationForRecipientByMessage(ctx context.Con
 		&i.Message,
 		&i.ActivityKey,
 		&i.Priority,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.ActivityPosition,
 		&i.CreatedAt,
 		&i.ReadAt,
 	)

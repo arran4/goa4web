@@ -85,6 +85,15 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if evt.ActivityID == "" && event.CommentID != 0 {
 			evt.ActivityID = fmt.Sprintf("comment:%d", event.CommentID)
 		}
+		if evt.ResourceType == "" && event.ThreadID != 0 {
+			evt.ResourceType = "thread"
+		}
+		if evt.ResourceID == 0 && event.ThreadID != 0 {
+			evt.ResourceID = event.ThreadID
+		}
+		if evt.ActivityPosition == 0 && event.CommentID != 0 {
+			evt.ActivityPosition = event.CommentID
+		}
 		if _, ok := evt.Data["Time"]; !ok {
 			evt.Data["Time"] = time.Now().UTC()
 		}

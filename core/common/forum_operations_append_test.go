@@ -201,6 +201,37 @@ func TestReplyForumThreadSuccessfulAppendUsesCanonicalTextAndImages(t *testing.T
 	}
 }
 
+func TestReplyForumThreadAcknowledgesOnlyDisplayedActivity(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{}, false)
+	q.CreateCommentInSectionForCommenterFn = func(context.Context, db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		return 300, nil
+	}
+
+	result, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID: forumReplyAppendActorID, ThreadID: forumReplyAppendThreadID,
+		LastDisplayedCommentID: forumReplyAppendCommentID, Text: "reply after displayed activity",
+	})
+	if err != nil {
+		t.Fatalf("ReplyForumThread: %v", err)
+	}
+	if result.CommentID != 300 {
+		t.Fatalf("reply comment ID = %d, want 300", result.CommentID)
+	}
+	if len(q.UpsertContentReadMarkerCalls) != 1 {
+		t.Fatalf("read marker calls = %d, want 1", len(q.UpsertContentReadMarkerCalls))
+	}
+	if got := q.UpsertContentReadMarkerCalls[0].LastCommentID; got != forumReplyAppendCommentID {
+		t.Fatalf("read marker = %d, want displayed comment %d", got, forumReplyAppendCommentID)
+	}
+	if len(q.SystemAcknowledgeNotificationsForResourceCalls) != 1 {
+		t.Fatalf("notification acknowledgement calls = %d, want 1", len(q.SystemAcknowledgeNotificationsForResourceCalls))
+	}
+	ack := q.SystemAcknowledgeNotificationsForResourceCalls[0]
+	if !ack.ResourceType.Valid || ack.ResourceType.String != "thread" || !ack.ResourceID.Valid || ack.ResourceID.Int32 != forumReplyAppendThreadID || !ack.ActivityPosition.Valid || ack.ActivityPosition.Int32 != forumReplyAppendCommentID {
+		t.Fatalf("notification acknowledgement = %#v, want displayed thread activity", ack)
+	}
+}
+
 func TestReplyForumThreadAppendZeroRowsFallsBackToCreate(t *testing.T) {
 	cd, q, evt := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
 	q.AppendCommentInSectionForCommenterFn = func(context.Context, db.AppendCommentInSectionForCommenterParams) (int64, error) {

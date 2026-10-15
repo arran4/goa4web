@@ -45,6 +45,9 @@ func TestHandleThreadUpdatedMarksThreadAndItemLabels(t *testing.T) {
 	if len(queries.UpsertContentReadMarkerCalls) != 1 {
 		t.Fatalf("expected 1 read marker call, got %d", len(queries.UpsertContentReadMarkerCalls))
 	}
+	if evt.ActivityID != "comment:7" || evt.ResourceType != "thread" || evt.ResourceID != 12 || evt.ActivityPosition != 7 {
+		t.Fatalf("event resource metadata = %#v", evt)
+	}
 	if got := queries.UpsertContentReadMarkerCalls[0]; got.Item != "thread" || got.ItemID != 12 {
 		t.Fatalf("unexpected read marker call: %+v", got)
 	}

@@ -126,14 +126,14 @@ func TestScenarioServeCmd_BootstrapAndSameDatabaseInvariant(t *testing.T) {
 		t.Errorf("server DB (%p) does not match bootstrap DB (%p)", srv.DB, dbConn)
 	}
 
-	// 2. Verify schema version is migrated to 100.
+	// 2. Verify schema version is migrated to 101.
 	var currentVersion int64
 	err = dbConn.QueryRowContext(ctx, "SELECT version_id FROM goose_db_version ORDER BY id DESC LIMIT 1;").Scan(&currentVersion)
 	if err != nil {
 		t.Fatalf("query goose_db_version: %v", err)
 	}
-	if currentVersion != 100 {
-		t.Errorf("expected migrated schema version 100, got %d", currentVersion)
+	if currentVersion != 101 {
+		t.Errorf("expected migrated schema version 101, got %d", currentVersion)
 	}
 
 	// 3. Verify language English is seeded

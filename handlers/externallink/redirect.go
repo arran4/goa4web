@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	domainexternallink "github.com/arran4/goa4web/internal/externallink"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
@@ -75,15 +76,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if linkID != 0 {
-				err := cd.UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
-					CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-					CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-					CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-					CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-					CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-					CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-					ID:              linkID,
-				})
+				err := cd.UpdateExternalLinkMetadata(r.Context(), domainexternallink.MetadataParams(linkID, info))
 				if err != nil {
 					log.Printf("UpdateExternalLinkMetadata error: %v", err)
 				}

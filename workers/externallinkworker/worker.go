@@ -82,14 +82,9 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						return nil // Already has title
 					}
 
-					var info *opengraph.Info
-					for i := range 3 {
-						info, err = opengraph.Fetch(canonicalURL, nil)
-						if err == nil {
-							break
-						}
-						time.Sleep(time.Duration(i+1) * 2 * time.Second)
-					}
+					info, err := domainexternallink.FetchMetadata(canonicalURL, func(url string) (*opengraph.Info, error) {
+						return opengraph.Fetch(url, nil)
+					}, time.Sleep)
 					if err != nil {
 						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
 						return nil

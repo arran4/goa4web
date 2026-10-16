@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
@@ -328,4 +329,24 @@ func (cd *CoreData) ApproveUser(userID int32) error {
 		UsersIdusers: userID,
 		Name:         "user",
 	})
+}
+
+// AssignExistingRole assigns a bootstrap-defined role to a user by its stable name.
+func (cd *CoreData) AssignExistingRole(userID int32, roleName string) error {
+	role, err := cd.RoleByName(roleName)
+	if err != nil {
+		return fmt.Errorf("get role %q: %w", roleName, err)
+	}
+	return cd.queries.SystemCreateUserRoleByID(cd.ctx, db.SystemCreateUserRoleByIDParams{
+		UsersIdusers: userID,
+		RoleID:       role.ID,
+	})
+}
+
+// RoleByName returns an existing role by its stable name.
+func (cd *CoreData) RoleByName(roleName string) (*db.Role, error) {
+	if cd == nil || cd.queries == nil {
+		return nil, errors.New("get role by name: no queries")
+	}
+	return cd.queries.GetRoleByName(cd.ctx, roleName)
 }

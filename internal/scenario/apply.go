@@ -65,6 +65,7 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 		supportedOps: map[string]bool{
 			"user.create":          true,
 			"user.enable":          true,
+			"user.role.assign":     true,
 			"user.grant":           true,
 			"private-forum.create": true,
 			"forum.thread.create":  true,
@@ -106,6 +107,11 @@ func (r *Runner) Preflight(s *Scenario) error {
 		if !r.supportedOps[evt.Op] {
 			return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 		}
+		if data, ok := evt.OpData.(*UserRoleAssignData); ok {
+			if _, err := r.coreData.RoleByName(data.Role); err != nil {
+				return fmt.Errorf("preflight %s: role %q is not available: %w", evt.File, data.Role, err)
+			}
+		}
 	}
 	return nil
 }
@@ -146,6 +152,13 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 			return fmt.Errorf("invalid operation data for user.enable")
 		}
 		return r.applyUserEnable(ctx, data)
+
+	case "user.role.assign":
+		data, ok := evt.OpData.(*UserRoleAssignData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for user.role.assign")
+		}
+		return r.applyUserRoleAssign(ctx, data)
 
 	case "user.grant":
 		data, ok := evt.OpData.(*UserGrantData)
@@ -242,6 +255,17 @@ func (r *Runner) applyUserEnable(ctx context.Context, data *UserEnableData) erro
 		return fmt.Errorf("approve user: %w", err)
 	}
 
+	return nil
+}
+
+func (r *Runner) applyUserRoleAssign(ctx context.Context, data *UserRoleAssignData) error {
+	uid, ok := r.refRegistry.ResolveUser(data.User)
+	if !ok {
+		return fmt.Errorf("cannot resolve user %q", data.User)
+	}
+	if err := r.coreData.AssignExistingRole(uid, data.Role); err != nil {
+		return fmt.Errorf("assign role %q to user %q: %w", data.Role, data.User, err)
+	}
 	return nil
 }
 

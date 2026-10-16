@@ -28,6 +28,10 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if roleID == 0 {
 		return fmt.Errorf("role id parse fail %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("")))
 	}
+	role, err := queries.AdminGetRoleByID(r.Context(), roleID)
+	if err != nil {
+		return fmt.Errorf("get role: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}
 
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
@@ -57,10 +61,7 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 			continue
 		}
 
-		if err := queries.SystemCreateUserRoleByID(r.Context(), db.SystemCreateUserRoleByIDParams{
-			UsersIdusers: u.Idusers,
-			RoleID:       roleID,
-		}); err != nil {
+		if err := cd.AssignExistingRole(u.Idusers, role.Name); err != nil {
 			log.Printf("Failed to add user %s to role %d: %v", username, roleID, err)
 			errs = append(errs, fmt.Sprintf("Failed to add user '%s'", username))
 			failedUsernames = append(failedUsernames, username)
@@ -68,11 +69,6 @@ func (RoleUsersAllowTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if len(errs) > 0 {
-		role, err := queries.AdminGetRoleByID(r.Context(), roleID)
-		if err != nil {
-			return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("/admin/role/%d", roleID)}
-		}
-
 		id := roleID
 		emailRows, _ := queries.GetVerifiedUserEmails(r.Context())
 		emailsByUser := make(map[int32][]string)

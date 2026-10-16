@@ -39,6 +39,10 @@ Permissions are grant-based, stored in the `grants` table. A grant matches a req
 
 *Note: `admin` actions exist for specific administrative overrides.*
 
+## Direct Detail Routes
+
+A directly addressable protected detail route must authorize the requested resource identifier using the detail action (normally `view`) and resolve that resource directly. It must not infer access from collection/list results, pagination, recency, search filters, or the listing-only `see` action. Route-level grant checks must run after path variables are populated; use middleware for path-dependent checks rather than a `MatcherFunc`.
+
 ## Configuration
 
 Valid `section` and `item` pairs are defined in `handlers/admin/role_grants.go` (`GrantActionMap`). The UI uses this to enforce valid grants.

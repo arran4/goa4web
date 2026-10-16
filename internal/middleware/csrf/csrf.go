@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"filippo.io/csrf/gorilla"
 
@@ -117,6 +118,17 @@ func NewCSRFMiddleware(secret string, hostname string, version string, intercept
 		})
 		protected := protect(validatedNext)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Bearer credentials are stateless only on the private API route family.
+			// A bearer-looking header on a browser/session route must still pass CSRF.
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(r.URL.Path, "/private/api/") && len(authHeader) > 7 && strings.EqualFold(authHeader[:7], "bearer ") {
+				// Reject whitespace-only tokens to avoid inadvertent bypass with empty credentials
+				if strings.TrimSpace(authHeader[7:]) != "" {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
 			lazy := &lazyCSRF{w: w, r: r}
 			ctx := context.WithValue(r.Context(), contextTokenKey, lazy)
 			protected.ServeHTTP(w, r.WithContext(ctx))

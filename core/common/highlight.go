@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"strings"
 
-	searchutil "github.com/arran4/goa4web/workers/searchworker"
+	searchdomain "github.com/arran4/goa4web/internal/search"
 )
 
 // HighlightSearchTerms returns HTML with searchWords highlighted using <mark>.
@@ -27,9 +27,9 @@ func HighlightSearchTerms(text string, searchWords []string) template.HTML {
 	var b strings.Builder
 	runes := []rune(text)
 	for i := 0; i < len(runes); {
-		if !searchutil.IsAlphanumericOrPunctuation(runes[i]) {
+		if !searchdomain.IsTokenRune(runes[i]) {
 			j := i + 1
-			for j < len(runes) && !searchutil.IsAlphanumericOrPunctuation(runes[j]) {
+			for j < len(runes) && !searchdomain.IsTokenRune(runes[j]) {
 				j++
 			}
 			b.WriteString(html.EscapeString(string(runes[i:j])))
@@ -37,7 +37,7 @@ func HighlightSearchTerms(text string, searchWords []string) template.HTML {
 			continue
 		}
 		j := i + 1
-		for j < len(runes) && searchutil.IsAlphanumericOrPunctuation(runes[j]) {
+		for j < len(runes) && searchdomain.IsTokenRune(runes[j]) {
 			j++
 		}
 		segment := string(runes[i:j])

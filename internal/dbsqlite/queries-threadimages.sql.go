@@ -13,17 +13,21 @@ import (
 
 const createThreadImage = `-- name: CreateThreadImage :exec
 INSERT INTO thread_images (forumthread_id, path, created_at)
-VALUES (?, ?, CURRENT_TIMESTAMP)
-ON CONFLICT (forumthread_id, path) DO NOTHING
+SELECT ?1, ?2, CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+    SELECT 1 FROM thread_images ti
+    WHERE ti.forumthread_id = ?1
+      AND ti.path = ?2
+)
 `
 
 type CreateThreadImageParams struct {
-	ForumthreadID int64
-	Path          sql.NullString
+	ThreadID int64
+	Path     sql.NullString
 }
 
 func (q *Queries) CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error {
-	_, err := q.db.ExecContext(ctx, createThreadImage, arg.ForumthreadID, arg.Path)
+	_, err := q.db.ExecContext(ctx, createThreadImage, arg.ThreadID, arg.Path)
 	return err
 }
 

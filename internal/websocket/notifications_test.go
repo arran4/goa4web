@@ -6,12 +6,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/internal/eventbus"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 )
@@ -77,6 +79,55 @@ func TestNotificationsJSRoute(t *testing.T) {
 	}
 	if rec.Body.Len() == 0 {
 		t.Fatal("empty body")
+	}
+}
+
+func TestLiveEventEnvelopeDoesNotExposeTaskImplementation(t *testing.T) {
+	timestamp := time.Date(2026, time.October, 16, 0, 0, 0, 0, time.UTC)
+	got := liveEventFromTaskEvent(eventbus.TaskEvent{
+		Path:    "/forum/topic/7/thread/42",
+		UserID:  9,
+		Time:    timestamp,
+		Outcome: eventbus.TaskOutcomeSuccess,
+		Data:    map[string]any{"notification": map[string]any{"id": 5}},
+	})
+
+	if got.Kind != LiveEventKindNotification {
+		t.Fatalf("kind = %q, want %q", got.Kind, LiveEventKindNotification)
+	}
+	if got.Path != "/forum/topic/7/thread/42" || got.ActorUserID != 9 || !got.Time.Equal(timestamp) {
+		t.Fatalf("envelope = %#v", got)
+	}
+	if _, ok := got.Data["notification"]; !ok {
+		t.Fatalf("notification data missing from %#v", got.Data)
+	}
+}
+
+func TestLiveEventsJSRoute(t *testing.T) {
+	reg := routerpkg.NewRegistry()
+	mod := NewModule(nil, &config.RuntimeConfig{})
+	mod.Register(reg)
+	r := mux.NewRouter()
+	navReg := nav.NewRegistry()
+	routerpkg.RegisterRoutes(r, reg, &config.RuntimeConfig{}, navReg)
+
+	req := httptest.NewRequest("GET", "http://example.com/websocket/live-events.js", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/javascript" {
+		t.Fatalf("content-type=%q", ct)
+	}
+	if !strings.Contains(rec.Body.String(), "'/ws/events'") {
+		t.Fatalf("live-events asset does not use the generic endpoint: %q", rec.Body.String())
+	}
+
+	match := &mux.RouteMatch{}
+	if !r.Match(httptest.NewRequest(http.MethodGet, "http://example.com/ws/events", nil), match) {
+		t.Fatal("generic live-events endpoint is not registered")
 	}
 }
 

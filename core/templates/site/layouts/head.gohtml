@@ -15,7 +15,7 @@
        <link rel="icon" href="{{ assetHash "/favicon.svg" }}" type="image/svg+xml">
        <meta name="viewport" content="width=device-width, initial-scale=1">
        {{ if cd.HasModule "images" }}               <script src="{{ assetHash "/images/pasteimg.js" }}"></script>               {{ end }}
-       {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled (ne cd.UserID 0) }}               <script src="{{ assetHash "/websocket/notifications.js" }}"></script>               {{ end }}
+       {{ if and (cd.HasModule "websocket") cd.Config.NotificationsEnabled (ne cd.UserID 0) }}               <script src="{{ assetHash "/websocket/live-events.js" }}"></script>               {{ end }}
        <script src="{{ assetHash "/static/site.js" }}"></script>
        {{ if or cd.UserID (eq cd.PageTitle "Login") }}
        <script>

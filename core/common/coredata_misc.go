@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"image"
 	"log"
@@ -28,6 +29,9 @@ type PrivateTopicParticipant struct {
 	ID       int32
 	Username string
 }
+
+// ErrPrivateTopicRequiresParticipant indicates that a private topic has no invitee besides its creator.
+var ErrPrivateTopicRequiresParticipant = errors.New("private topic requires another participant")
 
 // ErrInvalidParticipants indicates that one or more invited participants are ineligible
 // for private forum topics (e.g. they lack global privateforum:topic:see permission).
@@ -92,7 +96,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		}
 	}
 	if !hasOtherMember {
-		return 0, fmt.Errorf("at least one other participant is required")
+		return 0, fmt.Errorf("at least one other participant is required: %w", ErrPrivateTopicRequiresParticipant)
 	}
 
 	var invalidIDs []int32

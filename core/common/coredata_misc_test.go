@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -208,6 +209,34 @@ func TestCreatePrivateTopicRejectsIneligibleParticipants(t *testing.T) {
 		t.Errorf("unexpected invalid usernames: %v", errInvalid.Usernames)
 	}
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+}
+
+func TestCreatePrivateTopicRequiresAnotherParticipantSentinel(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	cd := NewTestCoreData(t, db.New(conn))
+	cd.UserID = 1
+	mock.ExpectQuery("WITH role_ids AS \\(").
+		WithArgs(int32(1), "privateforum", sql.NullString{String: "topic", Valid: true}, "create", sql.NullInt32{}, false, sql.NullInt32{Int32: 1, Valid: true}, false).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+
+	_, err = cd.CreatePrivateTopic(CreatePrivateTopicParams{
+		CreatorID:    1,
+		Participants: []PrivateTopicParticipant{{ID: 1, Username: "creator"}},
+	})
+	if !errors.Is(err, ErrPrivateTopicRequiresParticipant) {
+		t.Fatalf("CreatePrivateTopic error = %v, want ErrPrivateTopicRequiresParticipant", err)
+	}
+	if !errors.Is(fmt.Errorf("create private topic: %w", err), ErrPrivateTopicRequiresParticipant) {
+		t.Fatal("wrapped private-topic validation error lost its sentinel")
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("expectations: %v", err)
 	}

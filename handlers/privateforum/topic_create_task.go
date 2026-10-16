@@ -92,7 +92,7 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			return nil
 		}
-		if strings.Contains(err.Error(), "at least one other participant") {
+		if errors.Is(err, common.ErrPrivateTopicRequiresParticipant) {
 			cd.SetCurrentError("You must invite at least one other member")
 			if err := renderStartGroupDiscussionPage(w, r, &forumhandlers.CreateTopicPageForm{
 				Participants: participantsInput,

@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/arran4/goa4web/internal/configformat"
 )
@@ -12,6 +14,7 @@ type configAsCmd struct {
 	*configCmd
 	fs       *flag.FlagSet
 	extended bool
+	output   io.Writer
 }
 
 func parseConfigAsCmd(parent *configCmd, name string, args []string) (*configAsCmd, error) {
@@ -32,8 +35,7 @@ func (c *configAsCmd) asEnvFile() error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(out)
-	return nil
+	return c.writeOutput(out)
 }
 
 func (c *configAsCmd) asEnv() error {
@@ -41,8 +43,7 @@ func (c *configAsCmd) asEnv() error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(out)
-	return nil
+	return c.writeOutput(out)
 }
 
 func (c *configAsCmd) asJSON() error {
@@ -50,8 +51,7 @@ func (c *configAsCmd) asJSON() error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(out)
-	return nil
+	return c.writeOutput(out)
 }
 
 func (c *configAsCmd) asCLI() error {
@@ -59,6 +59,14 @@ func (c *configAsCmd) asCLI() error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(out)
-	return nil
+	return c.writeOutput(out)
+}
+
+func (c *configAsCmd) writeOutput(output string) error {
+	w := c.output
+	if w == nil {
+		w = os.Stdout
+	}
+	_, err := fmt.Fprint(w, output)
+	return err
 }

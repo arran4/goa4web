@@ -414,6 +414,11 @@ func GetAssetData(filename string) func(opts ...Option) []byte {
 	}
 }
 
+// GetUserSwaggerTemplateData returns the downloadable user API contract template.
+func GetUserSwaggerTemplateData(opts ...Option) []byte {
+	return readFile("site/domains/user/swagger.gohtml", opts...)
+}
+
 var (
 	GetMainCSSData = GetAssetData("main.css")
 	// GetFaviconData returns the site's favicon image.

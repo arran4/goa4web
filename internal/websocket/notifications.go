@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -34,6 +35,39 @@ type NotificationsHandler struct {
 	Bus      *eventbus.Bus      // event source
 	Upgrader websocket.Upgrader // websocket upgrader
 	Config   *config.RuntimeConfig
+}
+
+// Live event kinds identify the browser-visible purpose of an event.
+const (
+	// LiveEventKindNotification identifies a subscription-delivered notification.
+	LiveEventKindNotification = "notification"
+	// LiveEventKindTask identifies a compatibility event without a specialised browser kind.
+	LiveEventKindTask = "task"
+)
+
+// LiveEvent is the transport-neutral browser representation of an application event.
+type LiveEvent struct {
+	Kind        string         `json:"kind"`
+	Path        string         `json:"path,omitempty"`
+	ActorUserID int32          `json:"actor_user_id,omitempty"`
+	Time        time.Time      `json:"time"`
+	Outcome     string         `json:"outcome,omitempty"`
+	Data        map[string]any `json:"data,omitempty"`
+}
+
+func liveEventFromTaskEvent(event eventbus.TaskEvent) LiveEvent {
+	kind := LiveEventKindTask
+	if _, ok := event.Data["notification"]; ok {
+		kind = LiveEventKindNotification
+	}
+	return LiveEvent{
+		Kind:        kind,
+		Path:        event.Path,
+		ActorUserID: event.UserID,
+		Time:        event.Time,
+		Outcome:     event.Outcome,
+		Data:        event.Data,
+	}
 }
 
 // NewModule returns a websocket module using bus for events.
@@ -200,7 +234,11 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				if !allowed {
 					return false
 				}
-				data, _ := json.Marshal(evt)
+				data, marshalErr := json.Marshal(liveEventFromTaskEvent(evt))
+				if marshalErr != nil {
+					log.Printf("marshal live event: %v", marshalErr)
+					return false
+				}
 				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
 					return true
 				}
@@ -218,7 +256,9 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 // registerRoutes attaches the websocket handler to r.
 func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navigation.RouterOptions {
 	h := NewNotificationsHandler(m.Bus, cfg)
+	r.Handle("/ws/events", h).Methods(http.MethodGet)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
+	r.HandleFunc("/websocket/live-events.js", LiveEventsJS(cfg)).Methods(http.MethodGet)
 	r.HandleFunc("/websocket/notifications.js", NotificationsJS(cfg)).Methods(http.MethodGet)
 	return nil
 }

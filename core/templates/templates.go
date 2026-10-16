@@ -497,6 +497,8 @@ var (
 
 	// GetNotificationsJSData returns the JavaScript used for real-time notification updates.
 	GetNotificationsJSData = GetAssetData("notifications.js")
+	// GetLiveEventsJSData returns the JavaScript used for real-time live-event updates.
+	GetLiveEventsJSData = GetAssetData("live-events.js")
 
 	// GetRoleGrantsEditorJSData returns the JavaScript powering the role grants drag-and-drop editor.
 	GetRoleGrantsEditorJSData = GetAssetData("role_grants_editor.js")

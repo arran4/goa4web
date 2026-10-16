@@ -25,6 +25,10 @@ const (
 	DefaultImageThumbnailWidth = 1024
 	// DefaultImageThumbnailHeight is the default thumbnail height bound.
 	DefaultImageThumbnailHeight = 800
+	// DefaultCardImageThumbnailWidth is the default link-card thumbnail width bound.
+	DefaultCardImageThumbnailWidth = 300
+	// DefaultCardImageThumbnailHeight is the default link-card thumbnail height bound.
+	DefaultCardImageThumbnailHeight = 300
 )
 
 // ThumbnailSize represents a thumbnail's maximum width and height.
@@ -36,36 +40,7 @@ type ThumbnailSize struct {
 // ThumbnailSizes returns the allowed thumbnail bounds in default-first width-by-height order.
 func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
 	if c != nil {
-		sizes := make([]ThumbnailSize, 0)
-		seen := make(map[ThumbnailSize]struct{})
-		for value := range strings.SplitSeq(c.ImageThumbnailSizes, ",") {
-			parts := strings.Split(strings.TrimSpace(value), "x")
-			var width, height int
-			switch len(parts) {
-			case 1:
-				// Preserve support for the former square-size configuration.
-				width, _ = strconv.Atoi(strings.TrimSpace(parts[0]))
-				height = width
-			case 2:
-				var heightErr, widthErr error
-				width, widthErr = strconv.Atoi(strings.TrimSpace(parts[0]))
-				height, heightErr = strconv.Atoi(strings.TrimSpace(parts[1]))
-				if heightErr != nil || widthErr != nil {
-					continue
-				}
-			default:
-				continue
-			}
-			if height <= 0 || width <= 0 {
-				continue
-			}
-			size := ThumbnailSize{Width: width, Height: height}
-			if _, ok := seen[size]; ok {
-				continue
-			}
-			seen[size] = struct{}{}
-			sizes = append(sizes, size)
-		}
+		sizes := parseThumbnailSizes(c.ImageThumbnailSizes)
 		if len(sizes) > 0 {
 			return sizes
 		}
@@ -74,6 +49,68 @@ func (c *RuntimeConfig) ThumbnailSizes() []ThumbnailSize {
 		}
 	}
 	return []ThumbnailSize{{Width: DefaultImageThumbnailWidth, Height: DefaultImageThumbnailHeight}}
+}
+
+// CardThumbnailSizes returns link-card thumbnail bounds in default-first order.
+func (c *RuntimeConfig) CardThumbnailSizes() []ThumbnailSize {
+	if c != nil {
+		if sizes := parseThumbnailSizes(c.ImageCardThumbnailSizes); len(sizes) > 0 {
+			return sizes
+		}
+	}
+	return []ThumbnailSize{{Width: DefaultCardImageThumbnailWidth, Height: DefaultCardImageThumbnailHeight}}
+}
+
+// PermittedThumbnailSizes returns all configured derivative bounds, preserving context order.
+func (c *RuntimeConfig) PermittedThumbnailSizes() []ThumbnailSize {
+	sizes := append([]ThumbnailSize{}, c.ThumbnailSizes()...)
+	seen := make(map[ThumbnailSize]struct{}, len(sizes))
+	for _, size := range sizes {
+		seen[size] = struct{}{}
+	}
+	for _, size := range c.CardThumbnailSizes() {
+		if _, ok := seen[size]; ok {
+			continue
+		}
+		seen[size] = struct{}{}
+		sizes = append(sizes, size)
+	}
+	return sizes
+}
+
+// parseThumbnailSizes parses a comma-separated width-by-height list without changing its order.
+func parseThumbnailSizes(valueList string) []ThumbnailSize {
+	sizes := make([]ThumbnailSize, 0)
+	seen := make(map[ThumbnailSize]struct{})
+	for value := range strings.SplitSeq(valueList, ",") {
+		parts := strings.Split(strings.TrimSpace(value), "x")
+		var width, height int
+		switch len(parts) {
+		case 1:
+			// Preserve support for the former square-size configuration.
+			width, _ = strconv.Atoi(strings.TrimSpace(parts[0]))
+			height = width
+		case 2:
+			var heightErr, widthErr error
+			width, widthErr = strconv.Atoi(strings.TrimSpace(parts[0]))
+			height, heightErr = strconv.Atoi(strings.TrimSpace(parts[1]))
+			if heightErr != nil || widthErr != nil {
+				continue
+			}
+		default:
+			continue
+		}
+		if height <= 0 || width <= 0 {
+			continue
+		}
+		size := ThumbnailSize{Width: width, Height: height}
+		if _, ok := seen[size]; ok {
+			continue
+		}
+		seen[size] = struct{}{}
+		sizes = append(sizes, size)
+	}
+	return sizes
 }
 
 // SafeImageDimensions returns the user-selectable resize dimensions from the thumbnail configuration.
@@ -199,7 +236,9 @@ type RuntimeConfig struct {
 	ImageThumbnailSize             int
 	// ImageThumbnailSizes lists allowed thumbnail bounds in default-first width-by-height order.
 	ImageThumbnailSizes string
-	ImageMaxResizeBytes int
+	// ImageCardThumbnailSizes lists link-card thumbnail bounds in default-first width-by-height order.
+	ImageCardThumbnailSizes string
+	ImageMaxResizeBytes     int
 
 	DLQProvider string
 	DLQFile     string

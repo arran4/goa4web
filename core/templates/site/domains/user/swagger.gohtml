@@ -5,9 +5,18 @@ info:
   description: API for Goa4Web Private Forum and Image Gallery
   version: 1.0.0
 servers:
-  - url: {{ .BaseURL }}/api
+  - url: {{ .BaseURL }}
     description: {{ if eq .Version "dev" }}Development{{ else }}Production{{ end }} server
 components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
@@ -17,10 +26,10 @@ security:
   - bearerAuth: []
 
 paths:
-  /privateforum/topics:
+  /private/api/topics:
     get:
       summary: List existing private topics
-      description: Returns a paginated list of private forum topics for the authenticated user.
+      description: Returns a paginated list of private forum topics for the authenticated user. Requires `private_forum:read` scope and domain visibility grants.
       security:
         - bearerAuth: []
       parameters:
@@ -42,13 +51,42 @@ paths:
                     type: array
                     items:
                       type: object
+                      properties:
+                        id:
+                          type: integer
+                        title:
+                          type: string
+                        description:
+                          type: string
+                        participants:
+                          type: array
+                          items:
+                            type: string
+                        total_participants:
+                          type: integer
+                        threads:
+                          type: integer
+                        comments:
+                          type: integer
                   has_more:
                     type: boolean
                   page:
                     type: integer
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Create a new private topic
-      description: Creates a new private topic and invites users.
+      description: Creates a new private topic and invites users. Requires `private_forum:write` scope and `privateforum:topic:create` domain grant.
       security:
         - bearerAuth: []
       requestBody:
@@ -58,15 +96,24 @@ paths:
             schema:
               type: object
               properties:
-                subject:
+                title:
                   type: string
-                  description: Topic subject
-                text:
+                  description: Topic title
+                description:
                   type: string
-                  description: Initial post text
+                  description: Optional topic description
+                participants:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of usernames to invite. Must contain at least one valid user other than the creator.
               required:
-                - subject
-                - text
+                - title
+                - participants
+            encoding:
+              participants:
+                style: form
+                explode: true
       responses:
         '200':
           description: Topic created successfully
@@ -79,11 +126,25 @@ paths:
                     type: string
                   message:
                     type: string
+                  topicID:
+                    type: integer
+        '400':
+          description: Invalid input (e.g., missing title, invalid participants)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (lacks permission to create topic)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /privateforum/topic/{topic}/threads:
+  /private/api/topic/{topic}/threads:
     get:
       summary: List threads in a private topic
-      description: Returns a paginated list of threads for a specific private topic.
+      description: Returns a paginated list of threads for a specific private topic. Requires `private_forum:read` scope and domain visibility grants.
       security:
         - bearerAuth: []
       parameters:
@@ -92,6 +153,8 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
           description: Topic ID
         - in: query
           name: page
@@ -111,15 +174,28 @@ paths:
                     type: array
                     items:
                       type: object
+                      description: Raw SQL-row structure for thread
                   has_more:
                     type: boolean
                   page:
                     type: integer
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Topic not found or inaccessible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /privateforum/topic/{topic}/thread/{thread}:
+  /private/api/topic/{topic}/thread/{thread}:
     get:
       summary: Show comments in a private thread
-      description: Returns a paginated list of comments for a specific private thread.
+      description: Returns a paginated list of comments for a specific private thread. Requires `private_forum:read` scope and domain visibility grants.
       security:
         - bearerAuth: []
       parameters:
@@ -128,12 +204,16 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
           description: Topic ID
         - in: path
           name: thread
           required: true
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
           description: Thread ID
         - in: query
           name: page
@@ -169,11 +249,23 @@ paths:
                     type: boolean
                   page:
                     type: integer
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Thread not found or inaccessible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /privateforum/topic/{topic}/thread/{thread}/reply:
+  /private/api/topic/{topic}/thread/{thread}/reply:
     post:
       summary: Post a comment in a private thread
-      description: Replies to an existing private thread.
+      description: Replies to an existing private thread. Requires `private_forum:write` scope and domain visibility/post grants.
       security:
         - bearerAuth: []
       parameters:
@@ -182,12 +274,16 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
           description: Topic ID
         - in: path
           name: thread
           required: true
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
           description: Thread ID
       requestBody:
         required: true
@@ -211,10 +307,30 @@ paths:
                 properties:
                   status:
                     type: string
-                  message:
+                  thread_id:
+                    type: integer
+                  topic_id:
+                    type: integer
+                  comment_id:
+                    type: integer
+                  url:
                     type: string
+                  appended:
+                    type: boolean
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Thread not found or inaccessible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /images:
+  /api/images:
     get:
       summary: List gallery images
       description: Returns a paginated list of images uploaded by the user.
@@ -251,7 +367,7 @@ paths:
                   page:
                     type: integer
 
-  /images/upload:
+  /api/images/upload:
     post:
       summary: Upload an image
       description: Uploads an image to the user's gallery.

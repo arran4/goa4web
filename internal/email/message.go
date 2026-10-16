@@ -23,8 +23,38 @@ func SetDefaultFromName(addr string) {
 	}
 }
 
+// MessageOptions configures optional RFC-style headers for an email message.
+type MessageOptions struct {
+	AutoSubmitted bool
+	ReplyTo       *mail.Address
+}
+
+// MessageOption configures optional message metadata.
+type MessageOption func(*MessageOptions)
+
+// WithAutoSubmitted marks a message as generated automatically by the application.
+func WithAutoSubmitted() MessageOption {
+	return func(options *MessageOptions) {
+		options.AutoSubmitted = true
+	}
+}
+
+// WithReplyTo sets the address to which recipients should send replies.
+func WithReplyTo(address mail.Address) MessageOption {
+	return func(options *MessageOptions) {
+		options.ReplyTo = &address
+	}
+}
+
 // BuildMessage constructs a MIME email message with optional HTML content.
-func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]byte, error) {
+func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string, opts ...MessageOption) ([]byte, error) {
+	options := MessageOptions{}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&options)
+		}
+	}
+
 	if from.Name == "" {
 		from.Name = DefaultFromName
 	}
@@ -35,6 +65,16 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string) ([]
 	hdr.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	hdr.Set("MIME-Version", "1.0")
 	hdr.Set("Date", time.Now().Format(time.RFC1123Z))
+	if options.AutoSubmitted {
+		hdr.Set("Auto-Submitted", "auto-generated")
+	}
+	if options.ReplyTo != nil {
+		replyTo, err := mail.ParseAddress(options.ReplyTo.String())
+		if err != nil {
+			return nil, fmt.Errorf("parse Reply-To address: %w", err)
+		}
+		hdr.Set("Reply-To", replyTo.String())
+	}
 
 	domain := "localhost"
 	if parts := strings.Split(from.Address, "@"); len(parts) > 1 {

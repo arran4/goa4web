@@ -5,17 +5,14 @@ import (
 	"log"
 
 	"github.com/arran4/goa4web/internal/eventbus"
+	forumdomain "github.com/arran4/goa4web/internal/forum"
 )
 
-// EventKey is the map key used for post count update events.
-const EventKey = "post_count"
+// EventKey is retained as a compatibility alias for the forum event key.
+const EventKey = forumdomain.PostCountEventKey
 
-// UpdateEventData describes which comment, thread and topic counts to refresh.
-type UpdateEventData struct {
-	ThreadID  int32
-	TopicID   int32
-	CommentID int32
-}
+// UpdateEventData is retained as a compatibility alias for the forum contract.
+type UpdateEventData = forumdomain.PostCountUpdate
 
 // Worker listens for post count events and updates the related metadata.
 func Worker(ctx context.Context, bus *eventbus.Bus, q PostUpdateQuerier) {

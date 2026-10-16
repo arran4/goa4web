@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	domainexternallink "github.com/arran4/goa4web/internal/externallink"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
@@ -128,15 +129,9 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						}
 					}
 
-					if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-						CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-						CardDescription: sql.NullString{String: desc, Valid: desc != ""},
-						CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-						CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-						CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-						CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-						ID:              linkID,
-					}); err != nil {
+					metadata := *info
+					metadata.Description = desc
+					if err := q.UpdateExternalLinkMetadata(ctx, domainexternallink.MetadataParams(linkID, &metadata)); err != nil {
 						log.Printf("UpdateExternalLinkMetadata %d: %v", linkID, err)
 					}
 

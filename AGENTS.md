@@ -11,6 +11,18 @@ The `specs/` directory documents the current implementation and architecture. Th
 
 Refer to `specs/query_naming.md` for SQL naming conventions and `specs/permissions.md` for the permissions model.
 
+## Public API contract / OpenAPI
+
+Any change to a public API route, HTTP method, authentication or API-key scope,
+form/query parameter, response DTO key, error/status contract, or pagination
+behaviour must update the OpenAPI contract and its tests in the same PR. Until
+the two entry points are replaced by generated output, keep
+`docs/api/swagger.yaml` and the downloadable
+`core/templates/site/domains/user/swagger.gohtml` in semantic parity; the
+latter is served at `/usr/api-keys/swagger.yaml`. Run `go test ./docs/api` to
+validate both rendered and static documents against the approved route and
+schema contract.
+
 ## Database and migrations
 
 These rules intentionally live at repository scope because a database change often

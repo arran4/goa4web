@@ -2,288 +2,315 @@
 openapi: 3.0.0
 info:
   title: Goa4Web API
-  description: API for Goa4Web Private Forum and Image Gallery
+  description: |
+    Public API for Goa4Web Private Forum and Image Gallery. The downloadable
+    `/usr/api-keys/swagger.yaml` contract is equivalent to this file, except
+    that its server URL is rendered from the deployment BaseURL.
   version: 1.0.0
 servers:
-  - url: {{ .BaseURL }}/api
-    description: {{ if eq .Version "dev" }}Development{{ else }}Production{{ end }} server
+  - url: {{ .BaseURL }}
+    description: {{ if eq .Version "dev" }}Development{{ else }}Production{{ end }} site root
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: API Key
+  parameters:
+    TopicID:
+      in: path
+      name: topic
+      required: true
+      schema: {$ref: '#/components/schemas/PositiveInt32'}
+    ThreadID:
+      in: path
+      name: thread
+      required: true
+      schema: {$ref: '#/components/schemas/PositiveInt32'}
+    PrivatePage:
+      in: query
+      name: page
+      schema: {$ref: '#/components/schemas/Page'}
+      description: Invalid or out-of-int32-range values return 400. Valid pages beyond the final page return an empty array.
+  responses:
+    PrivateBadRequest:
+      description: Invalid private-forum input.
+      content: {application/json: {schema: {$ref: '#/components/schemas/PrivateAPIError'}}}
+    PrivateNotFound:
+      description: Protected resource is missing, inaccessible, or does not match its parent.
+      content: {application/json: {schema: {$ref: '#/components/schemas/PrivateAPIError'}}}
+    PrivateServerError:
+      description: Private-forum request failed without exposing internal details.
+      content: {application/json: {schema: {$ref: '#/components/schemas/PrivateAPIError'}}}
+    Unauthorized:
+      description: Missing or invalid Bearer API key.
+    Forbidden:
+      description: API key lacks the required scope or the owner lacks the required domain grant.
+    ImageBadRequest:
+      description: Invalid image upload. Image API errors are plain-text HTTP errors, not PrivateAPIError JSON.
+    ImageServerError:
+      description: Image operation failed. Image API errors are plain-text HTTP errors, not PrivateAPIError JSON.
+  schemas:
+    PrivateAPIError:
+      type: object
+      required: [status, message]
+      properties:
+        status: {type: string, example: error}
+        message: {type: string, example: resource not found}
+    PositiveInt32:
+      type: integer
+      format: int32
+      minimum: 1
+      maximum: 2147483647
+    Page:
+      type: integer
+      format: int32
+      minimum: 1
+      default: 1
+    Topic:
+      type: object
+      required: [id, title, description, participants, total_participants, threads, comments]
+      properties:
+        id: {$ref: '#/components/schemas/PositiveInt32'}
+        title: {type: string}
+        description: {type: string}
+        participants:
+          type: array
+          items: {type: string}
+        total_participants: {type: integer}
+        threads: {type: integer, format: int32}
+        comments: {type: integer, format: int32}
+    Comment:
+      type: object
+      required: [id, username, text, html, written]
+      properties:
+        id: {$ref: '#/components/schemas/PositiveInt32'}
+        username: {type: string}
+        text: {type: string}
+        html: {type: string}
+        written:
+          type: string
+          description: UTC timestamp formatted as `2006-01-02T15:04:05Z`.
+          example: '2026-10-16T12:34:56Z'
+    Image:
+      type: object
+      required: [id, path, url]
+      properties:
+        id: {$ref: '#/components/schemas/PositiveInt32'}
+        path: {type: string}
+        url: {type: string}
 security:
   - bearerAuth: []
-
 paths:
-  /privateforum/topics:
+  /private/api/topics:
     get:
-      summary: List existing private topics
-      description: Returns a paginated list of private forum topics for the authenticated user.
-      security:
-        - bearerAuth: []
+      summary: List private topics visible to the API-key owner
+      description: API-key scope does not replace the owner's private-topic grants.
+      x-required-scopes: [private_forum:read]
       parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Page number
+        - $ref: '#/components/parameters/PrivatePage'
       responses:
         '200':
-          description: Successful response
+          description: A page of topics. Out-of-range valid pages return an empty array.
           content:
             application/json:
               schema:
                 type: object
+                required: [topics, has_more, page]
                 properties:
                   topics:
                     type: array
-                    items:
-                      type: object
-                  has_more:
-                    type: boolean
-                  page:
-                    type: integer
+                    items: {$ref: '#/components/schemas/Topic'}
+                  has_more: {type: boolean}
+                  page: {$ref: '#/components/schemas/Page'}
+        '400': {$ref: '#/components/responses/PrivateBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '500': {$ref: '#/components/responses/PrivateServerError'}
     post:
-      summary: Create a new private topic
-      description: Creates a new private topic and invites users.
-      security:
-        - bearerAuth: []
+      summary: Create a private topic
+      description: |
+        Requires an eligible participant other than the caller. Repeating
+        `participants` encodes each invited username; the caller is included
+        automatically. The API-key scope does not replace domain grants.
+      x-required-scopes: [private_forum:write]
       requestBody:
         required: true
         content:
           application/x-www-form-urlencoded:
             schema:
               type: object
+              required: [title, participants]
               properties:
-                subject:
-                  type: string
-                  description: Topic subject
-                text:
-                  type: string
-                  description: Initial post text
-              required:
-                - subject
-                - text
+                title: {type: string, minLength: 1, example: Release discussion}
+                description: {type: string, example: Planning notes}
+                participants:
+                  type: array
+                  minItems: 1
+                  items: {type: string, example: alice}
+            encoding:
+              participants: {style: form, explode: true}
       responses:
         '200':
-          description: Topic created successfully
+          description: Topic created.
           content:
             application/json:
               schema:
                 type: object
+                required: [status, message, topicID]
                 properties:
-                  status:
-                    type: string
-                  message:
-                    type: string
-
-  /privateforum/topic/{topic}/threads:
+                  status: {type: string, example: success}
+                  message: {type: string, example: Topic created}
+                  topicID: {$ref: '#/components/schemas/PositiveInt32'}
+        '400': {$ref: '#/components/responses/PrivateBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '500': {$ref: '#/components/responses/PrivateServerError'}
+  /private/api/topic/{topic}/threads:
     get:
-      summary: List threads in a private topic
-      description: Returns a paginated list of threads for a specific private topic.
-      security:
-        - bearerAuth: []
+      summary: List threads in a visible private topic
+      description: Thread objects retain their current database-backed JSON shape; clients must not infer undocumented keys. Inaccessible topics return 404.
+      x-required-scopes: [private_forum:read]
       parameters:
-        - in: path
-          name: topic
-          required: true
-          schema:
-            type: integer
-          description: Topic ID
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Page number
+        - $ref: '#/components/parameters/TopicID'
+        - $ref: '#/components/parameters/PrivatePage'
       responses:
         '200':
-          description: Successful response
+          description: A page of threads. Out-of-range valid pages return an empty array.
           content:
             application/json:
               schema:
                 type: object
+                required: [threads, has_more, page]
                 properties:
-                  threads:
-                    type: array
-                    items:
-                      type: object
-                  has_more:
-                    type: boolean
-                  page:
-                    type: integer
-
-  /privateforum/topic/{topic}/thread/{thread}:
+                  threads: {type: array, items: {type: object}}
+                  has_more: {type: boolean}
+                  page: {$ref: '#/components/schemas/Page'}
+        '400': {$ref: '#/components/responses/PrivateBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/PrivateNotFound'}
+        '500': {$ref: '#/components/responses/PrivateServerError'}
+  /private/api/topic/{topic}/thread/{thread}:
     get:
-      summary: Show comments in a private thread
-      description: Returns a paginated list of comments for a specific private thread.
-      security:
-        - bearerAuth: []
+      summary: List comments in a visible private thread
+      description: Topic/thread mismatches and inaccessible IDs return a non-enumerating 404.
+      x-required-scopes: [private_forum:read]
       parameters:
-        - in: path
-          name: topic
-          required: true
-          schema:
-            type: integer
-          description: Topic ID
-        - in: path
-          name: thread
-          required: true
-          schema:
-            type: integer
-          description: Thread ID
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Page number
+        - $ref: '#/components/parameters/TopicID'
+        - $ref: '#/components/parameters/ThreadID'
+        - $ref: '#/components/parameters/PrivatePage'
       responses:
         '200':
-          description: Successful response
+          description: A page of comments. Out-of-range valid pages return an empty array.
           content:
             application/json:
               schema:
                 type: object
+                required: [comments, has_more, page]
                 properties:
                   comments:
                     type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        username:
-                          type: string
-                        text:
-                          type: string
-                        html:
-                          type: string
-                        written:
-                          type: string
-                          format: date-time
-                  has_more:
-                    type: boolean
-                  page:
-                    type: integer
-
-  /privateforum/topic/{topic}/thread/{thread}/reply:
+                    items: {$ref: '#/components/schemas/Comment'}
+                  has_more: {type: boolean}
+                  page: {$ref: '#/components/schemas/Page'}
+        '400': {$ref: '#/components/responses/PrivateBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/PrivateNotFound'}
+        '500': {$ref: '#/components/responses/PrivateServerError'}
+  /private/api/topic/{topic}/thread/{thread}/reply:
     post:
-      summary: Post a comment in a private thread
-      description: Replies to an existing private thread.
-      security:
-        - bearerAuth: []
+      summary: Post a comment to a visible private thread
+      description: Topic/thread mismatches and inaccessible IDs return a non-enumerating 404.
+      x-required-scopes: [private_forum:write]
       parameters:
-        - in: path
-          name: topic
-          required: true
-          schema:
-            type: integer
-          description: Topic ID
-        - in: path
-          name: thread
-          required: true
-          schema:
-            type: integer
-          description: Thread ID
+        - $ref: '#/components/parameters/TopicID'
+        - $ref: '#/components/parameters/ThreadID'
       requestBody:
         required: true
         content:
           application/x-www-form-urlencoded:
             schema:
               type: object
+              required: [text]
               properties:
-                text:
-                  type: string
-                  description: Comment text
-              required:
-                - text
+                text: {type: string, minLength: 1, example: I agree.}
       responses:
         '200':
-          description: Comment posted successfully
+          description: Comment created.
           content:
             application/json:
               schema:
                 type: object
+                required: [status, thread_id, topic_id, comment_id, url, appended]
                 properties:
-                  status:
-                    type: string
-                  message:
-                    type: string
-
-  /images:
+                  status: {type: string, example: success}
+                  thread_id: {$ref: '#/components/schemas/PositiveInt32'}
+                  topic_id: {$ref: '#/components/schemas/PositiveInt32'}
+                  comment_id: {$ref: '#/components/schemas/PositiveInt32'}
+                  url: {type: string}
+                  appended: {type: boolean}
+        '400': {$ref: '#/components/responses/PrivateBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/PrivateNotFound'}
+        '500': {$ref: '#/components/responses/PrivateServerError'}
+  /images/api:
     get:
-      summary: List gallery images
-      description: Returns a paginated list of images uploaded by the user.
-      security:
-        - bearerAuth: []
+      summary: List gallery images uploaded by the API-key owner
+      x-required-scopes: [images:read]
       parameters:
         - in: query
           name: page
-          schema:
-            type: integer
-            default: 1
-          description: Page number
+          schema: {$ref: '#/components/schemas/Page'}
+          description: Missing, invalid, or non-positive values are normalized to page 1.
       responses:
         '200':
-          description: Successful response
+          description: A page of images. The current server can serialize an empty image list as null.
           content:
             application/json:
               schema:
                 type: object
+                required: [images, has_more, page]
                 properties:
                   images:
                     type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        path:
-                          type: string
-                        url:
-                          type: string
-                  has_more:
-                    type: boolean
-                  page:
-                    type: integer
-
-  /images/upload:
+                    nullable: true
+                    items: {$ref: '#/components/schemas/Image'}
+                  has_more: {type: boolean}
+                  page: {$ref: '#/components/schemas/Page'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '500': {$ref: '#/components/responses/ImageServerError'}
+  /images/api/upload:
     post:
-      summary: Upload an image
-      description: Uploads an image to the user's gallery.
-      security:
-        - bearerAuth: []
+      summary: Upload an image to the API-key owner's gallery
+      x-required-scopes: [images:write]
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required: [image]
               properties:
-                image:
-                  type: string
-                  format: binary
-                  description: Image file to upload
-              required:
-                - image
+                image: {type: string, format: binary}
       responses:
         '200':
-          description: Image uploaded successfully
+          description: Image uploaded.
           content:
             application/json:
               schema:
                 type: object
+                required: [status, message, path, url]
                 properties:
-                  status:
-                    type: string
-                  message:
-                    type: string
-                  path:
-                    type: string
-                  url:
-                    type: string
+                  status: {type: string, example: success}
+                  message: {type: string, example: Image uploaded successfully}
+                  path: {type: string}
+                  url: {type: string}
+        '400': {$ref: '#/components/responses/ImageBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '500': {$ref: '#/components/responses/ImageServerError'}
 {{- end -}}

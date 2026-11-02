@@ -5,7 +5,6 @@ import (
 
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
-	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 func TestHappyPathPrivateTopicCreateTaskAutoSubscribe(t *testing.T) {
@@ -17,11 +16,7 @@ func TestHappyPathPrivateTopicCreateTaskAutoSubscribe(t *testing.T) {
 func TestHappyPathPrivateTopicCreateTaskAutoSubscribePath(t *testing.T) {
 	evt := eventbus.TaskEvent{
 		Data: map[string]any{
-			postcountworker.EventKey: postcountworker.UpdateEventData{
-				ThreadID:  7,
-				TopicID:   88,
-				CommentID: 999,
-			},
+			topicCreateEventKey: topicCreateEventData{TopicID: 88, BasePath: "/private"},
 		},
 		Path: "/private/topic/new",
 	}

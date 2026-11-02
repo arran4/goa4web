@@ -14,13 +14,25 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
 // PrivateTopicCreateTask creates a new private conversation and assigns grants.
 type PrivateTopicCreateTask struct{ tasks.TaskString }
 
 var privateTopicCreateTask = &PrivateTopicCreateTask{TaskString: TaskPrivateTopicCreate}
+
+const (
+	// topicCreateEventKey identifies the structured created-topic event payload.
+	topicCreateEventKey = "privateforum.topic-create"
+)
+
+// topicCreateEventData describes the topic created by PrivateTopicCreateTask.
+// It is intentionally independent of post-count worker data: creating a topic
+// does not create a post-count update.
+type topicCreateEventData struct {
+	TopicID  int32
+	BasePath string
+}
 
 var (
 	_ tasks.Task                  = (*PrivateTopicCreateTask)(nil)
@@ -92,7 +104,8 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 			}
 			return nil
 		}
-		if strings.Contains(err.Error(), "at least one other participant") {
+		var participantRequiredErr common.ErrPrivateTopicParticipantRequired
+		if errors.As(err, &participantRequiredErr) {
 			cd.SetCurrentError("You must invite at least one other member")
 			if err := renderStartGroupDiscussionPage(w, r, &forumhandlers.CreateTopicPageForm{
 				Participants: participantsInput,
@@ -109,18 +122,24 @@ func (PrivateTopicCreateTask) Action(w http.ResponseWriter, r *http.Request) any
 	if base == "" {
 		base = "/forum"
 	}
+	cd.SetEventData(topicCreateEventKey, topicCreateEventData{TopicID: topicID, BasePath: base})
 	return handlers.RefreshDirectHandler{TargetURL: fmt.Sprintf("%s/topic/%d", base, topicID)}
 }
 
 // AutoSubscribePath ensures conversation creators follow replies and future threads.
-// AutoSubscribePath implements notif.AutoSubscribeProvider. When postcountworker
-// context is available it subscribes to the created thread so authors receive
-// updates on subsequent comments.
+// AutoSubscribePath implements notif.AutoSubscribeProvider. It uses the
+// structured topic-create payload so API creation never falls back to its
+// collection endpoint path.
 func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
-	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		base := "/forum"
-		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
-			base = evt.Path[:idx]
+	if data, ok := evt.Data[topicCreateEventKey].(topicCreateEventData); ok {
+		base := data.BasePath
+		if base == "" {
+			base = "/forum"
+		}
+		if data.BasePath == "" {
+			if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
+				base = evt.Path[:idx]
+			}
 		}
 		return string(TaskPrivateTopicCreate), fmt.Sprintf("%s/topic/%d", base, data.TopicID), nil
 	}
@@ -128,7 +147,7 @@ func (PrivateTopicCreateTask) AutoSubscribePath(evt eventbus.TaskEvent) (string,
 }
 
 func (PrivateTopicCreateTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
-	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
+	if data, ok := evt.Data[topicCreateEventKey].(topicCreateEventData); ok {
 		return []notif.GrantRequirement{{Section: consts.PermissionSectionPrivateForum, Item: consts.PermissionItemTopic, ItemID: data.TopicID, Action: consts.PermissionActionView}}, nil
 	}
 	return nil, nil

@@ -570,8 +570,8 @@ func TestPublish_ReliableDeliveryRejectionReturnsError(t *testing.T) {
 	}()
 
 	select {
-	case <-publishErrCh:
-		t.Fatal("publish should block on full reliable buffer")
+	case err := <-publishErrCh:
+		t.Fatalf("publish should block on full reliable buffer; returned early: %v", err)
 	case <-time.After(50 * time.Millisecond):
 	}
 

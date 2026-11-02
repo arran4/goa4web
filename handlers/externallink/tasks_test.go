@@ -235,8 +235,23 @@ func TestExternalLinkBackgroundTask_ExecutesAndPreservesHTTPClient(t *testing.T)
 		if arg.ID != 456 {
 			t.Errorf("expected ID 456, got %d", arg.ID)
 		}
-		if arg.CardTitle.String != "OG Custom Title" {
-			t.Errorf("expected title 'OG Custom Title', got '%s'", arg.CardTitle.String)
+		if arg.CardTitle.String != "OG Custom Title" || !arg.CardTitle.Valid {
+			t.Errorf("expected title 'OG Custom Title', got %#v", arg.CardTitle)
+		}
+		if arg.CardDescription.String != "OG Custom Desc" || !arg.CardDescription.Valid {
+			t.Errorf("expected description 'OG Custom Desc', got %#v", arg.CardDescription)
+		}
+		if arg.CardDuration.String != "PT2M" || !arg.CardDuration.Valid {
+			t.Errorf("expected duration 'PT2M', got %#v", arg.CardDuration)
+		}
+		if arg.CardUploadDate.String != "2026-01-09" || !arg.CardUploadDate.Valid {
+			t.Errorf("expected upload date '2026-01-09', got %#v", arg.CardUploadDate)
+		}
+		if arg.CardAuthor.String != "Custom Author" || !arg.CardAuthor.Valid {
+			t.Errorf("expected author 'Custom Author', got %#v", arg.CardAuthor)
+		}
+		if arg.CardImage.Valid {
+			t.Errorf("expected empty image to remain invalid, got %#v", arg.CardImage)
 		}
 		metadataUpdated = true
 		return nil
@@ -247,8 +262,14 @@ func TestExternalLinkBackgroundTask_ExecutesAndPreservesHTTPClient(t *testing.T)
 		clientCalled = true
 		return &http.Response{
 			StatusCode: 200,
-			Body:       io.NopCloser(strings.NewReader(`<html><head><meta property="og:title" content="OG Custom Title"/><meta property="og:description" content="OG Custom Desc"/></head><body></body></html>`)),
-			Header:     make(http.Header),
+			Body: io.NopCloser(strings.NewReader(`<html><head>
+			<meta property="og:title" content="OG Custom Title"/>
+			<meta property="og:description" content="OG Custom Desc"/>
+			<meta itemprop="duration" content="PT2M"/>
+			<meta itemprop="uploadDate" content="2026-01-09"/>
+			<meta itemprop="author" content="Custom Author"/>
+		</head><body></body></html>`)),
+			Header: make(http.Header),
 		}
 	})
 

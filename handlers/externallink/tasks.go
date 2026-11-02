@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	domainexternallink "github.com/arran4/goa4web/internal/externallink"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
@@ -150,15 +151,7 @@ func processExternalLink(ctx context.Context, q db.Querier, targetURL string) (t
 	}
 
 	if lid != 0 {
-		err := cd.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-			CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-			CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-			CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-			CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-			CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-			CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-			ID:              lid,
-		})
+		err := cd.UpdateExternalLinkMetadata(ctx, domainexternallink.MetadataParams(lid, info))
 		if err != nil {
 			log.Printf("background update error: %v", err)
 			return nil, err

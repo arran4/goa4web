@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -207,17 +208,17 @@ func TestResume_SuccessRestoresOriginalTaskEvent(t *testing.T) {
 	require.NoError(t, srv.DB.QueryRow("SELECT idusers FROM users WHERE username = ?", "alice").Scan(&aliceID))
 	require.Equal(t, aliceID, evt.UserID)
 
+	var topicID int32
+	var title string
+	require.NoError(t, srv.DB.QueryRow("SELECT idforumtopic, title FROM forumtopic WHERE title = ?", "resumed event identity").Scan(&topicID, &title))
+	require.Equal(t, "resumed event identity", title)
+
 	provider, ok := evt.Task.(notif.AutoSubscribeProvider)
 	require.True(t, ok, "resumed task must retain AutoSubscribeProvider behavior")
 	actionName, subscriptionPath, err := provider.AutoSubscribePath(evt)
 	require.NoError(t, err)
 	require.Equal(t, string(privateforumhandlers.TaskPrivateTopicCreate), actionName)
-	require.Equal(t, "/private/topic/new", subscriptionPath)
-
-	var topicID int32
-	var title string
-	require.NoError(t, srv.DB.QueryRow("SELECT idforumtopic, title FROM forumtopic WHERE title = ?", "resumed event identity").Scan(&topicID, &title))
-	require.Equal(t, "resumed event identity", title)
+	require.Equal(t, fmt.Sprintf("/forum/topic/%d", topicID), subscriptionPath)
 	var subscriptionCount int
 	require.NoError(t, srv.DB.QueryRow(
 		"SELECT COUNT(*) FROM subscriptions WHERE pattern = ? AND method = 'internal'",

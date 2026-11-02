@@ -66,19 +66,19 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 
 	// In the 100-private-forum scenario, Alice has:
 	// - staff-welcome (opened by Alice, replied by Bob) -> Unread
-	// - bob-staff-check-in (opened by Bob, replied by Alice) -> Read
+	// - bob-staff-check-in (opened by Bob, replied by Alice without a captured watermark) -> Unread
 	// - coordination-plan (opened by Alice, replied by Carol) -> Unread
-	// So Alice has 2 unread private threads total.
+	// So Alice has 3 unread private threads total.
 
 	countMatches := strings.Count(body, "class=\"thread\"")
-	require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice in unscoped All Unread list. Body: %s", body)
+	require.Equal(t, 3, countMatches, "Expected 3 unread private threads for Alice in unscoped All Unread list. Body: %s", body)
 	require.Contains(t, body, "Welcome to the staff room.", "Expected staff-welcome thread to be present")
 	require.Contains(t, body, "Coordination plan for Alice and Carol", "Expected coordination-plan thread to be present")
-	require.NotContains(t, body, "Bob opening a second Staff Room thread to exercise participant thread creation.", "Expected bob-staff-check-in to NOT be present")
+	require.Contains(t, body, "Bob opening a second Staff Room thread to exercise participant thread creation.", "Expected bob-staff-check-in to remain unread without a captured reply watermark")
 
 	// Verify Private Custom Index
 	body = scenarioHTTPGet(t, client, httpServer.URL+"/private")
-	require.Contains(t, body, "All Unread (2)", "Expected CustomIndex to render All Unread (2)")
+	require.Contains(t, body, "All Unread (3)", "Expected CustomIndex to render All Unread (3)")
 
 	var staffRoomTopicID string
 	var coordinationTopicID string
@@ -94,7 +94,7 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 
 	body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+staffRoomTopicID+"/unread")
 	countMatches = strings.Count(body, "class=\"thread\"")
-	require.Equal(t, 1, countMatches, "Expected 1 unread private thread for Alice in Staff Room topic")
+	require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice in Staff Room topic")
 	require.Contains(t, body, "Welcome to the staff room.", "Expected staff-welcome thread to be present")
 
 	body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+coordinationTopicID+"/unread")
@@ -110,7 +110,7 @@ func TestE2EPrivateForumUnread(t *testing.T) {
 
 	// Verify Unread in Topic links
 	body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+staffRoomTopicID)
-	require.Contains(t, body, "Unread in Topic (1)", "Expected CustomIndex to render Unread in Topic (1) for Staff Room")
+	require.Contains(t, body, "Unread in Topic (2)", "Expected CustomIndex to render Unread in Topic (2) for Staff Room")
 
 	body = scenarioHTTPGet(t, client, httpServer.URL+"/private/topic/"+coordinationTopicID)
 	require.Contains(t, body, "Unread in Topic (1)", "Expected CustomIndex to render Unread in Topic (1) for Coordination")

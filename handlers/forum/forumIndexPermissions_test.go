@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -42,6 +43,12 @@ func TestCustomForumIndexMarkReadLinks(t *testing.T) {
 		testhelpers.WithGrant("forum", "topic", "reply"),
 		testhelpers.WithPrivateLabels(testdata.VisibleThreadLabels(7)),
 	)
+	q.GetCommentsByThreadIdForUserFn = func(_ context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		if arg.ThreadID != 3 {
+			t.Fatalf("thread ID %d, want 3", arg.ThreadID)
+		}
+		return []*db.GetCommentsByThreadIdForUserRow{{Idcomments: 55}}, nil
+	}
 	ctx := req.Context()
 	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserRoles([]string{"user"}))
 	cd.UserID = 7
@@ -55,6 +62,11 @@ func TestCustomForumIndexMarkReadLinks(t *testing.T) {
 	}
 	if len(q.ListContentPrivateLabelsCalls) != 1 {
 		t.Fatalf("expected 1 private label query, got %d", len(q.ListContentPrivateLabelsCalls))
+	}
+	for _, item := range cd.CustomIndexItems {
+		if item.Name == "Mark as read" && !strings.Contains(item.Link, "last_comment=55") {
+			t.Fatalf("mark-as-read link does not capture its displayed position: %q", item.Link)
+		}
 	}
 }
 

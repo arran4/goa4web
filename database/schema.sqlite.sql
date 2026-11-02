@@ -391,10 +391,14 @@ link TEXT,
 message TEXT,
 activity_key TEXT,
 priority INTEGER NOT NULL DEFAULT 0,
+resource_type TEXT,
+resource_id INTEGER,
+activity_position INTEGER,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 read_at DATETIME DEFAULT NULL,
 UNIQUE (users_idusers, activity_key)
 );
+CREATE INDEX notifications_recipient_resource_activity_idx ON notifications (users_idusers, resource_type, resource_id, activity_position);
 
 CREATE TABLE IF NOT EXISTS dead_letters (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -718,3 +722,4 @@ CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
 
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);

@@ -1,12 +1,13 @@
 Usage:
-  {{.Prog}} scenario validate <path>
+  {{.Prog}} scenario validate <path> [<path>...]
 
 Validates that a scenario TXTAR file or directory conforms to the format
 specification, has valid timestamps and references, and that all adjacent
 asset files exist without directory traversal escapes.
 
 Arguments:
-  <path>    Path to a .txtar scenario file or scenario directory.
+  <path>    Path to a .txtar scenario file or scenario directory. Multiple paths are
+            validated as one explicitly ordered composition.
 
 Examples:
   # Validate a scenario TXTAR file

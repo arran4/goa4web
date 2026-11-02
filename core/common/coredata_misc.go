@@ -36,6 +36,14 @@ type ErrInvalidParticipants struct {
 	Usernames []string
 }
 
+// ErrPrivateTopicParticipantRequired reports an attempt to create a private
+// topic without inviting someone other than its creator.
+type ErrPrivateTopicParticipantRequired struct{}
+
+func (ErrPrivateTopicParticipantRequired) Error() string {
+	return "at least one other participant is required"
+}
+
 func (e *ErrInvalidParticipants) Error() string {
 	if len(e.Usernames) > 0 {
 		return fmt.Sprintf("ineligible participants: %s", strings.Join(e.Usernames, ", "))
@@ -56,18 +64,34 @@ func (cd *CoreData) CanSeePrivateForum(userID int32) bool {
 	return userCD.HasGrant("privateforum", "topic", "see", 0)
 }
 
+// CheckPrivateTopicCreatePermission evaluates whether the specified user has permission
+// to create a new private forum topic. This logic must be applied prior to processing
+// dependent side-effects or leaking information about participant username existence.
+func (cd *CoreData) CheckPrivateTopicCreatePermission(creatorID int32) error {
+	actorCD := cd
+	if creatorID != 0 && cd.UserID != creatorID {
+		actorCD = cd.ForUser(creatorID)
+	}
+	if !actorCD.HasGrant("privateforum", "topic", "create", 0) {
+		log.Printf("private topic create denied: user=%d", creatorID)
+		return ForumOperationForbiddenError{Action: "private topic creation"}
+	}
+	return nil
+}
+
 // CreatePrivateTopic creates a new private topic and assigns grants and subscriptions.
 func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int32, err error) {
 	if cd == nil || cd.queries == nil {
 		return 0, fmt.Errorf("no queries")
 	}
+
+	if err := cd.CheckPrivateTopicCreatePermission(p.CreatorID); err != nil {
+		return 0, err
+	}
+
 	actorCD := cd
 	if p.CreatorID != 0 && cd.UserID != p.CreatorID {
 		actorCD = cd.ForUser(p.CreatorID)
-	}
-	if !actorCD.HasGrant("privateforum", "topic", "create", 0) {
-		log.Printf("private topic create denied: user=%d", p.CreatorID)
-		return 0, fmt.Errorf("permission denied")
 	}
 
 	participants := p.Participants
@@ -92,7 +116,7 @@ func (cd *CoreData) CreatePrivateTopic(p CreatePrivateTopicParams) (topicID int3
 		}
 	}
 	if !hasOtherMember {
-		return 0, fmt.Errorf("at least one other participant is required")
+		return 0, ErrPrivateTopicParticipantRequired{}
 	}
 
 	var invalidIDs []int32

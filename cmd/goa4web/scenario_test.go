@@ -169,6 +169,46 @@ At: 2026-08-01T09:05:00Z
 	}
 }
 
+func TestScenarioValidateCmd_ComposesOrderedPaths(t *testing.T) {
+	fsys := fstest.MapFS{
+		"scenarios/base/scenario.txtar": &fstest.MapFile{Data: []byte(`-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: base
+
+-- 010-user.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: alice-pass
+At: 2026-08-01T09:00:00Z
+`)},
+		"scenarios/feature/scenario.txtar": &fstest.MapFile{Data: []byte(`-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: feature
+
+-- 010-enable.event --
+Op: user.enable
+Actor: admin
+User: alice
+At: 2026-08-01T09:01:00Z
+`)},
+	}
+	root := &rootCmd{fs: flag.NewFlagSet("goa4web", flag.ContinueOnError)}
+	parent, err := parseScenarioCmd(root, []string{"validate"})
+	if err != nil {
+		t.Fatalf("parseScenarioCmd: %v", err)
+	}
+	cmd, err := parseScenarioValidateCmd(parent, []string{"scenarios/base", "scenarios/feature"})
+	if err != nil {
+		t.Fatalf("parseScenarioValidateCmd: %v", err)
+	}
+	cmd.fsys = fsys
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("validate composed scenarios: %v", err)
+	}
+}
+
 func TestScenarioApplyCmd_InjectedFS(t *testing.T) {
 	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	if err != nil {

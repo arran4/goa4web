@@ -1,5 +1,5 @@
 Usage:
-  {{.Prog}} scenario serve <path>
+  {{.Prog}} scenario serve <path> [<path>...]
 
 Creates an isolated, disposable SQLite environment from the requested scenario and starts
 the normal Goa4Web HTTP server. The command applies migrations, normal SQLite seed data,
@@ -11,11 +11,15 @@ three overlapping private conversations. Its seeded threads and replies are suit
 for manual permission-isolation testing as well as a quick product preview.
 
 Arguments:
-  <path>    Path to a .txtar scenario file or scenario directory.
+  <path>    Path to a .txtar scenario file or scenario directory. Multiple paths are
+            composed in command-line order with shared symbolic references.
 
 Examples:
   # Serve an ephemeral environment from a scenario directory
   {{.Prog}} scenario serve testdata/scenarios/100-private-forum
+
+  # Compose ordered scenario directories in one disposable environment
+  {{.Prog}} scenario serve testdata/scenarios/000-base-users testdata/scenarios/100-private-forum
 
   # From a source checkout without building a binary first
   go run -tags sqlite ./cmd/goa4web scenario serve testdata/scenarios/100-private-forum

@@ -63,6 +63,44 @@ func TestRenderEmailFromTemplatesAutomaticMetadata(t *testing.T) {
 	if got := automaticMessage.Header.Get("Auto-Submitted"); got != "auto-generated" {
 		t.Errorf("automatic Auto-Submitted=%q, want auto-generated", got)
 	}
+	if got := automaticMessage.Header.Get("List-Unsubscribe"); got != "" {
+		t.Errorf("automatic List-Unsubscribe=%q, want empty outside subscription delivery", got)
+	}
+
+	subscriberConfig := config.NewRuntimeConfig()
+	subscriberConfig.EmailFrom = "from@example.com"
+	subscriberConfig.BaseURL = "https://example.com"
+	subscriberNotifier := New(WithConfig(subscriberConfig))
+	subscriber, err := subscriberNotifier.RenderEmailFromTemplates(context.Background(), "to@example.com", &EmailTemplates{}, nil, WithAutomaticDelivery(), WithSubscriptionDelivery())
+	if err != nil {
+		t.Fatalf("render subscription email: %v", err)
+	}
+	subscriberMessage, err := mail.ReadMessage(bytes.NewReader(subscriber))
+	if err != nil {
+		t.Fatalf("read subscription email: %v", err)
+	}
+	if got := subscriberMessage.Header.Get("List-Unsubscribe"); got != "<https://example.com/usr/subscriptions>" {
+		t.Errorf("List-Unsubscribe=%q, want authenticated subscription-management URL", got)
+	}
+	if got := subscriberMessage.Header.Get("List-Unsubscribe-Post"); got != "" {
+		t.Errorf("List-Unsubscribe-Post=%q, want empty", got)
+	}
+
+	insecureConfig := config.NewRuntimeConfig()
+	insecureConfig.EmailFrom = "from@example.com"
+	insecureConfig.BaseURL = "http://example.com"
+	insecureNotifier := New(WithConfig(insecureConfig))
+	insecure, err := insecureNotifier.RenderEmailFromTemplates(context.Background(), "to@example.com", &EmailTemplates{}, nil, WithSubscriptionDelivery())
+	if err != nil {
+		t.Fatalf("render insecure-base subscription email: %v", err)
+	}
+	insecureMessage, err := mail.ReadMessage(bytes.NewReader(insecure))
+	if err != nil {
+		t.Fatalf("read insecure-base subscription email: %v", err)
+	}
+	if got := insecureMessage.Header.Get("List-Unsubscribe"); got != "" {
+		t.Errorf("List-Unsubscribe=%q, want empty for insecure base URL", got)
+	}
 }
 
 func TestRenderAndQueueEmailFromTemplatesMarksNotificationAutomatic(t *testing.T) {

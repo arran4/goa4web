@@ -53,6 +53,7 @@ func Parse(data []byte, fsys fs.FS) (*Scenario, error) {
 			if err != nil {
 				return nil, fmt.Errorf("parse event %s: %w", name, err)
 			}
+			evt.FS = fsys
 			events = append(events, evt)
 		} else {
 			return nil, fmt.Errorf("unexpected file %q in scenario archive (expected %s or *.event)", name, MetaFile)

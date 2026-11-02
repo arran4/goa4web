@@ -55,27 +55,8 @@ func ValidateWithRegistry(s *Scenario, opReg *Registry) error {
 		opReg = DefaultRegistry()
 	}
 
-	// 1. Validate scenario.meta
-	if s.Meta.Format == "" {
-		return ErrMissingRequiredField{Section: MetaFile, Field: "Format"}
-	}
-	if s.Meta.Format != FormatV1 {
-		return ErrInvalidFormat{Format: s.Meta.Format}
-	}
-	if s.Meta.Name == "" {
-		return ErrMissingRequiredField{Section: MetaFile, Field: "Name"}
-	}
-
-	// Validate allowed meta headers
-	allowedMeta := map[string]bool{
-		"format":      true,
-		"name":        true,
-		"description": true,
-	}
-	for _, k := range s.Meta.Headers.Keys() {
-		if !allowedMeta[strings.ToLower(k)] {
-			return ErrUnknownField{Section: MetaFile, Field: k}
-		}
+	if err := validateMeta(s); err != nil {
+		return err
 	}
 
 	// 2. Validate events sequentially
@@ -144,7 +125,11 @@ func ValidateWithRegistry(s *Scenario, opReg *Registry) error {
 
 		// Check asset paths
 		for _, assetPath := range op.AssetPaths(evt) {
-			if _, err := ValidateAsset(s.FS, assetPath); err != nil {
+			assetFS := evt.FS
+			if assetFS == nil {
+				assetFS = s.FS
+			}
+			if _, err := ValidateAsset(assetFS, assetPath); err != nil {
 				return fmt.Errorf("%s (%s): %w", sectionName, evt.Op, err)
 			}
 		}
@@ -156,6 +141,24 @@ func ValidateWithRegistry(s *Scenario, opReg *Registry) error {
 		}
 		evt.OpData = opData
 	}
+	return nil
+}
 
+func validateMeta(s *Scenario) error {
+	if s.Meta.Format == "" {
+		return ErrMissingRequiredField{Section: MetaFile, Field: "Format"}
+	}
+	if s.Meta.Format != FormatV1 {
+		return ErrInvalidFormat{Format: s.Meta.Format}
+	}
+	if s.Meta.Name == "" {
+		return ErrMissingRequiredField{Section: MetaFile, Field: "Name"}
+	}
+	allowedMeta := map[string]bool{"format": true, "name": true, "description": true}
+	for _, k := range s.Meta.Headers.Keys() {
+		if !allowedMeta[strings.ToLower(k)] {
+			return ErrUnknownField{Section: MetaFile, Field: k}
+		}
+	}
 	return nil
 }

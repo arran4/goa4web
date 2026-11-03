@@ -101,6 +101,13 @@ Actor: admin
 User: alice
 At: 2026-08-01T09:01:00Z
 
+-- 021-assign-alice-administrator.event --
+Op: user.role.assign
+Actor: admin
+User: alice
+Role: administrator
+At: 2026-08-01T09:01:15Z
+
 -- 022-grant-alice-see.event --
 Op: user.grant
 User: alice
@@ -191,8 +198,8 @@ At: 2026-08-01T09:15:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 12 {
-		t.Errorf("expected 12 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 13 {
+		t.Errorf("expected 13 events applied, got %d", res.EventsApplied)
 	}
 
 	// Step C: Verify that baseline user STILL has no privateforum permissions after scenario apply
@@ -218,6 +225,12 @@ At: 2026-08-01T09:15:00Z
 
 	aliceCD := cd.ForUser(aliceUID)
 	bobCD := cd.ForUser(bobUID)
+	if !aliceCD.HasGrant("role", "", "moderator", 0) {
+		t.Error("expected Alice to receive administrator role grants through user.role.assign")
+	}
+	if bobCD.HasGrant("role", "", "moderator", 0) {
+		t.Error("expected Bob to remain unaffected by Alice's user.role.assign")
+	}
 
 	// Verify that the permissions are now established specifically for Alice and Bob
 	if !aliceCD.HasGrant("privateforum", "topic", "create", 0) {

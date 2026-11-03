@@ -62,7 +62,7 @@ func TestImageRoutes(t *testing.T) {
 }
 
 func TestThumbnailRequest(t *testing.T) {
-	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "200x100,400x200"}
+	cfg := &config.RuntimeConfig{ImageThumbnailSizes: "200x100,400x200", ImageCardThumbnailSizes: "300x300"}
 	imageID := "abcd1234.png"
 	cases := []struct {
 		id       string
@@ -73,6 +73,7 @@ func TestThumbnailRequest(t *testing.T) {
 		{id: "abcd1234_thumb_200x100.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 200, Height: 100}, wantOK: true},
 		{id: "abcd1234_thumb.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 200, Height: 100}, wantOK: true},
 		{id: "abcd1234_thumb_400x200.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 400, Height: 200}, wantOK: true},
+		{id: "abcd1234_thumb_300x300.png", wantID: imageID, wantSize: config.ThumbnailSize{Width: 300, Height: 300}, wantOK: true},
 		{id: "abcd1234_thumb_600x300.png", wantOK: false},
 		{id: "abcd1234_thumb_nope.png", wantOK: false},
 	}

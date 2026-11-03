@@ -110,7 +110,7 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 			imageURL = link.CardImage.String
 			duration = link.CardDuration.String
 			if link.CardImageCache.Valid && link.CardImageCache.String != "" {
-				imageURL = p.cd.MapImageURL("img", link.CardImageCache.String)
+				imageURL = p.cd.MapCardImageURL("img", link.CardImageCache.String)
 			}
 			if link.FaviconCache.Valid && link.FaviconCache.String != "" {
 				faviconURL = p.cd.MapImageURL("img", link.FaviconCache.String)
@@ -183,16 +183,14 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 	if imageURL != "" {
 		safeImg, imgOk := a4code2html.SanitizeURL(imageURL)
 		if imgOk {
+			imageHTML = fmt.Sprintf(`<div class="external-link-image-container"><img src="%s" class="external-link-image" />`, safeImg)
 			if duration != "" {
 				formattedDuration := formatDuration(duration)
 				if formattedDuration != "" {
-					imageHTML = fmt.Sprintf(`<div class="external-link-image-container"><img src="%s" class="external-link-image" /><span class="external-link-duration">%s</span></div>`, safeImg, html.EscapeString(formattedDuration))
-				} else {
-					imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
+					imageHTML += fmt.Sprintf(`<span class="external-link-duration">%s</span>`, html.EscapeString(formattedDuration))
 				}
-			} else {
-				imageHTML = fmt.Sprintf(`<img src="%s" class="external-link-image" />`, safeImg)
 			}
+			imageHTML += `</div>`
 		}
 	}
 

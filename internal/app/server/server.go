@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	"github.com/arran4/goa4web/core"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	coretemplates "github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dbdrivers"
@@ -378,6 +380,16 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	}
 	customQueries, _ := queries.(db.CustomQueries)
 	coreOpts := []common.CoreOption{
+		common.WithSiteTemplateRenderer(func(cd *common.CoreData, w io.Writer, request *http.Request, name string, data any) error {
+			var opts []coretemplates.Option
+			if cd.Config != nil && cd.Config.TemplatesDir != "" {
+				opts = append(opts, coretemplates.WithDir(cd.Config.TemplatesDir))
+			}
+			if cd.Silent {
+				opts = append(opts, coretemplates.WithSilence(true))
+			}
+			return coretemplates.GetCompiledSiteTemplates(cd.Funcs(request), opts...).ExecuteTemplate(w, name, data)
+		}),
 		common.WithImageSignKey(s.ImageSignKey),
 		common.WithCustomQueries(customQueries),
 		common.WithLinkSignKey(s.LinkSignKey),

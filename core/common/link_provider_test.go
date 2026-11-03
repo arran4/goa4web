@@ -31,6 +31,8 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 				CardTitle:       sql.NullString{String: "Card Title", Valid: true},
 				CardDescription: sql.NullString{String: "Card Desc", Valid: true},
 				CardImage:       sql.NullString{String: "http://example.com/image.jpg?sig=asset_sig_123", Valid: true},
+				CardImageCache:  sql.NullString{String: "cache:abcd1234.jpg", Valid: true},
+				CardDuration:    sql.NullString{String: "PT1M", Valid: true},
 				FaviconCache:    sql.NullString{String: "favicon.ico", Valid: true},
 			},
 			"https://www.bloomberg.com/news/sample?accessToken=token123": {
@@ -42,9 +44,12 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 	}
 
 	cd := NewCoreData(context.Background(), mockDB, &config.RuntimeConfig{
-		BaseURL: "http://site.local",
+		BaseURL:                 "http://site.local",
+		ImageThumbnailSizes:     "1024x800,2048x1600",
+		ImageCardThumbnailSizes: "300x300",
 	})
 	WithLinkSignKey("test-key")(cd)
+	WithImageSignKey("image-key")(cd)
 
 	provider := NewGoa4WebLinkProvider(cd, context.Background())
 
@@ -126,4 +131,10 @@ func TestRenderLink_RoutesThroughGoto(t *testing.T) {
 			}
 		})
 	}
+
+	cardOpen, cardClose, _ := provider.RenderLink("http://example.com/card", true, true)
+	cardHTML := cardOpen + cardClose
+	assert.Contains(t, cardHTML, "/images/cache/abcd1234_thumb_300x300.jpg")
+	assert.Contains(t, cardHTML, `<div class="external-link-image-container"><img`)
+	assert.Contains(t, cardHTML, `class="external-link-image" /><span class="external-link-duration">1:00</span></div>`)
 }

@@ -154,6 +154,8 @@ const (
 	EnvImageThumbnailSize = "IMAGE_THUMBNAIL_SIZE"
 	// EnvImageThumbnailSizes sets allowed, comma-separated thumbnail bounds in width-by-height order.
 	EnvImageThumbnailSizes = "IMAGE_THUMBNAIL_SIZES"
+	// EnvImageCardThumbnailSizes sets link-card thumbnail bounds in width-by-height order.
+	EnvImageCardThumbnailSizes = "IMAGE_CARD_THUMBNAIL_SIZES"
 	// EnvImageMaxResizeBytes sets the maximum byte size of an image that triggers resizing in the cache server.
 	EnvImageMaxResizeBytes = "IMAGE_MAX_RESIZE_BYTES"
 	// EnvImageCacheProvider selects the cache storage backend.

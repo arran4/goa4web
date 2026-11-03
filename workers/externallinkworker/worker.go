@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	domainexternallink "github.com/arran4/goa4web/internal/externallink"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
@@ -62,21 +63,10 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						return nil
 					}
 
-					res, err := q.EnsureExternalLink(ctx, canonicalURL)
+					linkID, err := domainexternallink.ResolveRecord(ctx, q, canonicalURL)
 					if err != nil {
-						log.Printf("EnsureExternalLink %s: %v", canonicalURL, err)
+						log.Printf("resolve external link %s: %v", canonicalURL, err)
 						return nil
-					}
-					id, err := res.LastInsertId()
-					if err != nil {
-						log.Printf("LastInsertId for %s: %v", canonicalURL, err)
-						return nil
-					}
-					linkID := int32(id)
-					if linkID == 0 {
-						if existing, err := q.GetExternalLink(ctx, canonicalURL); err == nil && existing != nil {
-							linkID = existing.ID
-						}
 					}
 					if linkID == 0 {
 						return nil
@@ -88,18 +78,13 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						log.Printf("GetExternalLinkByID %d: %v", linkID, err)
 						return nil
 					}
-					if existing != nil && existing.CardTitle.Valid && existing.CardTitle.String != "" {
+					if !domainexternallink.NeedsMetadata(existing) {
 						return nil // Already has title
 					}
 
-					var info *opengraph.Info
-					for i := range 3 {
-						info, err = opengraph.Fetch(canonicalURL, nil)
-						if err == nil {
-							break
-						}
-						time.Sleep(time.Duration(i+1) * 2 * time.Second)
-					}
+					info, err := domainexternallink.FetchMetadata(canonicalURL, func(url string) (*opengraph.Info, error) {
+						return opengraph.Fetch(url, nil)
+					}, time.Sleep)
 					if err != nil {
 						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
 						return nil

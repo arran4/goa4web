@@ -28,7 +28,8 @@ func NotificationsFeed(r *http.Request, notifications []*db.Notification, siteTi
 	for _, n := range notifications {
 		link := ""
 		if n.Link.Valid {
-			link = cd.AbsoluteURL("/usr/notifications/go/" + strconv.Itoa(int(n.ID)))
+			// Feed readers follow item URLs with GET; opening preserves notification state.
+			link = cd.AbsoluteURL("/usr/notifications/open/" + strconv.Itoa(int(n.ID)))
 		}
 		msg := ""
 		if n.Message.Valid {

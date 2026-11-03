@@ -27,20 +27,20 @@ INSERT INTO image_cache_entries (
   last_attempt_at,
   next_attempt_at
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT(source_url, source_kind) DO UPDATE SET
-  source_url = VALUES(source_url),
-  source_kind = VALUES(source_kind),
+ON CONFLICT(id) DO UPDATE SET
+  source_url = excluded.source_url,
+  source_kind = excluded.source_kind,
   status = excluded.status,
   last_used_at = excluded.last_used_at,
-  fetched_at = VALUES(fetched_at),
-  expires_at = VALUES(expires_at),
-  content_expires_at = VALUES(content_expires_at),
-  content_type = VALUES(content_type),
-  size_bytes = VALUES(size_bytes),
-  width = VALUES(width),
-  height = VALUES(height),
-  checksum = VALUES(checksum),
-  thumbnail_id = VALUES(thumbnail_id),
+  fetched_at = excluded.fetched_at,
+  expires_at = excluded.expires_at,
+  content_expires_at = excluded.content_expires_at,
+  content_type = excluded.content_type,
+  size_bytes = excluded.size_bytes,
+  width = excluded.width,
+  height = excluded.height,
+  checksum = excluded.checksum,
+  thumbnail_id = excluded.thumbnail_id,
   uploaded_image_id = excluded.uploaded_image_id,
   error_message = excluded.error_message,
   retry_count = excluded.retry_count,
@@ -58,9 +58,9 @@ INSERT INTO image_cache_entries (
   retry_count,
   next_attempt_at
 ) VALUES (?, ?, ?, 'pending', ?, ?, 0, ?)
-ON CONFLICT(source_url, source_kind) DO UPDATE SET
-  source_url = VALUES(source_url),
-  source_kind = VALUES(source_kind),
+ON CONFLICT(id) DO UPDATE SET
+  source_url = excluded.source_url,
+  source_kind = excluded.source_kind,
   last_used_at = excluded.last_used_at,
   next_attempt_at = excluded.next_attempt_at;
 

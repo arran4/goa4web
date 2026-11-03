@@ -206,6 +206,25 @@ func TestMapImageURLUsesDefaultThumbnailForLargeCachedImage(t *testing.T) {
 	}
 }
 
+func TestMapCardImageURLUsesCardThumbnailForLargeCachedImage(t *testing.T) {
+	imageID := "abcd1234.jpg"
+	queries := testhelpers.NewQuerierStub()
+	queries.GetImageCacheEntryFn = func(ctx context.Context, id string) (*db.ImageCacheEntry, error) {
+		return &db.ImageCacheEntry{ID: id, Width: sql.NullInt32{Int32: 1600, Valid: true}, Height: sql.NullInt32{Int32: 1200, Valid: true}}, nil
+	}
+	cfg := &config.RuntimeConfig{BaseURL: "https://example.test", ImageThumbnailSizes: "1024x800,2048x1600", ImageCardThumbnailSizes: "300x300"}
+	cd := NewCoreData(context.Background(), queries, cfg, WithImageSignKey("test-key"))
+
+	mapped := cd.MapCardImageURL("img", "cache:"+imageID)
+	parsed, err := url.Parse(mapped)
+	if err != nil {
+		t.Fatalf("parse mapped URL: %v", err)
+	}
+	if parsed.Path != "/images/cache/abcd1234_thumb_300x300.jpg" {
+		t.Fatalf("mapped card path = %q", parsed.Path)
+	}
+}
+
 func TestMapImageURLUsesThumbnailForCachedImageWithoutMetadata(t *testing.T) {
 	imageID := "abcd1234.png"
 	queries := testhelpers.NewQuerierStub()

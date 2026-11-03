@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/sign/signutil"
@@ -126,6 +127,31 @@ func (cd *CoreData) MapImageURL(tag, val string) string {
 	}
 }
 
+// MapCardImageURL converts link-card image references to signed URLs using card bounds.
+func (cd *CoreData) MapCardImageURL(tag, val string) string {
+	if tag != "img" {
+		return val
+	}
+
+	switch {
+	case strings.HasPrefix(val, "uploading:"):
+		return val
+	case strings.HasPrefix(val, "image:") || strings.HasPrefix(val, "img:"):
+		if thumbnailRef := cd.CardThumbnailReferenceForImage(val); thumbnailRef != "" {
+			return cd.SignCacheURL(thumbnailRef, 24*time.Hour)
+		}
+		return cd.SignImageURL(val, 24*time.Hour)
+	case strings.HasPrefix(val, "cache:"):
+		cacheRef := strings.TrimPrefix(val, "cache:")
+		if thumbnailRef := cd.CardThumbnailReferenceForCache(cacheRef); thumbnailRef != "" {
+			return cd.SignCacheURL(thumbnailRef, 24*time.Hour)
+		}
+		return cd.SignCacheURL(cacheRef, 24*time.Hour)
+	default:
+		return val
+	}
+}
+
 // MapFullImageURL maps image references to their signed full-size source URLs.
 func (cd *CoreData) MapFullImageURL(tag, val string) string {
 	if tag != "img" {
@@ -143,12 +169,20 @@ func (cd *CoreData) MapFullImageURL(tag, val string) string {
 
 // ThumbnailReferenceForImage returns the default thumbnail for an oversized uploaded image.
 func (cd *CoreData) ThumbnailReferenceForImage(imageRef string) string {
+	return cd.thumbnailReferenceForImage(imageRef, cd.Config.ThumbnailSizes()[0])
+}
+
+// CardThumbnailReferenceForImage returns the selected card thumbnail for an oversized uploaded image.
+func (cd *CoreData) CardThumbnailReferenceForImage(imageRef string) string {
+	return cd.thumbnailReferenceForImage(imageRef, cd.Config.CardThumbnailSizes()[0])
+}
+
+func (cd *CoreData) thumbnailReferenceForImage(imageRef string, size config.ThumbnailSize) string {
 	imageID := strings.TrimPrefix(strings.TrimPrefix(cleanSignedParam(imageRef), "image:"), "img:")
 	image, err := cd.UploadedImageByImageID(imageID)
 	if err != nil || image == nil || !image.Width.Valid || !image.Height.Valid {
 		return ""
 	}
-	size := cd.Config.ThumbnailSizes()[0]
 	if int(image.Width.Int32) <= size.Width && int(image.Height.Int32) <= size.Height {
 		return ""
 	}
@@ -161,12 +195,20 @@ func (cd *CoreData) ThumbnailReferenceForImage(imageRef string) string {
 
 // ThumbnailReferenceForCache returns the default thumbnail for an oversized cached image.
 func (cd *CoreData) ThumbnailReferenceForCache(cacheRef string) string {
+	return cd.thumbnailReferenceForCache(cacheRef, cd.Config.ThumbnailSizes()[0])
+}
+
+// CardThumbnailReferenceForCache returns the selected card thumbnail for an oversized cached image.
+func (cd *CoreData) CardThumbnailReferenceForCache(cacheRef string) string {
+	return cd.thumbnailReferenceForCache(cacheRef, cd.Config.CardThumbnailSizes()[0])
+}
+
+func (cd *CoreData) thumbnailReferenceForCache(cacheRef string, size config.ThumbnailSize) string {
 	cacheRef = cleanSignedParam(cacheRef)
 	entry, err := cd.ImageCacheEntry(cd.ctx, cacheRef)
 	if err != nil {
 		return ""
 	}
-	size := cd.Config.ThumbnailSizes()[0]
 	if entry != nil && entry.Width.Valid && entry.Height.Valid && int(entry.Width.Int32) <= size.Width && int(entry.Height.Int32) <= size.Height {
 		return ""
 	}

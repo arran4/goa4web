@@ -376,7 +376,7 @@ CREATE TABLE `passwords` (
 CREATE TABLE `user_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `email` tinytext NOT NULL DEFAULT '',
+  `email` varchar(255) NOT NULL DEFAULT '',
   `verified_at` datetime DEFAULT NULL,
   `last_verification_code` varchar(64) DEFAULT NULL,
   `verification_expires_at` datetime DEFAULT NULL,
@@ -714,7 +714,7 @@ CREATE TABLE IF NOT EXISTS `admin_request_comments` (
 CREATE TABLE IF NOT EXISTS `external_links` (
   `id` int NOT NULL AUTO_INCREMENT,
   `url` text NOT NULL,
-  `url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED NOT NULL,
+  `url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED,
   `clicks` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -825,6 +825,7 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (96, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (97, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (98, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 
 
 

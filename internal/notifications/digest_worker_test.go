@@ -2,7 +2,6 @@ package notifications
 
 import (
 	"context"
-	"regexp"
 	"testing"
 	"time"
 
@@ -63,20 +62,22 @@ func TestNotificationDigestWorker_SendDigest(t *testing.T) {
 		WithArgs(userID, sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnRows(rows)
 
-	// Expect InsertPendingEmail (sending email)
+	// The queued digest records the exact notification snapshot. It must not
+	// mark the notification read until the email worker receives provider
+	// acceptance.
+	mock.ExpectExec("INSERT INTO digest_deliveries").
+		WithArgs(userID, true).
+		WillReturnResult(sqlmock.NewResult(25, 1))
+	mock.ExpectExec("INSERT INTO digest_delivery_notifications").
+		WithArgs(int32(25), int32(1)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO pending_emails").
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs(userID, sqlmock.AnyArg(), false, int32(25)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Expect UpdateLastWeeklyDigestSentAt (since we'll request Weekly)
 	mock.ExpectExec("UPDATE preferences SET last_weekly_digest_sent_at").
 		WithArgs(sqlmock.AnyArg(), userID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// Expect SetNotificationsReadForListerBatch (markRead=true)
-	// sqlc expands slice to params. id=1 -> IN (?)
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE notifications SET read_at = NOW() WHERE users_idusers = ? AND id IN (?)")).
-		WithArgs(userID, int32(1)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Execute
@@ -87,5 +88,68 @@ func TestNotificationDigestWorker_SendDigest(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestNotificationDigestWorker_PreviewDoesNotCreateDismissalState(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	q := db.New(conn)
+	n := New(WithQueries(q), WithConfig(config.NewRuntimeConfig()))
+	userID := int32(101)
+	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).
+		AddRow(1, userID, "/link", "Test Notification", time.Now(), nil)
+	mock.ExpectQuery("SELECT id, users_idusers").
+		WithArgs(userID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO pending_emails").
+		WithArgs(userID, sqlmock.AnyArg(), false).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	if err := n.SendDigestToUser(context.Background(), userID, "user@example.com", true, true, DigestDaily); err != nil {
+		t.Fatalf("SendDigestToUser preview: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("preview changed digest state: %v", err)
+	}
+}
+
+func TestNotificationDigestWorker_DisabledDismissalPersistsOptOut(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	q := db.New(conn)
+	n := New(WithQueries(q), WithConfig(config.NewRuntimeConfig()))
+	userID := int32(101)
+	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).
+		AddRow(1, userID, "/link", "Test Notification", time.Now(), nil)
+	mock.ExpectQuery("SELECT id, users_idusers").
+		WithArgs(userID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO digest_deliveries").
+		WithArgs(userID, false).
+		WillReturnResult(sqlmock.NewResult(25, 1))
+	mock.ExpectExec("INSERT INTO digest_delivery_notifications").
+		WithArgs(int32(25), int32(1)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO pending_emails").
+		WithArgs(userID, sqlmock.AnyArg(), false, int32(25)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE preferences SET last_digest_sent_at").
+		WithArgs(sqlmock.AnyArg(), userID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	if err := n.SendDigestToUser(context.Background(), userID, "user@example.com", false, false, DigestDaily); err != nil {
+		t.Fatalf("SendDigestToUser with dismissal disabled: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("disabled dismissal wrote unexpected state: %v", err)
 	}
 }

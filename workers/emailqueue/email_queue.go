@@ -187,6 +187,20 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		}
 		return true
 	}
+	if e.DigestDeliveryID.Valid {
+		// Provider acceptance happens before this durable acknowledgement. A
+		// crash or acknowledgement failure can therefore cause a provider retry,
+		// but the acknowledgement is idempotent and never dismisses notifications
+		// outside the stored digest snapshot.
+		if err := q.SystemAcknowledgeDigestNotificationsForPendingEmail(ctx, e.ID); err != nil {
+			log.Printf("acknowledge digest notifications: %v", err)
+			return true
+		}
+		if err := q.SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx, e.ID); err != nil {
+			log.Printf("mark digest delivery acknowledged: %v", err)
+			return true
+		}
+	}
 	if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
 		log.Printf("mark sent: %v", err)
 	}

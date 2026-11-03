@@ -543,6 +543,14 @@ type QuerierStub struct {
 	SystemMarkPendingEmailSentErr   error
 	SystemMarkPendingEmailSentFn    func(context.Context, int32) error
 
+	SystemAcknowledgeDigestNotificationsForPendingEmailCalls []int32
+	SystemAcknowledgeDigestNotificationsForPendingEmailErr   error
+	SystemAcknowledgeDigestNotificationsForPendingEmailFn    func(context.Context, int32) error
+
+	SystemMarkDigestDeliveryAcknowledgedForPendingEmailCalls []int32
+	SystemMarkDigestDeliveryAcknowledgedForPendingEmailErr   error
+	SystemMarkDigestDeliveryAcknowledgedForPendingEmailFn    func(context.Context, int32) error
+
 	SystemIncrementPendingEmailErrorCalls []int32
 	SystemIncrementPendingEmailErrorErr   error
 	SystemIncrementPendingEmailErrorFn    func(context.Context, int32) error

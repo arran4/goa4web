@@ -22,7 +22,7 @@ func (n *Notifier) CreateEmailTemplateAndQueue(ctx context.Context, userID *int3
 	prefix := strings.ToLower(action) + "Email"
 	et := NewEmailTemplates(prefix)
 	data := map[string]any{"page": page, "item": item}
-	msg, err := n.RenderEmailFromTemplates(ctx, emailAddr, et, data)
+	msg, err := n.RenderEmailFromTemplates(ctx, emailAddr, et, data, WithAutomaticDelivery())
 	if err != nil {
 		return err
 	}
@@ -35,6 +35,7 @@ func (n *Notifier) renderAndQueueEmailFromTemplates(ctx context.Context, userID 
 	if n.Queries == nil {
 		return fmt.Errorf("no query")
 	}
+	opts = append(opts, WithAutomaticDelivery())
 	msg, err := n.RenderEmailFromTemplates(ctx, emailAddr, et, data, opts...)
 	if err != nil {
 		return err
@@ -52,6 +53,7 @@ type EmailData struct {
 	SignOffHTML    htemplate.HTML
 	Item           any
 	Recipient      *db.SystemGetUserByIDRow
+	Automatic      bool
 }
 
 // EmailOption configures EmailData prior to rendering.
@@ -65,6 +67,11 @@ func WithAdmin() EmailOption {
 // WithRecipient adds the recipient user to EmailData.
 func WithRecipient(u *db.SystemGetUserByIDRow) EmailOption {
 	return func(d *EmailData) { d.Recipient = u }
+}
+
+// WithAutomaticDelivery marks an email as application-generated notification mail.
+func WithAutomaticDelivery() EmailOption {
+	return func(d *EmailData) { d.Automatic = true }
 }
 
 // RenderEmailFromTemplates returns the rendered email message using the provided templates.
@@ -140,7 +147,11 @@ func (n *Notifier) RenderEmailFromTemplates(ctx context.Context, emailAddr strin
 		}
 		htmlBody = strings.TrimSpace(string(hb))
 	}
-	return email.BuildMessage(from, to, subject, textBody, htmlBody)
+	var messageOptions []email.MessageOption
+	if data.Automatic {
+		messageOptions = append(messageOptions, email.WithAutoSubmitted())
+	}
+	return email.BuildMessage(from, to, subject, textBody, htmlBody, messageOptions...)
 }
 
 func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, msg []byte) error {

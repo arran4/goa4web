@@ -272,7 +272,7 @@ func getEmailBody(t *testing.T, msg *mail.Message) string {
 				if _, err := io.Copy(buf, p); err != nil {
 					t.Fatal(err)
 				}
-				return buf.String()
+				return strings.ReplaceAll(buf.String(), "\r\n", "\n")
 			}
 		}
 	}
@@ -281,5 +281,5 @@ func getEmailBody(t *testing.T, msg *mail.Message) string {
 	if _, err := io.Copy(buf, msg.Body); err != nil {
 		t.Fatal(err)
 	}
-	return buf.String()
+	return strings.ReplaceAll(buf.String(), "\r\n", "\n")
 }

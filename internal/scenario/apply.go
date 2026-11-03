@@ -76,6 +76,8 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 			"forum.reply.edit":     true,
 			"forum.label.add":      true,
 			"forum.label.remove":   true,
+			"news.post.create":     true,
+			"news.reply":           true,
 		},
 	}
 	for _, opt := range opts {
@@ -174,6 +176,18 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 			return fmt.Errorf("invalid operation data for forum.reply")
 		}
 		return r.applyForumReply(ctx, data)
+	case "news.post.create":
+		data, ok := evt.OpData.(*NewsPostCreateData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for news.post.create")
+		}
+		return r.applyNewsPostCreate(ctx, data)
+	case "news.reply":
+		data, ok := evt.OpData.(*NewsReplyData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for news.reply")
+		}
+		return r.applyNewsReply(ctx, data)
 
 	case "forum.thread.read":
 		data, ok := evt.OpData.(*ForumThreadReadData)
@@ -207,6 +221,69 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 	default:
 		return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
 	}
+}
+
+func (r *Runner) applyNewsPostCreate(ctx context.Context, data *NewsPostCreateData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve news author %q", data.Actor)
+	}
+	id, err := r.coreData.ForUser(actorID).CreateNewsPostAt(data.LanguageID, actorID, data.Body, data.At)
+	if err != nil {
+		return fmt.Errorf("create news post: %w", err)
+	}
+	if err := r.refRegistry.Bind(RefTypeNews, data.Ref, int32(id)); err != nil {
+		return fmt.Errorf("bind news ref %q: %w", data.Ref, err)
+	}
+	return nil
+}
+
+func (r *Runner) applyNewsReply(ctx context.Context, data *NewsReplyData) error {
+	actorID, ok := r.refRegistry.ResolveUser(data.Actor)
+	if !ok {
+		return fmt.Errorf("cannot resolve news reply author %q", data.Actor)
+	}
+	value, ok := r.refRegistry.Resolve(RefTypeNews, data.News)
+	if !ok {
+		return fmt.Errorf("cannot resolve news post %q", data.News)
+	}
+	postID, ok := value.(int32)
+	if !ok {
+		return fmt.Errorf("news ref %q has invalid ID", data.News)
+	}
+	actorCD := r.coreData.ForUser(actorID)
+	id, threadInfo, err := actorCD.CreateNewsReplyAt(actorID, postID, data.LanguageID, data.Body, data.At)
+	if err != nil {
+		return fmt.Errorf("create news reply: %w", err)
+	}
+	username := ""
+	if user := actorCD.UserByID(actorID); user != nil {
+		username = user.Username.String
+	}
+	newsPath := fmt.Sprintf("/news/news/%d", postID)
+	if err := actorCD.HandleThreadUpdated(ctx, common.ThreadUpdatedEvent{
+		ThreadID:             threadInfo.ThreadID,
+		TopicID:              threadInfo.TopicID,
+		CommentID:            int32(id),
+		LabelItem:            "news",
+		LabelItemID:          postID,
+		CommentText:          data.Body,
+		CommentURL:           actorCD.AbsoluteURL(newsPath),
+		PostURL:              actorCD.AbsoluteURL(newsPath),
+		Username:             username,
+		ClearUnreadForOthers: true,
+		MarkThreadRead:       true,
+		IncludePostCount:     true,
+		IncludeSearch:        true,
+	}); err != nil {
+		return fmt.Errorf("apply news reply side effects: %w", err)
+	}
+	if data.Ref != "" {
+		if err := r.refRegistry.Bind(RefTypePost, data.Ref, int32(id)); err != nil {
+			return fmt.Errorf("bind reply ref %q: %w", data.Ref, err)
+		}
+	}
+	return nil
 }
 
 func (r *Runner) applyUserCreate(ctx context.Context, data *UserCreateData) error {

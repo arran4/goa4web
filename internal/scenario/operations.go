@@ -64,6 +64,8 @@ func DefaultRegistry() *Registry {
 		&ForumThreadReadOp{},
 		&ForumSubscribeOp{},
 		&ForumUnsubscribeOp{},
+		&NewsPostCreateOp{},
+		&NewsReplyOp{},
 		&ForumPostOp{},
 	)
 }

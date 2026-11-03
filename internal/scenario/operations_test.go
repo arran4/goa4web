@@ -209,3 +209,40 @@ func TestForumLabelOperations(t *testing.T) {
 		}
 	}
 }
+
+func TestNewsOperationsParseLanguageAndBody(t *testing.T) {
+	post := &NewsPostCreateOp{}
+	reply := &NewsReplyOp{}
+
+	postHeaders := NewHeader()
+	postHeaders.Set("Ref", "launch")
+	postHeaders.Set("Actor", "writer")
+	postHeaders.Set("Language", "2")
+	postData, err := post.Parse(&Event{Headers: postHeaders, Body: "The launch is live.\n"})
+	if err != nil {
+		t.Fatalf("parse news post: %v", err)
+	}
+	if got := postData.(*NewsPostCreateData).LanguageID; got != 2 {
+		t.Errorf("post language = %d, want 2", got)
+	}
+
+	replyHeaders := NewHeader()
+	replyHeaders.Set("Actor", "reader")
+	replyHeaders.Set("News", "launch")
+	replyData, err := reply.Parse(&Event{Headers: replyHeaders, Body: "Congratulations!\n"})
+	if err != nil {
+		t.Fatalf("parse news reply: %v", err)
+	}
+	if got := replyData.(*NewsReplyData).LanguageID; got != 1 {
+		t.Errorf("reply language = %d, want default 1", got)
+	}
+
+	postHeaders.Set("Language", "nope")
+	if _, err := post.Parse(&Event{Headers: postHeaders, Body: "Body"}); err == nil || !strings.Contains(err.Error(), "invalid Language") {
+		t.Fatalf("invalid Language error = %v", err)
+	}
+	postHeaders.Set("Language", "1")
+	if _, err := post.Parse(&Event{Headers: postHeaders, Body: "\n"}); err == nil || !strings.Contains(err.Error(), "body is required") {
+		t.Fatalf("empty body error = %v", err)
+	}
+}

@@ -35,6 +35,8 @@ const (
 	RefTypeLink RefType = "link"
 	// RefTypeImage identifies an image reference.
 	RefTypeImage RefType = "image"
+	// RefTypeNews identifies a news post reference.
+	RefTypeNews RefType = "news"
 )
 
 // Meta contains the metadata parsed from scenario.meta.

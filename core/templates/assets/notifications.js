@@ -14,10 +14,11 @@
         conn.onmessage = evt => {
             try{
                 const msg = JSON.parse(evt.data);
-                if(!msg || !msg.Data || !msg.Data.notification){
+                const data = msg && (msg.data || msg.Data);
+                if(!data || !data.notification){
                     return;
                 }
-                const n = msg.Data.notification;
+                const n = data.notification;
                 if(seen.has(n.id)) return;
                 seen.add(n.id);
                 updateCount(1);

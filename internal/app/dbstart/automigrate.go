@@ -20,7 +20,11 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	c, err := reg.Connector(cfg.DBDriver, conn)
+	migrationConn, err := MigrationConnectionString(cfg.DBDriver, conn)
+	if err != nil {
+		return err
+	}
+	c, err := reg.Connector(cfg.DBDriver, migrationConn)
 	if err != nil {
 		return err
 	}

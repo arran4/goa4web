@@ -71,13 +71,13 @@ func TestMigrationConnectionAgainstMariaDB(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	rows, err := db.Query("SELECT 1; SELECT 2")
 	if err != nil {
 		t.Fatalf("migration connection rejected multi-statement SQL: %v", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var first, second int
 	if !rows.Next() {
 		t.Fatal("missing first statement result")

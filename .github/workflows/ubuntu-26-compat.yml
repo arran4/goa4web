@@ -1,0 +1,48 @@
+# Opt-in compatibility check for GitHub's ubuntu-latest transition.
+# The existing release pipeline intentionally stays on ubuntu-24.04 until
+# this check (and the complete release matrix) has been validated on 26.04.
+name: Ubuntu 26.04 compatibility
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ubuntu-26-compat.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  go-mariadb-smoke:
+    name: Go build, tests and MariaDB on Ubuntu 26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: goa4web_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Report runner image and Go toolchain
+        run: |
+          cat /etc/os-release
+          go version
+      - name: Build executable
+        run: go build -tags nosqlite -o "${RUNNER_TEMP}/goa4web" ./cmd/goa4web
+      - name: Run Go tests with MariaDB available
+        env:
+          GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
+        run: go test -tags nosqlite ./...

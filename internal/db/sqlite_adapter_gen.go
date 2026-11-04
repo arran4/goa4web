@@ -1204,6 +1204,8 @@ func (s *sqliteQuerier) AdminGetNotification(ctx context.Context, id int32) (*No
 			UsersIdusers: int32(v.UsersIdusers),
 			Link:         v.Link,
 			Message:      v.Message,
+			ActivityKey:  v.ActivityKey,
+			Priority:     uint8(v.Priority),
 			CreatedAt:    v.CreatedAt,
 			ReadAt:       v.ReadAt,
 		}
@@ -3068,6 +3070,8 @@ func (s *sqliteQuerier) AdminListRecentNotifications(ctx context.Context, limit 
 				UsersIdusers: int32(item.UsersIdusers),
 				Link:         item.Link,
 				Message:      item.Message,
+				ActivityKey:  item.ActivityKey,
+				Priority:     uint8(item.Priority),
 				CreatedAt:    item.CreatedAt,
 				ReadAt:       item.ReadAt,
 			}
@@ -6511,6 +6515,8 @@ func (s *sqliteQuerier) GetNotificationForLister(ctx context.Context, arg GetNot
 			UsersIdusers: int32(v.UsersIdusers),
 			Link:         v.Link,
 			Message:      v.Message,
+			ActivityKey:  v.ActivityKey,
+			Priority:     uint8(v.Priority),
 			CreatedAt:    v.CreatedAt,
 			ReadAt:       v.ReadAt,
 		}
@@ -8677,6 +8683,8 @@ func (s *sqliteQuerier) ListNotificationsForLister(ctx context.Context, arg List
 				UsersIdusers: int32(item.UsersIdusers),
 				Link:         item.Link,
 				Message:      item.Message,
+				ActivityKey:  item.ActivityKey,
+				Priority:     uint8(item.Priority),
 				CreatedAt:    item.CreatedAt,
 				ReadAt:       item.ReadAt,
 			}
@@ -9068,6 +9076,8 @@ func (s *sqliteQuerier) ListUnreadNotificationsForLister(ctx context.Context, ar
 				UsersIdusers: int32(item.UsersIdusers),
 				Link:         item.Link,
 				Message:      item.Message,
+				ActivityKey:  item.ActivityKey,
+				Priority:     uint8(item.Priority),
 				CreatedAt:    item.CreatedAt,
 				ReadAt:       item.ReadAt,
 			}
@@ -9792,6 +9802,16 @@ func (s *sqliteQuerier) SystemCreateNotification(ctx context.Context, arg System
 	})
 }
 
+func (s *sqliteQuerier) SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error {
+	return s.q.SystemCreateNotificationForActivity(ctx, dbsqlite.SystemCreateNotificationForActivityParams{
+		RecipientID: int64(arg.RecipientID),
+		Link:        arg.Link,
+		Message:     arg.Message,
+		ActivityKey: arg.ActivityKey,
+		Priority:    int64(arg.Priority),
+	})
+}
+
 func (s *sqliteQuerier) SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error) {
 	res, err := s.q.SystemCreateReplyThread(ctx, dbsqlite.SystemCreateReplyThreadParams{
 		TopicID:          int64(arg.TopicID),
@@ -10046,6 +10066,8 @@ func (s *sqliteQuerier) SystemGetLastNotificationForRecipientByMessage(ctx conte
 			UsersIdusers: int32(v.UsersIdusers),
 			Link:         v.Link,
 			Message:      v.Message,
+			ActivityKey:  v.ActivityKey,
+			Priority:     uint8(v.Priority),
 			CreatedAt:    v.CreatedAt,
 			ReadAt:       v.ReadAt,
 		}

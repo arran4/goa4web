@@ -5,13 +5,15 @@ import (
 	"testing"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
 func TestHandleThreadUpdatedMarksThreadAndItemLabels(t *testing.T) {
 	ctx := context.Background()
 	queries := testhelpers.NewQuerierStub()
-	cd := NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	evt := &eventbus.TaskEvent{Data: map[string]any{}}
+	cd := NewCoreData(ctx, queries, config.NewRuntimeConfig(), WithEvent(evt))
 	cd.UserID = 5
 
 	err := cd.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
@@ -45,6 +47,9 @@ func TestHandleThreadUpdatedMarksThreadAndItemLabels(t *testing.T) {
 	}
 	if got := queries.UpsertContentReadMarkerCalls[0]; got.Item != "thread" || got.ItemID != 12 {
 		t.Fatalf("unexpected read marker call: %+v", got)
+	}
+	if evt.ActivityID != "comment:7" {
+		t.Fatalf("event activity ID = %q, want comment:7", evt.ActivityID)
 	}
 
 	if len(queries.AddContentPrivateLabelCalls) != 4 {

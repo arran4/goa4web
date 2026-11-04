@@ -279,11 +279,7 @@ func (n *Notifier) notifySelf(ctx context.Context, evt eventbus.TaskEvent, tp Se
 			return err
 		}
 		if len(msg) > 0 {
-			if err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
-				RecipientID: evt.UserID,
-				Link:        sql.NullString{String: evt.Path, Valid: true},
-				Message:     sql.NullString{String: string(msg), Valid: true},
-			}); err != nil {
+			if err := n.sendInternalNotificationForEvent(ctx, evt, evt.UserID, evt.Path, string(msg), notificationPrioritySelf); err != nil {
 				return err
 			}
 		}
@@ -340,11 +336,7 @@ func (n *Notifier) notifyTargetUsers(ctx context.Context, evt eventbus.TaskEvent
 				return err
 			}
 			if len(msg) > 0 {
-				if err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
-					RecipientID: id,
-					Link:        sql.NullString{String: evt.Path, Valid: true},
-					Message:     sql.NullString{String: string(msg), Valid: true},
-				}); err != nil {
+				if err := n.sendInternalNotificationForEvent(ctx, evt, id, evt.Path, string(msg), notificationPriorityTarget); err != nil {
 					return err
 				}
 			}
@@ -426,7 +418,7 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 			link = url
 		}
 		for id := range internalSubs {
-			if err := n.sendInternalNotification(ctx, id, link, string(msg)); err != nil {
+			if err := n.sendInternalNotificationForEvent(ctx, evt, id, link, string(msg), notificationPrioritySubscriber); err != nil {
 				return fmt.Errorf("deliver internal to %d: %w", id, err)
 			}
 		}

@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/arran4/goa4web/internal/testhelpers"
 )
 
@@ -29,7 +31,7 @@ func TestNotificationsQueries(t *testing.T) {
 	if c, err := q.GetUnreadNotificationCountForLister(context.Background(), 1); err != nil || c != 1 {
 		t.Fatalf("count=%d err=%v", c, err)
 	}
-	mock.ExpectQuery("SELECT id, users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", time.Now(), nil))
+	mock.ExpectQuery("SELECT notifications.id, notifications.users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", nil, 0, time.Now(), nil))
 	if _, err := q.ListUnreadNotificationsForLister(context.Background(), db.ListUnreadNotificationsForListerParams{ListerID: 1, Limit: 10, Offset: 0}); err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -101,5 +103,30 @@ func TestNotifierInitialization(t *testing.T) {
 	n = New(WithQueries(q), WithConfig(cfg))
 	if n.Queries != q {
 		t.Fatalf("queries not set via option")
+	}
+}
+
+func TestSendInternalNotificationForEventUsesStableActivityKey(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	n := New(WithQueries(q), WithConfig(config.NewRuntimeConfig()))
+	evt := eventbus.TaskEvent{Task: tasks.TaskString("Reply"), ActivityID: "comment:42"}
+
+	if err := n.sendInternalNotificationForEvent(context.Background(), evt, 7, "/forum/topic/1/thread/2#c42", "subscriber message", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send subscriber contribution: %v", err)
+	}
+	if err := n.sendInternalNotificationForEvent(context.Background(), evt, 7, "", "admin message", notificationPriorityAdmin); err != nil {
+		t.Fatalf("send admin contribution: %v", err)
+	}
+
+	if len(q.SystemCreateNotificationForActivityCalls) != 2 {
+		t.Fatalf("activity upserts = %d, want 2", len(q.SystemCreateNotificationForActivityCalls))
+	}
+	first := q.SystemCreateNotificationForActivityCalls[0]
+	if first.ActivityKey.String != "reply:comment:42" || first.Priority != notificationPrioritySubscriber {
+		t.Errorf("subscriber activity upsert = %#v", first)
+	}
+	second := q.SystemCreateNotificationForActivityCalls[1]
+	if second.Priority != notificationPriorityAdmin {
+		t.Errorf("admin priority = %d, want %d", second.Priority, notificationPriorityAdmin)
 	}
 }

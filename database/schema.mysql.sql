@@ -510,9 +510,12 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `users_idusers` int NOT NULL,
   `link` text,
   `message` text,
+  `activity_key` varchar(255) DEFAULT NULL,
+  `priority` tinyint unsigned NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `read_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notifications_recipient_activity_idx` (`users_idusers`, `activity_key`)
 );
 
 -- Persist errors from asynchronous workers.
@@ -846,6 +849,7 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (98, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
 
 
 

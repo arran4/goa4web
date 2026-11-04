@@ -70,8 +70,11 @@ func (c *dbMigrateCmd) FlagGroups() []flagGroup {
 var _ usageData = (*dbMigrateCmd)(nil)
 
 func (c *dbMigrateCmd) Run() error {
-	c.Verbosef("connecting to database using %s", c.cfg.DBConn)
-	db, err := openDB(c.cfg, c.dbReg)
+	c.Verbosef("connecting to database for migrations using driver %s", c.cfg.DBDriver)
+	migrationConn := dbstart.MigrationConnectionString(c.cfg)
+	migrationCfg := *c.cfg
+	migrationCfg.DBConn = migrationConn
+	db, err := openDB(&migrationCfg, c.dbReg)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}
@@ -84,6 +87,9 @@ func (c *dbMigrateCmd) Run() error {
 	} else {
 		fsys = os.DirFS(c.Dir)
 		c.Verbosef("applying migrations from %s", c.Dir)
+	}
+	if err := dbstart.ValidateMigrationConnection(ctx, db, c.cfg.DBDriver, migrationConn); err != nil {
+		return fmt.Errorf("migration connection: %w", err)
 	}
 	if err := dbstart.Apply(ctx, db, fsys, c.Verbosity >= 0, c.cfg.DBDriver); err != nil {
 		return err

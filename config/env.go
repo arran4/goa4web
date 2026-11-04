@@ -3,6 +3,8 @@ package config
 const (
 	// EnvDBConn is the environment variable for the database connection string.
 	EnvDBConn = "DB_CONN"
+	// EnvDBMigrationConn is an optional separate connection string for database migrations.
+	EnvDBMigrationConn = "DB_MIGRATION_CONN"
 	// EnvDBDriver selects the database driver.
 	EnvDBDriver = "DB_DRIVER"
 	// EnvDBTimezone sets the database timezone.

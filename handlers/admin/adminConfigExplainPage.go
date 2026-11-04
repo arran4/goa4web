@@ -37,6 +37,7 @@ func (h *Handlers) AdminConfigExplainPage(w http.ResponseWriter, r *http.Request
 
 	hide := map[string]struct{}{
 		config.EnvDBConn:              {},
+		config.EnvDBMigrationConn:     {},
 		config.EnvSMTPPass:            {},
 		config.EnvJMAPPass:            {},
 		config.EnvSendGridKey:         {},

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
@@ -13,6 +14,55 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 )
+
+func TestRunnerPreflightRejectsInvalidImageAssetBeforeMutation(t *testing.T) {
+	scenarioText := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: invalid-image-asset
+
+-- 01-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: password
+At: 2026-08-01T09:00:00Z
+
+-- 02-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: password
+At: 2026-08-01T09:01:00Z
+
+-- 03-topic.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: alice
+Participant: bob
+Title: Staff Room
+At: 2026-08-01T09:02:00Z
+
+-- 04-thread.event --
+Op: forum.thread.create
+Actor: alice
+Topic: staff-room
+Asset: assets/not-an-image.jpg
+At: 2026-08-01T09:03:00Z
+`
+	s, err := Parse([]byte(scenarioText), fstest.MapFS{
+		"assets/not-an-image.jpg": &fstest.MapFile{Data: []byte("not a JPEG")},
+	})
+	if err != nil {
+		t.Fatalf("parse scenario: %v", err)
+	}
+	runner := NewRunner(common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig()))
+	err = runner.Preflight(s)
+	if err == nil || !strings.Contains(err.Error(), "validate image asset") {
+		t.Fatalf("expected invalid image preflight failure, got %v", err)
+	}
+}
 
 func TestApplyUserCreateAndEnableAndPrivateForumCreate(t *testing.T) {
 	conn, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))

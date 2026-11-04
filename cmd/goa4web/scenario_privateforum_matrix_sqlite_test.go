@@ -233,7 +233,12 @@ func loadScenarioThreadIDs(t *testing.T, ctx context.Context, dbConn *sql.DB) ma
 	ids := make(map[string]int32)
 	for name, body := range texts {
 		var id int32
-		if err := dbConn.QueryRowContext(ctx, "SELECT forumthread_id FROM comments WHERE text = ?", body).Scan(&id); err != nil {
+		query := "SELECT forumthread_id FROM comments WHERE text = ?"
+		if name == "staff-welcome" {
+			query = "SELECT forumthread_id FROM comments WHERE text LIKE ?"
+			body += "%"
+		}
+		if err := dbConn.QueryRowContext(ctx, query, body).Scan(&id); err != nil {
 			t.Fatalf("query thread %q: %v", name, err)
 		}
 		ids[name] = id

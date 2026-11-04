@@ -13,7 +13,7 @@ permissions:
 jobs:
   mariadb:
     name: MariaDB ${{ matrix.version }} migrations and queries
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

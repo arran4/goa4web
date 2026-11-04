@@ -71,7 +71,13 @@ var _ usageData = (*dbMigrateCmd)(nil)
 
 func (c *dbMigrateCmd) Run() error {
 	c.Verbosef("connecting to database using %s", c.cfg.DBConn)
-	db, err := openDB(c.cfg, c.dbReg)
+	migrationConn, err := dbstart.MigrationConnectionString(c.cfg.DBDriver, c.cfg.DBConn)
+	if err != nil {
+		return fmt.Errorf("migration connection: %w", err)
+	}
+	migrationCfg := *c.cfg
+	migrationCfg.DBConn = migrationConn
+	db, err := openDB(&migrationCfg, c.dbReg)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}

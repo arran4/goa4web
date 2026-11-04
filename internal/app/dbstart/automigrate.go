@@ -16,15 +16,11 @@ import (
 
 // applyMigrations connects to the database and executes SQL migrations.
 func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdrivers.Registry) error {
-	conn := cfg.DBConn
+	conn := MigrationConnectionString(cfg)
 	if conn == "" {
 		return fmt.Errorf("connection string required")
 	}
-	migrationConn, err := MigrationConnectionString(cfg.DBDriver, conn)
-	if err != nil {
-		return err
-	}
-	c, err := reg.Connector(cfg.DBDriver, migrationConn)
+	c, err := reg.Connector(cfg.DBDriver, conn)
 	if err != nil {
 		return err
 	}
@@ -48,6 +44,9 @@ func applyMigrations(ctx context.Context, cfg *config.RuntimeConfig, reg *dbdriv
 		log.Printf("applying migrations from %s", cfg.MigrationsDir)
 	}
 
+	if err := ValidateMigrationConnection(ctx, sdb, cfg.DBDriver, conn); err != nil {
+		return err
+	}
 	return Apply(ctx, sdb, fsys, false, cfg.DBDriver)
 }
 

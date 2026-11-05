@@ -49,13 +49,13 @@ func TestShutdownForcesBlockedHTTPRequestAtDeadline(t *testing.T) {
 	}
 	serveDone := make(chan error, 1)
 	go func() { serveDone <- httpServer.Serve(listener) }()
-	requestDone := make(chan error, 1)
+	requestDone := make(chan struct{})
 	go func() {
 		resp, err := http.Get("http://" + listener.Addr().String())
-		if resp != nil {
+		if err == nil && resp != nil {
 			_ = resp.Body.Close()
 		}
-		requestDone <- err
+		close(requestDone)
 	}()
 	select {
 	case <-started:
@@ -70,8 +70,7 @@ func TestShutdownForcesBlockedHTTPRequestAtDeadline(t *testing.T) {
 	}
 	close(release)
 	select {
-	case err := <-requestDone:
-		_ = err
+	case <-requestDone:
 	case <-time.After(time.Second):
 		t.Fatal("blocked HTTP request remained active after forced close")
 	}

@@ -109,7 +109,7 @@ func waitProcess(cmd *exec.Cmd, timeout time.Duration) error {
 		return err
 	case <-time.After(timeout):
 		_ = cmd.Process.Kill()
-		_ = <-done
-		return fmt.Errorf("process did not exit within %s", timeout)
+		waitErr := <-done
+		return fmt.Errorf("process did not exit within %s; wait after kill: %v", timeout, waitErr)
 	}
 }

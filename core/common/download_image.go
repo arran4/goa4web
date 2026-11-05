@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"errors"
 	"fmt"
 	"image"
 	_ "image/gif"  // Register format
@@ -125,7 +126,9 @@ func (cd *CoreData) QueueRemoteImageCache(imgURL string) (string, error) {
 }
 
 // StartRemoteImageCacheFetch starts a best-effort immediate fetch for a queued
-// remote cache entry. The scheduled worker remains responsible for retries.
+// remote cache entry. Managed runners own asynchronous work; callers without a
+// runner process synchronously while the scheduled worker remains responsible
+// for retries.
 func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 	if cd == nil || cd.queries == nil || id == "" || sourceURL == "" {
 		return
@@ -135,6 +138,10 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 		attemptTime := time.Now().UTC()
 		log.Printf("image cache fetch start: mode=immediate id=%s source=%q attempt_at=%s", id, sourceURL, attemptTime.Format(time.RFC3339))
 		if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
+			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
+				log.Printf("image cache fetch interrupted: mode=immediate id=%s source=%q error=%q", id, sourceURL, interrupted.Error())
+				return
+			}
 			log.Printf("image cache fetch failed: mode=immediate id=%s source=%q error=%q", id, sourceURL, err.Error())
 			retryDelay := cd.imageCacheFetchRetryDelay()
 			maxRetries := cd.imageCacheFetchMaxRetries()
@@ -157,6 +164,11 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 	if cd.backgroundRunner != nil && cd.backgroundRunner.Go(run) {
 		return
 	}
+	ctx := cd.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	run(ctx)
 }
 
 // ProcessPendingRemoteImageCacheEntries materializes queued remote cache
@@ -186,6 +198,10 @@ func (cd *CoreData) ProcessPendingRemoteImageCacheEntries(ctx context.Context, l
 		attemptTime := time.Now().UTC()
 		log.Printf("image cache fetch start: mode=worker id=%s source=%q attempt_at=%s retry_count=%d", entry.ID, entry.SourceUrl.String, attemptTime.Format(time.RFC3339), entry.RetryCount)
 		if err := cd.refreshRemoteImageCacheEntry(ctx, entry.ID, entry.SourceUrl.String, attemptTime); err != nil {
+			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
+				log.Printf("image cache fetch interrupted: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, interrupted.Error())
+				return interrupted
+			}
 			log.Printf("image cache fetch failed: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, err.Error())
 			retryDelay := cd.imageCacheFetchRetryDelay()
 			cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
@@ -207,6 +223,18 @@ func (cd *CoreData) ProcessPendingRemoteImageCacheEntries(ctx context.Context, l
 			continue
 		}
 		log.Printf("image cache fetch complete: mode=worker id=%s source=%q", entry.ID, entry.SourceUrl.String)
+	}
+	return nil
+}
+
+func imageFetchInterruption(ctx context.Context, err error) error {
+	if ctx != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+	}
+	if errors.Is(err, context.Canceled) {
+		return context.Canceled
 	}
 	return nil
 }
@@ -273,9 +301,9 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 	if depth > 3 {
 		return nil, fmt.Errorf("too many image metadata redirects")
 	}
-	client := opengraph.NewSafeClient() // Always use a safe client for external URLs
-	if cd != nil && cd.HTTPClient() != nil {
-		client = cd.HTTPClient()
+	client := cd.HTTPClient()
+	if client == nil {
+		client = opengraph.NewSafeClient()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imgURL, nil)

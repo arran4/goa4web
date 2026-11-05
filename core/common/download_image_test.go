@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -401,7 +403,7 @@ func TestProcessPendingRemoteImageCacheEntriesRecordsRetryFailure(t *testing.T) 
 	}
 }
 
-func TestImmediateRemoteImageFetchCancelsNetworkAndRecordsRetry(t *testing.T) {
+func TestImmediateRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
 	runner := newControlledBackgroundRunner()
 	started := make(chan struct{})
 	client := &http.Client{Transport: imageRoundTripper(func(req *http.Request) (*http.Response, error) {
@@ -414,7 +416,9 @@ func TestImmediateRemoteImageFetchCancelsNetworkAndRecordsRetry(t *testing.T) {
 		WithHTTPClient(client),
 		WithBackgroundRunner(runner),
 	)
-	cd.StartRemoteImageCacheFetch("abcd1234.png", "https://example.test/image.png")
+	// ForUser must retain the server-managed runner rather than falling back to
+	// synchronous request work.
+	cd.ForUser(42).StartRemoteImageCacheFetch("abcd1234.png", "https://example.test/image.png")
 	select {
 	case <-started:
 	case <-time.After(time.Second):
@@ -431,11 +435,83 @@ func TestImmediateRemoteImageFetchCancelsNetworkAndRecordsRetry(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("immediate image fetch did not stop after cancellation")
 	}
-	if len(queries.RecordImageCacheFetchFailureCalls) != 1 {
-		t.Fatalf("failure records = %d, want 1", len(queries.RecordImageCacheFetchFailureCalls))
+	if len(queries.RecordImageCacheFetchFailureCalls) != 0 {
+		t.Fatalf("failure records = %d, want 0 so the pending row remains due", len(queries.RecordImageCacheFetchFailureCalls))
 	}
-	if got := queries.RecordImageCacheFetchFailureCalls[0]; got.ID != "abcd1234.png" || !got.NextAttemptAt.Valid {
-		t.Fatalf("failure record = %#v", got)
+}
+
+func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	started := make(chan struct{})
+	client := &http.Client{Transport: imageRoundTripper(func(req *http.Request) (*http.Response, error) {
+		close(started)
+		<-req.Context().Done()
+		return nil, req.Context().Err()
+	})}
+	queries := testhelpers.NewQuerierStub()
+	queries.ListDuePendingImageCacheEntriesReturns = []*db.ImageCacheEntry{{
+		ID:            "abcd1234.png",
+		SourceUrl:     sql.NullString{String: "https://example.test/image.png", Valid: true},
+		SourceKind:    imageCacheSourceKindRemote,
+		Status:        imageCacheStatusPending,
+		RetryCount:    2,
+		NextAttemptAt: sql.NullTime{Time: time.Now().Add(-time.Minute), Valid: true},
+	}}
+	cfg := config.NewRuntimeConfig()
+	cfg.ImageCacheFetchMaxRetries = 3
+	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
+	done := make(chan error, 1)
+	go func() {
+		done <- cd.ProcessPendingRemoteImageCacheEntries(ctx, 1)
+	}()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("scheduled image fetch did not start")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("ProcessPendingRemoteImageCacheEntries() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("scheduled image fetch did not stop after cancellation")
+	}
+	if len(queries.RecordImageCacheFetchFailureCalls) != 0 {
+		t.Fatalf("failure records = %d, want 0 so retry_count remains 2", len(queries.RecordImageCacheFetchFailureCalls))
+	}
+}
+
+func TestStartRemoteImageCacheFetchWithoutRunnerProcessesSynchronously(t *testing.T) {
+	var imageBytes bytes.Buffer
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	if err := png.Encode(&imageBytes, img); err != nil {
+		t.Fatalf("encode png: %v", err)
+	}
+	provider := newMemoryCacheProvider()
+	cfg := config.NewRuntimeConfig()
+	cfg.ImageCacheProvider = registerMemoryCacheProvider(t, provider)
+	queries := testhelpers.NewQuerierStub()
+	client := &http.Client{Transport: imageRoundTripper(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"image/png"}},
+			Body:       io.NopCloser(bytes.NewReader(imageBytes.Bytes())),
+		}, nil
+	})}
+	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
+
+	cd.StartRemoteImageCacheFetch("abcd1234.png", "https://example.test/image.png")
+
+	if len(queries.RecordImageCacheFetchFailureCalls) != 0 {
+		t.Fatalf("failure records = %d, want 0", len(queries.RecordImageCacheFetchFailureCalls))
+	}
+	if len(queries.UpsertImageCacheEntryCalls) != 2 {
+		t.Fatalf("metadata upserts = %d, want original and thumbnail", len(queries.UpsertImageCacheEntryCalls))
+	}
+	if got := queries.UpsertImageCacheEntryCalls[0]; got.ID != "abcd1234.png" || got.Status != imageCacheStatusReady {
+		t.Fatalf("cache entry = %#v, want ready abcd1234.png", got)
 	}
 }
 

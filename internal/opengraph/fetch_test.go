@@ -285,6 +285,24 @@ func TestFetchCancellationDuringRedirect(t *testing.T) {
 	}
 }
 
+func TestNewSafeClientDisablesEnvironmentProxy(t *testing.T) {
+	t.Setenv("HTTP_PROXY", "http://127.0.0.1:3128")
+	t.Setenv("HTTPS_PROXY", "http://127.0.0.1:3128")
+	t.Setenv("NO_PROXY", "")
+	resolver := resolverFunc(func(context.Context, string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("192.0.2.1")}}, nil
+	})
+
+	client := newSafeClient(resolver)
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("transport type = %T, want *http.Transport", client.Transport)
+	}
+	if transport.Proxy != nil {
+		t.Fatal("safe transport inherited proxy routing; proxy resolution can bypass destination validation")
+	}
+}
+
 func TestFetchCancelledBeforeRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

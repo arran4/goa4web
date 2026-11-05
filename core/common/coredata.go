@@ -2950,7 +2950,8 @@ func WithLanguageCache(lc *LanguageCache) CoreOption {
 	return func(cd *CoreData) { cd.languageCache = lc }
 }
 
-// WithHTTPClient sets the HTTP client used for external requests.
+// WithHTTPClient sets the HTTP client used for external requests. The supplied
+// client is used as-is and must enforce any destination policy its caller needs.
 func WithHTTPClient(client *http.Client) CoreOption {
 	return func(cd *CoreData) { cd.httpClient = client }
 }
@@ -3252,6 +3253,7 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD.languageCache = cd.languageCache
 	userCD.WebAuthn = cd.WebAuthn
 	userCD.httpClient = cd.httpClient
+	userCD.backgroundRunner = cd.backgroundRunner
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
 	userCD.ForumBasePath = cd.ForumBasePath

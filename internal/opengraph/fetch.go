@@ -33,6 +33,8 @@ type Info struct {
 }
 
 // NewSafeClient returns an http.Client configured to block internal IP addresses.
+// It connects directly so an environment proxy cannot resolve destinations on
+// the client's behalf and bypass address validation.
 func NewSafeClient() *http.Client {
 	return newSafeClient(net.DefaultResolver)
 }
@@ -42,6 +44,7 @@ func newSafeClient(resolver IPResolver) *http.Client {
 		resolver = net.DefaultResolver
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
 	dialer := &net.Dialer{}
 	transport.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
 		host, port, err := net.SplitHostPort(address)
@@ -77,7 +80,9 @@ func newSafeClient(resolver IPResolver) *http.Client {
 	}
 }
 
-// Fetch retrieves and parses Open Graph metadata. All network work is tied to ctx.
+// Fetch retrieves and parses Open Graph metadata. All network work is tied to
+// ctx. A nil client selects NewSafeClient; a supplied client is used as-is and
+// remains responsible for its own destination and redirect policy.
 func Fetch(ctx context.Context, urlStr string, client *http.Client) (*Info, error) {
 	return fetch(ctx, urlStr, client, net.DefaultResolver)
 }

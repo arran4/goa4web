@@ -28,6 +28,30 @@ type memoryCacheProvider struct {
 	files map[string][]byte
 }
 
+type imageRoundTripper func(*http.Request) (*http.Response, error)
+
+func (f imageRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+type controlledBackgroundRunner struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+}
+
+func newControlledBackgroundRunner() *controlledBackgroundRunner {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &controlledBackgroundRunner{ctx: ctx, cancel: cancel}
+}
+
+func (r *controlledBackgroundRunner) Go(fn func(context.Context)) bool {
+	r.wg.Add(1)
+	go func() {
+		defer r.wg.Done()
+		fn(r.ctx)
+	}()
+	return true
+}
+
 func newMemoryCacheProvider() *memoryCacheProvider {
 	return &memoryCacheProvider{files: map[string][]byte{}}
 }
@@ -85,6 +109,7 @@ func TestDownloadAndCacheImageRecordsRemoteMetadata(t *testing.T) {
 		_, _ = w.Write(imageBytes.Bytes())
 	}))
 	defer srv.Close()
+	cd.httpClient = srv.Client()
 
 	sourceURL := srv.URL + "/logo.png"
 	ref, err := cd.DownloadAndCacheImage(sourceURL)
@@ -177,7 +202,7 @@ func TestPrepareImageCacheEntryForServeRefreshesExpiredRemoteEntry(t *testing.T)
 	cfg.ImageCacheProvider = providerName
 	cfg.ImageCacheMode = "ttl"
 	cfg.ImageCacheTTL = "1h"
-	cd := NewCoreData(context.Background(), queries, cfg)
+	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(srv.Client()))
 
 	ok, err := cd.PrepareImageCacheEntryForServe(context.Background(), id)
 	if err != nil {
@@ -257,8 +282,8 @@ func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cd := NewCoreData(context.Background(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig())
-	got, err := cd.downloadExternalImage(srv.URL + "/pin")
+	cd := NewCoreData(context.Background(), testhelpers.NewQuerierStub(), config.NewRuntimeConfig(), WithHTTPClient(srv.Client()))
+	got, err := cd.downloadExternalImage(context.Background(), srv.URL+"/pin")
 	if err != nil {
 		t.Fatalf("downloadExternalImage: %v", err)
 	}
@@ -303,7 +328,12 @@ func TestCreateCommentStartsImmediateRemoteImageFetch(t *testing.T) {
 	}
 	cfg := config.NewRuntimeConfig()
 	cfg.ImageCacheProvider = providerName
-	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
+	runner := newControlledBackgroundRunner()
+	defer func() {
+		runner.cancel()
+		runner.wg.Wait()
+	}()
+	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client), WithBackgroundRunner(runner))
 
 	if _, err := cd.CreateCommentInSectionForCommenter("forum", "topic", 1, 1, 9, 1, "[image http://93.184.216.34/logo.png]"); err != nil {
 		t.Fatalf("CreateCommentInSectionForCommenter: %v", err)
@@ -368,6 +398,44 @@ func TestProcessPendingRemoteImageCacheEntriesRecordsRetryFailure(t *testing.T) 
 	}
 	if got.NextAttemptAt.Time.Before(got.LastAttemptAt.Time.Add(time.Minute - time.Second)) {
 		t.Fatalf("next attempt %s too early after %s", got.NextAttemptAt.Time, got.LastAttemptAt.Time)
+	}
+}
+
+func TestImmediateRemoteImageFetchCancelsNetworkAndRecordsRetry(t *testing.T) {
+	runner := newControlledBackgroundRunner()
+	started := make(chan struct{})
+	client := &http.Client{Transport: imageRoundTripper(func(req *http.Request) (*http.Response, error) {
+		close(started)
+		<-req.Context().Done()
+		return nil, req.Context().Err()
+	})}
+	queries := testhelpers.NewQuerierStub()
+	cd := NewCoreData(context.Background(), queries, config.NewRuntimeConfig(),
+		WithHTTPClient(client),
+		WithBackgroundRunner(runner),
+	)
+	cd.StartRemoteImageCacheFetch("abcd1234.png", "https://example.test/image.png")
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("immediate image fetch did not start")
+	}
+	runner.cancel()
+	done := make(chan struct{})
+	go func() {
+		runner.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("immediate image fetch did not stop after cancellation")
+	}
+	if len(queries.RecordImageCacheFetchFailureCalls) != 1 {
+		t.Fatalf("failure records = %d, want 1", len(queries.RecordImageCacheFetchFailureCalls))
+	}
+	if got := queries.RecordImageCacheFetchFailureCalls[0]; got.ID != "abcd1234.png" || !got.NextAttemptAt.Valid {
+		t.Fatalf("failure record = %#v", got)
 	}
 }
 

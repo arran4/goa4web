@@ -48,11 +48,18 @@ The `Bus` struct manages subscribers and dispatching.
 - `Subscribe(types ...MessageType)` returns a channel that receives matching messages.
 - `Publish(msg Message)` sends a message to all matching subscribers non-blocking (dropping messages if channel is full).
 
+The bus and its acknowledgements are process-local and volatile. `Envelope.Ack`
+only releases in-memory shutdown accounting; it does not persist the message or
+prove that work can resume after a process exit. Reliable subscriptions apply
+backpressure while the process is running, but are not durable queues.
+
 ## Shutdown
 
-Calling `Bus.Shutdown(ctx)` stops new publications and waits for all
-queued messages on subscriber channels to drain. The call returns when
-either all pending events are processed or the context is cancelled.
+Calling `Bus.Shutdown(ctx)` stops new publications, closes delivery to each
+subscriber, and waits for accepted envelopes to be acknowledged. Consumers can
+process buffered envelopes while their channels drain. A subscriber that closes
+early acknowledges its remaining buffered envelopes without processing them.
+The call returns when accounting reaches zero or the context is cancelled.
 
 ## BusWorker
 

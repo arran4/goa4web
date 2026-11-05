@@ -1,11 +1,42 @@
 package opengraph
 
 import (
+	"context"
+	"errors"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
+
+type resolverFunc func(context.Context, string) ([]net.IPAddr, error)
+
+func (f resolverFunc) LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error) {
+	return f(ctx, host)
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+type contextBody struct {
+	ctx    context.Context
+	closed atomic.Bool
+}
+
+func (b *contextBody) Read([]byte) (int, error) {
+	<-b.ctx.Done()
+	return 0, b.ctx.Err()
+}
+
+func (b *contextBody) Close() error {
+	b.closed.Store(true)
+	return nil
+}
 
 func TestFetch(t *testing.T) {
 	tests := []struct {
@@ -140,7 +171,7 @@ func TestFetch(t *testing.T) {
 			}))
 			defer server.Close()
 
-			info, err := Fetch(server.URL, http.DefaultClient)
+			info, err := Fetch(context.Background(), server.URL, http.DefaultClient)
 			if err != nil {
 				t.Fatalf("Fetch() error = %v", err)
 			}
@@ -167,6 +198,107 @@ func TestFetch(t *testing.T) {
 				t.Errorf("Keywords = %v, want %v", info.Keywords, tt.wantInfo.Keywords)
 			}
 		})
+	}
+}
+
+func TestFetchCancelledDuringHTTPRequestClosesBody(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	body := &contextBody{ctx: ctx}
+	started := make(chan struct{})
+	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		close(started)
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: body}, nil
+	})}
+	done := make(chan error, 1)
+	go func() {
+		_, err := Fetch(ctx, "https://example.test", client)
+		done <- err
+	}()
+	<-started
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("Fetch() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Fetch did not stop after request cancellation")
+	}
+	if !body.closed.Load() {
+		t.Fatal("response body was not closed")
+	}
+}
+
+func TestFetchCancellationDuringDNSResolution(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	started := make(chan struct{})
+	resolver := resolverFunc(func(ctx context.Context, _ string) ([]net.IPAddr, error) {
+		close(started)
+		<-ctx.Done()
+		return nil, ctx.Err()
+	})
+	done := make(chan error, 1)
+	go func() {
+		_, err := fetch(ctx, "https://example.test", nil, resolver)
+		done <- err
+	}()
+	<-started
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("fetch() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("fetch did not stop during DNS resolution")
+	}
+}
+
+func TestFetchCancellationDuringRedirect(t *testing.T) {
+	redirected := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/next", http.StatusFound)
+	}))
+	defer server.Close()
+	resolver := resolverFunc(func(ctx context.Context, _ string) ([]net.IPAddr, error) {
+		close(redirected)
+		<-ctx.Done()
+		return nil, ctx.Err()
+	})
+	client := newSafeClient(resolver)
+	client.Transport = server.Client().Transport
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		_, err := Fetch(ctx, server.URL, client)
+		done <- err
+	}()
+	<-redirected
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("Fetch() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Fetch did not stop during redirect")
+	}
+}
+
+func TestFetchCancelledBeforeRequest(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	called := false
+	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		called = true
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(""))}, nil
+	})}
+	_, err := Fetch(ctx, "https://example.test", client)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Fetch() error = %v, want context.Canceled", err)
+	}
+	if called {
+		t.Fatal("transport called after context was already cancelled")
 	}
 }
 

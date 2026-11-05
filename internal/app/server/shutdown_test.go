@@ -70,12 +70,16 @@ func TestShutdownForcesBlockedHTTPRequestAtDeadline(t *testing.T) {
 	}
 	close(release)
 	select {
-	case <-requestDone:
+	case err := <-requestDone:
+		_ = err
 	case <-time.After(time.Second):
 		t.Fatal("blocked HTTP request remained active after forced close")
 	}
 	select {
-	case <-serveDone:
+	case err := <-serveDone:
+		if !errors.Is(err, http.ErrServerClosed) {
+			t.Fatalf("Serve() error = %v, want http.ErrServerClosed", err)
+		}
 	case <-time.After(time.Second):
 		t.Fatal("HTTP serve loop did not stop")
 	}

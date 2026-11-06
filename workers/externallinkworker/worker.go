@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/ast"
@@ -82,9 +81,9 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						return nil // Already has title
 					}
 
-					info, err := domainexternallink.FetchMetadata(canonicalURL, func(url string) (*opengraph.Info, error) {
-						return opengraph.Fetch(url, nil)
-					}, time.Sleep)
+					info, err := domainexternallink.FetchMetadata(ctx, canonicalURL, func(ctx context.Context, url string) (*opengraph.Info, error) {
+						return opengraph.Fetch(ctx, url, nil)
+					}, domainexternallink.Wait)
 					if err != nil {
 						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
 						return nil

@@ -44,11 +44,9 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 				env.Ack()
 				continue
 			}
-			// Use a context that isn't canceled while processing
-			// the current event so database operations aren't
-			// interrupted mid-flight when the worker context is
-			// cancelled.
-			evtCtx := context.WithoutCancel(ctx)
+			// The server keeps the worker context alive while accepted events drain,
+			// then cancels it at the shutdown deadline.
+			evtCtx := ctx
 			if data, ok := evt.Data[EventKey].(IndexEventData); ok {
 				if err := index(evtCtx, q, data); err != nil {
 					log.Printf("index error: %v", err)

@@ -41,6 +41,9 @@ import (
 // authenticated session has been invalidated and before the login redirect.
 type AuthenticationInterruptionHandler func(http.ResponseWriter, *http.Request) bool
 
+// gracefulShutdownTimeout bounds cooperative HTTP, event-bus, and worker shutdown.
+const gracefulShutdownTimeout = 5 * time.Second
+
 // Server bundles the application's configuration, router and runtime dependencies.
 type Server struct {
 	RouterReg       *router.Registry
@@ -71,6 +74,7 @@ type Server struct {
 	authInterrupted AuthenticationInterruptionHandler
 
 	WorkerCancel context.CancelFunc
+	WorkerGroup  *workers.Group
 
 	addr       string
 	httpServer *http.Server
@@ -83,6 +87,8 @@ type Server struct {
 	trustedProxiesParsed []netip.Prefix
 	lastTrustedProxies   string
 	configMu             sync.Mutex
+	shutdownMu           sync.Mutex
+	shutdownAttempted    bool
 }
 
 // Addr returns the address the server is listening on after Start is called.
@@ -98,35 +104,56 @@ func (s *Server) Start(addr string) error {
 	s.addr = ln.Addr().String()
 	s.httpServer = &http.Server{Handler: s.Router}
 	log.Printf("Server started on http://%s", s.addr)
-	if err := s.httpServer.Serve(ln); err != nil {
+	if err := s.httpServer.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("serve: %w", err)
 	}
 	return nil
 }
 
-// Shutdown gracefully stops the HTTP server.
+// Shutdown stops HTTP intake, drains accepted bus work, and then cancels workers.
 func (s *Server) Shutdown(ctx context.Context) error {
-	if s.httpServer == nil {
-		return nil
+	s.shutdownMu.Lock()
+	s.shutdownAttempted = true
+	s.shutdownMu.Unlock()
+	var firstErr error
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			firstErr = fmt.Errorf("shutdown server: %w", err)
+			if closeErr := s.httpServer.Close(); closeErr != nil && !errors.Is(closeErr, http.ErrServerClosed) {
+				log.Printf("force close HTTP server: %v", closeErr)
+			}
+		}
 	}
-	if err := s.httpServer.Shutdown(ctx); err != nil {
-		return fmt.Errorf("shutdown server: %w", err)
+	if s.Bus != nil {
+		if err := s.Bus.Shutdown(ctx); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("drain event bus: %w", err)
+		}
 	}
-	return nil
+	if s.WorkerCancel != nil {
+		s.WorkerCancel()
+	}
+	if s.WorkerGroup != nil {
+		if err := s.WorkerGroup.Wait(ctx); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("wait for workers: %w", err)
+		}
+	}
+	return firstErr
 }
 
 // Close releases resources associated with the server such as background
 // workers, the event bus and the database connection.
 func (s *Server) Close() {
-	if s.WorkerCancel != nil {
-		s.WorkerCancel()
-	}
-	if s.Bus != nil {
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.Bus.Shutdown(shutdownCtx); err != nil {
-			log.Printf("eventbus shutdown: %v", err)
+	s.shutdownMu.Lock()
+	shutdownAttempted := s.shutdownAttempted
+	s.shutdownMu.Unlock()
+	if !shutdownAttempted {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
+		if err := s.Shutdown(shutdownCtx); err != nil {
+			log.Printf("server close: %v", err)
 		}
+		cancel()
+	} else if s.WorkerCancel != nil {
+		s.WorkerCancel()
 	}
 	if s.DB != nil {
 		if err := s.DB.Close(); err != nil {
@@ -415,6 +442,9 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.HTTPClient != nil {
 		coreOpts = append(coreOpts, common.WithHTTPClient(s.HTTPClient))
 	}
+	if s.WorkerGroup != nil {
+		coreOpts = append(coreOpts, common.WithBackgroundRunner(s.WorkerGroup))
+	}
 	cd := common.NewCoreData(r.Context(), queries, s.Config, coreOpts...)
 	if providerErr != nil {
 		cd.EmailProviderError = providerErr.Error()
@@ -482,26 +512,28 @@ func (s *Server) startWorkers(ctx context.Context) {
 		log.Printf("startWorkers: no db or querier available")
 		return
 	}
-	workerCtx, cancel := context.WithCancel(ctx)
 	dlqProvider := s.DLQReg.ProviderFromConfig(s.Config, q)
 	var workerOpts []workers.Option
 	if s.HTTPClient != nil {
 		workerOpts = append(workerOpts, workers.WithHTTPClient(s.HTTPClient))
 	}
-	workers.Start(workerCtx, q, emailProvider, dlqProvider, s.Config, s.Bus, workerOpts...)
-	s.WorkerCancel = cancel
+	s.WorkerGroup = workers.Start(context.WithoutCancel(ctx), q, emailProvider, dlqProvider, s.Config, s.Bus, workerOpts...)
+	s.WorkerCancel = s.WorkerGroup.Cancel
 }
 
 // Run starts the HTTP server and blocks until the context is cancelled.
 func Run(ctx context.Context, srv *Server, addr string) error {
+	serverErr := make(chan error, 1)
 	go func() {
-		if err := srv.Start(addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server error: %v", err)
-		}
+		serverErr <- srv.Start(addr)
 	}()
-	<-ctx.Done()
+	select {
+	case err := <-serverErr:
+		return err
+	case <-ctx.Done():
+	}
 	log.Printf("Shutting down server...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown error: %w", err)
@@ -522,10 +554,9 @@ func Run(ctx context.Context, srv *Server, addr string) error {
 	if srv.DB != nil {
 		queries := db.NewForDriver(srv.DB, srv.Config.DBDriver)
 		customQueries, _ := queries.(db.CustomQueries)
-		usageTimeout := 5 * time.Minute
-		ctx, cancel := context.WithTimeout(context.Background(), usageTimeout)
-		defer cancel()
-		usageData := stats.BuildUsageStatsData(ctx, queries, customQueries, srv.Config.StatsStartYear)
+		usageCtx, usageCancel := context.WithTimeout(context.Background(), time.Second)
+		defer usageCancel()
+		usageData := stats.BuildUsageStatsData(usageCtx, queries, customQueries, srv.Config.StatsStartYear)
 		if b, err := formatUsageStats(usageData); err == nil {
 			log.Printf("%s", b)
 		} else {

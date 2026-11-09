@@ -46,8 +46,9 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 7, Email: "admin@example.com"},
 		ListSubscribersForPatternsFn: func(_ context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
 			if arg.Method == "internal" {
-				// User 7 is an administrator and subscriber; user 8 is only a subscriber.
-				return []int32{7, 8}, nil
+				// User 7 is an administrator with overlapping reply rules;
+				// user 8 is only a subscriber. Duplicate matches are a set.
+				return []int32{7, 7, 8}, nil
 			}
 			return nil, nil
 		},

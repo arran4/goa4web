@@ -40,17 +40,32 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 	cfg := config.NewRuntimeConfig()
 	cfg.AdminNotify = true
 	cfg.NotificationsEnabled = true
-	cfg.AdminEmails = "admin@example.com"
+	cfg.AdminEmails = "admin@example.com,admin-only@example.com"
 
 	queries := &db.QuerierStub{
-		SystemGetUserByEmailRow: &db.SystemGetUserByEmailRow{Idusers: 7, Email: "admin@example.com"},
-		ListSubscribersForPatternsFn: func(_ context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
-			if arg.Method == "internal" {
-				// User 7 is an administrator with overlapping reply rules;
-				// user 8 is only a subscriber. Duplicate matches are a set.
-				return []int32{7, 7, 8}, nil
+		SystemGetUserByEmailFn: func(_ context.Context, addr string) (*db.SystemGetUserByEmailRow, error) {
+			switch addr {
+			case "admin@example.com":
+				return &db.SystemGetUserByEmailRow{Idusers: 7, Email: addr}, nil
+			case "admin-only@example.com":
+				return &db.SystemGetUserByEmailRow{Idusers: 9, Email: addr}, nil
+			default:
+				return nil, sql.ErrNoRows
 			}
-			return nil, nil
+		},
+		ListSubscribersForPatternsFn: func(_ context.Context, arg db.ListSubscribersForPatternsParams) ([]int32, error) {
+			if arg.Method != "internal" {
+				return nil, nil
+			}
+			for _, pattern := range arg.Patterns {
+				if pattern == "notify:/admin/*" {
+					// Admin 9 does not subscribe to ordinary replies.
+					return []int32{7, 9}, nil
+				}
+			}
+			// Admin 7 also subscribes, ordinary subscriber 8 receives the same
+			// reply, and multiple effective matches for 7 must not duplicate.
+			return []int32{7, 7, 8}, nil
 		},
 		SystemGetTemplateOverrideFn: func(_ context.Context, name string) (string, error) {
 			if name == "overlap-admin.gotxt" {
@@ -77,20 +92,26 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 	}
 
 	calls := queries.SystemCreateNotificationForActivityCalls
-	if len(calls) != 3 {
-		t.Fatalf("activity contributions = %d, want 3 (admin + two subscriptions): %+v", len(calls), calls)
+	if len(calls) != 4 {
+		t.Fatalf("activity contributions = %d, want 4 (two admin + two subscriber): %+v", len(calls), calls)
 	}
 	if len(queries.SystemCreateNotificationCalls) != 0 {
 		t.Fatalf("unexpected non-idempotent notification inserts: %+v", queries.SystemCreateNotificationCalls)
 	}
 
-	admin := calls[0]
-	if admin.RecipientID != 7 || admin.Priority != notificationPriorityAdmin ||
-		admin.Message.String != "admin version" || admin.ActivityKey.String != "reply:comment:42" {
-		t.Fatalf("admin contribution = %+v", admin)
+	admins := map[int32]bool{}
+	for _, admin := range calls[:2] {
+		if admin.Priority != notificationPriorityAdmin ||
+			admin.Message.String != "admin version" || admin.ActivityKey.String != "reply:comment:42" {
+			t.Fatalf("admin contribution = %+v", admin)
+		}
+		admins[admin.RecipientID] = true
+	}
+	if len(admins) != 2 || !admins[7] || !admins[9] {
+		t.Fatalf("admin recipients = %+v, want overlapping admin 7 and admin-only 9", admins)
 	}
 	subscribers := map[int32]bool{}
-	for _, call := range calls[1:] {
+	for _, call := range calls[2:] {
 		if call.Priority != notificationPrioritySubscriber ||
 			call.Message.String != "subscriber version" ||
 			call.ActivityKey.String != "reply:comment:42" ||
@@ -104,5 +125,5 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 	}
 
 	// No source is suppressed; the DB's (recipient, activity) unique key
-	// consolidates overlapping contributions while preserving recipient 8.
+	// consolidates overlapping contributions while preserving admin-only 9 and subscriber-only 8.
 }

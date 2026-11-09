@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/arran4/goa4web/config"
@@ -34,6 +35,76 @@ type WorkersConfig struct {
 	CoreOptions []common.CoreOption
 }
 
+// Group owns worker and auxiliary goroutines so shutdown can cancel and bound their wait.
+type Group struct {
+	ctx      context.Context
+	cancel   context.CancelFunc
+	mu       sync.Mutex
+	stopping bool
+	wg       sync.WaitGroup
+}
+
+// NewGroup creates a managed goroutine group whose cancellation is explicit.
+func NewGroup(parent context.Context) *Group {
+	ctx, cancel := context.WithCancel(parent)
+	return &Group{ctx: ctx, cancel: cancel}
+}
+
+// Go starts shutdown-tracked work using the worker lifetime context.
+func (g *Group) Go(fn func(context.Context)) bool {
+	if g == nil || fn == nil {
+		return false
+	}
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.stopping {
+		return false
+	}
+	g.wg.Add(1)
+	go func() {
+		defer g.wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("goroutine panic: %v", r)
+				os.Exit(1)
+			}
+		}()
+		fn(g.ctx)
+	}()
+	return true
+}
+
+// Cancel prevents new tracked work and cooperatively cancels running work.
+func (g *Group) Cancel() {
+	if g == nil {
+		return
+	}
+	g.mu.Lock()
+	if !g.stopping {
+		g.stopping = true
+		g.cancel()
+	}
+	g.mu.Unlock()
+}
+
+// Wait waits for all tracked work or for ctx to expire.
+func (g *Group) Wait(ctx context.Context) error {
+	if g == nil {
+		return nil
+	}
+	done := make(chan struct{})
+	go func() {
+		g.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
 // WithHTTPClient sets the HTTP client to supply to workers making external requests.
 func WithHTTPClient(client *http.Client) Option {
 	return func(c *WorkersConfig) {
@@ -48,34 +119,22 @@ func WithCoreOptions(opts ...common.CoreOption) Option {
 	}
 }
 
-// safeGo runs fn in a goroutine and exits the program if the goroutine panics.
-func safeGo(fn func()) {
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("goroutine panic: %v", r)
-				os.Exit(1)
-			}
-		}()
-		fn()
-	}()
-}
-
 // Start launches all background workers using the given configuration.
-func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus, opts ...Option) {
+func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvider dlq.DLQ, cfg *config.RuntimeConfig, bus *eventbus.Bus, opts ...Option) *Group {
 	wc := &WorkersConfig{}
 	for _, opt := range opts {
 		if opt != nil {
 			opt(wc)
 		}
 	}
+	group := NewGroup(ctx)
 
 	log.Printf("Starting email worker")
-	safeGo(func() {
+	group.Go(func(ctx context.Context) {
 		emailqueue.StartEventListener(ctx, q, provider, dlqProvider, bus, cfg)
 	})
 	log.Printf("Starting generic scheduler and digest consumer")
-	safeGo(func() {
+	group.Go(func(ctx context.Context) {
 		n := notifications.New(
 			notifications.WithQueries(q),
 			notifications.WithEmailProvider(provider),
@@ -84,7 +143,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		)
 		// Start consumer
 		consumer := notifications.NewDigestConsumer(n)
-		go consumer.Run(ctx)
+		group.Go(func(ctx context.Context) { consumer.Run(ctx) })
 
 		// Start generic scheduler
 		s := scheduler.New(q)
@@ -122,11 +181,11 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		s.Run(ctx, 1*time.Second)
 	})
 	log.Printf("Starting event bus logger worker")
-	safeGo(func() { logworker.Worker(ctx, bus) })
+	group.Go(func(ctx context.Context) { logworker.Worker(ctx, bus) })
 	log.Printf("Starting audit worker")
-	safeGo(func() { auditworker.Worker(ctx, bus, q) })
+	group.Go(func(ctx context.Context) { auditworker.Worker(ctx, bus, q) })
 	log.Printf("Starting notification bus worker")
-	safeGo(func() {
+	group.Go(func(ctx context.Context) {
 		n := notifications.New(
 			notifications.WithQueries(q),
 			notifications.WithEmailProvider(provider),
@@ -136,9 +195,9 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		n.BusWorker(ctx, bus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
-	safeGo(func() { searchworker.Worker(ctx, bus, q) })
+	group.Go(func(ctx context.Context) { searchworker.Worker(ctx, bus, q) })
 	log.Printf("Starting background task worker")
-	safeGo(func() {
+	group.Go(func(ctx context.Context) {
 		var bopts []backgroundtaskworker.Option
 		if wc.HTTPClient != nil {
 			bopts = append(bopts, backgroundtaskworker.WithHTTPClient(wc.HTTPClient))
@@ -149,7 +208,8 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		backgroundtaskworker.Worker(ctx, bus, q, cfg, bopts...)
 	})
 	log.Printf("Starting post count worker")
-	safeGo(func() { postcountworker.Worker(ctx, bus, q) })
+	group.Go(func(ctx context.Context) { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")
-	safeGo(func() { externallinkworker.Worker(ctx, bus, q, cfg) })
+	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg) })
+	return group
 }

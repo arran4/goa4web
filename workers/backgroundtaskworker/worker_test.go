@@ -367,6 +367,53 @@ func TestWorker_ConsumerCancellationLifecycle(t *testing.T) {
 	}
 }
 
+func TestWorker_DrainsAcceptedTaskBeforeBusShutdownReturns(t *testing.T) {
+	bus := eventbus.NewBus()
+	qs := testhelpers.NewQuerierStub()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ready := make(chan struct{})
+	workerFinished := make(chan struct{})
+	go func() {
+		Worker(ctx, bus, qs, nil, WithConcurrency(1), WithReady(ready))
+		close(workerFinished)
+	}()
+	<-ready
+	block := make(chan struct{})
+	if err := bus.Publish(eventbus.TaskEvent{
+		Task:    &blockingTask{TaskString: "test:drain", block: block},
+		Outcome: eventbus.TaskOutcomeSuccess,
+		Time:    time.Now(),
+	}); err != nil {
+		t.Fatalf("publish blocking task: %v", err)
+	}
+	shutdownDone := make(chan error, 1)
+	go func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), time.Second)
+		defer shutdownCancel()
+		shutdownDone <- bus.Shutdown(shutdownCtx)
+	}()
+	select {
+	case err := <-shutdownDone:
+		t.Fatalf("Bus.Shutdown returned before accepted task finished: %v", err)
+	case <-time.After(20 * time.Millisecond):
+	}
+	close(block)
+	select {
+	case err := <-shutdownDone:
+		if err != nil {
+			t.Fatalf("Bus.Shutdown: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Bus.Shutdown did not finish after accepted task completed")
+	}
+	select {
+	case <-workerFinished:
+	case <-time.After(time.Second):
+		t.Fatal("worker did not exit after bus channel closed")
+	}
+}
+
 type plainNonBackgroundTask struct {
 	tasks.TaskString
 }

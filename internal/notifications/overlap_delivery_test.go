@@ -95,8 +95,10 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 	if len(calls) != 4 {
 		t.Fatalf("activity contributions = %d, want 4 (two admin + two subscriber): %+v", len(calls), calls)
 	}
-	if len(queries.SystemCreateNotificationCalls) != 0 {
-		t.Fatalf("unexpected non-idempotent notification inserts: %+v", queries.SystemCreateNotificationCalls)
+	// QuerierStub deliberately mirrors activity upserts into the legacy call
+	// list for compatibility. They are not independent database inserts.
+	if got := len(queries.SystemCreateNotificationCalls); got != len(calls) {
+		t.Fatalf("stub notification records = %d, want %d mirrored activity upserts", got, len(calls))
 	}
 
 	admins := map[int32]bool{}

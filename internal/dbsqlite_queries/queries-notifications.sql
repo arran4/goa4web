@@ -27,14 +27,14 @@ SELECT COUNT(*) FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: ListNotificationsForLister :many
-SELECT notifications.*
+SELECT id, users_idusers, link, message, activity_key, priority, created_at, read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id)
 ORDER BY id DESC
 LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 
 -- name: ListUnreadNotificationsForLister :many
-SELECT notifications.*
+SELECT id, users_idusers, link, message, activity_key, priority, created_at, read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL
 ORDER BY id DESC
@@ -61,12 +61,12 @@ DELETE FROM notifications
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
 
 -- name: GetNotificationForLister :one
-SELECT notifications.*
+SELECT id, users_idusers, link, message, activity_key, priority, created_at, read_at
 FROM notifications
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
 
 -- name: AdminGetNotification :one
-SELECT notifications.*
+SELECT id, users_idusers, link, message, activity_key, priority, created_at, read_at
 FROM notifications
 WHERE id = sqlc.arg(id);
 
@@ -84,13 +84,13 @@ DELETE FROM notifications
 WHERE read_at IS NOT NULL AND read_at < (datetime('now', '-24 hours'));
 
 -- name: SystemGetLastNotificationForRecipientByMessage :one
-SELECT notifications.*
+SELECT id, users_idusers, link, message, activity_key, priority, created_at, read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(recipient_id) AND message = sqlc.arg(message)
 ORDER BY id DESC LIMIT 1;
 
 -- name: AdminListRecentNotifications :many
-SELECT notifications.*
+SELECT id, users_idusers, link, message, activity_key, priority, created_at, read_at
 FROM notifications
 ORDER BY id DESC LIMIT sqlc.arg(limit);
 

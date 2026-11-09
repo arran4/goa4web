@@ -12,6 +12,7 @@
   "DB_DRIVER": "mysql",
   "DB_HOST": "",
   "DB_LOG_VERBOSITY": "0",
+  "DB_MIGRATION_CONN": "",
   "DB_NAME": "",
   "DB_PASS": "",
   "DB_PORT": "",

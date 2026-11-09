@@ -58,7 +58,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if needFetch && canonicalURL != "" && !isInternal {
-		info, err := opengraph.Fetch(canonicalURL, cd.HTTPClient())
+		info, err := opengraph.Fetch(r.Context(), canonicalURL, cd.HTTPClient())
 		if err == nil {
 			if linkID == 0 {
 				res, err := cd.EnsureExternalLink(r.Context(), canonicalURL)

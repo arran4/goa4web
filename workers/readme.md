@@ -10,7 +10,9 @@ To keep the web application fast. Operations like sending emails, recounting for
 
 ## What It Allows
 
-It allows the system to fire-and-forget tasks. The web handler returns instantly, and the worker processes the heavy lifting in the background reliably.
+It allows the system to fire-and-forget best-effort tasks. The web handler can
+return before the worker processes the heavy lifting. Event-bus work remains
+volatile and may be lost on a crash or forced shutdown.
 
 ## Structure and Components
 
@@ -20,7 +22,7 @@ The primary files and their general responsibilities include:
 
 ### Exported Functions
 
-- `Start`
+- `Start`, which returns a managed `Group` used for cancellation and bounded waits.
 
 ## Usage Examples
 
@@ -37,3 +39,6 @@ eventbus.Publish(ctx, "my_queue_topic", myDataStruct)
 
 - **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
 - **State Management**: Care must be taken to ensure thread safety and prevent race conditions when used concurrently.
+- **Shutdown**: Accepted in-memory work is allowed to drain within the server's
+  shutdown deadline. At the deadline workers are cancelled and resource closure
+  continues; work that ignored cancellation is not awaited indefinitely.

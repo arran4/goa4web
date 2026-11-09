@@ -1,6 +1,7 @@
 package opengraph
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,11 @@ import (
 	"golang.org/x/net/html"
 )
 
+// IPResolver resolves host names for SSRF validation and cancellable dialing.
+type IPResolver interface {
+	LookupIPAddr(context.Context, string) ([]net.IPAddr, error)
+}
+
 // Info contains extracted metadata.
 type Info struct {
 	Title       string
@@ -27,62 +33,117 @@ type Info struct {
 }
 
 // NewSafeClient returns an http.Client configured to block internal IP addresses.
+// It connects directly so an environment proxy cannot resolve destinations on
+// the client's behalf and bypass address validation.
 func NewSafeClient() *http.Client {
+	return newSafeClient(net.DefaultResolver)
+}
+
+func newSafeClient(resolver IPResolver) *http.Client {
+	if resolver == nil {
+		resolver = net.DefaultResolver
+	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	dialer := &net.Dialer{}
+	transport.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+		host, port, err := net.SplitHostPort(address)
+		if err != nil {
+			return nil, err
+		}
+		ips, err := lookupPublicIPs(ctx, resolver, host)
+		if err != nil {
+			return nil, err
+		}
+		var lastErr error
+		for _, ip := range ips {
+			conn, err := dialer.DialContext(ctx, network, net.JoinHostPort(ip.String(), port))
+			if err == nil {
+				return conn, nil
+			}
+			lastErr = err
+		}
+		return nil, lastErr
+	}
 	return &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout:   2 * time.Second,
+		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return errors.New("stopped after 10 redirects")
 			}
-			// Re-check IP on redirect
-			h := req.URL.Hostname()
-			ips, err := net.LookupIP(h)
-			if err != nil {
-				return err
-			}
-			for _, ip := range ips {
-				if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-					return fmt.Errorf("blocked internal ip on redirect: %s", ip)
-				}
+			if err := validateFetchURL(req.Context(), req.URL, resolver); err != nil {
+				return fmt.Errorf("redirect: %w", err)
 			}
 			return nil
 		},
 	}
 }
 
-func Fetch(urlStr string, client *http.Client) (*Info, error) {
+// Fetch retrieves and parses Open Graph metadata. All network work is tied to
+// ctx. A nil client selects NewSafeClient; a supplied client is used as-is and
+// remains responsible for its own destination and redirect policy.
+func Fetch(ctx context.Context, urlStr string, client *http.Client) (*Info, error) {
+	return fetch(ctx, urlStr, client, net.DefaultResolver)
+}
+
+func fetch(ctx context.Context, urlStr string, client *http.Client, resolver IPResolver) (*Info, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if client == nil {
 		u, err := url.Parse(urlStr)
 		if err != nil {
 			return nil, err
 		}
-
-		host := u.Hostname()
-		ips, err := net.LookupIP(host)
-		if err != nil {
+		if err := validateFetchURL(ctx, u, resolver); err != nil {
 			return nil, err
 		}
-
-		for _, ip := range ips {
-			if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() {
-				return nil, fmt.Errorf("blocked internal ip: %s", ip)
-			}
-		}
-
-		client = NewSafeClient()
+		client = newSafeClient(resolver)
 	}
-	req, err := http.NewRequest("GET", urlStr, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "goa4web/1.0 (+https://github.com/arran4/goa4web)")
 	resp, err := client.Do(req)
 	if err != nil {
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	return Parse(io.LimitReader(resp.Body, 5*1024*1024))
+}
+
+func validateFetchURL(ctx context.Context, u *url.URL, resolver IPResolver) error {
+	if u == nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return fmt.Errorf("unsupported URL scheme")
+	}
+	if u.Hostname() == "" {
+		return fmt.Errorf("URL host required")
+	}
+	_, err := lookupPublicIPs(ctx, resolver, u.Hostname())
+	return err
+}
+
+func lookupPublicIPs(ctx context.Context, resolver IPResolver, host string) ([]net.IPAddr, error) {
+	ips, err := resolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+	if len(ips) == 0 {
+		return nil, fmt.Errorf("no addresses for host %q", host)
+	}
+	for _, addr := range ips {
+		ip := addr.IP
+		if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return nil, fmt.Errorf("blocked internal ip: %s", ip)
+		}
+	}
+	return ips, nil
 }
 
 func Parse(r io.Reader) (*Info, error) {

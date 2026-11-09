@@ -34,6 +34,7 @@ type BoolOption struct {
 // StringOptions lists the string runtime options shared by flag parsing and configuration generation.
 var StringOptions = []StringOption{
 	{"db-conn", EnvDBConn, "Database connection string. This is used to connect to the database.", "", nil, "db_conn.txt", func(c *RuntimeConfig) *string { return &c.DBConn }},
+	{"db-migration-conn", EnvDBMigrationConn, "Optional migration-specific database connection string; defaults to DB_CONN without changes. For MySQL migrations set multiStatements=true.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBMigrationConn }},
 	{"db-driver", EnvDBDriver, "Database driver to use. Supported drivers are 'mysql'.", "mysql", nil, "db_driver.txt", func(c *RuntimeConfig) *string { return &c.DBDriver }},
 	{"db-timezone", EnvDBTimezone, "Timezone for the database connection.", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.DBTimezone }},
 	{"db-host", EnvDBHost, "Database server hostname.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBHost }},

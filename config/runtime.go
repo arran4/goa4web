@@ -126,7 +126,9 @@ func (c *RuntimeConfig) SafeImageDimensions() []string {
 // RuntimeConfig stores configuration values resolved from environment
 // variables, optional files and command line flags.
 type RuntimeConfig struct {
-	DBConn            string
+	DBConn string
+	// DBMigrationConn optionally selects a dedicated connection for schema migrations.
+	DBMigrationConn   string
 	DBDriver          string
 	DBTimezone        string
 	DBHost            string

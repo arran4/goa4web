@@ -11,10 +11,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -330,7 +328,7 @@ func (c *scenarioServeCmd) Bootstrap(ctx context.Context) (*server.Server, *sql.
 }
 
 func (c *scenarioServeCmd) Run() error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := notifyShutdownContext(context.Background())
 	defer stop()
 
 	srv, _, cleanup, err := c.Bootstrap(ctx)

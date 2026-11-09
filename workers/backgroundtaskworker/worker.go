@@ -146,7 +146,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 					env.Ack()
 				}()
 
-				evtCtx := context.WithoutCancel(ctx)
+				evtCtx := ctx
 				coreOpts := append([]common.CoreOption(nil), wc.CoreOptions...)
 				if wc.HTTPClient != nil {
 					coreOpts = append(coreOpts, common.WithHTTPClient(wc.HTTPClient))

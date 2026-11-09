@@ -139,6 +139,11 @@ type MailProvider interface {
 	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
 }
 
+// BackgroundRunner starts shutdown-tracked work using its managed lifetime.
+type BackgroundRunner interface {
+	Go(func(context.Context)) bool
+}
+
 // NavigationProvider exposes index and admin navigation links.
 type NavigationProvider interface {
 	IndexItems() []IndexItem
@@ -207,7 +212,8 @@ type CoreData struct {
 
 	WebAuthn *webauthn.WebAuthn
 
-	httpClient *http.Client
+	httpClient       *http.Client
+	backgroundRunner BackgroundRunner
 
 	session      *sessions.Session
 	sessionProxy SessionManager
@@ -2944,9 +2950,15 @@ func WithLanguageCache(lc *LanguageCache) CoreOption {
 	return func(cd *CoreData) { cd.languageCache = lc }
 }
 
-// WithHTTPClient sets the HTTP client used for external requests.
+// WithHTTPClient sets the HTTP client used for external requests. The supplied
+// client is used as-is and must enforce any destination policy its caller needs.
 func WithHTTPClient(client *http.Client) CoreOption {
 	return func(cd *CoreData) { cd.httpClient = client }
+}
+
+// WithBackgroundRunner ties best-effort asynchronous work to application shutdown.
+func WithBackgroundRunner(runner BackgroundRunner) CoreOption {
+	return func(cd *CoreData) { cd.backgroundRunner = runner }
 }
 
 // WithSession stores the gorilla session on the CoreData object and
@@ -3241,6 +3253,7 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD.languageCache = cd.languageCache
 	userCD.WebAuthn = cd.WebAuthn
 	userCD.httpClient = cd.httpClient
+	userCD.backgroundRunner = cd.backgroundRunner
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
 	userCD.ForumBasePath = cd.ForumBasePath

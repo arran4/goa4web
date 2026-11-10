@@ -159,6 +159,7 @@ func createReplyThreadTestSchema(t *testing.T, database *sql.DB) {
 		`CREATE TABLE forumtopic (idforumtopic INT PRIMARY KEY, language_id INT NULL, title VARCHAR(255), handler VARCHAR(255) NOT NULL)`,
 		`CREATE TABLE forumthread (idforumthread INT PRIMARY KEY, firstpost INT NOT NULL DEFAULT 0, lastposter INT NOT NULL DEFAULT 0, forumtopic_idforumtopic INT NOT NULL, comments INT NULL, lastaddition DATETIME NULL, locked BOOLEAN NULL, reply_to_comment_id INT NULL, reply_to_thread_id INT NULL, deleted_at DATETIME NULL)`,
 		`CREATE TABLE comments (idcomments INT PRIMARY KEY, forumthread_id INT NOT NULL, users_idusers INT NOT NULL, language_id INT NULL, text TEXT NULL, written DATETIME NULL, timezone VARCHAR(255) NULL, deleted_at DATETIME NULL, last_index DATETIME NULL)`,
+		`CREATE INDEX comments_thread_idx ON comments (forumthread_id)`,
 		appendTableSQL,
 		`CREATE TABLE grants (id INT AUTO_INCREMENT PRIMARY KEY, created_at DATETIME NULL, user_id INT NULL, role_id INT NULL, section VARCHAR(255) NOT NULL, item VARCHAR(255) NULL, rule_type VARCHAR(255) NOT NULL, item_id INT NULL, item_rule VARCHAR(255) NULL, action VARCHAR(255) NOT NULL, extra VARCHAR(255) NULL, active BOOLEAN NOT NULL)`,
 		`CREATE TABLE content_read_markers (item VARCHAR(255), item_id INT, user_id INT, last_comment_id INT, unread INT)`,

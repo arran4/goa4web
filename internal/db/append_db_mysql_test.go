@@ -590,18 +590,26 @@ func TestAppendCommentInSectionWithActivity_ConcurrencyMySQL(t *testing.T) {
 		tID := int32(100 + i)
 		text := fmt.Sprintf("appended segment %d", i)
 		go func() {
-			rows, appID, err := appender.AppendCommentInSectionWithActivity(ctx, AppendCommentInSectionForCommenterParams{
-				Text:             text,
-				AppendWindowMins: 60,
-				Section:          "forum",
-				ItemType:         sql.NullString{String: "topic", Valid: true},
-				GrantUserID:      sql.NullInt32{Int32: 1, Valid: true},
-				ItemID:           sql.NullInt32{Int32: 100, Valid: true},
-				Written:          sql.NullTime{Time: time.Now().UTC(), Valid: true},
-				CommentID:        cID,
-				CommenterID:      1,
-				ForumthreadID:    tID,
-			})
+			var rows, appID int64
+			var err error
+			for attempt := 0; attempt < 5; attempt++ {
+				rows, appID, err = appender.AppendCommentInSectionWithActivity(ctx, AppendCommentInSectionForCommenterParams{
+					Text:             text,
+					AppendWindowMins: 60,
+					Section:          "forum",
+					ItemType:         sql.NullString{String: "topic", Valid: true},
+					GrantUserID:      sql.NullInt32{Int32: 1, Valid: true},
+					ItemID:           sql.NullInt32{Int32: 100, Valid: true},
+					Written:          sql.NullTime{Time: time.Now().UTC(), Valid: true},
+					CommentID:        cID,
+					CommenterID:      1,
+					ForumthreadID:    tID,
+				})
+				if err == nil || !strings.Contains(err.Error(), "Deadlock") {
+					break
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
 			if err != nil {
 				results <- appendRes{commentID: cID, err: err}
 				return

@@ -38,9 +38,7 @@ func ParseActivityPosition(activity string) (int64, error) {
 	if activity == "" {
 		return 0, nil
 	}
-	if strings.HasPrefix(activity, "reply:") {
-		activity = strings.TrimPrefix(activity, "reply:")
-	}
+	activity = strings.TrimPrefix(activity, "reply:")
 	if strings.HasPrefix(activity, "comment:") {
 		rem := strings.TrimPrefix(activity, "comment:")
 		if idx := strings.Index(rem, ":append:"); idx != -1 {

@@ -451,7 +451,7 @@ func TestSubscribeWithOptions_Reliable_BackpressureWhenFull(t *testing.T) {
 	ch := sub.Channel()
 
 	// Fill buffer to capacity (5 messages)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		err := bus.Publish(TaskEvent{UserID: int32(i)})
 		require.NoError(t, err)
 	}
@@ -509,7 +509,7 @@ func TestSubscribeWithOptions_Reliable_ConsumerCancellationLifecycle(t *testing.
 	sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithReliableDelivery(), WithBufferSize(20), WithContext(ctx))
 
 	// Publish 10 messages into buffer
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		require.NoError(t, bus.Publish(TaskEvent{UserID: int32(i)}))
 	}
 
@@ -604,7 +604,7 @@ func TestPublish_ReliableDeliveryRejectionReturnsError(t *testing.T) {
 }
 
 func TestPublish_ShutdownRace(t *testing.T) {
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		bus := NewBus()
 		sub := bus.SubscribeWithOptions(WithTypes(TaskMessageType), WithReliableDelivery(), WithBufferSize(100))
 
@@ -612,10 +612,10 @@ func TestPublish_ShutdownRace(t *testing.T) {
 		const publishers = 10
 		wg.Add(publishers)
 
-		for p := 0; p < publishers; p++ {
+		for range publishers {
 			go func() {
 				defer wg.Done()
-				for m := 0; m < 50; m++ {
+				for m := range 50 {
 					_ = bus.Publish(TaskEvent{UserID: int32(m)})
 				}
 			}()

@@ -56,7 +56,7 @@ func TestMigration0096RetriesAfterStep4Failure(t *testing.T) {
 	if idx := strings.Index(upSection, "-- +goose Down"); idx != -1 {
 		upSection = upSection[:idx]
 	}
-	for _, statement := range strings.Split(upSection, ";") {
+	for statement := range strings.SplitSeq(upSection, ";") {
 		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Up", ""))
 		if statement == "" {
 			continue

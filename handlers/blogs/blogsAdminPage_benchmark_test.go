@@ -24,11 +24,11 @@ func (m *MyQuerierStub) AdminListUserIDsByRole(ctx context.Context, role string)
 func BenchmarkAdminPage(b *testing.B) {
 	// Setup mock data
 	var roles []*db.Role
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		roles = append(roles, &db.Role{ID: int32(i), Name: "Role" + string(rune(i))})
 	}
 	var grants []*db.Grant
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		grants = append(grants, &db.Grant{
 			Section: "blogs",
 			UserID:  sql.NullInt32{Int32: int32(i), Valid: true},

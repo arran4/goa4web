@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -354,12 +355,7 @@ func (n *Notifier) forumReplyGrantRequirements(evt eventbus.TaskEvent, intent co
 }
 
 func containsGrantRequirement(reqs []GrantRequirement, target GrantRequirement) bool {
-	for _, r := range reqs {
-		if r == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(reqs, target)
 }
 
 func (n *Notifier) userHasGrants(ctx context.Context, userID int32, reqs []GrantRequirement) bool {

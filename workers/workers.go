@@ -60,9 +60,7 @@ func (g *Group) Go(fn func(context.Context)) bool {
 	if g.stopping {
 		return false
 	}
-	g.wg.Add(1)
-	go func() {
-		defer g.wg.Done()
+	g.wg.Go(func() {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("goroutine panic: %v", r)
@@ -70,7 +68,7 @@ func (g *Group) Go(fn func(context.Context)) bool {
 			}
 		}()
 		fn(g.ctx)
-	}()
+	})
 	return true
 }
 

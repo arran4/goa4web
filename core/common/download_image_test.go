@@ -46,11 +46,9 @@ func newControlledBackgroundRunner() *controlledBackgroundRunner {
 }
 
 func (r *controlledBackgroundRunner) Go(fn func(context.Context)) bool {
-	r.wg.Add(1)
-	go func() {
-		defer r.wg.Done()
+	r.wg.Go(func() {
 		fn(r.ctx)
-	}()
+	})
 	return true
 }
 

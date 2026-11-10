@@ -48,10 +48,10 @@ func TestMigration0096ExecutesWithoutLegacyURLIndex(t *testing.T) {
 	}
 	rawSQL := string(contents)
 	upSection := rawSQL
-	if idx := strings.Index(rawSQL, "-- +goose Down"); idx != -1 {
-		upSection = rawSQL[:idx]
+	if before, _, ok := strings.Cut(rawSQL, "-- +goose Down"); ok {
+		upSection = before
 	}
-	for _, statement := range strings.Split(upSection, ";") {
+	for statement := range strings.SplitSeq(upSection, ";") {
 		statement = strings.TrimSpace(strings.ReplaceAll(statement, "-- +goose Up", ""))
 		if statement == "" {
 			continue

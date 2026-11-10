@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -67,10 +68,8 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 			if arg.Method != "internal" {
 				return nil, nil
 			}
-			for _, pattern := range arg.Patterns {
-				if pattern == "notify:/admin/*" {
-					return []int32{overlappingAdminID, nonMemberAdminID}, nil
-				}
+			if slices.Contains(arg.Patterns, "notify:/admin/*") {
+				return []int32{overlappingAdminID, nonMemberAdminID}, nil
 			}
 			// Actor 1, overlapping admin 2 (matched twice across patterns), ordinary subscriber 3, and revoked subscriber 5.
 			return []int32{actorID, overlappingAdminID, overlappingAdminID, ordinarySubID, revokedSubID}, nil

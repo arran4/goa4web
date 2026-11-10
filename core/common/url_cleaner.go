@@ -2,6 +2,7 @@ package common
 
 import (
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -56,12 +57,7 @@ func isTrackingParam(key string) bool {
 // isSignatureParam checks if a query parameter key indicates a cryptographic signature.
 func isSignatureParam(key string) bool {
 	lower := strings.ToLower(key)
-	for _, sigKey := range signatureKeys {
-		if lower == sigKey {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(signatureKeys, lower)
 }
 
 // IsHTTPURL checks case-insensitively whether a URL string begins with an http:// or https:// scheme.
@@ -112,8 +108,8 @@ func CanonicalizeExternalURL(raw string) string {
 			continue
 		}
 		key := part
-		if idx := strings.IndexByte(part, '='); idx != -1 {
-			key = part[:idx]
+		if before, _, ok := strings.Cut(part, "="); ok {
+			key = before
 		}
 		if isSignatureParam(key) {
 			return raw
@@ -127,8 +123,8 @@ func CanonicalizeExternalURL(raw string) string {
 			continue
 		}
 		key := part
-		if idx := strings.IndexByte(part, '='); idx != -1 {
-			key = part[:idx]
+		if before, _, ok := strings.Cut(part, "="); ok {
+			key = before
 		}
 		if isTrackingParam(key) {
 			modified = true

@@ -592,7 +592,7 @@ func TestAppendCommentInSectionWithActivity_ConcurrencyMySQL(t *testing.T) {
 		go func() {
 			var rows, appID int64
 			var err error
-			for attempt := 0; attempt < 5; attempt++ {
+			for range 5 {
 				rows, appID, err = appender.AppendCommentInSectionWithActivity(ctx, AppendCommentInSectionForCommenterParams{
 					Text:             text,
 					AppendWindowMins: 60,
@@ -623,7 +623,7 @@ func TestAppendCommentInSectionWithActivity_ConcurrencyMySQL(t *testing.T) {
 	}
 
 	seenAppendIDs := make(map[int64]bool)
-	for i := 0; i < numConcurrentAppends; i++ {
+	for range numConcurrentAppends {
 		select {
 		case res := <-results:
 			if res.err != nil {

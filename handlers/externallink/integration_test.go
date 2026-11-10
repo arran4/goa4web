@@ -95,8 +95,7 @@ func TestExternalLinkEndToEndIdentityAndPipeline(t *testing.T) {
 	canonicalURL := "https://example.com/blog/post?id=42"
 
 	bus := eventbus.NewBus()
-	workerCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	workerCtx := t.Context()
 	go externallinkworker.Worker(workerCtx, bus, qs, cfg)
 
 	// Ensure worker has subscribed

@@ -38,14 +38,14 @@ func ParseActivityPosition(activity string) (int64, error) {
 	if activity == "" {
 		return 0, nil
 	}
-	if strings.HasPrefix(activity, "reply:") {
-		activity = strings.TrimPrefix(activity, "reply:")
+	if after, ok := strings.CutPrefix(activity, "reply:"); ok {
+		activity = after
 	}
-	if strings.HasPrefix(activity, "comment:") {
-		rem := strings.TrimPrefix(activity, "comment:")
-		if idx := strings.Index(rem, ":append:"); idx != -1 {
-			cidStr := rem[:idx]
-			aidStr := rem[idx+len(":append:"):]
+	if after, ok := strings.CutPrefix(activity, "comment:"); ok {
+		rem := after
+		if before, after, ok := strings.Cut(rem, ":append:"); ok {
+			cidStr := before
+			aidStr := after
 			cid, err := strconv.ParseInt(cidStr, 10, 32)
 			if err != nil {
 				return 0, fmt.Errorf("invalid comment ID in activity %q: %w", activity, err)
@@ -56,8 +56,8 @@ func ParseActivityPosition(activity string) (int64, error) {
 			}
 			return CalculateActivityPosition(int32(cid), aid), nil
 		}
-		if strings.HasSuffix(rem, ":append") {
-			cidStr := strings.TrimSuffix(rem, ":append")
+		if before, ok := strings.CutSuffix(rem, ":append"); ok {
+			cidStr := before
 			cid, err := strconv.ParseInt(cidStr, 10, 32)
 			if err != nil {
 				return 0, fmt.Errorf("invalid comment ID in activity %q: %w", activity, err)

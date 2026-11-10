@@ -39,7 +39,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 			cd.UserID = 1
 			cd.ForumBasePath = "/private"
 
-			body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkThreadRead)) + "&redirect=" + url.QueryEscape("/private/topic/1/thread/2")
+			body := "task=" + url.QueryEscape(string(forumhandlers.TaskMarkThreadRead)) + "&last_comment=101&redirect=" + url.QueryEscape("/private/topic/1/thread/2")
 			req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
@@ -71,7 +71,7 @@ func TestPrivateLabelRoutes(t *testing.T) {
 			cd.UserID = 1
 			cd.ForumBasePath = "/private"
 
-			req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkThreadRead))))
+			req := httptest.NewRequest(http.MethodPost, "/private/thread/1/labels", strings.NewReader("task="+url.QueryEscape(string(forumhandlers.TaskMarkThreadRead))+"&last_comment=101"))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 			req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
 			rr := httptest.NewRecorder()

@@ -81,6 +81,8 @@ type ReplyForumThreadParams struct {
 	ActorID                int32
 	TopicID                int32
 	ThreadID               int32
+	LastDisplayedCommentID int32
+	LastDisplayedActivity  string
 	LanguageID             int32
 	Text                   string
 	At                     time.Time
@@ -107,6 +109,7 @@ type ForumReplyNotificationIntent struct {
 	CommentAnchor       string
 	Appended            bool
 	ActivityID          string
+	ActivityPosition    int64
 	Private             bool
 	CanonicalPath       string
 	CommentURL          string
@@ -618,6 +621,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	endURL := fmt.Sprintf("%s#%s", canonicalPath, anchor)
 	absCommentURL := cd.AbsoluteURL(endURL)
 	activityID := buildForumReplyActivityID(commentID, appendResult.appended, appendResult.appendID)
+	activityPosition := CalculateActivityPosition(commentID, appendResult.appendID)
 	username := ""
 	if user := cd.UserByID(params.ActorID); user != nil {
 		username = user.Username.String
@@ -640,6 +644,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	data["CommentID"] = commentID
 	data["CommentAnchor"] = anchor
 	data["ActivityID"] = activityID
+	data["ActivityPosition"] = activityPosition
 	data["CanonicalPath"] = canonicalPath
 	data["Private"] = isPrivate
 
@@ -654,6 +659,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		CommentAnchor:       anchor,
 		Appended:            appendResult.appended,
 		ActivityID:          activityID,
+		ActivityPosition:    activityPosition,
 		Private:             isPrivate,
 		CanonicalPath:       canonicalPath,
 		CommentURL:          endURL,
@@ -670,18 +676,29 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		TopicID:              topic.Idforumtopic,
 		CommentID:            commentID,
 		ActivityID:           activityID,
+		ActivityPosition:     activityPosition,
 		Thread:               thread,
 		TopicTitle:           topic.Title.String,
 		Username:             username,
 		CommentText:          commentText,
 		CommentURL:           absCommentURL,
 		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
+		MarkThreadRead:       false,
 		IncludePostCount:     true,
 		IncludeSearch:        canonicalTextAvailable,
 		AdditionalData:       data,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
+	}
+	if params.LastDisplayedCommentID > 0 || params.LastDisplayedActivity != "" {
+		if err := cd.ReadForumThread(ctx, ReadForumThreadParams{
+			ActorID:        params.ActorID,
+			ThreadID:       thread.Idforumthread,
+			LastCommentID:  params.LastDisplayedCommentID,
+			LastActivityID: params.LastDisplayedActivity,
+		}); err != nil {
+			log.Printf("acknowledge displayed thread activity: %v", err)
+		}
 	}
 	if params.SynchronousSideEffects {
 		if err := cd.applyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, commentText, canonicalTextAvailable); err != nil {
@@ -711,9 +728,11 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 
 // ReadForumThreadParams describes the parameters to mark a thread as read.
 type ReadForumThreadParams struct {
-	ActorID       int32
-	ThreadID      int32
-	LastCommentID int32
+	ActorID              int32
+	ThreadID             int32
+	LastCommentID        int32
+	LastActivityPosition int64
+	LastActivityID       string
 }
 
 // ReadForumThread marks a thread as read for the actor, clearing new/unread status and setting the read marker.
@@ -737,23 +756,47 @@ func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadP
 	actorCD := cd.ForUser(params.ActorID)
 
 	markerID := params.LastCommentID
+	activityPos := params.LastActivityPosition
+	if activityPos == 0 && params.LastActivityID != "" {
+		if pos, err := ParseActivityPosition(params.LastActivityID); err == nil && pos != 0 {
+			activityPos = pos
+		}
+	}
+	if markerID <= 0 && activityPos != 0 {
+		posCommentID, _ := ActivityPositionCommentAndAppend(activityPos)
+		markerID = posCommentID
+	}
 	if markerID <= 0 {
-		comments, err := cd.ThreadComments(params.ThreadID)
-		if err != nil {
-			return fmt.Errorf("fetch thread comments: %w", err)
+		return fmt.Errorf("read forum thread: missing captured comment position")
+	}
+	if activityPos == 0 {
+		activityPos = CalculateActivityPosition(markerID, 0)
+	}
+
+	comments, err := actorCD.ThreadComments(params.ThreadID)
+	if err != nil {
+		return fmt.Errorf("fetch thread comments: %w", err)
+	}
+	if len(comments) == 0 {
+		return fmt.Errorf("thread %d has no comments", params.ThreadID)
+	}
+	visible := false
+	for _, comment := range comments {
+		if comment.Idcomments == markerID {
+			visible = true
+			break
 		}
-		if len(comments) == 0 {
-			return fmt.Errorf("thread %d has no comments", params.ThreadID)
-		}
-		markerID = comments[len(comments)-1].Idcomments
+	}
+	if !visible {
+		return ForumResourceNotFoundError{Resource: "comment"}
 	}
 
 	if err := actorCD.SetThreadPrivateLabelStatus(params.ThreadID, false, false); err != nil {
 		return fmt.Errorf("set thread private label status: %w", err)
 	}
 
-	if err := actorCD.SetThreadReadMarker(params.ThreadID, markerID); err != nil {
-		return fmt.Errorf("set thread read marker: %w", err)
+	if err := actorCD.AcknowledgeThreadActivityPosition(params.ThreadID, markerID, activityPos); err != nil {
+		return fmt.Errorf("acknowledge thread activity: %w", err)
 	}
 
 	return nil

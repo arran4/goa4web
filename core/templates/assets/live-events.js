@@ -1,0 +1,71 @@
+(function(){
+    const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const url = proto + location.host + '/ws/events';
+    const seen = new Set();
+    let conn;
+    let retryDelay = 1000;
+
+    function connect(){
+        conn = new WebSocket(url);
+        conn.onopen = () => {
+            retryDelay = 1000;
+        };
+        conn.onmessage = evt => {
+            try{
+                const msg = JSON.parse(evt.data);
+                const data = msg && msg.data;
+                if(!data || !data.notification){
+                    return;
+                }
+                const n = data.notification;
+                if(seen.has(n.id)) return;
+                seen.add(n.id);
+                updateCount(1);
+                addNotification(n);
+            }catch(e){
+                console.log('ws message error', e);
+            }
+        };
+        conn.onclose = () => {
+            setTimeout(connect, retryDelay);
+            retryDelay = Math.min(retryDelay * 2, 60000);
+        };
+    }
+
+    function updateCount(delta){
+        const link = document.getElementById('notif-index');
+        if(!link) return;
+        let m = link.textContent.match(/\((\d+)\)/);
+        let count = m ? parseInt(m[1],10) : 0;
+        count += delta;
+        if(m){
+            link.textContent = link.textContent.replace(/\(\d+\)/, '('+count+')');
+        } else {
+            link.textContent += ' ('+count+')';
+        }
+    }
+
+    function addNotification(n){
+        const list = document.getElementById('notifications-list');
+        if(!list || document.getElementById('notif-'+n.id)) return;
+        const empty = document.getElementById('notifications-empty');
+        if(empty) empty.remove();
+        const div = document.createElement('div');
+        div.className = 'notification';
+        div.id = 'notif-'+n.id;
+        let html = '<label><input type="checkbox" name="id" value="'+n.id+'"> ';
+        html += n.link ? '<a href="'+n.link+'">'+n.message+'</a>' : n.message;
+        html += '</label>';
+        div.innerHTML = html;
+        list.prepend(div);
+    }
+
+    window.addEventListener('load', function(){
+        document.querySelectorAll('[data-notification-id]').forEach(el => seen.add(parseInt(el.dataset.notificationId,10)));
+        connect();
+        const btnAll = document.getElementById('btn-select-all');
+        if(btnAll) btnAll.addEventListener('click', () => document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = true));
+        const btnInvert = document.getElementById('btn-invert-selection');
+        if(btnInvert) btnInvert.addEventListener('click', () => document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = !el.checked));
+    });
+})();

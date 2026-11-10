@@ -245,8 +245,21 @@ type QuerierStub struct {
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
 
-	SystemCreateNotificationErr   error
-	SystemCreateNotificationCalls []SystemCreateNotificationParams
+	SystemCreateNotificationErr              error
+	SystemCreateNotificationCalls            []SystemCreateNotificationParams
+	SystemCreateNotificationForActivityErr   error
+	SystemCreateNotificationForActivityCalls []SystemCreateNotificationForActivityParams
+
+	SystemCreateCommentAppendCalls   []SystemCreateCommentAppendParams
+	SystemCreateCommentAppendReturns int64
+	SystemCreateCommentAppendErr     error
+	SystemCreateCommentAppendFn      func(context.Context, SystemCreateCommentAppendParams) (int64, error)
+	nextCommentAppendID              int64
+
+	SystemListCommentAppendsByCommentIDCalls   []int32
+	SystemListCommentAppendsByCommentIDReturns []*CommentAppend
+	SystemListCommentAppendsByCommentIDErr     error
+	SystemListCommentAppendsByCommentIDFn      func(context.Context, int32) ([]*CommentAppend, error)
 
 	SystemCreateThreadCalls                    []int32
 	SystemCreateThreadReturns                  int64
@@ -1081,6 +1094,11 @@ type QuerierStub struct {
 	ListUnreadPrivateThreadsForUserReturns  []*ListUnreadPrivateThreadsForUserRow
 	ListUnreadPrivateThreadsForUserErr      error
 	ListUnreadPrivateThreadsForUserFn       func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+
+	AppendCommentInSectionWithActivityCalls   []AppendCommentInSectionForCommenterParams
+	AppendCommentInSectionWithActivityReturns [2]int64
+	AppendCommentInSectionWithActivityErr     error
+	AppendCommentInSectionWithActivityFn      func(context.Context, AppendCommentInSectionForCommenterParams) (int64, int64, error)
 }
 
 // AppendCommentInSectionForCommenter invokes the configured append mutation, defaulting to an ineligible result.
@@ -1092,6 +1110,45 @@ func (s *QuerierStub) AppendCommentInSectionForCommenter(ctx context.Context, ar
 		return 0, nil
 	}
 	return fn(ctx, arg)
+}
+
+// AppendCommentInSectionWithActivity invokes the configured transactional append or defaults to executing the append mutation followed by activity allocation.
+func (s *QuerierStub) AppendCommentInSectionWithActivity(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+	s.mu.Lock()
+	s.AppendCommentInSectionWithActivityCalls = append(s.AppendCommentInSectionWithActivityCalls, arg)
+	fn := s.AppendCommentInSectionWithActivityFn
+	ret := s.AppendCommentInSectionWithActivityReturns
+	err := s.AppendCommentInSectionWithActivityErr
+	s.mu.Unlock()
+
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if err != nil || ret[0] != 0 || ret[1] != 0 {
+		return ret[0], ret[1], err
+	}
+
+	rowsAffected, err := s.AppendCommentInSectionForCommenter(ctx, arg)
+	if err != nil {
+		return 0, 0, err
+	}
+	if rowsAffected == 0 {
+		return 0, 0, nil
+	}
+
+	createdAt := arg.Written.Time
+	if !arg.Written.Valid {
+		createdAt = time.Now().UTC()
+	}
+	appendID, err := s.SystemCreateCommentAppend(ctx, SystemCreateCommentAppendParams{
+		CommentID:    arg.CommentID,
+		UsersIdusers: arg.CommenterID,
+		CreatedAt:    createdAt,
+	})
+	if err != nil {
+		return 0, 0, err
+	}
+	return rowsAffected, appendID, nil
 }
 
 // SystemHasOtherUserReadItemAtOrBeyond invokes the configured read-marker check.
@@ -2609,6 +2666,49 @@ func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCr
 	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, arg)
 	s.mu.Unlock()
 	return s.SystemCreateNotificationErr
+}
+
+// SystemCreateNotificationForActivity records the activity-keyed notification upsert.
+func (s *QuerierStub) SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error {
+	s.mu.Lock()
+	s.SystemCreateNotificationForActivityCalls = append(s.SystemCreateNotificationForActivityCalls, arg)
+	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, SystemCreateNotificationParams{
+		RecipientID: arg.RecipientID,
+		Link:        arg.Link,
+		Message:     arg.Message,
+	})
+	s.mu.Unlock()
+	return s.SystemCreateNotificationForActivityErr
+}
+
+func (s *QuerierStub) SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error) {
+	s.mu.Lock()
+	s.SystemCreateCommentAppendCalls = append(s.SystemCreateCommentAppendCalls, arg)
+	fn := s.SystemCreateCommentAppendFn
+	ret := s.SystemCreateCommentAppendReturns
+	err := s.SystemCreateCommentAppendErr
+	if fn == nil && ret == 0 && err == nil {
+		s.nextCommentAppendID++
+		ret = s.nextCommentAppendID
+	}
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error) {
+	s.mu.Lock()
+	s.SystemListCommentAppendsByCommentIDCalls = append(s.SystemListCommentAppendsByCommentIDCalls, commentID)
+	fn := s.SystemListCommentAppendsByCommentIDFn
+	ret := s.SystemListCommentAppendsByCommentIDReturns
+	err := s.SystemListCommentAppendsByCommentIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, commentID)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {

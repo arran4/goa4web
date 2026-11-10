@@ -39,6 +39,17 @@ type Notifier struct {
 	Silent         bool
 }
 
+const (
+	// notificationPriorityAdmin identifies broad administrative notification delivery.
+	notificationPriorityAdmin uint8 = 10
+	// notificationPrioritySubscriber identifies a resource-specific subscription delivery.
+	notificationPrioritySubscriber uint8 = 20
+	// notificationPriorityTarget identifies an explicit target-user delivery.
+	notificationPriorityTarget uint8 = 30
+	// notificationPrioritySelf identifies an actor's mandatory self-notification delivery.
+	notificationPrioritySelf uint8 = 40
+)
+
 // Option configures a Notifier instance.
 type Option func(*Notifier)
 
@@ -204,6 +215,17 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		log.Printf("collect admin internal subs: %v", err)
 	}
 
+	var reqs []GrantRequirement
+	if evt != nil && evt.Task != nil {
+		if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
+			var err error
+			reqs, err = gp.GrantsRequired(*evt)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for _, addr := range n.adminEmails(ctx) {
 		var uid *int32
 		if u, err := n.Queries.SystemGetUserByEmail(ctx, addr); err == nil {
@@ -214,6 +236,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		}
 
 		if uid != nil && *uid == actorID {
+			continue
+		}
+
+		if len(reqs) > 0 && (uid == nil || !n.userHasGrants(ctx, *uid, reqs)) {
 			continue
 		}
 
@@ -250,11 +276,11 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 				return err
 			}
 			if uid != nil {
-				if err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
-					RecipientID: *uid,
-					Link:        sql.NullString{String: link, Valid: link != ""},
-					Message:     sql.NullString{String: string(msg), Valid: len(msg) > 0},
-				}); err != nil {
+				event := eventbus.TaskEvent{}
+				if evt != nil {
+					event = *evt
+				}
+				if err := n.sendInternalNotificationForEvent(ctx, event, *uid, link, string(msg), notificationPriorityAdmin); err != nil {
 					return err
 				}
 			} else {
@@ -280,4 +306,30 @@ func (n *Notifier) sendInternalNotification(ctx context.Context, userID int32, p
 		Link:        sql.NullString{String: path, Valid: path != ""},
 		Message:     sql.NullString{String: msg, Valid: msg != ""},
 	})
+}
+
+func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eventbus.TaskEvent, userID int32, path, msg string, priority uint8) error {
+	activityKey := notificationActivityKey(evt)
+	if activityKey == "" {
+		return n.sendInternalNotification(ctx, userID, path, msg)
+	}
+	return n.Queries.SystemCreateNotificationForActivity(ctx, db.SystemCreateNotificationForActivityParams{
+		RecipientID: userID,
+		Link:        sql.NullString{String: path, Valid: path != ""},
+		Message:     sql.NullString{String: msg, Valid: msg != ""},
+		ActivityKey: sql.NullString{String: activityKey, Valid: true},
+		Priority:    priority,
+	})
+}
+
+func notificationActivityKey(evt eventbus.TaskEvent) string {
+	activityID := strings.TrimSpace(evt.ActivityID)
+	if activityID == "" {
+		return ""
+	}
+	name := "task"
+	if named, ok := evt.Task.(tasks.Name); ok && named.Name() != "" {
+		name = strings.ToLower(named.Name())
+	}
+	return name + ":" + activityID
 }

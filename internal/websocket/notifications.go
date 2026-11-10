@@ -191,9 +191,22 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				if n, ok := evt.Task.(tasks.Name); ok {
 					name = n.Name()
 				}
-				for _, p := range buildPatterns(name, evt.Path) {
-					if patterns[p] {
-						allowed = true
+				candidatePaths := []string{evt.Path}
+				if evt.Data != nil {
+					if intent, ok := evt.Data[corecommon.ForumReplyIntentEventKey].(corecommon.ForumReplyNotificationIntent); ok && intent.CanonicalPath != "" {
+						candidatePaths = append(candidatePaths, intent.CanonicalPath, intent.CanonicalPath+"/reply")
+					} else if canonicalPath, ok := evt.Data["CanonicalPath"].(string); ok && canonicalPath != "" {
+						candidatePaths = append(candidatePaths, canonicalPath, canonicalPath+"/reply")
+					}
+				}
+				for _, candidatePath := range candidatePaths {
+					for _, p := range buildPatterns(name, candidatePath) {
+						if patterns[p] {
+							allowed = true
+							break
+						}
+					}
+					if allowed {
 						break
 					}
 				}

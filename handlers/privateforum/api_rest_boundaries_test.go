@@ -1,7 +1,6 @@
 package privateforum
 
 import (
-
 	"math"
 	"strconv"
 	"testing"

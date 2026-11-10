@@ -47,6 +47,15 @@ CREATE TABLE `comments` (
   KEY `comments_FKIndex3` (`forumthread_id`)
 );
 
+CREATE TABLE IF NOT EXISTS `comment_appends` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `comment_id` int(10) NOT NULL,
+  `users_idusers` int(10) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `comment_appends_comment_idx` (`comment_id`)
+);
+
 CREATE TABLE `comments_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `comment_id` int(10) NOT NULL DEFAULT 0,
@@ -510,9 +519,12 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `users_idusers` int NOT NULL,
   `link` text,
   `message` text,
+  `activity_key` varchar(255) DEFAULT NULL,
+  `priority` tinyint unsigned NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `read_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notifications_recipient_activity_idx` (`users_idusers`, `activity_key`)
 );
 
 -- Persist errors from asynchronous workers.
@@ -846,6 +858,7 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (98, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
 
 
 

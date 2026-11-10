@@ -21,6 +21,7 @@ type ThreadUpdatedEvent struct {
 	ThreadID   int32
 	TopicID    int32
 	CommentID  int32
+	ActivityID string
 	Thread     any
 	TopicTitle string
 	Username   string
@@ -81,6 +82,11 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 	if evt != nil {
 		if evt.Data == nil {
 			evt.Data = map[string]any{}
+		}
+		if event.ActivityID != "" {
+			evt.ActivityID = event.ActivityID
+		} else if evt.ActivityID == "" && event.CommentID != 0 {
+			evt.ActivityID = fmt.Sprintf("comment:%d", event.CommentID)
 		}
 		if _, ok := evt.Data["Time"]; !ok {
 			evt.Data["Time"] = time.Now().UTC()

@@ -29,9 +29,11 @@ func requireAdminEmailTemplates(t *testing.T, et *notif.EmailTemplates) {
 }
 
 func TestForumAdminTemplatesExist(t *testing.T) {
+	if _, ok := any(replyTask).(notif.AdminEmailTemplateProvider); ok {
+		t.Fatalf("ReplyTask must not implement AdminEmailTemplateProvider")
+	}
 	admins := []notif.AdminEmailTemplateProvider{
 		createThreadTask,
-		replyTask,
 		categoryChangeTask,
 		categoryCreateTask,
 		deleteCategoryTask,

@@ -103,6 +103,13 @@ type Comment struct {
 	LastIndex     sql.NullTime
 }
 
+type CommentAppend struct {
+	ID           int64
+	CommentID    int64
+	UsersIdusers int64
+	CreatedAt    time.Time
+}
+
 type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int64
 	CommentID                      int64
@@ -459,6 +466,8 @@ type Notification struct {
 	UsersIdusers int64
 	Link         sql.NullString
 	Message      sql.NullString
+	ActivityKey  sql.NullString
+	Priority     int64
 	CreatedAt    time.Time
 	ReadAt       sql.NullTime
 }

@@ -349,3 +349,13 @@ WHERE c.idcomments = sqlc.arg(comment_id)
             SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(commenter_id)
         ))
   );
+
+-- name: SystemCreateCommentAppend :execlastid
+INSERT INTO comment_appends (comment_id, users_idusers, created_at)
+VALUES (?, ?, ?);
+
+-- name: SystemListCommentAppendsByCommentID :many
+SELECT id, comment_id, users_idusers, created_at
+FROM comment_appends
+WHERE comment_id = ?
+ORDER BY id ASC;

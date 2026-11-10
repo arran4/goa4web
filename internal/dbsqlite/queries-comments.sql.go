@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 )
 
 const adminGetAllCommentsByUser = `-- name: AdminGetAllCommentsByUser :many
@@ -734,6 +735,60 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemCreateCommentAppend = `-- name: SystemCreateCommentAppend :execlastid
+INSERT INTO comment_appends (comment_id, users_idusers, created_at)
+VALUES (?, ?, ?)
+`
+
+type SystemCreateCommentAppendParams struct {
+	CommentID    int64
+	UsersIdusers int64
+	CreatedAt    time.Time
+}
+
+func (q *Queries) SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateCommentAppend, arg.CommentID, arg.UsersIdusers, arg.CreatedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const systemListCommentAppendsByCommentID = `-- name: SystemListCommentAppendsByCommentID :many
+SELECT id, comment_id, users_idusers, created_at
+FROM comment_appends
+WHERE comment_id = ?
+ORDER BY id ASC
+`
+
+func (q *Queries) SystemListCommentAppendsByCommentID(ctx context.Context, commentID int64) ([]*CommentAppend, error) {
+	rows, err := q.db.QueryContext(ctx, systemListCommentAppendsByCommentID, commentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*CommentAppend
+	for rows.Next() {
+		var i CommentAppend
+		if err := rows.Scan(
+			&i.ID,
+			&i.CommentID,
+			&i.UsersIdusers,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

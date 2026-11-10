@@ -103,6 +103,13 @@ type Comment struct {
 	LastIndex     sql.NullTime
 }
 
+type CommentAppend struct {
+	ID           int64
+	CommentID    int64
+	UsersIdusers int64
+	CreatedAt    time.Time
+}
+
 type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int64
 	CommentID                      int64
@@ -225,6 +232,19 @@ type DeadLetter struct {
 	ID        int64
 	Message   string
 	CreatedAt time.Time
+}
+
+type DigestDelivery struct {
+	ID                   int64
+	UserID               int64
+	DismissNotifications int64
+	CreatedAt            time.Time
+	AcknowledgedAt       sql.NullTime
+}
+
+type DigestDeliveryNotification struct {
+	DigestDeliveryID int64
+	NotificationID   int64
 }
 
 type ExternalLink struct {
@@ -475,13 +495,14 @@ type PendingAction struct {
 }
 
 type PendingEmail struct {
-	ID          int64
-	ToUserID    sql.NullInt64
-	DirectEmail int64
-	Body        string
-	ErrorCount  int64
-	CreatedAt   time.Time
-	SentAt      sql.NullTime
+	ID               int64
+	ToUserID         sql.NullInt64
+	DirectEmail      int64
+	Body             string
+	ErrorCount       int64
+	CreatedAt        time.Time
+	SentAt           sql.NullTime
+	DigestDeliveryID sql.NullInt64
 }
 
 type PendingPassword struct {

@@ -139,12 +139,21 @@ type MailProvider interface {
 	Send(ctx context.Context, to mail.Address, rawEmailMessage []byte) error
 }
 
+// BackgroundRunner starts shutdown-tracked work using its managed lifetime.
+type BackgroundRunner interface {
+	Go(func(context.Context)) bool
+}
+
 // NavigationProvider exposes index and admin navigation links.
 type NavigationProvider interface {
 	IndexItems() []IndexItem
 	AdminLinks() []IndexItem
 	AdminSections() []AdminSection
 }
+
+// SiteTemplateRenderer renders a compiled site template for a request.
+// Application composition provides the concrete template compiler.
+type SiteTemplateRenderer func(*CoreData, io.Writer, *http.Request, string, any) error
 
 // No package-level pagination constants as runtime config provides these values.
 
@@ -173,28 +182,29 @@ type CoreData struct {
 	ShareSignKey string // Key for signing share/OG URLs
 	LinkSignKey  string // Key for signing external link redirects
 
-	IndexItems        []IndexItem
-	absoluteURLBase   lazy.Value[string]  // cached base URL for absolute links
-	dbRegistry        *dbdrivers.Registry // database driver registry
-	emailRegistry     *email.Registry
-	Nav               NavigationProvider
-	NextLink          string
-	NotFoundLink      *NotFoundLink
-	NotificationCount int32
-	Pagination        Pagination
-	PageTitle         string
-	PageTitleLink     string
-	OpenGraph         *OpenGraph
-	PrevLink          string
-	RSSFeedURL        string
-	RSSFeedTitle      string
-	AtomFeedTitle     string
-	PublicRSSFeedURL  string
-	StartLink         string
-	TasksReg          *tasks.Registry
-	SiteTitle         string
-	ForumBasePath     string // ForumBasePath holds the URL prefix for forum links.
-	UserID            int32
+	IndexItems           []IndexItem
+	absoluteURLBase      lazy.Value[string]  // cached base URL for absolute links
+	dbRegistry           *dbdrivers.Registry // database driver registry
+	emailRegistry        *email.Registry
+	siteTemplateRenderer SiteTemplateRenderer
+	Nav                  NavigationProvider
+	NextLink             string
+	NotFoundLink         *NotFoundLink
+	NotificationCount    int32
+	Pagination           Pagination
+	PageTitle            string
+	PageTitleLink        string
+	OpenGraph            *OpenGraph
+	PrevLink             string
+	RSSFeedURL           string
+	RSSFeedTitle         string
+	AtomFeedTitle        string
+	PublicRSSFeedURL     string
+	StartLink            string
+	TasksReg             *tasks.Registry
+	SiteTitle            string
+	ForumBasePath        string // ForumBasePath holds the URL prefix for forum links.
+	UserID               int32
 	// routerModules tracks enabled router modules.
 	routerModules map[string]struct{}
 
@@ -202,7 +212,9 @@ type CoreData struct {
 
 	WebAuthn *webauthn.WebAuthn
 
-	httpClient *http.Client
+	httpClient         *http.Client
+	backgroundRunner   BackgroundRunner
+	forumReplyNotifier ForumReplyNotifier
 
 	session      *sessions.Session
 	sessionProxy SessionManager
@@ -1170,6 +1182,9 @@ func (cd *CoreData) HTTPClient() *http.Client {
 // Event returns the event associated with the request, if any.
 func (cd *CoreData) Event() *eventbus.TaskEvent { return cd.event }
 
+// EventBus returns the event bus used by this request, if configured.
+func (cd *CoreData) EventBus() *eventbus.Bus { return cd.bus }
+
 // Publish publishes an event to the event bus.
 func (cd *CoreData) Publish(msg eventbus.Message) error {
 	if cd.bus == nil {
@@ -1178,9 +1193,13 @@ func (cd *CoreData) Publish(msg eventbus.Message) error {
 	return cd.bus.Publish(msg)
 }
 
-// ExecuteSiteTemplate renders the named site template using cd's helper
-// functions. It wraps templates.GetCompiledSiteTemplates(cd.Funcs(r)).
+// ExecuteSiteTemplate renders the named site template using the application-provided
+// renderer when available. The compiler fallback preserves direct callers that have
+// not yet been composed with a renderer.
 func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
+	if cd.siteTemplateRenderer != nil {
+		return cd.siteTemplateRenderer(cd, w, r, name, data)
+	}
 	var opts []templates.Option
 	if cd.Config != nil && cd.Config.TemplatesDir != "" {
 		opts = append(opts, templates.WithDir(cd.Config.TemplatesDir))
@@ -1189,6 +1208,13 @@ func (cd *CoreData) ExecuteSiteTemplate(w io.Writer, r *http.Request, name strin
 		opts = append(opts, templates.WithSilence(true))
 	}
 	return templates.GetCompiledSiteTemplates(cd.Funcs(r), opts...).ExecuteTemplate(w, name, data)
+}
+
+func (cd *CoreData) executeIncludedSiteTemplate(w io.Writer, r *http.Request, name string, data any) error {
+	if cd.siteTemplateRenderer == nil {
+		return fmt.Errorf("site template renderer unavailable")
+	}
+	return cd.siteTemplateRenderer(cd, w, r, name, data)
 }
 
 // ExternalLink lazily resolves metadata for id.
@@ -2550,6 +2576,9 @@ func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }
 // SelectedThreadID returns the thread ID extracted from the request.
 func (cd *CoreData) SelectedThreadID() int32 { return cd.currentThreadID }
 
+// SelectedTopicID returns the topic ID extracted from the request.
+func (cd *CoreData) SelectedTopicID() int32 { return cd.currentTopicID }
+
 // SelectedImagePostID returns the image post ID extracted from the request.
 func (cd *CoreData) SelectedImagePostID() int32 { return cd.currentImagePostID }
 
@@ -2905,6 +2934,11 @@ func (cd *CoreData) WritingByID(id int32, ops ...lazy.Option[int32, *db.GetWriti
 // CoreOption configures a new CoreData instance.
 type CoreOption func(*CoreData)
 
+// WithSiteTemplateRenderer supplies the application-composed site template renderer.
+func WithSiteTemplateRenderer(renderer SiteTemplateRenderer) CoreOption {
+	return func(cd *CoreData) { cd.siteTemplateRenderer = renderer }
+}
+
 // WithUserID sets the active UserID for CoreData.
 func WithUserID(userID int32) CoreOption {
 	return func(cd *CoreData) { cd.UserID = userID }
@@ -2920,9 +2954,35 @@ func WithLanguageCache(lc *LanguageCache) CoreOption {
 	return func(cd *CoreData) { cd.languageCache = lc }
 }
 
-// WithHTTPClient sets the HTTP client used for external requests.
+// WithHTTPClient sets the HTTP client used for external requests. The supplied
+// client is used as-is and must enforce any destination policy its caller needs.
 func WithHTTPClient(client *http.Client) CoreOption {
 	return func(cd *CoreData) { cd.httpClient = client }
+}
+
+// WithBackgroundRunner ties best-effort asynchronous work to application shutdown.
+func WithBackgroundRunner(runner BackgroundRunner) CoreOption {
+	return func(cd *CoreData) { cd.backgroundRunner = runner }
+}
+
+// WithForumReplyNotifier sets the application-level notifier used for canonical forum reply notifications.
+func WithForumReplyNotifier(notifier ForumReplyNotifier) CoreOption {
+	return func(cd *CoreData) { cd.forumReplyNotifier = notifier }
+}
+
+// SetForumReplyNotifier configures the application-level notifier for forum reply operations.
+func (cd *CoreData) SetForumReplyNotifier(notifier ForumReplyNotifier) {
+	if cd != nil {
+		cd.forumReplyNotifier = notifier
+	}
+}
+
+// ForumReplyNotifier returns the configured forum reply notifier, if any.
+func (cd *CoreData) ForumReplyNotifier() ForumReplyNotifier {
+	if cd == nil {
+		return nil
+	}
+	return cd.forumReplyNotifier
 }
 
 // WithSession stores the gorilla session on the CoreData object and
@@ -3212,10 +3272,13 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD := NewCoreData(cd.ctx, cd.queries, cd.Config, WithUserID(userID))
 	userCD.bus = cd.bus
 	userCD.customQueries = cd.customQueries
+	userCD.siteTemplateRenderer = cd.siteTemplateRenderer
 	userCD.routerModules = cd.routerModules
 	userCD.languageCache = cd.languageCache
 	userCD.WebAuthn = cd.WebAuthn
 	userCD.httpClient = cd.httpClient
+	userCD.backgroundRunner = cd.backgroundRunner
+	userCD.forumReplyNotifier = cd.forumReplyNotifier
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
 	userCD.ForumBasePath = cd.ForumBasePath

@@ -122,7 +122,7 @@ func privateAPIPageOffset(pageStr string, pageSize int, collectionLength int) (i
 	if collectionLength <= 0 {
 		return 0, 0, false, nil
 	}
-	if (page - 1) > (collectionLength - 1) / pageSize {
+	if (page - 1) > (collectionLength-1)/pageSize {
 		return collectionLength, collectionLength, false, nil
 	}
 
@@ -421,6 +421,7 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 
 	result, err := cd.ReplyForumThread(r.Context(), common.ReplyForumThreadParams{
 		ActorID:        cd.UserID,
+		TopicID:        topicID,
 		ThreadID:       threadID,
 		LanguageID:     int32(langID),
 		Text:           text,
@@ -435,11 +436,12 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeAPIJSON(w, http.StatusOK, map[string]any{
-		"status":     "success",
-		"thread_id":  result.ThreadID,
-		"topic_id":   result.TopicID,
-		"comment_id": result.CommentID,
-		"url":        result.URL,
-		"appended":   result.Appended,
+		"status":      "success",
+		"thread_id":   result.ThreadID,
+		"topic_id":    result.TopicID,
+		"comment_id":  result.CommentID,
+		"url":         result.URL,
+		"appended":    result.Appended,
+		"activity_id": result.ActivityID,
 	})
 }

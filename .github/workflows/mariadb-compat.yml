@@ -40,4 +40,4 @@ jobs:
       - name: Test migrations and database queries on MariaDB
         env:
           GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
-        run: go test -tags nosqlite ./migrations ./internal/db -v
+        run: go test -tags nosqlite ./migrations ./internal/db ./internal/app/dbstart -v

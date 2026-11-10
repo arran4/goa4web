@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"errors"
 	"fmt"
 	"image"
 	_ "image/gif"  // Register format
@@ -58,7 +59,11 @@ type downloadedImage struct {
 // DownloadAndCacheImage downloads an image from a URL, stores it in the image
 // cache, and returns the stored cache ID prefixed with "cache:".
 func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
-	img, err := cd.downloadExternalImage(imgURL)
+	ctx := cd.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	img, err := cd.downloadExternalImage(ctx, imgURL)
 	if err != nil {
 		return "", err
 	}
@@ -80,15 +85,15 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 	sub1, sub2 := hash[:2], hash[2:4]
 	key := path.Join(sub1, sub2, cacheRef)
 
-	if err := cd.writeImageCacheBytes(context.Background(), key, cacheRef, img.body); err != nil {
+	if err := cd.writeImageCacheBytes(ctx, key, cacheRef, img.body); err != nil {
 		return "", err
 	}
 
-	if err := cd.writeRemoteImageThumbnail(context.Background(), cacheRef, ext, img); err != nil {
+	if err := cd.writeRemoteImageThumbnail(ctx, cacheRef, ext, img); err != nil {
 		return "", err
 	}
 
-	if err := cd.recordRemoteImageCacheEntry(context.Background(), cacheRef, imgURL, img, time.Now().UTC()); err != nil {
+	if err := cd.recordRemoteImageCacheEntry(ctx, cacheRef, imgURL, img, time.Now().UTC()); err != nil {
 		return "", err
 	}
 
@@ -121,21 +126,28 @@ func (cd *CoreData) QueueRemoteImageCache(imgURL string) (string, error) {
 }
 
 // StartRemoteImageCacheFetch starts a best-effort immediate fetch for a queued
-// remote cache entry. The scheduled worker remains responsible for retries.
+// remote cache entry. Managed runners own asynchronous work; callers without a
+// runner process synchronously while the scheduled worker remains responsible
+// for retries.
 func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 	if cd == nil || cd.queries == nil || id == "" || sourceURL == "" {
 		return
 	}
 	sourceURL = canonicalRemoteImageSourceURL(sourceURL)
-	go func() {
-		ctx := context.Background()
+	run := func(ctx context.Context) {
 		attemptTime := time.Now().UTC()
 		log.Printf("image cache fetch start: mode=immediate id=%s source=%q attempt_at=%s", id, sourceURL, attemptTime.Format(time.RFC3339))
 		if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
+			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
+				log.Printf("image cache fetch interrupted: mode=immediate id=%s source=%q error=%q", id, sourceURL, interrupted.Error())
+				return
+			}
 			log.Printf("image cache fetch failed: mode=immediate id=%s source=%q error=%q", id, sourceURL, err.Error())
 			retryDelay := cd.imageCacheFetchRetryDelay()
 			maxRetries := cd.imageCacheFetchMaxRetries()
-			if recErr := cd.queries.RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
+			cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+			defer cancel()
+			if recErr := cd.queries.RecordImageCacheFetchFailure(cleanupCtx, db.RecordImageCacheFetchFailureParams{
 				ID:            id,
 				RetryCount:    int32(maxRetries),
 				RetryCount_2:  int32(maxRetries),
@@ -148,7 +160,15 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 			return
 		}
 		log.Printf("image cache fetch complete: mode=immediate id=%s source=%q", id, sourceURL)
-	}()
+	}
+	if cd.backgroundRunner != nil && cd.backgroundRunner.Go(run) {
+		return
+	}
+	ctx := cd.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	run(ctx)
 }
 
 // ProcessPendingRemoteImageCacheEntries materializes queued remote cache
@@ -178,21 +198,43 @@ func (cd *CoreData) ProcessPendingRemoteImageCacheEntries(ctx context.Context, l
 		attemptTime := time.Now().UTC()
 		log.Printf("image cache fetch start: mode=worker id=%s source=%q attempt_at=%s retry_count=%d", entry.ID, entry.SourceUrl.String, attemptTime.Format(time.RFC3339), entry.RetryCount)
 		if err := cd.refreshRemoteImageCacheEntry(ctx, entry.ID, entry.SourceUrl.String, attemptTime); err != nil {
+			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
+				log.Printf("image cache fetch interrupted: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, interrupted.Error())
+				return interrupted
+			}
 			log.Printf("image cache fetch failed: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, err.Error())
 			retryDelay := cd.imageCacheFetchRetryDelay()
-			if recErr := cd.queries.RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
+			cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+			recErr := cd.queries.RecordImageCacheFetchFailure(cleanupCtx, db.RecordImageCacheFetchFailureParams{
 				ID:            entry.ID,
 				RetryCount:    int32(maxRetries),
 				RetryCount_2:  int32(maxRetries),
 				ErrorMessage:  sql.NullString{String: err.Error(), Valid: true},
 				LastAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
 				NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
-			}); recErr != nil {
+			})
+			cancel()
+			if recErr != nil {
 				log.Printf("record worker image cache fetch failure: id=%s source=%q error=%q", entry.ID, entry.SourceUrl.String, recErr.Error())
+			}
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return ctxErr
 			}
 			continue
 		}
 		log.Printf("image cache fetch complete: mode=worker id=%s source=%q", entry.ID, entry.SourceUrl.String)
+	}
+	return nil
+}
+
+func imageFetchInterruption(ctx context.Context, err error) error {
+	if ctx != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+	}
+	if errors.Is(err, context.Canceled) {
+		return context.Canceled
 	}
 	return nil
 }
@@ -251,20 +293,24 @@ func looksLikeHTML(body []byte) bool {
 	return strings.HasPrefix(s, "<!doctype html") || strings.HasPrefix(s, "<html") || strings.Contains(s, "<head")
 }
 
-func (cd *CoreData) downloadExternalImage(imgURL string) (*downloadedImage, error) {
-	return cd.downloadExternalImageAtDepth(canonicalRemoteImageSourceURL(imgURL), 0)
+func (cd *CoreData) downloadExternalImage(ctx context.Context, imgURL string) (*downloadedImage, error) {
+	return cd.downloadExternalImageAtDepth(ctx, canonicalRemoteImageSourceURL(imgURL), 0)
 }
 
-func (cd *CoreData) downloadExternalImageAtDepth(imgURL string, depth int) (*downloadedImage, error) {
+func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL string, depth int) (*downloadedImage, error) {
 	if depth > 3 {
 		return nil, fmt.Errorf("too many image metadata redirects")
 	}
-	client := opengraph.NewSafeClient() // Always use a safe client for external URLs
-	if cd != nil && cd.HTTPClient() != nil {
-		client = cd.HTTPClient()
+	client := cd.HTTPClient()
+	if client == nil {
+		client = opengraph.NewSafeClient()
 	}
 
-	resp, err := client.Get(imgURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imgURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create image request: %w", err)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("http get: %w", err)
 	}
@@ -302,7 +348,7 @@ func (cd *CoreData) downloadExternalImageAtDepth(imgURL string, depth int) (*dow
 	if !isHTMLContentType(contentType) && !looksLikeHTML(body) {
 		return nil, fmt.Errorf("not an image: %s", contentType)
 	}
-	info, err := opengraph.Fetch(imgURL, client)
+	info, err := opengraph.Fetch(ctx, imgURL, client)
 	if err != nil {
 		return nil, fmt.Errorf("fetch image metadata: %w", err)
 	}
@@ -322,7 +368,7 @@ func (cd *CoreData) downloadExternalImageAtDepth(imgURL string, depth int) (*dow
 		return nil, fmt.Errorf("metadata image points to same url")
 	}
 	log.Printf("image cache fetch metadata image: page=%q image=%q", imgURL, resolved)
-	return cd.downloadExternalImageAtDepth(resolved, depth+1)
+	return cd.downloadExternalImageAtDepth(ctx, resolved, depth+1)
 }
 
 func (cd *CoreData) writeImageCacheBytes(ctx context.Context, key, id string, body []byte) error {
@@ -622,7 +668,7 @@ func (cd *CoreData) imageCacheEntryExpired(entry *db.ImageCacheEntry, now time.T
 }
 
 func (cd *CoreData) refreshRemoteImageCacheEntry(ctx context.Context, id, sourceURL string, now time.Time) error {
-	img, err := cd.downloadExternalImage(sourceURL)
+	img, err := cd.downloadExternalImage(ctx, sourceURL)
 	if err != nil {
 		return err
 	}

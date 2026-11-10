@@ -402,7 +402,7 @@ func thumbnailRequest(id string, cfg *config.RuntimeConfig) (string, config.Thum
 		return "", config.ThumbnailSize{}, false
 	}
 	base := strings.TrimSuffix(id, ext)
-	sizes := cfg.ThumbnailSizes()
+	sizes := cfg.PermittedThumbnailSizes()
 	if before, ok := strings.CutSuffix(base, "_thumb"); ok {
 		originalID := before + ext
 		return originalID, sizes[0], intimages.ValidID(originalID)

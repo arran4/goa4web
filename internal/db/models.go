@@ -103,6 +103,13 @@ type Comment struct {
 	LastIndex     sql.NullTime
 }
 
+type CommentAppend struct {
+	ID           int32
+	CommentID    int32
+	UsersIdusers int32
+	CreatedAt    time.Time
+}
+
 type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	CommentID                      int32
@@ -227,10 +234,23 @@ type DeadLetter struct {
 	CreatedAt time.Time
 }
 
+type DigestDelivery struct {
+	ID                   int32
+	UserID               int32
+	DismissNotifications bool
+	CreatedAt            time.Time
+	AcknowledgedAt       sql.NullTime
+}
+
+type DigestDeliveryNotification struct {
+	DigestDeliveryID int32
+	NotificationID   int32
+}
+
 type ExternalLink struct {
 	ID              int32
 	Url             string
-	UrlHash         []byte
+	UrlHash         sql.NullString
 	Clicks          int32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -451,7 +471,7 @@ type Notification struct {
 	Priority         uint8
 	ResourceType     sql.NullString
 	ResourceID       sql.NullInt32
-	ActivityPosition sql.NullInt32
+	ActivityPosition sql.NullInt64
 	CreatedAt        time.Time
 	ReadAt           sql.NullTime
 }
@@ -476,13 +496,14 @@ type PendingAction struct {
 }
 
 type PendingEmail struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	DirectEmail bool
-	Body        string
-	ErrorCount  int32
-	CreatedAt   time.Time
-	SentAt      sql.NullTime
+	ID               int32
+	ToUserID         sql.NullInt32
+	DirectEmail      bool
+	Body             string
+	ErrorCount       int32
+	CreatedAt        time.Time
+	SentAt           sql.NullTime
+	DigestDeliveryID sql.NullInt32
 }
 
 type PendingPassword struct {

@@ -47,6 +47,15 @@ CREATE TABLE `comments` (
   KEY `comments_FKIndex3` (`forumthread_id`)
 );
 
+CREATE TABLE IF NOT EXISTS `comment_appends` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `comment_id` int(10) NOT NULL,
+  `users_idusers` int(10) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `comment_appends_comment_idx` (`comment_id`)
+);
+
 CREATE TABLE `comments_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `comment_id` int(10) NOT NULL DEFAULT 0,
@@ -376,7 +385,7 @@ CREATE TABLE `passwords` (
 CREATE TABLE `user_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `email` tinytext NOT NULL DEFAULT '',
+  `email` varchar(255) NOT NULL DEFAULT '',
   `verified_at` datetime DEFAULT NULL,
   `last_verification_code` varchar(64) DEFAULT NULL,
   `verification_expires_at` datetime DEFAULT NULL,
@@ -461,6 +470,23 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
 );
 
 -- Queue outbound emails.
+CREATE TABLE IF NOT EXISTS `digest_deliveries` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `dismiss_notifications` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `acknowledged_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `digest_deliveries_user_idx` (`user_id`)
+);
+
+CREATE TABLE IF NOT EXISTS `digest_delivery_notifications` (
+  `digest_delivery_id` int NOT NULL,
+  `notification_id` int NOT NULL,
+  PRIMARY KEY (`digest_delivery_id`, `notification_id`),
+  KEY `digest_delivery_notifications_notification_idx` (`notification_id`)
+);
+
 CREATE TABLE IF NOT EXISTS `pending_emails` (
   `id` int NOT NULL AUTO_INCREMENT,
   `to_user_id` int DEFAULT NULL,
@@ -469,7 +495,9 @@ CREATE TABLE IF NOT EXISTS `pending_emails` (
   `error_count` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `sent_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `digest_delivery_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pending_emails_digest_delivery_idx` (`digest_delivery_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `pending_passwords` (
@@ -495,7 +523,7 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   `priority` tinyint unsigned NOT NULL DEFAULT 0,
   `resource_type` varchar(64) DEFAULT NULL,
   `resource_id` int DEFAULT NULL,
-  `activity_position` int DEFAULT NULL,
+  `activity_position` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `read_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -721,7 +749,7 @@ CREATE TABLE IF NOT EXISTS `admin_request_comments` (
 CREATE TABLE IF NOT EXISTS `external_links` (
   `id` int NOT NULL AUTO_INCREMENT,
   `url` text NOT NULL,
-  `url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED NOT NULL,
+  `url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED,
   `clicks` int NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -834,6 +862,8 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (98, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);
 
 
 

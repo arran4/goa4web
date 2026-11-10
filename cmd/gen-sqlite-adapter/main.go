@@ -300,12 +300,13 @@ func toNullTime(v any) sql.NullTime {
 `)
 
 	buf.WriteString("type sqliteQuerier struct {\n")
+	buf.WriteString("	db DBTX\n")
 	buf.WriteString("	q *dbsqlite.Queries\n")
 	buf.WriteString("}\n\n")
 
 	buf.WriteString("// NewSQLiteQuerier constructs a db.Querier backed by the SQLite query implementation.\n")
 	buf.WriteString("func NewSQLiteQuerier(db DBTX) Querier {\n")
-	buf.WriteString("	return &sqliteQuerier{q: dbsqlite.New(db)}\n")
+	buf.WriteString("	return &sqliteQuerier{db: db, q: dbsqlite.New(db)}\n")
 	buf.WriteString("}\n\n")
 
 	var methodNames []string

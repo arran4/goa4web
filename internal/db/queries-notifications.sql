@@ -39,14 +39,14 @@ SELECT COUNT(*) FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: ListNotificationsForLister :many
-SELECT notifications.*
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id)
 ORDER BY id DESC
 LIMIT ? OFFSET ?;
 
 -- name: ListUnreadNotificationsForLister :many
-SELECT notifications.*
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(lister_id) AND read_at IS NULL
 ORDER BY id DESC
@@ -73,12 +73,12 @@ DELETE FROM notifications
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
 
 -- name: GetNotificationForLister :one
-SELECT notifications.*
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
 
 -- name: AdminGetNotification :one
-SELECT notifications.*
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE id = sqlc.arg(id);
 
@@ -96,13 +96,13 @@ DELETE FROM notifications
 WHERE read_at IS NOT NULL AND read_at < (NOW() - INTERVAL 24 HOUR);
 
 -- name: SystemGetLastNotificationForRecipientByMessage :one
-SELECT notifications.*
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = sqlc.arg(recipient_id) AND message = sqlc.arg(message)
 ORDER BY id DESC LIMIT 1;
 
 -- name: AdminListRecentNotifications :many
-SELECT notifications.*
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
 FROM notifications
 ORDER BY id DESC LIMIT ?;
 

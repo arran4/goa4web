@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -141,6 +142,15 @@ func TestSystemDeleteUninitializedThreadRemovesForkAndCopiedGrants(t *testing.T)
 
 func createReplyThreadTestSchema(t *testing.T, database *sql.DB) {
 	t.Helper()
+	isSQLite := false
+	if database != nil && database.Driver() != nil {
+		drvName := fmt.Sprintf("%T", database.Driver())
+		isSQLite = strings.Contains(strings.ToLower(drvName), "sqlite")
+	}
+	appendTableSQL := `CREATE TABLE comment_appends (id INT AUTO_INCREMENT PRIMARY KEY, comment_id INT NOT NULL, users_idusers INT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)`
+	if isSQLite {
+		appendTableSQL = `CREATE TABLE comment_appends (id INTEGER PRIMARY KEY AUTOINCREMENT, comment_id INT NOT NULL, users_idusers INT NOT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)`
+	}
 	execReplySQL(t, database,
 		`CREATE TABLE roles (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, is_admin BOOLEAN NOT NULL DEFAULT 0)`,
 		`CREATE TABLE users (idusers INT PRIMARY KEY, username VARCHAR(255))`,
@@ -149,6 +159,8 @@ func createReplyThreadTestSchema(t *testing.T, database *sql.DB) {
 		`CREATE TABLE forumtopic (idforumtopic INT PRIMARY KEY, language_id INT NULL, title VARCHAR(255), handler VARCHAR(255) NOT NULL)`,
 		`CREATE TABLE forumthread (idforumthread INT PRIMARY KEY, firstpost INT NOT NULL DEFAULT 0, lastposter INT NOT NULL DEFAULT 0, forumtopic_idforumtopic INT NOT NULL, comments INT NULL, lastaddition DATETIME NULL, locked BOOLEAN NULL, reply_to_comment_id INT NULL, reply_to_thread_id INT NULL, deleted_at DATETIME NULL)`,
 		`CREATE TABLE comments (idcomments INT PRIMARY KEY, forumthread_id INT NOT NULL, users_idusers INT NOT NULL, language_id INT NULL, text TEXT NULL, written DATETIME NULL, timezone VARCHAR(255) NULL, deleted_at DATETIME NULL, last_index DATETIME NULL)`,
+		`CREATE INDEX comments_thread_idx ON comments (forumthread_id)`,
+		appendTableSQL,
 		`CREATE TABLE grants (id INT AUTO_INCREMENT PRIMARY KEY, created_at DATETIME NULL, user_id INT NULL, role_id INT NULL, section VARCHAR(255) NOT NULL, item VARCHAR(255) NULL, rule_type VARCHAR(255) NOT NULL, item_id INT NULL, item_rule VARCHAR(255) NULL, action VARCHAR(255) NOT NULL, extra VARCHAR(255) NULL, active BOOLEAN NOT NULL)`,
 		`CREATE TABLE content_read_markers (item VARCHAR(255), item_id INT, user_id INT, last_comment_id INT, unread INT)`,
 		`CREATE TABLE content_private_labels (item VARCHAR(255) NOT NULL, item_id INT NOT NULL, user_id INT NOT NULL, label VARCHAR(255) NOT NULL, invert BOOLEAN NOT NULL)`,

@@ -34,6 +34,7 @@ type BoolOption struct {
 // StringOptions lists the string runtime options shared by flag parsing and configuration generation.
 var StringOptions = []StringOption{
 	{"db-conn", EnvDBConn, "Database connection string. This is used to connect to the database.", "", nil, "db_conn.txt", func(c *RuntimeConfig) *string { return &c.DBConn }},
+	{"db-migration-conn", EnvDBMigrationConn, "Optional migration-specific database connection string; defaults to DB_CONN without changes. For MySQL migrations set multiStatements=true.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBMigrationConn }},
 	{"db-driver", EnvDBDriver, "Database driver to use. Supported drivers are 'mysql'.", "mysql", nil, "db_driver.txt", func(c *RuntimeConfig) *string { return &c.DBDriver }},
 	{"db-timezone", EnvDBTimezone, "Timezone for the database connection.", "Australia/Melbourne", nil, "", func(c *RuntimeConfig) *string { return &c.DBTimezone }},
 	{"db-host", EnvDBHost, "Database server hostname.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DBHost }},
@@ -78,6 +79,7 @@ var StringOptions = []StringOption{
 	{"image-cache-fetch-retry-delay", EnvImageCacheFetchRetryDelay, "Delay between remote image cache fetch retries, such as 1m or 30s.", "1m", nil, "", func(c *RuntimeConfig) *string { return &c.ImageCacheFetchRetryDelay }},
 	{"image-thumbnail-generator", EnvImageThumbnailGenerator, "The thumbnail generator backend to use ('bild' or 'draw').", "bild", nil, "", func(c *RuntimeConfig) *string { return &c.ImageThumbnailGenerator }},
 	{"image-thumbnail-sizes", EnvImageThumbnailSizes, "Comma-separated thumbnail bounds in width x height form. These also provide the user-selectable safe resize dimensions. The first size is generated on upload; the others are generated on demand.", "1024x800,2048x1600", []string{"1024x800,2048x1600"}, "", func(c *RuntimeConfig) *string { return &c.ImageThumbnailSizes }},
+	{"image-card-thumbnail-sizes", EnvImageCardThumbnailSizes, "Comma-separated link-card thumbnail bounds in width x height form. The first size is used for cards; later sizes are card alternatives generated on demand.", "300x300", []string{"300x300"}, "", func(c *RuntimeConfig) *string { return &c.ImageCardThumbnailSizes }},
 	{"dlq-provider", EnvDLQProvider, "The provider for the dead letter queue. Supported providers are 'file' and 'memory'.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DLQProvider }},
 	{"dlq-file", EnvDLQFile, "The file path for the dead letter queue when using the 'file' provider.", "", nil, "", func(c *RuntimeConfig) *string { return &c.DLQFile }},
 	{"session-name", EnvSessionName, "The name of the session cookie.", "my-session", nil, "", func(c *RuntimeConfig) *string { return &c.SessionName }},

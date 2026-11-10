@@ -35,6 +35,14 @@ deleted_at DATETIME DEFAULT NULL,
 last_index DATETIME DEFAULT NULL
 );
 
+CREATE TABLE IF NOT EXISTS comment_appends (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+comment_id INTEGER NOT NULL,
+users_idusers INTEGER NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS comment_appends_comment_idx ON comment_appends (comment_id);
+
 CREATE TABLE comments_search (
 searchwordlist_idsearchwordlist INTEGER NOT NULL DEFAULT 0,
 comment_id INTEGER NOT NULL DEFAULT 0,
@@ -363,6 +371,22 @@ pattern TEXT NOT NULL DEFAULT '',
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS digest_deliveries (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+user_id int NOT NULL,
+dismiss_notifications INTEGER NOT NULL DEFAULT 0,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+acknowledged_at DATETIME DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS digest_deliveries_user_idx ON digest_deliveries (user_id);
+
+CREATE TABLE IF NOT EXISTS digest_delivery_notifications (
+digest_delivery_id int NOT NULL,
+notification_id int NOT NULL,
+PRIMARY KEY (digest_delivery_id, notification_id)
+);
+CREATE INDEX IF NOT EXISTS digest_delivery_notifications_notification_idx ON digest_delivery_notifications (notification_id);
+
 CREATE TABLE IF NOT EXISTS pending_emails (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 to_user_id int DEFAULT NULL,
@@ -370,8 +394,10 @@ direct_email INTEGER NOT NULL DEFAULT 0,
 body TEXT NOT NULL,
 error_count int NOT NULL DEFAULT 0,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-sent_at DATETIME DEFAULT NULL
+sent_at DATETIME DEFAULT NULL,
+digest_delivery_id int DEFAULT NULL
 );
+CREATE UNIQUE INDEX IF NOT EXISTS pending_emails_digest_delivery_idx ON pending_emails (digest_delivery_id);
 
 CREATE TABLE IF NOT EXISTS pending_passwords (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -720,6 +746,7 @@ CREATE TABLE IF NOT EXISTS pending_actions (
 CREATE INDEX idx_pending_actions_expires_at ON pending_actions (expires_at);
 CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
 
-INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (99, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);

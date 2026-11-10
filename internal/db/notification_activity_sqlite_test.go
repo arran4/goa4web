@@ -65,6 +65,86 @@ func TestSystemCreateNotificationForActivitySQLiteKeepsHighestPriority(t *testin
 	}
 }
 
+func TestSystemCreateNotificationForActivitySQLitePreservesDistinctActivities(t *testing.T) {
+	ctx := context.Background()
+	conn, err := sql.Open("sqlite", "file:notification_activity_distinct?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("open SQLite database: %v", err)
+	}
+	t.Cleanup(func() { _ = conn.Close() })
+	if _, err := conn.ExecContext(ctx, `
+		CREATE TABLE notifications (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			users_idusers INTEGER NOT NULL,
+			link TEXT,
+			message TEXT,
+			activity_key TEXT,
+			priority INTEGER NOT NULL DEFAULT 0,
+			resource_type TEXT,
+			resource_id INTEGER,
+			activity_position INTEGER,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			read_at DATETIME,
+			UNIQUE (users_idusers, activity_key)
+		)`); err != nil {
+		t.Fatalf("create notifications table: %v", err)
+	}
+	q := NewForDriver(conn, "sqlite3")
+	insert := func(recipient int32, activity, message, link string, priority int64) {
+		t.Helper()
+		err := q.SystemCreateNotificationForActivity(ctx, SystemCreateNotificationForActivityParams{
+			RecipientID: recipient,
+			ActivityKey: sql.NullString{String: activity, Valid: true},
+			Link:        sql.NullString{String: link, Valid: link != ""},
+			Message:     sql.NullString{String: message, Valid: true},
+			Priority:    uint8(priority),
+		})
+		if err != nil {
+			t.Fatalf("upsert recipient=%d activity=%q priority=%d: %v", recipient, activity, priority, err)
+		}
+	}
+
+	// Invert the previous test's arrival order: admin contribution first,
+	// subscriber contribution second. The more specific recipient message wins.
+	insert(7, "reply:comment:42", "admin notice", "/admin", 10)
+	insert(7, "reply:comment:42", "subscriber reply", "/forum/thread/2#c42", 20)
+	// Another recipient's copy and another reply are distinct activities.
+	insert(8, "reply:comment:42", "other subscriber", "/forum/thread/2#c42", 20)
+	insert(7, "reply:comment:43", "second reply", "/forum/thread/2#c43", 20)
+
+	// Delivery replay must not recreate or unread an acknowledged notification.
+	if _, err := conn.ExecContext(ctx,
+		`UPDATE notifications SET read_at = CURRENT_TIMESTAMP
+		 WHERE users_idusers = ? AND activity_key = ?`,
+		7, "reply:comment:42"); err != nil {
+		t.Fatalf("mark original notification read: %v", err)
+	}
+	insert(7, "reply:comment:42", "replayed admin notice", "/admin", 10)
+	insert(7, "reply:comment:42", "replayed subscriber reply", "/forum/thread/2#c42", 20)
+
+	var count int
+	if err := conn.QueryRowContext(ctx, `SELECT COUNT(*) FROM notifications`).Scan(&count); err != nil {
+		t.Fatalf("count notifications: %v", err)
+	}
+	if count != 3 {
+		t.Fatalf("notifications=%d, want 3 (two replies for user 7 and one for user 8)", count)
+	}
+
+	var priority int
+	var message, link string
+	var readAt sql.NullTime
+	if err := conn.QueryRowContext(ctx,
+		`SELECT priority, message, link, read_at FROM notifications
+		 WHERE users_idusers = ? AND activity_key = ?`,
+		7, "reply:comment:42").Scan(&priority, &message, &link, &readAt); err != nil {
+		t.Fatalf("read resolved notification: %v", err)
+	}
+	if priority != 20 || message != "subscriber reply" || link != "/forum/thread/2#c42" || !readAt.Valid {
+		t.Fatalf("resolved notification: priority=%d message=%q link=%q readAt=%v",
+			priority, message, link, readAt)
+	}
+}
+
 func TestSystemAcknowledgeNotificationsForResourceSQLitePreservesNewerActivity(t *testing.T) {
 	ctx := context.Background()
 	conn, err := sql.Open("sqlite", "file:notification_resource_acknowledgement?mode=memory&cache=shared")
@@ -103,7 +183,7 @@ func TestSystemAcknowledgeNotificationsForResourceSQLitePreservesNewerActivity(t
 		RecipientID:      7,
 		ResourceType:     sql.NullString{String: "thread", Valid: true},
 		ResourceID:       sql.NullInt32{Int32: 2, Valid: true},
-		ActivityPosition: sql.NullInt32{Int32: 42, Valid: true},
+		ActivityPosition: sql.NullInt64{Int64: 42, Valid: true},
 	}); err != nil {
 		t.Fatalf("acknowledge notifications: %v", err)
 	}

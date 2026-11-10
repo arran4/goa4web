@@ -107,7 +107,7 @@ type Querier interface {
 	AdminGetForumStats(ctx context.Context) (*AdminGetForumStatsRow, error)
 	AdminGetForumThreadById(ctx context.Context, idforumthread int32) (*AdminGetForumThreadByIdRow, error)
 	AdminGetImagePost(ctx context.Context, idimagepost int32) (*AdminGetImagePostRow, error)
-	AdminGetNotification(ctx context.Context, id int32) (*Notification, error)
+	AdminGetNotification(ctx context.Context, id int32) (*AdminGetNotificationRow, error)
 	AdminGetPasswordResetByID(ctx context.Context, id int32) (*PendingPassword, error)
 	// admin task
 	AdminGetPendingEmailByID(ctx context.Context, id int32) (*AdminGetPendingEmailByIDRow, error)
@@ -197,7 +197,7 @@ type Querier interface {
 	AdminListPrivateForumThreads(ctx context.Context, arg AdminListPrivateForumThreadsParams) ([]*AdminListPrivateForumThreadsRow, error)
 	AdminListPrivateForumTopics(ctx context.Context, arg AdminListPrivateForumTopicsParams) ([]*AdminListPrivateForumTopicsRow, error)
 	AdminListPrivateTopicParticipantsByTopicID(ctx context.Context, itemID sql.NullInt32) ([]*AdminListPrivateTopicParticipantsByTopicIDRow, error)
-	AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error)
+	AdminListRecentNotifications(ctx context.Context, limit int32) ([]*AdminListRecentNotificationsRow, error)
 	AdminListRequestComments(ctx context.Context, requestID int32) ([]*AdminRequestComment, error)
 	AdminListRequestQueue(ctx context.Context) ([]*AdminRequestQueue, error)
 	AdminListRequestQueueByStatus(ctx context.Context, status string) ([]*AdminRequestQueue, error)
@@ -409,7 +409,7 @@ type Querier interface {
 	//   lister_id - ID of the lister to count notifications for
 	GetNotificationCountForLister(ctx context.Context, listerID int32) (int64, error)
 	GetNotificationEmailByUserID(ctx context.Context, userID int32) (*UserEmail, error)
-	GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error)
+	GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*GetNotificationForListerRow, error)
 	GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error)
 	GetPasskeysByUserID(ctx context.Context, userID int32) ([]*UserPasskey, error)
 	GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)
@@ -512,7 +512,7 @@ type Querier interface {
 	ListImagePostsByPosterForLister(ctx context.Context, arg ListImagePostsByPosterForListerParams) ([]*ListImagePostsByPosterForListerRow, error)
 	ListImageboardPath(ctx context.Context, boardID int32) ([]*ListImageboardPathRow, error)
 	ListLinkerCategoryPath(ctx context.Context, categoryID int32) ([]*ListLinkerCategoryPathRow, error)
-	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error)
+	ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*ListNotificationsForListerRow, error)
 	ListOldestUsedImageCacheEntries(ctx context.Context, limit int32) ([]*ImageCacheEntry, error)
 	ListPrivateTopicParticipantsByTopicIDForUser(ctx context.Context, arg ListPrivateTopicParticipantsByTopicIDForUserParams) ([]*ListPrivateTopicParticipantsByTopicIDForUserRow, error)
 	ListPrivateTopicsByUserID(ctx context.Context, userID sql.NullInt32) ([]*ListPrivateTopicsByUserIDRow, error)
@@ -526,7 +526,7 @@ type Querier interface {
 	ListSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListSubscriptionsByUserRow, error)
 	ListThreadImagePaths(ctx context.Context, arg ListThreadImagePathsParams) ([]sql.NullString, error)
 	ListThreadSubscriptionsByUser(ctx context.Context, usersIdusers int32) ([]*ListThreadSubscriptionsByUserRow, error)
-	ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error)
+	ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*ListUnreadNotificationsForListerRow, error)
 	ListUnreadPrivateThreadsForUser(ctx context.Context, arg ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
 	ListUploadedImagePathsByUser(ctx context.Context, arg ListUploadedImagePathsByUserParams) ([]sql.NullString, error)
 	ListUploadedImagesByUserForLister(ctx context.Context, arg ListUploadedImagesByUserForListerParams) ([]*UploadedImage, error)
@@ -550,6 +550,7 @@ type Querier interface {
 	SetNotificationUnreadForLister(ctx context.Context, arg SetNotificationUnreadForListerParams) error
 	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
+	SystemAcknowledgeDigestNotificationsForPendingEmail(ctx context.Context, id int32) error
 	SystemAcknowledgeNotificationsForResource(ctx context.Context, arg SystemAcknowledgeNotificationsForResourceParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
@@ -574,6 +575,9 @@ type Querier interface {
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
+	SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error)
+	SystemCreateDigestDelivery(ctx context.Context, arg SystemCreateDigestDeliveryParams) (int64, error)
+	SystemCreateDigestDeliveryNotification(ctx context.Context, arg SystemCreateDigestDeliveryNotificationParams) error
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error
@@ -618,7 +622,7 @@ type Querier interface {
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error)
-	SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
+	SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*SystemGetLastNotificationForRecipientByMessageRow, error)
 	SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
 	SystemGetNewsPostByID(ctx context.Context, idsitenews int32) (int32, error)
 	SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error)
@@ -634,6 +638,7 @@ type Querier interface {
 	SystemIncrementPendingEmailError(ctx context.Context, id int32) error
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
+	SystemInsertDigestPendingEmail(ctx context.Context, arg SystemInsertDigestPendingEmailParams) error
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
 	SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error
 	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
@@ -643,6 +648,7 @@ type Querier interface {
 	SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error)
 	SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
+	SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error)
 	SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
 	// SystemListLanguages lists all languages.
@@ -655,6 +661,7 @@ type Querier interface {
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error
 	SystemMarkPasswordResetVerified(ctx context.Context, id int32) error
 	SystemMarkPendingEmailSent(ctx context.Context, id int32) error
 	SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error

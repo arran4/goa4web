@@ -15,14 +15,14 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	notif "github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/tasks"
-	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
 
 const (
-	EmailTemplateForumReply                  notif.EmailTemplateName        = "forumReplyEmail"
-	NotificationTemplateForumReply           notif.NotificationTemplateName = "reply"
-	EmailTemplateAdminNotificationForumReply notif.EmailTemplateName        = "adminNotificationForumReplyEmail"
+	// EmailTemplateForumReply is the email template prefix for forum replies.
+	EmailTemplateForumReply notif.EmailTemplateName = "forumReplyEmail"
+	// NotificationTemplateForumReply is the internal notification template name for forum replies.
+	NotificationTemplateForumReply notif.NotificationTemplateName = "reply"
 )
 
 // ReplyTask handles replying to an existing thread.
@@ -36,7 +36,6 @@ var (
 	ReplyTaskHandler                                               = replyTask
 	_                tasks.Task                                    = (*ReplyTask)(nil)
 	_                notif.SubscribersNotificationTemplateProvider = (*ReplyTask)(nil)
-	_                notif.AdminEmailTemplateProvider              = (*ReplyTask)(nil)
 	_                notif.AutoSubscribeProvider                   = (*ReplyTask)(nil)
 	_                notif.GrantsRequiredProvider                  = (*ReplyTask)(nil)
 	_                tasks.EmailTemplatesRequired                  = (*ReplyTask)(nil)
@@ -63,46 +62,30 @@ func (ReplyTask) SubscribedInternalNotificationTemplate(evt eventbus.TaskEvent) 
 	s := NotificationTemplateForumReply.NotificationTemplate()
 	return &s
 }
-func (ReplyTask) AdminEmailTemplate(evt eventbus.TaskEvent) (templates *notif.EmailTemplates, send bool) {
-	return EmailTemplateAdminNotificationForumReply.EmailTemplates(), evt.Outcome == eventbus.TaskOutcomeSuccess
-}
-func (ReplyTask) AdminInternalNotificationTemplate(evt eventbus.TaskEvent) *string {
-	if evt.Outcome != eventbus.TaskOutcomeSuccess {
-		return nil
-	}
-	v := EmailTemplateAdminNotificationForumReply.NotificationTemplate()
-	return &v
-}
 func (ReplyTask) RequiredTemplates() []tasks.Template {
-	return append(EmailTemplateForumReply.RequiredTemplates(), EmailTemplateAdminNotificationForumReply.RequiredTemplates()...)
+	return EmailTemplateForumReply.RequiredTemplates()
 }
 
 // AutoSubscribePath ensures authors automatically receive updates on replies.
 // AutoSubscribePath implements notif.AutoSubscribeProvider. The subscription is
 // created for the originating forum thread when that information is available.
 func (ReplyTask) AutoSubscribePath(evt eventbus.TaskEvent) (string, string, error) {
-	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		base := "/forum"
-		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
-			base = evt.Path[:idx]
-		}
-		return string(TaskReply), fmt.Sprintf("%s/topic/%d/thread/%d", base, data.TopicID, data.ThreadID), nil
+	topicID, threadID, private := privateThreadIDs(evt)
+	if topicID != 0 && threadID != 0 {
+		base := common.CanonicalForumBasePath(private, evt.Path)
+		return string(TaskReply), fmt.Sprintf("%s/topic/%d/thread/%d", base, topicID, threadID), nil
 	}
 	return string(TaskReply), evt.Path, nil
 }
 func (ReplyTask) AutoSubscribeGrants(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
-	if data, ok := evt.Data[postcountworker.EventKey].(postcountworker.UpdateEventData); ok {
-		base := "/forum"
-		if idx := strings.Index(evt.Path, "/topic/"); idx > 0 {
-			base = evt.Path[:idx]
-		}
-		section := consts.PermissionSectionForum
-		if base == "/private" {
-			section = consts.PermissionSectionPrivateForumThread
-		}
-		return []notif.GrantRequirement{{Section: section, Item: consts.PermissionItemThread, ItemID: data.ThreadID, Action: consts.PermissionActionView}}, nil
+	_, threadID, private := privateThreadIDs(evt)
+	if threadID == 0 {
+		return nil, nil
 	}
-	return nil, nil
+	if private {
+		return privateThreadSubscriberGrants(evt)
+	}
+	return []notif.GrantRequirement{{Section: consts.PermissionSectionForum, Item: consts.PermissionItemThread, ItemID: threadID, Action: consts.PermissionActionView}}, nil
 }
 
 func (ReplyTask) GrantsRequired(evt eventbus.TaskEvent) ([]notif.GrantRequirement, error) {
@@ -118,17 +101,20 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	text := r.PostFormValue("replytext")
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
 	lastDisplayedCommentID, _ := strconv.Atoi(r.PostFormValue("last_comment"))
+	lastDisplayedActivity := r.PostFormValue("last_activity")
 	base := cd.ForumBasePath
 	if base == "" {
 		base = "/forum"
 	}
 	result, err := cd.ReplyForumThread(r.Context(), common.ReplyForumThreadParams{
 		ActorID:                uid,
+		TopicID:                cd.SelectedTopicID(),
 		ThreadID:               cd.SelectedThreadID(),
 		LastDisplayedCommentID: int32(lastDisplayedCommentID),
+		LastDisplayedActivity:  lastDisplayedActivity,
 		LanguageID:             int32(languageID),
 		Text:                   text,
-		Private:                base == "/private",
+		Private:                base == "/private" || strings.HasPrefix(base, "/private"),
 		EnforceHandler:         true,
 		BasePath:               base,
 	})

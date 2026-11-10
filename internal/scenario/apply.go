@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // ErrUnsupportedOperation indicates that an operation is valid in format but not yet supported by this runner.
@@ -58,6 +59,22 @@ func WithRefRegistry(reg *RefRegistry) Option {
 
 // NewRunner creates a new Runner with CoreData.
 func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
+	if cd != nil && cd.ForumReplyNotifier() == nil && cd.Queries() != nil {
+		var notifCfg config.RuntimeConfig
+		if cd.Config != nil {
+			notifCfg = *cd.Config
+		}
+		notifCfg.NotificationsEnabled = true
+		notifCfg.EmailEnabled = false
+		if notifCfg.EmailFrom == "" {
+			notifCfg.EmailFrom = "noreply@example.test"
+		}
+		cd.SetForumReplyNotifier(notif.New(
+			notif.WithSilence(true),
+			notif.WithQueries(cd.Queries()),
+			notif.WithConfig(&notifCfg),
+		))
+	}
 	r := &Runner{
 		coreData:    cd,
 		opRegistry:  DefaultRegistry(),
@@ -65,6 +82,7 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 		supportedOps: map[string]bool{
 			"user.create":          true,
 			"user.enable":          true,
+			"user.role.assign":     true,
 			"user.grant":           true,
 			"private-forum.create": true,
 			"forum.thread.create":  true,
@@ -86,7 +104,10 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 
 // NewRunnerWithQuerier creates a new Runner using a db.Querier.
 func NewRunnerWithQuerier(ctx context.Context, q db.Querier, opts ...Option) *Runner {
-	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{})
+	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{
+		NotificationsEnabled: true,
+		EmailFrom:            "noreply@example.test",
+	})
 	return NewRunner(cd, opts...)
 }
 
@@ -105,6 +126,11 @@ func (r *Runner) Preflight(s *Scenario) error {
 	for _, evt := range s.Events {
 		if !r.supportedOps[evt.Op] {
 			return ErrUnsupportedOperation{Op: evt.Op, EventFile: evt.File}
+		}
+		if data, ok := evt.OpData.(*UserRoleAssignData); ok {
+			if _, err := r.coreData.RoleByName(data.Role); err != nil {
+				return fmt.Errorf("preflight %s: role %q is not available: %w", evt.File, data.Role, err)
+			}
 		}
 	}
 	return nil
@@ -146,6 +172,13 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 			return fmt.Errorf("invalid operation data for user.enable")
 		}
 		return r.applyUserEnable(ctx, data)
+
+	case "user.role.assign":
+		data, ok := evt.OpData.(*UserRoleAssignData)
+		if !ok {
+			return fmt.Errorf("invalid operation data for user.role.assign")
+		}
+		return r.applyUserRoleAssign(ctx, data)
 
 	case "user.grant":
 		data, ok := evt.OpData.(*UserGrantData)
@@ -242,6 +275,17 @@ func (r *Runner) applyUserEnable(ctx context.Context, data *UserEnableData) erro
 		return fmt.Errorf("approve user: %w", err)
 	}
 
+	return nil
+}
+
+func (r *Runner) applyUserRoleAssign(ctx context.Context, data *UserRoleAssignData) error {
+	uid, ok := r.refRegistry.ResolveUser(data.User)
+	if !ok {
+		return fmt.Errorf("cannot resolve user %q", data.User)
+	}
+	if err := r.coreData.AssignExistingRole(uid, data.Role); err != nil {
+		return fmt.Errorf("assign role %q to user %q: %w", data.Role, data.User, err)
+	}
 	return nil
 }
 

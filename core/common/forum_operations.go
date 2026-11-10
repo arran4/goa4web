@@ -267,6 +267,18 @@ func forumAppendGrantTarget(isPrivate bool, topicID, threadID int32) (consts.Per
 	return consts.PermissionSectionForum, consts.PermissionItemTopic, topicID
 }
 
+// AppendCommentInSectionWithActivity conditionally appends text to a comment and allocates its append activity record atomically.
+func (cd *CoreData) AppendCommentInSectionWithActivity(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+	if cd == nil || cd.queries == nil {
+		return 0, 0, fmt.Errorf("append comment with activity: no queries")
+	}
+	appender, ok := cd.queries.(db.CommentAppender)
+	if !ok {
+		return 0, 0, fmt.Errorf("append comment with activity: querier does not implement CommentAppender")
+	}
+	return appender.AppendCommentInSectionWithActivity(ctx, arg)
+}
+
 func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, threadID, topicID, commentID int32, text string, writtenAt time.Time, isPrivate bool) (forumCommentAppendResult, error) {
 	appendWindowMins := cd.forumAppendWindow(isPrivate)
 	if appendWindowMins <= 0 {
@@ -283,7 +295,7 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 
 	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
-	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(ctx, db.AppendCommentInSectionForCommenterParams{
+	rowsAffected, appendID, err := cd.AppendCommentInSectionWithActivity(ctx, db.AppendCommentInSectionForCommenterParams{
 		Text:             text,
 		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		CommentID:        commentID,
@@ -300,15 +312,6 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 	if rowsAffected == 0 {
 		return forumCommentAppendResult{}, nil
-	}
-
-	appendID, err := cd.queries.SystemCreateCommentAppend(ctx, db.SystemCreateCommentAppendParams{
-		CommentID:    commentID,
-		UsersIdusers: actorID,
-		CreatedAt:    writtenAt.UTC(),
-	})
-	if err != nil {
-		return forumCommentAppendResult{}, fmt.Errorf("record comment append: %w", err)
 	}
 
 	for _, fetch := range queuedFetches {

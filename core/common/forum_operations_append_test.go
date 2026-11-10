@@ -565,3 +565,86 @@ func TestReplyForumThreadConcurrentAppendReorderedReloadProducesDistinctActiviti
 		t.Fatalf("retried activity identity = %q, want %q", retryActivityID2, res2.ActivityID)
 	}
 }
+
+func TestReplyForumThreadAppendFailureRollbackLeavesCommentUntouched(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
+
+	initialCommentText := "Initial unmutated post"
+	q.GetCommentByIdForUserFn = func(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		switch arg.ID {
+		case forumReplyAppendCommentID:
+			return &db.GetCommentByIdForUserRow{Idcomments: arg.ID, Text: sql.NullString{String: initialCommentText, Valid: true}}, nil
+		case 100:
+			return &db.GetCommentByIdForUserRow{Idcomments: 100, Text: sql.NullString{String: "Opening post", Valid: true}}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+
+	// Simulate transactional append write failure (such as ledger insertion failure causing rollback).
+	q.AppendCommentInSectionWithActivityFn = func(_ context.Context, _ db.AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+		return 0, 0, errors.New("simulated append transaction rollback failure")
+	}
+
+	res, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID:  forumReplyAppendActorID,
+		ThreadID: forumReplyAppendThreadID,
+		Text:     "failed append attempt",
+	})
+	if err == nil {
+		t.Fatal("expected error from ReplyForumThread when atomic append transaction fails, got nil")
+	}
+	if !strings.Contains(err.Error(), "simulated append transaction rollback failure") {
+		t.Fatalf("expected simulated error, got %v", err)
+	}
+	if res != nil {
+		t.Fatalf("expected nil result on failure, got %#v", res)
+	}
+	if len(q.AppendCommentInSectionWithActivityCalls) != 1 {
+		t.Fatalf("expected 1 call to AppendCommentInSectionWithActivity, got %d", len(q.AppendCommentInSectionWithActivityCalls))
+	}
+	if len(q.SystemCreateNotificationForActivityCalls) != 0 {
+		t.Fatalf("expected 0 notifications dispatched on append failure, got %d", len(q.SystemCreateNotificationForActivityCalls))
+	}
+}
+
+func TestReplyForumThreadAppendZeroRowsFallbackToCreateComment(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
+
+	q.GetCommentByIdForUserFn = func(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		switch arg.ID {
+		case forumReplyAppendCommentID:
+			return &db.GetCommentByIdForUserRow{Idcomments: arg.ID, Text: sql.NullString{String: "Previous post", Valid: true}}, nil
+		case 100:
+			return &db.GetCommentByIdForUserRow{Idcomments: 100, Text: sql.NullString{String: "Opening post", Valid: true}}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+
+	// Append conditional UPDATE matched 0 rows (e.g. read marker or expired window).
+	q.AppendCommentInSectionWithActivityFn = func(_ context.Context, _ db.AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+		return 0, 0, nil
+	}
+
+	// Fallback path creates a new standalone comment.
+	q.CreateCommentInSectionForCommenterFn = func(_ context.Context, _ db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		return 999, nil
+	}
+
+	res, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID:  forumReplyAppendActorID,
+		ThreadID: forumReplyAppendThreadID,
+		Text:     "new standalone reply",
+	})
+	if err != nil {
+		t.Fatalf("ReplyForumThread with 0 rows affected fallback: %v", err)
+	}
+	if res.Appended {
+		t.Fatal("expected Appended = false when conditional append affected 0 rows")
+	}
+	if res.CommentID != 999 {
+		t.Fatalf("expected CommentID = 999 from new comment creation, got %d", res.CommentID)
+	}
+	if res.ActivityID != "comment:999" {
+		t.Fatalf("expected standard ActivityID 'comment:999', got %q", res.ActivityID)
+	}
+}

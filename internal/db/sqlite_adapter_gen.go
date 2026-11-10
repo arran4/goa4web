@@ -110,12 +110,13 @@ func toNullTime(v any) sql.NullTime {
 }
 
 type sqliteQuerier struct {
-	q *dbsqlite.Queries
+	db DBTX
+	q  *dbsqlite.Queries
 }
 
 // NewSQLiteQuerier constructs a db.Querier backed by the SQLite query implementation.
 func NewSQLiteQuerier(db DBTX) Querier {
-	return &sqliteQuerier{q: dbsqlite.New(db)}
+	return &sqliteQuerier{db: db, q: dbsqlite.New(db)}
 }
 
 func (s *sqliteQuerier) AddContentLabelStatus(ctx context.Context, arg AddContentLabelStatusParams) error {

@@ -1094,6 +1094,11 @@ type QuerierStub struct {
 	ListUnreadPrivateThreadsForUserReturns  []*ListUnreadPrivateThreadsForUserRow
 	ListUnreadPrivateThreadsForUserErr      error
 	ListUnreadPrivateThreadsForUserFn       func(context.Context, ListUnreadPrivateThreadsForUserParams) ([]*ListUnreadPrivateThreadsForUserRow, error)
+
+	AppendCommentInSectionWithActivityCalls   []AppendCommentInSectionForCommenterParams
+	AppendCommentInSectionWithActivityReturns [2]int64
+	AppendCommentInSectionWithActivityErr     error
+	AppendCommentInSectionWithActivityFn      func(context.Context, AppendCommentInSectionForCommenterParams) (int64, int64, error)
 }
 
 // AppendCommentInSectionForCommenter invokes the configured append mutation, defaulting to an ineligible result.
@@ -1105,6 +1110,45 @@ func (s *QuerierStub) AppendCommentInSectionForCommenter(ctx context.Context, ar
 		return 0, nil
 	}
 	return fn(ctx, arg)
+}
+
+// AppendCommentInSectionWithActivity invokes the configured transactional append or defaults to executing the append mutation followed by activity allocation.
+func (s *QuerierStub) AppendCommentInSectionWithActivity(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+	s.mu.Lock()
+	s.AppendCommentInSectionWithActivityCalls = append(s.AppendCommentInSectionWithActivityCalls, arg)
+	fn := s.AppendCommentInSectionWithActivityFn
+	ret := s.AppendCommentInSectionWithActivityReturns
+	err := s.AppendCommentInSectionWithActivityErr
+	s.mu.Unlock()
+
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if err != nil || ret[0] != 0 || ret[1] != 0 {
+		return ret[0], ret[1], err
+	}
+
+	rowsAffected, err := s.AppendCommentInSectionForCommenter(ctx, arg)
+	if err != nil {
+		return 0, 0, err
+	}
+	if rowsAffected == 0 {
+		return 0, 0, nil
+	}
+
+	createdAt := arg.Written.Time
+	if !arg.Written.Valid {
+		createdAt = time.Now().UTC()
+	}
+	appendID, err := s.SystemCreateCommentAppend(ctx, SystemCreateCommentAppendParams{
+		CommentID:    arg.CommentID,
+		UsersIdusers: arg.CommenterID,
+		CreatedAt:    createdAt,
+	})
+	if err != nil {
+		return 0, 0, err
+	}
+	return rowsAffected, appendID, nil
 }
 
 // SystemHasOtherUserReadItemAtOrBeyond invokes the configured read-marker check.

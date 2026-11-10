@@ -1191,24 +1191,27 @@ func (s *sqliteQuerier) AdminGetImagePost(ctx context.Context, idimagepost int32
 	}(res), nil
 }
 
-func (s *sqliteQuerier) AdminGetNotification(ctx context.Context, id int32) (*AdminGetNotificationRow, error) {
+func (s *sqliteQuerier) AdminGetNotification(ctx context.Context, id int32) (*Notification, error) {
 	res, err := s.q.AdminGetNotification(ctx, int64(id))
 	if err != nil {
 		return nil, err
 	}
-	return func(v *dbsqlite.AdminGetNotificationRow) *AdminGetNotificationRow {
+	return func(v *dbsqlite.Notification) *Notification {
 		if v == nil {
 			return nil
 		}
-		return &AdminGetNotificationRow{
-			ID:           int32(v.ID),
-			UsersIdusers: int32(v.UsersIdusers),
-			Link:         v.Link,
-			Message:      v.Message,
-			ActivityKey:  v.ActivityKey,
-			Priority:     uint8(v.Priority),
-			CreatedAt:    v.CreatedAt,
-			ReadAt:       v.ReadAt,
+		return &Notification{
+			ID:               int32(v.ID),
+			UsersIdusers:     int32(v.UsersIdusers),
+			Link:             v.Link,
+			Message:          v.Message,
+			ActivityKey:      v.ActivityKey,
+			Priority:         uint8(v.Priority),
+			ResourceType:     v.ResourceType,
+			ResourceID:       sql.NullInt32{Int32: int32(v.ResourceID.Int64), Valid: v.ResourceID.Valid},
+			ActivityPosition: v.ActivityPosition,
+			CreatedAt:        v.CreatedAt,
+			ReadAt:           v.ReadAt,
 		}
 	}(res), nil
 }
@@ -3052,29 +3055,32 @@ func (s *sqliteQuerier) AdminListPrivateTopicParticipantsByTopicID(ctx context.C
 	}(res), nil
 }
 
-func (s *sqliteQuerier) AdminListRecentNotifications(ctx context.Context, limit int32) ([]*AdminListRecentNotificationsRow, error) {
+func (s *sqliteQuerier) AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
 	res, err := s.q.AdminListRecentNotifications(ctx, int64(limit))
 	if err != nil {
 		return nil, err
 	}
-	return func(items []*dbsqlite.AdminListRecentNotificationsRow) []*AdminListRecentNotificationsRow {
+	return func(items []*dbsqlite.Notification) []*Notification {
 		if items == nil {
 			return nil
 		}
-		out := make([]*AdminListRecentNotificationsRow, len(items))
+		out := make([]*Notification, len(items))
 		for i, item := range items {
 			if item == nil {
 				continue
 			}
-			out[i] = &AdminListRecentNotificationsRow{
-				ID:           int32(item.ID),
-				UsersIdusers: int32(item.UsersIdusers),
-				Link:         item.Link,
-				Message:      item.Message,
-				ActivityKey:  item.ActivityKey,
-				Priority:     uint8(item.Priority),
-				CreatedAt:    item.CreatedAt,
-				ReadAt:       item.ReadAt,
+			out[i] = &Notification{
+				ID:               int32(item.ID),
+				UsersIdusers:     int32(item.UsersIdusers),
+				Link:             item.Link,
+				Message:          item.Message,
+				ActivityKey:      item.ActivityKey,
+				Priority:         uint8(item.Priority),
+				ResourceType:     item.ResourceType,
+				ResourceID:       sql.NullInt32{Int32: int32(item.ResourceID.Int64), Valid: item.ResourceID.Valid},
+				ActivityPosition: item.ActivityPosition,
+				CreatedAt:        item.CreatedAt,
+				ReadAt:           item.ReadAt,
 			}
 		}
 		return out
@@ -6499,7 +6505,7 @@ func (s *sqliteQuerier) GetNotificationEmailByUserID(ctx context.Context, userID
 	}(res), nil
 }
 
-func (s *sqliteQuerier) GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*GetNotificationForListerRow, error) {
+func (s *sqliteQuerier) GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error) {
 	res, err := s.q.GetNotificationForLister(ctx, dbsqlite.GetNotificationForListerParams{
 		ID:       int64(arg.ID),
 		ListerID: int64(arg.ListerID),
@@ -6507,19 +6513,22 @@ func (s *sqliteQuerier) GetNotificationForLister(ctx context.Context, arg GetNot
 	if err != nil {
 		return nil, err
 	}
-	return func(v *dbsqlite.GetNotificationForListerRow) *GetNotificationForListerRow {
+	return func(v *dbsqlite.Notification) *Notification {
 		if v == nil {
 			return nil
 		}
-		return &GetNotificationForListerRow{
-			ID:           int32(v.ID),
-			UsersIdusers: int32(v.UsersIdusers),
-			Link:         v.Link,
-			Message:      v.Message,
-			ActivityKey:  v.ActivityKey,
-			Priority:     uint8(v.Priority),
-			CreatedAt:    v.CreatedAt,
-			ReadAt:       v.ReadAt,
+		return &Notification{
+			ID:               int32(v.ID),
+			UsersIdusers:     int32(v.UsersIdusers),
+			Link:             v.Link,
+			Message:          v.Message,
+			ActivityKey:      v.ActivityKey,
+			Priority:         uint8(v.Priority),
+			ResourceType:     v.ResourceType,
+			ResourceID:       sql.NullInt32{Int32: int32(v.ResourceID.Int64), Valid: v.ResourceID.Valid},
+			ActivityPosition: v.ActivityPosition,
+			CreatedAt:        v.CreatedAt,
+			ReadAt:           v.ReadAt,
 		}
 	}(res), nil
 }
@@ -8661,7 +8670,7 @@ func (s *sqliteQuerier) ListLinkerCategoryPath(ctx context.Context, categoryID i
 	}(res), nil
 }
 
-func (s *sqliteQuerier) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*ListNotificationsForListerRow, error) {
+func (s *sqliteQuerier) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error) {
 	res, err := s.q.ListNotificationsForLister(ctx, dbsqlite.ListNotificationsForListerParams{
 		ListerID: int64(arg.ListerID),
 		Offset:   int64(arg.Offset),
@@ -8670,24 +8679,27 @@ func (s *sqliteQuerier) ListNotificationsForLister(ctx context.Context, arg List
 	if err != nil {
 		return nil, err
 	}
-	return func(items []*dbsqlite.ListNotificationsForListerRow) []*ListNotificationsForListerRow {
+	return func(items []*dbsqlite.Notification) []*Notification {
 		if items == nil {
 			return nil
 		}
-		out := make([]*ListNotificationsForListerRow, len(items))
+		out := make([]*Notification, len(items))
 		for i, item := range items {
 			if item == nil {
 				continue
 			}
-			out[i] = &ListNotificationsForListerRow{
-				ID:           int32(item.ID),
-				UsersIdusers: int32(item.UsersIdusers),
-				Link:         item.Link,
-				Message:      item.Message,
-				ActivityKey:  item.ActivityKey,
-				Priority:     uint8(item.Priority),
-				CreatedAt:    item.CreatedAt,
-				ReadAt:       item.ReadAt,
+			out[i] = &Notification{
+				ID:               int32(item.ID),
+				UsersIdusers:     int32(item.UsersIdusers),
+				Link:             item.Link,
+				Message:          item.Message,
+				ActivityKey:      item.ActivityKey,
+				Priority:         uint8(item.Priority),
+				ResourceType:     item.ResourceType,
+				ResourceID:       sql.NullInt32{Int32: int32(item.ResourceID.Int64), Valid: item.ResourceID.Valid},
+				ActivityPosition: item.ActivityPosition,
+				CreatedAt:        item.CreatedAt,
+				ReadAt:           item.ReadAt,
 			}
 		}
 		return out
@@ -9054,7 +9066,7 @@ func (s *sqliteQuerier) ListThreadSubscriptionsByUser(ctx context.Context, users
 	}(res), nil
 }
 
-func (s *sqliteQuerier) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*ListUnreadNotificationsForListerRow, error) {
+func (s *sqliteQuerier) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error) {
 	res, err := s.q.ListUnreadNotificationsForLister(ctx, dbsqlite.ListUnreadNotificationsForListerParams{
 		ListerID: int64(arg.ListerID),
 		Offset:   int64(arg.Offset),
@@ -9063,24 +9075,27 @@ func (s *sqliteQuerier) ListUnreadNotificationsForLister(ctx context.Context, ar
 	if err != nil {
 		return nil, err
 	}
-	return func(items []*dbsqlite.ListUnreadNotificationsForListerRow) []*ListUnreadNotificationsForListerRow {
+	return func(items []*dbsqlite.Notification) []*Notification {
 		if items == nil {
 			return nil
 		}
-		out := make([]*ListUnreadNotificationsForListerRow, len(items))
+		out := make([]*Notification, len(items))
 		for i, item := range items {
 			if item == nil {
 				continue
 			}
-			out[i] = &ListUnreadNotificationsForListerRow{
-				ID:           int32(item.ID),
-				UsersIdusers: int32(item.UsersIdusers),
-				Link:         item.Link,
-				Message:      item.Message,
-				ActivityKey:  item.ActivityKey,
-				Priority:     uint8(item.Priority),
-				CreatedAt:    item.CreatedAt,
-				ReadAt:       item.ReadAt,
+			out[i] = &Notification{
+				ID:               int32(item.ID),
+				UsersIdusers:     int32(item.UsersIdusers),
+				Link:             item.Link,
+				Message:          item.Message,
+				ActivityKey:      item.ActivityKey,
+				Priority:         uint8(item.Priority),
+				ResourceType:     item.ResourceType,
+				ResourceID:       sql.NullInt32{Int32: int32(item.ResourceID.Int64), Valid: item.ResourceID.Valid},
+				ActivityPosition: item.ActivityPosition,
+				CreatedAt:        item.CreatedAt,
+				ReadAt:           item.ReadAt,
 			}
 		}
 		return out
@@ -10075,7 +10090,7 @@ func (s *sqliteQuerier) SystemGetLanguageIDByName(ctx context.Context, nameof sq
 	return int32(res), nil
 }
 
-func (s *sqliteQuerier) SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*SystemGetLastNotificationForRecipientByMessageRow, error) {
+func (s *sqliteQuerier) SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error) {
 	res, err := s.q.SystemGetLastNotificationForRecipientByMessage(ctx, dbsqlite.SystemGetLastNotificationForRecipientByMessageParams{
 		RecipientID: int64(arg.RecipientID),
 		Message:     arg.Message,
@@ -10083,19 +10098,22 @@ func (s *sqliteQuerier) SystemGetLastNotificationForRecipientByMessage(ctx conte
 	if err != nil {
 		return nil, err
 	}
-	return func(v *dbsqlite.SystemGetLastNotificationForRecipientByMessageRow) *SystemGetLastNotificationForRecipientByMessageRow {
+	return func(v *dbsqlite.Notification) *Notification {
 		if v == nil {
 			return nil
 		}
-		return &SystemGetLastNotificationForRecipientByMessageRow{
-			ID:           int32(v.ID),
-			UsersIdusers: int32(v.UsersIdusers),
-			Link:         v.Link,
-			Message:      v.Message,
-			ActivityKey:  v.ActivityKey,
-			Priority:     uint8(v.Priority),
-			CreatedAt:    v.CreatedAt,
-			ReadAt:       v.ReadAt,
+		return &Notification{
+			ID:               int32(v.ID),
+			UsersIdusers:     int32(v.UsersIdusers),
+			Link:             v.Link,
+			Message:          v.Message,
+			ActivityKey:      v.ActivityKey,
+			Priority:         uint8(v.Priority),
+			ResourceType:     v.ResourceType,
+			ResourceID:       sql.NullInt32{Int32: int32(v.ResourceID.Int64), Valid: v.ResourceID.Valid},
+			ActivityPosition: v.ActivityPosition,
+			CreatedAt:        v.CreatedAt,
+			ReadAt:           v.ReadAt,
 		}
 	}(res), nil
 }

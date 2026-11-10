@@ -9,7 +9,6 @@ import (
 	"context"
 	"database/sql"
 	"strings"
-	"time"
 )
 
 const adminDeleteNotification = `-- name: AdminDeleteNotification :exec
@@ -32,25 +31,14 @@ func (q *Queries) AdminDeleteNotificationsByMessage(ctx context.Context, message
 }
 
 const adminGetNotification = `-- name: AdminGetNotification :one
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE id = ?
 `
 
-type AdminGetNotificationRow struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
-}
-
-func (q *Queries) AdminGetNotification(ctx context.Context, id int32) (*AdminGetNotificationRow, error) {
+func (q *Queries) AdminGetNotification(ctx context.Context, id int32) (*Notification, error) {
 	row := q.db.QueryRowContext(ctx, adminGetNotification, id)
-	var i AdminGetNotificationRow
+	var i Notification
 	err := row.Scan(
 		&i.ID,
 		&i.UsersIdusers,
@@ -58,6 +46,9 @@ func (q *Queries) AdminGetNotification(ctx context.Context, id int32) (*AdminGet
 		&i.Message,
 		&i.ActivityKey,
 		&i.Priority,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.ActivityPosition,
 		&i.CreatedAt,
 		&i.ReadAt,
 	)
@@ -65,31 +56,20 @@ func (q *Queries) AdminGetNotification(ctx context.Context, id int32) (*AdminGet
 }
 
 const adminListRecentNotifications = `-- name: AdminListRecentNotifications :many
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 ORDER BY id DESC LIMIT ?
 `
 
-type AdminListRecentNotificationsRow struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
-}
-
-func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int32) ([]*AdminListRecentNotificationsRow, error) {
+func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int32) ([]*Notification, error) {
 	rows, err := q.db.QueryContext(ctx, adminListRecentNotifications, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*AdminListRecentNotificationsRow
+	var items []*Notification
 	for rows.Next() {
-		var i AdminListRecentNotificationsRow
+		var i Notification
 		if err := rows.Scan(
 			&i.ID,
 			&i.UsersIdusers,
@@ -97,6 +77,9 @@ func (q *Queries) AdminListRecentNotifications(ctx context.Context, limit int32)
 			&i.Message,
 			&i.ActivityKey,
 			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
 			&i.CreatedAt,
 			&i.ReadAt,
 		); err != nil {
@@ -174,7 +157,7 @@ func (q *Queries) GetNotificationCountForLister(ctx context.Context, listerID in
 }
 
 const getNotificationForLister = `-- name: GetNotificationForLister :one
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE id = ? AND users_idusers = ?
 `
@@ -184,20 +167,9 @@ type GetNotificationForListerParams struct {
 	ListerID int32
 }
 
-type GetNotificationForListerRow struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
-}
-
-func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*GetNotificationForListerRow, error) {
+func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error) {
 	row := q.db.QueryRowContext(ctx, getNotificationForLister, arg.ID, arg.ListerID)
-	var i GetNotificationForListerRow
+	var i Notification
 	err := row.Scan(
 		&i.ID,
 		&i.UsersIdusers,
@@ -205,6 +177,9 @@ func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificat
 		&i.Message,
 		&i.ActivityKey,
 		&i.Priority,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.ActivityPosition,
 		&i.CreatedAt,
 		&i.ReadAt,
 	)
@@ -229,7 +204,7 @@ func (q *Queries) GetUnreadNotificationCountForLister(ctx context.Context, liste
 }
 
 const listNotificationsForLister = `-- name: ListNotificationsForLister :many
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = ?
 ORDER BY id DESC
@@ -242,26 +217,15 @@ type ListNotificationsForListerParams struct {
 	Offset   int32
 }
 
-type ListNotificationsForListerRow struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
-}
-
-func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*ListNotificationsForListerRow, error) {
+func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotificationsForListerParams) ([]*Notification, error) {
 	rows, err := q.db.QueryContext(ctx, listNotificationsForLister, arg.ListerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListNotificationsForListerRow
+	var items []*Notification
 	for rows.Next() {
-		var i ListNotificationsForListerRow
+		var i Notification
 		if err := rows.Scan(
 			&i.ID,
 			&i.UsersIdusers,
@@ -269,6 +233,9 @@ func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotifi
 			&i.Message,
 			&i.ActivityKey,
 			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
 			&i.CreatedAt,
 			&i.ReadAt,
 		); err != nil {
@@ -286,7 +253,7 @@ func (q *Queries) ListNotificationsForLister(ctx context.Context, arg ListNotifi
 }
 
 const listUnreadNotificationsForLister = `-- name: ListUnreadNotificationsForLister :many
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = ? AND read_at IS NULL
 ORDER BY id DESC
@@ -299,26 +266,15 @@ type ListUnreadNotificationsForListerParams struct {
 	Offset   int32
 }
 
-type ListUnreadNotificationsForListerRow struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
-}
-
-func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*ListUnreadNotificationsForListerRow, error) {
+func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg ListUnreadNotificationsForListerParams) ([]*Notification, error) {
 	rows, err := q.db.QueryContext(ctx, listUnreadNotificationsForLister, arg.ListerID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*ListUnreadNotificationsForListerRow
+	var items []*Notification
 	for rows.Next() {
-		var i ListUnreadNotificationsForListerRow
+		var i Notification
 		if err := rows.Scan(
 			&i.ID,
 			&i.UsersIdusers,
@@ -326,6 +282,9 @@ func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg List
 			&i.Message,
 			&i.ActivityKey,
 			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
 			&i.CreatedAt,
 			&i.ReadAt,
 		); err != nil {
@@ -485,7 +444,7 @@ func (q *Queries) SystemCreateNotificationForActivity(ctx context.Context, arg S
 }
 
 const systemGetLastNotificationForRecipientByMessage = `-- name: SystemGetLastNotificationForRecipientByMessage :one
-SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.created_at, notifications.read_at
+SELECT notifications.id, notifications.users_idusers, notifications.link, notifications.message, notifications.activity_key, notifications.priority, notifications.resource_type, notifications.resource_id, notifications.activity_position, notifications.created_at, notifications.read_at
 FROM notifications
 WHERE users_idusers = ? AND message = ?
 ORDER BY id DESC LIMIT 1
@@ -496,20 +455,9 @@ type SystemGetLastNotificationForRecipientByMessageParams struct {
 	Message     sql.NullString
 }
 
-type SystemGetLastNotificationForRecipientByMessageRow struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
-}
-
-func (q *Queries) SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*SystemGetLastNotificationForRecipientByMessageRow, error) {
+func (q *Queries) SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error) {
 	row := q.db.QueryRowContext(ctx, systemGetLastNotificationForRecipientByMessage, arg.RecipientID, arg.Message)
-	var i SystemGetLastNotificationForRecipientByMessageRow
+	var i Notification
 	err := row.Scan(
 		&i.ID,
 		&i.UsersIdusers,
@@ -517,6 +465,9 @@ func (q *Queries) SystemGetLastNotificationForRecipientByMessage(ctx context.Con
 		&i.Message,
 		&i.ActivityKey,
 		&i.Priority,
+		&i.ResourceType,
+		&i.ResourceID,
+		&i.ActivityPosition,
 		&i.CreatedAt,
 		&i.ReadAt,
 	)

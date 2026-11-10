@@ -18,14 +18,15 @@ import (
 type ThreadUpdatedEvent struct {
 	Event *eventbus.TaskEvent
 
-	ThreadID   int32
-	TopicID    int32
-	CommentID  int32
-	ActivityID string
-	Thread     any
-	TopicTitle string
-	Username   string
-	Author     string
+	ThreadID         int32
+	TopicID          int32
+	CommentID        int32
+	ActivityID       string
+	ActivityPosition int64
+	Thread           any
+	TopicTitle       string
+	Username         string
+	Author           string
 
 	LabelItem   string
 	LabelItemID int32
@@ -94,8 +95,10 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		if evt.ResourceID == 0 && event.ThreadID != 0 {
 			evt.ResourceID = event.ThreadID
 		}
-		if evt.ActivityPosition == 0 && event.CommentID != 0 {
-			evt.ActivityPosition = event.CommentID
+		if event.ActivityPosition != 0 {
+			evt.ActivityPosition = event.ActivityPosition
+		} else if evt.ActivityPosition == 0 && event.CommentID != 0 {
+			evt.ActivityPosition = CalculateActivityPosition(event.CommentID, 0)
 		}
 		if _, ok := evt.Data["Time"]; !ok {
 			evt.Data["Time"] = time.Now().UTC()

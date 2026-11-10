@@ -51,7 +51,7 @@ type TaskEvent struct {
 	ActivityID       string         // Stable identity of the activity represented by the event.
 	ResourceType     string         // Stable type of the resource containing the activity.
 	ResourceID       int32          // Stable identifier of the resource containing the activity.
-	ActivityPosition int32          // Monotonic activity position within the resource.
+	ActivityPosition int64          // Monotonic activity position within the resource.
 	Data             map[string]any // Optional template data associated with the event
 	Outcome          string         // Outcome describes the result of the task run
 }

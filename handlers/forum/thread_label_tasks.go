@@ -222,6 +222,7 @@ func (MarkThreadReadTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("mark read requires a captured last comment %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("invalid last comment")))
 	}
 	params.LastCommentID = int32(lastCommentID)
+	params.LastActivityID = r.FormValue("last_activity")
 
 	if err := cd.ReadForumThread(r.Context(), params); err != nil {
 		log.Printf("mark read: %v", err)

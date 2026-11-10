@@ -233,8 +233,9 @@ func TestReplyForumThreadAcknowledgesOnlyDisplayedActivity(t *testing.T) {
 		t.Fatalf("notification acknowledgement calls = %d, want 1", len(q.SystemAcknowledgeNotificationsForResourceCalls))
 	}
 	ack := q.SystemAcknowledgeNotificationsForResourceCalls[0]
-	if !ack.ResourceType.Valid || ack.ResourceType.String != "thread" || !ack.ResourceID.Valid || ack.ResourceID.Int32 != forumReplyAppendThreadID || !ack.ActivityPosition.Valid || ack.ActivityPosition.Int32 != forumReplyAppendCommentID {
-		t.Fatalf("notification acknowledgement = %#v, want displayed thread activity", ack)
+	wantPos := CalculateActivityPosition(forumReplyAppendCommentID, 0)
+	if !ack.ResourceType.Valid || ack.ResourceType.String != "thread" || !ack.ResourceID.Valid || ack.ResourceID.Int32 != forumReplyAppendThreadID || !ack.ActivityPosition.Valid || ack.ActivityPosition.Int64 != wantPos {
+		t.Fatalf("notification acknowledgement = %#v, want displayed thread activity pos %d", ack, wantPos)
 	}
 }
 

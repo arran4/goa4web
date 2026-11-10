@@ -419,15 +419,20 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 		langID = 1
 	}
 
+	lastCommentID, _ := strconv.Atoi(r.FormValue("last_comment"))
+	lastActivity := strings.TrimSpace(r.FormValue("last_activity"))
+
 	result, err := cd.ReplyForumThread(r.Context(), common.ReplyForumThreadParams{
-		ActorID:        cd.UserID,
-		TopicID:        topicID,
-		ThreadID:       threadID,
-		LanguageID:     int32(langID),
-		Text:           text,
-		Private:        true,
-		EnforceHandler: true,
-		BasePath:       "/private",
+		ActorID:                cd.UserID,
+		TopicID:                topicID,
+		ThreadID:               threadID,
+		LastDisplayedCommentID: int32(lastCommentID),
+		LastDisplayedActivity:  lastActivity,
+		LanguageID:             int32(langID),
+		Text:                   text,
+		Private:                true,
+		EnforceHandler:         true,
+		BasePath:               "/private",
 	})
 
 	if err != nil {

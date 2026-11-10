@@ -386,7 +386,12 @@ func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) erro
 	}
 	actorCD := r.coreData.ForUser(actorID)
 	result, err := actorCD.ReplyForumThread(ctx, common.ReplyForumThreadParams{
-		ActorID: actorID, ThreadID: threadID, LastDisplayedCommentID: lastDisplayedCommentID, Text: data.Body, At: data.At,
+		ActorID:                actorID,
+		ThreadID:               threadID,
+		LastDisplayedCommentID: lastDisplayedCommentID,
+		LastDisplayedActivity:  data.LastDisplayedActivity,
+		Text:                   data.Body,
+		At:                     data.At,
 		SynchronousSideEffects: true,
 	})
 	if err != nil {
@@ -448,9 +453,10 @@ func (r *Runner) applyForumThreadRead(ctx context.Context, data *ForumThreadRead
 	actorCD := r.coreData.ForUser(actorID)
 
 	err := actorCD.ReadForumThread(ctx, common.ReadForumThreadParams{
-		ActorID:       actorID,
-		ThreadID:      threadID,
-		LastCommentID: commentID,
+		ActorID:        actorID,
+		ThreadID:       threadID,
+		LastCommentID:  commentID,
+		LastActivityID: data.Activity,
 	})
 	if err != nil {
 		return fmt.Errorf("read forum thread: %w", err)

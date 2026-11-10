@@ -433,12 +433,13 @@ func (o *ForumThreadCreateOp) Parse(evt *Event) (OperationData, error) {
 
 // ForumReplyData holds the strongly-typed data for forum.reply.
 type ForumReplyData struct {
-	Ref                  string
-	Actor                string
-	Thread               string
-	LastDisplayedComment string
-	Body                 string
-	At                   time.Time
+	Ref                   string
+	Actor                 string
+	Thread                string
+	LastDisplayedComment  string
+	LastDisplayedActivity string
+	Body                  string
+	At                    time.Time
 }
 
 func (d *ForumReplyData) Op() string { return "forum.reply" }
@@ -449,7 +450,7 @@ type ForumReplyOp struct{}
 func (o *ForumReplyOp) OpName() string { return "forum.reply" }
 
 func (o *ForumReplyOp) AllowedHeaders() []string {
-	return []string{"Op", "Ref", "Actor", "Thread", "LastComment", "At"}
+	return []string{"Op", "Ref", "Actor", "Thread", "LastComment", "LastActivity", "At"}
 }
 
 func (o *ForumReplyOp) RequiredHeaders() []string {
@@ -487,8 +488,13 @@ func (o *ForumReplyOp) Parse(evt *Event) (OperationData, error) {
 		return nil, fmt.Errorf("forum.reply: missing required 'Thread'")
 	}
 	return &ForumReplyData{
-		Ref: strings.TrimSpace(evt.Headers.Get("Ref")), Actor: actor, Thread: thread, LastDisplayedComment: strings.TrimSpace(evt.Headers.Get("LastComment")),
-		Body: strings.TrimRight(evt.Body, "\r\n"), At: evt.At,
+		Ref:                   strings.TrimSpace(evt.Headers.Get("Ref")),
+		Actor:                 actor,
+		Thread:                thread,
+		LastDisplayedComment:  strings.TrimSpace(evt.Headers.Get("LastComment")),
+		LastDisplayedActivity: strings.TrimSpace(evt.Headers.Get("LastActivity")),
+		Body:                  strings.TrimRight(evt.Body, "\r\n"),
+		At:                    evt.At,
 	}, nil
 }
 
@@ -496,10 +502,11 @@ func (o *ForumReplyOp) Parse(evt *Event) (OperationData, error) {
 
 // ForumThreadReadData holds the strongly-typed data for forum.thread.read.
 type ForumThreadReadData struct {
-	Actor   string
-	Thread  string
-	Comment string
-	At      time.Time
+	Actor    string
+	Thread   string
+	Comment  string
+	Activity string
+	At       time.Time
 }
 
 func (d *ForumThreadReadData) Op() string { return "forum.thread.read" }
@@ -510,7 +517,7 @@ type ForumThreadReadOp struct{}
 func (o *ForumThreadReadOp) OpName() string { return "forum.thread.read" }
 
 func (o *ForumThreadReadOp) AllowedHeaders() []string {
-	return []string{"Op", "Actor", "Thread", "Comment", "At"}
+	return []string{"Op", "Actor", "Thread", "Comment", "Activity", "At"}
 }
 
 func (o *ForumThreadReadOp) RequiredHeaders() []string {
@@ -545,7 +552,11 @@ func (o *ForumThreadReadOp) Parse(evt *Event) (OperationData, error) {
 		return nil, fmt.Errorf("forum.thread.read: missing required 'Comment'")
 	}
 	return &ForumThreadReadData{
-		Actor: actor, Thread: thread, Comment: comment, At: evt.At,
+		Actor:    actor,
+		Thread:   thread,
+		Comment:  comment,
+		Activity: strings.TrimSpace(evt.Headers.Get("Activity")),
+		At:       evt.At,
 	}, nil
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -31,7 +32,7 @@ func TestNotificationsQueries(t *testing.T) {
 	if c, err := q.GetUnreadNotificationCountForLister(context.Background(), 1); err != nil || c != 1 {
 		t.Fatalf("count=%d err=%v", c, err)
 	}
-	mock.ExpectQuery("SELECT notifications.id, notifications.users_idusers").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", nil, 0, nil, nil, nil, time.Now(), nil))
+	mock.ExpectQuery("SELECT notifications").WillReturnRows(sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at"}).AddRow(1, 1, "/x", "hi", nil, 0, nil, nil, nil, time.Now(), nil))
 	if _, err := q.ListUnreadNotificationsForLister(context.Background(), db.ListUnreadNotificationsForListerParams{ListerID: 1, Limit: 10, Offset: 0}); err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -109,10 +110,11 @@ func TestNotifierInitialization(t *testing.T) {
 func TestSendInternalNotificationForEventUsesStableActivityKey(t *testing.T) {
 	q := testhelpers.NewQuerierStub()
 	n := New(WithQueries(q), WithConfig(config.NewRuntimeConfig()))
+	wantPos := common.CalculateActivityPosition(42, 0)
 	q.GetContentReadMarkerRow = &db.GetContentReadMarkerRow{LastCommentID: 42}
 	evt := eventbus.TaskEvent{
 		Task: tasks.TaskString("Reply"), ActivityID: "comment:42",
-		ResourceType: "thread", ResourceID: 2, ActivityPosition: 42,
+		ResourceType: "thread", ResourceID: 2, ActivityPosition: wantPos,
 	}
 
 	if err := n.sendInternalNotificationForEvent(context.Background(), evt, 7, "/forum/topic/1/thread/2#c42", "subscriber message", notificationPrioritySubscriber); err != nil {
@@ -129,7 +131,7 @@ func TestSendInternalNotificationForEventUsesStableActivityKey(t *testing.T) {
 	if first.ActivityKey.String != "reply:comment:42" || first.Priority != notificationPrioritySubscriber {
 		t.Errorf("subscriber activity upsert = %#v", first)
 	}
-	if first.ResourceType.String != "thread" || first.ResourceID.Int32 != 2 || first.ActivityPosition.Int32 != 42 {
+	if first.ResourceType.String != "thread" || first.ResourceID.Int32 != 2 || first.ActivityPosition.Int64 != wantPos {
 		t.Errorf("subscriber resource = %#v", first)
 	}
 	if !first.ReadAt.Valid {

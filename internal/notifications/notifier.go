@@ -215,6 +215,17 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		log.Printf("collect admin internal subs: %v", err)
 	}
 
+	var reqs []GrantRequirement
+	if evt != nil && evt.Task != nil {
+		if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
+			var err error
+			reqs, err = gp.GrantsRequired(*evt)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	for _, addr := range n.adminEmails(ctx) {
 		var uid *int32
 		if u, err := n.Queries.SystemGetUserByEmail(ctx, addr); err == nil {
@@ -225,6 +236,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		}
 
 		if uid != nil && *uid == actorID {
+			continue
+		}
+
+		if len(reqs) > 0 && (uid == nil || !n.userHasGrants(ctx, *uid, reqs)) {
 			continue
 		}
 

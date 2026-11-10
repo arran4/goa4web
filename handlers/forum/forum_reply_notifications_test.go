@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -246,13 +247,8 @@ func TestHappyPathForumReply(t *testing.T) {
 			if !findNotification(subscriberUID, expectedSubscriberNotif, expectedLink) {
 				t.Fatalf("expected subscriber notification %q with link %q, got %q with links %q", expectedSubscriberNotif, expectedLink, notificationsByRecipient[subscriberUID], notificationsLinksByRecipient[subscriberUID])
 			}
-			expectedAdminNotif := "User replier replied to the forum thread.\nOriginal thread content"
-			if !findNotification(adminUID, expectedAdminNotif, "") {
-				// If mismatch, try with trailing newline (template artifact)
-				expectedAdminNotifNewline := expectedAdminNotif + "\n"
-				if !findNotification(adminUID, expectedAdminNotifNewline, "") {
-					t.Fatalf("expected admin notification %q (or with newline), got %q", expectedAdminNotif, notificationsByRecipient[adminUID])
-				}
+			if len(notificationsByRecipient[adminUID]) != 0 {
+				t.Fatalf("expected non-subscriber admin %d to receive zero ordinary reply notifications, got %q", adminUID, notificationsByRecipient[adminUID])
 			}
 
 			if !findNotification(missingEmailUID, expectedSubscriberNotif, expectedLink) {
@@ -272,8 +268,8 @@ func TestHappyPathForumReply(t *testing.T) {
 			for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
 			}
 
-			if len(mockProvider.SentMessages) != 2 {
-				t.Fatalf("expected 2 emails sent, got %d", len(mockProvider.SentMessages))
+			if len(mockProvider.SentMessages) != 1 {
+				t.Fatalf("expected 1 email sent (subscriber only, no unsolicited admin reply email), got %d", len(mockProvider.SentMessages))
 			}
 
 			var subscriberEmail, adminEmail *mail.Message
@@ -302,16 +298,8 @@ func TestHappyPathForumReply(t *testing.T) {
 			if subBody != expectedSubBody {
 				t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
 			}
-			if adminEmail == nil {
-				t.Fatal("admin email not found")
-			}
-			if adminEmail.Header.Get("Subject") != "[goa4web Admin] Forum: Test Topic - Original thread content" {
-				t.Errorf("admin email subject mismatch: %s", adminEmail.Header.Get("Subject"))
-			}
-			adminBody := getEmailBody(t, adminEmail)
-			expectedAdminBody := "User replier replied to a forum thread.\nThis is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words limit plus more.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
-			if adminBody != expectedAdminBody {
-				t.Errorf("admin email body mismatch: %q, want %q", adminBody, expectedAdminBody)
+			if adminEmail != nil {
+				t.Errorf("expected no admin email for non-subscriber admin on ordinary reply, got %v", adminEmail.Header.Get("Subject"))
 			}
 		})
 
@@ -445,4 +433,342 @@ func TestForumAutoSubscribeTasks(t *testing.T) {
 	if path != "/private/topic/20/thread/64" {
 		t.Fatalf("expected private create thread auto-subscribe path /private/topic/20/thread/64, got %q", path)
 	}
+}
+
+func TestPrivateForumReply_CanonicalMatrixTransportAndAppend(t *testing.T) {
+	const (
+		actorUID            int32 = 1
+		overlappingAdminUID int32 = 2
+		ordinarySubUID      int32 = 3
+		nonMemberAdminUID   int32 = 4
+		revokedSubUID       int32 = 5
+		topicID             int32 = 15
+		threadID            int32 = 88
+		firstCommentID      int32 = 500
+	)
+
+	buildStub := func(currentCommentText *string) *db.QuerierStub {
+		qs := testhelpers.NewQuerierStub()
+		qs.GetPermissionsByUserIDFn = func(idusers int32) ([]*db.GetPermissionsByUserIDRow, error) {
+			return []*db.GetPermissionsByUserIDRow{}, nil
+		}
+		qs.SystemGetUserByIDFn = func(ctx context.Context, idusers int32) (*db.SystemGetUserByIDRow, error) {
+			switch idusers {
+			case actorUID:
+				return &db.SystemGetUserByIDRow{Idusers: actorUID, Username: sql.NullString{String: "bob", Valid: true}, Email: sql.NullString{String: "bob@example.com", Valid: true}}, nil
+			case overlappingAdminUID:
+				return &db.SystemGetUserByIDRow{Idusers: overlappingAdminUID, Username: sql.NullString{String: "alice", Valid: true}, Email: sql.NullString{String: "alice@example.com", Valid: true}}, nil
+			case ordinarySubUID:
+				return &db.SystemGetUserByIDRow{Idusers: ordinarySubUID, Username: sql.NullString{String: "dave", Valid: true}, Email: sql.NullString{String: "dave@example.com", Valid: true}}, nil
+			case nonMemberAdminUID:
+				return &db.SystemGetUserByIDRow{Idusers: nonMemberAdminUID, Username: sql.NullString{String: "carol", Valid: true}, Email: sql.NullString{String: "carol@example.com", Valid: true}}, nil
+			case revokedSubUID:
+				return &db.SystemGetUserByIDRow{Idusers: revokedSubUID, Username: sql.NullString{String: "erin", Valid: true}, Email: sql.NullString{String: "erin@example.com", Valid: true}}, nil
+			default:
+				return nil, sql.ErrNoRows
+			}
+		}
+		qs.SystemGetUserByEmailFn = func(ctx context.Context, addr string) (*db.SystemGetUserByEmailRow, error) {
+			switch addr {
+			case "alice@example.com":
+				return &db.SystemGetUserByEmailRow{Idusers: overlappingAdminUID, Email: addr}, nil
+			case "carol@example.com":
+				return &db.SystemGetUserByEmailRow{Idusers: nonMemberAdminUID, Email: addr}, nil
+			default:
+				return nil, sql.ErrNoRows
+			}
+		}
+		qs.AdminListAdministratorEmailsReturns = []string{"alice@example.com", "carol@example.com"}
+		qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+			return &db.GetForumTopicByIdForUserRow{
+				Idforumtopic: topicID,
+				Title:        sql.NullString{String: "Staff Room", Valid: true},
+				Handler:      "private",
+			}, nil
+		}
+		qs.GetThreadBySectionThreadIDForReplierFn = func(ctx context.Context, arg db.GetThreadBySectionThreadIDForReplierParams) (*db.Forumthread, error) {
+			return &db.Forumthread{
+				Idforumthread:          threadID,
+				ForumtopicIdforumtopic: topicID,
+			}, nil
+		}
+		qs.GetThreadLastPosterAndPermsForUserFn = func(ctx context.Context, arg db.GetThreadLastPosterAndPermsForUserParams) (*db.GetThreadLastPosterAndPermsForUserRow, error) {
+			return &db.GetThreadLastPosterAndPermsForUserRow{
+				Idforumthread:          threadID,
+				ForumtopicIdforumtopic: topicID,
+				Lastposterusername:     sql.NullString{String: "bob", Valid: true},
+				Comments:               sql.NullInt32{Int32: 1, Valid: true},
+				Firstpost:              100,
+			}, nil
+		}
+		qs.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+			if arg.ID == 100 {
+				return &db.GetCommentByIdForUserRow{
+					Idcomments: 100,
+					Text:       sql.NullString{String: "Welcome to the private staff room.", Valid: true},
+				}, nil
+			}
+			return &db.GetCommentByIdForUserRow{
+				Idcomments: arg.ID,
+				Text:       sql.NullString{String: *currentCommentText, Valid: true},
+			}, nil
+		}
+		qs.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
+			*currentCommentText = arg.Text.String
+			return int64(firstCommentID), nil
+		}
+		qs.AppendCommentInSectionForCommenterFn = func(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+			*currentCommentText = *currentCommentText + fmt.Sprint(arg.Text)
+			return 1, nil
+		}
+		qs.ListSubscribersForPatternsReturn = map[string][]int32{
+			fmt.Sprintf("reply:/private/topic/%d/thread/%d/*", topicID, threadID): {actorUID, overlappingAdminUID, ordinarySubUID, revokedSubUID},
+			"notify:/admin/*": {overlappingAdminUID, nonMemberAdminUID},
+		}
+		qs.GetPreferenceForListerReturn = map[int32]*db.Preference{
+			actorUID:            {AutoSubscribeReplies: true},
+			overlappingAdminUID: {AutoSubscribeReplies: true},
+			ordinarySubUID:      {AutoSubscribeReplies: true},
+		}
+		qs.SystemCheckGrantFn = func(arg db.SystemCheckGrantParams) (int32, error) {
+			switch arg.UserID.Int32 {
+			case actorUID, overlappingAdminUID, ordinarySubUID:
+				if (arg.Section == string(consts.PermissionSectionPrivateForum) && arg.Item.String == string(consts.PermissionItemTopic) && arg.ItemID.Int32 == topicID) ||
+					(arg.Section == string(consts.PermissionSectionPrivateForumThread) && arg.Item.String == string(consts.PermissionItemThread) && arg.ItemID.Int32 == threadID) {
+					return 1, nil
+				}
+			case revokedSubUID:
+				// Revoked subscriber retained topic view but lost thread view.
+				if arg.Section == string(consts.PermissionSectionPrivateForum) && arg.Item.String == string(consts.PermissionItemTopic) && arg.ItemID.Int32 == topicID && arg.Action == string(consts.PermissionActionView) {
+					return 1, nil
+				}
+			}
+			return 0, sql.ErrNoRows
+		}
+		qs.UpsertContentReadMarkerFn = func(ctx context.Context, arg db.UpsertContentReadMarkerParams) error { return nil }
+		qs.ClearUnreadContentPrivateLabelExceptUserFn = func(ctx context.Context, arg db.ClearUnreadContentPrivateLabelExceptUserParams) error { return nil }
+		qs.AdminDeletePendingEmailFn = func(ctx context.Context, id int32) error { return nil }
+		qs.SystemMarkPendingEmailSentFn = func(ctx context.Context, id int32) error { return nil }
+		qs.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
+			var rows []*db.SystemListPendingEmailsRow
+			if len(qs.InsertPendingEmailCalls) > 0 {
+				call := qs.InsertPendingEmailCalls[0]
+				rows = append(rows, &db.SystemListPendingEmailsRow{
+					ID:          1,
+					ToUserID:    call.ToUserID,
+					Body:        call.Body,
+					DirectEmail: call.DirectEmail,
+				})
+				qs.InsertPendingEmailCalls = qs.InsertPendingEmailCalls[1:]
+			}
+			return rows, nil
+		}
+		return qs
+	}
+
+	for _, transportPath := range []string{
+		fmt.Sprintf("/private/topic/%d/thread/%d/reply", topicID, threadID),
+		fmt.Sprintf("/private/api/topic/%d/thread/%d/reply", topicID, threadID),
+	} {
+		t.Run("Transport_"+transportPath, func(t *testing.T) {
+			commentBody := ""
+			qs := buildStub(&commentBody)
+
+			cfg := config.NewRuntimeConfig()
+			cfg.NotificationsEnabled = true
+			cfg.AdminNotify = true
+			cfg.EmailEnabled = true
+			cfg.EmailFrom = "noreply@example.com"
+			cfg.BaseURL = "http://example.com"
+
+			mockProvider := &MockEmailProvider{}
+			n := notifications.New(
+				notifications.WithSilence(true),
+				notifications.WithQueries(qs),
+				notifications.WithConfig(cfg),
+				notifications.WithEmailProvider(mockProvider),
+			)
+			cdlq := &captureDLQ{}
+
+			evt := &eventbus.TaskEvent{
+				Data:    map[string]any{},
+				UserID:  actorUID,
+				Path:    transportPath,
+				Task:    replyTask,
+				Outcome: eventbus.TaskOutcomeSuccess,
+			}
+			ctx := context.Background()
+			cd := common.NewCoreData(ctx, qs, cfg, common.WithEvent(evt), common.WithAbsoluteURLBase(cfg.BaseURL))
+			cd.UserID = actorUID
+			cd.ForumBasePath = "/private"
+
+			result, err := cd.ReplyForumThread(ctx, common.ReplyForumThreadParams{
+				ActorID:        actorUID,
+				ThreadID:       threadID,
+				LanguageID:     1,
+				Text:           "Confidential reply from Bob",
+				Private:        true,
+				EnforceHandler: true,
+				BasePath:       "/private",
+			})
+			if err != nil {
+				t.Fatalf("ReplyForumThread: %v", err)
+			}
+			cd.SetEventData("URL", cd.AbsoluteURL(result.URL))
+
+			if err := n.ProcessEvent(ctx, *evt, cdlq); err != nil {
+				t.Fatalf("ProcessEvent: %v", err)
+			}
+			for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
+			}
+
+			expectedMsg := "bob replied to Staff Room: Confidential reply from Bob"
+			expectedLink := fmt.Sprintf("http://example.com/private/topic/%d/thread/%d#c%d", topicID, threadID, firstCommentID)
+
+			notifsByRecipient := map[int32][]db.SystemCreateNotificationForActivityParams{}
+			for _, call := range qs.SystemCreateNotificationForActivityCalls {
+				notifsByRecipient[call.RecipientID] = append(notifsByRecipient[call.RecipientID], call)
+			}
+
+			if len(notifsByRecipient[overlappingAdminUID]) != 1 {
+				t.Fatalf("overlapping admin+subscriber (user %d) notifications = %d, want 1: %+v", overlappingAdminUID, len(notifsByRecipient[overlappingAdminUID]), notifsByRecipient[overlappingAdminUID])
+			}
+			if notifsByRecipient[overlappingAdminUID][0].Message.String != expectedMsg {
+				t.Errorf("user %d message = %q, want %q", overlappingAdminUID, notifsByRecipient[overlappingAdminUID][0].Message.String, expectedMsg)
+			}
+			if notifsByRecipient[overlappingAdminUID][0].Link.String != expectedLink {
+				t.Errorf("user %d link = %q, want %q", overlappingAdminUID, notifsByRecipient[overlappingAdminUID][0].Link.String, expectedLink)
+			}
+
+			if len(notifsByRecipient[ordinarySubUID]) != 1 {
+				t.Fatalf("ordinary subscriber (user %d) notifications = %d, want 1: %+v", ordinarySubUID, len(notifsByRecipient[ordinarySubUID]), notifsByRecipient[ordinarySubUID])
+			}
+			if notifsByRecipient[ordinarySubUID][0].Message.String != expectedMsg || notifsByRecipient[ordinarySubUID][0].Link.String != expectedLink {
+				t.Errorf("user %d notification = %+v, want message %q and link %q", ordinarySubUID, notifsByRecipient[ordinarySubUID][0], expectedMsg, expectedLink)
+			}
+
+			if len(notifsByRecipient[nonMemberAdminUID]) != 0 {
+				t.Errorf("non-participant admin (user %d) received private forum notification: %+v", nonMemberAdminUID, notifsByRecipient[nonMemberAdminUID])
+			}
+			if len(notifsByRecipient[revokedSubUID]) != 0 {
+				t.Errorf("revoked-grant subscriber (user %d) received private forum notification: %+v", revokedSubUID, notifsByRecipient[revokedSubUID])
+			}
+			if len(notifsByRecipient[actorUID]) != 0 {
+				t.Errorf("actor (user %d) received self-notification: %+v", actorUID, notifsByRecipient[actorUID])
+			}
+
+			if len(mockProvider.Recipients) != 2 {
+				t.Fatalf("emails sent = %d, want 2 (alice and dave only): %+v", len(mockProvider.Recipients), mockProvider.Recipients)
+			}
+			for _, r := range mockProvider.Recipients {
+				if r.Address == "carol@example.com" || r.Address == "erin@example.com" || r.Address == "bob@example.com" {
+					t.Errorf("unexpected email recipient %q", r.Address)
+				}
+			}
+		})
+	}
+
+	t.Run("AppendedConsecutiveReplyProducesDistinctActivity", func(t *testing.T) {
+		commentBody := "Initial reply from Bob"
+		qs := buildStub(&commentBody)
+		hasFirstComment := false
+		qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+			if !hasFirstComment {
+				return nil, nil
+			}
+			return []*db.GetCommentsByThreadIdForUserRow{
+				{
+					Idcomments:    firstCommentID,
+					UsersIdusers:  actorUID,
+					ForumthreadID: threadID,
+					IsOwner:       true,
+					Written:       sql.NullTime{Time: time.Now().Add(-time.Minute), Valid: true},
+					Text:          sql.NullString{String: commentBody, Valid: true},
+				},
+			}, nil
+		}
+
+		cfg := config.NewRuntimeConfig()
+		cfg.NotificationsEnabled = true
+		cfg.PrivateForumPostAppendWindow = 60
+		cfg.BaseURL = "http://example.com"
+
+		n := notifications.New(
+			notifications.WithSilence(true),
+			notifications.WithQueries(qs),
+			notifications.WithConfig(cfg),
+		)
+
+		ctx := context.Background()
+
+		// 1. First reply creates comment 500
+		evt1 := &eventbus.TaskEvent{
+			Data:    map[string]any{},
+			UserID:  actorUID,
+			Path:    fmt.Sprintf("/private/topic/%d/thread/%d/reply", topicID, threadID),
+			Task:    replyTask,
+			Outcome: eventbus.TaskOutcomeSuccess,
+		}
+		cd1 := common.NewCoreData(ctx, qs, cfg, common.WithEvent(evt1), common.WithAbsoluteURLBase(cfg.BaseURL))
+		cd1.UserID = actorUID
+		cd1.ForumBasePath = "/private"
+		res1, err := cd1.ReplyForumThread(ctx, common.ReplyForumThreadParams{
+			ActorID:        actorUID,
+			ThreadID:       threadID,
+			LanguageID:     1,
+			Text:           "Initial reply from Bob",
+			Private:        true,
+			EnforceHandler: true,
+			BasePath:       "/private",
+		})
+		if err != nil {
+			t.Fatalf("first ReplyForumThread: %v", err)
+		}
+		hasFirstComment = true
+		cd1.SetEventData("URL", cd1.AbsoluteURL(res1.URL))
+		if err := n.ProcessEvent(ctx, *evt1, nil); err != nil {
+			t.Fatalf("first ProcessEvent: %v", err)
+		}
+
+		// 2. Second reply within append window appends to comment 500
+		evt2 := &eventbus.TaskEvent{
+			Data:    map[string]any{},
+			UserID:  actorUID,
+			Path:    fmt.Sprintf("/private/topic/%d/thread/%d/reply", topicID, threadID),
+			Task:    replyTask,
+			Outcome: eventbus.TaskOutcomeSuccess,
+		}
+		cd2 := common.NewCoreData(ctx, qs, cfg, common.WithEvent(evt2), common.WithAbsoluteURLBase(cfg.BaseURL))
+		cd2.UserID = actorUID
+		cd2.ForumBasePath = "/private"
+		res2, err := cd2.ReplyForumThread(ctx, common.ReplyForumThreadParams{
+			ActorID:        actorUID,
+			ThreadID:       threadID,
+			LanguageID:     1,
+			Text:           "Appended follow-up from Bob",
+			Private:        true,
+			EnforceHandler: true,
+			BasePath:       "/private",
+		})
+		if err != nil {
+			t.Fatalf("second (appended) ReplyForumThread: %v", err)
+		}
+		cd2.SetEventData("URL", cd2.AbsoluteURL(res2.URL))
+		if err := n.ProcessEvent(ctx, *evt2, nil); err != nil {
+			t.Fatalf("second ProcessEvent: %v", err)
+		}
+
+		var aliceKeys []string
+		for _, call := range qs.SystemCreateNotificationForActivityCalls {
+			if call.RecipientID == overlappingAdminUID {
+				aliceKeys = append(aliceKeys, call.ActivityKey.String)
+			}
+		}
+		if len(aliceKeys) != 2 {
+			t.Fatalf("expected 2 notification activity calls for Alice across initial + appended reply, got %d: %v", len(aliceKeys), aliceKeys)
+		}
+		if aliceKeys[0] == aliceKeys[1] {
+			t.Fatalf("expected appended reply to have a distinct activity key from initial reply, both were %q", aliceKeys[0])
+		}
+	})
 }

@@ -255,6 +255,44 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			daveCD := coreDataForUser(context.Background(), cd, daveID)
 			hasSub = daveCD.HasSubscription(bobThreadPattern, "internal")
 			require.False(t, hasSub, "Dave should not be subscribed to staff-welcome thread")
+
+			var carolID int32
+			errCarol := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'carol'").Scan(&carolID)
+			require.NoError(t, errCarol)
+			carolCD := coreDataForUser(context.Background(), cd, carolID)
+
+			notifReq := httptest.NewRequest(http.MethodGet, "/usr/notifications", nil)
+			aliceNotes, err := aliceCD.Notifications(notifReq)
+			require.NoError(t, err)
+			bobNotes, err := bobCD.Notifications(notifReq)
+			require.NoError(t, err)
+			carolNotes, err := carolCD.Notifications(notifReq)
+			require.NoError(t, err)
+			daveNotes, err := daveCD.Notifications(notifReq)
+			require.NoError(t, err)
+
+			// Alice (overlapping administrator + subscriber) receives 3 canonical reply notifications:
+			// 1. Bob's first reply on staff-welcome
+			// 2. Carol's reply on coordination-plan
+			// 3. Bob's second reply on staff-welcome
+			// And 0 notifications for Project Room (where Alice is not a participant) or Alice's own reply.
+			require.Len(t, aliceNotes, 3, "Alice should receive 1 canonical notification per eligible reply (no admin duplicate, no Project Room leak)")
+			for _, n := range aliceNotes {
+				require.NotContains(t, n.Message.String, "replied to the forum thread", "Admin template must never be used for ordinary replies")
+				require.NotContains(t, n.Message.String, "Project Room", "Administrator Alice must not receive notifications for Project Room")
+				require.NotContains(t, n.Link.String, "/private/api/", "Notification link must be canonical /private/topic/...#c...")
+			}
+
+			// Bob receives 1 canonical notification for Alice's reply on bob-staff-check-in, and 0 for Project Room or Coordination.
+			require.Len(t, bobNotes, 1, "Bob should receive 1 canonical notification for Alice's reply in Staff Room")
+			require.Contains(t, bobNotes[0].Message.String, "alice replied to Staff Room:")
+
+			// Carol receives 1 canonical notification for Dave's reply on project-kickoff, and 0 for Staff Room.
+			require.Len(t, carolNotes, 1, "Carol should receive 1 canonical notification for Dave's reply in Project Room")
+			require.Contains(t, carolNotes[0].Message.String, "dave replied to Project Room:")
+
+			// Dave authored the only reply in Project Room and is not in Staff Room or Coordination.
+			require.Empty(t, daveNotes, "Dave should receive 0 notifications for his own reply or other rooms")
 		})
 	})
 

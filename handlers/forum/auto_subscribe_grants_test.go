@@ -130,23 +130,41 @@ func TestHappyPathReplyTaskAutoSubscribeGrants(t *testing.T) {
 }
 
 func TestHappyPathReplyTaskAutoSubscribeGrantsPrivateThread(t *testing.T) {
-	evt := eventbus.TaskEvent{
-		Data: map[string]any{
-			postcountworker.EventKey: postcountworker.UpdateEventData{
-				ThreadID: 77,
-				TopicID:  88,
+	for _, path := range []string{"/private/topic/88/thread/77/reply", "/private/api/topic/88/thread/77/reply"} {
+		evt := eventbus.TaskEvent{
+			Data: map[string]any{
+				postcountworker.EventKey: postcountworker.UpdateEventData{
+					ThreadID: 77,
+					TopicID:  88,
+				},
 			},
-		},
-		Path: "/private/topic/88/thread/77/reply",
-	}
-	reqs, err := replyTask.AutoSubscribeGrants(evt)
-	if err != nil {
-		t.Fatalf("AutoSubscribeGrants error: %v", err)
-	}
-	if len(reqs) != 1 {
-		t.Fatalf("expected 1 grant requirement, got %d", len(reqs))
-	}
-	if req := reqs[0]; req.Section != consts.PermissionSectionPrivateForumThread || req.Item != consts.PermissionItemThread || req.ItemID != 77 || req.Action != consts.PermissionActionView {
-		t.Errorf("unexpected grant requirement: %+v", req)
+			Path: path,
+		}
+		reqs, err := replyTask.AutoSubscribeGrants(evt)
+		if err != nil {
+			t.Fatalf("AutoSubscribeGrants(%s) error: %v", path, err)
+		}
+		want := []notif.GrantRequirement{
+			{
+				Section: consts.PermissionSectionPrivateForum,
+				Item:    consts.PermissionItemTopic,
+				ItemID:  88,
+				Action:  consts.PermissionActionView,
+			},
+			{
+				Section: consts.PermissionSectionPrivateForumThread,
+				Item:    consts.PermissionItemThread,
+				ItemID:  77,
+				Action:  consts.PermissionActionView,
+			},
+		}
+		if len(reqs) != len(want) {
+			t.Fatalf("AutoSubscribeGrants(%s) = %d, want %d: %+v", path, len(reqs), len(want), reqs)
+		}
+		for i := range want {
+			if reqs[i] != want[i] {
+				t.Errorf("AutoSubscribeGrants(%s)[%d] = %+v, want %+v", path, i, reqs[i], want[i])
+			}
+		}
 	}
 }

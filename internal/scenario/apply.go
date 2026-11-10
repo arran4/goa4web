@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // ErrUnsupportedOperation indicates that an operation is valid in format but not yet supported by this runner.
@@ -58,6 +59,22 @@ func WithRefRegistry(reg *RefRegistry) Option {
 
 // NewRunner creates a new Runner with CoreData.
 func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
+	if cd != nil && cd.ForumReplyNotifier() == nil && cd.Queries() != nil {
+		var notifCfg config.RuntimeConfig
+		if cd.Config != nil {
+			notifCfg = *cd.Config
+		}
+		notifCfg.NotificationsEnabled = true
+		notifCfg.EmailEnabled = false
+		if notifCfg.EmailFrom == "" {
+			notifCfg.EmailFrom = "noreply@example.test"
+		}
+		cd.SetForumReplyNotifier(notif.New(
+			notif.WithSilence(true),
+			notif.WithQueries(cd.Queries()),
+			notif.WithConfig(&notifCfg),
+		))
+	}
 	r := &Runner{
 		coreData:    cd,
 		opRegistry:  DefaultRegistry(),
@@ -87,7 +104,10 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 
 // NewRunnerWithQuerier creates a new Runner using a db.Querier.
 func NewRunnerWithQuerier(ctx context.Context, q db.Querier, opts ...Option) *Runner {
-	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{})
+	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{
+		NotificationsEnabled: true,
+		EmailFrom:            "noreply@example.test",
+	})
 	return NewRunner(cd, opts...)
 }
 

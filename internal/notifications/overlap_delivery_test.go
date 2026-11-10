@@ -42,13 +42,23 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 	cfg.NotificationsEnabled = true
 	cfg.AdminEmails = "admin@example.com,admin-only@example.com"
 
+	const (
+		actorID            int32 = 1
+		overlappingAdminID int32 = 2
+		ordinarySubID      int32 = 3
+		nonMemberAdminID   int32 = 4
+		revokedSubID       int32 = 5
+		topicID            int32 = 5
+		threadID           int32 = 42
+	)
+
 	queries := &db.QuerierStub{
 		SystemGetUserByEmailFn: func(_ context.Context, addr string) (*db.SystemGetUserByEmailRow, error) {
 			switch addr {
 			case "admin@example.com":
-				return &db.SystemGetUserByEmailRow{Idusers: 7, Email: addr}, nil
+				return &db.SystemGetUserByEmailRow{Idusers: overlappingAdminID, Email: addr}, nil
 			case "admin-only@example.com":
-				return &db.SystemGetUserByEmailRow{Idusers: 9, Email: addr}, nil
+				return &db.SystemGetUserByEmailRow{Idusers: nonMemberAdminID, Email: addr}, nil
 			default:
 				return nil, sql.ErrNoRows
 			}
@@ -59,13 +69,25 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 			}
 			for _, pattern := range arg.Patterns {
 				if pattern == "notify:/admin/*" {
-					// Admin 9 does not subscribe to ordinary replies.
-					return []int32{7, 9}, nil
+					return []int32{overlappingAdminID, nonMemberAdminID}, nil
 				}
 			}
-			// Admin 7 also subscribes, ordinary subscriber 8 receives the same
-			// reply, and multiple effective matches for 7 must not duplicate.
-			return []int32{7, 7, 8}, nil
+			// Actor 1, overlapping admin 2 (matched twice across patterns), ordinary subscriber 3, and revoked subscriber 5.
+			return []int32{actorID, overlappingAdminID, overlappingAdminID, ordinarySubID, revokedSubID}, nil
+		},
+		SystemCheckGrantFn: func(arg db.SystemCheckGrantParams) (int32, error) {
+			switch arg.UserID.Int32 {
+			case actorID, overlappingAdminID, ordinarySubID:
+				if (arg.Section == "privateforum" && arg.Item.String == "topic" && arg.ItemID.Int32 == topicID && arg.Action == "view") ||
+					(arg.Section == "privateforum_thread" && arg.Item.String == "thread" && arg.ItemID.Int32 == threadID && arg.Action == "view") {
+					return 1, nil
+				}
+			case revokedSubID:
+				if arg.Section == "privateforum" && arg.Item.String == "topic" && arg.ItemID.Int32 == topicID && arg.Action == "view" {
+					return 1, nil
+				}
+			}
+			return 0, sql.ErrNoRows
 		},
 		SystemGetTemplateOverrideFn: func(_ context.Context, name string) (string, error) {
 			if name == "overlap-admin.gotxt" {
@@ -80,52 +102,63 @@ func TestAdminAndSubscriberContributeToSameReplyActivity(t *testing.T) {
 
 	notifier := New(WithQueries(queries), WithConfig(cfg))
 	event := eventbus.TaskEvent{
-		Path:       "/forum/topic/1/thread/2",
+		Path:       "/private/topic/5/thread/42",
 		Task:       overlapReplyTask{TaskString: tasks.TaskString("Reply")},
-		UserID:     1,
+		UserID:     actorID,
 		ActivityID: "comment:42",
-		Data:       map[string]any{"URL": "/forum/topic/1/thread/2#c42"},
-		Outcome:    eventbus.TaskOutcomeSuccess,
+		Data: map[string]any{
+			"Username":      "replier",
+			"TopicTitle":    "Private Ops",
+			"Text":          "Original thread opener",
+			"CommentText":   "New reply preview body",
+			"CommentID":     int32(42),
+			"CommentAnchor": "c42",
+			"URL":           "/private/topic/5/thread/42#c42",
+		},
+		Outcome: eventbus.TaskOutcomeSuccess,
 	}
 	if err := notifier.ProcessEvent(context.Background(), event, nil); err != nil {
 		t.Fatalf("ProcessEvent: %v", err)
 	}
 
 	calls := queries.SystemCreateNotificationForActivityCalls
-	if len(calls) != 4 {
-		t.Fatalf("activity contributions = %d, want 4 (two admin + two subscriber): %+v", len(calls), calls)
-	}
-	// QuerierStub deliberately mirrors activity upserts into the legacy call
-	// list for compatibility. They are not independent database inserts.
-	if got := len(queries.SystemCreateNotificationCalls); got != len(calls) {
-		t.Fatalf("stub notification records = %d, want %d mirrored activity upserts", got, len(calls))
+	if len(calls) != 2 {
+		t.Fatalf("activity contributions = %d, want 2 (overlapping admin+subscriber 2 and ordinary subscriber 3 only): %+v", len(calls), calls)
 	}
 
-	admins := map[int32]bool{}
-	for _, admin := range calls[:2] {
-		if admin.Priority != notificationPriorityAdmin ||
-			admin.Message.String != "admin version" || admin.ActivityKey.String != "reply:comment:42" {
-			t.Fatalf("admin contribution = %+v", admin)
+	byRecipient := map[int32]db.SystemCreateNotificationForActivityParams{}
+	for _, call := range calls {
+		if call.Message.String == "admin version" {
+			t.Fatalf("recipient %d received competing admin template %q instead of canonical reply notification", call.RecipientID, call.Message.String)
 		}
-		admins[admin.RecipientID] = true
-	}
-	if len(admins) != 2 || !admins[7] || !admins[9] {
-		t.Fatalf("admin recipients = %+v, want overlapping admin 7 and admin-only 9", admins)
-	}
-	subscribers := map[int32]bool{}
-	for _, call := range calls[2:] {
-		if call.Priority != notificationPrioritySubscriber ||
-			call.Message.String != "subscriber version" ||
-			call.ActivityKey.String != "reply:comment:42" ||
-			call.Link.String != "/forum/topic/1/thread/2#c42" {
-			t.Fatalf("subscriber contribution = %+v", call)
+		if call.ActivityKey.String != "reply:comment:42" {
+			t.Fatalf("recipient %d activity key = %q, want reply:comment:42", call.RecipientID, call.ActivityKey.String)
 		}
-		subscribers[call.RecipientID] = true
-	}
-	if len(subscribers) != 2 || !subscribers[7] || !subscribers[8] {
-		t.Fatalf("subscriber recipients = %+v, want users 7 and 8", subscribers)
+		if call.Link.String != "/private/topic/5/thread/42#c42" {
+			t.Fatalf("recipient %d link = %q, want /private/topic/5/thread/42#c42", call.RecipientID, call.Link.String)
+		}
+		byRecipient[call.RecipientID] = call
 	}
 
-	// No source is suppressed; the DB's (recipient, activity) unique key
-	// consolidates overlapping contributions while preserving admin-only 9 and subscriber-only 8.
+	if _, ok := byRecipient[overlappingAdminID]; !ok {
+		t.Errorf("expected overlapping admin+subscriber (user %d) to receive canonical notification", overlappingAdminID)
+	}
+	if _, ok := byRecipient[ordinarySubID]; !ok {
+		t.Errorf("expected ordinary subscriber (user %d) to receive canonical notification", ordinarySubID)
+	}
+	if _, ok := byRecipient[nonMemberAdminID]; ok {
+		t.Errorf("expected non-participant admin (user %d) to receive zero notifications", nonMemberAdminID)
+	}
+	if _, ok := byRecipient[revokedSubID]; ok {
+		t.Errorf("expected revoked-grant subscriber (user %d) to receive zero notifications", revokedSubID)
+	}
+	if _, ok := byRecipient[actorID]; ok {
+		t.Errorf("expected actor (user %d) to receive zero self-notifications", actorID)
+	}
+	if byRecipient[overlappingAdminID].Message.String != byRecipient[ordinarySubID].Message.String {
+		t.Errorf("expected identical canonical message for users %d and %d, got %q vs %q",
+			overlappingAdminID, ordinarySubID,
+			byRecipient[overlappingAdminID].Message.String,
+			byRecipient[ordinarySubID].Message.String)
+	}
 }

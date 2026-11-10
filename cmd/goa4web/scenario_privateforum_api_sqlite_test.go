@@ -346,8 +346,8 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 			staffThread := strconv.Itoa(int(staffThreadID))
 			for _, tc := range []struct {
 				method string
-				path string
-				form url.Values
+				path   string
+				form   url.Values
 			}{
 				{http.MethodGet, "/private/api/topic/" + hugeID + "/threads", nil},
 				{http.MethodGet, "/private/api/topic/" + hugeID + "/thread/" + staffThread, nil},

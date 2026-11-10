@@ -133,6 +133,10 @@ func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q d
 		return nil
 	}
 
+	if intent, ok := n.extractForumReplyIntent(evt); ok {
+		return n.notifyForumReplyFromEvent(ctx, evt, intent, q)
+	}
+
 	if evt.Task == nil {
 		return nil
 	}

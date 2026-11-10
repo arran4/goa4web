@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -488,5 +489,79 @@ func TestCanAppendToCommentEligibilityAndMarkerScope(t *testing.T) {
 				t.Fatalf("CanAppendToComment() = %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestReplyForumThreadConcurrentAppendReorderedReloadProducesDistinctActivities(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
+
+	// Simulate reordered reload where both concurrent operations see the combined final text.
+	finalCombinedText := "initial\n\n[hr]\n\nappend 1\n\n[hr]\n\nappend 2"
+	q.GetCommentByIdForUserFn = func(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		switch arg.ID {
+		case forumReplyAppendCommentID:
+			return &db.GetCommentByIdForUserRow{Idcomments: arg.ID, Text: sql.NullString{String: finalCombinedText, Valid: true}}, nil
+		case 100:
+			return &db.GetCommentByIdForUserRow{Idcomments: 100, Text: sql.NullString{String: "Opening post", Valid: true}}, nil
+		}
+		return nil, sql.ErrNoRows
+	}
+
+	appendOpCount := 0
+	q.AppendCommentInSectionForCommenterFn = func(_ context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, error) {
+		appendOpCount++
+		return 1, nil
+	}
+
+	// First append operation
+	res1, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID:  forumReplyAppendActorID,
+		ThreadID: forumReplyAppendThreadID,
+		Text:     "append 1",
+	})
+	if err != nil {
+		t.Fatalf("first ReplyForumThread: %v", err)
+	}
+	if !res1.Appended || res1.CommentID != forumReplyAppendCommentID {
+		t.Fatalf("res1 = %#v, want appended to %d", res1, forumReplyAppendCommentID)
+	}
+
+	// Second concurrent append operation
+	res2, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID:  forumReplyAppendActorID,
+		ThreadID: forumReplyAppendThreadID,
+		Text:     "append 2",
+	})
+	if err != nil {
+		t.Fatalf("second ReplyForumThread: %v", err)
+	}
+	if !res2.Appended || res2.CommentID != forumReplyAppendCommentID {
+		t.Fatalf("res2 = %#v, want appended to %d", res2, forumReplyAppendCommentID)
+	}
+
+	// Under reordered reload, both saw finalCombinedText on reload.
+	// In the flawed implementation, both computed the identical activity key from the reloaded text!
+	// In the fixed implementation, each has a distinct atomic AppendID and distinct ActivityID.
+	if res1.ActivityID == res2.ActivityID {
+		t.Fatalf("both concurrent appends collapsed to the same ActivityID %q despite distinct operations", res1.ActivityID)
+	}
+	if res1.AppendID == res2.AppendID {
+		t.Fatalf("both concurrent appends received the same AppendID %d", res1.AppendID)
+	}
+	if res1.ActivityID != fmt.Sprintf("comment:%d:append:%d", forumReplyAppendCommentID, res1.AppendID) {
+		t.Fatalf("res1 ActivityID = %q, want comment:%d:append:%d", res1.ActivityID, forumReplyAppendCommentID, res1.AppendID)
+	}
+	if res2.ActivityID != fmt.Sprintf("comment:%d:append:%d", forumReplyAppendCommentID, res2.AppendID) {
+		t.Fatalf("res2 ActivityID = %q, want comment:%d:append:%d", res2.ActivityID, forumReplyAppendCommentID, res2.AppendID)
+	}
+
+	// Verify retry idempotency: retrying delivery uses the original activity identity.
+	retryActivityID1 := buildForumReplyActivityID(res1.CommentID, res1.Appended, res1.AppendID)
+	if retryActivityID1 != res1.ActivityID {
+		t.Fatalf("retried activity identity = %q, want %q", retryActivityID1, res1.ActivityID)
+	}
+	retryActivityID2 := buildForumReplyActivityID(res2.CommentID, res2.Appended, res2.AppendID)
+	if retryActivityID2 != res2.ActivityID {
+		t.Fatalf("retried activity identity = %q, want %q", retryActivityID2, res2.ActivityID)
 	}
 }

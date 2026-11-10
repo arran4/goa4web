@@ -250,6 +250,17 @@ type QuerierStub struct {
 	SystemCreateNotificationForActivityErr   error
 	SystemCreateNotificationForActivityCalls []SystemCreateNotificationForActivityParams
 
+	SystemCreateCommentAppendCalls   []SystemCreateCommentAppendParams
+	SystemCreateCommentAppendReturns int64
+	SystemCreateCommentAppendErr     error
+	SystemCreateCommentAppendFn      func(context.Context, SystemCreateCommentAppendParams) (int64, error)
+	nextCommentAppendID              int64
+
+	SystemListCommentAppendsByCommentIDCalls   []int32
+	SystemListCommentAppendsByCommentIDReturns []*CommentAppend
+	SystemListCommentAppendsByCommentIDErr     error
+	SystemListCommentAppendsByCommentIDFn      func(context.Context, int32) ([]*CommentAppend, error)
+
 	SystemCreateThreadCalls                    []int32
 	SystemCreateThreadReturns                  int64
 	SystemCreateThreadErr                      error
@@ -2624,6 +2635,36 @@ func (s *QuerierStub) SystemCreateNotificationForActivity(ctx context.Context, a
 	})
 	s.mu.Unlock()
 	return s.SystemCreateNotificationForActivityErr
+}
+
+func (s *QuerierStub) SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error) {
+	s.mu.Lock()
+	s.SystemCreateCommentAppendCalls = append(s.SystemCreateCommentAppendCalls, arg)
+	fn := s.SystemCreateCommentAppendFn
+	ret := s.SystemCreateCommentAppendReturns
+	err := s.SystemCreateCommentAppendErr
+	if fn == nil && ret == 0 && err == nil {
+		s.nextCommentAppendID++
+		ret = s.nextCommentAppendID
+	}
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return ret, err
+}
+
+func (s *QuerierStub) SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error) {
+	s.mu.Lock()
+	s.SystemListCommentAppendsByCommentIDCalls = append(s.SystemListCommentAppendsByCommentIDCalls, commentID)
+	fn := s.SystemListCommentAppendsByCommentIDFn
+	ret := s.SystemListCommentAppendsByCommentIDReturns
+	err := s.SystemListCommentAppendsByCommentIDErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, commentID)
+	}
+	return ret, err
 }
 
 func (s *QuerierStub) SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int32) (int64, error) {

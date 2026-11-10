@@ -9753,6 +9753,18 @@ func (s *sqliteQuerier) SystemCountRecentLoginAttempts(ctx context.Context, arg 
 	return res, nil
 }
 
+func (s *sqliteQuerier) SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error) {
+	res, err := s.q.SystemCreateCommentAppend(ctx, dbsqlite.SystemCreateCommentAppendParams{
+		CommentID:    int64(arg.CommentID),
+		UsersIdusers: int64(arg.UsersIdusers),
+		CreatedAt:    arg.CreatedAt,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemCreateDigestDelivery(ctx context.Context, arg SystemCreateDigestDeliveryParams) (int64, error) {
 	res, err := s.q.SystemCreateDigestDelivery(ctx, dbsqlite.SystemCreateDigestDeliveryParams{
 		UserID: int64(arg.UserID),
@@ -10436,6 +10448,31 @@ func (s *sqliteQuerier) SystemListBoardsByParentID(ctx context.Context, arg Syst
 				Description:            item.Description,
 				ApprovalRequired:       (item.ApprovalRequired != 0),
 				DeletedAt:              item.DeletedAt,
+			}
+		}
+		return out
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error) {
+	res, err := s.q.SystemListCommentAppendsByCommentID(ctx, int64(commentID))
+	if err != nil {
+		return nil, err
+	}
+	return func(items []*dbsqlite.CommentAppend) []*CommentAppend {
+		if items == nil {
+			return nil
+		}
+		out := make([]*CommentAppend, len(items))
+		for i, item := range items {
+			if item == nil {
+				continue
+			}
+			out[i] = &CommentAppend{
+				ID:           int32(item.ID),
+				CommentID:    int32(item.CommentID),
+				UsersIdusers: int32(item.UsersIdusers),
+				CreatedAt:    item.CreatedAt,
 			}
 		}
 		return out

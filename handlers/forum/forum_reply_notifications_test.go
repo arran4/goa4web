@@ -771,4 +771,137 @@ func TestPrivateForumReply_CanonicalMatrixTransportAndAppend(t *testing.T) {
 			t.Fatalf("expected appended reply to have a distinct activity key from initial reply, both were %q", aliceKeys[0])
 		}
 	})
+
+	t.Run("AppendedConcurrentInterleavedRepliesProduceDistinctActivitiesAndDeduplicateRetries", func(t *testing.T) {
+		commentBody := "Initial reply from Bob"
+		qs := buildStub(&commentBody)
+
+		// Reordered reload: any reload returns the final combined text containing both appends.
+		finalText := "Initial reply from Bob\n\n[hr]\n\nAppended reply 1\n\n[hr]\n\nAppended reply 2"
+		qs.GetCommentsByThreadIdForUserFn = func(ctx context.Context, arg db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+			return []*db.GetCommentsByThreadIdForUserRow{
+				{
+					Idcomments:    firstCommentID,
+					UsersIdusers:  actorUID,
+					ForumthreadID: threadID,
+					IsOwner:       true,
+					Written:       sql.NullTime{Time: time.Now().Add(-time.Minute), Valid: true},
+					Text:          sql.NullString{String: finalText, Valid: true},
+				},
+			}, nil
+		}
+		qs.GetCommentByIdForUserFn = func(ctx context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+			return &db.GetCommentByIdForUserRow{
+				Idcomments: firstCommentID,
+				Text:       sql.NullString{String: finalText, Valid: true},
+			}, nil
+		}
+
+		cfg := config.NewRuntimeConfig()
+		cfg.NotificationsEnabled = true
+		cfg.PrivateForumPostAppendWindow = 60
+		cfg.BaseURL = "http://example.com"
+
+		n := notifications.New(
+			notifications.WithSilence(true),
+			notifications.WithQueries(qs),
+			notifications.WithConfig(cfg),
+		)
+
+		ctx := context.Background()
+
+		// Append 1
+		evt1 := &eventbus.TaskEvent{
+			Data:    map[string]any{},
+			UserID:  actorUID,
+			Path:    fmt.Sprintf("/private/topic/%d/thread/%d/reply", topicID, threadID),
+			Task:    replyTask,
+			Outcome: eventbus.TaskOutcomeSuccess,
+		}
+		cd1 := common.NewCoreData(ctx, qs, cfg, common.WithEvent(evt1), common.WithAbsoluteURLBase(cfg.BaseURL))
+		cd1.UserID = actorUID
+		cd1.ForumBasePath = "/private"
+		res1, err := cd1.ReplyForumThread(ctx, common.ReplyForumThreadParams{
+			ActorID:        actorUID,
+			ThreadID:       threadID,
+			LanguageID:     1,
+			Text:           "Appended reply 1",
+			Private:        true,
+			EnforceHandler: true,
+			BasePath:       "/private",
+		})
+		if err != nil {
+			t.Fatalf("append 1: %v", err)
+		}
+		cd1.SetEventData("URL", cd1.AbsoluteURL(res1.URL))
+		if err := n.ProcessEvent(ctx, *evt1, nil); err != nil {
+			t.Fatalf("process append 1: %v", err)
+		}
+
+		// Append 2 (concurrent / interleaved reload seeing same finalText)
+		evt2 := &eventbus.TaskEvent{
+			Data:    map[string]any{},
+			UserID:  actorUID,
+			Path:    fmt.Sprintf("/private/topic/%d/thread/%d/reply", topicID, threadID),
+			Task:    replyTask,
+			Outcome: eventbus.TaskOutcomeSuccess,
+		}
+		cd2 := common.NewCoreData(ctx, qs, cfg, common.WithEvent(evt2), common.WithAbsoluteURLBase(cfg.BaseURL))
+		cd2.UserID = actorUID
+		cd2.ForumBasePath = "/private"
+		res2, err := cd2.ReplyForumThread(ctx, common.ReplyForumThreadParams{
+			ActorID:        actorUID,
+			ThreadID:       threadID,
+			LanguageID:     1,
+			Text:           "Appended reply 2",
+			Private:        true,
+			EnforceHandler: true,
+			BasePath:       "/private",
+		})
+		if err != nil {
+			t.Fatalf("append 2: %v", err)
+		}
+		cd2.SetEventData("URL", cd2.AbsoluteURL(res2.URL))
+		if err := n.ProcessEvent(ctx, *evt2, nil); err != nil {
+			t.Fatalf("process append 2: %v", err)
+		}
+
+		// Verify distinct activity identities
+		if res1.ActivityID == res2.ActivityID {
+			t.Fatalf("concurrent appends produced identical ActivityID %q", res1.ActivityID)
+		}
+		if res1.AppendID == res2.AppendID {
+			t.Fatalf("concurrent appends produced identical AppendID %d", res1.AppendID)
+		}
+
+		var aliceKeys []string
+		for _, call := range qs.SystemCreateNotificationForActivityCalls {
+			if call.RecipientID == overlappingAdminUID {
+				aliceKeys = append(aliceKeys, call.ActivityKey.String)
+			}
+		}
+		if len(aliceKeys) != 2 {
+			t.Fatalf("expected 2 notification calls for Alice across both appends, got %d: %v", len(aliceKeys), aliceKeys)
+		}
+		if aliceKeys[0] == aliceKeys[1] {
+			t.Fatalf("expected distinct activity keys for Alice, got %v", aliceKeys)
+		}
+
+		// Verify retry idempotency: re-delivering append 1 reuses its original ActivityID and activity key
+		if err := n.ProcessEvent(ctx, *evt1, nil); err != nil {
+			t.Fatalf("retry process append 1: %v", err)
+		}
+		var retryAliceKeys []string
+		for _, call := range qs.SystemCreateNotificationForActivityCalls {
+			if call.RecipientID == overlappingAdminUID {
+				retryAliceKeys = append(retryAliceKeys, call.ActivityKey.String)
+			}
+		}
+		if len(retryAliceKeys) != 3 {
+			t.Fatalf("expected 3 total calls after retry, got %d", len(retryAliceKeys))
+		}
+		if retryAliceKeys[2] != aliceKeys[0] {
+			t.Fatalf("retry activity key = %q, want original %q", retryAliceKeys[2], aliceKeys[0])
+		}
+	})
 }

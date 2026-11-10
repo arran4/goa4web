@@ -35,6 +35,14 @@ deleted_at DATETIME DEFAULT NULL,
 last_index DATETIME DEFAULT NULL
 );
 
+CREATE TABLE IF NOT EXISTS comment_appends (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+comment_id INTEGER NOT NULL,
+users_idusers INTEGER NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS comment_appends_comment_idx ON comment_appends (comment_id);
+
 CREATE TABLE comments_search (
 searchwordlist_idsearchwordlist INTEGER NOT NULL DEFAULT 0,
 comment_id INTEGER NOT NULL DEFAULT 0,

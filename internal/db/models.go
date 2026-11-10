@@ -103,6 +103,13 @@ type Comment struct {
 	LastIndex     sql.NullTime
 }
 
+type CommentAppend struct {
+	ID           int32
+	CommentID    int32
+	UsersIdusers int32
+	CreatedAt    time.Time
+}
+
 type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int32
 	CommentID                      int32

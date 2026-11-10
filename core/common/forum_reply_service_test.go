@@ -195,8 +195,11 @@ func TestForumReplyService_HeadlessCanonicalExecutionAndAppendActivity(t *testin
 	if res2.CommentID != commentID {
 		t.Fatalf("second reply CommentID = %d, want %d", res2.CommentID, commentID)
 	}
-	if res2.ActivityID == res1.ActivityID || !strings.HasPrefix(res2.ActivityID, "comment:444:append:1:") {
-		t.Fatalf("expected distinct append ActivityID with prefix comment:444:append:1:, got %q (first=%q)", res2.ActivityID, res1.ActivityID)
+	if res2.ActivityID == res1.ActivityID || res2.ActivityID != "comment:444:append:1" {
+		t.Fatalf("expected distinct append ActivityID comment:444:append:1, got %q (first=%q)", res2.ActivityID, res1.ActivityID)
+	}
+	if res2.AppendID != 1 {
+		t.Fatalf("expected AppendID 1, got %d", res2.AppendID)
 	}
 	if len(notifier.intents) != 2 {
 		t.Fatalf("notifier intents = %d, want 2", len(notifier.intents))

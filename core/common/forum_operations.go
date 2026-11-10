@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"log"
@@ -104,6 +103,7 @@ type ForumReplyNotificationIntent struct {
 	TopicTitle          string
 	ThreadID            int32
 	CommentID           int32
+	AppendID            int64
 	CommentAnchor       string
 	Appended            bool
 	ActivityID          string
@@ -127,6 +127,7 @@ type ReplyForumThreadResult struct {
 	ThreadID      int32
 	TopicID       int32
 	CommentID     int32
+	AppendID      int64
 	URL           string
 	Appended      bool
 	ActivityID    string
@@ -177,6 +178,7 @@ type forumCommentAppendResult struct {
 	appended      bool
 	canonicalText string
 	textAvailable bool
+	appendID      int64
 }
 
 // CanCreateForumThread reports whether actorID may post a thread in topicID.
@@ -238,20 +240,14 @@ func forumBasePath(private bool, basePath string) string {
 	return CanonicalForumBasePath(private, basePath)
 }
 
-func buildForumReplyActivityID(commentID int32, appended bool, textAvailable bool, canonicalText string, submittedText string, writtenAt time.Time) string {
+func buildForumReplyActivityID(commentID int32, appended bool, appendID int64) string {
 	if !appended {
 		return fmt.Sprintf("comment:%d", commentID)
 	}
-	if textAvailable && canonicalText != "" {
-		rev := strings.Count(canonicalText, "\n\n[hr]\n\n")
-		if rev < 1 {
-			rev = 1
-		}
-		sum := sha256.Sum256([]byte(canonicalText))
-		return fmt.Sprintf("comment:%d:append:%d:%x", commentID, rev, sum[:4])
+	if appendID > 0 {
+		return fmt.Sprintf("comment:%d:append:%d", commentID, appendID)
 	}
-	sum := sha256.Sum256([]byte(fmt.Sprintf("%d:%s", writtenAt.UTC().UnixNano(), submittedText)))
-	return fmt.Sprintf("comment:%d:append:1:%x", commentID, sum[:4])
+	return fmt.Sprintf("comment:%d:append", commentID)
 }
 
 func (cd *CoreData) forumAppendWindow(isPrivate bool) int {
@@ -306,6 +302,15 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 		return forumCommentAppendResult{}, nil
 	}
 
+	appendID, err := cd.queries.SystemCreateCommentAppend(ctx, db.SystemCreateCommentAppendParams{
+		CommentID:    commentID,
+		UsersIdusers: actorID,
+		CreatedAt:    writtenAt.UTC(),
+	})
+	if err != nil {
+		return forumCommentAppendResult{}, fmt.Errorf("record comment append: %w", err)
+	}
+
 	for _, fetch := range queuedFetches {
 		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
@@ -322,12 +327,16 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 		if err != nil {
 			log.Printf("reload appended forum comment %d: %v", commentID, err)
 		}
-		return forumCommentAppendResult{appended: true}, nil
+		return forumCommentAppendResult{
+			appended: true,
+			appendID: appendID,
+		}, nil
 	}
 	return forumCommentAppendResult{
 		appended:      true,
 		canonicalText: comment.Text.String,
 		textAvailable: true,
+		appendID:      appendID,
 	}, nil
 }
 
@@ -605,7 +614,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	canonicalPath := fmt.Sprintf("%s/topic/%d/thread/%d", basePath, topic.Idforumtopic, thread.Idforumthread)
 	endURL := fmt.Sprintf("%s#%s", canonicalPath, anchor)
 	absCommentURL := cd.AbsoluteURL(endURL)
-	activityID := buildForumReplyActivityID(commentID, appendResult.appended, canonicalTextAvailable, commentText, params.Text, writtenAt)
+	activityID := buildForumReplyActivityID(commentID, appendResult.appended, appendResult.appendID)
 	username := ""
 	if user := cd.UserByID(params.ActorID); user != nil {
 		username = user.Username.String
@@ -638,6 +647,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		TopicTitle:          topic.Title.String,
 		ThreadID:            thread.Idforumthread,
 		CommentID:           commentID,
+		AppendID:            appendResult.appendID,
 		CommentAnchor:       anchor,
 		Appended:            appendResult.appended,
 		ActivityID:          activityID,
@@ -647,7 +657,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		AbsoluteCommentURL:  absCommentURL,
 		CommentText:         commentText,
 		SubmittedText:       params.Text,
-		ThreadOpenerPreview: openerText,
+		ThreadOpenerPreview: openerPreview,
 		SubjectPrefix:       subjectPrefix,
 	}
 	data[ForumReplyIntentEventKey] = intent
@@ -685,6 +695,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		ThreadID:      thread.Idforumthread,
 		TopicID:       topic.Idforumtopic,
 		CommentID:     commentID,
+		AppendID:      appendResult.appendID,
 		URL:           endURL,
 		Appended:      appendResult.appended,
 		ActivityID:    activityID,

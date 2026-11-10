@@ -201,6 +201,71 @@ func TestAppendCommentConcurrencySQLite(t *testing.T) {
 	}
 }
 
+func TestCommentAppendAtomicIdentityConcurrencySQLite(t *testing.T) {
+	database := openReplyThreadTestDatabaseSQLite(t)
+	createReplyThreadTestSchema(t, database)
+
+	execReplySQL(t, database,
+		`INSERT INTO users (idusers, username) VALUES (1, 'user1')`,
+		`INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (1000, 100, 1, 'initial text', datetime('now', '-30 minutes'))`,
+	)
+
+	queries := NewForDriver(database, "sqlite")
+	ctx := context.Background()
+
+	// Simulate concurrent append identity allocation
+	// numConcurrent specifies the number of parallel append operations.
+	const numConcurrent = 5
+	appendIDs := make(chan int64, numConcurrent)
+	errCh := make(chan error, numConcurrent)
+
+	for i := 0; i < numConcurrent; i++ {
+		go func() {
+			id, err := queries.SystemCreateCommentAppend(ctx, SystemCreateCommentAppendParams{
+				CommentID:    1000,
+				UsersIdusers: 1,
+				CreatedAt:    time.Now().UTC(),
+			})
+			if err != nil {
+				errCh <- err
+				return
+			}
+			appendIDs <- id
+		}()
+	}
+
+	seen := make(map[int64]bool)
+	for i := 0; i < numConcurrent; i++ {
+		select {
+		case err := <-errCh:
+			t.Fatalf("SystemCreateCommentAppend concurrent error: %v", err)
+		case id := <-appendIDs:
+			if id <= 0 {
+				t.Fatalf("expected positive auto-increment append ID, got %d", id)
+			}
+			if seen[id] {
+				t.Fatalf("duplicate append ID %d allocated under concurrency", id)
+			}
+			seen[id] = true
+		case <-time.After(5 * time.Second):
+			t.Fatal("timeout waiting for concurrent append IDs")
+		}
+	}
+
+	appends, err := queries.SystemListCommentAppendsByCommentID(ctx, 1000)
+	if err != nil {
+		t.Fatalf("SystemListCommentAppendsByCommentID: %v", err)
+	}
+	if len(appends) != numConcurrent {
+		t.Fatalf("recorded appends count = %d, want %d", len(appends), numConcurrent)
+	}
+	for i := 1; i < len(appends); i++ {
+		if appends[i].ID <= appends[i-1].ID {
+			t.Fatalf("expected monotonically increasing IDs, got %d then %d", appends[i-1].ID, appends[i].ID)
+		}
+	}
+}
+
 func openReplyThreadTestDatabaseSQLite(t *testing.T) *sql.DB {
 	t.Helper()
 	// Using file::memory:?cache=shared instead of just :memory: for concurrent accesses

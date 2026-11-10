@@ -47,6 +47,15 @@ CREATE TABLE `comments` (
   KEY `comments_FKIndex3` (`forumthread_id`)
 );
 
+CREATE TABLE IF NOT EXISTS `comment_appends` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `comment_id` int(10) NOT NULL,
+  `users_idusers` int(10) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `comment_appends_comment_idx` (`comment_id`)
+);
+
 CREATE TABLE `comments_search` (
   `searchwordlist_idsearchwordlist` int(10) NOT NULL DEFAULT 0,
   `comment_id` int(10) NOT NULL DEFAULT 0,

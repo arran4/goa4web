@@ -574,6 +574,7 @@ type Querier interface {
 	// SystemCountLanguages counts all languages.
 	SystemCountLanguages(ctx context.Context) (int64, error)
 	SystemCountRecentLoginAttempts(ctx context.Context, arg SystemCountRecentLoginAttemptsParams) (int64, error)
+	SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error)
 	SystemCreateDigestDelivery(ctx context.Context, arg SystemCreateDigestDeliveryParams) (int64, error)
 	SystemCreateDigestDeliveryNotification(ctx context.Context, arg SystemCreateDigestDeliveryNotificationParams) error
 	SystemCreateGrant(ctx context.Context, arg SystemCreateGrantParams) (int64, error)
@@ -646,6 +647,7 @@ type Querier interface {
 	SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error)
 	SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error)
 	SystemListBoardsByParentID(ctx context.Context, arg SystemListBoardsByParentIDParams) ([]*Imageboard, error)
+	SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error)
 	SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
 	// SystemListLanguages lists all languages.

@@ -122,7 +122,7 @@ func privateAPIPageOffset(pageStr string, pageSize int, collectionLength int) (i
 	if collectionLength <= 0 {
 		return 0, 0, false, nil
 	}
-	if (page - 1) > (collectionLength - 1) / pageSize {
+	if (page - 1) > (collectionLength-1)/pageSize {
 		return collectionLength, collectionLength, false, nil
 	}
 

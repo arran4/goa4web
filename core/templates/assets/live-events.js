@@ -1,71 +1,171 @@
-(function(){
-    const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
-    const url = proto + location.host + '/ws/events';
-    const seen = new Set();
-    let conn;
-    let retryDelay = 1000;
+(function(root){
+    function buildWebSocketURL(endpoint){
+        const proto = root.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        return proto + root.location.host + endpoint;
+    }
 
-    function connect(){
-        conn = new WebSocket(url);
-        conn.onopen = () => {
-            retryDelay = 1000;
-        };
-        conn.onmessage = evt => {
-            try{
-                const msg = JSON.parse(evt.data);
-                const data = msg && msg.data;
-                if(!data || !data.notification){
+    function isSafeFragmentURL(url){
+        return typeof url === 'string' && url.length > 1 && url[0] === '/' && url[1] !== '/';
+    }
+
+    function parseEventKind(raw){
+        const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if(!msg || typeof msg !== 'object') return null;
+        if(typeof msg.kind === 'string' && msg.kind){
+            if(msg.kind === 'task' && msg.data && msg.data.notification){
+                return 'notification';
+            }
+            return msg.kind;
+        }
+        const data = msg.data || msg.Data;
+        if(data && data.notification){
+            return 'notification';
+        }
+        return null;
+    }
+
+    function swapFragment(el, html, swapMode, doc){
+        const mode = (swapMode || el.getAttribute('data-live-swap') || 'innerHTML').trim();
+        if(mode === 'outerHTML' || mode === 'replace'){
+            const ownerDoc = el.ownerDocument || doc || root.document;
+            const tpl = ownerDoc && typeof ownerDoc.createElement === 'function' ? ownerDoc.createElement('template') : null;
+            if(tpl){
+                tpl.innerHTML = html.trim();
+                if(tpl.content && tpl.content.firstElementChild && typeof el.replaceWith === 'function'){
+                    el.replaceWith(tpl.content.firstElementChild);
                     return;
                 }
-                const n = data.notification;
-                if(seen.has(n.id)) return;
-                seen.add(n.id);
-                updateCount(1);
-                addNotification(n);
-            }catch(e){
-                console.log('ws message error', e);
             }
-        };
-        conn.onclose = () => {
-            setTimeout(connect, retryDelay);
-            retryDelay = Math.min(retryDelay * 2, 60000);
-        };
+            el.outerHTML = html;
+            return;
+        }
+        if(mode === 'prepend'){
+            el.insertAdjacentHTML('afterbegin', html);
+            return;
+        }
+        if(mode === 'append'){
+            el.insertAdjacentHTML('beforeend', html);
+            return;
+        }
+        el.innerHTML = html;
     }
 
-    function updateCount(delta){
-        const link = document.getElementById('notif-index');
-        if(!link) return;
-        let m = link.textContent.match(/\((\d+)\)/);
-        let count = m ? parseInt(m[1],10) : 0;
-        count += delta;
-        if(m){
-            link.textContent = link.textContent.replace(/\(\d+\)/, '('+count+')');
-        } else {
-            link.textContent += ' ('+count+')';
+    async function refreshTarget(el, fetchImpl, doc){
+        const url = el.getAttribute('data-live-url');
+        if(!isSafeFragmentURL(url)){
+            return false;
+        }
+        const doFetch = fetchImpl || root.fetch;
+        if(typeof doFetch !== 'function'){
+            return false;
+        }
+        const resp = await doFetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Live-Fragment': '1' }
+        });
+        if(!resp || !resp.ok || resp.redirected){
+            return false;
+        }
+        const ct = resp.headers && typeof resp.headers.get === 'function' ? (resp.headers.get('content-type') || '') : 'text/html';
+        if(ct && !ct.toLowerCase().includes('text/html')){
+            return false;
+        }
+        const html = await resp.text();
+        swapFragment(el, html, el.getAttribute('data-live-swap'), doc);
+        return true;
+    }
+
+    function matchingTargets(doc, kind){
+        const nodes = doc.querySelectorAll('[data-live-event][data-live-url]');
+        const matches = [];
+        nodes.forEach(el => {
+            const events = (el.getAttribute('data-live-event') || '').trim().split(/\s+/);
+            if(events.includes(kind) || events.includes('*')){
+                matches.push(el);
+            }
+        });
+        return matches;
+    }
+
+    async function handleMessage(raw, doc, fetchImpl){
+        const kind = parseEventKind(raw);
+        if(!kind) return 0;
+        const targetDoc = doc || root.document;
+        const targets = matchingTargets(targetDoc, kind);
+        let updated = 0;
+        for(const el of targets){
+            if(await refreshTarget(el, fetchImpl, targetDoc)){
+                updated++;
+            }
+        }
+        return updated;
+    }
+
+    async function refreshAllTargets(doc, fetchImpl){
+        const targetDoc = doc || root.document;
+        const nodes = targetDoc.querySelectorAll('[data-live-event][data-live-url]');
+        let updated = 0;
+        for(const el of nodes){
+            if(await refreshTarget(el, fetchImpl, targetDoc)){
+                updated++;
+            }
+        }
+        return updated;
+    }
+
+    function initLiveEvents(endpoint){
+        let conn;
+        let retryDelay = 1000;
+        let hasConnected = false;
+
+        function connect(){
+            if(typeof root.WebSocket !== 'function') return;
+            conn = new root.WebSocket(buildWebSocketURL(endpoint));
+            conn.onopen = () => {
+                const reconnected = hasConnected;
+                hasConnected = true;
+                retryDelay = 1000;
+                if(reconnected){
+                    refreshAllTargets(root.document).catch(e => console.log('ws reconcile error', e));
+                }
+            };
+            conn.onmessage = evt => {
+                handleMessage(evt.data, root.document).catch(e => console.log('ws message error', e));
+            };
+            conn.onclose = () => {
+                root.setTimeout(connect, retryDelay);
+                retryDelay = Math.min(retryDelay * 2, 60000);
+            };
+        }
+
+        root.addEventListener('load', function(){
+            connect();
+            const btnAll = root.document.getElementById('btn-select-all');
+            if(btnAll) btnAll.addEventListener('click', () => root.document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = true));
+            const btnInvert = root.document.getElementById('btn-invert-selection');
+            if(btnInvert) btnInvert.addEventListener('click', () => root.document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = !el.checked));
+        });
+    }
+
+    const api = {
+        isSafeFragmentURL,
+        parseEventKind,
+        swapFragment,
+        refreshTarget,
+        matchingTargets,
+        handleMessage,
+        refreshAllTargets,
+        initLiveEvents
+    };
+
+    if(typeof module !== 'undefined' && module.exports){
+        module.exports = api;
+    }
+    if(root){
+        root.Goa4WebLiveEvents = api;
+        if(root.document && root.location && !root.__GOA4WEB_DISABLE_AUTO_LIVE_EVENTS__){
+            initLiveEvents('/ws/events');
         }
     }
-
-    function addNotification(n){
-        const list = document.getElementById('notifications-list');
-        if(!list || document.getElementById('notif-'+n.id)) return;
-        const empty = document.getElementById('notifications-empty');
-        if(empty) empty.remove();
-        const div = document.createElement('div');
-        div.className = 'notification';
-        div.id = 'notif-'+n.id;
-        let html = '<label><input type="checkbox" name="id" value="'+n.id+'"> ';
-        html += n.link ? '<a href="'+n.link+'">'+n.message+'</a>' : n.message;
-        html += '</label>';
-        div.innerHTML = html;
-        list.prepend(div);
-    }
-
-    window.addEventListener('load', function(){
-        document.querySelectorAll('[data-notification-id]').forEach(el => seen.add(parseInt(el.dataset.notificationId,10)));
-        connect();
-        const btnAll = document.getElementById('btn-select-all');
-        if(btnAll) btnAll.addEventListener('click', () => document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = true));
-        const btnInvert = document.getElementById('btn-invert-selection');
-        if(btnInvert) btnInvert.addEventListener('click', () => document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = !el.checked));
-    });
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

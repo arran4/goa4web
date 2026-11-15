@@ -52,6 +52,8 @@ func RegisterRoutes(r *mux.Router, _ *config.RuntimeConfig) []nav.RouterOptions 
 	ur.HandleFunc("/api-keys/create", handlers.TaskHandler(createAPIKeyTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(createAPIKeyTask.Matcher())
 	ur.HandleFunc("/api-keys/revoke", handlers.TaskHandler(revokeAPIKeyTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(revokeAPIKeyTask.Matcher())
 	ur.HandleFunc("/notifications", userNotificationsPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/notifications/fragment/list", notificationsListFragmentPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	ur.HandleFunc("/notifications/fragment/count", notificationsCountFragmentPage).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	ur.HandleFunc("/notifications", handlers.TaskHandler(saveAllTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveAllTask.Matcher())
 	ur.HandleFunc("/notifications", handlers.TaskHandler(saveDigestTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(saveDigestTask.Matcher())
 	ur.HandleFunc("/notifications", handlers.TaskHandler(sendDigestNowTask)).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount()).MatcherFunc(sendDigestNowTask.Matcher())

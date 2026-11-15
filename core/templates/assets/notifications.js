@@ -1,88 +1,56 @@
-(function(){
-    const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
-    const url = proto + location.host + '/ws/notifications';
-    const seen = new Set();
-    let conn;
+(function(root){
+    // Compatibility shim: delegates legacy /websocket/notifications.js consumers to the
+    // server-rendered HTML fragment swapper over /ws/notifications without client-side HTML assembly.
+    if(root && root.Goa4WebLiveEvents && typeof root.Goa4WebLiveEvents.initLiveEvents === 'function'){
+        root.Goa4WebLiveEvents.initLiveEvents('/ws/notifications');
+        return;
+    }
 
+    const proto = root.location && root.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const url = root.location ? proto + root.location.host + '/ws/notifications' : '/ws/notifications';
     let retryDelay = 1000;
+    let hasConnected = false;
+
+    async function refreshFragments(){
+        const nodes = root.document.querySelectorAll('[data-live-event][data-live-url]');
+        for(const el of nodes){
+            const fragURL = el.getAttribute('data-live-url');
+            if(typeof fragURL !== 'string' || fragURL.length < 2 || fragURL[0] !== '/' || fragURL[1] === '/') continue;
+            const resp = await root.fetch(fragURL, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'X-Live-Fragment': '1' }
+            });
+            if(!resp || !resp.ok || resp.redirected) continue;
+            const html = await resp.text();
+            const mode = (el.getAttribute('data-live-swap') || 'innerHTML').trim();
+            if(mode === 'outerHTML' || mode === 'replace'){
+                el.outerHTML = html;
+            } else {
+                el.innerHTML = html;
+            }
+        }
+    }
 
     function connect(){
-        conn = new WebSocket(url);
+        if(typeof root.WebSocket !== 'function') return;
+        const conn = new root.WebSocket(url);
         conn.onopen = () => {
+            const reconnected = hasConnected;
+            hasConnected = true;
             retryDelay = 1000;
+            if(reconnected) refreshFragments().catch(() => {});
         };
-        conn.onmessage = evt => {
-            try{
-                const msg = JSON.parse(evt.data);
-                const data = msg && (msg.data || msg.Data);
-                if(!data || !data.notification){
-                    return;
-                }
-                const n = data.notification;
-                if(seen.has(n.id)) return;
-                seen.add(n.id);
-                updateCount(1);
-                addNotification(n);
-            }catch(e){
-                console.log('ws message error', e);
-            }
+        conn.onmessage = () => {
+            refreshFragments().catch(() => {});
         };
         conn.onclose = () => {
-             setTimeout(connect, retryDelay);
-             retryDelay = Math.min(retryDelay * 2, 60000);
+            root.setTimeout(connect, retryDelay);
+            retryDelay = Math.min(retryDelay * 2, 60000);
         };
     }
 
-    function updateCount(delta){
-        const link = document.getElementById('notif-index');
-        if(!link) return;
-        let m = link.textContent.match(/\((\d+)\)/);
-        let count = m ? parseInt(m[1],10) : 0;
-        count += delta;
-        if(m){
-            link.textContent = link.textContent.replace(/\(\d+\)/, '('+count+')');
-        } else {
-            link.textContent += ' ('+count+')';
-        }
+    if(root.addEventListener){
+        root.addEventListener('load', connect);
     }
-
-    function addNotification(n){
-        const list = document.getElementById('notifications-list');
-        if(!list) return;
-        if(document.getElementById('notif-'+n.id)) return;
-        const empty = document.getElementById('notifications-empty');
-        if(empty) empty.remove();
-        const div = document.createElement('div');
-        div.className = 'notification';
-        div.id = 'notif-'+n.id;
-        let html = '';
-        html += '<label>';
-        html += '<input type="checkbox" name="id" value="'+n.id+'"> ';
-        if(n.link){
-            html += '<a href="'+n.link+'">'+n.message+'</a>';
-        } else {
-            html += n.message;
-        }
-        html += '</label>';
-        div.innerHTML = html;
-        list.prepend(div);
-    }
-
-    window.addEventListener('load', function(){
-        document.querySelectorAll('[data-notification-id]').forEach(el => seen.add(parseInt(el.dataset.notificationId,10)));
-        connect();
-
-        const btnAll = document.getElementById('btn-select-all');
-        if(btnAll) {
-            btnAll.addEventListener('click', () => {
-                document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = true);
-            });
-        }
-        const btnInvert = document.getElementById('btn-invert-selection');
-        if(btnInvert) {
-            btnInvert.addEventListener('click', () => {
-                document.querySelectorAll('#notifications-list input[type="checkbox"]').forEach(el => el.checked = !el.checked);
-            });
-        }
-    });
-})();
+})(typeof window !== 'undefined' ? window : globalThis);

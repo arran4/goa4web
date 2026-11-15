@@ -227,10 +227,23 @@ type DeadLetter struct {
 	CreatedAt time.Time
 }
 
+type DigestDelivery struct {
+	ID                   int32
+	UserID               int32
+	DismissNotifications bool
+	CreatedAt            time.Time
+	AcknowledgedAt       sql.NullTime
+}
+
+type DigestDeliveryNotification struct {
+	DigestDeliveryID int32
+	NotificationID   int32
+}
+
 type ExternalLink struct {
 	ID              int32
 	Url             string
-	UrlHash         []byte
+	UrlHash         sql.NullString
 	Clicks          int32
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -471,13 +484,14 @@ type PendingAction struct {
 }
 
 type PendingEmail struct {
-	ID          int32
-	ToUserID    sql.NullInt32
-	DirectEmail bool
-	Body        string
-	ErrorCount  int32
-	CreatedAt   time.Time
-	SentAt      sql.NullTime
+	ID               int32
+	ToUserID         sql.NullInt32
+	DirectEmail      bool
+	Body             string
+	ErrorCount       int32
+	CreatedAt        time.Time
+	SentAt           sql.NullTime
+	DigestDeliveryID sql.NullInt32
 }
 
 type PendingPassword struct {

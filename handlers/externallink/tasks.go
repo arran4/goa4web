@@ -119,7 +119,7 @@ func processExternalLink(ctx context.Context, q db.Querier, targetURL string) (t
 		cd = common.NewCoreData(ctx, q, nil)
 	}
 
-	info, err := opengraph.Fetch(targetURL, cd.HTTPClient())
+	info, err := opengraph.Fetch(ctx, targetURL, cd.HTTPClient())
 	if err != nil {
 		log.Printf("background fetch error for %s: %v", targetURL, err)
 		return nil, err

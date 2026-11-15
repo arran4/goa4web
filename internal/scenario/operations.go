@@ -53,6 +53,7 @@ func DefaultRegistry() *Registry {
 	return NewRegistry(
 		&UserCreateOp{},
 		&UserEnableOp{},
+		&UserRoleAssignOp{},
 		&UserGrantOp{},
 		&PrivateForumCreateOp{},
 		&PrivateForumEditOp{},
@@ -219,6 +220,57 @@ func (o *UserEnableOp) Parse(evt *Event) (OperationData, error) {
 		User:  user,
 		At:    evt.At,
 	}, nil
+}
+
+// UserRoleAssignData holds the strongly-typed data for user.role.assign.
+type UserRoleAssignData struct {
+	Actor string
+	User  string
+	Role  string
+	At    time.Time
+}
+
+func (d *UserRoleAssignData) Op() string { return "user.role.assign" }
+
+// UserRoleAssignOp assigns an existing application role to one scenario user.
+type UserRoleAssignOp struct{}
+
+func (o *UserRoleAssignOp) OpName() string { return "user.role.assign" }
+
+func (o *UserRoleAssignOp) AllowedHeaders() []string {
+	return []string{"Op", "Actor", "User", "Role", "At"}
+}
+
+func (o *UserRoleAssignOp) RequiredHeaders() []string {
+	return []string{"User", "Role", "At"}
+}
+
+func (o *UserRoleAssignOp) DeclaredRef(*Event) (RefType, string, bool) { return "", "", false }
+
+func (o *UserRoleAssignOp) ReferencedSymbols(evt *Event) []SymbolRef {
+	refs := []SymbolRef{{Type: RefTypeUser, Symbol: strings.TrimSpace(evt.Headers.Get("User")), Field: "User"}}
+	if actor := strings.TrimSpace(evt.Headers.Get("Actor")); actor != "" && actor != "admin" && actor != "system" {
+		refs = append(refs, SymbolRef{Type: RefTypeUser, Symbol: actor, Field: "Actor"})
+	}
+	return refs
+}
+
+func (o *UserRoleAssignOp) AssetPaths(*Event) []string { return nil }
+
+func (o *UserRoleAssignOp) Parse(evt *Event) (OperationData, error) {
+	user := strings.TrimSpace(evt.Headers.Get("User"))
+	if user == "" {
+		return nil, fmt.Errorf("user.role.assign: missing required 'User'")
+	}
+	role := strings.TrimSpace(evt.Headers.Get("Role"))
+	if role == "" {
+		return nil, fmt.Errorf("user.role.assign: missing required 'Role'")
+	}
+	actor := strings.TrimSpace(evt.Headers.Get("Actor"))
+	if actor == "" {
+		actor = "admin"
+	}
+	return &UserRoleAssignData{Actor: actor, User: user, Role: role, At: evt.At}, nil
 }
 
 // --- private-forum.create ---

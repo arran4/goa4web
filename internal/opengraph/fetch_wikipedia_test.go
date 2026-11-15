@@ -1,6 +1,7 @@
 package opengraph
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -31,7 +32,7 @@ func TestFetchUserAgent(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := Fetch(server.URL, http.DefaultClient)
+	_, err := Fetch(context.Background(), server.URL, http.DefaultClient)
 	if err != nil {
 		t.Fatalf("Fetch() error = %v", err)
 	}

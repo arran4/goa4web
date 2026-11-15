@@ -66,12 +66,12 @@ func TestRefRegistry(t *testing.T) {
 func TestOperationRegistry(t *testing.T) {
 	reg := DefaultRegistry()
 	ops := reg.RegisteredOperations()
-	if len(ops) != 14 {
-		t.Fatalf("expected 14 operations, got %d: %v", len(ops), ops)
+	if len(ops) != 15 {
+		t.Fatalf("expected 15 operations, got %d: %v", len(ops), ops)
 	}
 
 	// Verify operations are returned sorted
-	expected := []string{"forum.label.add", "forum.label.remove", "forum.post", "forum.reply", "forum.reply.edit", "forum.subscribe", "forum.thread.create", "forum.thread.read", "forum.unsubscribe", "private-forum.create", "private-forum.edit", "user.create", "user.enable", "user.grant"}
+	expected := []string{"forum.label.add", "forum.label.remove", "forum.post", "forum.reply", "forum.reply.edit", "forum.subscribe", "forum.thread.create", "forum.thread.read", "forum.unsubscribe", "private-forum.create", "private-forum.edit", "user.create", "user.enable", "user.grant", "user.role.assign"}
 	for i, name := range expected {
 		if ops[i] != name {
 			t.Errorf("ops[%d] = %q, want %q", i, ops[i], name)
@@ -83,6 +83,9 @@ func TestOperationRegistry(t *testing.T) {
 	}
 	if _, ok := reg.Lookup("user.grant"); !ok {
 		t.Error("expected user.grant in registry")
+	}
+	if _, ok := reg.Lookup("user.role.assign"); !ok {
+		t.Error("expected user.role.assign in registry")
 	}
 	if _, ok := reg.Lookup("unknown.op"); ok {
 		t.Error("expected unknown.op not in registry")

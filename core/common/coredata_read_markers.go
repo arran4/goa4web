@@ -206,6 +206,14 @@ func (cd *CoreData) AcknowledgeThreadActivityPosition(threadID, commentID int32,
 	if activityPosition <= 0 {
 		activityPosition = CalculateActivityPosition(commentID, 0)
 	}
+	if coordinator, ok := cd.queries.(db.NotificationReadStateCoordinator); ok {
+		return coordinator.AcknowledgeThreadReadActivity(cd.ctx, db.AcknowledgeThreadReadActivityParams{
+			RecipientID:      cd.UserID,
+			ThreadID:         threadID,
+			CommentID:        commentID,
+			ActivityPosition: activityPosition,
+		})
+	}
 	if err := cd.SetThreadReadMarkerPosition(threadID, commentID, activityPosition); err != nil {
 		return fmt.Errorf("save thread read marker: %w", err)
 	}

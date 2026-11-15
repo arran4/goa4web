@@ -413,7 +413,8 @@ ON CONFLICT(users_idusers, activity_key) DO UPDATE SET
     priority = MAX(notifications.priority, excluded.priority),
     resource_type = COALESCE(notifications.resource_type, excluded.resource_type),
     resource_id = COALESCE(notifications.resource_id, excluded.resource_id),
-    activity_position = COALESCE(notifications.activity_position, excluded.activity_position)
+    activity_position = COALESCE(notifications.activity_position, excluded.activity_position),
+    read_at = COALESCE(notifications.read_at, excluded.read_at)
 `
 
 type SystemCreateNotificationForActivityParams struct {

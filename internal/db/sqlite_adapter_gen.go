@@ -5437,6 +5437,29 @@ func (s *sqliteQuerier) GetContentReadMarker(ctx context.Context, arg GetContent
 	}(res), nil
 }
 
+func (s *sqliteQuerier) GetContentReadMarkerForUpdate(ctx context.Context, arg GetContentReadMarkerForUpdateParams) (*GetContentReadMarkerForUpdateRow, error) {
+	res, err := s.q.GetContentReadMarkerForUpdate(ctx, dbsqlite.GetContentReadMarkerForUpdateParams{
+		Item:   arg.Item,
+		ItemID: int64(arg.ItemID),
+		UserID: int64(arg.UserID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.GetContentReadMarkerForUpdateRow) *GetContentReadMarkerForUpdateRow {
+		if v == nil {
+			return nil
+		}
+		return &GetContentReadMarkerForUpdateRow{
+			Item:                 v.Item,
+			ItemID:               int32(v.ItemID),
+			UserID:               int32(v.UserID),
+			LastCommentID:        int32(v.LastCommentID),
+			LastActivityPosition: v.LastActivityPosition,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) GetDigestTimezones(ctx context.Context) ([]sql.NullString, error) {
 	res, err := s.q.GetDigestTimezones(ctx)
 	if err != nil {

@@ -42,6 +42,39 @@ func (q *Queries) GetContentReadMarker(ctx context.Context, arg GetContentReadMa
 	return &i, err
 }
 
+const getContentReadMarkerForUpdate = `-- name: GetContentReadMarkerForUpdate :one
+SELECT item, item_id, user_id, last_comment_id, last_activity_position
+FROM content_read_markers
+WHERE item = ? AND item_id = ? AND user_id = ?
+`
+
+type GetContentReadMarkerForUpdateParams struct {
+	Item   string
+	ItemID int64
+	UserID int64
+}
+
+type GetContentReadMarkerForUpdateRow struct {
+	Item                 string
+	ItemID               int64
+	UserID               int64
+	LastCommentID        int64
+	LastActivityPosition int64
+}
+
+func (q *Queries) GetContentReadMarkerForUpdate(ctx context.Context, arg GetContentReadMarkerForUpdateParams) (*GetContentReadMarkerForUpdateRow, error) {
+	row := q.db.QueryRowContext(ctx, getContentReadMarkerForUpdate, arg.Item, arg.ItemID, arg.UserID)
+	var i GetContentReadMarkerForUpdateRow
+	err := row.Scan(
+		&i.Item,
+		&i.ItemID,
+		&i.UserID,
+		&i.LastCommentID,
+		&i.LastActivityPosition,
+	)
+	return &i, err
+}
+
 const systemHasOtherUserReadItemAtOrBeyond = `-- name: SystemHasOtherUserReadItemAtOrBeyond :one
 SELECT EXISTS (
     SELECT 1 FROM content_read_markers crm

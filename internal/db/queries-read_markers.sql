@@ -11,6 +11,12 @@ SELECT item, item_id, user_id, last_comment_id, last_activity_position
 FROM content_read_markers
 WHERE item = ? AND item_id = ? AND user_id = ?;
 
+-- name: GetContentReadMarkerForUpdate :one
+SELECT item, item_id, user_id, last_comment_id, last_activity_position
+FROM content_read_markers
+WHERE item = ? AND item_id = ? AND user_id = ?
+FOR UPDATE;
+
 -- name: SystemHasOtherUserReadItemAtOrBeyond :one
 SELECT EXISTS (
     SELECT 1 FROM content_read_markers crm

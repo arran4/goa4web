@@ -11,7 +11,8 @@ ON DUPLICATE KEY UPDATE
     priority = GREATEST(priority, VALUES(priority)),
     resource_type = COALESCE(resource_type, VALUES(resource_type)),
     resource_id = COALESCE(resource_id, VALUES(resource_id)),
-    activity_position = COALESCE(activity_position, VALUES(activity_position));
+    activity_position = COALESCE(activity_position, VALUES(activity_position)),
+    read_at = COALESCE(read_at, VALUES(read_at));
 
 -- name: SystemAcknowledgeNotificationsForResource :exec
 UPDATE notifications

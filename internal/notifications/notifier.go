@@ -317,6 +317,19 @@ func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eve
 	resourceType := sql.NullString{String: evt.ResourceType, Valid: evt.ResourceType != ""}
 	resourceID := sql.NullInt32{Int32: evt.ResourceID, Valid: evt.ResourceID != 0}
 	activityPosition := sql.NullInt64{Int64: evt.ActivityPosition, Valid: evt.ActivityPosition != 0}
+	arg := db.SystemCreateNotificationForActivityParams{
+		RecipientID:      userID,
+		Link:             sql.NullString{String: path, Valid: path != ""},
+		Message:          sql.NullString{String: msg, Valid: msg != ""},
+		ActivityKey:      sql.NullString{String: activityKey, Valid: true},
+		Priority:         priority,
+		ResourceType:     resourceType,
+		ResourceID:       resourceID,
+		ActivityPosition: activityPosition,
+	}
+	if coordinator, ok := n.Queries.(db.NotificationReadStateCoordinator); ok {
+		return coordinator.DeliverThreadNotificationForActivity(ctx, arg)
+	}
 	readAt := sql.NullTime{}
 	if resourceType.Valid && resourceType.String == "thread" && resourceID.Valid && activityPosition.Valid {
 		marker, err := n.Queries.GetContentReadMarker(ctx, db.GetContentReadMarkerParams{
@@ -337,17 +350,8 @@ func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eve
 			}
 		}
 	}
-	return n.Queries.SystemCreateNotificationForActivity(ctx, db.SystemCreateNotificationForActivityParams{
-		RecipientID:      userID,
-		Link:             sql.NullString{String: path, Valid: path != ""},
-		Message:          sql.NullString{String: msg, Valid: msg != ""},
-		ActivityKey:      sql.NullString{String: activityKey, Valid: true},
-		Priority:         priority,
-		ResourceType:     resourceType,
-		ResourceID:       resourceID,
-		ActivityPosition: activityPosition,
-		ReadAt:           readAt,
-	})
+	arg.ReadAt = readAt
+	return n.Queries.SystemCreateNotificationForActivity(ctx, arg)
 }
 
 func notificationActivityKey(evt eventbus.TaskEvent) string {

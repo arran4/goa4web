@@ -175,14 +175,16 @@ func TestNotificationFragmentsAndXSSSafety(t *testing.T) {
 		// Give subscription loop a brief moment to register on bus.
 		time.Sleep(25 * time.Millisecond)
 
-		bus.Publish(eventbus.TaskEvent{
+		if err := bus.Publish(eventbus.TaskEvent{
 			Path:   "/forum/topic/1",
 			UserID: 99,
 			Task:   replyTaskStub{},
 			Data: map[string]any{
 				"notification": map[string]any{"id": 77},
 			},
-		})
+		}); err != nil {
+			t.Fatalf("publish task event: %v", err)
+		}
 
 		_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 		var evt websocket.LiveEvent

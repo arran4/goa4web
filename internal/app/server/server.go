@@ -28,6 +28,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/middleware"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	"github.com/arran4/goa4web/internal/router"
@@ -75,6 +76,7 @@ type Server struct {
 
 	WorkerCancel context.CancelFunc
 	WorkerGroup  *workers.Group
+	JobService   *jobs.Service
 
 	addr       string
 	httpServer *http.Server
@@ -242,6 +244,24 @@ func WithWebsocket(w *websocket.Module) Option { return func(s *Server) { s.Webs
 
 // WithTasksRegistry sets the tasks registry used by the server.
 func WithTasksRegistry(r *tasks.Registry) Option { return func(s *Server) { s.TasksReg = r } }
+
+// WithJobService sets the durable background job service used by the server.
+func WithJobService(svc *jobs.Service) Option { return func(s *Server) { s.JobService = svc } }
+
+func (s *Server) getJobService(q db.Querier) *jobs.Service {
+	if s.JobService != nil {
+		return s.JobService
+	}
+	if q == nil {
+		return nil
+	}
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	if s.JobService == nil {
+		s.JobService = jobs.NewConfiguredService(q)
+	}
+	return s.JobService
+}
 
 // New returns a Server configured using the supplied options.
 func New(opts ...Option) *Server {
@@ -442,6 +462,9 @@ func (s *Server) GetCoreData(w http.ResponseWriter, r *http.Request) (*common.Co
 	if s.HTTPClient != nil {
 		coreOpts = append(coreOpts, common.WithHTTPClient(s.HTTPClient))
 	}
+	if jobSvc := s.getJobService(queries); jobSvc != nil {
+		coreOpts = append(coreOpts, common.WithJobService(jobSvc))
+	}
 	if s.WorkerGroup != nil {
 		coreOpts = append(coreOpts, common.WithBackgroundRunner(s.WorkerGroup))
 	}
@@ -516,6 +539,9 @@ func (s *Server) startWorkers(ctx context.Context) {
 	var workerOpts []workers.Option
 	if s.HTTPClient != nil {
 		workerOpts = append(workerOpts, workers.WithHTTPClient(s.HTTPClient))
+	}
+	if jobSvc := s.getJobService(q); jobSvc != nil {
+		workerOpts = append(workerOpts, workers.WithJobService(jobSvc))
 	}
 	s.WorkerGroup = workers.Start(context.WithoutCancel(ctx), q, emailProvider, dlqProvider, s.Config, s.Bus, workerOpts...)
 	s.WorkerCancel = s.WorkerGroup.Cancel

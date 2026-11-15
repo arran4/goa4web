@@ -8,8 +8,11 @@ import (
 	"maps"
 	"time"
 
+	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/workers/postcountworker"
 	"github.com/arran4/goa4web/workers/searchworker"
 )
@@ -135,10 +138,21 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			}
 		}
 		if event.IncludeSearch {
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{
-				Type: searchworker.TypeComment,
-				ID:   event.CommentID,
-				Text: event.CommentText,
+			if cd != nil && cd.jobService != nil && event.CommentID != 0 {
+				if err := cd.jobService.EnqueueSearchDirty(ctx, searchworker.TypeComment, event.CommentID); err != nil {
+					errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
+				}
+			} else {
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{
+					Type: searchworker.TypeComment,
+					ID:   event.CommentID,
+					Text: event.CommentText,
+				}
+			}
+		}
+		if event.CommentText != "" && cd != nil && cd.jobService != nil {
+			if err := cd.EnqueueExternalLinksFromBody(ctx, event.CommentText); err != nil {
+				errs = append(errs, fmt.Errorf("enqueue external links: %w", err))
 			}
 		}
 
@@ -205,4 +219,42 @@ func (cd *CoreData) EnsureAutoSubscription(ctx context.Context, topicID, threadI
 		}
 	}
 	return nil
+}
+
+// EnqueueExternalLinksFromBody parses a4code links in body and enqueues durable metadata fetch jobs.
+func (cd *CoreData) EnqueueExternalLinksFromBody(ctx context.Context, body string) error {
+	if cd == nil || cd.jobService == nil || body == "" {
+		return nil
+	}
+	root, err := a4code.ParseString(body)
+	if err != nil {
+		return nil
+	}
+	var errs []error
+	seen := make(map[string]struct{})
+	_ = ast.Walk(root, func(n ast.Node) error {
+		link, ok := n.(*ast.Link)
+		if !ok || link.Href == "" {
+			return nil
+		}
+		canonicalURL := CanonicalizeExternalURL(link.Href)
+		if canonicalURL == "" {
+			return nil
+		}
+		if _, exists := seen[canonicalURL]; exists {
+			return nil
+		}
+		seen[canonicalURL] = struct{}{}
+		_, err := cd.jobService.Enqueue(ctx, jobs.EnqueueRequest{
+			JobType:         jobs.JobTypeExternalLink,
+			TargetType:      jobs.JobTypeExternalLink,
+			TargetKey:       canonicalURL,
+			CreatedByUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0},
+		})
+		if err != nil && !errors.Is(err, jobs.ErrInCooldown) {
+			errs = append(errs, err)
+		}
+		return nil
+	})
+	return errors.Join(errs...)
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/scheduler"
 
@@ -31,8 +32,10 @@ type Option func(*WorkersConfig)
 
 // WorkersConfig holds worker configuration.
 type WorkersConfig struct {
-	HTTPClient  *http.Client
-	CoreOptions []common.CoreOption
+	HTTPClient     *http.Client
+	CoreOptions    []common.CoreOption
+	JobService     *jobs.Service
+	WorkerIDPrefix string
 }
 
 // Group owns worker and auxiliary goroutines so shutdown can cancel and bound their wait.
@@ -117,6 +120,75 @@ func WithCoreOptions(opts ...common.CoreOption) Option {
 	return func(c *WorkersConfig) {
 		c.CoreOptions = append(c.CoreOptions, opts...)
 	}
+}
+
+// WithJobService sets the shared durable job service for worker loops.
+func WithJobService(svc *jobs.Service) Option {
+	return func(c *WorkersConfig) {
+		c.JobService = svc
+	}
+}
+
+// WithWorkerIDPrefix sets the prefix used for worker lease identifiers.
+func WithWorkerIDPrefix(prefix string) Option {
+	return func(c *WorkersConfig) {
+		c.WorkerIDPrefix = prefix
+	}
+}
+
+// StartDurableWorkers starts only the durable job worker loops (used by `goa4web worker`).
+func StartDurableWorkers(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, svc *jobs.Service, workerIDPrefix string, opts ...Option) *Group {
+	wc := &WorkersConfig{
+		JobService:     svc,
+		WorkerIDPrefix: workerIDPrefix,
+	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(wc)
+		}
+	}
+	group := NewGroup(ctx)
+	startDurableWorkerLoops(group, q, cfg, wc)
+	return group
+}
+
+func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConfig, wc *WorkersConfig) {
+	if group == nil || q == nil {
+		return
+	}
+	svc := wc.JobService
+	if svc == nil {
+		svc = jobs.NewConfiguredService(q)
+	}
+	prefix := wc.WorkerIDPrefix
+	if prefix == "" {
+		host, _ := os.Hostname()
+		if host == "" {
+			host = "worker"
+		}
+		prefix = host
+	}
+	log.Printf("Starting durable external link worker (%s)", prefix)
+	group.Go(func(ctx context.Context) {
+		externallinkworker.RunDurableWorker(ctx, svc, q, cfg, prefix+"-externallink")
+	})
+	log.Printf("Starting durable search index worker (%s)", prefix)
+	group.Go(func(ctx context.Context) {
+		searchworker.RunDurableWorker(ctx, svc, q, prefix+"-search")
+	})
+	log.Printf("Starting durable image cache worker (%s)", prefix)
+	group.Go(func(ctx context.Context) {
+		svc.RunWorkerLoop(ctx, prefix+"-imagecache", 0, []string{jobs.JobTypeImageCache}, func(ctx context.Context, job *db.DurableJob) error {
+			if job == nil {
+				return nil
+			}
+			cd := common.NewCoreData(ctx, q, cfg, wc.CoreOptions...)
+			return cd.ProcessRemoteImageCacheJob(ctx, job.TargetKey)
+		})
+	})
+	group.Go(func(ctx context.Context) {
+		svc.RunPruneLoop(ctx, 6*time.Hour, 7*24*time.Hour)
+	})
 }
 
 // Start launches all background workers using the given configuration.
@@ -211,5 +283,6 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	group.Go(func(ctx context.Context) { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")
 	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg) })
+	startDurableWorkerLoops(group, q, cfg, wc)
 	return group
 }

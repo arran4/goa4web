@@ -90,8 +90,29 @@ func FormatActivityPosition(commentID int32, appendID int64) string {
 }
 
 // CommentLastActivity returns the canonical activity ID for the latest state of commentID.
+// If the comment was loaded as part of thread comments in the current context, it returns the
+// snapshot-consistent activity identity that was rendered to the user.
 func (cd *CoreData) CommentLastActivity(commentID int32) string {
-	if cd == nil || cd.queries == nil || commentID <= 0 {
+	if cd == nil || commentID <= 0 {
+		return fmt.Sprintf("comment:%d", commentID)
+	}
+	if cd.cache.forumThreadComments != nil {
+		cd.cache.mapMu.Lock()
+		for _, lv := range cd.cache.forumThreadComments {
+			if lv != nil {
+				if comments, ok := lv.Peek(); ok {
+					for _, c := range comments {
+						if c.Idcomments == commentID {
+							cd.cache.mapMu.Unlock()
+							return FormatActivityPosition(c.Idcomments, c.LastAppendID)
+						}
+					}
+				}
+			}
+		}
+		cd.cache.mapMu.Unlock()
+	}
+	if cd.queries == nil {
 		return fmt.Sprintf("comment:%d", commentID)
 	}
 	appends, err := cd.queries.SystemListCommentAppendsByCommentID(cd.ctx, commentID)
@@ -103,8 +124,29 @@ func (cd *CoreData) CommentLastActivity(commentID int32) string {
 }
 
 // CommentLastActivityPosition returns the 64-bit activity position for the latest state of commentID.
+// If the comment was loaded as part of thread comments in the current context, it returns the
+// snapshot-consistent activity position that was rendered to the user.
 func (cd *CoreData) CommentLastActivityPosition(commentID int32) int64 {
-	if cd == nil || cd.queries == nil || commentID <= 0 {
+	if cd == nil || commentID <= 0 {
+		return CalculateActivityPosition(commentID, 0)
+	}
+	if cd.cache.forumThreadComments != nil {
+		cd.cache.mapMu.Lock()
+		for _, lv := range cd.cache.forumThreadComments {
+			if lv != nil {
+				if comments, ok := lv.Peek(); ok {
+					for _, c := range comments {
+						if c.Idcomments == commentID {
+							cd.cache.mapMu.Unlock()
+							return CalculateActivityPosition(c.Idcomments, c.LastAppendID)
+						}
+					}
+				}
+			}
+		}
+		cd.cache.mapMu.Unlock()
+	}
+	if cd.queries == nil {
 		return CalculateActivityPosition(commentID, 0)
 	}
 	appends, err := cd.queries.SystemListCommentAppendsByCommentID(cd.ctx, commentID)
@@ -115,33 +157,57 @@ func (cd *CoreData) CommentLastActivityPosition(commentID int32) int64 {
 	return CalculateActivityPosition(commentID, 0)
 }
 
+// CommentDisplayActivity returns the canonical activity ID for a displayed comment row.
+func (cd *CoreData) CommentDisplayActivity(cmt *db.GetCommentsByThreadIdForUserRow) string {
+	if cmt == nil || cmt.Idcomments <= 0 {
+		return ""
+	}
+	return FormatActivityPosition(cmt.Idcomments, cmt.LastAppendID)
+}
+
 // SetThreadReadMarker stores the last read comment for the current user on a thread.
 func (cd *CoreData) SetThreadReadMarker(threadID, commentID int32) error {
+	return cd.SetThreadReadMarkerPosition(threadID, commentID, CalculateActivityPosition(commentID, 0))
+}
+
+// SetThreadReadMarkerPosition stores the last read comment and full activity position watermark
+// for the current user on a thread.
+func (cd *CoreData) SetThreadReadMarkerPosition(threadID, commentID int32, activityPosition int64) error {
 	if cd.queries == nil {
 		return nil
 	}
+	if commentID <= 0 && activityPosition > 0 {
+		commentID, _ = ActivityPositionCommentAndAppend(activityPosition)
+	}
+	if activityPosition <= 0 && commentID > 0 {
+		activityPosition = CalculateActivityPosition(commentID, 0)
+	}
 	return cd.queries.UpsertContentReadMarker(cd.ctx, db.UpsertContentReadMarkerParams{
-		Item:          "thread",
-		ItemID:        threadID,
-		UserID:        cd.UserID,
-		LastCommentID: commentID,
+		Item:                 "thread",
+		ItemID:               threadID,
+		UserID:               cd.UserID,
+		LastCommentID:        commentID,
+		LastActivityPosition: activityPosition,
 	})
 }
 
-// AcknowledgeThreadActivityPosition persists the user's thread read marker and marks matching
-// notifications read up to activityPosition.
+// AcknowledgeThreadActivityPosition persists the user's thread read marker and full activity position
+// watermark, then marks matching notifications read up to activityPosition.
 func (cd *CoreData) AcknowledgeThreadActivityPosition(threadID, commentID int32, activityPosition int64) error {
 	if cd.queries == nil {
 		return nil
 	}
+	if commentID <= 0 && activityPosition > 0 {
+		commentID, _ = ActivityPositionCommentAndAppend(activityPosition)
+	}
 	if commentID <= 0 {
 		return fmt.Errorf("acknowledge thread activity: invalid comment ID %d", commentID)
 	}
-	if err := cd.SetThreadReadMarker(threadID, commentID); err != nil {
-		return fmt.Errorf("save thread read marker: %w", err)
-	}
 	if activityPosition <= 0 {
 		activityPosition = CalculateActivityPosition(commentID, 0)
+	}
+	if err := cd.SetThreadReadMarkerPosition(threadID, commentID, activityPosition); err != nil {
+		return fmt.Errorf("save thread read marker: %w", err)
 	}
 	if err := cd.queries.SystemAcknowledgeNotificationsForResource(cd.ctx, db.SystemAcknowledgeNotificationsForResourceParams{
 		RecipientID:      cd.UserID,
@@ -176,4 +242,29 @@ func (cd *CoreData) ThreadReadMarker(threadID int32) (int32, error) {
 		return 0, err
 	}
 	return row.LastCommentID, nil
+}
+
+// ThreadReadMarkerPosition returns the last activity position read by the current user for a thread.
+func (cd *CoreData) ThreadReadMarkerPosition(threadID int32) (int64, error) {
+	if cd.queries == nil {
+		return 0, nil
+	}
+	row, err := cd.queries.GetContentReadMarker(cd.ctx, db.GetContentReadMarkerParams{
+		Item:   "thread",
+		ItemID: threadID,
+		UserID: cd.UserID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	if row.LastActivityPosition > 0 {
+		return row.LastActivityPosition, nil
+	}
+	if row.LastCommentID > 0 {
+		return CalculateActivityPosition(row.LastCommentID, 0), nil
+	}
+	return 0, nil
 }

@@ -5,11 +5,18 @@ ALTER TABLE notifications
     ADD COLUMN resource_id INT NULL,
     ADD COLUMN activity_position BIGINT NULL,
     ADD KEY notifications_recipient_resource_activity_idx (users_idusers, resource_type, resource_id, activity_position);
+ALTER TABLE content_read_markers
+    ADD COLUMN last_activity_position BIGINT NOT NULL DEFAULT 0;
+UPDATE content_read_markers
+    SET last_activity_position = (CAST(last_comment_id AS UNSIGNED) << 32)
+    WHERE last_comment_id > 0 AND last_activity_position = 0;
 UPDATE schema_version SET version = 103;
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+ALTER TABLE content_read_markers
+    DROP COLUMN last_activity_position;
 ALTER TABLE notifications
     DROP INDEX notifications_recipient_resource_activity_idx,
     DROP COLUMN activity_position,

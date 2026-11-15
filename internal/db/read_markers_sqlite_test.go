@@ -23,18 +23,26 @@ func TestUpsertContentReadMarkerSQLiteDoesNotRegressPosition(t *testing.T) {
 			item_id INTEGER NOT NULL,
 			user_id INTEGER NOT NULL,
 			last_comment_id INTEGER NOT NULL,
+			last_activity_position INTEGER NOT NULL DEFAULT 0,
 			UNIQUE (user_id, item_id, item)
 		)`); err != nil {
 		t.Fatalf("create content_read_markers table: %v", err)
 	}
 
 	queries := NewForDriver(conn, "sqlite3")
-	newer := UpsertContentReadMarkerParams{Item: "thread", ItemID: 2, UserID: 7, LastCommentID: 42}
+	newer := UpsertContentReadMarkerParams{
+		Item:                 "thread",
+		ItemID:               2,
+		UserID:               7,
+		LastCommentID:        42,
+		LastActivityPosition: (int64(42) << 32) | 1,
+	}
 	if err := queries.UpsertContentReadMarker(ctx, newer); err != nil {
 		t.Fatalf("save newer marker: %v", err)
 	}
 	older := newer
 	older.LastCommentID = 21
+	older.LastActivityPosition = (int64(21) << 32)
 	if err := queries.UpsertContentReadMarker(ctx, older); err != nil {
 		t.Fatalf("save delayed older marker: %v", err)
 	}
@@ -44,6 +52,9 @@ func TestUpsertContentReadMarkerSQLiteDoesNotRegressPosition(t *testing.T) {
 		t.Fatalf("load marker: %v", err)
 	}
 	if marker.LastCommentID != newer.LastCommentID {
-		t.Fatalf("last comment ID = %d, want retained newer position %d", marker.LastCommentID, newer.LastCommentID)
+		t.Fatalf("last comment ID = %d, want retained newer comment %d", marker.LastCommentID, newer.LastCommentID)
+	}
+	if marker.LastActivityPosition != newer.LastActivityPosition {
+		t.Fatalf("last activity position = %d, want retained newer position %d", marker.LastActivityPosition, newer.LastActivityPosition)
 	}
 }

@@ -697,7 +697,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 			LastCommentID:  params.LastDisplayedCommentID,
 			LastActivityID: params.LastDisplayedActivity,
 		}); err != nil {
-			log.Printf("acknowledge displayed thread activity: %v", err)
+			return nil, fmt.Errorf("acknowledge displayed thread activity: %w", err)
 		}
 	}
 	if params.SynchronousSideEffects {
@@ -757,13 +757,30 @@ func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadP
 
 	markerID := params.LastCommentID
 	activityPos := params.LastActivityPosition
-	if activityPos == 0 && params.LastActivityID != "" {
-		if pos, err := ParseActivityPosition(params.LastActivityID); err == nil && pos != 0 {
-			activityPos = pos
+	if params.LastActivityID != "" {
+		pos, err := ParseActivityPosition(params.LastActivityID)
+		if err != nil {
+			return fmt.Errorf("read forum thread: invalid activity position %q: %w", params.LastActivityID, err)
 		}
+		if activityPos != 0 && activityPos != pos {
+			return fmt.Errorf("read forum thread: activity position %d does not match activity string %q (%d)", activityPos, params.LastActivityID, pos)
+		}
+		activityPos = pos
 	}
-	if markerID <= 0 && activityPos != 0 {
-		posCommentID, _ := ActivityPositionCommentAndAppend(activityPos)
+	if activityPos < 0 {
+		return fmt.Errorf("read forum thread: negative activity position %d", activityPos)
+	}
+	if activityPos != 0 {
+		posCommentID, appendID := ActivityPositionCommentAndAppend(activityPos)
+		if posCommentID <= 0 {
+			return fmt.Errorf("read forum thread: invalid comment ID in activity position %d", activityPos)
+		}
+		if appendID < 0 {
+			return fmt.Errorf("read forum thread: invalid append ID in activity position %d", activityPos)
+		}
+		if markerID > 0 && markerID != posCommentID {
+			return fmt.Errorf("read forum thread: last_comment %d and last_activity %d refer to different comments", markerID, posCommentID)
+		}
 		markerID = posCommentID
 	}
 	if markerID <= 0 {
@@ -789,6 +806,24 @@ func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadP
 	}
 	if !visible {
 		return ForumResourceNotFoundError{Resource: "comment"}
+	}
+
+	_, appendID := ActivityPositionCommentAndAppend(activityPos)
+	if appendID > 0 {
+		appends, err := cd.queries.SystemListCommentAppendsByCommentID(ctx, markerID)
+		if err != nil {
+			return fmt.Errorf("fetch comment appends for verification: %w", err)
+		}
+		appendFound := false
+		for _, app := range appends {
+			if int64(app.ID) == appendID {
+				appendFound = true
+				break
+			}
+		}
+		if !appendFound {
+			return ForumResourceNotFoundError{Resource: "append"}
+		}
 	}
 
 	if err := actorCD.SetThreadPrivateLabelStatus(params.ThreadID, false, false); err != nil {

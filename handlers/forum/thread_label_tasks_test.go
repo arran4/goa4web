@@ -342,6 +342,9 @@ func TestMarkThreadReadTaskWithAppendedActivityPosition(t *testing.T) {
 			{Idcomments: 101},
 		}, nil
 	}
+	qs.SystemListCommentAppendsByCommentIDFn = func(ctx context.Context, commentID int32) ([]*db.CommentAppend, error) {
+		return []*db.CommentAppend{{ID: 5, CommentID: 101}}, nil
+	}
 	cd := common.NewCoreData(context.Background(), qs, config.NewRuntimeConfig())
 
 	form := url.Values{}

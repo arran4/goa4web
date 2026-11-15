@@ -661,6 +661,7 @@ item TEXT NOT NULL,
 item_id int NOT NULL,
 user_id int NOT NULL,
 last_comment_id int NOT NULL,
+last_activity_position int NOT NULL DEFAULT 0,
 UNIQUE (item,item_id,user_id)
 );
 

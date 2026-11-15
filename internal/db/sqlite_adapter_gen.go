@@ -5370,6 +5370,7 @@ func (s *sqliteQuerier) GetCommentsBySectionThreadIdForUser(ctx context.Context,
 				LastIndex:      item.LastIndex,
 				Posterusername: item.Posterusername,
 				IsOwner:        item.IsOwner,
+				LastAppendID:   item.LastAppendID,
 			}
 		}
 		return out
@@ -5406,6 +5407,7 @@ func (s *sqliteQuerier) GetCommentsByThreadIdForUser(ctx context.Context, arg Ge
 				LastIndex:      item.LastIndex,
 				Posterusername: item.Posterusername,
 				IsOwner:        item.IsOwner,
+				LastAppendID:   item.LastAppendID,
 			}
 		}
 		return out
@@ -5426,10 +5428,11 @@ func (s *sqliteQuerier) GetContentReadMarker(ctx context.Context, arg GetContent
 			return nil
 		}
 		return &GetContentReadMarkerRow{
-			Item:          v.Item,
-			ItemID:        int32(v.ItemID),
-			UserID:        int32(v.UserID),
-			LastCommentID: int32(v.LastCommentID),
+			Item:                 v.Item,
+			ItemID:               int32(v.ItemID),
+			UserID:               int32(v.UserID),
+			LastCommentID:        int32(v.LastCommentID),
+			LastActivityPosition: v.LastActivityPosition,
 		}
 	}(res), nil
 }
@@ -11167,10 +11170,11 @@ func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWr
 
 func (s *sqliteQuerier) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {
 	return s.q.UpsertContentReadMarker(ctx, dbsqlite.UpsertContentReadMarkerParams{
-		Item:          arg.Item,
-		ItemID:        int64(arg.ItemID),
-		UserID:        int64(arg.UserID),
-		LastCommentID: int64(arg.LastCommentID),
+		Item:                 arg.Item,
+		ItemID:               int64(arg.ItemID),
+		UserID:               int64(arg.UserID),
+		LastCommentID:        int64(arg.LastCommentID),
+		LastActivityPosition: arg.LastActivityPosition,
 	})
 }
 

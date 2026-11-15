@@ -140,11 +140,12 @@ type ContentPublicLabel struct {
 }
 
 type ContentReadMarker struct {
-	ID            int32
-	Item          string
-	ItemID        int32
-	UserID        int32
-	LastCommentID int32
+	ID                   int32
+	Item                 string
+	ItemID               int32
+	UserID               int32
+	LastCommentID        int32
+	LastActivityPosition int64
 }
 
 type DeactivatedBlog struct {

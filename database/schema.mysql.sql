@@ -801,6 +801,7 @@ CREATE TABLE `content_read_markers` (
   `item_id` int NOT NULL,
   `user_id` int NOT NULL,
   `last_comment_id` int NOT NULL,
+  `last_activity_position` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `content_read_markers_uq` (`item`,`item_id`,`user_id`)
 );

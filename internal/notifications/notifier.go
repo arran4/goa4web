@@ -328,8 +328,11 @@ func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eve
 			return fmt.Errorf("get read marker for notification activity: %w", err)
 		}
 		if marker != nil {
-			commentID, appendID := common.ActivityPositionCommentAndAppend(activityPosition.Int64)
-			if marker.LastCommentID > commentID || (marker.LastCommentID == commentID && appendID == 0) {
+			watermark := marker.LastActivityPosition
+			if watermark == 0 && marker.LastCommentID > 0 {
+				watermark = common.CalculateActivityPosition(marker.LastCommentID, 0)
+			}
+			if activityPosition.Int64 <= watermark {
 				readAt = sql.NullTime{Time: time.Now().UTC(), Valid: true}
 			}
 		}

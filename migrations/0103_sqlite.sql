@@ -4,11 +4,14 @@ ALTER TABLE notifications ADD COLUMN resource_type TEXT;
 ALTER TABLE notifications ADD COLUMN resource_id INTEGER;
 ALTER TABLE notifications ADD COLUMN activity_position INTEGER;
 CREATE INDEX notifications_recipient_resource_activity_idx ON notifications (users_idusers, resource_type, resource_id, activity_position);
+ALTER TABLE content_read_markers ADD COLUMN last_activity_position INTEGER NOT NULL DEFAULT 0;
+UPDATE content_read_markers SET last_activity_position = (last_comment_id << 32) WHERE last_comment_id > 0 AND last_activity_position = 0;
 UPDATE schema_version SET version = 103;
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+ALTER TABLE content_read_markers DROP COLUMN last_activity_position;
 DROP INDEX IF EXISTS notifications_recipient_resource_activity_idx;
 ALTER TABLE notifications DROP COLUMN activity_position;
 ALTER TABLE notifications DROP COLUMN resource_id;

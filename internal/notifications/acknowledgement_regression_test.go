@@ -50,6 +50,7 @@ func setupAckRegressionDB(t *testing.T) (*sql.DB, db.Querier) {
 			item TEXT NOT NULL,
 			item_id INTEGER NOT NULL,
 			last_comment_id INTEGER NOT NULL,
+			last_activity_position INTEGER NOT NULL DEFAULT 0,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			UNIQUE (user_id, item, item_id)
 		);
@@ -404,5 +405,235 @@ func TestRegression_DeliveryAfterRead(t *testing.T) {
 	}
 	if read400App1.Valid {
 		t.Errorf("comment 400:append:1 should remain unread because user only read base comment, got read_at = %v", read400App1.Time)
+	}
+}
+
+// TestRegression_DeliveryAfterRead_AcknowledgedAppend verifies that when a user has viewed
+// and acknowledged an append (e.g. comment:400:append:1), a late-delivered notification for that
+// exact append arrives marked read immediately, while newer unseen appends (append:2) and newer
+// comments (comment:401) remain unread.
+func TestRegression_DeliveryAfterRead_AcknowledgedAppend(t *testing.T) {
+	ctx := context.Background()
+	conn, queries := setupAckRegressionDB(t)
+
+	const (
+		userA         int32 = 7
+		threadID      int32 = 40
+		readCommentID int32 = 400
+	)
+
+	// User has acknowledged up to comment 400:append:1
+	pos400App1 := common.CalculateActivityPosition(readCommentID, 1)
+	if err := queries.UpsertContentReadMarker(ctx, db.UpsertContentReadMarkerParams{
+		Item:                 "thread",
+		ItemID:               threadID,
+		UserID:               userA,
+		LastCommentID:        readCommentID,
+		LastActivityPosition: pos400App1,
+	}); err != nil {
+		t.Fatalf("upsert read marker: %v", err)
+	}
+
+	notifier := New(WithQueries(queries), WithConfig(config.NewRuntimeConfig()))
+
+	// 1. Late delivery for already-acknowledged append 1. MUST arrive read.
+	evt400App1 := eventbus.TaskEvent{
+		Task:             tasks.TaskString("Reply"),
+		ActivityID:       "comment:400:append:1",
+		ResourceType:     "thread",
+		ResourceID:       threadID,
+		ActivityPosition: pos400App1,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400App1, userA, "/forum/thread/40#c400", "append 1 to 400", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send late append 1: %v", err)
+	}
+
+	// 2. Late delivery for base comment 400. MUST arrive read.
+	pos400 := common.CalculateActivityPosition(readCommentID, 0)
+	evt400 := eventbus.TaskEvent{
+		Task:             tasks.TaskString("Reply"),
+		ActivityID:       "comment:400",
+		ResourceType:     "thread",
+		ResourceID:       threadID,
+		ActivityPosition: pos400,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400, userA, "/forum/thread/40#c400", "late base comment 400", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send late base comment 400: %v", err)
+	}
+
+	// 3. Late delivery for older comment 399. MUST arrive read.
+	pos399 := common.CalculateActivityPosition(399, 0)
+	evt399 := eventbus.TaskEvent{
+		Task:             tasks.TaskString("Reply"),
+		ActivityID:       "comment:399",
+		ResourceType:     "thread",
+		ResourceID:       threadID,
+		ActivityPosition: pos399,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt399, userA, "/forum/thread/40#c399", "late comment 399", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send late comment 399: %v", err)
+	}
+
+	// 4. Delivery of newer unseen append 2 on comment 400. MUST arrive unread.
+	pos400App2 := common.CalculateActivityPosition(readCommentID, 2)
+	evt400App2 := eventbus.TaskEvent{
+		Task:             tasks.TaskString("Reply"),
+		ActivityID:       "comment:400:append:2",
+		ResourceType:     "thread",
+		ResourceID:       threadID,
+		ActivityPosition: pos400App2,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400App2, userA, "/forum/thread/40#c400", "append 2 to 400", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send append 2: %v", err)
+	}
+
+	// 5. Delivery of newer comment 401. MUST arrive unread.
+	pos401 := common.CalculateActivityPosition(401, 0)
+	evt401 := eventbus.TaskEvent{
+		Task:             tasks.TaskString("Reply"),
+		ActivityID:       "comment:401",
+		ResourceType:     "thread",
+		ResourceID:       threadID,
+		ActivityPosition: pos401,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt401, userA, "/forum/thread/40#c401", "new comment 401", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send new comment 401: %v", err)
+	}
+
+	// Verify states
+	var read400App1, read400, read399, read400App2, read401 sql.NullTime
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400:append:1").Scan(&read400App1)
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400").Scan(&read400)
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:399").Scan(&read399)
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400:append:2").Scan(&read400App2)
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:401").Scan(&read401)
+
+	if !read400App1.Valid {
+		t.Errorf("comment 400:append:1 was acknowledged before delivery, MUST arrive marked read")
+	}
+	if !read400.Valid {
+		t.Errorf("base comment 400 is prior to acknowledged append:1, MUST arrive marked read")
+	}
+	if !read399.Valid {
+		t.Errorf("comment 399 is prior to acknowledged append:1, MUST arrive marked read")
+	}
+	if read400App2.Valid {
+		t.Errorf("comment 400:append:2 was NOT acknowledged, MUST arrive unread, got read_at = %v", read400App2.Time)
+	}
+	if read401.Valid {
+		t.Errorf("comment 401 was NOT acknowledged, MUST arrive unread, got read_at = %v", read401.Time)
+	}
+}
+
+// TestRegression_DeterministicInterleaving_ConcurrentAppends verifies end-to-end that
+// when user A renders a thread at position (comment 400, append 1), and concurrent append 2
+// is committed before user A submits acknowledgement/reply with captured position (400, append 1):
+// 1. Existing notifications for comment 400 and append 1 transition to read.
+// 2. Notification for concurrent append 2 strictly remains unread.
+// 3. User A's monotonic watermark is persisted at (400, append 1).
+// 4. Any replay or delayed delivery of append 1 notification arrives already marked read.
+// 5. Subsequent delivery of newer append 3 notification arrives marked unread.
+func TestRegression_DeterministicInterleaving_ConcurrentAppends(t *testing.T) {
+	ctx := context.Background()
+	conn, queries := setupAckRegressionDB(t)
+
+	const (
+		userA    int32 = 7
+		threadID int32 = 40
+	)
+	notifier := New(WithQueries(queries), WithConfig(config.NewRuntimeConfig()))
+
+	// Step 1: Notifications 400 (base), 400:append:1, and concurrent 400:append:2 exist.
+	pos400 := common.CalculateActivityPosition(400, 0)
+	evt400 := eventbus.TaskEvent{
+		Task: tasks.TaskString("Reply"), ActivityID: "comment:400",
+		ResourceType: "thread", ResourceID: threadID, ActivityPosition: pos400,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400, userA, "/forum/thread/40#c400", "base 400", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send base 400: %v", err)
+	}
+
+	pos400App1 := common.CalculateActivityPosition(400, 1)
+	evt400App1 := eventbus.TaskEvent{
+		Task: tasks.TaskString("Reply"), ActivityID: "comment:400:append:1",
+		ResourceType: "thread", ResourceID: threadID, ActivityPosition: pos400App1,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400App1, userA, "/forum/thread/40#c400", "append 1", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send append 1: %v", err)
+	}
+
+	pos400App2 := common.CalculateActivityPosition(400, 2)
+	evt400App2 := eventbus.TaskEvent{
+		Task: tasks.TaskString("Reply"), ActivityID: "comment:400:append:2",
+		ResourceType: "thread", ResourceID: threadID, ActivityPosition: pos400App2,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400App2, userA, "/forum/thread/40#c400", "concurrent append 2", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send append 2: %v", err)
+	}
+
+	// Step 2: User A submits reply with captured visible position (400, append 1).
+	cd := common.NewCoreData(ctx, queries, config.NewRuntimeConfig())
+	cd.UserID = userA
+	if err := cd.AcknowledgeThreadActivityPosition(threadID, 400, pos400App1); err != nil {
+		t.Fatalf("acknowledge visible position: %v", err)
+	}
+
+	// Step 3: Verify notification read states.
+	var read400, read400App1, read400App2 sql.NullTime
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400").Scan(&read400)
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400:append:1").Scan(&read400App1)
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400:append:2").Scan(&read400App2)
+
+	if !read400.Valid {
+		t.Errorf("base comment 400 should be read")
+	}
+	if !read400App1.Valid {
+		t.Errorf("rendered append 1 should be read")
+	}
+	if read400App2.Valid {
+		t.Errorf("concurrent unseen append 2 MUST remain unread, got read_at = %v", read400App2.Time)
+	}
+
+	// Step 4: Verify monotonic watermark in content_read_markers.
+	marker, err := queries.GetContentReadMarker(ctx, db.GetContentReadMarkerParams{
+		Item:   "thread",
+		ItemID: threadID,
+		UserID: userA,
+	})
+	if err != nil {
+		t.Fatalf("get marker: %v", err)
+	}
+	if marker.LastCommentID != 400 || marker.LastActivityPosition != pos400App1 {
+		t.Fatalf("marker = %#v, want comment 400 and pos %d", marker, pos400App1)
+	}
+
+	// Step 5: Delayed delivery of notification for append 1 arrives late.
+	// Since user already acknowledged (400, append 1), it must arrive marked read immediately.
+	evt400App1Late := eventbus.TaskEvent{
+		Task: tasks.TaskString("Reply"), ActivityID: "comment:400:append:1:alt",
+		ResourceType: "thread", ResourceID: threadID, ActivityPosition: pos400App1,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400App1Late, userA, "/forum/thread/40#c400", "append 1 late", notificationPriorityAdmin); err != nil {
+		t.Fatalf("send late append 1: %v", err)
+	}
+	var readLateApp1 sql.NullTime
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400:append:1:alt").Scan(&readLateApp1)
+	if !readLateApp1.Valid {
+		t.Errorf("late delivery for already-acknowledged append 1 MUST arrive marked read")
+	}
+
+	// Step 6: Delivery of unseen append 3 arrives. Must arrive unread.
+	pos400App3 := common.CalculateActivityPosition(400, 3)
+	evt400App3 := eventbus.TaskEvent{
+		Task: tasks.TaskString("Reply"), ActivityID: "comment:400:append:3",
+		ResourceType: "thread", ResourceID: threadID, ActivityPosition: pos400App3,
+	}
+	if err := notifier.sendInternalNotificationForEvent(ctx, evt400App3, userA, "/forum/thread/40#c400", "append 3", notificationPrioritySubscriber); err != nil {
+		t.Fatalf("send append 3: %v", err)
+	}
+	var readApp3 sql.NullTime
+	_ = conn.QueryRowContext(ctx, `SELECT read_at FROM notifications WHERE users_idusers = ? AND activity_key = ?`, userA, "reply:comment:400:append:3").Scan(&readApp3)
+	if readApp3.Valid {
+		t.Errorf("unseen append 3 MUST arrive unread, got read_at = %v", readApp3.Time)
 	}
 }

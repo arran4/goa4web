@@ -140,11 +140,12 @@ type ContentPublicLabel struct {
 }
 
 type ContentReadMarker struct {
-	ID            int32
-	Item          string
-	ItemID        int32
-	UserID        int32
-	LastCommentID int32
+	ID                   int32
+	Item                 string
+	ItemID               int32
+	UserID               int32
+	LastCommentID        int32
+	LastActivityPosition int64
 }
 
 type DeactivatedBlog struct {
@@ -463,14 +464,17 @@ type LoginAttempt struct {
 }
 
 type Notification struct {
-	ID           int32
-	UsersIdusers int32
-	Link         sql.NullString
-	Message      sql.NullString
-	ActivityKey  sql.NullString
-	Priority     uint8
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
+	ID               int32
+	UsersIdusers     int32
+	Link             sql.NullString
+	Message          sql.NullString
+	ActivityKey      sql.NullString
+	Priority         uint8
+	ResourceType     sql.NullString
+	ResourceID       sql.NullInt32
+	ActivityPosition sql.NullInt64
+	CreatedAt        time.Time
+	ReadAt           sql.NullTime
 }
 
 type Password struct {

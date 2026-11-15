@@ -2766,6 +2766,7 @@ func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, op
 				LastIndex:      r.LastIndex,
 				Posterusername: r.Posterusername,
 				IsOwner:        r.IsOwner,
+				LastAppendID:   r.LastAppendID,
 			}
 		}
 		return out, nil

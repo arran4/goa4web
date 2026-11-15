@@ -182,7 +182,8 @@ WITH role_ids AS (
     SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.*, pu.username AS posterusername,
-       c.users_idusers = sqlc.arg(viewer_id) AS is_owner
+       c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
+       CAST(COALESCE((SELECT MAX(ca.id) FROM comment_appends ca WHERE ca.comment_id = c.idcomments), 0) AS SIGNED) AS last_append_id
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -234,7 +235,8 @@ WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(viewer_id)
 )
 SELECT c.*, pu.username AS posterusername,
-       c.users_idusers = sqlc.arg(viewer_id) AS is_owner
+       c.users_idusers = sqlc.arg(viewer_id) AS is_owner,
+       CAST(COALESCE((SELECT MAX(ca.id) FROM comment_appends ca WHERE ca.comment_id = c.idcomments), 0) AS SIGNED) AS last_append_id
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic

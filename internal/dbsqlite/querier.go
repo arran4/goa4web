@@ -366,6 +366,7 @@ type Querier interface {
 	GetCommentsBySectionThreadIdForUser(ctx context.Context, arg GetCommentsBySectionThreadIdForUserParams) ([]*GetCommentsBySectionThreadIdForUserRow, error)
 	GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error)
 	GetContentReadMarker(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
+	GetContentReadMarkerForUpdate(ctx context.Context, arg GetContentReadMarkerForUpdateParams) (*GetContentReadMarkerForUpdateRow, error)
 	GetDigestTimezones(ctx context.Context) ([]sql.NullString, error)
 	GetExternalLink(ctx context.Context, url string) (*ExternalLink, error)
 	GetExternalLinkByID(ctx context.Context, id int64) (*ExternalLink, error)
@@ -551,6 +552,7 @@ type Querier interface {
 	SetNotificationsReadForListerBatch(ctx context.Context, arg SetNotificationsReadForListerBatchParams) error
 	SetVerificationCodeForLister(ctx context.Context, arg SetVerificationCodeForListerParams) error
 	SystemAcknowledgeDigestNotificationsForPendingEmail(ctx context.Context, pendingEmailID int64) error
+	SystemAcknowledgeNotificationsForResource(ctx context.Context, arg SystemAcknowledgeNotificationsForResourceParams) error
 	SystemAddToBlogsSearch(ctx context.Context, arg SystemAddToBlogsSearchParams) error
 	SystemAddToForumCommentSearch(ctx context.Context, arg SystemAddToForumCommentSearchParams) error
 	SystemAddToForumWritingSearch(ctx context.Context, arg SystemAddToForumWritingSearchParams) error

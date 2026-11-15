@@ -206,6 +206,11 @@ func (n *Notifier) normalizeForumReplyIntent(intent common.ForumReplyNotificatio
 	if intent.SubjectPrefix == "" && n.Config != nil {
 		intent.SubjectPrefix = n.Config.EmailSubjectPrefix
 	}
+	if intent.ActivityPosition == 0 && intent.CommentID != 0 {
+		intent.ActivityPosition = common.CalculateActivityPosition(intent.CommentID, intent.AppendID)
+	} else if intent.ActivityPosition == 0 && evt != nil && evt.ActivityPosition != 0 {
+		intent.ActivityPosition = evt.ActivityPosition
+	}
 	return intent
 }
 
@@ -276,13 +281,20 @@ func buildTaskEventFromForumReplyIntent(intent common.ForumReplyNotificationInte
 		"SubjectPrefix": intent.SubjectPrefix,
 		"Private":       intent.Private,
 	}
+	activityPos := intent.ActivityPosition
+	if activityPos == 0 && intent.CommentID != 0 {
+		activityPos = common.CalculateActivityPosition(intent.CommentID, intent.AppendID)
+	}
 	return eventbus.TaskEvent{
-		Task:       forumReplyTaskName,
-		Path:       intent.CanonicalPath,
-		UserID:     intent.ActorID,
-		ActivityID: intent.ActivityID,
-		Data:       data,
-		Outcome:    eventbus.TaskOutcomeSuccess,
+		Task:             forumReplyTaskName,
+		Path:             intent.CanonicalPath,
+		UserID:           intent.ActorID,
+		ActivityID:       intent.ActivityID,
+		ResourceType:     "thread",
+		ResourceID:       intent.ThreadID,
+		ActivityPosition: activityPos,
+		Data:             data,
+		Outcome:          eventbus.TaskOutcomeSuccess,
 	}
 }
 

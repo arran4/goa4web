@@ -245,10 +245,18 @@ type QuerierStub struct {
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
 
-	SystemCreateNotificationErr              error
-	SystemCreateNotificationCalls            []SystemCreateNotificationParams
-	SystemCreateNotificationForActivityErr   error
-	SystemCreateNotificationForActivityCalls []SystemCreateNotificationForActivityParams
+	SystemCreateNotificationErr                    error
+	SystemCreateNotificationCalls                  []SystemCreateNotificationParams
+	SystemCreateNotificationForActivityErr         error
+	SystemCreateNotificationForActivityCalls       []SystemCreateNotificationForActivityParams
+	SystemAcknowledgeNotificationsForResourceErr   error
+	SystemAcknowledgeNotificationsForResourceCalls []SystemAcknowledgeNotificationsForResourceParams
+	SystemAcknowledgeNotificationsForResourceFn    func(context.Context, SystemAcknowledgeNotificationsForResourceParams) error
+
+	GetContentReadMarkerCalls []GetContentReadMarkerParams
+	GetContentReadMarkerRow   *GetContentReadMarkerRow
+	GetContentReadMarkerErr   error
+	GetContentReadMarkerFn    func(context.Context, GetContentReadMarkerParams) (*GetContentReadMarkerRow, error)
 
 	SystemCreateCommentAppendCalls   []SystemCreateCommentAppendParams
 	SystemCreateCommentAppendReturns int64
@@ -2681,6 +2689,19 @@ func (s *QuerierStub) SystemCreateNotificationForActivity(ctx context.Context, a
 	return s.SystemCreateNotificationForActivityErr
 }
 
+// SystemAcknowledgeNotificationsForResource records a resource-scoped acknowledgement.
+func (s *QuerierStub) SystemAcknowledgeNotificationsForResource(ctx context.Context, arg SystemAcknowledgeNotificationsForResourceParams) error {
+	s.mu.Lock()
+	s.SystemAcknowledgeNotificationsForResourceCalls = append(s.SystemAcknowledgeNotificationsForResourceCalls, arg)
+	fn := s.SystemAcknowledgeNotificationsForResourceFn
+	err := s.SystemAcknowledgeNotificationsForResourceErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
 func (s *QuerierStub) SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error) {
 	s.mu.Lock()
 	s.SystemCreateCommentAppendCalls = append(s.SystemCreateCommentAppendCalls, arg)
@@ -3061,6 +3082,26 @@ func (s *QuerierStub) GetNotificationCountForLister(ctx context.Context, listerI
 	defer s.mu.Unlock()
 	s.GetNotificationCountForListerCalls = append(s.GetNotificationCountForListerCalls, listerID)
 	return s.GetNotificationCountForListerReturns, s.GetNotificationCountForListerErr
+}
+
+// GetContentReadMarker records the marker lookup and returns the configured response.
+func (s *QuerierStub) GetContentReadMarker(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error) {
+	s.mu.Lock()
+	s.GetContentReadMarkerCalls = append(s.GetContentReadMarkerCalls, arg)
+	row := s.GetContentReadMarkerRow
+	err := s.GetContentReadMarkerErr
+	fn := s.GetContentReadMarkerFn
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if row == nil {
+		return nil, sql.ErrNoRows
+	}
+	return row, nil
 }
 
 func (s *QuerierStub) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {

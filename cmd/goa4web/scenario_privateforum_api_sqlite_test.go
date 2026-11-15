@@ -750,6 +750,43 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Malformed thread ID should return 400")
+
+		// Malformed last_activity is rejected before committing a reply
+		form = url.Values{}
+		form.Add("text", "must not commit with malformed activity")
+		form.Add("last_activity", "invalid:activity:format")
+		req, _ = http.NewRequest("POST", fmt.Sprintf("%s/private/api/topic/%d/thread/%d/reply", env.http.URL, topicID, threadID), strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+
+		resp, err = env.client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Malformed last_activity should return 400")
+
+		// Nonexistent append in last_activity is rejected before committing a reply
+		form = url.Values{}
+		form.Add("text", "must not commit with nonexistent append")
+		form.Add("last_activity", "comment:1:append:99999")
+		req, _ = http.NewRequest("POST", fmt.Sprintf("%s/private/api/topic/%d/thread/%d/reply", env.http.URL, topicID, threadID), strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+
+		resp, err = env.client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode, "Nonexistent append in last_activity should return 404")
+
+		// Confirm neither rejected reply was persisted
+		commentsAfterRejected, err := env.cd.Queries().GetCommentsByThreadIdForUser(context.Background(), db.GetCommentsByThreadIdForUserParams{
+			ViewerID: aliceID,
+			ThreadID: threadID,
+			UserID:   sql.NullInt32{Int32: aliceID, Valid: true},
+		})
+		require.NoError(t, err)
+		for _, c := range commentsAfterRejected {
+			assert.NotContains(t, c.Text.String, "must not commit with", "Rejected activity reply must not be persisted")
+		}
 	})
 
 	t.Run("read-thread", func(t *testing.T) {

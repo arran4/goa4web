@@ -100,19 +100,23 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	uid, _ := session.Values["UID"].(int32)
 	text := r.PostFormValue("replytext")
 	languageID, _ := strconv.Atoi(r.PostFormValue("language"))
+	lastDisplayedCommentID, _ := strconv.Atoi(r.PostFormValue("last_comment"))
+	lastDisplayedActivity := r.PostFormValue("last_activity")
 	base := cd.ForumBasePath
 	if base == "" {
 		base = "/forum"
 	}
 	result, err := cd.ReplyForumThread(r.Context(), common.ReplyForumThreadParams{
-		ActorID:        uid,
-		TopicID:        cd.SelectedTopicID(),
-		ThreadID:       cd.SelectedThreadID(),
-		LanguageID:     int32(languageID),
-		Text:           text,
-		Private:        base == "/private" || strings.HasPrefix(base, "/private"),
-		EnforceHandler: true,
-		BasePath:       base,
+		ActorID:                uid,
+		TopicID:                cd.SelectedTopicID(),
+		ThreadID:               cd.SelectedThreadID(),
+		LastDisplayedCommentID: int32(lastDisplayedCommentID),
+		LastDisplayedActivity:  lastDisplayedActivity,
+		LanguageID:             int32(languageID),
+		Text:                   text,
+		Private:                base == "/private" || strings.HasPrefix(base, "/private"),
+		EnforceHandler:         true,
+		BasePath:               base,
 	})
 	if err != nil {
 		var notFound common.ForumResourceNotFoundError

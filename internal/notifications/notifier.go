@@ -15,6 +15,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/email"
@@ -313,13 +314,44 @@ func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eve
 	if activityKey == "" {
 		return n.sendInternalNotification(ctx, userID, path, msg)
 	}
-	return n.Queries.SystemCreateNotificationForActivity(ctx, db.SystemCreateNotificationForActivityParams{
-		RecipientID: userID,
-		Link:        sql.NullString{String: path, Valid: path != ""},
-		Message:     sql.NullString{String: msg, Valid: msg != ""},
-		ActivityKey: sql.NullString{String: activityKey, Valid: true},
-		Priority:    priority,
-	})
+	resourceType := sql.NullString{String: evt.ResourceType, Valid: evt.ResourceType != ""}
+	resourceID := sql.NullInt32{Int32: evt.ResourceID, Valid: evt.ResourceID != 0}
+	activityPosition := sql.NullInt64{Int64: evt.ActivityPosition, Valid: evt.ActivityPosition != 0}
+	arg := db.SystemCreateNotificationForActivityParams{
+		RecipientID:      userID,
+		Link:             sql.NullString{String: path, Valid: path != ""},
+		Message:          sql.NullString{String: msg, Valid: msg != ""},
+		ActivityKey:      sql.NullString{String: activityKey, Valid: true},
+		Priority:         priority,
+		ResourceType:     resourceType,
+		ResourceID:       resourceID,
+		ActivityPosition: activityPosition,
+	}
+	if coordinator, ok := n.Queries.(db.NotificationReadStateCoordinator); ok {
+		return coordinator.DeliverThreadNotificationForActivity(ctx, arg)
+	}
+	readAt := sql.NullTime{}
+	if resourceType.Valid && resourceType.String == "thread" && resourceID.Valid && activityPosition.Valid {
+		marker, err := n.Queries.GetContentReadMarker(ctx, db.GetContentReadMarkerParams{
+			Item:   resourceType.String,
+			ItemID: resourceID.Int32,
+			UserID: userID,
+		})
+		if err != nil && err != sql.ErrNoRows {
+			return fmt.Errorf("get read marker for notification activity: %w", err)
+		}
+		if marker != nil {
+			watermark := marker.LastActivityPosition
+			if watermark == 0 && marker.LastCommentID > 0 {
+				watermark = common.CalculateActivityPosition(marker.LastCommentID, 0)
+			}
+			if activityPosition.Int64 <= watermark {
+				readAt = sql.NullTime{Time: time.Now().UTC(), Valid: true}
+			}
+		}
+	}
+	arg.ReadAt = readAt
+	return n.Queries.SystemCreateNotificationForActivity(ctx, arg)
 }
 
 func notificationActivityKey(evt eventbus.TaskEvent) string {

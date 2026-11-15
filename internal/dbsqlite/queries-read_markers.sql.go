@@ -10,7 +10,7 @@ import (
 )
 
 const getContentReadMarker = `-- name: GetContentReadMarker :one
-SELECT item, item_id, user_id, last_comment_id
+SELECT item, item_id, user_id, last_comment_id, last_activity_position
 FROM content_read_markers
 WHERE item = ? AND item_id = ? AND user_id = ?
 `
@@ -22,10 +22,11 @@ type GetContentReadMarkerParams struct {
 }
 
 type GetContentReadMarkerRow struct {
-	Item          string
-	ItemID        int64
-	UserID        int64
-	LastCommentID int64
+	Item                 string
+	ItemID               int64
+	UserID               int64
+	LastCommentID        int64
+	LastActivityPosition int64
 }
 
 func (q *Queries) GetContentReadMarker(ctx context.Context, arg GetContentReadMarkerParams) (*GetContentReadMarkerRow, error) {
@@ -36,6 +37,40 @@ func (q *Queries) GetContentReadMarker(ctx context.Context, arg GetContentReadMa
 		&i.ItemID,
 		&i.UserID,
 		&i.LastCommentID,
+		&i.LastActivityPosition,
+	)
+	return &i, err
+}
+
+const getContentReadMarkerForUpdate = `-- name: GetContentReadMarkerForUpdate :one
+SELECT item, item_id, user_id, last_comment_id, last_activity_position
+FROM content_read_markers
+WHERE item = ? AND item_id = ? AND user_id = ?
+`
+
+type GetContentReadMarkerForUpdateParams struct {
+	Item   string
+	ItemID int64
+	UserID int64
+}
+
+type GetContentReadMarkerForUpdateRow struct {
+	Item                 string
+	ItemID               int64
+	UserID               int64
+	LastCommentID        int64
+	LastActivityPosition int64
+}
+
+func (q *Queries) GetContentReadMarkerForUpdate(ctx context.Context, arg GetContentReadMarkerForUpdateParams) (*GetContentReadMarkerForUpdateRow, error) {
+	row := q.db.QueryRowContext(ctx, getContentReadMarkerForUpdate, arg.Item, arg.ItemID, arg.UserID)
+	var i GetContentReadMarkerForUpdateRow
+	err := row.Scan(
+		&i.Item,
+		&i.ItemID,
+		&i.UserID,
+		&i.LastCommentID,
+		&i.LastActivityPosition,
 	)
 	return &i, err
 }
@@ -71,16 +106,19 @@ func (q *Queries) SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg 
 
 const upsertContentReadMarker = `-- name: UpsertContentReadMarker :exec
 INSERT INTO content_read_markers (
-    item, item_id, user_id, last_comment_id
-) VALUES (?, ?, ?, ?)
-ON CONFLICT(user_id, item_id, item) DO UPDATE SET last_comment_id = excluded.last_comment_id
+    item, item_id, user_id, last_comment_id, last_activity_position
+) VALUES (?, ?, ?, ?, ?)
+ON CONFLICT(user_id, item_id, item) DO UPDATE SET
+    last_comment_id = MAX(last_comment_id, excluded.last_comment_id),
+    last_activity_position = MAX(last_activity_position, excluded.last_activity_position)
 `
 
 type UpsertContentReadMarkerParams struct {
-	Item          string
-	ItemID        int64
-	UserID        int64
-	LastCommentID int64
+	Item                 string
+	ItemID               int64
+	UserID               int64
+	LastCommentID        int64
+	LastActivityPosition int64
 }
 
 func (q *Queries) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {
@@ -89,6 +127,7 @@ func (q *Queries) UpsertContentReadMarker(ctx context.Context, arg UpsertContent
 		arg.ItemID,
 		arg.UserID,
 		arg.LastCommentID,
+		arg.LastActivityPosition,
 	)
 	return err
 }

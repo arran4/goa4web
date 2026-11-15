@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web"
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
+	docsapi "github.com/arran4/goa4web/docs/api"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/tasks"
@@ -20,17 +21,14 @@ import (
 
 func DownloadSwagger(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	rendered, err := docsapi.RenderSwagger(strings.TrimRight(cd.Config.BaseURL, "/"), goa4web.Version)
+	if err != nil {
+		handlers.RenderErrorPage(w, r, fmt.Errorf("render swagger contract: %w", err))
+		return
+	}
 	w.Header().Set("Content-Type", "application/yaml")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"swagger.yaml\"")
-
-	// Pass the BaseURL to the template to populate the server URL correctly
-	_ = tasks.Template("user/swagger.gohtml").Handle(w, r, struct {
-		BaseURL string
-		Version string
-	}{
-		BaseURL: strings.TrimRight(cd.Config.BaseURL, "/"),
-		Version: goa4web.Version,
-	})
+	_, _ = w.Write(rendered)
 }
 
 func ListAPIKeysPage(w http.ResponseWriter, r *http.Request) {

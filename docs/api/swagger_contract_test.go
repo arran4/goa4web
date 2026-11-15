@@ -1,34 +1,39 @@
 package api
 
 import (
-	"bytes"
-	_ "embed"
+	"fmt"
+	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
-	"text/template"
 
-	"github.com/arran4/goa4web/core/templates"
+	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/handlers/images"
+	"github.com/arran4/goa4web/handlers/privateforum"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/gorilla/mux"
 	"go.yaml.in/yaml/v3"
 )
 
-// staticSwagger is the checked-in public API contract.
-//
-//go:embed swagger.yaml
-var staticSwagger []byte
-
 func TestSwaggerContractsMatchPublishedAPIRoutes(t *testing.T) {
+	staticSwagger := CanonicalSwaggerYAML()
 	validateOpenAPI3Document(t, staticSwagger)
-	renderedDocument := renderSwagger(t, "https://example.test/goa")
+
+	renderedDocument, err := RenderSwagger("https://example.test/goa", "test")
+	if err != nil {
+		t.Fatalf("RenderSwagger: %v", err)
+	}
 	validateOpenAPI3Document(t, renderedDocument)
+
 	static := parseOpenAPI(t, staticSwagger)
 	rendered := parseOpenAPI(t, renderedDocument)
 
 	validateOpenAPI(t, static)
 	validateOpenAPI(t, rendered)
-	assertEquivalentExceptServerMetadata(t, static, rendered)
+	assertEquivalentExceptServerAndVersionMetadata(t, static, rendered)
 
+	liveRouter := buildPublishedAPIRouter()
 	for _, contract := range []struct {
 		name string
 		spec map[string]any
@@ -37,29 +42,133 @@ func TestSwaggerContractsMatchPublishedAPIRoutes(t *testing.T) {
 		{name: "rendered", spec: rendered},
 	} {
 		t.Run(contract.name, func(t *testing.T) {
-			assertPublishedRouteContract(t, contract.spec)
+			if err := verifyRouterAgainstOpenAPI(liveRouter, contract.spec); err != nil {
+				t.Fatalf("router/OpenAPI drift: %v", err)
+			}
+			assertPublishedPayloadAndScopeContracts(t, contract.spec)
 		})
 	}
 }
 
-func renderSwagger(t *testing.T, baseURL string) []byte {
-	t.Helper()
-	var rendered bytes.Buffer
-	tmpl, err := template.New("swagger").Parse(string(templates.GetUserSwaggerTemplateData()))
+func TestRenderSwaggerEscapesUntrustedBaseURL(t *testing.T) {
+	tricky := "https://example.test/goa\"\nmalicious: true"
+	rendered, err := RenderSwagger(tricky, "1.2.3")
 	if err != nil {
-		t.Fatalf("parse downloadable Swagger template: %v", err)
+		t.Fatalf("RenderSwagger: %v", err)
 	}
-	err = tmpl.ExecuteTemplate(&rendered, "user/swagger.gohtml", struct {
-		BaseURL string
-		Version string
-	}{
-		BaseURL: baseURL,
-		Version: "test",
+	validateOpenAPI3Document(t, rendered)
+	spec := parseOpenAPI(t, rendered)
+	if _, injected := spec["malicious"]; injected {
+		t.Fatal("BaseURL injected top-level YAML key")
+	}
+	servers := spec["servers"].([]any)
+	gotURL := stringAt(t, servers[0].(map[string]any), "url")
+	if gotURL != tricky {
+		t.Fatalf("server URL = %q, want %q", gotURL, tricky)
+	}
+	if gotVer := stringAt(t, mapAt(t, spec, "info"), "version"); gotVer != "1.2.3" {
+		t.Fatalf("info.version = %q, want 1.2.3", gotVer)
+	}
+}
+
+// TestSwaggerDriftDetectionDetectsLiveRouteMutation verifies that adding or changing
+// a live gorilla/mux API route without updating swagger.yaml fails the contract guard.
+func TestSwaggerDriftDetectionDetectsLiveRouteMutation(t *testing.T) {
+	spec := parseOpenAPI(t, CanonicalSwaggerYAML())
+
+	r := buildPublishedAPIRouter()
+	r.HandleFunc("/private/api/undocumented", func(http.ResponseWriter, *http.Request) {}).Methods(http.MethodPost)
+
+	err := verifyRouterAgainstOpenAPI(r, spec)
+	if err == nil {
+		t.Fatal("expected drift error when undocumented live API route is registered")
+	}
+	if !strings.Contains(err.Error(), "POST /private/api/undocumented") {
+		t.Fatalf("drift error = %v, want mention of POST /private/api/undocumented", err)
+	}
+}
+
+func buildPublishedAPIRouter() *mux.Router {
+	r := mux.NewRouter()
+	cfg := &config.RuntimeConfig{}
+	privateforum.RegisterRoutes(r, cfg)
+	images.RegisterRoutes(r, cfg)
+	return r
+}
+
+func collectLiveAPIRoutes(r *mux.Router) (map[string]struct{}, error) {
+	live := make(map[string]struct{})
+	err := r.Walk(func(route *mux.Route, _ *mux.Router, _ []*mux.Route) error {
+		path, err := route.GetPathTemplate()
+		if err != nil || path == "" {
+			return nil
+		}
+		if !strings.HasPrefix(path, "/private/api") && !strings.HasPrefix(path, "/images/api") {
+			return nil
+		}
+		// /private/api/user-exists is a session-authenticated browser UI helper
+		// (RequiresAnAccount), not part of the public bearer-token OpenAPI contract.
+		if path == "/private/api/user-exists" {
+			return nil
+		}
+		methods, err := route.GetMethods()
+		if err != nil || len(methods) == 0 {
+			return nil
+		}
+		for _, m := range methods {
+			live[strings.ToUpper(m)+" "+path] = struct{}{}
+		}
+		return nil
 	})
-	if err != nil {
-		t.Fatalf("render downloadable Swagger: %v", err)
+	return live, err
+}
+
+func collectDocumentedAPIRoutes(spec map[string]any) map[string]struct{} {
+	documented := make(map[string]struct{})
+	paths, _ := spec["paths"].(map[string]any)
+	for path, rawOps := range paths {
+		ops, ok := rawOps.(map[string]any)
+		if !ok {
+			continue
+		}
+		for method := range ops {
+			switch strings.ToLower(method) {
+			case "get", "post", "put", "patch", "delete", "head", "options":
+				documented[strings.ToUpper(method)+" "+path] = struct{}{}
+			}
+		}
 	}
-	return rendered.Bytes()
+	return documented
+}
+
+// verifyRouterAgainstOpenAPI enforces exact (method, path) parity between live
+// gorilla/mux routes under /private/api and /images/api and the OpenAPI spec.
+// Note: handler-internal x-required-scopes and form/JSON DTO fields cannot be
+// extracted from mux.Route alone and are verified separately below.
+func verifyRouterAgainstOpenAPI(r *mux.Router, spec map[string]any) error {
+	live, err := collectLiveAPIRoutes(r)
+	if err != nil {
+		return fmt.Errorf("walk live router: %w", err)
+	}
+	documented := collectDocumentedAPIRoutes(spec)
+
+	var missingInSpec, extraInSpec []string
+	for k := range live {
+		if _, ok := documented[k]; !ok {
+			missingInSpec = append(missingInSpec, k)
+		}
+	}
+	for k := range documented {
+		if _, ok := live[k]; !ok {
+			extraInSpec = append(extraInSpec, k)
+		}
+	}
+	sort.Strings(missingInSpec)
+	sort.Strings(extraInSpec)
+	if len(missingInSpec) > 0 || len(extraInSpec) > 0 {
+		return fmt.Errorf("missing in OpenAPI: %v; missing in live router: %v", missingInSpec, extraInSpec)
+	}
+	return nil
 }
 
 func parseOpenAPI(t *testing.T, document []byte) map[string]any {
@@ -100,14 +209,16 @@ func validateOpenAPI3Document(t *testing.T, document []byte) {
 	}
 }
 
-func assertEquivalentExceptServerMetadata(t *testing.T, static, rendered map[string]any) {
+func assertEquivalentExceptServerAndVersionMetadata(t *testing.T, static, rendered map[string]any) {
 	t.Helper()
 	staticCopy := cloneSpec(t, static)
 	renderedCopy := cloneSpec(t, rendered)
 	delete(staticCopy, "servers")
 	delete(renderedCopy, "servers")
+	delete(mapAt(t, staticCopy, "info"), "version")
+	delete(mapAt(t, renderedCopy, "info"), "version")
 	if !reflect.DeepEqual(staticCopy, renderedCopy) {
-		t.Fatalf("static and downloadable OpenAPI contracts differ outside server metadata")
+		t.Fatalf("static and downloadable OpenAPI contracts differ outside server/version metadata")
 	}
 }
 
@@ -120,7 +231,7 @@ func cloneSpec(t *testing.T, spec map[string]any) map[string]any {
 	return parseOpenAPI(t, data)
 }
 
-func assertPublishedRouteContract(t *testing.T, spec map[string]any) {
+func assertPublishedPayloadAndScopeContracts(t *testing.T, spec map[string]any) {
 	t.Helper()
 	paths := mapAt(t, spec, "paths")
 	for path, requirement := range map[string]struct {
@@ -141,9 +252,6 @@ func assertPublishedRouteContract(t *testing.T, spec map[string]any) {
 		if scopes, ok := operation["x-required-scopes"].([]any); !ok || len(scopes) != 1 || scopes[0] != requirement.scope {
 			t.Fatalf("%s %s required scopes = %#v, want %q", strings.ToUpper(requirement.method), pathName, operation["x-required-scopes"], requirement.scope)
 		}
-	}
-	if len(paths) != 6 {
-		t.Fatalf("paths = %d, want exactly the six published API paths", len(paths))
 	}
 	server := stringAt(t, spec["servers"].([]any)[0].(map[string]any), "url")
 	if server != "https://example.test/goa" && server != "http://localhost:8080" {

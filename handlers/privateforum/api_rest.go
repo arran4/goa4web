@@ -355,6 +355,7 @@ func mapAPIError(w http.ResponseWriter, err error) {
 	var notFoundErr common.ForumResourceNotFoundError
 	var forbiddenErr common.ForumOperationForbiddenError
 	var mismatchErr common.ForumHandlerMismatchError
+	var invalidActivityErr common.ForumInvalidActivityError
 	var invalidParticipantsErr *common.ErrInvalidParticipants
 	var participantRequiredErr common.ErrPrivateTopicParticipantRequired
 
@@ -365,6 +366,8 @@ func mapAPIError(w http.ResponseWriter, err error) {
 		writeAPIError(w, http.StatusForbidden, "permission denied")
 	case errors.As(err, &mismatchErr):
 		writeAPIError(w, http.StatusNotFound, "resource not found") // fail closed for private API
+	case errors.As(err, &invalidActivityErr):
+		writeAPIError(w, http.StatusBadRequest, invalidActivityErr.UserErrorMessage())
 	case errors.As(err, &invalidParticipantsErr), errors.As(err, &participantRequiredErr):
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 	default:
@@ -440,7 +443,7 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAPIJSON(w, http.StatusOK, map[string]any{
+	resp := map[string]any{
 		"status":      "success",
 		"thread_id":   result.ThreadID,
 		"topic_id":    result.TopicID,
@@ -448,5 +451,9 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 		"url":         result.URL,
 		"appended":    result.Appended,
 		"activity_id": result.ActivityID,
-	})
+	}
+	if result.AcknowledgementError != nil {
+		resp["acknowledgement_failed"] = true
+	}
+	writeAPIJSON(w, http.StatusOK, resp)
 }

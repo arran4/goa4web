@@ -784,8 +784,162 @@ func TestReplyForumThread_RejectsInvalidCapturedActivity(t *testing.T) {
 		LastDisplayedActivity:  fmt.Sprintf("comment:%d:append:999", forumReplyAppendCommentID),
 		Text:                   "reply with future activity",
 	})
-	if err == nil {
-		t.Fatal("expected ReplyForumThread to fail when captured activity position is invalid/future, got nil error")
+	var notFound ForumResourceNotFoundError
+	if !errors.As(err, &notFound) || notFound.Resource != "append" {
+		t.Fatalf("expected ForumResourceNotFoundError for append, got %v", err)
+	}
+	if len(q.CreateCommentInSectionForCommenterCalls) != 0 {
+		t.Fatalf("expected 0 comment creates on pre-commit rejection, got %d", len(q.CreateCommentInSectionForCommenterCalls))
+	}
+	if len(q.SystemCreateCommentAppendCalls) != 0 {
+		t.Fatalf("expected 0 append creates on pre-commit rejection, got %d", len(q.SystemCreateCommentAppendCalls))
+	}
+	if len(q.UpsertContentReadMarkerCalls) != 0 {
+		t.Fatalf("expected 0 read marker updates on pre-commit rejection, got %d", len(q.UpsertContentReadMarkerCalls))
+	}
+}
+
+func TestReplyForumThread_PreCommitRejectsMalformedAndMismatchedActivity(t *testing.T) {
+	cases := []struct {
+		name           string
+		lastCommentID  int32
+		lastActivityID string
+		wantInvalid    bool
+		wantNotFound   string
+	}{
+		{
+			name:           "malformed activity string",
+			lastCommentID:  forumReplyAppendCommentID,
+			lastActivityID: "invalid:activity:format",
+			wantInvalid:    true,
+		},
+		{
+			name:           "mismatched comment and activity ID",
+			lastCommentID:  forumReplyAppendCommentID,
+			lastActivityID: "comment:999",
+			wantInvalid:    true,
+		},
+		{
+			name:           "negative last comment ID",
+			lastCommentID:  -5,
+			lastActivityID: "",
+			wantInvalid:    true,
+		},
+		{
+			name:           "nonexistent comment ID",
+			lastCommentID:  99999,
+			lastActivityID: "comment:99999",
+			wantNotFound:   "comment",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{ForumPostAppendWindow: 60}, false)
+			q.CreateCommentInSectionForCommenterFn = func(context.Context, db.CreateCommentInSectionForCommenterParams) (int64, error) {
+				return 300, nil
+			}
+			_, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+				ActorID:                forumReplyAppendActorID,
+				ThreadID:               forumReplyAppendThreadID,
+				LastDisplayedCommentID: tc.lastCommentID,
+				LastDisplayedActivity:  tc.lastActivityID,
+				Text:                   "must not persist",
+			})
+			if tc.wantInvalid {
+				var invalidErr ForumInvalidActivityError
+				if !errors.As(err, &invalidErr) {
+					t.Fatalf("expected ForumInvalidActivityError, got %v", err)
+				}
+			}
+			if tc.wantNotFound != "" {
+				var notFound ForumResourceNotFoundError
+				if !errors.As(err, &notFound) || notFound.Resource != tc.wantNotFound {
+					t.Fatalf("expected ForumResourceNotFoundError(%q), got %v", tc.wantNotFound, err)
+				}
+			}
+			if len(q.CreateCommentInSectionForCommenterCalls) != 0 {
+				t.Fatalf("expected 0 comment creates, got %d", len(q.CreateCommentInSectionForCommenterCalls))
+			}
+			if len(q.SystemCreateCommentAppendCalls) != 0 {
+				t.Fatalf("expected 0 append creates, got %d", len(q.SystemCreateCommentAppendCalls))
+			}
+			if len(q.UpsertContentReadMarkerCalls) != 0 {
+				t.Fatalf("expected 0 read marker updates, got %d", len(q.UpsertContentReadMarkerCalls))
+			}
+			if len(q.SystemAcknowledgeNotificationsForResourceCalls) != 0 {
+				t.Fatalf("expected 0 notification acks, got %d", len(q.SystemAcknowledgeNotificationsForResourceCalls))
+			}
+		})
+	}
+}
+
+func TestReplyForumThread_PostCommitAckDBFailurePreservesReplyAndAllowsRetry(t *testing.T) {
+	cd, q, _ := newForumReplyAppendCoreData(t, &config.RuntimeConfig{}, false)
+	q.CreateCommentInSectionForCommenterFn = func(context.Context, db.CreateCommentInSectionForCommenterParams) (int64, error) {
+		return 300, nil
+	}
+	q.SystemListCommentAppendsByCommentIDFn = func(context.Context, int32) ([]*db.CommentAppend, error) {
+		return []*db.CommentAppend{{ID: 1, CommentID: forumReplyAppendCommentID}}, nil
+	}
+	dbErr := errors.New("transient read-marker deadlock")
+	failAck := true
+	q.UpsertContentReadMarkerFn = func(context.Context, db.UpsertContentReadMarkerParams) error {
+		if failAck {
+			return dbErr
+		}
+		return nil
+	}
+
+	displayedActivity := fmt.Sprintf("comment:%d:append:1", forumReplyAppendCommentID)
+	result, err := cd.ReplyForumThread(context.Background(), ReplyForumThreadParams{
+		ActorID:                forumReplyAppendActorID,
+		ThreadID:               forumReplyAppendThreadID,
+		LastDisplayedCommentID: forumReplyAppendCommentID,
+		LastDisplayedActivity:  displayedActivity,
+		Text:                   "reply that commits despite transient ack failure",
+	})
+	if err != nil {
+		t.Fatalf("expected ReplyForumThread to return nil error when reply committed, got %v", err)
+	}
+	if result == nil || result.CommentID != 300 {
+		t.Fatalf("expected committed reply result with CommentID=300, got %#v", result)
+	}
+	if !errors.Is(result.AcknowledgementError, dbErr) {
+		t.Fatalf("expected result.AcknowledgementError to wrap %v, got %v", dbErr, result.AcknowledgementError)
+	}
+	if len(q.CreateCommentInSectionForCommenterCalls) != 1 {
+		t.Fatalf("expected exactly 1 comment create, got %d", len(q.CreateCommentInSectionForCommenterCalls))
+	}
+	if len(q.SystemAcknowledgeNotificationsForResourceCalls) != 0 {
+		t.Fatalf("expected 0 notification acks when UpsertContentReadMarker failed, got %d", len(q.SystemAcknowledgeNotificationsForResourceCalls))
+	}
+
+	// Simulate retrying only the read acknowledgment after transient DB failure clears.
+	failAck = false
+	if err := cd.ReadForumThread(context.Background(), ReadForumThreadParams{
+		ActorID:        forumReplyAppendActorID,
+		ThreadID:       forumReplyAppendThreadID,
+		LastCommentID:  forumReplyAppendCommentID,
+		LastActivityID: displayedActivity,
+	}); err != nil {
+		t.Fatalf("retry ReadForumThread: %v", err)
+	}
+	if len(q.CreateCommentInSectionForCommenterCalls) != 1 {
+		t.Fatalf("expected no duplicate reply on mark-read retry, got %d creates", len(q.CreateCommentInSectionForCommenterCalls))
+	}
+	wantPos := CalculateActivityPosition(forumReplyAppendCommentID, 1)
+	if len(q.UpsertContentReadMarkerCalls) != 2 {
+		t.Fatalf("expected 2 UpsertContentReadMarker calls (failed + retry), got %d", len(q.UpsertContentReadMarkerCalls))
+	}
+	if got := q.UpsertContentReadMarkerCalls[1].LastActivityPosition; got != wantPos {
+		t.Fatalf("retried read marker position = %d, want displayed pos %d (must not advance to new reply 300)", got, wantPos)
+	}
+	if len(q.SystemAcknowledgeNotificationsForResourceCalls) != 1 {
+		t.Fatalf("expected 1 notification ack on retry, got %d", len(q.SystemAcknowledgeNotificationsForResourceCalls))
+	}
+	if got := q.SystemAcknowledgeNotificationsForResourceCalls[0].ActivityPosition.Int64; got != wantPos {
+		t.Fatalf("retried notification ack pos = %d, want %d", got, wantPos)
 	}
 }
 

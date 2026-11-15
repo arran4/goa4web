@@ -3,7 +3,7 @@ INSERT INTO pending_emails (to_user_id, body, direct_email)
 VALUES (?, ?, ?);
 
 -- name: SystemListPendingEmails :many
-SELECT id, to_user_id, body, error_count, direct_email, created_at
+SELECT id, to_user_id, body, error_count, direct_email, created_at, digest_delivery_id
 FROM pending_emails
 WHERE sent_at IS NULL
 ORDER BY id

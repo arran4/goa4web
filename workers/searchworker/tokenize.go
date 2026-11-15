@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/internal/db"
-	searchdomain "github.com/arran4/goa4web/internal/search"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 func isAlphanumericOrPunctuation(char rune) bool {
-	return searchdomain.IsTokenRune(char)
+	return searchindex.IsTokenRune(char)
 }
 
 // IsAlphanumericOrPunctuation is exported for testing.
@@ -22,7 +22,7 @@ func IsAlphanumericOrPunctuation(char rune) bool {
 // BreakupTextToWords splits input into tokens of alphanumeric or
 // punctuation characters used for search indexing.
 func BreakupTextToWords(input string) []string {
-	return searchdomain.BreakupTextToWords(input)
+	return searchindex.BreakupTextToWords(input)
 }
 
 // SearchWordIdsFromText inserts new search words and returns their ids.

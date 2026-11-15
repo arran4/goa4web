@@ -1,5 +1,5 @@
-// Package forum owns forum-domain event contracts and operations.
-package forum
+// Package postcount owns post-count event contracts and metadata refresh operations.
+package postcount
 
 import (
 	"context"

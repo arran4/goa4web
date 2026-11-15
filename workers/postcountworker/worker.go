@@ -5,14 +5,14 @@ import (
 	"log"
 
 	"github.com/arran4/goa4web/internal/eventbus"
-	forumdomain "github.com/arran4/goa4web/internal/forum"
+	"github.com/arran4/goa4web/internal/postcount"
 )
 
-// EventKey is retained as a compatibility alias for the forum event key.
-const EventKey = forumdomain.PostCountEventKey
+// EventKey is retained as a compatibility alias for the postcount event key.
+const EventKey = postcount.PostCountEventKey
 
-// UpdateEventData is retained as a compatibility alias for the forum contract.
-type UpdateEventData = forumdomain.PostCountUpdate
+// UpdateEventData is retained as a compatibility alias for the postcount contract.
+type UpdateEventData = postcount.PostCountUpdate
 
 // Worker listens for post count events and updates the related metadata.
 func Worker(ctx context.Context, bus *eventbus.Bus, q PostUpdateQuerier) {

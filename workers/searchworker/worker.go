@@ -6,22 +6,22 @@ import (
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	searchdomain "github.com/arran4/goa4web/internal/search"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
-// EventKey is retained as a compatibility alias for the search event key.
-const EventKey = searchdomain.IndexEventKey
+// EventKey is retained as a compatibility alias for the searchindex event key.
+const EventKey = searchindex.IndexEventKey
 
-// Index types are retained as compatibility aliases for the search contract.
+// Index types are retained as compatibility aliases for the searchindex contract.
 const (
-	TypeComment = searchdomain.TypeComment
-	TypeWriting = searchdomain.TypeWriting
-	TypeLinker  = searchdomain.TypeLinker
-	TypeImage   = searchdomain.TypeImage
+	TypeComment = searchindex.TypeComment
+	TypeWriting = searchindex.TypeWriting
+	TypeLinker  = searchindex.TypeLinker
+	TypeImage   = searchindex.TypeImage
 )
 
-// IndexEventData is retained as a compatibility alias for the search contract.
-type IndexEventData = searchdomain.IndexEventData
+// IndexEventData is retained as a compatibility alias for the searchindex contract.
+type IndexEventData = searchindex.IndexEventData
 
 // Worker listens for index events and updates the search tables.
 func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
@@ -58,7 +58,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 }
 
 func index(ctx context.Context, q db.Querier, data IndexEventData) error {
-	return searchdomain.Index(ctx, q, data)
+	return searchindex.Index(ctx, q, data)
 }
 
 // Index synchronously updates the search index for one item.

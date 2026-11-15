@@ -1,5 +1,5 @@
-// Package search owns search-index event contracts and operations.
-package search
+// Package searchindex owns search-index event contracts and operations.
+package searchindex
 
 import (
 	"context"

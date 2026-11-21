@@ -1145,3 +1145,52 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(overlay);
     }
 });
+
+// The advanced subscription form uses native inputs even without this script.
+function setupSubscriptionEditor(form) {
+    for (const control of form.querySelectorAll('[data-subscription-shortcuts], [data-subscription-selection]')) {
+        control.hidden = false;
+    }
+
+    function checkboxes(scope, channel) {
+        return Array.from(scope.querySelectorAll('input[name="subs"]'))
+            .filter(input => !input.disabled && input.value.endsWith('|' + channel));
+    }
+
+    let lastChecked;
+    form.addEventListener('click', (event) => {
+        const button = event.target.closest?.('button[data-subscription-selection]');
+        if (button) {
+            const scope = button.closest('table') || form;
+            for (const input of checkboxes(scope, button.dataset.subscriptionChannel)) {
+                switch (button.dataset.subscriptionSelection) {
+                    case 'all': input.checked = true; break;
+                    case 'none': input.checked = false; break;
+                    case 'invert': input.checked = !input.checked; break;
+                }
+            }
+            return;
+        }
+
+        const input = event.target.closest?.('input[name="subs"]');
+        if (!input || input.disabled) return;
+        const table = input.closest('table');
+        const channel = input.value.split('|').pop();
+        if (event.shiftKey && table && lastChecked?.closest('table') === table) {
+            const group = checkboxes(table, channel);
+            const start = group.indexOf(lastChecked);
+            const end = group.indexOf(input);
+            if (start >= 0 && end >= 0) {
+                for (const item of group.slice(Math.min(start, end), Math.max(start, end) + 1)) {
+                    item.checked = input.checked;
+                }
+            }
+        }
+        lastChecked = input;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-subscription-editor]');
+    if (form) setupSubscriptionEditor(form);
+});

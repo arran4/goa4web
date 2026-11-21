@@ -1,0 +1,9 @@
+{{ define "subscriptionOverviewChannels" }}
+{{ if . }}
+<ul>
+{{ range . }}
+    <li>{{ .Activity }}<span> · {{ if .InSite }}In-site{{ end }}{{ if and .InSite .Email }} and {{ end }}{{ if .Email }}Email{{ if .Paused }} (paused){{ end }}{{ end }}</span></li>
+{{ end }}
+</ul>
+{{ end }}
+{{ end }}

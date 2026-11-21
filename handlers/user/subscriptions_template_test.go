@@ -54,8 +54,13 @@ func TestSubscriptionsTemplateRender(t *testing.T) {
 			t.Fatalf("render domains/user/subscriptions.gohtml: %v", err)
 		}
 
-		if !bytes.Contains(buf.Bytes(), []byte("<form method=\"post\" action=\"/usr/subscriptions/update\">")) {
-			t.Errorf("Expected form tag not found")
+		if !bytes.Contains(buf.Bytes(), []byte(`<form method="post" action="/usr/subscriptions/update"`)) {
+			t.Error("subscription editor must still submit to the existing POST route")
+		}
+		if !bytes.Contains(buf.Bytes(), []byte("data-subscription-editor")) ||
+			!bytes.Contains(buf.Bytes(), []byte(`data-subscription-selection="all"`)) ||
+			bytes.Contains(buf.Bytes(), []byte(`onclick="selectSubs(`)) {
+			t.Error("bulk controls must bind through data attributes without inline handlers")
 		}
 		// Check for the checkbox with correct value
 		expectedValue := "test:/test/1|internal"

@@ -1,0 +1,38 @@
+{{ template "head" $ }}
+<h2>Your forum follows</h2>
+<p>
+    {{ if .AutoFollow }}Automatically follow threads you post in.{{ else }}Automatic follow when you post is off.{{ end }}
+    {{ if .ReplyEmail }}Email replies enabled.{{ else }}Email replies paused. Saved email follows are kept.{{ end }}
+    <a href="/usr/email">Email and auto-follow settings</a> · <a href="/usr/notifications">Digest settings</a>
+</p>
+{{ range .Modules }}
+    <section>
+        <h3><a href="{{ .Link }}">{{ .Title }}</a></h3>
+        {{ template "subscriptionOverviewChannels" .Rules }}
+        {{ range .Topics }}
+            <h4><a href="{{ .Link }}">{{ .Title }}</a></h4>
+            {{ template "subscriptionOverviewChannels" .Rules }}
+            {{ if .Threads }}
+                <ul>
+                {{ range .Threads }}
+                    <li>
+                        <a href="{{ .Link }}">{{ .Title }}</a>
+                        {{ template "subscriptionOverviewChannels" .Rules }}
+                    </li>
+                {{ end }}
+                </ul>
+            {{ end }}
+        {{ end }}
+    </section>
+{{ else }}
+    <p>No forum follows to show. <a href="/forum">Browse the public forum</a></p>
+{{ end }}
+{{ if .Other }}
+    <h3>Other saved subscriptions</h3>
+    {{ template "subscriptionOverviewChannels" .Other }}
+{{ end }}
+<p>
+    <a href="/usr/subscriptions?mode=advanced">Advanced subscription settings</a>
+    {{ if .Admin }} · <a href="/usr/subscriptions?mode=admin">Admin subscription settings</a>{{ end }}
+</p>
+{{ template "tail" $ }}

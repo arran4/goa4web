@@ -71,7 +71,7 @@ SET status = CASE WHEN retry_count + 1 >= ? THEN 'failed' ELSE 'pending' END,
     retry_count = retry_count + 1,
     last_attempt_at = ?,
     next_attempt_at = CASE WHEN retry_count + 1 >= ? THEN NULL ELSE ? END
-WHERE id = ?;
+WHERE id = ? AND status <> 'cancelled';
 
 -- name: TouchImageCacheEntry :exec
 UPDATE image_cache_entries

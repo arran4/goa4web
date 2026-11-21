@@ -95,4 +95,17 @@ func TestMySQLQueuePendingImageCacheJobs(t *testing.T) {
 	require.Equal(t, params.ActorID, rows[0].CreatedByUserID)
 	require.Equal(t, "recover.png", rows[1].TargetKey)
 	require.Equal(t, "image_cache_entry", rows[1].TargetType)
+
+	id := rows[1].ID
+	require.NoError(t, q.(JobTransactor).WithJobTransaction(ctx, func(tx Querier) error {
+		if _, err := tx.AdminCancelDurableJob(ctx, id); err != nil {
+			return err
+		}
+		return tx.AdminSetImageCacheStateForDurableJob(ctx, AdminSetImageCacheStateForDurableJobParams{
+			JobID: id, PreviousStatus: "pending", NextStatus: "cancelled",
+		})
+	}))
+	var status string
+	require.NoError(t, conn.QueryRowContext(ctx, "SELECT status FROM image_cache_entries WHERE id = ?", "recover.png").Scan(&status))
+	require.Equal(t, "cancelled", status)
 }

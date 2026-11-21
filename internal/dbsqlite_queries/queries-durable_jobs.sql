@@ -317,3 +317,15 @@ WHERE img.source_kind = 'remote'
 ORDER BY img.created_at, img.id
 LIMIT 10
 ON CONFLICT(active_dedupe_key) DO NOTHING;
+
+-- name: AdminSetImageCacheStateForDurableJob :exec
+UPDATE image_cache_entries
+SET status = sqlc.arg(next_status), next_attempt_at = NULL, error_message = NULL
+WHERE image_cache_entries.status = sqlc.arg(previous_status)
+  AND image_cache_entries.source_kind = 'remote'
+  AND EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.id = sqlc.arg(job_id) AND job.job_type = 'image_cache'
+        AND ((job.target_type = 'image_cache_entry' AND job.target_key = image_cache_entries.id)
+          OR (job.target_type = 'image_cache' AND job.target_key = image_cache_entries.source_url))
+  );

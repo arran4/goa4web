@@ -153,6 +153,30 @@ func (q *Queries) AdminRetryDurableJob(ctx context.Context, id int64) (int64, er
 	return result.RowsAffected()
 }
 
+const adminSetImageCacheStateForDurableJob = `-- name: AdminSetImageCacheStateForDurableJob :exec
+UPDATE image_cache_entries
+SET status = ?1, next_attempt_at = NULL, error_message = NULL
+WHERE image_cache_entries.status = ?2
+  AND image_cache_entries.source_kind = 'remote'
+  AND EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.id = ?3 AND job.job_type = 'image_cache'
+        AND ((job.target_type = 'image_cache_entry' AND job.target_key = image_cache_entries.id)
+          OR (job.target_type = 'image_cache' AND job.target_key = image_cache_entries.source_url))
+  )
+`
+
+type AdminSetImageCacheStateForDurableJobParams struct {
+	NextStatus     string
+	PreviousStatus string
+	JobID          int64
+}
+
+func (q *Queries) AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error {
+	_, err := q.db.ExecContext(ctx, adminSetImageCacheStateForDurableJob, arg.NextStatus, arg.PreviousStatus, arg.JobID)
+	return err
+}
+
 const systemBumpActiveDurableJob = `-- name: SystemBumpActiveDurableJob :execrows
 UPDATE durable_jobs
 SET

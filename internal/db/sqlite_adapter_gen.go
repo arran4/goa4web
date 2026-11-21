@@ -3829,6 +3829,14 @@ func (s *sqliteQuerier) AdminSetAnnouncementActive(ctx context.Context, arg Admi
 	})
 }
 
+func (s *sqliteQuerier) AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error {
+	return s.q.AdminSetImageCacheStateForDurableJob(ctx, dbsqlite.AdminSetImageCacheStateForDurableJobParams{
+		NextStatus:     arg.NextStatus,
+		PreviousStatus: arg.PreviousStatus,
+		JobID:          arg.JobID,
+	})
+}
+
 func (s *sqliteQuerier) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
 	return s.q.AdminSetTemplateOverride(ctx, dbsqlite.AdminSetTemplateOverrideParams{
 		Name: arg.Name,

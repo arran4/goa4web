@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/workers"
 	"github.com/stretchr/testify/require"
@@ -75,4 +76,66 @@ type pendingImageTestTransport func(*http.Request) (*http.Response, error)
 
 func (f pendingImageTestTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 	return f(request)
+}
+
+func TestScenarioImageRecoveryHonorsCancellation(t *testing.T) {
+	env, cleanup := setupAPITestEnv(t)
+	defer cleanup()
+	ctx := t.Context()
+	queue := jobs.NewService(env.cd.Queries())
+	ref, err := env.cd.QueueRemoteImageCache("https://example.test/cancelled.png")
+	require.NoError(t, err)
+	id := strings.TrimPrefix(ref, "cache:")
+
+	require.NoError(t, queue.QueuePendingImageCacheJobs(ctx, id, sql.NullInt32{}))
+	rows, err := queue.AdminList(ctx, jobs.StatusPending, jobs.JobTypeImageCache, 20, 0)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	jobID := rows[0].ID
+
+	_, err = env.db.ExecContext(ctx, `CREATE TRIGGER reject_image_cancellation BEFORE UPDATE OF status ON image_cache_entries
+		WHEN NEW.status = 'cancelled' BEGIN SELECT RAISE(ABORT, 'injected cache failure'); END`)
+	require.NoError(t, err)
+	cancelled, err := queue.AdminCancel(ctx, jobID)
+	require.ErrorContains(t, err, "injected cache failure")
+	require.False(t, cancelled)
+	job, err := env.cd.Queries().SystemGetDurableJobByID(ctx, jobID)
+	require.NoError(t, err)
+	require.Equal(t, jobs.StatusPending, job.Status, "a failed cache update must roll back queue cancellation")
+	_, err = env.db.ExecContext(ctx, "DROP TRIGGER reject_image_cancellation")
+	require.NoError(t, err)
+
+	cancelled, err = queue.AdminCancel(ctx, jobID)
+	require.NoError(t, err)
+	require.True(t, cancelled)
+	require.NoError(t, queue.QueuePendingImageCacheJobs(ctx, "", sql.NullInt32{}))
+	rows, err = queue.AdminList(ctx, jobs.StatusPending, jobs.JobTypeImageCache, 20, 0)
+	require.NoError(t, err)
+	require.Empty(t, rows, "recovery must not queue a cancelled image")
+
+	// A worker that was interrupted during its fetch may still record a failure.
+	require.NoError(t, env.cd.Queries().RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
+		ID: id, RetryCount: 3, RetryCount_2: 3,
+	}))
+	entry, err := env.cd.ImageCacheEntry(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, jobs.StatusCancelled, entry.Status)
+
+	retried, err := queue.AdminRetry(ctx, jobID)
+	require.NoError(t, err)
+	require.True(t, retried)
+	entry, err = env.cd.ImageCacheEntry(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, "pending", entry.Status)
+
+	cancelled, err = queue.AdminCancel(ctx, jobID)
+	require.NoError(t, err)
+	require.True(t, cancelled)
+	purged, err := queue.AdminPurge(ctx, jobs.StatusCancelled)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), purged)
+	require.NoError(t, queue.QueuePendingImageCacheJobs(ctx, "", sql.NullInt32{}))
+	rows, err = queue.AdminList(ctx, jobs.StatusPending, jobs.JobTypeImageCache, 20, 0)
+	require.NoError(t, err)
+	require.Empty(t, rows, "pruning the job history must not undo cancellation")
 }

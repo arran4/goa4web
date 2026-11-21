@@ -15,3 +15,25 @@ func (q *Queries) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, er
 	}
 	return nil, fmt.Errorf("database does not support transactions")
 }
+
+// JobTransactor runs related queue and source changes in one transaction.
+type JobTransactor interface {
+	WithJobTransaction(context.Context, func(Querier) error) error
+}
+
+// WithJobTransaction commits job and source updates together.
+func (q *Queries) WithJobTransaction(ctx context.Context, update func(Querier) error) error {
+	tx, err := q.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	return updateJobTransaction(tx, q.WithTx(tx), update)
+}
+
+func updateJobTransaction(tx *sql.Tx, q Querier, update func(Querier) error) error {
+	defer func() { _ = tx.Rollback() }()
+	if err := update(q); err != nil {
+		return err
+	}
+	return tx.Commit()
+}

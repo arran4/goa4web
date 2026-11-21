@@ -267,6 +267,7 @@ type Querier interface {
 	AdminScrubUserPasswords(ctx context.Context, usersIdusers int32) error
 	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
 	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
+	AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
 	AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error

@@ -437,39 +437,61 @@ func (s *Service) AdminList(ctx context.Context, statusFilter, jobTypeFilter str
 
 // AdminRetry resets a terminal job to pending and clears any active cooldown for its dedupe key.
 func (s *Service) AdminRetry(ctx context.Context, id int64) (bool, error) {
-	if s == nil || s.Queries == nil {
-		return false, nil
-	}
-	job, err := s.Queries.SystemGetDurableJobByID(ctx, id)
-	if err != nil {
-		return false, err
-	}
-	if err := s.Queries.SystemClearJobCooldownWindow(ctx, db.SystemClearJobCooldownWindowParams{
-		CooldownUntil: s.now(),
-		DedupeKey:     job.DedupeKey,
-	}); err != nil {
-		return false, fmt.Errorf("clear cooldown for job %d: %w", id, err)
-	}
-	rows, err := s.Queries.AdminRetryDurableJob(ctx, id)
+	retried, err := s.updateAdminJobState(ctx, id, StatusCancelled, StatusPending, func(q db.Querier) (int64, error) {
+		rows, err := q.AdminRetryDurableJob(ctx, id)
+		if err != nil {
+			return 0, err
+		}
+		job, err := q.SystemGetDurableJobByID(ctx, id)
+		if err != nil || rows == 0 {
+			return rows, err
+		}
+		err = q.SystemClearJobCooldownWindow(ctx, db.SystemClearJobCooldownWindowParams{
+			CooldownUntil: s.now(),
+			DedupeKey:     job.DedupeKey,
+		})
+		return rows, err
+	})
 	if err != nil {
 		return false, fmt.Errorf("retry durable job %d: %w", id, err)
 	}
-	if rows > 0 {
+	if retried {
 		s.SignalWakeup()
 	}
-	return rows > 0, nil
+	return retried, nil
 }
 
-// AdminCancel cancels a pending or running job.
+// AdminCancel cancels a pending or running job and stops image recovery for its source.
 func (s *Service) AdminCancel(ctx context.Context, id int64) (bool, error) {
-	if s == nil || s.Queries == nil {
-		return false, nil
-	}
-	rows, err := s.Queries.AdminCancelDurableJob(ctx, id)
+	cancelled, err := s.updateAdminJobState(ctx, id, StatusPending, StatusCancelled, func(q db.Querier) (int64, error) {
+		return q.AdminCancelDurableJob(ctx, id)
+	})
 	if err != nil {
 		return false, fmt.Errorf("cancel durable job %d: %w", id, err)
 	}
-	return rows > 0, nil
+	return cancelled, nil
+}
+
+func (s *Service) updateAdminJobState(ctx context.Context, id int64, previousImageStatus, nextImageStatus string, update func(db.Querier) (int64, error)) (bool, error) {
+	if s == nil || s.Queries == nil {
+		return false, nil
+	}
+	tx, ok := s.Queries.(db.JobTransactor)
+	if !ok {
+		return false, fmt.Errorf("durable job transactions unavailable")
+	}
+	var rows int64
+	err := tx.WithJobTransaction(ctx, func(q db.Querier) error {
+		var err error
+		rows, err = update(q)
+		if err != nil || rows == 0 {
+			return err
+		}
+		return q.AdminSetImageCacheStateForDurableJob(ctx, db.AdminSetImageCacheStateForDurableJobParams{
+			JobID: id, PreviousStatus: previousImageStatus, NextStatus: nextImageStatus,
+		})
+	})
+	return err == nil && rows > 0, err
 }
 
 // AdminPurge deletes terminal durable jobs matching statusFilter (or all terminal jobs when empty).

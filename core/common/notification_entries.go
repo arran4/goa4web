@@ -40,6 +40,16 @@ func (n NotificationEntry) DisplayMessage() string {
 	return fmt.Sprintf("%d new %s in %s", n.ReplyCount, reply, title)
 }
 
+// HasVisibleNotificationAfter reports whether the viewer may see an inbox entry newer than id.
+func (cd *CoreData) HasVisibleNotificationAfter(id int32) (bool, error) {
+	entries, err := cd.VisibleNotificationEntries(db.ListVisibleNotificationEntriesForListerParams{
+		AfterNotificationID: id,
+		IncludeRead:         true,
+		Limit:               1,
+	})
+	return len(entries) != 0, err
+}
+
 // VisibleNotificationEntries lists notifications within the current actor's
 // grants. The query scopes account, resource visibility, and pagination together.
 func (cd *CoreData) VisibleNotificationEntries(params db.ListVisibleNotificationEntriesForListerParams) ([]NotificationEntry, error) {

@@ -59,7 +59,7 @@ func TestNotificationDigestWorker_SendDigest(t *testing.T) {
 	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at", "topic_title", "reply_author", "forum_reply", "reply_count", "snapshot", "total_entries"}).
 		AddRow(1, userID, "/link", "Test Notification", nil, 0, nil, nil, nil, time.Now(), nil, "", "", 0, 1, "", 1)
 	mock.ExpectQuery("WITH viewer AS").
-		WithArgs(userID, 1, false, 0, 0, 0, 0, sqlmock.AnyArg(), 0).
+		WithArgs(userID, 1, false, 0, 0, 0, 0, 0, sqlmock.AnyArg(), 0).
 		WillReturnRows(rows)
 
 	// The queued digest records the exact notification snapshot. It must not
@@ -104,7 +104,7 @@ func TestNotificationDigestWorker_PreviewDoesNotCreateDismissalState(t *testing.
 	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at", "topic_title", "reply_author", "forum_reply", "reply_count", "snapshot", "total_entries"}).
 		AddRow(1, userID, "/link", "Test Notification", nil, 0, nil, nil, nil, time.Now(), nil, "", "", 0, 1, "", 1)
 	mock.ExpectQuery("WITH viewer AS").
-		WithArgs(userID, 1, false, 0, 0, 0, 0, sqlmock.AnyArg(), 0).
+		WithArgs(userID, 1, false, 0, 0, 0, 0, 0, sqlmock.AnyArg(), 0).
 		WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO digest_deliveries").
 		WithArgs(userID, false).
@@ -137,7 +137,7 @@ func TestNotificationDigestWorker_DisabledDismissalPersistsOptOut(t *testing.T) 
 	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "activity_key", "priority", "resource_type", "resource_id", "activity_position", "created_at", "read_at", "topic_title", "reply_author", "forum_reply", "reply_count", "snapshot", "total_entries"}).
 		AddRow(1, userID, "/link", "Test Notification", nil, 0, nil, nil, nil, time.Now(), nil, "", "", 0, 1, "", 1)
 	mock.ExpectQuery("WITH viewer AS").
-		WithArgs(userID, 1, false, 0, 0, 0, 0, sqlmock.AnyArg(), 0).
+		WithArgs(userID, 1, false, 0, 0, 0, 0, 0, sqlmock.AnyArg(), 0).
 		WillReturnRows(rows)
 	mock.ExpectExec("INSERT INTO digest_deliveries").
 		WithArgs(userID, false).

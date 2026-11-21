@@ -39,6 +39,9 @@ const LiveEventKindNotification = "notification"
 // LiveEventKindThreadReply asks the open thread's page to check for new replies.
 const LiveEventKindThreadReply = "thread-reply"
 
+// notificationPollInterval bounds how often a socket checks for deliveries from another process.
+const notificationPollInterval = 5 * time.Second
+
 // LiveEvent is a browser invalidation signal. The HTML endpoint supplies the data.
 type LiveEvent struct {
 	Kind string    `json:"kind"`
@@ -112,12 +115,11 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var threadID int32
-	var cd *common.CoreData
+	cd := common.FromContext(r.Context())
 	var cards *linkCardWatch
 	if r.URL.Path == "/ws/events" {
 		if id, err := strconv.ParseInt(r.URL.Query().Get("thread"), 10, 32); err == nil && id > 0 {
 			threadID = int32(id)
-			cd = common.FromContext(r.Context())
 			if cd != nil && cd.UserID == uid {
 				cards = watchLinkCards(r.Context(), cd, threadID, r.URL.Query()["card"])
 			}
@@ -138,6 +140,21 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}),
 	)
 	defer sub.Close()
+
+	observeInbox := cd != nil && cd.UserID == uid && cd.Config != nil && cd.Config.NotificationsEnabled
+	var lastNotificationID int32
+	snapshotInbox := func() {
+		if id, err := cd.LatestNotificationID(); err == nil && id > lastNotificationID {
+			lastNotificationID = id
+		}
+	}
+	var notificationTick <-chan time.Time
+	if observeInbox {
+		snapshotInbox()
+		ticker := time.NewTicker(notificationPollInterval)
+		defer ticker.Stop()
+		notificationTick = ticker.C
+	}
 
 	conn, err := h.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -175,6 +192,9 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			var signal LiveEvent
 			switch evt := env.Msg.(type) {
 			case eventbus.NotificationsChanged:
+				if observeInbox {
+					snapshotInbox()
+				}
 				signal = LiveEvent{Kind: LiveEventKindNotification, Time: evt.Time}
 			case eventbus.ForumReplyCommitted:
 				if cd != nil && cd.UserID == uid && cd.CanReceiveForumReply(evt.TopicID, evt.ThreadID, evt.CommentID) {
@@ -188,6 +208,21 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			env.Ack()
 			if err != nil {
 				return
+			}
+		case now := <-notificationTick:
+			id, err := cd.LatestNotificationID()
+			if err != nil || id <= lastNotificationID {
+				continue
+			}
+			visible, err := cd.HasVisibleNotificationAfter(lastNotificationID)
+			if err != nil {
+				continue
+			}
+			lastNotificationID = id
+			if visible {
+				if err := writeLiveEvent(conn, LiveEvent{Kind: LiveEventKindNotification, Time: now.UTC()}); err != nil {
+					return
+				}
 			}
 		case now := <-cardTick:
 			if cards.changed(r.Context()) {

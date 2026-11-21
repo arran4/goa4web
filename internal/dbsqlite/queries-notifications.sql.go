@@ -140,6 +140,27 @@ func (q *Queries) DeleteNotificationForLister(ctx context.Context, arg DeleteNot
 	return err
 }
 
+const getLatestNotificationIDForLister = `-- name: GetLatestNotificationIDForLister :one
+SELECT n.id
+FROM notifications n
+JOIN users u ON u.idusers = n.users_idusers AND u.deleted_at IS NULL
+WHERE n.users_idusers = ?1
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id AND r.can_login = 1
+      WHERE ur.users_idusers = u.idusers
+  )
+ORDER BY n.id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestNotificationIDForLister(ctx context.Context, listerID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getLatestNotificationIDForLister, listerID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getNotificationCountForLister = `-- name: GetNotificationCountForLister :one
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = ?1
@@ -349,11 +370,12 @@ visible AS (
         AND reply.idcomments = (n.activity_position >> 32) AND reply.forumthread_id = th.idforumthread
     LEFT JOIN users author ON author.idusers = reply.users_idusers
     WHERE (?5 OR n.read_at IS NULL)
-      AND (?6 = 0 OR n.id = ?6)
+      AND n.id > ?6
+      AND (?7 = 0 OR n.id = ?7)
       AND (
-          ?7 = 0 OR EXISTS (
+          ?8 = 0 OR EXISTS (
               SELECT 1 FROM digest_delivery_notifications item
-              WHERE item.notification_id = n.id AND item.digest_delivery_id = ?7
+              WHERE item.notification_id = n.id AND item.digest_delivery_id = ?8
           )
       )
       AND (
@@ -419,13 +441,14 @@ LIMIT ?2 OFFSET ?1
 `
 
 type ListVisibleNotificationEntriesForListerParams struct {
-	Offset         int64
-	Limit          int64
-	ListerID       int64
-	GroupUnread    interface{}
-	IncludeRead    interface{}
-	NotificationID interface{}
-	DeliveryID     interface{}
+	Offset              int64
+	Limit               int64
+	ListerID            int64
+	GroupUnread         interface{}
+	IncludeRead         interface{}
+	AfterNotificationID int64
+	NotificationID      interface{}
+	DeliveryID          interface{}
 }
 
 type ListVisibleNotificationEntriesForListerRow struct {
@@ -455,6 +478,7 @@ func (q *Queries) ListVisibleNotificationEntriesForLister(ctx context.Context, a
 		arg.ListerID,
 		arg.GroupUnread,
 		arg.IncludeRead,
+		arg.AfterNotificationID,
 		arg.NotificationID,
 		arg.DeliveryID,
 	)

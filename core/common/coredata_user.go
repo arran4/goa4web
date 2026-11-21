@@ -9,6 +9,18 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 )
 
+// LatestNotificationID returns the newest inbox entry ID for the current user.
+func (cd *CoreData) LatestNotificationID() (int32, error) {
+	if cd == nil || cd.queries == nil || cd.UserID <= 0 {
+		return 0, nil
+	}
+	id, err := cd.queries.GetLatestNotificationIDForLister(cd.ctx, cd.UserID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	return id, err
+}
+
 // UserSettings returns preference settings for a given user.
 func (cd *CoreData) UserSettings(userID int32) (*db.Preference, error) {
 	if cd == nil || cd.queries == nil {

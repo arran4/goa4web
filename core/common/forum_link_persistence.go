@@ -5,8 +5,23 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
 )
+
+func (cd *CoreData) commentLinkObservations(section consts.PermissionSection, body string) []string {
+	if cd.jobService == nil {
+		return nil
+	}
+	switch section {
+	case consts.PermissionSectionForum, consts.PermissionSectionPrivateForum, consts.PermissionSectionPrivateForumThread,
+		consts.PermissionSectionBlogs, consts.PermissionSectionImageBBS, consts.PermissionSectionLinker,
+		consts.PermissionSectionNews, consts.PermissionSectionWriting:
+		return externalLinksFromBody(body)
+	default:
+		return nil
+	}
+}
 
 func insertCommentForCommenter(ctx context.Context, q db.Querier, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
 	result, err := q.CreateCommentInSectionForCommenter(ctx, arg)

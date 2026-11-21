@@ -62,6 +62,48 @@ func TestScenarioForumOpeningCommentCommitsWithObservedLink(t *testing.T) {
 	require.Equal(t, targetURL, claim.Job.TargetKey)
 }
 
+func TestScenarioNewsReplyCommitsWithObservedLink(t *testing.T) {
+	env, cleanup := setupAPITestEnv(t)
+	defer cleanup()
+	ctx := t.Context()
+	q := env.cd.Queries()
+	queue := jobs.NewService(q)
+	alice, ok := env.registry.ResolveUser("alice")
+	require.True(t, ok)
+	for _, action := range []string{"post", "see", "view", "reply"} {
+		require.NoError(t, env.cd.GrantUser(alice, "news", "post", action))
+	}
+	app := common.NewCoreData(ctx, q, env.server.Config, common.WithJobService(queue)).ForUser(alice)
+	post, err := app.CreateNewsPost(1, alice, "News source for a durable reply")
+	require.NoError(t, err)
+	require.NotZero(t, post)
+	target := "https://example.test/legacy-news-reply"
+	body := "[a=" + target + "]Link from news"
+
+	_, err = env.db.ExecContext(ctx, `CREATE TRIGGER reject_news_link BEFORE INSERT ON durable_jobs
+		WHEN NEW.job_type = 'external_link' BEGIN SELECT RAISE(ABORT, 'injected news link failure'); END`)
+	require.NoError(t, err)
+	comment, _, err := app.CreateNewsReply(alice, int32(post), 1, body)
+	if err == nil && comment != 0 {
+		t.Errorf("news reply %d committed despite an unavailable link queue", comment)
+	}
+	require.ErrorContains(t, err, "injected news link failure")
+	require.Zero(t, comment)
+
+	_, err = env.db.ExecContext(ctx, "DROP TRIGGER reject_news_link")
+	require.NoError(t, err)
+	comment, thread, err := app.CreateNewsReply(alice, int32(post), 1, body)
+	require.NoError(t, err)
+	require.NotZero(t, comment)
+	comments, err := app.SectionThreadComments("news", "post", thread.ThreadID)
+	require.NoError(t, err)
+	require.Len(t, comments, 1)
+	job, err := jobs.NewService(q).ClaimNext(ctx, "standalone", jobs.JobTypeExternalLink)
+	require.NoError(t, err)
+	require.NotNil(t, job)
+	require.Equal(t, target, job.Job.TargetKey)
+}
+
 func TestScenarioForumReplyAppendAndEditCommitWithObservedLinks(t *testing.T) {
 	env, cleanup := setupAPITestEnv(t)
 	defer cleanup()

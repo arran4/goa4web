@@ -213,17 +213,18 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             pthid,
-		TopicID:              ptid,
-		CommentID:            int32(cid),
-		LabelItem:            "imagebbs",
-		LabelItemID:          int32(bid),
-		CommentText:          text,
-		CommentURL:           cd.AbsoluteURL(endUrl),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
-		IncludeSearch:        true,
+		ThreadID:              pthid,
+		TopicID:               ptid,
+		CommentID:             int32(cid),
+		LabelItem:             "imagebbs",
+		LabelItemID:           int32(bid),
+		CommentText:           text,
+		ExternalLinksRecorded: cd.JobService() != nil,
+		CommentURL:            cd.AbsoluteURL(endUrl),
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        true,
+		IncludePostCount:      true,
+		IncludeSearch:         true,
 	}); err != nil {
 		log.Printf("imagebbs reply side effects: %v", err)
 	}

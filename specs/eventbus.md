@@ -73,8 +73,9 @@ the remote image URL.
 The embedded server treats successful task events from older producers as
 inputs to the durable external-link queue. Forum opening comments, replies,
 appends and edits record eligible link jobs in the same transaction as their
-content. Worker wake-ups follow the commit. Task events indicate when their
-link jobs have already been recorded, so the compatibility worker does not
+content. Blog, image board, linker, news and writing replies use the same
+transaction boundary. Worker wake-ups follow the commit. Task events indicate
+when their link jobs have already been recorded, so the compatibility worker does not
 enqueue them again. Observing a link preserves the schedule of an active
 retry and respects its cooldown.
 

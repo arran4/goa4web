@@ -2247,13 +2247,7 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 		Action:        action.String(),
 	}
-	var links []string
-	if cd.jobService != nil {
-		switch section {
-		case consts.PermissionSectionForum, consts.PermissionSectionPrivateForum, consts.PermissionSectionPrivateForumThread:
-			links = externalLinksFromBody(text)
-		}
-	}
+	links := cd.commentLinkObservations(section, text)
 	var commentID int64
 	err = cd.withForumLinkObservations(cd.ctx, links, arg.CommenterID, func(q db.Querier) (bool, error) {
 		var err error

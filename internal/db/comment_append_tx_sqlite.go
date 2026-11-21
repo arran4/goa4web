@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 )
 
 // BeginTx starts a transaction using the underlying SQLite database connection.
@@ -26,45 +25,16 @@ func (s *sqliteQuerier) withTx(tx *sql.Tx) *sqliteQuerier {
 	}
 }
 
-// AppendCommentInSectionWithActivity conditionally appends text to an existing comment within the append window
-// and allocates an append activity ID in a single SQLite database transaction. If the conditional append affects 0 rows,
-// no activity record is created and 0, 0, nil is returned. If either the append update or activity insert fails,
-// the transaction is rolled back and an error is returned.
-func (s *sqliteQuerier) AppendCommentInSectionWithActivity(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+// WithCommentTransaction runs a comment mutation and its required effects atomically.
+func (s *sqliteQuerier) WithCommentTransaction(ctx context.Context, write func(Querier) error) error {
 	tx, err := s.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, 0, fmt.Errorf("begin append transaction: %w", err)
+		return fmt.Errorf("begin comment transaction: %w", err)
 	}
-	defer func() {
-		_ = tx.Rollback()
-	}()
+	return writeCommentTransaction(tx, s.withTx(tx), write)
+}
 
-	stx := s.withTx(tx)
-	rowsAffected, err := stx.AppendCommentInSectionForCommenter(ctx, arg)
-	if err != nil {
-		return 0, 0, fmt.Errorf("append comment in section: %w", err)
-	}
-	if rowsAffected == 0 {
-		return 0, 0, nil
-	}
-
-	createdAt := arg.Written.Time
-	if !arg.Written.Valid {
-		createdAt = time.Now().UTC()
-	}
-
-	appendID, err := stx.SystemCreateCommentAppend(ctx, SystemCreateCommentAppendParams{
-		CommentID:    arg.CommentID,
-		UsersIdusers: arg.CommenterID,
-		CreatedAt:    createdAt,
-	})
-	if err != nil {
-		return 0, 0, fmt.Errorf("record comment append: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return 0, 0, fmt.Errorf("commit append transaction: %w", err)
-	}
-
-	return rowsAffected, appendID, nil
+// AppendCommentInSectionWithActivity appends to a comment and records its activity in one SQLite transaction.
+func (s *sqliteQuerier) AppendCommentInSectionWithActivity(ctx context.Context, arg AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+	return appendCommentWithActivity(ctx, s, arg)
 }

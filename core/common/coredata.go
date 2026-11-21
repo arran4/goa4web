@@ -2235,7 +2235,7 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
 	}
-	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+	arg := db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
@@ -2246,8 +2246,21 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 		ItemType:      sql.NullString{String: itemType.String(), Valid: itemType != ""},
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 		Action:        action.String(),
+	}
+	var links []string
+	if cd.jobService != nil {
+		switch section {
+		case consts.PermissionSectionForum, consts.PermissionSectionPrivateForum, consts.PermissionSectionPrivateForumThread:
+			links = externalLinksFromBody(text)
+		}
+	}
+	var commentID int64
+	err = cd.withForumLinkObservations(cd.ctx, links, arg.CommenterID, func(q db.Querier) (bool, error) {
+		var err error
+		commentID, err = insertCommentForCommenter(cd.ctx, q, arg)
+		return commentID != 0, err
 	})
-	if err != nil {
+	if err != nil || commentID == 0 {
 		return 0, err
 	}
 	if err := cd.recordThreadImages(threadID, paths); err != nil {

@@ -437,7 +437,7 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 
 	// 7. Test write path: Insert a new comment using queries on SQLite
 	querier := srv.Queries
-	newCommentID, err := querier.CreateCommentInSectionForCommenter(ctx, db.CreateCommentInSectionForCommenterParams{
+	insertedComment, err := querier.CreateCommentInSectionForCommenter(ctx, db.CreateCommentInSectionForCommenterParams{
 		CommenterID:   sql.NullInt32{Int32: 2, Valid: true},
 		ForumthreadID: 1,
 		LanguageID:    sql.NullInt32{Int32: 1, Valid: true},
@@ -450,6 +450,10 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("failed to insert comment into SQLite: %v", err)
+	}
+	newCommentID, err := insertedComment.LastInsertId()
+	if err != nil {
+		t.Fatalf("retrieve inserted comment ID: %v", err)
 	}
 	if newCommentID <= 0 {
 		t.Fatalf("invalid new comment id: %d", newCommentID)

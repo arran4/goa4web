@@ -71,9 +71,12 @@ the remote image URL.
 ## Observed external links
 
 The embedded server treats successful task events from older producers as
-inputs to the durable external-link queue. The same queue handles links
-observed directly by newer thread operations. Observing a link preserves the
-schedule of an active retry and respects its cooldown.
+inputs to the durable external-link queue. Forum opening comments, replies,
+appends and edits record eligible link jobs in the same transaction as their
+content. Worker wake-ups follow the commit. Task events indicate when their
+link jobs have already been recorded, so the compatibility worker does not
+enqueue them again. Observing a link preserves the schedule of an active
+retry and respects its cooldown.
 
 The worker fetches outside the job transaction and checks the current lease
 when publishing metadata or its image reference. It rejects unsuccessful HTTP

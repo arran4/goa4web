@@ -207,7 +207,7 @@ func (q *Queries) AppendCommentInSectionForCommenter(ctx context.Context, arg Ap
 	return result.RowsAffected()
 }
 
-const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execlastid
+const createCommentInSectionForCommenter = `-- name: CreateCommentInSectionForCommenter :execresult
 ;
 
 INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
@@ -239,8 +239,8 @@ type CreateCommentInSectionForCommenterParams struct {
 	ItemID        sql.NullInt64
 }
 
-func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createCommentInSectionForCommenter,
+func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createCommentInSectionForCommenter,
 		arg.LanguageID,
 		arg.CommenterID,
 		arg.ForumthreadID,
@@ -252,10 +252,6 @@ func (q *Queries) CreateCommentInSectionForCommenter(ctx context.Context, arg Cr
 		arg.Action,
 		arg.ItemID,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }
 
 const getAllCommentsForIndex = `-- name: GetAllCommentsForIndex :many

@@ -44,6 +44,9 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 				if evt.Outcome != eventbus.TaskOutcomeSuccess {
 					return
 				}
+				if recorded, _ := evt.Data[eventbus.ExternalLinksRecordedKey].(bool); recorded {
+					return
+				}
 				body, ok := evt.Data["Body"].(string)
 				if !ok || body == "" {
 					return

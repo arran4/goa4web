@@ -56,6 +56,9 @@ type TaskEvent struct {
 	Outcome          string         // Outcome describes the result of the task run
 }
 
+// ExternalLinksRecordedKey indicates that the task's link observations are already durable.
+const ExternalLinksRecordedKey = "external_links_recorded"
+
 const (
 	// TaskOutcomeSuccess indicates the task completed without error.
 	TaskOutcomeSuccess = "success"

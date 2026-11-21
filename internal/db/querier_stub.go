@@ -1306,15 +1306,23 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 	return res, nil
 }
 
-func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error) {
 	s.mu.Lock()
 	s.CreateCommentInSectionForCommenterCalls = append(s.CreateCommentInSectionForCommenterCalls, arg)
 	fn := s.CreateCommentInSectionForCommenterFn
+	id, err := s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
 	s.mu.Unlock()
 	if fn != nil {
-		return fn(ctx, arg)
+		id, err = fn(ctx, arg)
 	}
-	return s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
+	if err != nil {
+		return nil, err
+	}
+	var rows int64
+	if id > 0 {
+		rows = 1
+	}
+	return FakeSQLResult{LastInsertIDValue: id, RowsAffectedValue: rows}, nil
 }
 
 // ListUploadedImagePathsByUser records the call and returns stored paths.

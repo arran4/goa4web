@@ -254,13 +254,13 @@ CREATE TABLE `linker_search` (
 
 CREATE TABLE `roles` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
-  `name` tinytext NOT NULL,
+  `name` varchar(255) NOT NULL,
   `can_login` tinyint(1) NOT NULL DEFAULT 0,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
   `private_labels` tinyint(1) NOT NULL DEFAULT 1,
   `public_profile_allowed_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `roles_name_idx` (`name`(255))
+  UNIQUE KEY `roles_name_idx` (`name`)
 );
 
 CREATE TABLE `user_roles` (
@@ -332,9 +332,9 @@ CREATE INDEX forum_reply_email_window ON forum_reply_email_activities (recipient
 
 CREATE TABLE `searchwordlist` (
   `idsearchwordlist` int(10) NOT NULL AUTO_INCREMENT,
-  `word` tinytext DEFAULT NULL,
+  `word` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`idsearchwordlist`),
-  UNIQUE KEY `searchwordlist_word_idx` (`word`(255))
+  UNIQUE KEY `searchwordlist_word_idx` (`word`)
 );
 
 CREATE TABLE `searchwordlist_has_linker` (
@@ -382,11 +382,11 @@ CREATE TABLE `user_language` (
 
 CREATE TABLE `users` (
   `idusers` int(10) NOT NULL AUTO_INCREMENT,
-  `username` tinytext DEFAULT NULL,
+  `username` varchar(255) DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `public_profile_enabled_at` datetime DEFAULT NULL,
   PRIMARY KEY (`idusers`),
-  UNIQUE KEY `users_username_idx` (`username`(255))
+  UNIQUE KEY `users_username_idx` (`username`)
 );
 
 CREATE TABLE `passwords` (
@@ -787,9 +787,9 @@ CREATE TABLE `content_public_labels` (
   `id` int NOT NULL AUTO_INCREMENT,
   `item` varchar(64) NOT NULL,
   `item_id` int NOT NULL,
-  `label` tinytext NOT NULL,
+  `label` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `content_public_labels_uq` (`item`,`item_id`,`label`(255))
+  UNIQUE KEY `content_public_labels_uq` (`item`,`item_id`,`label`)
 );
 
 CREATE TABLE `content_private_labels` (
@@ -797,19 +797,19 @@ CREATE TABLE `content_private_labels` (
   `item` varchar(64) NOT NULL,
   `item_id` int NOT NULL,
   `user_id` int NOT NULL,
-  `label` tinytext NOT NULL,
+  `label` varchar(255) NOT NULL,
   `invert` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `content_private_labels_uq` (`item`,`item_id`,`user_id`,`label`(255))
+  UNIQUE KEY `content_private_labels_uq` (`item`,`item_id`,`user_id`,`label`)
 );
 
 CREATE TABLE `content_label_status` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `item` tinytext NOT NULL,
+  `item` varchar(255) NOT NULL,
   `item_id` int NOT NULL,
-  `label` tinytext NOT NULL,
+  `label` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `content_label_status_uq` (`item`(255),`item_id`,`label`(255))
+  UNIQUE KEY `content_label_status_uq` (`item`,`item_id`,`label`)
 );
 
 CREATE TABLE `content_read_markers` (
@@ -969,3 +969,4 @@ CREATE TABLE IF NOT EXISTS search_dirty_targets (
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (106, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (107, 1);

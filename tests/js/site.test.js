@@ -145,6 +145,38 @@ const siteJsPath = path.join(__dirname, '../../core/templates/assets/site.js');
 const siteJsContent = fs.readFileSync(siteJsPath, 'utf8');
 eval(siteJsContent);
 
+// The editor only changes the selected channel and skips disabled controls.
+{
+    const checkbox = (channel, checked = false, disabled = false) => ({
+        value: `pattern|${channel}`, checked, disabled, closest: () => table,
+    });
+    const inSite = checkbox('internal');
+    const email = checkbox('email');
+    const disabled = checkbox('internal', false, true);
+    const table = {querySelectorAll: () => [inSite, email, disabled]};
+    const another = checkbox('internal');
+    const button = {
+        hidden: true, dataset: {subscriptionChannel: 'internal', subscriptionSelection: 'all'},
+        closest: () => table,
+    };
+    let click;
+    const form = {
+        querySelectorAll: (selector) => selector.startsWith('[data-') ? [button] : [inSite, email, disabled, another],
+        addEventListener: (type, callback) => { if (type === 'click') click = callback; },
+    };
+    setupSubscriptionEditor(form);
+    assert(!button.hidden, 'script makes bulk selectors available');
+    click({target: {closest: () => button}});
+    assert(inSite.checked && !email.checked && !disabled.checked && !another.checked, 'table bulk selection respects channel and scope');
+    button.dataset.subscriptionSelection = 'invert';
+    click({target: {closest: () => button}});
+    assert(!inSite.checked, 'invert updates the mutable checkbox');
+    button.closest = () => null;
+    button.dataset.subscriptionSelection = 'all';
+    click({target: {closest: () => button}});
+    assert(inSite.checked && another.checked && !disabled.checked, 'form bulk selection spans its tables');
+}
+
 // Tests
 function assert(condition, message) {
     if (!condition) {

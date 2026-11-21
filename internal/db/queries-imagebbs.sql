@@ -12,7 +12,7 @@ WHERE (b.imageboard_idimageboard = sqlc.narg(parent_id) OR (b.imageboard_idimage
 LIMIT ? OFFSET ?;
 
 
--- name: CreateImagePostForPoster :execlastid
+-- name: CreateImagePostForPoster :execresult
 INSERT INTO imagepost (
     imageboard_idimageboard,
     thumbnail,

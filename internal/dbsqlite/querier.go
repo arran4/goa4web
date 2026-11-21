@@ -314,7 +314,7 @@ type Querier interface {
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
 	CreateGrant(ctx context.Context, arg CreateGrantParams) error
-	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
+	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (sql.Result, error)
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
 	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error

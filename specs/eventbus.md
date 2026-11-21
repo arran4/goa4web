@@ -95,7 +95,8 @@ Forum opening comments, replies, appends and edits record a search revision
 and coalesce its job in the source transaction. Blog, image board, linker,
 news and writing reply creation use the same transaction boundary. Writing
 creation and edits record the article search job with the article change.
-Link approvals record a search job for every published link.
+Link approvals record a search job for every published link. Image board
+uploads commit the post, upload metadata and search job together.
 A search job reads the current source and replaces its per-item terms.
 The term replacement and indexed revision commit together under an active
 job lease. A superseded revision cannot advance the indexed revision.

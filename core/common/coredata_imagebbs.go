@@ -13,6 +13,7 @@ import (
 
 	"github.com/arran4/goa4web/a4code/a4code2html"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // ImageBBSFeed constructs an RSS/Atom feed for the provided image posts.
@@ -139,3 +140,24 @@ func (cd *CoreData) ImageBBSThreadPosts() (ImageBBSThreadPosts, error) {
 
 // ImageBBSThreadPosts represents comments within a thread.
 type ImageBBSThreadPosts []*db.GetCommentsByThreadIdForUserRow
+
+// CreateImageBoardUpload records a post, upload metadata and its index work.
+func (cd *CoreData) CreateImageBoardUpload(uploaded db.CreateUploadedImageForUploaderParams, post db.CreateImagePostForPosterParams) (int64, error) {
+	return cd.withSearchWork(searchindex.TypeImage, func(q db.Querier) (int64, error) {
+		if _, err := q.CreateUploadedImageForUploader(cd.ctx, uploaded); err != nil {
+			return 0, fmt.Errorf("record uploaded image: %w", err)
+		}
+		result, err := q.CreateImagePostForPoster(cd.ctx, post)
+		if err != nil {
+			return 0, err
+		}
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
+		if rows == 0 {
+			return 0, sql.ErrNoRows
+		}
+		return result.LastInsertId()
+	})
+}

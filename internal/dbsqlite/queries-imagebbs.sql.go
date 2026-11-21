@@ -264,7 +264,7 @@ func (q *Queries) AdminUpdateImagePost(ctx context.Context, arg AdminUpdateImage
 	return err
 }
 
-const createImagePostForPoster = `-- name: CreateImagePostForPoster :execlastid
+const createImagePostForPoster = `-- name: CreateImagePostForPoster :execresult
 INSERT INTO imagepost (
     imageboard_idimageboard,
     thumbnail,
@@ -305,8 +305,8 @@ type CreateImagePostForPosterParams struct {
 	GranteeID    sql.NullInt64
 }
 
-func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createImagePostForPoster,
+func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createImagePostForPoster,
 		arg.ImageboardID,
 		arg.Thumbnail,
 		arg.Fullimage,
@@ -319,10 +319,6 @@ func (q *Queries) CreateImagePostForPoster(ctx context.Context, arg CreateImageP
 		arg.GrantBoardID,
 		arg.GranteeID,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }
 
 const getAllImagePostsForIndex = `-- name: GetAllImagePostsForIndex :many

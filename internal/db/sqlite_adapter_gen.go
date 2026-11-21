@@ -4380,7 +4380,7 @@ func (s *sqliteQuerier) CreateGrant(ctx context.Context, arg CreateGrantParams) 
 	})
 }
 
-func (s *sqliteQuerier) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error) {
+func (s *sqliteQuerier) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (sql.Result, error) {
 	res, err := s.q.CreateImagePostForPoster(ctx, dbsqlite.CreateImagePostForPosterParams{
 		ImageboardID: sql.NullInt64{Int64: int64(arg.ImageboardID.Int32), Valid: arg.ImageboardID.Valid},
 		Thumbnail:    arg.Thumbnail,
@@ -4400,7 +4400,7 @@ func (s *sqliteQuerier) CreateImagePostForPoster(ctx context.Context, arg Create
 		GranteeID:    sql.NullInt64{Int64: int64(arg.GranteeID.Int32), Valid: arg.GranteeID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }

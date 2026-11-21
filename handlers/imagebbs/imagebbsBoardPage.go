@@ -127,19 +127,17 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	thumbName := shaHex + "_thumb" + ext
 	relThumb := path.Join(relBase, thumbName)
 
-	if _, err := queries.CreateUploadedImageForUploader(r.Context(), db.CreateUploadedImageForUploaderParams{
+	uploaded := db.CreateUploadedImageForUploaderParams{
 		UploaderID: uid,
 		Path:       sql.NullString{String: relFull, Valid: true},
 		Width:      sql.NullInt32{Int32: int32(cfg.Width), Valid: true},
 		Height:     sql.NullInt32{Int32: int32(cfg.Height), Valid: true},
 		FileSize:   int32(size),
-	}); err != nil {
-		return fmt.Errorf("record uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	approved := !board.ApprovalRequired
 
-	pid, err := queries.CreateImagePostForPoster(r.Context(), db.CreateImagePostForPosterParams{
+	pid, err := cd.CreateImageBoardUpload(uploaded, db.CreateImagePostForPosterParams{
 		ImageboardID: sql.NullInt32{Int32: int32(bid), Valid: true},
 		Thumbnail:    sql.NullString{Valid: true, String: relThumb},
 		Fullimage:    sql.NullString{Valid: true, String: relFull},
@@ -161,7 +159,9 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 			if evt.Data == nil {
 				evt.Data = map[string]any{}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
+			if cd.JobService() == nil {
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
+			}
 			evt.Data["ImagePostID"] = int32(pid)
 			evt.Data["BoardID"] = int32(bid)
 

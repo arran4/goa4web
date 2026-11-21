@@ -3,12 +3,15 @@ package externallink
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"testing/iotest"
+	"unicode/utf8"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
@@ -307,6 +310,67 @@ func TestExternalLinkBackgroundTask_EmptyURLNoop(t *testing.T) {
 	if res, err := prefetchTask.BackgroundTask(context.Background(), qs); err != nil || res != nil {
 		t.Errorf("expected (nil, nil) for empty prefetch task, got (%v, %v)", res, err)
 	}
+}
+
+func TestHappyPathExternalLinkBackgroundRefreshNormalizesLargeDescription(t *testing.T) {
+	q := testhelpers.NewQuerierStub()
+	description := strings.Repeat("🐚", 17000)
+	q.EnsureExternalLinkFn = func(context.Context, string) (sql.Result, error) {
+		return db.FakeSQLResult{LastInsertIDValue: 456}, nil
+	}
+	var stored db.UpdateExternalLinkMetadataParams
+	q.UpdateExternalLinkMetadataFn = func(_ context.Context, metadata db.UpdateExternalLinkMetadataParams) error {
+		stored = metadata
+		return nil
+	}
+	var requests int
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		requests++
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     make(http.Header),
+			Body: io.NopCloser(strings.NewReader(
+				`<html><head><meta property="og:description" content="` + description + `"></head></html>`,
+			)),
+		}
+	})
+	cd := common.NewCoreData(t.Context(), q, nil, common.WithHTTPClient(client))
+	ctx := context.WithValue(t.Context(), consts.KeyCoreData, cd)
+	if _, err := (ReloadExternalLinkTask{URL: "https://example.com/article"}).BackgroundTask(ctx, q); err != nil {
+		t.Fatalf("refresh metadata: %v", err)
+	}
+	if requests != 1 {
+		t.Fatalf("requests = %d, want 1", requests)
+	}
+	t.Run("Persisted description", func(t *testing.T) {
+		got := stored.CardDescription.String
+		if stored.ID != 456 || !stored.CardDescription.Valid || len(got) != 64000 || !utf8.ValidString(got) || !strings.HasPrefix(description, got) {
+			t.Fatalf("link %d description length = %d, want link 456 with a valid 64000-byte prefix", stored.ID, len(got))
+		}
+	})
+}
+
+func TestExternalLinkBackgroundRefreshFetchFailure(t *testing.T) {
+	t.Run("Unhappy Path - fetch fails before creating a record", func(t *testing.T) {
+		q := testhelpers.NewQuerierStub()
+		q.EnsureExternalLinkFn = func(context.Context, string) (sql.Result, error) {
+			t.Fatal("failed metadata fetch attempted to create a record")
+			return nil, nil
+		}
+		fetchErr := errors.New("read interrupted")
+		client := NewTestClient(func(*http.Request) *http.Response {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     make(http.Header),
+				Body:       io.NopCloser(iotest.ErrReader(fetchErr)),
+			}
+		})
+		cd := common.NewCoreData(t.Context(), q, nil, common.WithHTTPClient(client))
+		ctx := context.WithValue(t.Context(), consts.KeyCoreData, cd)
+		if followUp, err := (ReloadExternalLinkTask{URL: "https://example.com/article"}).BackgroundTask(ctx, q); followUp != nil || !errors.Is(err, fetchErr) {
+			t.Fatalf("failed metadata refresh returned (%v, %v), want %v and no follow-up task", followUp, err, fetchErr)
+		}
+	})
 }
 
 func TestExternalLinkWorkerPipeline_PreservesHTTPClient(t *testing.T) {

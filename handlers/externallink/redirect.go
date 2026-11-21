@@ -1,6 +1,7 @@
 package externallink
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -59,30 +60,16 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if needFetch && canonicalURL != "" && !isInternal {
-		info, err := opengraph.Fetch(r.Context(), canonicalURL, cd.HTTPClient())
-		if err == nil {
-			if linkID == 0 {
-				res, err := cd.EnsureExternalLink(r.Context(), canonicalURL)
-				if err == nil {
-					id, _ := res.LastInsertId()
-					linkID = int32(id)
-				} else {
-					log.Printf("EnsureExternalLink error: %v", err)
-				}
-				if linkID == 0 {
-					if l, err := cd.GetExternalLink(r.Context(), canonicalURL); err == nil && l != nil {
-						linkID = l.ID
-					}
-				}
-			}
+		_, err := domainexternallink.RefreshMetadata(r.Context(), cd, canonicalURL, func(ctx context.Context) (int32, error) {
 			if linkID != 0 {
-				err := cd.UpdateExternalLinkMetadata(r.Context(), domainexternallink.MetadataParams(linkID, info))
-				if err != nil {
-					log.Printf("UpdateExternalLinkMetadata error: %v", err)
-				}
+				return linkID, nil
 			}
-		} else {
-			log.Printf("fetchOpenGraph error: %v", err)
+			return domainexternallink.ResolveRecord(ctx, cd, canonicalURL)
+		}, func(ctx context.Context, target string) (*opengraph.Info, error) {
+			return opengraph.Fetch(ctx, target, cd.HTTPClient())
+		}, nil)
+		if err != nil {
+			log.Printf("refresh external link for confirmation page: %v", err)
 		}
 	}
 

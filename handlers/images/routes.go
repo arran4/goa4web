@@ -3,7 +3,6 @@ package images
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"fmt"
 	"image"
 	"log"
@@ -299,18 +298,7 @@ func regenerateMissingThumbnail(ctx context.Context, cd *common.CoreData, p uplo
 }
 
 func generateAndSaveThumbnail(ctx context.Context, cd *common.CoreData, p upload.Provider, id, key, originalID string, origBytes []byte, thumbnailSize config.ThumbnailSize, fromCache bool) []byte {
-	img, _, err := image.Decode(bytes.NewReader(origBytes))
-	if err != nil {
-		return nil
-	}
-
-	ext := filepath.Ext(originalID)
-	generator := "bild"
-	if cd.Config != nil && cd.Config.ImageThumbnailGenerator != "" {
-		generator = cd.Config.ImageThumbnailGenerator
-	}
-
-	thumbBytes, err := intimages.GenerateThumbnailWithinBounds(img, ext, generator, thumbnailSize.Height, thumbnailSize.Width)
+	thumbBytes, img, err := generateCacheThumbnail(cd.Config, originalID, origBytes, thumbnailSize)
 	if err != nil {
 		return nil
 	}
@@ -342,6 +330,34 @@ func generateAndSaveThumbnail(ctx context.Context, cd *common.CoreData, p upload
 	return nil
 }
 
+func generateCacheThumbnail(cfg *config.RuntimeConfig, originalID string, origBytes []byte, thumbnailSize config.ThumbnailSize) ([]byte, image.Image, error) {
+	img, _, err := image.Decode(bytes.NewReader(origBytes))
+	if err != nil {
+		return nil, nil, err
+	}
+	generator := "bild"
+	if cfg != nil && cfg.ImageThumbnailGenerator != "" {
+		generator = cfg.ImageThumbnailGenerator
+	}
+	body, err := intimages.GenerateThumbnailWithinBounds(img, filepath.Ext(originalID), generator, thumbnailSize.Height, thumbnailSize.Width)
+	return body, img, err
+}
+
+func restoreVersionedThumbnail(ctx context.Context, cfg *config.RuntimeConfig, p upload.Provider, key, originalKey, originalID string, entry *db.ImageCacheEntry, size config.ThumbnailSize) []byte {
+	original, err := p.Read(ctx, originalKey)
+	if err != nil {
+		return nil
+	}
+	body, _, err := generateCacheThumbnail(cfg, originalID, original, size)
+	if err != nil || entry != nil && !common.MatchesImageCacheObject(entry, body) {
+		return nil
+	}
+	if err := p.Write(ctx, key, body); err != nil {
+		return nil
+	}
+	return body
+}
+
 func serveCache(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	if !intimages.ValidID(id) {
@@ -352,17 +368,42 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cfg := cd.Config
 	originalID, thumbnailSize, isThumbnail := thumbnailRequest(id, cfg)
-	ok, err := cd.PrepareImageCacheEntryForServe(r.Context(), id)
+	entry, ok, err := cd.ImageCacheEntryForServe(r.Context(), id)
 	if err != nil || !ok {
-		entry, entryErr := cd.ImageCacheEntry(r.Context(), id)
-		if entryErr != nil && entryErr != sql.ErrNoRows {
-			entry = nil
-		}
 		serveMissingCacheImage(w, r, cfg, id, entry)
 		return
 	}
-	sub1, sub2 := id[:2], id[2:4]
-	key := path.Join(sub1, sub2, id)
+	key, err := common.ImageCacheObjectKey(id, entry)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	var originalKey string
+	var publishedThumbnail *db.ImageCacheEntry
+	if isThumbnail {
+		legacyKey, _ := common.ImageCacheObjectKey(id, nil)
+		if key != legacyKey {
+			publishedThumbnail = entry
+		}
+		parent, _ := cd.ImageCacheEntry(r.Context(), originalID)
+		legacyOriginalKey, _ := common.ImageCacheObjectKey(originalID, nil)
+		if parent != nil {
+			parentKey, err := common.ImageCacheObjectKey(originalID, parent)
+			if err != nil || parentKey != legacyOriginalKey && parent.Status != "ready" {
+				serveMissingCacheImage(w, r, cfg, id, parent)
+				return
+			}
+			if parentKey != legacyOriginalKey {
+				originalKey = parentKey
+				if !parent.ThumbnailID.Valid || parent.ThumbnailID.String != id {
+					publishedThumbnail = nil
+				}
+				if publishedThumbnail == nil {
+					key = path.Join(path.Dir(parentKey), id)
+				}
+			}
+		}
+	}
 	safeDim, maxW, maxH := getSafeDimensions(cd)
 
 	if p := upload.CacheProviderFromConfig(cfg); p != nil {
@@ -380,7 +421,12 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err != nil && isThumbnail {
-			data = regenerateMissingThumbnail(r.Context(), cd, p, id, key, originalID, thumbnailSize)
+			switch {
+			case originalKey != "":
+				data = restoreVersionedThumbnail(r.Context(), cfg, p, key, originalKey, originalID, publishedThumbnail, thumbnailSize)
+			case publishedThumbnail == nil:
+				data = regenerateMissingThumbnail(r.Context(), cd, p, id, key, originalID, thumbnailSize)
+			}
 		}
 
 		if data == nil {
@@ -391,7 +437,7 @@ func serveCache(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	full := filepath.Join(cfg.ImageCacheDir, sub1, sub2, id)
+	full := filepath.Join(cfg.ImageCacheDir, filepath.FromSlash(key))
 	http.ServeFile(w, r, full)
 }
 

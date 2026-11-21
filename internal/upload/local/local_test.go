@@ -3,11 +3,38 @@ package local
 import (
 	"context"
 	"errors"
+	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
 )
+
+func TestProviderPublishesReplacementAtomically(t *testing.T) {
+	// An open OS file must retain its bytes after a replacement is published.
+	p := Provider{Dir: t.TempDir()}
+	ctx := t.Context()
+	if err := p.Write(ctx, "cache/object.png", []byte("first")); err != nil {
+		t.Fatal(err)
+	}
+	file, err := os.Open(filepath.Join(p.Dir, "cache", "object.png"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = file.Close() }()
+	if err := p.Write(ctx, "cache/object.png", []byte("second")); err != nil {
+		t.Fatal(err)
+	}
+	old, err := io.ReadAll(file)
+	if err != nil || string(old) != "first" {
+		t.Fatalf("open reader got %q, err %v", old, err)
+	}
+	current, err := p.Read(ctx, "cache/object.png")
+	if err != nil || string(current) != "second" {
+		t.Fatalf("new reader got %q, err %v", current, err)
+	}
+}
 
 type memFile struct {
 	path string

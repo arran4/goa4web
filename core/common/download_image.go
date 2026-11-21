@@ -29,6 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/upload"
+	"github.com/arran4/goa4web/internal/upload/local"
 )
 
 const (
@@ -44,19 +45,22 @@ const (
 	imageCacheStatusPending = "pending"
 	// imageCacheStatusFailed identifies entries whose previous download failed.
 	imageCacheStatusFailed = "failed"
+	// versionedImageChecksumPrefix marks rows backed by a SHA-256-addressed cache object.
+	versionedImageChecksumPrefix = "sha256:"
 )
 
 type downloadedImage struct {
-	body             []byte
-	contentType      string
-	contentExpiresAt sql.NullTime
-	width            sql.NullInt32
-	height           sql.NullInt32
-	checksum         string
-	thumbnailID      sql.NullString
-	thumbnailBytes   []byte
-	thumbnailHeight  int
-	thumbnailWidth   int
+	body              []byte
+	contentType       string
+	contentExpiresAt  sql.NullTime
+	width             sql.NullInt32
+	height            sql.NullInt32
+	checksum          string
+	thumbnailID       sql.NullString
+	thumbnailBytes    []byte
+	thumbnailChecksum string
+	thumbnailHeight   int
+	thumbnailWidth    int
 }
 
 // DownloadAndCacheImage downloads an image from a URL, stores it in the image
@@ -88,11 +92,11 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 	sub1, sub2 := hash[:2], hash[2:4]
 	key := path.Join(sub1, sub2, cacheRef)
 
-	if err := cd.writeImageCacheBytes(ctx, key, cacheRef, img.body); err != nil {
+	if err := cd.writeImageCacheBytes(ctx, key, img.body); err != nil {
 		return "", err
 	}
 
-	if err := cd.writeRemoteImageThumbnail(ctx, cacheRef, ext, img); err != nil {
+	if err := cd.writeRemoteImageThumbnail(ctx, cacheRef, ext, img, false); err != nil {
 		return "", err
 	}
 
@@ -151,7 +155,7 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 	run := func(ctx context.Context) {
 		attemptTime := time.Now().UTC()
 		log.Printf("image cache fetch start: mode=immediate id=%s source=%q attempt_at=%s", id, sourceURL, attemptTime.Format(time.RFC3339))
-		if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
+		if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime, false); err != nil {
 			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
 				log.Printf("image cache fetch interrupted: mode=immediate id=%s source=%q error=%q", id, sourceURL, interrupted.Error())
 				return
@@ -242,7 +246,7 @@ func (cd *CoreData) fetchRemoteImageCacheJob(ctx context.Context, id, sourceURL 
 		if err := write(ctx, func(db.Querier) error { return nil }); err != nil {
 			return err
 		}
-		err = cd.storeRemoteImageCacheFiles(ctx, id, img)
+		err = cd.storeRemoteImageCacheFiles(ctx, id, img, true)
 	}
 	if err == nil {
 		return write(ctx, func(q db.Querier) error {
@@ -411,7 +415,7 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 	return cd.downloadExternalImageAtDepth(ctx, resolved, depth+1)
 }
 
-func (cd *CoreData) writeImageCacheBytes(ctx context.Context, key, id string, body []byte) error {
+func (cd *CoreData) writeImageCacheBytes(ctx context.Context, key string, body []byte) error {
 	if cp := upload.CacheProviderFromConfig(cd.Config); cp != nil {
 		if err := cp.Write(ctx, key, body); err != nil {
 			return fmt.Errorf("cache write: %w", err)
@@ -419,17 +423,17 @@ func (cd *CoreData) writeImageCacheBytes(ctx context.Context, key, id string, bo
 		return nil
 	}
 
-	fullPath := path.Join(cd.Config.ImageCacheDir, path.Dir(key), id)
-	if err := os.MkdirAll(path.Dir(fullPath), 0755); err != nil {
+	fullPath := filepath.Join(cd.Config.ImageCacheDir, filepath.FromSlash(key))
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return fmt.Errorf("mkdir cache: %w", err)
 	}
-	if err := os.WriteFile(fullPath, body, 0644); err != nil {
+	if err := local.WriteFileAtomically(fullPath, body, 0644); err != nil {
 		return fmt.Errorf("write cache file: %w", err)
 	}
 	return nil
 }
 
-func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext string, img *downloadedImage) error {
+func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext string, img *downloadedImage, versioned bool) error {
 	if img == nil || len(img.body) == 0 {
 		return nil
 	}
@@ -450,11 +454,14 @@ func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext strin
 		return fmt.Errorf("generate cache thumbnail: %w", err)
 	}
 	thumbID := thumbnailFilename(strings.TrimSuffix(id, ext), ext, size)
-	key, err := imageCacheKey(thumbID)
+	if versioned {
+		img.thumbnailChecksum = versionedImageChecksum(thumbBytes)
+	}
+	key, err := imageCacheObjectKey(thumbID, img.thumbnailChecksum)
 	if err != nil {
 		return err
 	}
-	if err := cd.writeImageCacheBytes(ctx, key, thumbID, thumbBytes); err != nil {
+	if err := cd.writeImageCacheBytes(ctx, key, thumbBytes); err != nil {
 		return err
 	}
 	img.thumbnailID = sql.NullString{String: thumbID, Valid: true}
@@ -508,6 +515,7 @@ func (cd *CoreData) recordRemoteImageCacheMetadata(ctx context.Context, q db.Que
 		SizeBytes:   sql.NullInt64{Int64: int64(len(img.thumbnailBytes)), Valid: true},
 		Width:       sql.NullInt32{Int32: int32(img.thumbnailWidth), Valid: img.thumbnailWidth > 0},
 		Height:      sql.NullInt32{Int32: int32(img.thumbnailHeight), Valid: img.thumbnailHeight > 0},
+		Checksum:    sql.NullString{String: img.thumbnailChecksum, Valid: img.thumbnailChecksum != ""},
 	})
 }
 
@@ -647,46 +655,83 @@ func imageCacheKey(id string) (string, error) {
 	return path.Join(id[:2], id[2:4], id), nil
 }
 
-// PrepareImageCacheEntryForServe refreshes an expired remote cache entry when
-// external cache expiry is enabled. It returns false when the cached object
-// should not be served.
+func versionedImageChecksum(body []byte) string {
+	return fmt.Sprintf("%s%x", versionedImageChecksumPrefix, sha256.Sum256(body))
+}
+
+func imageCacheObjectKey(id, checksum string) (string, error) {
+	key, err := imageCacheKey(id)
+	if err != nil {
+		return "", err
+	}
+	digest, versioned := strings.CutPrefix(checksum, versionedImageChecksumPrefix)
+	if !versioned {
+		return key, nil
+	}
+	if !intimages.ValidCacheDigest(digest) {
+		return "", fmt.Errorf("invalid image cache checksum")
+	}
+	return path.Join(path.Dir(key), digest, id), nil
+}
+
+// ImageCacheObjectKey selects the published object for a public cache ID.
+// Rows written before versioned storage still use their original file path.
+func ImageCacheObjectKey(id string, entry *db.ImageCacheEntry) (string, error) {
+	if entry != nil && entry.Checksum.Valid {
+		return imageCacheObjectKey(id, entry.Checksum.String)
+	}
+	return imageCacheKey(id)
+}
+
+// MatchesImageCacheObject reports whether generated bytes belong to a published object.
+func MatchesImageCacheObject(entry *db.ImageCacheEntry, body []byte) bool {
+	return entry != nil && entry.Checksum.Valid && entry.Checksum.String == versionedImageChecksum(body)
+}
+
+// PrepareImageCacheEntryForServe reports whether the cache ID can be served.
 func (cd *CoreData) PrepareImageCacheEntryForServe(ctx context.Context, id string) (bool, error) {
+	_, ready, err := cd.ImageCacheEntryForServe(ctx, id)
+	return ready, err
+}
+
+// ImageCacheEntryForServe refreshes an expired remote cache entry when
+// external cache expiry is enabled, returning metadata and whether the cache
+// ID can be served.
+func (cd *CoreData) ImageCacheEntryForServe(ctx context.Context, id string) (*db.ImageCacheEntry, bool, error) {
 	if cd == nil || cd.queries == nil {
-		return true, nil
+		return nil, true, nil
 	}
 	entry, err := cd.queries.GetImageCacheEntry(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return true, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, true, nil
 		}
-		return false, fmt.Errorf("get image cache entry: %w", err)
+		return nil, false, fmt.Errorf("get image cache entry: %w", err)
 	}
 	if entry == nil {
-		return true, nil
+		return nil, true, nil
 	}
 	now := time.Now().UTC()
 	if entry.SourceKind != imageCacheSourceKindRemote {
 		_ = cd.queries.TouchImageCacheEntry(ctx, db.TouchImageCacheEntryParams{ID: id, LastUsedAt: sql.NullTime{Time: now, Valid: true}})
-		return true, nil
+		return entry, true, nil
 	}
 	if entry.Status != imageCacheStatusReady {
-		return false, nil
-	}
-	if cd.imageCacheMode() == "none" {
-		_ = cd.queries.TouchImageCacheEntry(ctx, db.TouchImageCacheEntryParams{ID: id, LastUsedAt: sql.NullTime{Time: now, Valid: true}})
-		return true, nil
+		return entry, false, nil
 	}
 	if !cd.imageCacheEntryExpired(entry, now) {
 		_ = cd.queries.TouchImageCacheEntry(ctx, db.TouchImageCacheEntryParams{ID: id, LastUsedAt: sql.NullTime{Time: now, Valid: true}})
-		return true, nil
+		return entry, true, nil
 	}
 	if !entry.SourceUrl.Valid || entry.SourceUrl.String == "" {
-		return false, nil
+		return entry, false, nil
 	}
-	if err := cd.refreshRemoteImageCacheEntry(ctx, id, entry.SourceUrl.String, now); err != nil {
-		return false, err
+	versioned := entry.Checksum.Valid && strings.HasPrefix(entry.Checksum.String, versionedImageChecksumPrefix)
+	if err := cd.refreshRemoteImageCacheEntry(ctx, id, entry.SourceUrl.String, now, versioned); err != nil {
+		return entry, false, err
 	}
-	return true, nil
+	entry, err = cd.queries.GetImageCacheEntry(ctx, id)
+	return entry, err == nil && entry != nil && entry.Status == imageCacheStatusReady, err
 }
 
 func (cd *CoreData) imageCacheEntryExpired(entry *db.ImageCacheEntry, now time.Time) bool {
@@ -711,27 +756,30 @@ func (cd *CoreData) imageCacheEntryExpired(entry *db.ImageCacheEntry, now time.T
 	}
 }
 
-func (cd *CoreData) refreshRemoteImageCacheEntry(ctx context.Context, id, sourceURL string, now time.Time) error {
+func (cd *CoreData) refreshRemoteImageCacheEntry(ctx context.Context, id, sourceURL string, now time.Time, versioned bool) error {
 	img, err := cd.downloadExternalImage(ctx, sourceURL)
 	if err != nil {
 		return err
 	}
-	if err := cd.storeRemoteImageCacheFiles(ctx, id, img); err != nil {
+	if err := cd.storeRemoteImageCacheFiles(ctx, id, img, versioned); err != nil {
 		return err
 	}
 	return cd.recordRemoteImageCacheEntry(ctx, id, sourceURL, img, now)
 }
 
-func (cd *CoreData) storeRemoteImageCacheFiles(ctx context.Context, id string, img *downloadedImage) error {
-	key, err := imageCacheKey(id)
+func (cd *CoreData) storeRemoteImageCacheFiles(ctx context.Context, id string, img *downloadedImage, versioned bool) error {
+	if versioned {
+		img.checksum = versionedImageChecksumPrefix + img.checksum
+	}
+	key, err := imageCacheObjectKey(id, img.checksum)
 	if err != nil {
 		return err
 	}
-	if err := cd.writeImageCacheBytes(ctx, key, id, img.body); err != nil {
+	if err := cd.writeImageCacheBytes(ctx, key, img.body); err != nil {
 		return err
 	}
 	ext := path.Ext(id)
-	return cd.writeRemoteImageThumbnail(ctx, id, ext, img)
+	return cd.writeRemoteImageThumbnail(ctx, id, ext, img, versioned)
 }
 
 // ImageCacheEntry returns metadata for a cache entry when present.

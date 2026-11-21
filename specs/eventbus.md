@@ -60,9 +60,11 @@ durable job queue at startup and periodically. Both reconciliation and the
 immediate enqueue use the cache entry ID and leave existing job retry schedules
 intact. Workers also accept previously queued URL-keyed image jobs. Cancelling
 a queued image updates its cache entry in the same transaction, so recovery
-respects cancellation even after the job history is pruned. The worker checks
-its claim after downloading and locks the active lease while recording the
-cache metadata.
+respects cancellation even after the job history is pruned. The worker writes
+the original and thumbnail to content-addressed keys outside the transaction.
+The active lease gates the transaction that selects which keys a signed cache
+URL serves. A late write by a replaced worker cannot select its bytes. Existing
+cache rows with unqualified checksums still resolve their original filenames.
 
 ## Observed external links
 

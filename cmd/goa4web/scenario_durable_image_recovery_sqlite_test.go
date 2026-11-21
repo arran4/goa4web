@@ -11,15 +11,25 @@ import (
 	"image/png"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core/common"
+	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/handlers/images"
 	"github.com/arran4/goa4web/internal/db"
+	intimages "github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/upload"
 	"github.com/arran4/goa4web/workers"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
 
@@ -201,4 +211,152 @@ func TestScenarioCancelledImageDoesNotPublishInFlightSuccess(t *testing.T) {
 	entry, err := app.ImageCacheEntry(ctx, id)
 	require.NoError(t, err)
 	require.Equal(t, jobs.StatusCancelled, entry.Status, "a stale fetch must not publish after cancellation")
+}
+
+func TestScenarioReplacedImageClaimCannotReplaceServedBytes(t *testing.T) {
+	env, cleanup := setupAPITestEnv(t)
+	defer cleanup()
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	q := env.cd.Queries()
+	queue := jobs.NewService(q)
+	var stale, current bytes.Buffer
+	require.NoError(t, png.Encode(&stale, image.NewGray(image.Rect(0, 0, 1, 1))))
+	require.NoError(t, png.Encode(&current, image.NewGray(image.Rect(0, 0, 2, 1))))
+
+	cache := &publicationTestCache{
+		files: make(map[string][]byte), delayed: stale.Bytes(),
+		started: make(chan struct{}), release: make(chan struct{}),
+	}
+	// providerName identifies the cache controlled by this scenario.
+	const providerName = "scenario-image-lease-publication"
+	upload.RegisterProvider(providerName, func(*config.RuntimeConfig) upload.Provider { return cache })
+	env.server.Config.ImageCacheProvider = providerName
+	env.server.Config.ImageThumbnailSizes = "128x128,64x64"
+	router := mux.NewRouter()
+	images.RegisterRoutes(router, env.server.Config)
+	app := common.NewCoreData(ctx, q, env.server.Config, common.WithImageSignKey("scenario-image-signing-key"))
+	serve := func(t *testing.T, id string) []byte {
+		t.Helper()
+		signedURL, err := url.Parse(app.SignCacheURL(id, time.Hour))
+		require.NoError(t, err)
+		request := httptest.NewRequest(http.MethodGet, signedURL.RequestURI(), nil)
+		request = request.WithContext(context.WithValue(request.Context(), consts.KeyCoreData, app))
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		require.Equal(t, http.StatusOK, response.Code)
+		return response.Body.Bytes()
+	}
+	clientFor := func(content []byte) *http.Client {
+		return &http.Client{Transport: pendingImageTestTransport(func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(bytes.NewReader(content)),
+				Header: http.Header{"Content-Type": {"image/png"}},
+			}, nil
+		})}
+	}
+	t.Run("Legacy reference still resolves", func(t *testing.T) {
+		legacyApp := common.NewCoreData(ctx, q, env.server.Config, common.WithHTTPClient(clientFor(current.Bytes())))
+		ref, err := legacyApp.DownloadAndCacheImage("https://example.test/legacy-cache.png")
+		require.NoError(t, err)
+		require.Equal(t, current.Bytes(), serve(t, strings.TrimPrefix(ref, "cache:")))
+	})
+
+	ref, err := env.cd.QueueRemoteImageCache("https://example.test/replaced-claim.png")
+	require.NoError(t, err)
+	id := strings.TrimPrefix(ref, "cache:")
+	require.NoError(t, queue.QueuePendingImageCacheJobs(ctx, id, sql.NullInt32{}))
+	first, err := queue.ClaimNext(ctx, "first-image-worker", jobs.JobTypeImageCache)
+	require.NoError(t, err)
+	require.NotNil(t, first)
+
+	process := func(claim *jobs.ClaimedJob, content []byte) error {
+		app := common.NewCoreData(ctx, q, env.server.Config, common.WithHTTPClient(clientFor(content)))
+		return app.ProcessClaimedRemoteImageCacheJob(ctx, queue, claim.Job)
+	}
+	finished := make(chan error, 1)
+	go func() { finished <- process(first, stale.Bytes()) }()
+	select {
+	case <-cache.started:
+	case <-ctx.Done():
+		t.Fatal("first worker never reached cache storage")
+	}
+
+	cancelled, err := queue.AdminCancel(ctx, first.Job.ID)
+	require.NoError(t, err)
+	require.True(t, cancelled)
+	retried, err := queue.AdminRetry(ctx, first.Job.ID)
+	require.NoError(t, err)
+	require.True(t, retried)
+	second, err := queue.ClaimNext(ctx, "second-image-worker", jobs.JobTypeImageCache)
+	require.NoError(t, err)
+	require.NotNil(t, second)
+	require.NoError(t, process(second, current.Bytes()))
+	activeThumbnail := strings.TrimSuffix(id, filepath.Ext(id)) + "_thumb_128x128.png"
+	publishedThumbnail := serve(t, activeThumbnail)
+	close(cache.release)
+	select {
+	case err := <-finished:
+		require.ErrorIs(t, err, jobs.ErrLeaseLost)
+	case <-ctx.Done():
+		t.Fatal("replaced worker did not finish")
+	}
+
+	t.Run("Published objects survive the stale write", func(t *testing.T) {
+		require.Equal(t, current.Bytes(), serve(t, id))
+		require.Equal(t, publishedThumbnail, serve(t, activeThumbnail))
+	})
+	t.Run("Evicted thumbnail is restored from the published original", func(t *testing.T) {
+		entry, err := q.GetImageCacheEntry(ctx, activeThumbnail)
+		require.NoError(t, err)
+		key, err := common.ImageCacheObjectKey(activeThumbnail, entry)
+		require.NoError(t, err)
+		cache.mu.Lock()
+		delete(cache.files, key)
+		cache.mu.Unlock()
+		require.Equal(t, publishedThumbnail, serve(t, activeThumbnail))
+	})
+	t.Run("On-demand thumbnail uses the published original", func(t *testing.T) {
+		source, err := png.Decode(bytes.NewReader(current.Bytes()))
+		require.NoError(t, err)
+		expected, err := intimages.GenerateThumbnailWithinBounds(source, ".png", env.server.Config.ImageThumbnailGenerator, 64, 64)
+		require.NoError(t, err)
+		alt := strings.TrimSuffix(id, filepath.Ext(id)) + "_thumb_64x64.png"
+		require.Equal(t, expected, serve(t, alt))
+	})
+}
+
+type publicationTestCache struct {
+	mu      sync.Mutex
+	once    sync.Once
+	files   map[string][]byte
+	delayed []byte
+	started chan struct{}
+	release chan struct{}
+}
+
+func (*publicationTestCache) Check(context.Context) error { return nil }
+
+func (c *publicationTestCache) Write(ctx context.Context, key string, data []byte) error {
+	if bytes.Equal(data, c.delayed) {
+		c.once.Do(func() { close(c.started) })
+		select {
+		case <-c.release:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.files[key] = bytes.Clone(data)
+	return nil
+}
+
+func (c *publicationTestCache) Read(_ context.Context, key string) ([]byte, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if data, ok := c.files[key]; ok {
+		return bytes.Clone(data), nil
+	}
+	return nil, errors.New("missing cache object")
 }

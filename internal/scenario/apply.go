@@ -370,6 +370,9 @@ func (r *Runner) applyForumThreadCreate(ctx context.Context, data *ForumThreadCr
 			return fmt.Errorf("bind thread ref %q: %w", data.Ref, err)
 		}
 	}
+	if result.SideEffectError != nil {
+		return fmt.Errorf("thread %d committed with a projection failure: %w", result.ThreadID, result.SideEffectError)
+	}
 	return nil
 }
 
@@ -409,6 +412,9 @@ func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) erro
 		if err := r.refRegistry.Bind(refTypeReplyActivity, data.Ref, result.ActivityID); err != nil {
 			return fmt.Errorf("bind reply activity ref %q: %w", data.Ref, err)
 		}
+	}
+	if result.SideEffectError != nil {
+		return fmt.Errorf("reply %s committed with a projection failure: %w", result.ActivityID, result.SideEffectError)
 	}
 	return nil
 }

@@ -1,4 +1,7 @@
 (function(root){
+    // A newer fragment request for the same target supersedes earlier requests.
+    const currentRefresh = new WeakMap();
+
     function buildWebSocketURL(endpoint){
         const proto = root.location.protocol === 'https:' ? 'wss://' : 'ws://';
         return proto + root.location.host + endpoint;
@@ -59,6 +62,8 @@
         if(typeof doFetch !== 'function'){
             return false;
         }
+        const request = {};
+        currentRefresh.set(el, request);
         const resp = await doFetch(url, {
             method: 'GET',
             credentials: 'same-origin',
@@ -72,6 +77,9 @@
             return false;
         }
         const html = await resp.text();
+        if(currentRefresh.get(el) !== request){
+            return false;
+        }
         swapFragment(el, html, el.getAttribute('data-live-swap'), doc);
         return true;
     }

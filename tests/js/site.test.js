@@ -943,6 +943,21 @@ console.log("Running pasteimg.js Tests...");
     const reconciled = await liveEvents.refreshAllTargets(mockDoc, mockFetch);
     assert.strictEqual(reconciled, 2);
 
+    // An older response can arrive after a newer invalidation has completed.
+    let deliverOlder;
+    const older = liveEvents.refreshTarget(listEl, () => new Promise(resolve => {
+        deliverOlder = resolve;
+    }), mockDoc);
+    assert.strictEqual(await liveEvents.refreshTarget(listEl, mockFetch, mockDoc), true);
+    deliverOlder({
+        ok: true,
+        redirected: false,
+        headers: { get: () => 'text/html' },
+        text: async () => '<div>Older inbox snapshot</div>'
+    });
+    assert.strictEqual(await older, false);
+    assert(!listInnerHTML.includes('Older inbox snapshot'));
+
     // 6. Verify neither live-events.js nor notifications.js concatenates n.message/n.link into innerHTML
     const liveJS = fs.readFileSync(path.join(__dirname, '../../core/templates/assets/live-events.js'), 'utf8');
     const notifJS = fs.readFileSync(path.join(__dirname, '../../core/templates/assets/notifications.js'), 'utf8');

@@ -245,13 +245,15 @@ type QuerierStub struct {
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
 
-	SystemCreateNotificationErr                    error
-	SystemCreateNotificationCalls                  []SystemCreateNotificationParams
-	SystemCreateNotificationForActivityErr         error
-	SystemCreateNotificationForActivityCalls       []SystemCreateNotificationForActivityParams
-	SystemAcknowledgeNotificationsForResourceErr   error
-	SystemAcknowledgeNotificationsForResourceCalls []SystemAcknowledgeNotificationsForResourceParams
-	SystemAcknowledgeNotificationsForResourceFn    func(context.Context, SystemAcknowledgeNotificationsForResourceParams) error
+	SystemCreateNotificationErr                     error
+	SystemCreateNotificationCalls                   []SystemCreateNotificationParams
+	SystemRecordAdminJobFailureNotificationCalls    []SystemRecordAdminJobFailureNotificationParams
+	SystemSummarizeAdminJobFailureNotificationCalls []SystemSummarizeAdminJobFailureNotificationParams
+	SystemCreateNotificationForActivityErr          error
+	SystemCreateNotificationForActivityCalls        []SystemCreateNotificationForActivityParams
+	SystemAcknowledgeNotificationsForResourceErr    error
+	SystemAcknowledgeNotificationsForResourceCalls  []SystemAcknowledgeNotificationsForResourceParams
+	SystemAcknowledgeNotificationsForResourceFn     func(context.Context, SystemAcknowledgeNotificationsForResourceParams) error
 
 	GetContentReadMarkerCalls []GetContentReadMarkerParams
 	GetContentReadMarkerRow   *GetContentReadMarkerRow
@@ -517,11 +519,6 @@ type QuerierStub struct {
 	ListExpiredExternalImageCacheEntriesReturns []*ImageCacheEntry
 	ListExpiredExternalImageCacheEntriesErr     error
 	ListExpiredExternalImageCacheEntriesFn      func(context.Context, ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error)
-
-	ListDuePendingImageCacheEntriesCalls   []ListDuePendingImageCacheEntriesParams
-	ListDuePendingImageCacheEntriesReturns []*ImageCacheEntry
-	ListDuePendingImageCacheEntriesErr     error
-	ListDuePendingImageCacheEntriesFn      func(context.Context, ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 
 	ListOldestUsedImageCacheEntriesCalls   []int32
 	ListOldestUsedImageCacheEntriesReturns []*ImageCacheEntry
@@ -1311,15 +1308,23 @@ func (s *QuerierStub) ListContentPublicLabels(ctx context.Context, arg ListConte
 	return res, nil
 }
 
-func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+func (s *QuerierStub) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error) {
 	s.mu.Lock()
 	s.CreateCommentInSectionForCommenterCalls = append(s.CreateCommentInSectionForCommenterCalls, arg)
 	fn := s.CreateCommentInSectionForCommenterFn
+	id, err := s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
 	s.mu.Unlock()
 	if fn != nil {
-		return fn(ctx, arg)
+		id, err = fn(ctx, arg)
 	}
-	return s.CreateCommentInSectionForCommenterResult, s.CreateCommentInSectionForCommenterErr
+	if err != nil {
+		return nil, err
+	}
+	var rows int64
+	if id > 0 {
+		rows = 1
+	}
+	return FakeSQLResult{LastInsertIDValue: id, RowsAffectedValue: rows}, nil
 }
 
 // ListUploadedImagePathsByUser records the call and returns stored paths.
@@ -2676,6 +2681,22 @@ func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCr
 	return s.SystemCreateNotificationErr
 }
 
+// SystemRecordAdminJobFailureNotification records a failure aggregate write.
+func (s *QuerierStub) SystemRecordAdminJobFailureNotification(_ context.Context, arg SystemRecordAdminJobFailureNotificationParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemRecordAdminJobFailureNotificationCalls = append(s.SystemRecordAdminJobFailureNotificationCalls, arg)
+	return nil
+}
+
+// SystemSummarizeAdminJobFailureNotification records a failure summary update.
+func (s *QuerierStub) SystemSummarizeAdminJobFailureNotification(_ context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemSummarizeAdminJobFailureNotificationCalls = append(s.SystemSummarizeAdminJobFailureNotificationCalls, arg)
+	return nil
+}
+
 // SystemCreateNotificationForActivity records the activity-keyed notification upsert.
 func (s *QuerierStub) SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error {
 	s.mu.Lock()
@@ -3273,19 +3294,6 @@ func (s *QuerierStub) ListExpiredExternalImageCacheEntries(ctx context.Context, 
 	fn := s.ListExpiredExternalImageCacheEntriesFn
 	ret := s.ListExpiredExternalImageCacheEntriesReturns
 	err := s.ListExpiredExternalImageCacheEntriesErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
-	s.mu.Lock()
-	s.ListDuePendingImageCacheEntriesCalls = append(s.ListDuePendingImageCacheEntriesCalls, arg)
-	fn := s.ListDuePendingImageCacheEntriesFn
-	ret := s.ListDuePendingImageCacheEntriesReturns
-	err := s.ListDuePendingImageCacheEntriesErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

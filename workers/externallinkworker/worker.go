@@ -2,8 +2,6 @@ package externallinkworker
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"log"
 
 	"github.com/arran4/goa4web/a4code"
@@ -13,15 +11,23 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	domainexternallink "github.com/arran4/goa4web/internal/externallink"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
-// Worker listens for new content and fetches metadata for external links.
-func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.RuntimeConfig) {
+// Worker queues links observed in task events. Callers without a durable queue
+// retain the direct metadata adapter.
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.RuntimeConfig, jobsOpt ...*jobs.Service) {
 	if bus == nil || q == nil {
 		return
 	}
-	ch := bus.Subscribe(eventbus.TaskMessageType)
+	var app *common.CoreData
+	if len(jobsOpt) != 0 && jobsOpt[0] != nil {
+		app = common.NewCoreData(ctx, q, cfg, common.WithJobService(jobsOpt[0]))
+	}
+	subscription := bus.SubscribeWithOptions(eventbus.WithTypes(eventbus.TaskMessageType))
+	defer subscription.Close()
+	ch := subscription.Channel()
 
 	for {
 		select {
@@ -38,8 +44,18 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 				if evt.Outcome != eventbus.TaskOutcomeSuccess {
 					return
 				}
+				if recorded, _ := evt.Data[eventbus.ExternalLinksRecordedKey].(bool); recorded {
+					return
+				}
 				body, ok := evt.Data["Body"].(string)
 				if !ok || body == "" {
+					return
+				}
+
+				if app != nil {
+					if err := app.ForUser(evt.UserID).EnqueueExternalLinksFromBody(ctx, body); err != nil && ctx.Err() == nil {
+						log.Printf("queue links from task event: %v", err)
+					}
 					return
 				}
 
@@ -71,66 +87,17 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						return nil
 					}
 
-					// Check if we need to fetch metadata
-					existing, err := q.GetExternalLinkByID(ctx, linkID)
-					if err != nil && !errors.Is(err, sql.ErrNoRows) {
-						log.Printf("GetExternalLinkByID %d: %v", linkID, err)
-						return nil
-					}
-					if !domainexternallink.NeedsMetadata(existing) {
-						return nil // Already has title
-					}
-
-					info, err := domainexternallink.FetchMetadata(ctx, canonicalURL, func(ctx context.Context, url string) (*opengraph.Info, error) {
-						return opengraph.Fetch(ctx, url, nil)
-					}, domainexternallink.Wait)
+					_, err = domainexternallink.RefreshMissingMetadata(ctx, q, linkID, canonicalURL,
+						func(ctx context.Context, url string) (*opengraph.Info, error) {
+							return domainexternallink.FetchMetadata(ctx, url, func(ctx context.Context, url string) (*opengraph.Info, error) {
+								return opengraph.Fetch(ctx, url, nil)
+							}, domainexternallink.Wait)
+						},
+						func(ctx context.Context, image string) (string, error) {
+							return common.NewCoreData(ctx, q, cfg).DownloadAndCacheImage(image)
+						})
 					if err != nil {
-						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
-						return nil
-					}
-
-					var cachedImage string
-					if info.Image != "" {
-						cd := common.NewCoreData(ctx, q, cfg)
-						cached, err := cd.DownloadAndCacheImage(info.Image)
-						if err != nil {
-							log.Printf("DownloadAndCacheImage %s: %v", info.Image, err)
-						} else {
-							cachedImage = cached
-						}
-					}
-
-					desc := info.Description
-					if len(desc) > 65000 {
-						runes := []rune(desc)
-						if len(runes) > 16000 {
-							desc = string(runes[:16000])
-						}
-						for len(desc) > 65000 {
-							runes = []rune(desc)
-							desc = string(runes[:len(runes)-100])
-						}
-					}
-
-					if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-						CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-						CardDescription: sql.NullString{String: desc, Valid: desc != ""},
-						CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-						CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-						CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-						CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-						ID:              linkID,
-					}); err != nil {
-						log.Printf("UpdateExternalLinkMetadata %d: %v", linkID, err)
-					}
-
-					if cachedImage != "" {
-						if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-							CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-							ID:             linkID,
-						}); err != nil {
-							log.Printf("UpdateExternalLinkImageCache %d: %v", linkID, err)
-						}
+						log.Printf("refresh external-link metadata %d: %v", linkID, err)
 					}
 
 					return nil

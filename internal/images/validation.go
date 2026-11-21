@@ -1,10 +1,18 @@
 package images
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"path/filepath"
 	"strings"
 )
+
+// ValidCacheDigest reports whether a cache object uses a lowercase SHA-256 directory.
+func ValidCacheDigest(s string) bool {
+	return len(s) == sha256.Size*2 && strings.IndexFunc(s, func(r rune) bool {
+		return !strings.ContainsRune("0123456789abcdef", r)
+	}) == -1
+}
 
 // minImageIDLen enforces the minimum length required to build upload paths safely.
 const minImageIDLen = 4

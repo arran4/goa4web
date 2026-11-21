@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 const (
@@ -241,7 +242,7 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
 		return fmt.Errorf("validate body images: %w", err)
 	}
-	return cd.queries.UpdateWritingForWriter(cd.ctx, db.UpdateWritingForWriterParams{
+	arg := db.UpdateWritingForWriterParams{
 		Title:      sql.NullString{Valid: true, String: title},
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
@@ -250,7 +251,15 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 		WritingID:  w.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	}
+	_, err := cd.withSearchWork(searchindex.TypeWriting, func(q db.Querier) (int64, error) {
+		rows, err := q.UpdateWritingForWriter(cd.ctx, arg)
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return int64(arg.WritingID), nil
 	})
+	return err
 }
 
 // CreateWriting creates a new article in the given category.
@@ -270,7 +279,7 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
 		return 0, fmt.Errorf("validate body images: %w", err)
 	}
-	return cd.queries.CreateWritingForWriter(cd.ctx, db.CreateWritingForWriterParams{
+	arg := db.CreateWritingForWriterParams{
 		WriterID:          cd.UserID,
 		WritingCategoryID: categoryID,
 		Title:             sql.NullString{Valid: true, String: title},
@@ -282,6 +291,17 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		Timezone:          sql.NullString{String: cd.Location().String(), Valid: true},
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	}
+	return cd.withSearchWork(searchindex.TypeWriting, func(q db.Querier) (int64, error) {
+		result, err := q.CreateWritingForWriter(cd.ctx, arg)
+		if err != nil {
+			return 0, err
+		}
+		rows, err := result.RowsAffected()
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return result.LastInsertId()
 	})
 }
 

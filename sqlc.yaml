@@ -52,6 +52,7 @@ sql:
         - "internal/db/queries-api_keys.sql"
         - "internal/db/queries-passkeys.sql"
         - "internal/db/queries-pending_actions.sql"
+        - "internal/db/queries-durable_jobs.sql"
       gen:
           go:
               package: "db"
@@ -112,6 +113,7 @@ sql:
         - "internal/dbsqlite_queries/queries-api_keys.sql"
         - "internal/dbsqlite_queries/queries-passkeys.sql"
         - "internal/dbsqlite_queries/queries-pending_actions.sql"
+        - "internal/dbsqlite_queries/queries-durable_jobs.sql"
       gen:
           go:
               package: "dbsqlite"

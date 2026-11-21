@@ -75,12 +75,14 @@ func (SubmitWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 		evt.Data["target"] = notif.Target{Type: "writing", ID: int32(articleID)}
 	}
 
-	fullText := strings.Join([]string{abstract, title, body}, " ")
-	if evt := cd.Event(); evt != nil {
-		if evt.Data == nil {
-			evt.Data = map[string]any{}
+	if cd.JobService() == nil {
+		fullText := strings.Join([]string{abstract, title, body}, " ")
+		if evt := cd.Event(); evt != nil {
+			if evt.Data == nil {
+				evt.Data = map[string]any{}
+			}
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleID), Text: fullText}
 		}
-		evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleID), Text: fullText}
 	}
 
 	return handlers.RedirectHandler(fmt.Sprintf("/writings/article/%d", articleID))

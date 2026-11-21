@@ -2,7 +2,51 @@
 
 package db
 
-import "testing"
+import (
+	"database/sql"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/arran4/goa4web/database"
+	"github.com/stretchr/testify/require"
+)
+
+func TestMySQLRecordsAndSummarizesAdminJobFailures(t *testing.T) {
+	conn := openReplyThreadTestDatabase(t)
+	ctx := t.Context()
+	// notificationTable identifies the canonical table used by this query contract.
+	const notificationTable = "CREATE TABLE IF NOT EXISTS `notifications` ("
+	_, rest, found := strings.Cut(string(database.SchemaMySQL), notificationTable)
+	require.True(t, found, "canonical notifications table")
+	definition, _, found := strings.Cut(rest, ";")
+	require.True(t, found, "complete notifications table definition")
+	execReplySQL(t, conn, notificationTable+definition)
+	q := NewForDriver(conn, "mysql")
+	key := sql.NullString{String: "failure-group", Valid: true}
+	now := time.Now().UTC().Truncate(time.Second)
+	record := func(occurredAt time.Time) {
+		t.Helper()
+		require.NoError(t, q.(JobTransactor).WithJobTransaction(ctx, func(tx Querier) error {
+			if err := tx.SystemRecordAdminJobFailureNotification(ctx, SystemRecordAdminJobFailureNotificationParams{
+				RecipientID: 10, ActivityKey: key, LatestAt: occurredAt,
+			}); err != nil {
+				return err
+			}
+			return tx.SystemSummarizeAdminJobFailureNotification(ctx, SystemSummarizeAdminJobFailureNotificationParams{
+				RecipientID: 10, ActivityKey: key, Summary: "Terminal job failure",
+				ReopenBefore: sql.NullTime{Time: occurredAt.Add(-15 * time.Minute), Valid: true},
+			})
+		}))
+	}
+	record(now)
+	record(now.Add(time.Minute))
+	rows, err := q.ListUnreadNotificationsForLister(ctx, ListUnreadNotificationsForListerParams{ListerID: 10, Limit: 10})
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	require.Contains(t, rows[0].Message.String, "2 failures")
+	require.True(t, rows[0].CreatedAt.Equal(now.Add(time.Minute)))
+}
 
 func TestNotificationReadStateLinearizabilityMySQL(t *testing.T) {
 	database := openReplyThreadTestDatabase(t)

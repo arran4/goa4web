@@ -31,8 +31,8 @@ type approveQueries struct {
 	queuedLinkID int64
 }
 
-func (q *approveQueries) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error) {
-	return q.queuedLinkID, nil
+func (q *approveQueries) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (sql.Result, error) {
+	return db.FakeSQLResult{LastInsertIDValue: q.queuedLinkID, RowsAffectedValue: 1}, nil
 }
 
 type captureDLQ struct {

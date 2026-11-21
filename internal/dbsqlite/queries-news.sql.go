@@ -100,7 +100,7 @@ WHERE EXISTS (
       AND (g.item_id = 0 OR g.item_id IS NULL)
       AND (g.user_id = ?6 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.site_news.users_idusers = ?2
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?2
       ))
 )
 `
@@ -488,7 +488,7 @@ WHERE idsitenews = ?3
       AND (g.item_id = ?5 OR g.item_id IS NULL)
       AND (g.user_id = ?6 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.site_news.users_idusers = ?4
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?4
       ))
   )
 `

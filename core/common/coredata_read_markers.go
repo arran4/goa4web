@@ -194,6 +194,10 @@ func (cd *CoreData) SetThreadReadMarkerPosition(threadID, commentID int32, activ
 // AcknowledgeThreadActivityPosition persists the user's thread read marker and full activity position
 // watermark, then marks matching notifications read up to activityPosition.
 func (cd *CoreData) AcknowledgeThreadActivityPosition(threadID, commentID int32, activityPosition int64) error {
+	return cd.acknowledgeThreadActivityPosition(threadID, commentID, activityPosition, false)
+}
+
+func (cd *CoreData) acknowledgeThreadActivityPosition(threadID, commentID int32, activityPosition int64, updateLabels bool) error {
 	if cd.queries == nil {
 		return nil
 	}
@@ -212,7 +216,13 @@ func (cd *CoreData) AcknowledgeThreadActivityPosition(threadID, commentID int32,
 			ThreadID:         threadID,
 			CommentID:        commentID,
 			ActivityPosition: activityPosition,
+			UpdateLabels:     updateLabels,
 		})
+	}
+	if updateLabels {
+		if err := cd.SetThreadPrivateLabelStatus(threadID, false, false); err != nil {
+			return fmt.Errorf("set thread private label status: %w", err)
+		}
 	}
 	if err := cd.SetThreadReadMarkerPosition(threadID, commentID, activityPosition); err != nil {
 		return fmt.Errorf("save thread read marker: %w", err)

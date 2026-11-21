@@ -900,10 +900,7 @@ func (cd *CoreData) applyValidatedThreadRead(_ context.Context, threadID int32, 
 	if validated == nil || validated.actorCD == nil {
 		return fmt.Errorf("apply thread read: missing validated state")
 	}
-	if err := validated.actorCD.SetThreadPrivateLabelStatus(threadID, false, false); err != nil {
-		return fmt.Errorf("set thread private label status: %w", err)
-	}
-	if err := validated.actorCD.AcknowledgeThreadActivityPosition(threadID, validated.markerID, validated.activityPosition); err != nil {
+	if err := validated.actorCD.acknowledgeThreadActivityPosition(threadID, validated.markerID, validated.activityPosition, true); err != nil {
 		return fmt.Errorf("acknowledge thread activity: %w", err)
 	}
 	return nil

@@ -297,3 +297,53 @@ func (q *Queries) SystemClearContentPrivateLabel(ctx context.Context, arg System
 	_, err := q.db.ExecContext(ctx, systemClearContentPrivateLabel, arg.Item, arg.ItemID, arg.Label)
 	return err
 }
+
+const systemReopenThreadUnreadLabelForNewerActivity = `-- name: SystemReopenThreadUnreadLabelForNewerActivity :exec
+DELETE FROM content_private_labels
+WHERE item = 'thread'
+  AND item_id = ?1
+  AND user_id = ?2
+  AND label = 'unread'
+  AND invert = true
+  AND EXISTS (
+      SELECT 1 FROM comments c
+      WHERE c.forumthread_id = content_private_labels.item_id
+        AND c.deleted_at IS NULL
+        AND (
+            c.language_id = 0 OR c.language_id IS NULL
+            OR EXISTS (
+                SELECT 1 FROM user_language ul
+                WHERE ul.users_idusers = content_private_labels.user_id
+                  AND ul.language_id = c.language_id
+            )
+            OR NOT EXISTS (
+                SELECT 1 FROM user_language ul
+                WHERE ul.users_idusers = content_private_labels.user_id
+            )
+        )
+        AND (
+            c.idcomments > ?3
+            OR (c.idcomments = ?3 AND EXISTS (
+                SELECT 1 FROM comment_appends ca
+                WHERE ca.comment_id = c.idcomments AND ca.id > ?4
+            ))
+        )
+  )
+`
+
+type SystemReopenThreadUnreadLabelForNewerActivityParams struct {
+	ThreadID      int64
+	RecipientID   int64
+	LastCommentID int64
+	LastAppendID  int64
+}
+
+func (q *Queries) SystemReopenThreadUnreadLabelForNewerActivity(ctx context.Context, arg SystemReopenThreadUnreadLabelForNewerActivityParams) error {
+	_, err := q.db.ExecContext(ctx, systemReopenThreadUnreadLabelForNewerActivity,
+		arg.ThreadID,
+		arg.RecipientID,
+		arg.LastCommentID,
+		arg.LastAppendID,
+	)
+	return err
+}

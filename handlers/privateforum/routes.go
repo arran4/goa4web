@@ -49,6 +49,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	apiWrite.Use(apiauth.RequireScope("private_forum:write"))
 	apiWrite.HandleFunc("/topics", APICreateTopic).Methods(http.MethodPost)
 	apiWrite.HandleFunc("/topic/{topic}/thread/{thread}/reply", APIPostComment).Methods(http.MethodPost)
+	apiWrite.HandleFunc("/topic/{topic}/thread/{thread}/read", APIMarkThreadRead).Methods(http.MethodPost)
 
 	// Provide GET confirmation pages for subscribe/unsubscribe (mirrors public forum)
 	pr.Handle("/topic/{topic}/subscribe", RequirePrivateTopicAccess(http.HandlerFunc(forumhandlers.SubscribeTopicPage))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())

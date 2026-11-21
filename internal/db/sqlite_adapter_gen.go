@@ -10894,6 +10894,15 @@ func (s *sqliteQuerier) SystemRegisterExternalLinkClick(ctx context.Context, url
 	return s.q.SystemRegisterExternalLinkClick(ctx, url)
 }
 
+func (s *sqliteQuerier) SystemReopenThreadUnreadLabelForNewerActivity(ctx context.Context, arg SystemReopenThreadUnreadLabelForNewerActivityParams) error {
+	return s.q.SystemReopenThreadUnreadLabelForNewerActivity(ctx, dbsqlite.SystemReopenThreadUnreadLabelForNewerActivityParams{
+		ThreadID:      int64(arg.ThreadID),
+		RecipientID:   int64(arg.RecipientID),
+		LastCommentID: int64(arg.LastCommentID),
+		LastAppendID:  int64(arg.LastAppendID),
+	})
+}
+
 func (s *sqliteQuerier) SystemSetBlogLastIndex(ctx context.Context, id int32) error {
 	return s.q.SystemSetBlogLastIndex(ctx, int64(id))
 }

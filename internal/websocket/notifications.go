@@ -113,10 +113,14 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	var threadID int32
 	var cd *common.CoreData
+	var cards *linkCardWatch
 	if r.URL.Path == "/ws/events" {
 		if id, err := strconv.ParseInt(r.URL.Query().Get("thread"), 10, 32); err == nil && id > 0 {
 			threadID = int32(id)
 			cd = common.FromContext(r.Context())
+			if cd != nil && cd.UserID == uid {
+				cards = watchLinkCards(r.Context(), cd, threadID, r.URL.Query()["card"])
+			}
 		}
 	}
 	sub := h.Bus.SubscribeWithOptions(
@@ -154,6 +158,14 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}()
 
+	var cardTick <-chan time.Time
+	var ticker *time.Ticker
+	if cards != nil {
+		ticker = time.NewTicker(linkCardPollInterval)
+		defer ticker.Stop()
+		cardTick = ticker.C
+	}
+
 	for {
 		select {
 		case env, ok := <-sub.Channel():
@@ -171,14 +183,21 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			}
 			var err error
 			if signal.Kind != "" {
-				err = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-				if err == nil {
-					err = conn.WriteJSON(signal)
-				}
+				err = writeLiveEvent(conn, signal)
 			}
 			env.Ack()
 			if err != nil {
 				return
+			}
+		case now := <-cardTick:
+			if cards.changed(r.Context()) {
+				if err := writeLiveEvent(conn, LiveEvent{Kind: LiveEventKindExternalLinkCard, Time: now.UTC()}); err != nil {
+					return
+				}
+			}
+			if len(cards.seen) == 0 {
+				ticker.Stop()
+				cardTick = nil
 			}
 		case <-disconnected:
 			return
@@ -186,6 +205,13 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
+}
+
+func writeLiveEvent(conn *websocket.Conn, signal LiveEvent) error {
+	if err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return err
+	}
+	return conn.WriteJSON(signal)
 }
 
 // registerRoutes attaches the websocket handler to r.

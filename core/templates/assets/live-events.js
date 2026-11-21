@@ -1,6 +1,8 @@
 (function(root){
     // A newer fragment request for the same target supersedes earlier requests.
     const currentRefresh = new WeakMap();
+    // The gateway observes the same number of cards per connection.
+    const maxLiveCards = 12;
 
     function buildWebSocketURL(endpoint){
         const proto = root.location.protocol === 'https:' ? 'wss://' : 'ws://';
@@ -85,16 +87,21 @@
         return true;
     }
 
+    function liveTargets(doc){
+        const targets = [];
+        let cards = 0;
+        for(const el of doc.querySelectorAll('[data-live-event][data-live-url]')){
+            if(el.getAttribute('data-live-card') && ++cards > maxLiveCards) continue;
+            targets.push(el);
+        }
+        return targets;
+    }
+
     function matchingTargets(doc, kind){
-        const nodes = doc.querySelectorAll('[data-live-event][data-live-url]');
-        const matches = [];
-        nodes.forEach(el => {
+        return liveTargets(doc).filter(el => {
             const events = (el.getAttribute('data-live-event') || '').trim().split(/\s+/);
-            if(events.includes(kind) || events.includes('*')){
-                matches.push(el);
-            }
+            return events.includes(kind) || events.includes('*');
         });
-        return matches;
     }
 
     async function handleMessage(raw, doc, fetchImpl){
@@ -113,7 +120,7 @@
 
     async function refreshAllTargets(doc, fetchImpl){
         const targetDoc = doc || root.document;
-        const nodes = targetDoc.querySelectorAll('[data-live-event][data-live-url]');
+        const nodes = liveTargets(targetDoc);
         let updated = 0;
         for(const el of nodes){
             if(await refreshTarget(el, fetchImpl, targetDoc)){
@@ -131,7 +138,17 @@
             if(typeof root.WebSocket !== 'function') return;
             const target = root.document.querySelector('[data-live-thread]');
             const thread = target && target.getAttribute('data-live-thread');
-            const scope = /^[1-9][0-9]*$/.test(thread || '') ? '?thread=' + thread : '';
+            const params = new URLSearchParams();
+            if(/^[1-9][0-9]*$/.test(thread || '')){
+                params.set('thread', thread);
+                const keys = new Set();
+                for(const card of liveTargets(root.document)){
+                    const key = card.getAttribute('data-live-card');
+                    if(/^[1-9][0-9]*-[a-f0-9]{64}$/.test(key || '')) keys.add(key);
+                }
+                for(const key of keys) params.append('card', key);
+            }
+            const scope = params.size ? '?' + params.toString() : '';
             conn = new root.WebSocket(buildWebSocketURL(endpoint + scope));
             conn.onopen = () => {
                 retryDelay = 1000;

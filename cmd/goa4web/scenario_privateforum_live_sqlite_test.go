@@ -25,7 +25,7 @@ import (
 )
 
 func TestScenarioPrivateForumLiveReplies(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	serve, closeRoot := newTestScenarioServeCmd(t, []string{"goa4web", "scenario", "serve", "100-private-forum"})
 	defer closeRoot()

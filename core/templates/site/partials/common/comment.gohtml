@@ -32,7 +32,7 @@
                     </div>
                 </form>
             {{ else }}
-                <div id="comment-{{ $cmt.Idcomments }}">{{ $cmt.Text.String | a4code2html}}</div>
+                <div id="comment-{{ $cmt.Idcomments }}">{{ if and $.LiveLinks (not $cmt.DeletedAt.Valid) }}{{ forumCommentHTML $cmt.Idcomments $cmt.Text.String }}{{ else }}{{ $cmt.Text.String | a4code2html }}{{ end }}</div>
                 {{ if cd.SelectedThreadCanReply }}
                     {{ $topicID := 0 }}
                     {{ if cd.SelectedThreadLoaded }}{{ $topicID = cd.SelectedThreadLoaded.ForumtopicIdforumtopic }}{{ end }}

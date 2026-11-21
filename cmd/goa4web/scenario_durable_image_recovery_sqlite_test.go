@@ -326,6 +326,56 @@ func TestScenarioReplacedImageClaimCannotReplaceServedBytes(t *testing.T) {
 	})
 }
 
+func TestScenarioImageFailureDiagnosticsOmitSourceURL(t *testing.T) {
+	env, cleanup := setupAPITestEnv(t)
+	defer cleanup()
+	ctx := t.Context()
+	q := env.cd.Queries()
+	queue := jobs.NewService(q)
+	var adminMessage string
+	queue.NotifyAdmins = func(_ context.Context, message, _ string) error {
+		adminMessage = message
+		return nil
+	}
+	// privateValue represents an embedded capability in a private-forum image URL.
+	const privateValue = "example-private-image-capability"
+	ref, err := env.cd.QueueRemoteImageCache("https://example.test/private.png?auth=" + privateValue)
+	require.NoError(t, err)
+	id := strings.TrimPrefix(ref, "cache:")
+	_, err = queue.Enqueue(ctx, jobs.EnqueueRequest{
+		JobType: jobs.JobTypeImageCache, TargetType: jobs.TargetTypeImageCacheEntry, TargetKey: id, MaxAttempts: 1,
+	})
+	require.NoError(t, err)
+	claim, err := queue.ClaimNext(ctx, "worker", jobs.JobTypeImageCache)
+	require.NoError(t, err)
+	require.NotNil(t, claim)
+
+	transportFailure := errors.New("upstream connection timed out")
+	client := &http.Client{Transport: pendingImageTestTransport(func(*http.Request) (*http.Response, error) {
+		return nil, transportFailure
+	})}
+	app := common.NewCoreData(ctx, q, env.server.Config, common.WithHTTPClient(client))
+	fetchErr := app.ProcessClaimedRemoteImageCacheJob(ctx, queue, claim.Job)
+	require.ErrorIs(t, fetchErr, transportFailure)
+	applied, err := queue.FailOrRetryFenced(ctx, claim, fetchErr)
+	require.NoError(t, err)
+	require.True(t, applied)
+
+	entry, err := app.ImageCacheEntry(ctx, id)
+	require.NoError(t, err)
+	job, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+	require.NoError(t, err)
+	for label, value := range map[string]string{
+		"returned error": fetchErr.Error(), "image record": entry.ErrorMessage.String,
+		"job record": job.LastError.String, "admin notification": adminMessage,
+	} {
+		t.Run(label, func(t *testing.T) {
+			require.NotEmpty(t, value)
+			require.NotContains(t, value, privateValue)
+		})
+	}
+}
+
 type publicationTestCache struct {
 	mu      sync.Mutex
 	once    sync.Once

@@ -16,6 +16,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -270,12 +271,16 @@ func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 		t.Fatalf("encode png: %v", err)
 	}
 
+	var metadataRequests atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/pin":
+			http.Redirect(w, r, "/landing/pin", http.StatusFound)
+		case "/landing/pin":
+			metadataRequests.Add(1)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			_, _ = fmt.Fprintf(w, `<html><head><meta property="og:image" content="%s/photo.png"></head><body></body></html>`, "http://"+r.Host)
-		case "/photo.png":
+			_, _ = io.WriteString(w, `<html><head><meta property="og:image" content="photo.png"></head><body></body></html>`)
+		case "/landing/photo.png":
 			w.Header().Set("Content-Type", "image/png")
 			_, _ = w.Write(imageBytes.Bytes())
 		default:
@@ -294,6 +299,9 @@ func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 	}
 	if got.contentType != "image/png" {
 		t.Fatalf("content type = %q, want image/png", got.contentType)
+	}
+	if requests := metadataRequests.Load(); requests != 1 {
+		t.Fatalf("metadata requests = %d, want 1", requests)
 	}
 }
 

@@ -47,6 +47,8 @@ const (
 	imageCacheStatusFailed = "failed"
 	// versionedImageChecksumPrefix marks rows backed by a SHA-256-addressed cache object.
 	versionedImageChecksumPrefix = "sha256:"
+	// maxImageMetadataBytes limits the HTML inspected for an image URL.
+	maxImageMetadataBytes = 5 * 1024 * 1024
 )
 
 type downloadedImage struct {
@@ -80,7 +82,7 @@ func (cd *CoreData) DownloadAndCacheImage(imgURL string) (string, error) {
 	// Try to get extension from URL path
 	u, err := url.Parse(imgURL)
 	if err != nil {
-		return "", fmt.Errorf("parse url: %w", err)
+		return "", opengraph.ErrInvalidDestination
 	}
 	ext, err := intimages.CleanExtension(path.Base(u.Path))
 	if err != nil {
@@ -154,13 +156,13 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 	}
 	run := func(ctx context.Context) {
 		attemptTime := time.Now().UTC()
-		log.Printf("image cache fetch start: mode=immediate id=%s source=%q attempt_at=%s", id, sourceURL, attemptTime.Format(time.RFC3339))
+		log.Printf("image cache fetch start: mode=immediate id=%s attempt_at=%s", id, attemptTime.Format(time.RFC3339))
 		if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime, false); err != nil {
 			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
-				log.Printf("image cache fetch interrupted: mode=immediate id=%s source=%q error=%q", id, sourceURL, interrupted.Error())
+				log.Printf("image cache fetch interrupted: mode=immediate id=%s error=%q", id, interrupted.Error())
 				return
 			}
-			log.Printf("image cache fetch failed: mode=immediate id=%s source=%q error=%q", id, sourceURL, err.Error())
+			log.Printf("image cache fetch failed: mode=immediate id=%s error=%q", id, err.Error())
 			retryDelay := cd.imageCacheFetchRetryDelay()
 			maxRetries := cd.imageCacheFetchMaxRetries()
 			cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
@@ -177,7 +179,7 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 			}
 			return
 		}
-		log.Printf("image cache fetch complete: mode=immediate id=%s source=%q", id, sourceURL)
+		log.Printf("image cache fetch complete: mode=immediate id=%s", id)
 	}
 	if cd.backgroundRunner != nil && cd.backgroundRunner.Go(run) {
 		return
@@ -286,7 +288,7 @@ func imageFetchInterruption(ctx context.Context, err error) error {
 func remoteImageCacheIDForURL(imgURL string) (string, error) {
 	u, err := url.Parse(imgURL)
 	if err != nil {
-		return "", fmt.Errorf("parse url: %w", err)
+		return "", opengraph.ErrInvalidDestination
 	}
 	ext, err := intimages.CleanExtension(path.Base(u.Path))
 	if err != nil {
@@ -341,6 +343,14 @@ func (cd *CoreData) downloadExternalImage(ctx context.Context, imgURL string) (*
 	return cd.downloadExternalImageAtDepth(ctx, canonicalRemoteImageSourceURL(imgURL), 0)
 }
 
+type remoteImageFetchError struct {
+	message string
+	cause   error
+}
+
+func (e remoteImageFetchError) Error() string { return e.message }
+func (e remoteImageFetchError) Unwrap() error { return e.cause }
+
 func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL string, depth int) (*downloadedImage, error) {
 	if depth > 3 {
 		return nil, fmt.Errorf("too many image metadata redirects")
@@ -351,27 +361,28 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imgURL, nil)
-	if err != nil {
+	if err != nil || (req.URL.Scheme != "http" && req.URL.Scheme != "https") || req.URL.Hostname() == "" {
 		return nil, opengraph.ErrInvalidDestination
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http get: %w", err)
+		if errors.Is(err, opengraph.ErrInvalidDestination) {
+			return nil, opengraph.ErrInvalidDestination
+		}
+		return nil, remoteImageFetchError{message: "request remote image", cause: err}
 	}
 	defer func() { _ = resp.Body.Close() }()
-	log.Printf("image cache fetch http response: url=%q status=%q content_type=%q", imgURL, resp.Status, resp.Header.Get("Content-Type"))
 	if err := opengraph.CheckHTTPStatus(resp); err != nil {
 		return nil, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read body: %w", err)
+		return nil, remoteImageFetchError{message: "read remote image response", cause: err}
 	}
 	if len(body) == 0 {
 		return nil, fmt.Errorf("empty body")
 	}
-	log.Printf("image cache fetch http body: url=%q bytes=%d", imgURL, len(body))
 	hashBytes := sha256.Sum256(body)
 	contentType := resp.Header.Get("Content-Type")
 	img := &downloadedImage{
@@ -390,28 +401,27 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 		return img, nil
 	}
 	if !isHTMLContentType(contentType) && !looksLikeHTML(body) {
-		return nil, fmt.Errorf("not an image: %s", contentType)
+		return nil, fmt.Errorf("remote response is not an image")
 	}
-	info, err := opengraph.Fetch(ctx, imgURL, client)
+	info, err := opengraph.Parse(io.LimitReader(bytes.NewReader(body), maxImageMetadataBytes))
 	if err != nil {
-		return nil, fmt.Errorf("fetch image metadata: %w", err)
+		return nil, remoteImageFetchError{message: "parse remote image metadata", cause: err}
 	}
 	if info == nil || info.Image == "" {
 		return nil, fmt.Errorf("html document did not expose an image")
 	}
 	nextURL, err := url.Parse(info.Image)
 	if err != nil {
-		return nil, fmt.Errorf("parse metadata image url: %w", err)
+		return nil, opengraph.ErrInvalidDestination
 	}
-	baseURL, err := url.Parse(imgURL)
-	if err != nil {
-		return nil, fmt.Errorf("parse base image url: %w", err)
+	baseURL := req.URL
+	if resp.Request != nil && resp.Request.URL != nil {
+		baseURL = resp.Request.URL
 	}
 	resolved := baseURL.ResolveReference(nextURL).String()
-	if resolved == imgURL {
+	if resolved == baseURL.String() {
 		return nil, fmt.Errorf("metadata image points to same url")
 	}
-	log.Printf("image cache fetch metadata image: page=%q image=%q", imgURL, resolved)
 	return cd.downloadExternalImageAtDepth(ctx, resolved, depth+1)
 }
 

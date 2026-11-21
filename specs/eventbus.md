@@ -65,6 +65,8 @@ the original and thumbnail to content-addressed keys outside the transaction.
 The active lease gates the transaction that selects which keys a signed cache
 URL serves. A late write by a replaced worker cannot select its bytes. Existing
 cache rows with unqualified checksums still resolve their original filenames.
+Fetch diagnostics identify the operation or upstream status without exposing
+the remote image URL.
 
 ## Observed external links
 

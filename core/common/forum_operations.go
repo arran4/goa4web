@@ -328,7 +328,7 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 
 	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
-	rowsAffected, appendID, err := cd.AppendCommentInSectionWithActivity(ctx, db.AppendCommentInSectionForCommenterParams{
+	rowsAffected, appendID, err := cd.appendForumReply(ctx, db.AppendCommentInSectionForCommenterParams{
 		Text:             text,
 		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		CommentID:        commentID,
@@ -471,7 +471,7 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 	}
 	commentID64, err := cd.createCommentInSectionForCommenterAt(
 		commentSection, consts.PermissionItemTopic, consts.PermissionActionPost,
-		params.TopicID, threadID, params.ActorID, params.LanguageID, params.Text, writtenAt,
+		params.TopicID, threadID, params.ActorID, params.LanguageID, params.Text, writtenAt, cd.insertComment,
 	)
 	if err != nil {
 		return nil, cd.cleanupUninitializedForumThread(ctx, threadID, fmt.Errorf("create forum opening comment: %w", err))
@@ -635,7 +635,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	} else {
 		commentID64, createErr := cd.createCommentInSectionForCommenterAt(
 			section, itemType, consts.PermissionActionReply, itemID,
-			thread.Idforumthread, params.ActorID, params.LanguageID, params.Text, writtenAt,
+			thread.Idforumthread, params.ActorID, params.LanguageID, params.Text, writtenAt, cd.insertForumReply,
 		)
 		if createErr != nil {
 			return nil, fmt.Errorf("create forum reply: %w", createErr)

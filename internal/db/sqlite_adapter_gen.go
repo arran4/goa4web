@@ -4299,7 +4299,7 @@ func (s *sqliteQuerier) CreateBookmarksForLister(ctx context.Context, arg Create
 	})
 }
 
-func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error) {
 	res, err := s.q.CreateCommentInSectionForCommenter(ctx, dbsqlite.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
 		CommenterID:   int64(arg.CommenterID.Int32),
@@ -4313,7 +4313,7 @@ func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, 
 		ItemID:        sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }

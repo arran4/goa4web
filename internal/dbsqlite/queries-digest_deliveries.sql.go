@@ -30,6 +30,18 @@ func (q *Queries) SystemAcknowledgeDigestNotificationsForPendingEmail(ctx contex
 	return err
 }
 
+const systemCountDigestDeliveryMembers = `-- name: SystemCountDigestDeliveryMembers :one
+SELECT COUNT(*) FROM digest_delivery_notifications
+WHERE digest_delivery_id = ?
+`
+
+func (q *Queries) SystemCountDigestDeliveryMembers(ctx context.Context, digestDeliveryID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemCountDigestDeliveryMembers, digestDeliveryID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const systemCreateDigestDelivery = `-- name: SystemCreateDigestDelivery :execlastid
 INSERT INTO digest_deliveries (user_id, dismiss_notifications)
 VALUES (?, ?)
@@ -60,6 +72,16 @@ type SystemCreateDigestDeliveryNotificationParams struct {
 
 func (q *Queries) SystemCreateDigestDeliveryNotification(ctx context.Context, arg SystemCreateDigestDeliveryNotificationParams) error {
 	_, err := q.db.ExecContext(ctx, systemCreateDigestDeliveryNotification, arg.DigestDeliveryID, arg.NotificationID)
+	return err
+}
+
+const systemDiscardQueuedDigest = `-- name: SystemDiscardQueuedDigest :exec
+DELETE FROM pending_emails
+WHERE id = ? AND digest_delivery_id IS NOT NULL AND sent_at IS NULL
+`
+
+func (q *Queries) SystemDiscardQueuedDigest(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, systemDiscardQueuedDigest, id)
 	return err
 }
 

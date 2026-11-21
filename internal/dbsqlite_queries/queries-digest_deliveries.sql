@@ -32,3 +32,11 @@ WHERE digest_deliveries.id = (
   FROM pending_emails
   WHERE pending_emails.id = sqlc.arg(pending_email_id)
 );
+
+-- name: SystemCountDigestDeliveryMembers :one
+SELECT COUNT(*) FROM digest_delivery_notifications
+WHERE digest_delivery_id = ?;
+
+-- name: SystemDiscardQueuedDigest :exec
+DELETE FROM pending_emails
+WHERE id = ? AND digest_delivery_id IS NOT NULL AND sent_at IS NULL;

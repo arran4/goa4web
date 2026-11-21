@@ -7,22 +7,8 @@
         <button type="button" id="btn-invert-selection">Invert Selection</button>
         <input type="submit" value="Dismiss Selected">
     </div>
-    <div id="notifications-list">
-    {{ if .Request }}
-    {{ range cd.Notifications .Request }}
-        <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
-            <label>
-                <input type="checkbox" name="id" value="{{ .ID }}">
-                {{ cd.FormatLocalTime .CreatedAt }}
-                {{ if .Link.Valid }}<a href="/usr/notifications/open/{{ .ID }}">{{ end }}{{ .Message.String }}{{ if .Link.Valid }}</a>{{ end }}
-            </label>
-        </div>
-    {{ else }}
-        <div id="notifications-empty">No notifications</div>
-    {{ end }}
-    {{ else }}
-        <div id="notifications-empty">No notifications</div>
-    {{ end }}
+    <div id="notifications-list" data-live-target="notifications-list" data-live-event="notification" data-live-url="/usr/notifications/fragment/list" data-live-swap="innerHTML">
+    {{ template "domains/user/notificationsListFragment.gohtml" . }}
     </div>
 </form>
 <fieldset>

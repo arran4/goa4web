@@ -43,6 +43,10 @@ type QuerierStub struct {
 	InsertPasskeyStub           func(ctx context.Context, arg InsertPasskeyParams) error
 	UpdatePasskeyAfterLoginStub func(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
 
+	ListVisibleNotificationEntriesForListerFn func(context.Context, ListVisibleNotificationEntriesForListerParams) ([]*ListVisibleNotificationEntriesForListerRow, error)
+	SystemCountDigestDeliveryMembersFn        func(context.Context, int32) (int64, error)
+	SystemDiscardQueuedDigestFn               func(context.Context, int32) error
+
 	Querier
 	mu sync.Mutex
 
@@ -1850,6 +1854,10 @@ func (s *QuerierStub) ListUnreadNotificationsForLister(ctx context.Context, arg 
 		return fn(ctx, arg)
 	}
 	return ret, err
+}
+
+func (s *QuerierStub) GetNotificationIDByActivityForLister(context.Context, GetNotificationIDByActivityForListerParams) (int32, error) {
+	return 0, sql.ErrNoRows
 }
 
 func (s *QuerierStub) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error {

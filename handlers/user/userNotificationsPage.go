@@ -2,6 +2,7 @@ package user
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -35,6 +36,7 @@ var (
 func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	cd.PageTitle = "Notifications"
+	handlers.DisableCaching(w)
 	if !cd.Config.NotificationsEnabled {
 		http.NotFound(w, r)
 		return
@@ -49,13 +51,7 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	showAll := r.URL.Query().Get("all") == "1"
 
-	var count int64
-	var err error
-	if showAll {
-		count, err = cd.Queries().GetNotificationCountForLister(r.Context(), cd.UserID)
-	} else {
-		count, err = cd.Queries().GetUnreadNotificationCountForLister(r.Context(), cd.UserID)
-	}
+	count, err := cd.InboxNotificationCount(showAll)
 	if err != nil {
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
@@ -176,6 +172,58 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 
 const UserNotificationsPage tasks.Template = "domains/user/notifications.gohtml"
 
+// UserNotificationsListFragment renders the inner HTML of #notifications-list for live updates.
+const UserNotificationsListFragment tasks.Template = "domains/user/notificationsListFragment.gohtml"
+
+// UserNotificationsCountFragment renders the #notif-index link with unread count for live updates.
+const UserNotificationsCountFragment tasks.Template = "domains/user/notificationsCountFragment.gohtml"
+
+func notificationsListFragmentPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
+		http.NotFound(w, r)
+		return
+	}
+	ps := cd.PageSize()
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	showAll := r.URL.Query().Get("all") == "1"
+	count, err := cd.InboxNotificationCount(showAll)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	cd.Pagination = &common.OffsetPagination{
+		TotalItems: int(count),
+		PageSize:   ps,
+		Offset:     offset,
+		BaseURL:    "/usr/notifications",
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	data := struct {
+		Request *http.Request
+	}{
+		Request: r,
+	}
+	if err := UserNotificationsListFragment.TemplateExecute(w, r, data); err != nil {
+		log.Printf("render notifications list fragment: %v", err)
+	}
+}
+
+func notificationsCountFragmentPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
+		http.NotFound(w, r)
+		return
+	}
+	cd.NotificationCount = int32(cd.UnreadNotificationCount())
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	if err := UserNotificationsCountFragment.TemplateExecute(w, r, struct{}{}); err != nil {
+		log.Printf("render notifications count fragment: %v", err)
+	}
+}
+
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.Config.NotificationsEnabled {
@@ -187,19 +235,20 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err := r.ParseForm(); err != nil {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	ids := r.Form["id"]
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	for _, idStr := range ids {
-		id, _ := strconv.Atoi(idStr)
-		if id == 0 {
-			continue
+	var ids []int32
+	for _, idStr := range r.PostForm["id"] {
+		if id, err := strconv.ParseInt(idStr, 10, 32); err == nil && id > 0 {
+			ids = append(ids, int32(id))
 		}
-		n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
-		if err == nil && !n.ReadAt.Valid {
-			if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
-				log.Printf("mark notification read: %v", err)
-			}
+	}
+	for _, raw := range r.PostForm["group"] {
+		var snapshot []int32
+		if err := json.Unmarshal([]byte(raw), &snapshot); err == nil {
+			ids = append(ids, snapshot...)
 		}
+	}
+	if err := cd.ForUser(uid).DismissNotificationSnapshot(r.Context(), ids); err != nil {
+		log.Printf("dismiss notifications: %v", err)
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/notifications"}
 }
@@ -223,15 +272,16 @@ func notificationsRssPage(w http.ResponseWriter, r *http.Request) {
 		session := cd.GetSession()
 		uid, _ = session.Values["UID"].(int32)
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	limit := int32(cd.Config.PageSizeDefault)
-	notifs, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: limit, Offset: 0})
+	handlers.DisableCaching(w)
+	entries, err := cd.ForUser(uid).VisibleNotificationEntries(db.ListVisibleNotificationEntriesForListerParams{
+		GroupUnread: 1, Limit: int32(cd.Config.PageSizeDefault),
+	})
 	if err != nil {
 		log.Printf("notify feed: %v", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
-	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
+	feed := NotificationsFeed(r, common.RenderedNotifications(entries), cd.SiteTitle)
 	if err := feed.WriteRss(w); err != nil {
 		log.Printf("feed write: %v", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
@@ -258,15 +308,16 @@ func notificationsAtomPage(w http.ResponseWriter, r *http.Request) {
 		session := cd.GetSession()
 		uid, _ = session.Values["UID"].(int32)
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	limit := int32(cd.Config.PageSizeDefault)
-	notifs, err := queries.ListUnreadNotificationsForLister(r.Context(), db.ListUnreadNotificationsForListerParams{ListerID: uid, Limit: limit, Offset: 0})
+	handlers.DisableCaching(w)
+	entries, err := cd.ForUser(uid).VisibleNotificationEntries(db.ListVisibleNotificationEntriesForListerParams{
+		GroupUnread: 1, Limit: int32(cd.Config.PageSizeDefault),
+	})
 	if err != nil {
 		log.Printf("notify feed: %v", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
 		return
 	}
-	feed := NotificationsFeed(r, notifs, cd.SiteTitle)
+	feed := NotificationsFeed(r, common.RenderedNotifications(entries), cd.SiteTitle)
 	if err := feed.WriteAtom(w); err != nil {
 		log.Printf("feed write: %v", err)
 		handlers.RenderErrorPage(w, r, common.ErrInternalServerError)
@@ -331,8 +382,13 @@ func userNotificationOpenPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
+	handlers.DisableCaching(w)
+	if id <= 0 || int64(id) > 2147483647 {
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		return
+	}
+	actor := cd.ForUser(uid)
+	n, err := actor.VisibleNotification(int32(id))
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("notification open: %v", err)
@@ -429,8 +485,13 @@ func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
 		return
 	}
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
-	n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
+	handlers.DisableCaching(w)
+	if id <= 0 || int64(id) > 2147483647 {
+		http.Redirect(w, r, "/usr/notifications", http.StatusSeeOther)
+		return
+	}
+	actor := cd.ForUser(uid)
+	n, err := actor.VisibleNotification(int32(id))
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("notification go: %v", err)
@@ -439,7 +500,7 @@ func notificationsGoPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !n.ReadAt.Valid {
-		if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
+		if err := actor.DismissNotification(r.Context(), n.ID); err != nil {
 			log.Printf("mark notification read: %v", err)
 		}
 	}

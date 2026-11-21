@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 )
 
 const adminDeleteNotification = `-- name: AdminDeleteNotification :exec
@@ -186,6 +187,23 @@ func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificat
 	return &i, err
 }
 
+const getNotificationIDByActivityForLister = `-- name: GetNotificationIDByActivityForLister :one
+SELECT id FROM notifications
+WHERE users_idusers = ?1 AND activity_key = ?2
+`
+
+type GetNotificationIDByActivityForListerParams struct {
+	ListerID    int64
+	ActivityKey sql.NullString
+}
+
+func (q *Queries) GetNotificationIDByActivityForLister(ctx context.Context, arg GetNotificationIDByActivityForListerParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationIDByActivityForLister, arg.ListerID, arg.ActivityKey)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getUnreadNotificationCountForLister = `-- name: GetUnreadNotificationCountForLister :one
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = ?1 AND read_at IS NULL
@@ -301,10 +319,188 @@ func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg List
 	return items, nil
 }
 
+const listVisibleNotificationEntriesForLister = `-- name: ListVisibleNotificationEntriesForLister :many
+WITH viewer AS (
+    SELECT u.idusers AS viewer_id FROM users u WHERE u.idusers = ?3 AND u.deleted_at IS NULL
+),
+viewer_roles AS (
+    SELECT ur.role_id AS id FROM user_roles ur JOIN viewer v ON v.viewer_id = ur.users_idusers
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+),
+viewer_languages AS (
+    SELECT ul.language_id AS id FROM user_language ul JOIN viewer v ON v.viewer_id = ul.users_idusers
+),
+visible AS (
+    SELECT n.id, n.users_idusers, n.link, n.message, n.activity_key, n.priority,
+           n.resource_type, n.resource_id, n.activity_position, n.created_at, n.read_at,
+           COALESCE(t.title, '') AS topic_title,
+           COALESCE(author.username, '') AS reply_author,
+           CASE WHEN n.resource_type = 'thread' AND n.activity_key LIKE 'reply:comment:%' THEN 1 ELSE 0 END AS forum_reply,
+           CAST(CASE WHEN ?4 = 1 AND n.read_at IS NULL
+                     AND n.resource_type = 'thread' AND n.activity_key LIKE 'reply:comment:%'
+                THEN n.resource_id ELSE NULL END AS INTEGER) AS reply_group
+    FROM notifications n
+    JOIN viewer v ON v.viewer_id = n.users_idusers
+    LEFT JOIN forumthread th ON n.resource_type = 'thread' AND th.idforumthread = n.resource_id
+    LEFT JOIN forumtopic t ON t.idforumtopic = th.forumtopic_idforumtopic
+    LEFT JOIN comments opener ON opener.idcomments = th.firstpost
+    LEFT JOIN comments reply ON n.activity_key LIKE 'reply:comment:%'
+        AND reply.idcomments = (n.activity_position >> 32) AND reply.forumthread_id = th.idforumthread
+    LEFT JOIN users author ON author.idusers = reply.users_idusers
+    WHERE (?5 OR n.read_at IS NULL)
+      AND (?6 = 0 OR n.id = ?6)
+      AND (
+          ?7 = 0 OR EXISTS (
+              SELECT 1 FROM digest_delivery_notifications item
+              WHERE item.notification_id = n.id AND item.digest_delivery_id = ?7
+          )
+      )
+      AND (
+          (COALESCE(n.resource_type, '') <> 'thread'
+              AND LOWER(COALESCE(n.link, '')) NOT LIKE '%/private/%')
+          OR (n.resource_type = 'thread'
+              AND (t.language_id IS NULL OR t.language_id = 0 OR t.language_id IN (SELECT id FROM viewer_languages)
+                  OR NOT EXISTS (SELECT 1 FROM viewer_languages))
+              AND (opener.language_id IS NULL OR opener.language_id = 0 OR opener.language_id IN (SELECT id FROM viewer_languages)
+                  OR NOT EXISTS (SELECT 1 FROM viewer_languages))
+              AND (
+                  COALESCE(n.activity_key, '') NOT LIKE 'reply:comment:%'
+                  OR (reply.idcomments IS NOT NULL AND reply.deleted_at IS NULL
+                      AND (reply.language_id IS NULL OR reply.language_id = 0 OR reply.language_id IN (SELECT id FROM viewer_languages)
+                          OR NOT EXISTS (SELECT 1 FROM viewer_languages)))
+              )
+              AND EXISTS (
+                  SELECT 1 FROM grants g
+                  WHERE g.section = CASE WHEN t.handler = 'private' THEN 'privateforum' ELSE 'forum' END
+                    AND (g.item = 'topic' OR g.item IS NULL)
+                    AND g.action = 'view' AND g.active = 1
+                    AND (g.item_id = t.idforumtopic OR (t.handler <> 'private' AND g.item_id IS NULL))
+                    AND (g.user_id = v.viewer_id OR g.user_id IS NULL)
+                    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM viewer_roles))
+              )
+              AND (t.handler <> 'private' OR EXISTS (
+                  SELECT 1 FROM grants g
+                  WHERE g.section = 'privateforum_thread' AND g.item = 'thread'
+                    AND g.action = 'view' AND g.active = 1 AND g.item_id = th.idforumthread
+                    AND (g.user_id = v.viewer_id OR g.user_id IS NULL)
+                    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM viewer_roles))
+              ))
+          )
+      )
+),
+reply_groups AS (
+    SELECT v.reply_group, COUNT(*) AS reply_count, MAX(v.id) AS latest_notification_id,
+           json_group_array(v.id) AS snapshot
+    FROM visible v
+    WHERE v.reply_group IS NOT NULL
+    GROUP BY v.reply_group
+),
+ranked AS (
+    SELECT v.id, v.users_idusers, v.link, v.message, v.activity_key, v.priority,
+           v.resource_type, v.resource_id, v.activity_position, v.created_at, v.read_at,
+           v.topic_title, v.reply_author, v.forum_reply, v.reply_group, ROW_NUMBER() OVER (
+        PARTITION BY v.reply_group, CASE WHEN v.reply_group IS NULL THEN v.id ELSE 0 END
+        ORDER BY v.activity_position DESC, v.id DESC
+    ) AS display_order
+    FROM visible v
+)
+SELECT ranked.id, ranked.users_idusers, ranked.link, ranked.message, ranked.activity_key,
+       ranked.priority, ranked.resource_type, ranked.resource_id, ranked.activity_position,
+       ranked.created_at, ranked.read_at, ranked.topic_title, ranked.reply_author, ranked.forum_reply,
+       CAST(COALESCE(reply_groups.reply_count, 1) AS INTEGER) AS reply_count,
+       CAST(COALESCE(reply_groups.snapshot, '') AS TEXT) AS snapshot,
+       CAST(COUNT(*) OVER () AS INTEGER) AS total_entries
+FROM ranked
+LEFT JOIN reply_groups ON reply_groups.reply_group = ranked.reply_group
+WHERE ranked.display_order = 1
+ORDER BY COALESCE(reply_groups.latest_notification_id, ranked.id) DESC
+LIMIT ?2 OFFSET ?1
+`
+
+type ListVisibleNotificationEntriesForListerParams struct {
+	Offset         int64
+	Limit          int64
+	ListerID       int64
+	GroupUnread    interface{}
+	IncludeRead    interface{}
+	NotificationID interface{}
+	DeliveryID     interface{}
+}
+
+type ListVisibleNotificationEntriesForListerRow struct {
+	ID               int64
+	UsersIdusers     int64
+	Link             sql.NullString
+	Message          sql.NullString
+	ActivityKey      sql.NullString
+	Priority         int64
+	ResourceType     sql.NullString
+	ResourceID       sql.NullInt64
+	ActivityPosition sql.NullInt64
+	CreatedAt        time.Time
+	ReadAt           sql.NullTime
+	TopicTitle       string
+	ReplyAuthor      string
+	ForumReply       int64
+	ReplyCount       int64
+	Snapshot         string
+	TotalEntries     int64
+}
+
+func (q *Queries) ListVisibleNotificationEntriesForLister(ctx context.Context, arg ListVisibleNotificationEntriesForListerParams) ([]*ListVisibleNotificationEntriesForListerRow, error) {
+	rows, err := q.db.QueryContext(ctx, listVisibleNotificationEntriesForLister,
+		arg.Offset,
+		arg.Limit,
+		arg.ListerID,
+		arg.GroupUnread,
+		arg.IncludeRead,
+		arg.NotificationID,
+		arg.DeliveryID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ListVisibleNotificationEntriesForListerRow
+	for rows.Next() {
+		var i ListVisibleNotificationEntriesForListerRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UsersIdusers,
+			&i.Link,
+			&i.Message,
+			&i.ActivityKey,
+			&i.Priority,
+			&i.ResourceType,
+			&i.ResourceID,
+			&i.ActivityPosition,
+			&i.CreatedAt,
+			&i.ReadAt,
+			&i.TopicTitle,
+			&i.ReplyAuthor,
+			&i.ForumReply,
+			&i.ReplyCount,
+			&i.Snapshot,
+			&i.TotalEntries,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setNotificationReadForLister = `-- name: SetNotificationReadForLister :exec
 UPDATE notifications
 SET read_at = CURRENT_TIMESTAMP
-WHERE id = ?1 AND users_idusers = ?2
+WHERE id = ?1 AND users_idusers = ?2 AND read_at IS NULL
 `
 
 type SetNotificationReadForListerParams struct {
@@ -338,6 +534,7 @@ UPDATE notifications
 SET read_at = CURRENT_TIMESTAMP
 WHERE users_idusers = ?1
   AND id IN (/*SLICE:ids*/?)
+  AND read_at IS NULL
 `
 
 type SetNotificationsReadForListerBatchParams struct {

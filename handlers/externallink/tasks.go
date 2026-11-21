@@ -2,7 +2,6 @@ package externallink
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	domainexternallink "github.com/arran4/goa4web/internal/externallink"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
@@ -119,62 +119,20 @@ func processExternalLink(ctx context.Context, q db.Querier, targetURL string) (t
 		cd = common.NewCoreData(ctx, q, nil)
 	}
 
-	info, err := opengraph.Fetch(ctx, targetURL, cd.HTTPClient())
-	if err != nil {
-		log.Printf("background fetch error for %s: %v", targetURL, err)
-		return nil, err
-	}
-
-	var cachedImgName string
-	if info.Image != "" {
-		var err error
-		cachedImgName, err = cd.DownloadAndCacheImage(info.Image)
+	cacheErr, err := domainexternallink.RefreshMetadata(ctx, cd, targetURL, func(ctx context.Context) (int32, error) {
+		id, err := domainexternallink.ResolveRecord(ctx, cd, targetURL)
 		if err != nil {
-			log.Printf("failed to cache image: %v", err)
+			// The legacy task skips persistence if it cannot resolve a record.
+			log.Printf("resolve link for background metadata refresh: %v", err)
 		}
+		return id, nil
+	}, func(ctx context.Context, target string) (*opengraph.Info, error) {
+		return opengraph.Fetch(ctx, target, cd.HTTPClient())
+	}, func(_ context.Context, image string) (string, error) {
+		return cd.DownloadAndCacheImage(image)
+	})
+	if cacheErr != nil {
+		log.Printf("refresh external link image cache: %v", cacheErr)
 	}
-
-	// Update DB using EnsureExternalLink to handle duplicates properly
-	res, err := cd.EnsureExternalLink(ctx, targetURL)
-	var lid int32
-	if err == nil {
-		id, _ := res.LastInsertId()
-		lid = int32(id)
-	}
-
-	// Always fetch existing if EnsureExternalLink returns 0 or fails
-	if lid == 0 {
-		if l, err := cd.GetExternalLink(ctx, targetURL); err == nil && l != nil {
-			lid = l.ID
-		}
-	}
-
-	if lid != 0 {
-		err := cd.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-			CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-			CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-			CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-			CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-			CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-			CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-			ID:              lid,
-		})
-		if err != nil {
-			log.Printf("background update error: %v", err)
-			return nil, err
-		}
-
-		if cachedImgName != "" {
-			// Update cache
-			err := cd.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-				CardImageCache: sql.NullString{String: cachedImgName, Valid: true},
-				ID:             lid,
-			})
-			if err != nil {
-				// non-fatal, just log
-				log.Printf("failed to update cache: %v", err)
-			}
-		}
-	}
-	return nil, nil
+	return nil, err
 }

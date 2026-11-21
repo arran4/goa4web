@@ -1,0 +1,16 @@
+{{- if .Request -}}
+{{- range cd.Notifications .Request }}
+    <div class="notification" id="notif-{{ .ID }}" data-notification-id="{{ .ID }}">
+        <label>
+            {{ if .Snapshot }}<input type="checkbox" name="group" value="{{ .Snapshot }}">{{ else }}<input type="checkbox" name="id" value="{{ .ID }}">{{ end }}
+            {{ cd.FormatLocalTime .CreatedAt }}
+            {{ if .Link.Valid }}<a href="/usr/notifications/open/{{ .ID }}">{{ end }}{{ .DisplayMessage }}{{ if .Link.Valid }}</a>{{ end }}
+            {{ if and .Snapshot .ReplyAuthor }}<span>Latest reply by {{ .ReplyAuthor }}</span>{{ end }}
+        </label>
+    </div>
+{{- else }}
+    <div id="notifications-empty">No notifications</div>
+{{- end }}
+{{- else }}
+    <div id="notifications-empty">No notifications</div>
+{{- end -}}

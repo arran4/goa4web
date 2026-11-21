@@ -41,6 +41,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -214,6 +215,7 @@ type CoreData struct {
 
 	httpClient         *http.Client
 	backgroundRunner   BackgroundRunner
+	jobService         *jobs.Service
 	forumReplyNotifier ForumReplyNotifier
 
 	session      *sessions.Session
@@ -1687,41 +1689,6 @@ func (cd *CoreData) NewsPostByID(id int32, ops ...lazy.Option[int32, *db.GetForu
 	return lazy.Map(&cd.cache.newsPosts, &cd.cache.mapMu, id, fetch, ops...)
 }
 
-// Notifications returns the notifications for the current user using query
-// parameters to control pagination. Results are cached per offset and filter
-// combination.
-func (cd *CoreData) Notifications(r *http.Request) ([]*db.Notification, error) {
-	if cd.cache.notifications == nil {
-		cd.cache.notifications = map[string]*lazy.Value[[]*db.Notification]{}
-	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	showAll := r.URL.Query().Get("all") == "1"
-	key := fmt.Sprintf("%t:%d", showAll, offset)
-	lv, ok := cd.cache.notifications[key]
-	if !ok {
-		lv = &lazy.Value[[]*db.Notification]{}
-		cd.cache.notifications[key] = lv
-	}
-	return lv.Load(func() ([]*db.Notification, error) {
-		if cd.queries == nil || cd.UserID == 0 {
-			return nil, nil
-		}
-		limit := int32(cd.PageSize())
-		if showAll {
-			return cd.queries.ListNotificationsForLister(cd.ctx, db.ListNotificationsForListerParams{
-				ListerID: cd.UserID,
-				Limit:    limit,
-				Offset:   int32(offset),
-			})
-		}
-		return cd.queries.ListUnreadNotificationsForLister(cd.ctx, db.ListUnreadNotificationsForListerParams{
-			ListerID: cd.UserID,
-			Limit:    limit,
-			Offset:   int32(offset),
-		})
-	})
-}
-
 // PageSize returns the preferred page size within configured limits.
 func (cd *CoreData) PageSize() int {
 	size := cd.Config.PageSizeDefault
@@ -2782,7 +2749,7 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
-		return cd.queries.GetUnreadNotificationCountForLister(cd.ctx, cd.UserID)
+		return cd.InboxNotificationCount(false)
 	})
 	if err != nil {
 		log.Printf("load unread notification count: %v", err)
@@ -2964,6 +2931,19 @@ func WithHTTPClient(client *http.Client) CoreOption {
 // WithBackgroundRunner ties best-effort asynchronous work to application shutdown.
 func WithBackgroundRunner(runner BackgroundRunner) CoreOption {
 	return func(cd *CoreData) { cd.backgroundRunner = runner }
+}
+
+// WithJobService attaches the durable background job service to CoreData.
+func WithJobService(svc *jobs.Service) CoreOption {
+	return func(cd *CoreData) { cd.jobService = svc }
+}
+
+// JobService returns the configured durable job service, if any.
+func (cd *CoreData) JobService() *jobs.Service {
+	if cd == nil {
+		return nil
+	}
+	return cd.jobService
 }
 
 // WithForumReplyNotifier sets the application-level notifier used for canonical forum reply notifications.
@@ -3279,6 +3259,7 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD.WebAuthn = cd.WebAuthn
 	userCD.httpClient = cd.httpClient
 	userCD.backgroundRunner = cd.backgroundRunner
+	userCD.jobService = cd.jobService
 	userCD.forumReplyNotifier = cd.forumReplyNotifier
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
@@ -3818,4 +3799,27 @@ func isPrivateOrLocalhost(host string) bool {
 		return true
 	}
 	return false
+}
+
+// ValidateEnqueueExternalURL canonicalizes raw and rejects non-HTTP(S), localhost,
+// internal domains, and private/loopback/link-local IP literals before enqueueing.
+func ValidateEnqueueExternalURL(raw string) string {
+	canonical := CanonicalizeExternalURL(raw)
+	if canonical == "" {
+		return ""
+	}
+	u, err := url.Parse(canonical)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	host := strings.ToLower(strings.TrimSpace(u.Hostname()))
+	if host == "" || host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".internal") {
+		return ""
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+			return ""
+		}
+	}
+	return canonical
 }

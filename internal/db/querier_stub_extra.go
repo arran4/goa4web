@@ -812,3 +812,24 @@ func (s *QuerierStub) DeleteSubscriptionByIDForSubscriber(ctx context.Context, a
 	}
 	return err
 }
+
+func (s *QuerierStub) ListVisibleNotificationEntriesForLister(ctx context.Context, arg ListVisibleNotificationEntriesForListerParams) ([]*ListVisibleNotificationEntriesForListerRow, error) {
+	if s.ListVisibleNotificationEntriesForListerFn != nil {
+		return s.ListVisibleNotificationEntriesForListerFn(ctx, arg)
+	}
+	return nil, nil
+}
+
+func (s *QuerierStub) SystemCountDigestDeliveryMembers(ctx context.Context, id int32) (int64, error) {
+	if s.SystemCountDigestDeliveryMembersFn != nil {
+		return s.SystemCountDigestDeliveryMembersFn(ctx, id)
+	}
+	return 0, nil
+}
+
+func (s *QuerierStub) SystemDiscardQueuedDigest(ctx context.Context, id int32) error {
+	if s.SystemDiscardQueuedDigestFn != nil {
+		return s.SystemDiscardQueuedDigestFn(ctx, id)
+	}
+	return nil
+}

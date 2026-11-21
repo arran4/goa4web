@@ -8,10 +8,13 @@ import (
 	"maps"
 	"time"
 
+	"github.com/arran4/goa4web/a4code"
+	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/workers/postcountworker"
-	"github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/postcount"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // ThreadUpdatedEvent captures side effects tied to thread updates.
@@ -73,6 +76,19 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 					errs = append(errs, fmt.Errorf("set item private label status: %w", err))
 				}
 			}
+		}
+	}
+
+	jobService := cd.JobService()
+	durableSearch := jobService != nil && event.CommentID != 0
+	if durableSearch && event.IncludeSearch {
+		if err := jobService.EnqueueSearchDirty(ctx, searchindex.TypeComment, event.CommentID); err != nil {
+			errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
+		}
+	}
+	if jobService != nil && event.CommentText != "" {
+		if err := cd.EnqueueExternalLinksFromBody(ctx, event.CommentText); err != nil {
+			errs = append(errs, fmt.Errorf("enqueue external links: %w", err))
 		}
 	}
 
@@ -146,20 +162,19 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		}
 		maps.Copy(evt.Data, event.AdditionalData)
 		if event.IncludePostCount {
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{
+			evt.Data[postcount.PostCountEventKey] = postcount.PostCountUpdate{
 				CommentID: event.CommentID,
 				ThreadID:  event.ThreadID,
 				TopicID:   event.TopicID,
 			}
 		}
-		if event.IncludeSearch {
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{
-				Type: searchworker.TypeComment,
+		if event.IncludeSearch && !durableSearch {
+			evt.Data[searchindex.IndexEventKey] = searchindex.IndexEventData{
+				Type: searchindex.TypeComment,
 				ID:   event.CommentID,
 				Text: event.CommentText,
 			}
 		}
-
 	}
 
 	return errors.Join(errs...)
@@ -175,7 +190,7 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	if err := postcountworker.PostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
+	if err := postcount.ApplyPostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
 		return err
 	}
 
@@ -186,8 +201,8 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	if !includeSearch {
 		return nil
 	}
-	return searchworker.Index(ctx, cd.queries, searchworker.IndexEventData{
-		Type: searchworker.TypeComment,
+	return searchindex.Index(ctx, cd.queries, searchindex.IndexEventData{
+		Type: searchindex.TypeComment,
 		ID:   commentID,
 		Text: text,
 	})
@@ -223,4 +238,42 @@ func (cd *CoreData) EnsureAutoSubscription(ctx context.Context, topicID, threadI
 		}
 	}
 	return nil
+}
+
+// EnqueueExternalLinksFromBody parses a4code links in body and enqueues durable metadata fetch jobs.
+func (cd *CoreData) EnqueueExternalLinksFromBody(ctx context.Context, body string) error {
+	if cd == nil || cd.jobService == nil || body == "" {
+		return nil
+	}
+	root, err := a4code.ParseString(body)
+	if err != nil {
+		return nil
+	}
+	var errs []error
+	seen := make(map[string]struct{})
+	_ = ast.Walk(root, func(n ast.Node) error {
+		link, ok := n.(*ast.Link)
+		if !ok || link.Href == "" {
+			return nil
+		}
+		canonicalURL := CanonicalizeExternalURL(link.Href)
+		if canonicalURL == "" {
+			return nil
+		}
+		if _, exists := seen[canonicalURL]; exists {
+			return nil
+		}
+		seen[canonicalURL] = struct{}{}
+		_, err := cd.jobService.Enqueue(ctx, jobs.EnqueueRequest{
+			JobType:         jobs.JobTypeExternalLink,
+			TargetType:      jobs.JobTypeExternalLink,
+			TargetKey:       canonicalURL,
+			CreatedByUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0},
+		})
+		if err != nil && !errors.Is(err, jobs.ErrInCooldown) {
+			errs = append(errs, err)
+		}
+		return nil
+	})
+	return errors.Join(errs...)
 }

@@ -302,11 +302,12 @@ func (n *Notifier) PurgeReadNotifications(ctx context.Context, t time.Time) erro
 
 // sendInternalNotification stores an internal notification for the user.
 func (n *Notifier) sendInternalNotification(ctx context.Context, userID int32, path, msg string) error {
-	return n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
+	err := n.Queries.SystemCreateNotification(ctx, db.SystemCreateNotificationParams{
 		RecipientID: userID,
 		Link:        sql.NullString{String: path, Valid: path != ""},
 		Message:     sql.NullString{String: msg, Valid: msg != ""},
 	})
+	return n.notificationStored(userID, err)
 }
 
 func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eventbus.TaskEvent, userID int32, path, msg string, priority uint8) error {
@@ -328,7 +329,7 @@ func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eve
 		ActivityPosition: activityPosition,
 	}
 	if coordinator, ok := n.Queries.(db.NotificationReadStateCoordinator); ok {
-		return coordinator.DeliverThreadNotificationForActivity(ctx, arg)
+		return n.notificationStored(userID, coordinator.DeliverThreadNotificationForActivity(ctx, arg))
 	}
 	readAt := sql.NullTime{}
 	if resourceType.Valid && resourceType.String == "thread" && resourceID.Valid && activityPosition.Valid {
@@ -351,17 +352,29 @@ func (n *Notifier) sendInternalNotificationForEvent(ctx context.Context, evt eve
 		}
 	}
 	arg.ReadAt = readAt
-	return n.Queries.SystemCreateNotificationForActivity(ctx, arg)
+	return n.notificationStored(userID, n.Queries.SystemCreateNotificationForActivity(ctx, arg))
+}
+
+func (n *Notifier) notificationStored(userID int32, err error) error {
+	if err == nil && userID > 0 && n.Bus != nil {
+		// The inbox is authoritative. A lost wake-up must not cause redelivery.
+		_ = n.Bus.Publish(eventbus.NotificationsChanged{RecipientID: userID, Time: time.Now().UTC()})
+	}
+	return err
 }
 
 func notificationActivityKey(evt eventbus.TaskEvent) string {
-	activityID := strings.TrimSpace(evt.ActivityID)
-	if activityID == "" {
-		return ""
-	}
 	name := "task"
 	if named, ok := evt.Task.(tasks.Name); ok && named.Name() != "" {
-		name = strings.ToLower(named.Name())
+		name = named.Name()
 	}
-	return name + ":" + activityID
+	return formatNotificationActivityKey(name, evt.ActivityID)
+}
+
+func formatNotificationActivityKey(name, activityID string) string {
+	id := strings.TrimSpace(activityID)
+	if id == "" {
+		return ""
+	}
+	return strings.ToLower(name) + ":" + id
 }

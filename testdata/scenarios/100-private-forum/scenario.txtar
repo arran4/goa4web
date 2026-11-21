@@ -434,3 +434,8 @@ ItemRef: staff-room
 Label: temporary-topic-label
 Private: false
 At: 2026-08-02T10:17:00Z
+-- 640-alice-dismisses-reply-notification.event --
+Op: notification.dismiss
+Actor: alice
+Reply: bob-staff-welcome-reply-2
+At: 2026-08-02T10:18:00Z

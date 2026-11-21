@@ -211,13 +211,17 @@ func (cd *CoreData) acknowledgeThreadActivityPosition(threadID, commentID int32,
 		activityPosition = CalculateActivityPosition(commentID, 0)
 	}
 	if coordinator, ok := cd.queries.(db.NotificationReadStateCoordinator); ok {
-		return coordinator.AcknowledgeThreadReadActivity(cd.ctx, db.AcknowledgeThreadReadActivityParams{
+		err := coordinator.AcknowledgeThreadReadActivity(cd.ctx, db.AcknowledgeThreadReadActivityParams{
 			RecipientID:      cd.UserID,
 			ThreadID:         threadID,
 			CommentID:        commentID,
 			ActivityPosition: activityPosition,
 			UpdateLabels:     updateLabels,
 		})
+		if err == nil {
+			cd.publishNotificationChange()
+		}
+		return err
 	}
 	if updateLabels {
 		if err := cd.SetThreadPrivateLabelStatus(threadID, false, false); err != nil {
@@ -235,6 +239,7 @@ func (cd *CoreData) acknowledgeThreadActivityPosition(threadID, commentID int32,
 	}); err != nil {
 		return fmt.Errorf("acknowledge thread notifications: %w", err)
 	}
+	cd.publishNotificationChange()
 	return nil
 }
 

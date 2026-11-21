@@ -44,19 +44,19 @@ func TestUserNotificationOpenPage_SetsTitle(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				qs := testhelpers.NewQuerierStub()
 
-				qs.GetNotificationForListerFn = func(ctx context.Context, arg db.GetNotificationForListerParams) (*db.Notification, error) {
+				qs.ListVisibleNotificationEntriesForListerFn = func(ctx context.Context, arg db.ListVisibleNotificationEntriesForListerParams) ([]*db.ListVisibleNotificationEntriesForListerRow, error) {
 					link := ""
-					switch arg.ID {
+					switch arg.NotificationID {
 					case 124:
 						link = "/topic/1/thread/1"
 					case 125:
 						link = "/private/topic/2/thread/2"
 					}
-					return &db.Notification{
-						ID:      arg.ID,
+					return []*db.ListVisibleNotificationEntriesForListerRow{{
+						ID:      arg.NotificationID,
 						Message: sql.NullString{String: "Test Notification Message", Valid: true},
 						Link:    sql.NullString{String: link, Valid: link != ""},
-					}, nil
+					}}, nil
 				}
 
 				qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {

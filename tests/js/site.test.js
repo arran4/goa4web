@@ -847,3 +847,127 @@ console.log("Running pasteimg.js Tests...");
     global.document = _originalDoc;
     global.window = _originalWin;
 }
+
+// Live-events HTMX-style fragment swap & XSS safety tests
+(async function testLiveEvents() {
+    const assert = require('assert');
+    const liveEvents = require('../../core/templates/assets/live-events.js');
+
+    // 1. Safe fragment URL validation (rejects cross-origin / protocol-relative / javascript: URLs)
+    assert.strictEqual(liveEvents.isSafeFragmentURL('/usr/notifications/fragment/list'), true);
+    assert.strictEqual(liveEvents.isSafeFragmentURL('//evil.example/frag'), false);
+    assert.strictEqual(liveEvents.isSafeFragmentURL('https://evil.example/frag'), false);
+    assert.strictEqual(liveEvents.isSafeFragmentURL('javascript:alert(1)'), false);
+
+    // 2. Event kind extraction preserves envelope neutrality
+    assert.strictEqual(liveEvents.parseEventKind(JSON.stringify({ kind: 'notification', data: { notification: { id: 1 } } })), 'notification');
+    assert.strictEqual(liveEvents.parseEventKind(JSON.stringify({ kind: 'task', data: { notification: { id: 1 } } })), 'notification');
+    assert.strictEqual(liveEvents.parseEventKind(JSON.stringify({ kind: 'task', data: {} })), 'task');
+
+    // 3. Declarative DOM target matching & server-rendered fragment swap (innerHTML & outerHTML)
+    let listInnerHTML = '<div id="notifications-empty">No notifications</div>';
+    let countOuterHTML = '<a id="notif-index">Notifications</a>';
+    const listEl = {
+        getAttribute: (k) => ({
+            'data-live-event': 'notification',
+            'data-live-url': '/usr/notifications/fragment/list',
+            'data-live-swap': 'innerHTML'
+        })[k],
+        set innerHTML(v) { listInnerHTML = v; },
+        get innerHTML() { return listInnerHTML; }
+    };
+    const countEl = {
+        getAttribute: (k) => ({
+            'data-live-event': 'notification',
+            'data-live-url': '/usr/notifications/fragment/count',
+            'data-live-swap': 'outerHTML'
+        })[k],
+        replaceWith: (node) => { countOuterHTML = node.html; },
+        set outerHTML(v) { countOuterHTML = v; }
+    };
+    const mockDoc = {
+        querySelectorAll: (sel) => sel === '[data-live-event][data-live-url]' ? [listEl, countEl] : [],
+        createElement: (tag) => {
+            if (tag === 'template') {
+                return {
+                    _html: '',
+                    set innerHTML(v) { this._html = v; },
+                    get content() { return { firstElementChild: { html: this._html } }; }
+                };
+            }
+            return {};
+        }
+    };
+
+    const fetched = [];
+    const mockFetch = async (url, opts) => {
+        fetched.push({ url, opts });
+        if (url === '/usr/notifications/fragment/list') {
+            return {
+                ok: true,
+                redirected: false,
+                headers: { get: () => 'text/html; charset=utf-8' },
+                text: async () => '<div class="notification" id="notif-9">&lt;script&gt;alert(1)&lt;/script&gt;</div>'
+            };
+        }
+        return {
+            ok: true,
+            redirected: false,
+            headers: { get: () => 'text/html; charset=utf-8' },
+            text: async () => '<a href="/usr/notifications" id="notif-index">Notifications (1)</a>'
+        };
+    };
+
+    const updated = await liveEvents.handleMessage(
+        JSON.stringify({ kind: 'notification', data: { notification: { id: 9, message: '<script>alert(1)</script>', link: 'javascript:alert(1)' } } }),
+        mockDoc,
+        mockFetch
+    );
+    assert.strictEqual(updated, 2);
+    assert.strictEqual(fetched[0].opts.credentials, 'same-origin');
+    assert.strictEqual(fetched[0].opts.headers['X-Live-Fragment'], '1');
+    assert(listInnerHTML.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    assert(!listInnerHTML.includes('<script>'));
+    assert(countOuterHTML.includes('Notifications (1)'));
+
+    // 4. Rejects redirected or non-HTML responses (e.g. session expired -> login redirect)
+    const redirectedUpdated = await liveEvents.refreshTarget(listEl, async () => ({
+        ok: true,
+        redirected: true,
+        headers: { get: () => 'text/html' },
+        text: async () => '<form>Login</form>'
+    }));
+    assert.strictEqual(redirectedUpdated, false);
+
+    // 5. Reconnect reconciles all targets from authoritative HTTP endpoints
+    const reconciled = await liveEvents.refreshAllTargets(mockDoc, mockFetch);
+    assert.strictEqual(reconciled, 2);
+
+    // An older response can arrive after a newer invalidation has completed.
+    let deliverOlder;
+    const older = liveEvents.refreshTarget(listEl, () => new Promise(resolve => {
+        deliverOlder = resolve;
+    }), mockDoc);
+    assert.strictEqual(await liveEvents.refreshTarget(listEl, mockFetch, mockDoc), true);
+    deliverOlder({
+        ok: true,
+        redirected: false,
+        headers: { get: () => 'text/html' },
+        text: async () => '<div>Older inbox snapshot</div>'
+    });
+    assert.strictEqual(await older, false);
+    assert(!listInnerHTML.includes('Older inbox snapshot'));
+
+    // 6. Verify neither live-events.js nor notifications.js concatenates n.message/n.link into innerHTML
+    const liveJS = fs.readFileSync(path.join(__dirname, '../../core/templates/assets/live-events.js'), 'utf8');
+    const notifJS = fs.readFileSync(path.join(__dirname, '../../core/templates/assets/notifications.js'), 'utf8');
+    assert(!liveJS.includes('n.message'), 'live-events.js must not render n.message');
+    assert(!liveJS.includes('n.link'), 'live-events.js must not render n.link');
+    assert(!notifJS.includes('n.message'), 'notifications.js must not render n.message');
+    assert(!notifJS.includes('n.link'), 'notifications.js must not render n.link');
+
+    console.log('PASS: Live-events HTMX fragment swap and XSS safety tests');
+})().catch(err => {
+    console.error(err);
+    process.exit(1);
+});

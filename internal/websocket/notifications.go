@@ -1,9 +1,7 @@
 package websocket
 
 import (
-	"encoding/json"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,13 +13,10 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	coreconsts "github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Module bundles the event bus for websocket handlers.
@@ -34,40 +29,15 @@ type Module struct {
 type NotificationsHandler struct {
 	Bus      *eventbus.Bus      // event source
 	Upgrader websocket.Upgrader // websocket upgrader
-	Config   *config.RuntimeConfig
 }
 
-// Live event kinds identify the browser-visible purpose of an event.
-const (
-	// LiveEventKindNotification identifies a subscription-delivered notification.
-	LiveEventKindNotification = "notification"
-	// LiveEventKindTask identifies a compatibility event without a specialised browser kind.
-	LiveEventKindTask = "task"
-)
+// LiveEventKindNotification asks the browser to re-fetch its own inbox fragments.
+const LiveEventKindNotification = "notification"
 
-// LiveEvent is the transport-neutral browser representation of an application event.
+// LiveEvent is a browser invalidation signal. The HTML endpoint supplies the data.
 type LiveEvent struct {
-	Kind        string         `json:"kind"`
-	Path        string         `json:"path,omitempty"`
-	ActorUserID int32          `json:"actor_user_id,omitempty"`
-	Time        time.Time      `json:"time"`
-	Outcome     string         `json:"outcome,omitempty"`
-	Data        map[string]any `json:"data,omitempty"`
-}
-
-func liveEventFromTaskEvent(event eventbus.TaskEvent) LiveEvent {
-	kind := LiveEventKindTask
-	if _, ok := event.Data["notification"]; ok {
-		kind = LiveEventKindNotification
-	}
-	return LiveEvent{
-		Kind:        kind,
-		Path:        event.Path,
-		ActorUserID: event.UserID,
-		Time:        event.Time,
-		Outcome:     event.Outcome,
-		Data:        event.Data,
-	}
+	Kind string    `json:"kind"`
+	Time time.Time `json:"time"`
 }
 
 // NewModule returns a websocket module using bus for events.
@@ -75,23 +45,6 @@ func NewModule(bus *eventbus.Bus, cfg *config.RuntimeConfig) *Module {
 	return &Module{Bus: bus, Config: cfg}
 }
 
-func buildPatterns(task, path string) []string {
-	name := strings.ToLower(task)
-	path = strings.Trim(path, "/")
-	if path == "" {
-		return []string{fmt.Sprintf("%s:/*", name)}
-	}
-	parts := strings.Split(path, "/")
-	patterns := []string{fmt.Sprintf("%s:/%s", name, path)}
-	for i := len(parts) - 1; i >= 1; i-- {
-		prefix := strings.Join(parts[:i], "/")
-		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", name, prefix))
-	}
-	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
-	return patterns
-}
-
-// NewNotificationsHandler returns a handler using bus for events.
 func parseHosts(s string) []string {
 	var hosts []string
 	for part := range strings.SplitSeq(s, ",") {
@@ -109,7 +62,7 @@ func parseHosts(s string) []string {
 }
 
 func NewNotificationsHandler(bus *eventbus.Bus, cfg *config.RuntimeConfig) *NotificationsHandler {
-	h := &NotificationsHandler{Bus: bus, Config: cfg}
+	h := &NotificationsHandler{Bus: bus}
 	cfgHosts := parseHosts(cfg.BaseURL)
 	upgrader := websocket.Upgrader{}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
@@ -149,39 +102,19 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData).Queries()
-	if queries == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("db unavailable"))
+	if h.Bus == nil {
+		http.Error(w, "live updates unavailable", http.StatusServiceUnavailable)
 		return
 	}
-
-	ctx := r.Context()
-
-	loadSubs := func() ([]*db.ListSubscriptionsByUserRow, map[string]bool, error) {
-		rows, err := queries.ListSubscriptionsByUser(ctx, uid)
-		if err != nil {
-			return nil, nil, err
-		}
-		p := make(map[string]bool)
-		for _, row := range rows {
-			if row.Method == "internal" {
-				p[row.Pattern] = true
-			}
-		}
-		return rows, p, nil
-	}
-
-	subsRows, patterns, err := loadSubs()
-	if err != nil {
-		log.Printf("list subscriptions: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, corecommon.ErrInternalServerError)
-		return
-	}
-	if h.Config.LogFlags&config.LogFlagDebug != 0 {
-		log.Printf("subscriptions loaded: %d entries", len(subsRows))
-	}
+	sub := h.Bus.SubscribeWithOptions(
+		eventbus.WithTypes(eventbus.NotificationsChangedMessageType),
+		eventbus.WithBufferSize(1),
+		eventbus.WithFilter(func(msg eventbus.Message) bool {
+			evt, ok := msg.(eventbus.NotificationsChanged)
+			return ok && evt.RecipientID == uid
+		}),
+	)
+	defer sub.Close()
 
 	conn, err := h.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -190,77 +123,36 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	defer func() { _ = conn.Close() }()
 
-	ch := h.Bus.Subscribe(eventbus.TaskMessageType)
+	// Read control frames so closed clients release their subscriptions.
+	disconnected := make(chan struct{})
+	conn.SetReadLimit(1024)
+	go func() {
+		defer close(disconnected)
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
+
 	for {
 		select {
-		case env, ok := <-ch:
+		case env, ok := <-sub.Channel():
 			if !ok {
 				return
 			}
-			shouldReturn := func() bool {
-				defer env.Ack()
-				evt, ok := env.Msg.(eventbus.TaskEvent)
-				if !ok {
-					return false
-				}
-				if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") {
-					if n, ok := evt.Task.(tasks.Name); ok {
-						if name := n.Name(); name == "Update" || name == "Delete" {
-							var err error
-							subsRows, patterns, err = loadSubs()
-							if err != nil {
-								log.Printf("refresh subscriptions: %v", err)
-							} else if h.Config.LogFlags&config.LogFlagDebug != 0 {
-								log.Printf("subscriptions updated: %d entries", len(subsRows))
-							}
-							return false
-						}
-					}
-				}
-				if evt.UserID == uid {
-					return false
-				}
-				allowed := false
-				name := ""
-				if n, ok := evt.Task.(tasks.Name); ok {
-					name = n.Name()
-				}
-				candidatePaths := []string{evt.Path}
-				if evt.Data != nil {
-					if intent, ok := evt.Data[corecommon.ForumReplyIntentEventKey].(corecommon.ForumReplyNotificationIntent); ok && intent.CanonicalPath != "" {
-						candidatePaths = append(candidatePaths, intent.CanonicalPath, intent.CanonicalPath+"/reply")
-					} else if canonicalPath, ok := evt.Data["CanonicalPath"].(string); ok && canonicalPath != "" {
-						candidatePaths = append(candidatePaths, canonicalPath, canonicalPath+"/reply")
-					}
-				}
-				for _, candidatePath := range candidatePaths {
-					for _, p := range buildPatterns(name, candidatePath) {
-						if patterns[p] {
-							allowed = true
-							break
-						}
-					}
-					if allowed {
-						break
-					}
-				}
-				if !allowed {
-					return false
-				}
-				data, marshalErr := json.Marshal(liveEventFromTaskEvent(evt))
-				if marshalErr != nil {
-					log.Printf("marshal live event: %v", marshalErr)
-					return false
-				}
-				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
-					return true
-				}
-				return false
-			}()
-			if shouldReturn {
+			evt := env.Msg.(eventbus.NotificationsChanged)
+			err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			if err == nil {
+				err = conn.WriteJSON(LiveEvent{Kind: LiveEventKindNotification, Time: evt.Time})
+			}
+			env.Ack()
+			if err != nil {
 				return
 			}
-		case <-ctx.Done():
+		case <-disconnected:
+			return
+		case <-r.Context().Done():
 			return
 		}
 	}

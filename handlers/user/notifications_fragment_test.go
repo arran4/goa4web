@@ -172,9 +172,10 @@ func TestNotificationFragmentsAndXSSSafety(t *testing.T) {
 		}
 		defer func() { _ = conn.Close() }()
 
-		// Give subscription loop a brief moment to register on bus.
-		time.Sleep(25 * time.Millisecond)
-
+		marker := time.Date(2026, 11, 21, 0, 0, 0, 0, time.UTC)
+		if err := bus.Publish(eventbus.NotificationsChanged{RecipientID: 99, Time: marker.Add(-time.Minute)}); err != nil {
+			t.Fatalf("publish unrelated notification signal: %v", err)
+		}
 		if err := bus.Publish(eventbus.TaskEvent{
 			Path:   "/forum/topic/1",
 			UserID: 99,
@@ -185,14 +186,17 @@ func TestNotificationFragmentsAndXSSSafety(t *testing.T) {
 		}); err != nil {
 			t.Fatalf("publish task event: %v", err)
 		}
+		if err := bus.Publish(eventbus.NotificationsChanged{RecipientID: 42, Time: marker}); err != nil {
+			t.Fatalf("publish own notification signal: %v", err)
+		}
 
 		_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 		var evt websocket.LiveEvent
 		if err := conn.ReadJSON(&evt); err != nil {
 			t.Fatalf("read ws event: %v", err)
 		}
-		if evt.Kind != websocket.LiveEventKindNotification {
-			t.Fatalf("evt.Kind = %q, want %q", evt.Kind, websocket.LiveEventKindNotification)
+		if evt.Kind != websocket.LiveEventKindNotification || !evt.Time.Equal(marker) {
+			t.Fatalf("received unexpected event: %#v", evt)
 		}
 
 		resp, err := srv.Client().Get(srv.URL + "/usr/notifications/fragment/list")

@@ -9,7 +9,6 @@
     const proto = root.location && root.location.protocol === 'https:' ? 'wss://' : 'ws://';
     const url = root.location ? proto + root.location.host + '/ws/notifications' : '/ws/notifications';
     let retryDelay = 1000;
-    let hasConnected = false;
 
     async function refreshFragments(){
         const nodes = root.document.querySelectorAll('[data-live-event][data-live-url]');
@@ -36,10 +35,8 @@
         if(typeof root.WebSocket !== 'function') return;
         const conn = new root.WebSocket(url);
         conn.onopen = () => {
-            const reconnected = hasConnected;
-            hasConnected = true;
             retryDelay = 1000;
-            if(reconnected) refreshFragments().catch(() => {});
+            refreshFragments().catch(() => {});
         };
         conn.onmessage = () => {
             refreshFragments().catch(() => {});

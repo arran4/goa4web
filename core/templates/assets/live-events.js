@@ -117,18 +117,13 @@
     function initLiveEvents(endpoint){
         let conn;
         let retryDelay = 1000;
-        let hasConnected = false;
 
         function connect(){
             if(typeof root.WebSocket !== 'function') return;
             conn = new root.WebSocket(buildWebSocketURL(endpoint));
             conn.onopen = () => {
-                const reconnected = hasConnected;
-                hasConnected = true;
                 retryDelay = 1000;
-                if(reconnected){
-                    refreshAllTargets(root.document).catch(e => console.log('ws reconcile error', e));
-                }
+                refreshAllTargets(root.document).catch(e => console.log('ws reconcile error', e));
             };
             conn.onmessage = evt => {
                 handleMessage(evt.data, root.document).catch(e => console.log('ws message error', e));

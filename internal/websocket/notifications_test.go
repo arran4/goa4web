@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	"github.com/arran4/goa4web/internal/eventbus"
 	nav "github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
 )
@@ -82,24 +82,14 @@ func TestNotificationsJSRoute(t *testing.T) {
 	}
 }
 
-func TestLiveEventEnvelopeDoesNotExposeTaskImplementation(t *testing.T) {
+func TestNotificationLiveEventEnvelopeContainsOnlyInvalidation(t *testing.T) {
 	timestamp := time.Date(2026, time.October, 16, 0, 0, 0, 0, time.UTC)
-	got := liveEventFromTaskEvent(eventbus.TaskEvent{
-		Path:    "/forum/topic/7/thread/42",
-		UserID:  9,
-		Time:    timestamp,
-		Outcome: eventbus.TaskOutcomeSuccess,
-		Data:    map[string]any{"notification": map[string]any{"id": 5}},
-	})
-
-	if got.Kind != LiveEventKindNotification {
-		t.Fatalf("kind = %q, want %q", got.Kind, LiveEventKindNotification)
+	got, err := json.Marshal(LiveEvent{Kind: LiveEventKindNotification, Time: timestamp})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if got.Path != "/forum/topic/7/thread/42" || got.ActorUserID != 9 || !got.Time.Equal(timestamp) {
-		t.Fatalf("envelope = %#v", got)
-	}
-	if _, ok := got.Data["notification"]; !ok {
-		t.Fatalf("notification data missing from %#v", got.Data)
+	if want := `{"kind":"notification","time":"2026-10-16T00:00:00Z"}`; string(got) != want {
+		t.Fatalf("envelope = %s, want %s", got, want)
 	}
 }
 

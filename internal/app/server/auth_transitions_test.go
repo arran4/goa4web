@@ -111,7 +111,7 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 			t.Fatalf("anonymous GET %s status = %d; want 200", target, sensitivePage.Code)
 		}
 		assertIssue3095NoStore(t, sensitivePage)
-		if target == "/login" && !strings.Contains(sensitivePage.Body.String(), "window.addEventListener('pageshow'") {
+		if target == "/login" && !strings.Contains(sensitivePage.Body.String(), ` data-revalidate-on-restore></script>`) {
 			t.Error("anonymous login page is missing the BFCache restoration safeguard")
 		}
 	}
@@ -217,7 +217,7 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 		t.Fatalf("authenticated GET /login status = %d; want 200", authenticatedLoginPage.Code)
 	}
 	assertIssue3095NoStore(t, authenticatedLoginPage)
-	if !strings.Contains(authenticatedLoginPage.Body.String(), "window.addEventListener('pageshow'") {
+	if !strings.Contains(authenticatedLoginPage.Body.String(), ` data-revalidate-on-restore></script>`) {
 		t.Error("authenticated login page is missing the BFCache restoration safeguard")
 	}
 	for _, field := range []string{`name="code" value="abc"`, `name="back" value="/usr?view=settings"`} {
@@ -250,7 +250,7 @@ func TestIssue3095ProductionAuthTransitions(t *testing.T) {
 	if got := publicPage.Header().Get("Cache-Control"); got != "public, max-age=3600" {
 		t.Errorf("anonymous public page Cache-Control = %q; want public, max-age=3600", got)
 	}
-	if strings.Contains(publicPage.Body.String(), "window.addEventListener('pageshow'") {
+	if strings.Contains(publicPage.Body.String(), ` data-revalidate-on-restore></script>`) {
 		t.Error("anonymous public page unexpectedly includes the BFCache restoration safeguard")
 	}
 

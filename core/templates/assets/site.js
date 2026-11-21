@@ -1,3 +1,11 @@
+if (document.currentScript?.hasAttribute('data-revalidate-on-restore')) {
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     foldLongQuotes(document);
 

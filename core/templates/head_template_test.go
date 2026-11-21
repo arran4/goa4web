@@ -79,16 +79,12 @@ func TestHeadTemplateIncludesBFCacheSafeguardOnlyForSensitivePages(t *testing.T)
 				t.Fatalf("execute head: %v", err)
 			}
 			out := b.String()
-			hasListener := strings.Contains(out, "window.addEventListener('pageshow'")
-			if hasListener != tt.want {
-				t.Errorf("pageshow listener present = %t; want %t; output: %s", hasListener, tt.want, out)
+			hasFlag := strings.Contains(out, `<script src="/static/site.js" data-revalidate-on-restore></script>`)
+			if hasFlag != tt.want {
+				t.Errorf("restoration flag present = %t; want %t; output: %s", hasFlag, tt.want, out)
 			}
-			if tt.want {
-				normalized := strings.Join(strings.Fields(out), " ")
-				persistedReload := "window.addEventListener('pageshow', function(event) { if (event.persisted) { window.location.reload(); } });"
-				if !strings.Contains(normalized, persistedReload) || strings.Count(out, "window.location.reload()") != 1 {
-					t.Errorf("BFCache safeguard must reload only from the persisted restoration branch: %s", out)
-				}
+			if strings.Contains(out, "window.addEventListener('pageshow'") {
+				t.Errorf("inline restoration script is blocked by the site's Content Security Policy: %s", out)
 			}
 		})
 	}

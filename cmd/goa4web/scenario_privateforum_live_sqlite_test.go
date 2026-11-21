@@ -78,15 +78,15 @@ func TestScenarioPrivateForumLiveReplies(t *testing.T) {
 	carolSocket := dial(carol, threadID)
 	wrongThreadSocket := dial(alice, threadID+1)
 
-	postReply := func(text string) {
-		bobPage := scenarioHTTPGet(t, bob, ts.URL+staffPath)
+	postReply := func(author *http.Client, text string) {
+		bobPage := scenarioHTTPGet(t, author, ts.URL+staffPath)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, ts.URL+staffPath+"/reply", strings.NewReader(url.Values{
 			"replytext": {text}, "task": {"Reply"}, "gorilla.csrf.Token": {scenarioCSRFToken(t, bobPage)},
 		}.Encode()))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.Header.Set("Referer", ts.URL+staffPath)
-		client := *bob
+		client := *author
 		client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 		resp, err := client.Do(req)
 		require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestScenarioPrivateForumLiveReplies(t *testing.T) {
 	before, err := aliceCD.ThreadReadMarker(threadID)
 	require.NoError(t, err)
 
-	postReply("private live reply <script>alert(1)</script>")
+	postReply(bob, "private live reply <script>alert(1)</script>")
 	readSignal(aliceSocket, "thread-reply")
 	readSignal(bobSocket, "thread-reply")
 	resp, err := alice.Get(fragmentURL)
@@ -141,10 +141,21 @@ func TestScenarioPrivateForumLiveReplies(t *testing.T) {
 	var grantID int32
 	require.NoError(t, sqlDB.QueryRowContext(ctx, "SELECT id FROM grants WHERE section = 'privateforum_thread' AND action = 'view' AND item_id = ? AND user_id = ?", threadID, aliceUser.Idusers).Scan(&grantID))
 	require.NoError(t, aliceCD.RevokeForumThread(grantID))
-	postReply("second private live reply")
+	postReply(bob, "second private live reply")
 	barrier(aliceSocket, aliceUser.Idusers)
 	resp, err = alice.Get(fragmentURL)
 	require.NoError(t, err)
 	resp.Body.Close()
 	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	bobUser, err := q.SystemGetUserByUsername(ctx, sql.NullString{String: "bob", Valid: true})
+	require.NoError(t, err)
+	readSignal(bobSocket, "thread-reply") // Bob still received his second reply.
+	require.NoError(t, q.AdminScrubUser(ctx, db.AdminScrubUserParams{
+		Idusers: bobUser.Idusers, Username: sql.NullString{String: "deactivated-bob", Valid: true},
+	}))
+	_, err = aliceCD.GrantForumThread(threadID, sql.NullInt32{Int32: aliceUser.Idusers, Valid: true}, sql.NullInt32{}, "view")
+	require.NoError(t, err)
+	postReply(alice, "private live reply after deactivation")
+	barrier(bobSocket, bobUser.Idusers)
 }

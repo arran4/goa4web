@@ -89,3 +89,39 @@ func TestDurableMetadataRefresh(t *testing.T) {
 		})
 	}
 }
+
+func TestDurableMetadataRetryRepairsMissingImageReference(t *testing.T) {
+	const target = "https://example.test/article" // Target of both attempts.
+	const image = "https://example.test/image"    // Image for the persisted card.
+	record := &db.ExternalLink{ID: 42, Url: target}
+	failure := errors.New("temporary reference write failure")
+	q := &db.QuerierStub{
+		GetExternalLinkByIDReturns: record,
+		UpdateExternalLinkMetadataFn: func(_ context.Context, p db.UpdateExternalLinkMetadataParams) error {
+			record.CardTitle = p.CardTitle
+			record.CardImage = p.CardImage
+			return nil
+		},
+		UpdateExternalLinkImageCacheErr: failure,
+	}
+	fetches := 0
+	fetch := func(context.Context, string) (*opengraph.Info, error) {
+		fetches++
+		return &opengraph.Info{Title: "Fetched", Image: image}, nil
+	}
+	cache := func(context.Context, string) (string, error) { return "cached", nil }
+	if err := processExternalLink(t.Context(), q, record.ID, target, fetch, cache); !errors.Is(err, failure) {
+		t.Fatalf("first attempt error = %v, want %v", err, failure)
+	}
+	q.UpdateExternalLinkImageCacheErr = nil
+	q.UpdateExternalLinkImageCacheFn = func(_ context.Context, p db.UpdateExternalLinkImageCacheParams) error {
+		record.CardImageCache = p.CardImageCache
+		return nil
+	}
+	if err := processExternalLink(t.Context(), q, record.ID, target, fetch, cache); err != nil {
+		t.Fatalf("retry failed: %v", err)
+	}
+	if fetches != 1 || !record.CardImageCache.Valid || record.CardImageCache.String != "cached" {
+		t.Fatalf("retry fetched %d times and stored %v", fetches, record.CardImageCache)
+	}
+}

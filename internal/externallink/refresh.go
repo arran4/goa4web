@@ -17,7 +17,37 @@ type metadataStore interface {
 
 type metadataWriter interface {
 	UpdateExternalLinkMetadata(context.Context, db.UpdateExternalLinkMetadataParams) error
+	imageReferenceWriter
+}
+
+type imageReferenceWriter interface {
 	UpdateExternalLinkImageCache(context.Context, db.UpdateExternalLinkImageCacheParams) error
+}
+
+// RefreshMissingImageReference repairs an incomplete cache write without refetching
+// Open Graph metadata. An empty cache result leaves the optional reference unset.
+func RefreshMissingImageReference(ctx context.Context, store imageReferenceWriter, link *db.ExternalLink,
+	cacheImage func(context.Context, string) (string, error),
+) error {
+	if !link.CardImage.Valid || link.CardImage.String == "" ||
+		(link.CardImageCache.Valid && link.CardImageCache.String != "") {
+		return nil
+	}
+	ref, err := cacheImage(ctx, link.CardImage.String)
+	if err != nil || ref == "" {
+		return err
+	}
+	return storeImageReference(ctx, store, link.ID, ref)
+}
+
+func storeImageReference(ctx context.Context, store imageReferenceWriter, id int32, ref string) error {
+	if err := store.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
+		ID:             id,
+		CardImageCache: sql.NullString{String: ref, Valid: true},
+	}); err != nil {
+		return fmt.Errorf("store card image reference: %w", err)
+	}
+	return nil
 }
 
 // RefreshMissingMetadata fetches and persists metadata for a link without a title.
@@ -87,13 +117,7 @@ func refreshMetadata(ctx context.Context, store metadataWriter, url string,
 		storeErr = fmt.Errorf("store metadata: %w", storeErr)
 	}
 	if cachedImage != "" && (storeErr == nil || writeImageOnMetadataError) {
-		err := store.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-			ID:             id,
-			CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-		})
-		if err != nil {
-			cacheErr = fmt.Errorf("store card image reference: %w", err)
-		}
+		cacheErr = storeImageReference(ctx, store, id, cachedImage)
 	}
 	return storeErr == nil, cacheErr, storeErr
 }

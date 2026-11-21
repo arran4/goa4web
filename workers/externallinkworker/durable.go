@@ -63,8 +63,22 @@ func processExternalLink(ctx context.Context, q db.Querier, linkID int32, target
 	if err != nil {
 		return err
 	}
-	if existing == nil || common.CanonicalizeExternalURL(existing.Url) != canonicalURL || !domainexternallink.NeedsMetadata(existing) {
+	if existing == nil || common.CanonicalizeExternalURL(existing.Url) != canonicalURL {
 		return nil
+	}
+	cacheOptionalImage := func(ctx context.Context, imageURL string) (string, error) {
+		ref, err := cacheImage(ctx, imageURL)
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+		if err != nil {
+			log.Printf("external link %d image cache unavailable", linkID)
+			return "", nil
+		}
+		return ref, nil
+	}
+	if !domainexternallink.NeedsMetadata(existing) {
+		return domainexternallink.RefreshMissingImageReference(ctx, q, existing, cacheOptionalImage)
 	}
 	cacheErr, err := domainexternallink.RefreshMetadata(ctx, q, canonicalURL, func(context.Context) (int32, error) {
 		return linkID, ctx.Err()
@@ -75,17 +89,7 @@ func processExternalLink(ctx context.Context, q db.Querier, linkID int32, target
 			return nil, metadataFetchError{cause: err}
 		}
 		return info, nil
-	}, func(ctx context.Context, imageURL string) (string, error) {
-		ref, err := cacheImage(ctx, imageURL)
-		if ctx.Err() != nil {
-			return "", ctx.Err()
-		}
-		if err != nil {
-			log.Printf("external link %d image cache unavailable", linkID)
-			return "", nil
-		}
-		return ref, err
-	})
+	}, cacheOptionalImage)
 	return errors.Join(err, cacheErr)
 }
 

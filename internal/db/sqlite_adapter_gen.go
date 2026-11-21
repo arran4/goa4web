@@ -1595,10 +1595,10 @@ func (s *sqliteQuerier) AdminInsertLanguage(ctx context.Context, nameof sql.Null
 	return res, nil
 }
 
-func (s *sqliteQuerier) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error) {
+func (s *sqliteQuerier) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (sql.Result, error) {
 	res, err := s.q.AdminInsertQueuedLinkFromQueue(ctx, int64(id))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }

@@ -97,7 +97,7 @@ func loadSearchableText(ctx context.Context, q db.Querier, targetType string, ta
 		if err != nil {
 			return "", err
 		}
-		return strings.TrimSpace(row.Title.String + "\n" + row.Url.String + "\n" + row.Description.String), nil
+		return strings.TrimSpace(row.Title.String + "\n" + row.Description.String), nil
 	case TypeImage:
 		row, err := q.SystemGetImagePostTextForSearchIndex(ctx, targetID)
 		if errors.Is(err, sql.ErrNoRows) {

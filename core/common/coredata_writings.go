@@ -252,7 +252,7 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	}
-	_, err := cd.withWritingSearch(func(q db.Querier) (int64, error) {
+	_, err := cd.withSearchWork(searchindex.TypeWriting, func(q db.Querier) (int64, error) {
 		rows, err := q.UpdateWritingForWriter(cd.ctx, arg)
 		if err != nil || rows == 0 {
 			return 0, err
@@ -292,7 +292,7 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	}
-	return cd.withWritingSearch(func(q db.Querier) (int64, error) {
+	return cd.withSearchWork(searchindex.TypeWriting, func(q db.Querier) (int64, error) {
 		result, err := q.CreateWritingForWriter(cd.ctx, arg)
 		if err != nil {
 			return 0, err
@@ -303,32 +303,6 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		}
 		return result.LastInsertId()
 	})
-}
-
-func (cd *CoreData) withWritingSearch(write func(db.Querier) (int64, error)) (int64, error) {
-	if cd.jobService == nil {
-		return write(cd.queries)
-	}
-	transactor, ok := cd.queries.(db.JobTransactor)
-	if !ok {
-		return 0, fmt.Errorf("persist writing and search job: database does not support transactions")
-	}
-	var id int64
-	err := transactor.WithJobTransaction(cd.ctx, func(q db.Querier) error {
-		var err error
-		id, err = write(q)
-		if err != nil || id == 0 {
-			return err
-		}
-		return cd.jobService.RecordSearchDirty(cd.ctx, q, searchindex.TypeWriting, int32(id))
-	})
-	if err != nil {
-		return 0, err
-	}
-	if id > 0 {
-		cd.jobService.SignalWakeup()
-	}
-	return id, nil
 }
 
 // GrantWritingCategory adds a grant for a writing category.

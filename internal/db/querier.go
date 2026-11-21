@@ -130,7 +130,7 @@ type Querier interface {
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
 	// AdminInsertLanguage adds a new language returning a result.
 	AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
-	AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error)
+	AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (sql.Result, error)
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error

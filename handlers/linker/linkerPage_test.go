@@ -151,11 +151,11 @@ func newLinkerIndexRecorder(linkID int64, link *db.GetLinkerItemByIdWithPosterUs
 	}
 }
 
-func (l *linkerIndexRecorder) AdminInsertQueuedLinkFromQueue(_ context.Context, id int32) (int64, error) {
+func (l *linkerIndexRecorder) AdminInsertQueuedLinkFromQueue(_ context.Context, id int32) (sql.Result, error) {
 	l.mu.Lock()
 	l.queued = append(l.queued, id)
 	l.mu.Unlock()
-	return l.linkID, nil
+	return db.FakeSQLResult{LastInsertIDValue: l.linkID, RowsAffectedValue: 1}, nil
 }
 
 func (l *linkerIndexRecorder) GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUser(context.Context, db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserParams) (*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow, error) {

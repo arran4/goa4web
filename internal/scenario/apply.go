@@ -9,6 +9,7 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers/auth"
 	"github.com/arran4/goa4web/internal/db"
+	notif "github.com/arran4/goa4web/internal/notifications"
 )
 
 // ErrUnsupportedOperation indicates that an operation is valid in format but not yet supported by this runner.
@@ -58,6 +59,22 @@ func WithRefRegistry(reg *RefRegistry) Option {
 
 // NewRunner creates a new Runner with CoreData.
 func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
+	if cd != nil && cd.ForumReplyNotifier() == nil && cd.Queries() != nil {
+		var notifCfg config.RuntimeConfig
+		if cd.Config != nil {
+			notifCfg = *cd.Config
+		}
+		notifCfg.NotificationsEnabled = true
+		notifCfg.EmailEnabled = false
+		if notifCfg.EmailFrom == "" {
+			notifCfg.EmailFrom = "noreply@example.test"
+		}
+		cd.SetForumReplyNotifier(notif.New(
+			notif.WithSilence(true),
+			notif.WithQueries(cd.Queries()),
+			notif.WithConfig(&notifCfg),
+		))
+	}
 	r := &Runner{
 		coreData:    cd,
 		opRegistry:  DefaultRegistry(),
@@ -87,7 +104,10 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 
 // NewRunnerWithQuerier creates a new Runner using a db.Querier.
 func NewRunnerWithQuerier(ctx context.Context, q db.Querier, opts ...Option) *Runner {
-	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{})
+	cd := common.NewCoreData(ctx, q, &config.RuntimeConfig{
+		NotificationsEnabled: true,
+		EmailFrom:            "noreply@example.test",
+	})
 	return NewRunner(cd, opts...)
 }
 
@@ -357,9 +377,21 @@ func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) erro
 	if !ok {
 		return fmt.Errorf("cannot resolve thread %q", data.Thread)
 	}
+	lastDisplayedCommentID := int32(0)
+	if data.LastDisplayedComment != "" {
+		lastDisplayedCommentID, ok = r.resolveInt32Ref(RefTypePost, data.LastDisplayedComment)
+		if !ok {
+			return fmt.Errorf("cannot resolve last displayed comment %q", data.LastDisplayedComment)
+		}
+	}
 	actorCD := r.coreData.ForUser(actorID)
 	result, err := actorCD.ReplyForumThread(ctx, common.ReplyForumThreadParams{
-		ActorID: actorID, ThreadID: threadID, Text: data.Body, At: data.At,
+		ActorID:                actorID,
+		ThreadID:               threadID,
+		LastDisplayedCommentID: lastDisplayedCommentID,
+		LastDisplayedActivity:  data.LastDisplayedActivity,
+		Text:                   data.Body,
+		At:                     data.At,
 		SynchronousSideEffects: true,
 	})
 	if err != nil {
@@ -413,12 +445,18 @@ func (r *Runner) applyForumThreadRead(ctx context.Context, data *ForumThreadRead
 	if !ok {
 		return fmt.Errorf("cannot resolve thread %q", data.Thread)
 	}
+	commentID, ok := r.resolveInt32Ref(RefTypePost, data.Comment)
+	if !ok {
+		return fmt.Errorf("cannot resolve comment %q", data.Comment)
+	}
 
 	actorCD := r.coreData.ForUser(actorID)
 
 	err := actorCD.ReadForumThread(ctx, common.ReadForumThreadParams{
-		ActorID:  actorID,
-		ThreadID: threadID,
+		ActorID:        actorID,
+		ThreadID:       threadID,
+		LastCommentID:  commentID,
+		LastActivityID: data.Activity,
 	})
 	if err != nil {
 		return fmt.Errorf("read forum thread: %w", err)

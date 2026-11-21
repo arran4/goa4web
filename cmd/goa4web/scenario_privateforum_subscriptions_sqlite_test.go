@@ -138,7 +138,7 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 		runScenarioAndAssert(t, baseEventsCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
 			body := scenarioHTTPGet(t, client, url+"/private/unread")
 			countMatches := strings.Count(body, "class=\"thread\"")
-			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice initially")
+			require.Equal(t, 3, countMatches, "Expected 3 unread private threads for Alice without a captured reply watermark")
 
 			var aliceID int32
 			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
@@ -183,7 +183,7 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 		runScenarioAndAssert(t, readEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
 			body := scenarioHTTPGet(t, client, url+"/private/unread")
 			countMatches := strings.Count(body, "class=\"thread\"")
-			require.Equal(t, 1, countMatches, "Expected 1 unread private thread for Alice after reading staff-welcome")
+			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice after reading staff-welcome")
 			require.NotContains(t, body, "Welcome to the staff room.", "Staff Room unread should be cleared")
 
 			var aliceID int32
@@ -211,7 +211,7 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 		runScenarioAndAssert(t, replyEventCount, func(t *testing.T, client *http.Client, url string, sqlDB *sql.DB, cd *common.CoreData) {
 			body := scenarioHTTPGet(t, client, url+"/private/unread")
 			countMatches := strings.Count(body, "class=\"thread\"")
-			require.Equal(t, 2, countMatches, "Expected 2 unread private threads for Alice after bob replied")
+			require.Equal(t, 3, countMatches, "Expected 3 unread private threads for Alice after bob replied")
 
 			var aliceID, bobID int32
 			errAlice := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'alice'").Scan(&aliceID)
@@ -231,15 +231,12 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			bobMarker, err := bobCD.ThreadReadMarker(staffWelcomeThreadID)
 			require.NoError(t, err)
 
-			var bobFirstReplyID, newReplyID int32
+			var bobFirstReplyID int32
 			// The thread has 3 comments: alice welcome, bob reply 1, bob reply 2
 			err = sqlDB.QueryRow("SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written ASC LIMIT 1 OFFSET 1", staffWelcomeThreadID).Scan(&bobFirstReplyID)
 			require.NoError(t, err)
-			err = sqlDB.QueryRow("SELECT idcomments FROM comments WHERE forumthread_id = ? ORDER BY written DESC LIMIT 1", staffWelcomeThreadID).Scan(&newReplyID)
-			require.NoError(t, err)
-
 			require.Equal(t, bobFirstReplyID, aliceMarker, "Alice's marker remains exactly Bob's first reply")
-			require.Equal(t, newReplyID, bobMarker, "Bob's marker equals the new reply")
+			require.Equal(t, bobFirstReplyID, bobMarker, "Bob's marker acknowledges the captured prior reply, not the new reply")
 
 			var staffRoomTopicID int32
 			errStaff := sqlDB.QueryRow("SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room'").Scan(&staffRoomTopicID)
@@ -255,6 +252,51 @@ func TestE2EPrivateForumSubscriptionsIncremental(t *testing.T) {
 			daveCD := coreDataForUser(context.Background(), cd, daveID)
 			hasSub = daveCD.HasSubscription(bobThreadPattern, "internal")
 			require.False(t, hasSub, "Dave should not be subscribed to staff-welcome thread")
+
+			var carolID int32
+			errCarol := sqlDB.QueryRow("SELECT idusers FROM users WHERE username = 'carol'").Scan(&carolID)
+			require.NoError(t, errCarol)
+			carolCD := coreDataForUser(context.Background(), cd, carolID)
+
+			notifReq := httptest.NewRequest(http.MethodGet, "/usr/notifications?all=1", nil)
+			aliceNotes, err := aliceCD.Notifications(notifReq)
+			require.NoError(t, err)
+			bobNotes, err := bobCD.Notifications(notifReq)
+			require.NoError(t, err)
+			carolNotes, err := carolCD.Notifications(notifReq)
+			require.NoError(t, err)
+			daveNotes, err := daveCD.Notifications(notifReq)
+			require.NoError(t, err)
+
+			// Alice (overlapping administrator + subscriber) receives 3 canonical reply notifications:
+			// 1. Bob's first reply on staff-welcome (marked read when Alice read the thread)
+			// 2. Carol's reply on coordination-plan (unread)
+			// 3. Bob's second reply on staff-welcome (unread)
+			// And 0 notifications for Project Room (where Alice is not a participant) or Alice's own reply.
+			require.Len(t, aliceNotes, 3, "Alice should receive 1 canonical notification per eligible reply (no admin duplicate, no Project Room leak)")
+			for _, n := range aliceNotes {
+				require.NotContains(t, n.Message.String, "replied to the forum thread", "Admin template must never be used for ordinary replies")
+				require.NotContains(t, n.Message.String, "Project Room", "Administrator Alice must not receive notifications for Project Room")
+				require.NotContains(t, n.Link.String, "/private/api/", "Notification link must be canonical /private/topic/...#c...")
+			}
+
+			// Unread check: Bob's first reply was acknowledged by Alice reading the thread;
+			// Alice's unread list contains only the 2 unread replies.
+			aliceUnreadReq := httptest.NewRequest(http.MethodGet, "/usr/notifications", nil)
+			aliceUnreadNotes, err := aliceCD.Notifications(aliceUnreadReq)
+			require.NoError(t, err)
+			require.Len(t, aliceUnreadNotes, 2, "Alice should have 2 unread notifications; Bob's first reply was acknowledged by reading")
+
+			// Bob receives 1 canonical notification for Alice's reply on bob-staff-check-in, and 0 for Project Room or Coordination.
+			require.Len(t, bobNotes, 1, "Bob should receive 1 canonical notification for Alice's reply in Staff Room")
+			require.Contains(t, bobNotes[0].Message.String, "alice replied to Staff Room:")
+
+			// Carol receives 1 canonical notification for Dave's reply on project-kickoff, and 0 for Staff Room.
+			require.Len(t, carolNotes, 1, "Carol should receive 1 canonical notification for Dave's reply in Project Room")
+			require.Contains(t, carolNotes[0].Message.String, "dave replied to Project Room:")
+
+			// Dave authored the only reply in Project Room and is not in Staff Room or Coordination.
+			require.Empty(t, daveNotes, "Dave should receive 0 notifications for his own reply or other rooms")
 		})
 	})
 

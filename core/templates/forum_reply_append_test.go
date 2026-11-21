@@ -68,3 +68,62 @@ func TestForumReplyFormAdvertisesAppendAdvisory(t *testing.T) {
 		t.Fatalf("read-marker-blocked form did not fall back to reply: %s", read)
 	}
 }
+
+func TestForumReplyForm_SnapshotConsistentWatermark_InterleavedAppend(t *testing.T) {
+	q := testhelpers.NewQuerierStub(testhelpers.WithGrant("forum", "topic", "reply"))
+	// The comment snapshot loaded for the user has append ID 1.
+	comment := &db.GetCommentsByThreadIdForUserRow{
+		Idcomments: 20, ForumthreadID: 10, UsersIdusers: 9, IsOwner: false,
+		Written:      sql.NullTime{Time: time.Now(), Valid: true},
+		LastAppendID: 1,
+	}
+	q.GetForumTopicByIdForUserFn = func(context.Context, db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
+		return &db.GetForumTopicByIdForUserRow{Idforumtopic: 5, Handler: "forum"}, nil
+	}
+	q.GetThreadBySectionThreadIDForReplierFn = func(context.Context, db.GetThreadBySectionThreadIDForReplierParams) (*db.Forumthread, error) {
+		return &db.Forumthread{Idforumthread: 10}, nil
+	}
+	q.GetCommentsBySectionThreadIdForUserReturns = []*db.GetCommentsBySectionThreadIdForUserRow{{
+		Idcomments: comment.Idcomments, ForumthreadID: comment.ForumthreadID,
+		UsersIdusers: comment.UsersIdusers, IsOwner: comment.IsOwner, Written: comment.Written,
+		LastAppendID: 1,
+	}}
+	q.GetCommentsByThreadIdForUserFn = func(context.Context, db.GetCommentsByThreadIdForUserParams) ([]*db.GetCommentsByThreadIdForUserRow, error) {
+		return []*db.GetCommentsByThreadIdForUserRow{comment}, nil
+	}
+	// Simulate an interleaved concurrent append committed to the DB after comments were fetched.
+	// A live lookup on SystemListCommentAppendsByCommentID would see append 2.
+	q.SystemListCommentAppendsByCommentIDFn = func(context.Context, int32) ([]*db.CommentAppend, error) {
+		return []*db.CommentAppend{
+			{ID: 1, CommentID: 20, UsersIdusers: 9},
+			{ID: 2, CommentID: 20, UsersIdusers: 9},
+		}, nil
+	}
+
+	cd := common.NewCoreData(context.Background(), q, &config.RuntimeConfig{}, common.WithUserRoles([]string{"user"}))
+	cd.UserID = 7
+	cd.SetCurrentSection("forum")
+	cd.SetCurrentThreadAndTopic(10, 5)
+
+	req := httptest.NewRequest("GET", "/forum/topic/5/thread/10", nil)
+	compiled := templates.GetCompiledSiteTemplates(cd.Funcs(req), templates.WithSilence(true))
+	data := map[string]any{
+		"BasePath": "/forum",
+		"Text":     "reply text",
+		"Topic":    &db.GetForumTopicByIdForUserRow{Idforumtopic: 5, Handler: "forum"},
+		"Thread":   &db.GetThreadLastPosterAndPermsForUserRow{Idforumthread: 10},
+	}
+	var buf bytes.Buffer
+	if err := compiled.ExecuteTemplate(&buf, "forumReply", data); err != nil {
+		t.Fatalf("ExecuteTemplate forumReply: %v", err)
+	}
+	html := buf.String()
+
+	// The form must capture what was visible (append 1), NOT the concurrent DB tip (append 2).
+	if !strings.Contains(html, `<input type="hidden" name="last_activity" value="comment:20:append:1">`) {
+		t.Fatalf("form did not preserve snapshot-consistent activity comment:20:append:1, output:\n%s", html)
+	}
+	if strings.Contains(html, "comment:20:append:2") {
+		t.Fatalf("form incorrectly leaked interleaved append 2 which was never rendered, output:\n%s", html)
+	}
+}

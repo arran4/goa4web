@@ -187,7 +187,11 @@ func (c *scenarioServeCmd) Bootstrap(ctx context.Context) (*server.Server, *sql.
 	serveCfg.ImageCacheS3URL = ""
 
 	// 4. Email isolation: disable external sending, clear external credentials, use inert log provider
+	serveCfg.NotificationsEnabled = true
 	serveCfg.EmailEnabled = false
+	if serveCfg.EmailFrom == "" {
+		serveCfg.EmailFrom = "noreply@example.test"
+	}
 	serveCfg.EmailProvider = "log"
 	serveCfg.EmailSMTPHost = ""
 	serveCfg.EmailSMTPPort = ""

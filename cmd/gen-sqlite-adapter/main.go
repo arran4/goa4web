@@ -300,12 +300,13 @@ func toNullTime(v any) sql.NullTime {
 `)
 
 	buf.WriteString("type sqliteQuerier struct {\n")
+	buf.WriteString("	db DBTX\n")
 	buf.WriteString("	q *dbsqlite.Queries\n")
 	buf.WriteString("}\n\n")
 
 	buf.WriteString("// NewSQLiteQuerier constructs a db.Querier backed by the SQLite query implementation.\n")
 	buf.WriteString("func NewSQLiteQuerier(db DBTX) Querier {\n")
-	buf.WriteString("	return &sqliteQuerier{q: dbsqlite.New(db)}\n")
+	buf.WriteString("	return &sqliteQuerier{db: db, q: dbsqlite.New(db)}\n")
 	buf.WriteString("}\n\n")
 
 	var methodNames []string
@@ -415,7 +416,7 @@ func zeroValueOf(typ string) string {
 		return "nil"
 	}
 	switch typ {
-	case "int", "int32", "int64", "uint", "uint32", "uint64", "float32", "float64":
+	case "int", "int32", "int64", "uint", "uint8", "uint32", "uint64", "float32", "float64":
 		return "0"
 	case "bool":
 		return "false"
@@ -468,6 +469,9 @@ func convertToLiteExpr(
 		return "func(v interface{}) string { if s, ok := v.(string); ok { return s }; if s, ok := v.(*string); ok && s != nil { return *s }; return \"\" }(" + valName + ")", nil
 	}
 	if dbType == "int32" && liteType == "int64" {
+		return fmt.Sprintf("int64(%s)", valName), nil
+	}
+	if dbType == "uint8" && liteType == "int64" {
 		return fmt.Sprintf("int64(%s)", valName), nil
 	}
 	if dbType == "int64" && liteType == "int32" {
@@ -570,6 +574,9 @@ func convertFromLiteExpr(
 	}
 	if dbType == "int32" && liteType == "int64" {
 		return fmt.Sprintf("int32(%s)", valName), nil
+	}
+	if dbType == "uint8" && liteType == "int64" {
+		return fmt.Sprintf("uint8(%s)", valName), nil
 	}
 	if dbType == "int64" && liteType == "int32" {
 		return fmt.Sprintf("int64(%s)", valName), nil

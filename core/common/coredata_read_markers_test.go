@@ -20,17 +20,18 @@ func TestThreadReadMarker(t *testing.T) {
 	cd := common.NewTestCoreData(t, q)
 	cd.UserID = 1
 
+	wantPos := common.CalculateActivityPosition(5, 0)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO content_read_markers")).
-		WithArgs("thread", int32(2), cd.UserID, int32(5)).
+		WithArgs("thread", int32(2), cd.UserID, int32(5), wantPos).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	if err := cd.SetThreadReadMarker(2, 5); err != nil {
 		t.Fatalf("SetThreadReadMarker: %v", err)
 	}
 
-	rows := sqlmock.NewRows([]string{"item", "item_id", "user_id", "last_comment_id"}).
-		AddRow("thread", 2, cd.UserID, 5)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT item, item_id, user_id, last_comment_id FROM content_read_markers")).
+	rows := sqlmock.NewRows([]string{"item", "item_id", "user_id", "last_comment_id", "last_activity_position"}).
+		AddRow("thread", 2, cd.UserID, 5, wantPos)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT item, item_id, user_id, last_comment_id, last_activity_position FROM content_read_markers")).
 		WithArgs("thread", int32(2), cd.UserID).
 		WillReturnRows(rows)
 

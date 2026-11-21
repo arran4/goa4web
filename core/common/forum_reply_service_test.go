@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -17,11 +18,12 @@ import (
 
 type recordingForumReplyNotifier struct {
 	intents []ForumReplyNotificationIntent
+	err     error
 }
 
 func (r *recordingForumReplyNotifier) NotifyForumReply(_ context.Context, intent ForumReplyNotificationIntent) error {
 	r.intents = append(r.intents, intent)
-	return nil
+	return r.err
 }
 
 func TestCoreCommonDoesNotImportInternalNotifications(t *testing.T) {
@@ -207,4 +209,19 @@ func TestForumReplyService_HeadlessCanonicalExecutionAndAppendActivity(t *testin
 	if notifier.intents[0].ActivityID != res1.ActivityID || notifier.intents[1].ActivityID != res2.ActivityID {
 		t.Fatalf("recorded intents = %+v, want %q then %q", notifier.intents, res1.ActivityID, res2.ActivityID)
 	}
+
+	notifier.err = errors.New("notification projection unavailable")
+	appendMode = false
+	cmd := ForumReplyCommand{
+		ActorID: actorID, TopicID: topicID, ThreadID: threadID, LanguageID: 1,
+		Text: "Reply committed before notification dispatch", Private: true, EnforceHandler: true,
+	}
+	committed, err := svc.Reply(t.Context(), cmd)
+	if err != nil || committed == nil || committed.CommentID != commentID {
+		t.Fatalf("committed reply should retain its result after a failed notifier, got %+v, %v", committed, err)
+	}
+	if !errors.Is(committed.SideEffectError, notifier.err) {
+		t.Fatalf("committed reply should include notification failure: %v", committed.SideEffectError)
+	}
+
 }

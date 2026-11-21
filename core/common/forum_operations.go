@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -95,6 +96,8 @@ type CreateForumThreadResult struct {
 	ThreadID  int32
 	CommentID int32
 	URL       string
+	// SideEffectError describes a projection failure after the thread was committed.
+	SideEffectError error
 }
 
 // ForumReplyIntentEventKey stores the canonical forum reply notification intent in TaskEvent.Data.
@@ -163,6 +166,8 @@ type ReplyForumThreadResult struct {
 	Private              bool
 	Intent               ForumReplyNotificationIntent
 	AcknowledgementError error
+	// SideEffectError describes a worker or notifier failure after the reply was committed.
+	SideEffectError error
 }
 
 // ForumReplyResult is the canonical application result of replying to a forum thread.
@@ -196,7 +201,7 @@ func (s *ForumReplyService) Reply(ctx context.Context, cmd ForumReplyCommand) (*
 	}
 	if !cmd.SynchronousSideEffects && cd.forumReplyNotifier != nil {
 		if err := cd.forumReplyNotifier.NotifyForumReply(ctx, res.Intent); err != nil {
-			return nil, fmt.Errorf("notify forum reply: %w", err)
+			res.SideEffectError = errors.Join(res.SideEffectError, fmt.Errorf("notify forum reply: %w", err))
 		}
 	}
 	return res, nil
@@ -518,13 +523,14 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 	}); err != nil {
 		log.Printf("thread create side effects: %v", err)
 	}
+	result := &CreateForumThreadResult{ThreadID: threadID, CommentID: commentID, URL: endURL}
 	if params.SynchronousSideEffects {
 		if err := cd.ApplyForumMutationWorkers(ctx, threadID, params.TopicID, commentID, params.Text); err != nil {
-			return nil, fmt.Errorf("apply forum thread workers: %w", err)
+			result.SideEffectError = fmt.Errorf("apply forum thread workers: %w", err)
 		}
 	}
 
-	return &CreateForumThreadResult{ThreadID: threadID, CommentID: commentID, URL: endURL}, nil
+	return result, nil
 }
 
 // ReplyForumThread creates a reply through the same permission and side-effect boundary used by HTTP handlers and scenario imports.
@@ -737,13 +743,14 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 			ackErr = fmt.Errorf("acknowledge displayed thread activity: %w", err)
 		}
 	}
+	var sideEffectErr error
 	if params.SynchronousSideEffects {
 		if err := cd.applyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, commentText, canonicalTextAvailable); err != nil {
-			return nil, fmt.Errorf("apply forum reply workers: %w", err)
+			sideEffectErr = fmt.Errorf("apply forum reply workers: %w", err)
 		}
 		if cd.forumReplyNotifier != nil {
 			if err := cd.forumReplyNotifier.NotifyForumReply(ctx, intent); err != nil {
-				return nil, fmt.Errorf("notify forum reply: %w", err)
+				sideEffectErr = errors.Join(sideEffectErr, fmt.Errorf("notify forum reply: %w", err))
 			}
 		}
 	}
@@ -761,6 +768,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		Private:              isPrivate,
 		Intent:               intent,
 		AcknowledgementError: ackErr,
+		SideEffectError:      sideEffectErr,
 	}, nil
 }
 

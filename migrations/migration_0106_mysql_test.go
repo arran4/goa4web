@@ -22,6 +22,13 @@ func TestMySQLMigration0106PreservesPreferencesAndExistingMail(t *testing.T) {
 	require.NoError(t, err)
 	_, err = conn.ExecContext(ctx, "INSERT INTO schema_version VALUES (106)")
 	require.NoError(t, err)
+	// Existing upgraded servers have the complete historic migration ledger.
+	_, err = conn.ExecContext(ctx, "DELETE FROM goose_db_version")
+	require.NoError(t, err)
+	for version := 0; version <= 106; version++ {
+		_, err = conn.ExecContext(ctx, "INSERT INTO goose_db_version (version_id, is_applied) VALUES (?, 1)", version)
+		require.NoError(t, err)
+	}
 	provider, err := goose.NewProvider(goose.DialectMySQL, conn, ForDriver("mysql"))
 	require.NoError(t, err)
 	_, err = provider.DownTo(ctx, 105)

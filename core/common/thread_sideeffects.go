@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/postcount"
 	"github.com/arran4/goa4web/internal/searchindex"
 )
@@ -264,13 +263,8 @@ func (cd *CoreData) EnqueueExternalLinksFromBody(ctx context.Context, body strin
 			return nil
 		}
 		seen[canonicalURL] = struct{}{}
-		_, err := cd.jobService.Enqueue(ctx, jobs.EnqueueRequest{
-			JobType:         jobs.JobTypeExternalLink,
-			TargetType:      jobs.JobTypeExternalLink,
-			TargetKey:       canonicalURL,
-			CreatedByUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0},
-		})
-		if err != nil && !errors.Is(err, jobs.ErrInCooldown) {
+		err := cd.jobService.QueueObservedExternalLink(ctx, canonicalURL, sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0})
+		if err != nil {
 			errs = append(errs, err)
 		}
 		return nil

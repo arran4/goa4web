@@ -64,6 +64,13 @@ respects cancellation even after the job history is pruned. The worker checks
 its claim after downloading and locks the active lease while recording the
 cache metadata.
 
+## Observed external links
+
+The embedded server treats successful task events from older producers as
+inputs to the durable external-link queue. The same queue handles links
+observed directly by newer thread operations. Observing a link preserves the
+schedule of an active retry and respects its cooldown.
+
 ## Shutdown
 
 Calling `Bus.Shutdown(ctx)` stops new publications, closes delivery to each

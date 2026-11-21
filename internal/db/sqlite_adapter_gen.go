@@ -11291,6 +11291,23 @@ func (s *sqliteQuerier) SystemPurgePasswordResetsBefore(ctx context.Context, cre
 	return res, nil
 }
 
+func (s *sqliteQuerier) SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error) {
+	res, err := s.q.SystemQueueObservedExternalLinkJob(ctx, dbsqlite.SystemQueueObservedExternalLinkJobParams{
+		DedupeKey:   arg.DedupeKey,
+		ActiveKey:   arg.ActiveKey,
+		TargetKey:   arg.TargetKey,
+		MaxAttempts: int64(arg.MaxAttempts),
+		RunAfter:    arg.RunAfter,
+		ActorID:     sql.NullInt64{Int64: int64(arg.ActorID.Int32), Valid: arg.ActorID.Valid},
+		CheckKey:    arg.CheckKey,
+		CooldownAt:  arg.CooldownAt,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error) {
 	res, err := s.q.SystemQueuePendingImageCacheJobs(ctx, dbsqlite.SystemQueuePendingImageCacheJobsParams{
 		MaxAttempts: int64(arg.MaxAttempts),

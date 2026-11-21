@@ -814,6 +814,48 @@ func (q *Queries) SystemPruneTerminalDurableJobs(ctx context.Context, arg System
 	return result.RowsAffected()
 }
 
+const systemQueueObservedExternalLinkJob = `-- name: SystemQueueObservedExternalLinkJob :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'external_link', ?, ?, 'external_link',
+       ?, ?, ?,
+       ?, NOW(), NOW()
+FROM (SELECT 1 AS anchor_value) anchor
+LEFT JOIN durable_job_cooldowns cooldown ON cooldown.dedupe_key = ?
+WHERE cooldown.dedupe_key IS NULL OR cooldown.cooldown_until <= ?
+ON DUPLICATE KEY UPDATE id = durable_jobs.id
+`
+
+type SystemQueueObservedExternalLinkJobParams struct {
+	DedupeKey   string
+	ActiveKey   sql.NullString
+	TargetKey   string
+	MaxAttempts int32
+	RunAfter    time.Time
+	ActorID     sql.NullInt32
+	CheckKey    string
+	CooldownAt  time.Time
+}
+
+func (q *Queries) SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemQueueObservedExternalLinkJob,
+		arg.DedupeKey,
+		arg.ActiveKey,
+		arg.TargetKey,
+		arg.MaxAttempts,
+		arg.RunAfter,
+		arg.ActorID,
+		arg.CheckKey,
+		arg.CooldownAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const systemQueuePendingImageCacheJobs = `-- name: SystemQueuePendingImageCacheJobs :execrows
 INSERT INTO durable_jobs (
     job_type, dedupe_key, active_dedupe_key, target_type, target_key,

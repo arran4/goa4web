@@ -211,6 +211,9 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 			opt(wc)
 		}
 	}
+	if wc.JobService == nil && q != nil {
+		wc.JobService = jobs.NewConfiguredService(q)
+	}
 	group := NewGroup(ctx)
 
 	log.Printf("Starting email worker")
@@ -285,7 +288,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	log.Printf("Starting post count worker")
 	group.Go(func(ctx context.Context) { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")
-	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg) })
+	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg, wc.JobService) })
 	startDurableWorkerLoops(group, q, cfg, wc)
 	return group
 }

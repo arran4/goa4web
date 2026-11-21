@@ -129,3 +129,32 @@ func TestMySQLQueuePendingImageCacheJobs(t *testing.T) {
 	})
 	require.ErrorIs(t, err, sql.ErrNoRows)
 }
+
+func TestMySQLObservedExternalLinksPreserveActiveRetry(t *testing.T) {
+	ctx := t.Context()
+	conn := openReplyThreadTestDatabase(t)
+	loadMySQLDurableJobMigration(t, conn)
+	execReplySQL(t, conn,
+		`INSERT INTO durable_jobs (job_type, dedupe_key, active_dedupe_key, target_type, target_key, attempts, run_after)
+		  VALUES ('external_link', 'external_link:retry', 'external_link:retry', 'external_link', 'retry', 1, '2030-01-01')`,
+		`INSERT INTO durable_job_cooldowns (dedupe_key, cooldown_until) VALUES ('external_link:cooldown', '2030-01-01')`,
+	)
+	q := NewForDriver(conn, "mysql")
+	now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+	for _, tc := range []struct {
+		target string
+		want   int64
+	}{{"retry", 0}, {"cooldown", 0}, {"new", 1}} {
+		key := "external_link:" + tc.target
+		rows, err := q.SystemQueueObservedExternalLinkJob(ctx, SystemQueueObservedExternalLinkJobParams{
+			DedupeKey: key, ActiveKey: sql.NullString{String: key, Valid: true}, CheckKey: key,
+			TargetKey: tc.target, MaxAttempts: 4, RunAfter: now, CooldownAt: now,
+		})
+		require.NoError(t, err)
+		require.Equal(t, tc.want, rows, tc.target)
+	}
+	existing, err := q.SystemGetDurableJobByID(ctx, 1)
+	require.NoError(t, err)
+	require.Equal(t, int32(1), existing.Attempts)
+	require.True(t, existing.RunAfter.Equal(time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)))
+}

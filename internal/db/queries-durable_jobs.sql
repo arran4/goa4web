@@ -335,3 +335,16 @@ SELECT id FROM durable_jobs
 WHERE id = sqlc.arg(id) AND status = 'running'
   AND lease_token = sqlc.arg(lease_token) AND lease_expires_at > sqlc.arg(now_at)
 FOR UPDATE;
+
+-- name: SystemQueueObservedExternalLinkJob :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'external_link', sqlc.arg(dedupe_key), sqlc.narg(active_key), 'external_link',
+       sqlc.arg(target_key), sqlc.arg(max_attempts), sqlc.arg(run_after),
+       sqlc.narg(actor_id), NOW(), NOW()
+FROM (SELECT 1 AS anchor_value) anchor
+LEFT JOIN durable_job_cooldowns cooldown ON cooldown.dedupe_key = sqlc.arg(check_key)
+WHERE cooldown.dedupe_key IS NULL OR cooldown.cooldown_until <= sqlc.arg(cooldown_at)
+ON DUPLICATE KEY UPDATE id = durable_jobs.id;

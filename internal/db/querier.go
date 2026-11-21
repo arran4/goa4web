@@ -694,6 +694,7 @@ type Querier interface {
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	// Remove password reset entries that have expired or were already verified
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
+	SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error)
 	SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error)
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error

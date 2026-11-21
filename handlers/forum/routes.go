@@ -37,6 +37,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom/u/{username}", TopicAtomPage).Methods("GET")
 	fr.HandleFunc("", Page).Methods("GET")
+	fr.HandleFunc("/follow", setPublicForumFollow).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 	fr.HandleFunc("/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/categories/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", TopicsPage).Methods("GET")

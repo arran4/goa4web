@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 )
 
 const adminGetAllCommentsByUser = `-- name: AdminGetAllCommentsByUser :many
@@ -558,7 +559,8 @@ WITH role_ids(id) AS (
     SELECT DISTINCT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
-       c.users_idusers = ? AS is_owner
+       c.users_idusers = ? AS is_owner,
+       CAST(COALESCE((SELECT MAX(ca.id) FROM comment_appends ca WHERE ca.comment_id = c.idcomments), 0) AS SIGNED) AS last_append_id
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -624,6 +626,7 @@ type GetCommentsBySectionThreadIdForUserRow struct {
 	LastIndex      sql.NullTime
 	Posterusername sql.NullString
 	IsOwner        bool
+	LastAppendID   int64
 }
 
 // Viewing comments in a section-specific thread requires 'view' on the
@@ -659,6 +662,7 @@ func (q *Queries) GetCommentsBySectionThreadIdForUser(ctx context.Context, arg G
 			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
+			&i.LastAppendID,
 		); err != nil {
 			return nil, err
 		}
@@ -680,7 +684,8 @@ WITH role_ids AS (
     SELECT id FROM roles WHERE name = 'anyone'
 )
 SELECT c.idcomments, c.forumthread_id, c.users_idusers, c.language_id, c.written, c.text, c.timezone, c.deleted_at, c.last_index, pu.username AS posterusername,
-       c.users_idusers = ? AS is_owner
+       c.users_idusers = ? AS is_owner,
+       CAST(COALESCE((SELECT MAX(ca.id) FROM comment_appends ca WHERE ca.comment_id = c.idcomments), 0) AS SIGNED) AS last_append_id
 FROM comments c
 LEFT JOIN forumthread th ON c.forumthread_id=th.idforumthread
 LEFT JOIN forumtopic t ON th.forumtopic_idforumtopic=t.idforumtopic
@@ -744,6 +749,7 @@ type GetCommentsByThreadIdForUserRow struct {
 	LastIndex      sql.NullTime
 	Posterusername sql.NullString
 	IsOwner        bool
+	LastAppendID   int64
 }
 
 func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetCommentsByThreadIdForUserParams) ([]*GetCommentsByThreadIdForUserRow, error) {
@@ -775,6 +781,61 @@ func (q *Queries) GetCommentsByThreadIdForUser(ctx context.Context, arg GetComme
 			&i.LastIndex,
 			&i.Posterusername,
 			&i.IsOwner,
+			&i.LastAppendID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const systemCreateCommentAppend = `-- name: SystemCreateCommentAppend :execlastid
+INSERT INTO comment_appends (comment_id, users_idusers, created_at)
+VALUES (?, ?, ?)
+`
+
+type SystemCreateCommentAppendParams struct {
+	CommentID    int32
+	UsersIdusers int32
+	CreatedAt    time.Time
+}
+
+func (q *Queries) SystemCreateCommentAppend(ctx context.Context, arg SystemCreateCommentAppendParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemCreateCommentAppend, arg.CommentID, arg.UsersIdusers, arg.CreatedAt)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const systemListCommentAppendsByCommentID = `-- name: SystemListCommentAppendsByCommentID :many
+SELECT id, comment_id, users_idusers, created_at
+FROM comment_appends
+WHERE comment_id = ?
+ORDER BY id ASC
+`
+
+func (q *Queries) SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error) {
+	rows, err := q.db.QueryContext(ctx, systemListCommentAppendsByCommentID, commentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*CommentAppend
+	for rows.Next() {
+		var i CommentAppend
+		if err := rows.Scan(
+			&i.ID,
+			&i.CommentID,
+			&i.UsersIdusers,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

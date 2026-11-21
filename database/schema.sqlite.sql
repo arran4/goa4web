@@ -35,6 +35,14 @@ deleted_at DATETIME DEFAULT NULL,
 last_index DATETIME DEFAULT NULL
 );
 
+CREATE TABLE IF NOT EXISTS comment_appends (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+comment_id INTEGER NOT NULL,
+users_idusers INTEGER NOT NULL,
+created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS comment_appends_comment_idx ON comment_appends (comment_id);
+
 CREATE TABLE comments_search (
 searchwordlist_idsearchwordlist INTEGER NOT NULL DEFAULT 0,
 comment_id INTEGER NOT NULL DEFAULT 0,
@@ -407,9 +415,16 @@ id INTEGER PRIMARY KEY AUTOINCREMENT,
 users_idusers int NOT NULL,
 link TEXT,
 message TEXT,
+activity_key TEXT,
+priority INTEGER NOT NULL DEFAULT 0,
+resource_type TEXT,
+resource_id INTEGER,
+activity_position INTEGER,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-read_at DATETIME DEFAULT NULL
+read_at DATETIME DEFAULT NULL,
+UNIQUE (users_idusers, activity_key)
 );
+CREATE INDEX notifications_recipient_resource_activity_idx ON notifications (users_idusers, resource_type, resource_id, activity_position);
 
 CREATE TABLE IF NOT EXISTS dead_letters (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -646,6 +661,7 @@ item TEXT NOT NULL,
 item_id int NOT NULL,
 user_id int NOT NULL,
 last_comment_id int NOT NULL,
+last_activity_position int NOT NULL DEFAULT 0,
 UNIQUE (item,item_id,user_id)
 );
 
@@ -733,3 +749,5 @@ CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
 
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);

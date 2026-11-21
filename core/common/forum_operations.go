@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/arran4/goa4web/a4code"
@@ -48,6 +49,30 @@ func (e ForumHandlerMismatchError) Error() string {
 	return "private forum topic cannot be used through the public forum"
 }
 
+// ForumInvalidActivityError reports that a submitted thread activity position or comment reference is invalid.
+type ForumInvalidActivityError struct {
+	Reason string
+	Err    error
+}
+
+// Error returns the diagnostic message for the invalid activity error.
+func (e ForumInvalidActivityError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %v", e.Reason, e.Err)
+	}
+	return e.Reason
+}
+
+// UserErrorMessage returns a safe user-facing message for invalid thread activity submissions.
+func (e ForumInvalidActivityError) UserErrorMessage() string {
+	return "Invalid thread activity position."
+}
+
+// Unwrap returns the underlying parsing or validation error, if any.
+func (e ForumInvalidActivityError) Unwrap() error {
+	return e.Err
+}
+
 // CreateForumThreadParams describes a normal forum or private-forum thread creation.
 type CreateForumThreadParams struct {
 	ActorID                int32
@@ -72,10 +97,16 @@ type CreateForumThreadResult struct {
 	URL       string
 }
 
+// ForumReplyIntentEventKey stores the canonical forum reply notification intent in TaskEvent.Data.
+const ForumReplyIntentEventKey = "forum_reply_intent"
+
 // ReplyForumThreadParams describes a normal reply to a forum or private-forum thread.
 type ReplyForumThreadParams struct {
 	ActorID                int32
+	TopicID                int32
 	ThreadID               int32
+	LastDisplayedCommentID int32
+	LastDisplayedActivity  string
 	LanguageID             int32
 	Text                   string
 	At                     time.Time
@@ -85,19 +116,97 @@ type ReplyForumThreadParams struct {
 	BasePath               string
 }
 
-// ReplyForumThreadResult identifies the comment created by ReplyForumThread.
+// ForumReplyCommand is the canonical application command for replying to a forum thread.
+type ForumReplyCommand = ReplyForumThreadParams
+
+// ForumReplyNotificationIntent captures the canonical domain facts of a committed
+// forum reply so notification policy can evaluate recipients and render payloads
+// without depending on HTTP requests, transport paths, or handler Task types.
+type ForumReplyNotificationIntent struct {
+	ActorID             int32
+	Username            string
+	TopicID             int32
+	TopicTitle          string
+	ThreadID            int32
+	CommentID           int32
+	AppendID            int64
+	CommentAnchor       string
+	Appended            bool
+	ActivityID          string
+	ActivityPosition    int64
+	Private             bool
+	CanonicalPath       string
+	CommentURL          string
+	AbsoluteCommentURL  string
+	CommentText         string
+	SubmittedText       string
+	ThreadOpenerPreview string
+	SubjectPrefix       string
+}
+
+// ForumReplyNotifier evaluates and dispatches canonical notifications for a committed forum reply.
+type ForumReplyNotifier interface {
+	NotifyForumReply(ctx context.Context, intent ForumReplyNotificationIntent) error
+}
+
+// ReplyForumThreadResult identifies the comment created or appended by ReplyForumThread.
 type ReplyForumThreadResult struct {
-	ThreadID  int32
-	TopicID   int32
-	CommentID int32
-	URL       string
-	Appended  bool
+	ThreadID             int32
+	TopicID              int32
+	CommentID            int32
+	AppendID             int64
+	URL                  string
+	Appended             bool
+	ActivityID           string
+	CanonicalPath        string
+	CommentURL           string
+	Private              bool
+	Intent               ForumReplyNotificationIntent
+	AcknowledgementError error
+}
+
+// ForumReplyResult is the canonical application result of replying to a forum thread.
+type ForumReplyResult = ReplyForumThreadResult
+
+// ForumReplyService executes forum reply commands and dispatches canonical side effects
+// without requiring an *http.Request or handler Task.
+type ForumReplyService struct {
+	cd       *CoreData
+	notifier ForumReplyNotifier
+}
+
+// NewForumReplyService constructs a ForumReplyService backed by cd and an optional notifier.
+func NewForumReplyService(cd *CoreData, notifier ForumReplyNotifier) *ForumReplyService {
+	return &ForumReplyService{cd: cd, notifier: notifier}
+}
+
+// Reply executes the forum reply command and returns the canonical result.
+func (s *ForumReplyService) Reply(ctx context.Context, cmd ForumReplyCommand) (*ForumReplyResult, error) {
+	if s == nil || s.cd == nil {
+		return nil, fmt.Errorf("reply to forum thread: service not initialized")
+	}
+	cd := s.cd
+	if s.notifier != nil && cd.forumReplyNotifier == nil {
+		cd = cd.ForUser(cd.UserID)
+		cd.forumReplyNotifier = s.notifier
+	}
+	res, err := cd.ReplyForumThread(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	if !cmd.SynchronousSideEffects && cd.forumReplyNotifier != nil {
+		if err := cd.forumReplyNotifier.NotifyForumReply(ctx, res.Intent); err != nil {
+			return nil, fmt.Errorf("notify forum reply: %w", err)
+		}
+	}
+	return res, nil
 }
 
 type forumCommentAppendResult struct {
 	appended      bool
 	canonicalText string
 	textAvailable bool
+	appendID      int64
 }
 
 // CanCreateForumThread reports whether actorID may post a thread in topicID.
@@ -139,14 +248,34 @@ func CanReplyForumThread(ctx context.Context, q db.Querier, section consts.Permi
 	return thread != nil && (!thread.Locked.Valid || !thread.Locked.Bool), nil
 }
 
-func forumBasePath(private bool, basePath string) string {
-	if basePath != "" {
-		return basePath
+// CanonicalForumBasePath normalizes a forum base path to the canonical domain prefix ("/private" or "/forum").
+func CanonicalForumBasePath(private bool, basePath string) string {
+	trimmed := strings.TrimSpace(basePath)
+	if idx := strings.Index(trimmed, "/topic/"); idx > 0 {
+		trimmed = trimmed[:idx]
 	}
-	if private {
+	trimmed = strings.TrimRight(trimmed, "/")
+	if private || trimmed == "/private" || strings.HasPrefix(trimmed, "/private/") {
 		return "/private"
 	}
-	return "/forum"
+	if trimmed == "" || trimmed == "/api" {
+		return "/forum"
+	}
+	return trimmed
+}
+
+func forumBasePath(private bool, basePath string) string {
+	return CanonicalForumBasePath(private, basePath)
+}
+
+func buildForumReplyActivityID(commentID int32, appended bool, appendID int64) string {
+	if !appended {
+		return fmt.Sprintf("comment:%d", commentID)
+	}
+	if appendID > 0 {
+		return fmt.Sprintf("comment:%d:append:%d", commentID, appendID)
+	}
+	return fmt.Sprintf("comment:%d:append", commentID)
 }
 
 func (cd *CoreData) forumAppendWindow(isPrivate bool) int {
@@ -166,6 +295,18 @@ func forumAppendGrantTarget(isPrivate bool, topicID, threadID int32) (consts.Per
 	return consts.PermissionSectionForum, consts.PermissionItemTopic, topicID
 }
 
+// AppendCommentInSectionWithActivity conditionally appends text to a comment and allocates its append activity record atomically.
+func (cd *CoreData) AppendCommentInSectionWithActivity(ctx context.Context, arg db.AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+	if cd == nil || cd.queries == nil {
+		return 0, 0, fmt.Errorf("append comment with activity: no queries")
+	}
+	appender, ok := cd.queries.(db.CommentAppender)
+	if !ok {
+		return 0, 0, fmt.Errorf("append comment with activity: querier does not implement CommentAppender")
+	}
+	return appender.AppendCommentInSectionWithActivity(ctx, arg)
+}
+
 func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, threadID, topicID, commentID int32, text string, writtenAt time.Time, isPrivate bool) (forumCommentAppendResult, error) {
 	appendWindowMins := cd.forumAppendWindow(isPrivate)
 	if appendWindowMins <= 0 {
@@ -182,7 +323,7 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 
 	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
-	rowsAffected, err := cd.queries.AppendCommentInSectionForCommenter(ctx, db.AppendCommentInSectionForCommenterParams{
+	rowsAffected, appendID, err := cd.AppendCommentInSectionWithActivity(ctx, db.AppendCommentInSectionForCommenterParams{
 		Text:             text,
 		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		CommentID:        commentID,
@@ -217,12 +358,16 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 		if err != nil {
 			log.Printf("reload appended forum comment %d: %v", commentID, err)
 		}
-		return forumCommentAppendResult{appended: true}, nil
+		return forumCommentAppendResult{
+			appended: true,
+			appendID: appendID,
+		}, nil
 	}
 	return forumCommentAppendResult{
 		appended:      true,
 		canonicalText: comment.Text.String,
 		textAvailable: true,
+		appendID:      appendID,
 	}, nil
 }
 
@@ -398,7 +543,14 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	if err != nil {
 		return nil, fmt.Errorf("get forum thread for actor: %w", err)
 	}
-	topic, err := cd.forumTopicForActor(ctx, thread.ForumtopicIdforumtopic, params.ActorID)
+	if params.TopicID != 0 && thread.ForumtopicIdforumtopic != 0 && thread.ForumtopicIdforumtopic != params.TopicID {
+		return nil, ForumResourceNotFoundError{Resource: "thread"}
+	}
+	topicID := thread.ForumtopicIdforumtopic
+	if topicID == 0 {
+		topicID = params.TopicID
+	}
+	topic, err := cd.forumTopicForActor(ctx, topicID, params.ActorID)
 	if err != nil {
 		return nil, err
 	}
@@ -420,6 +572,19 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	}
 	if !allowed {
 		return nil, ForumOperationForbiddenError{Action: "reply"}
+	}
+
+	var validatedRead *validatedThreadReadMarker
+	if params.LastDisplayedCommentID != 0 || params.LastDisplayedActivity != "" {
+		validatedRead, err = cd.validateThreadReadActivity(ctx, thread, ReadForumThreadParams{
+			ActorID:        params.ActorID,
+			ThreadID:       thread.Idforumthread,
+			LastCommentID:  params.LastDisplayedCommentID,
+			LastActivityID: params.LastDisplayedActivity,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	writtenAt := params.At
@@ -490,100 +655,267 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		anchor = fmt.Sprintf("c%d", len(currentComments))
 	}
 	basePath := forumBasePath(isPrivate, params.BasePath)
-	endURL := fmt.Sprintf("%s/topic/%d/thread/%d#%s", basePath, topic.Idforumtopic, thread.Idforumthread, anchor)
+	canonicalPath := fmt.Sprintf("%s/topic/%d/thread/%d", basePath, topic.Idforumtopic, thread.Idforumthread)
+	endURL := fmt.Sprintf("%s#%s", canonicalPath, anchor)
+	absCommentURL := cd.AbsoluteURL(endURL)
+	activityID := buildForumReplyActivityID(commentID, appendResult.appended, appendResult.appendID)
+	activityPosition := CalculateActivityPosition(commentID, appendResult.appendID)
 	username := ""
 	if user := cd.UserByID(params.ActorID); user != nil {
 		username = user.Username.String
 	}
+	openerText := ""
+	openerPreview := ""
 	data := map[string]any{}
 	if firstPost, firstPostErr := cd.CommentByID(thread.Firstpost); firstPostErr == nil && firstPost != nil && firstPost.Text.Valid {
-		data["ThreadOpenerPreview"] = a4code.SnipTextWords(firstPost.Text.String, 10)
+		openerText = firstPost.Text.String
+		openerPreview = a4code.SnipTextWords(firstPost.Text.String, 10)
+		data["ThreadOpenerPreview"] = openerPreview
+		data["Text"] = openerText
 	}
+	subjectPrefix := "Forum"
 	if isPrivate {
-		data["SubjectPrefix"] = "Private Forum"
-	} else {
-		data["SubjectPrefix"] = "Forum"
+		subjectPrefix = "Private Forum"
 	}
+	data["SubjectPrefix"] = subjectPrefix
+	data["CommentText"] = commentText
+	data["CommentID"] = commentID
+	data["CommentAnchor"] = anchor
+	data["ActivityID"] = activityID
+	data["ActivityPosition"] = activityPosition
+	data["CanonicalPath"] = canonicalPath
+	data["Private"] = isPrivate
+
+	intent := ForumReplyNotificationIntent{
+		ActorID:             params.ActorID,
+		Username:            username,
+		TopicID:             topic.Idforumtopic,
+		TopicTitle:          topic.Title.String,
+		ThreadID:            thread.Idforumthread,
+		CommentID:           commentID,
+		AppendID:            appendResult.appendID,
+		CommentAnchor:       anchor,
+		Appended:            appendResult.appended,
+		ActivityID:          activityID,
+		ActivityPosition:    activityPosition,
+		Private:             isPrivate,
+		CanonicalPath:       canonicalPath,
+		CommentURL:          endURL,
+		AbsoluteCommentURL:  absCommentURL,
+		CommentText:         commentText,
+		SubmittedText:       params.Text,
+		ThreadOpenerPreview: openerPreview,
+		SubjectPrefix:       subjectPrefix,
+	}
+	data[ForumReplyIntentEventKey] = intent
+
 	if err := cd.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
 		ThreadID:             thread.Idforumthread,
 		TopicID:              topic.Idforumtopic,
 		CommentID:            commentID,
+		ActivityID:           activityID,
+		ActivityPosition:     activityPosition,
 		Thread:               thread,
 		TopicTitle:           topic.Title.String,
 		Username:             username,
 		CommentText:          commentText,
-		CommentURL:           cd.AbsoluteURL(endURL),
+		CommentURL:           absCommentURL,
 		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
+		MarkThreadRead:       false,
 		IncludePostCount:     true,
 		IncludeSearch:        canonicalTextAvailable,
 		AdditionalData:       data,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
 	}
+	var ackErr error
+	if validatedRead != nil {
+		if err := cd.applyValidatedThreadRead(ctx, thread.Idforumthread, validatedRead); err != nil {
+			// The reply is already committed; surface the side-effect failure without
+			// reporting the reply itself as failed so callers do not blindly retry and duplicate it.
+			log.Printf("acknowledge displayed thread activity (thread=%d comment=%d): %v", thread.Idforumthread, commentID, err)
+			ackErr = fmt.Errorf("acknowledge displayed thread activity: %w", err)
+		}
+	}
 	if params.SynchronousSideEffects {
 		if err := cd.applyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, commentText, canonicalTextAvailable); err != nil {
 			return nil, fmt.Errorf("apply forum reply workers: %w", err)
 		}
+		if cd.forumReplyNotifier != nil {
+			if err := cd.forumReplyNotifier.NotifyForumReply(ctx, intent); err != nil {
+				return nil, fmt.Errorf("notify forum reply: %w", err)
+			}
+		}
 	}
 
 	return &ReplyForumThreadResult{
-		ThreadID:  thread.Idforumthread,
-		TopicID:   topic.Idforumtopic,
-		CommentID: commentID,
-		URL:       endURL,
-		Appended:  appendResult.appended,
+		ThreadID:             thread.Idforumthread,
+		TopicID:              topic.Idforumtopic,
+		CommentID:            commentID,
+		AppendID:             appendResult.appendID,
+		URL:                  endURL,
+		Appended:             appendResult.appended,
+		ActivityID:           activityID,
+		CanonicalPath:        canonicalPath,
+		CommentURL:           endURL,
+		Private:              isPrivate,
+		Intent:               intent,
+		AcknowledgementError: ackErr,
 	}, nil
 }
 
 // ReadForumThreadParams describes the parameters to mark a thread as read.
 type ReadForumThreadParams struct {
-	ActorID       int32
-	ThreadID      int32
-	LastCommentID int32
+	ActorID              int32
+	ThreadID             int32
+	LastCommentID        int32
+	LastActivityPosition int64
+	LastActivityID       string
+}
+
+type validatedThreadReadMarker struct {
+	actorCD          *CoreData
+	markerID         int32
+	activityPosition int64
+}
+
+// validateThreadReadActivity performs non-mutating validation of the actor's thread visibility,
+// submitted comment/activity position consistency, comment visibility, and append existence.
+func (cd *CoreData) validateThreadReadActivity(ctx context.Context, preloadedThread *db.GetThreadLastPosterAndPermsForUserRow, params ReadForumThreadParams) (*validatedThreadReadMarker, error) {
+	if cd == nil || cd.queries == nil {
+		return nil, fmt.Errorf("read forum thread: no queries")
+	}
+
+	if preloadedThread == nil {
+		thread, err := cd.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
+			ViewerID:      params.ActorID,
+			ThreadID:      params.ThreadID,
+			ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
+		})
+		if err == sql.ErrNoRows || thread == nil {
+			return nil, ForumResourceNotFoundError{Resource: "thread"}
+		}
+		if err != nil {
+			return nil, fmt.Errorf("get forum thread for actor: %w", err)
+		}
+	}
+
+	markerID := params.LastCommentID
+	activityPos := params.LastActivityPosition
+	if params.LastActivityID != "" {
+		pos, err := ParseActivityPosition(params.LastActivityID)
+		if err != nil {
+			return nil, ForumInvalidActivityError{
+				Reason: fmt.Sprintf("read forum thread: invalid activity position %q", params.LastActivityID),
+				Err:    err,
+			}
+		}
+		if activityPos != 0 && activityPos != pos {
+			return nil, ForumInvalidActivityError{
+				Reason: fmt.Sprintf("read forum thread: activity position %d does not match activity string %q (%d)", activityPos, params.LastActivityID, pos),
+			}
+		}
+		activityPos = pos
+	}
+	if activityPos < 0 {
+		return nil, ForumInvalidActivityError{
+			Reason: fmt.Sprintf("read forum thread: negative activity position %d", activityPos),
+		}
+	}
+	if activityPos != 0 {
+		posCommentID, appendID := ActivityPositionCommentAndAppend(activityPos)
+		if posCommentID <= 0 {
+			return nil, ForumInvalidActivityError{
+				Reason: fmt.Sprintf("read forum thread: invalid comment ID in activity position %d", activityPos),
+			}
+		}
+		if appendID < 0 {
+			return nil, ForumInvalidActivityError{
+				Reason: fmt.Sprintf("read forum thread: invalid append ID in activity position %d", activityPos),
+			}
+		}
+		if markerID > 0 && markerID != posCommentID {
+			return nil, ForumInvalidActivityError{
+				Reason: fmt.Sprintf("read forum thread: last_comment %d and last_activity %d refer to different comments", markerID, posCommentID),
+			}
+		}
+		markerID = posCommentID
+	}
+	if markerID <= 0 {
+		return nil, ForumInvalidActivityError{
+			Reason: "read forum thread: missing captured comment position",
+		}
+	}
+	if activityPos == 0 {
+		activityPos = CalculateActivityPosition(markerID, 0)
+	}
+
+	actorCD := cd.ForUser(params.ActorID)
+	comments, err := actorCD.ThreadComments(params.ThreadID)
+	if err != nil {
+		return nil, fmt.Errorf("fetch thread comments: %w", err)
+	}
+	if len(comments) == 0 {
+		return nil, ForumResourceNotFoundError{Resource: "comment"}
+	}
+	visible := false
+	for _, comment := range comments {
+		if comment.Idcomments == markerID {
+			visible = true
+			break
+		}
+	}
+	if !visible {
+		return nil, ForumResourceNotFoundError{Resource: "comment"}
+	}
+
+	_, appendID := ActivityPositionCommentAndAppend(activityPos)
+	if appendID > 0 {
+		appends, err := cd.queries.SystemListCommentAppendsByCommentID(ctx, markerID)
+		if err != nil {
+			return nil, fmt.Errorf("fetch comment appends for verification: %w", err)
+		}
+		appendFound := false
+		for _, app := range appends {
+			if int64(app.ID) == appendID {
+				appendFound = true
+				break
+			}
+		}
+		if !appendFound {
+			return nil, ForumResourceNotFoundError{Resource: "append"}
+		}
+	}
+
+	return &validatedThreadReadMarker{
+		actorCD:          actorCD,
+		markerID:         markerID,
+		activityPosition: activityPos,
+	}, nil
+}
+
+// applyValidatedThreadRead persists the validated read marker watermark and acknowledges
+// matching notifications up to the validated activity position.
+func (cd *CoreData) applyValidatedThreadRead(_ context.Context, threadID int32, validated *validatedThreadReadMarker) error {
+	if validated == nil || validated.actorCD == nil {
+		return fmt.Errorf("apply thread read: missing validated state")
+	}
+	if err := validated.actorCD.SetThreadPrivateLabelStatus(threadID, false, false); err != nil {
+		return fmt.Errorf("set thread private label status: %w", err)
+	}
+	if err := validated.actorCD.AcknowledgeThreadActivityPosition(threadID, validated.markerID, validated.activityPosition); err != nil {
+		return fmt.Errorf("acknowledge thread activity: %w", err)
+	}
+	return nil
 }
 
 // ReadForumThread marks a thread as read for the actor, clearing new/unread status and setting the read marker.
 func (cd *CoreData) ReadForumThread(ctx context.Context, params ReadForumThreadParams) error {
-	if cd == nil || cd.queries == nil {
-		return fmt.Errorf("read forum thread: no queries")
-	}
-
-	thread, err := cd.queries.GetThreadLastPosterAndPermsForUser(ctx, db.GetThreadLastPosterAndPermsForUserParams{
-		ViewerID:      params.ActorID,
-		ThreadID:      params.ThreadID,
-		ViewerMatchID: sql.NullInt32{Int32: params.ActorID, Valid: params.ActorID != 0},
-	})
-	if err == sql.ErrNoRows || thread == nil {
-		return ForumResourceNotFoundError{Resource: "thread"}
-	}
+	validated, err := cd.validateThreadReadActivity(ctx, nil, params)
 	if err != nil {
-		return fmt.Errorf("get forum thread for actor: %w", err)
+		return err
 	}
-
-	actorCD := cd.ForUser(params.ActorID)
-
-	markerID := params.LastCommentID
-	if markerID <= 0 {
-		comments, err := cd.ThreadComments(params.ThreadID)
-		if err != nil {
-			return fmt.Errorf("fetch thread comments: %w", err)
-		}
-		if len(comments) == 0 {
-			return fmt.Errorf("thread %d has no comments", params.ThreadID)
-		}
-		markerID = comments[len(comments)-1].Idcomments
-	}
-
-	if err := actorCD.SetThreadPrivateLabelStatus(params.ThreadID, false, false); err != nil {
-		return fmt.Errorf("set thread private label status: %w", err)
-	}
-
-	if err := actorCD.SetThreadReadMarker(params.ThreadID, markerID); err != nil {
-		return fmt.Errorf("set thread read marker: %w", err)
-	}
-
-	return nil
+	return cd.applyValidatedThreadRead(ctx, params.ThreadID, validated)
 }
 
 // SubscribeForumParams describes the parameters for subscribing to a topic or thread.

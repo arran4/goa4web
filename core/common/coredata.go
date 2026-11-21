@@ -212,8 +212,9 @@ type CoreData struct {
 
 	WebAuthn *webauthn.WebAuthn
 
-	httpClient       *http.Client
-	backgroundRunner BackgroundRunner
+	httpClient         *http.Client
+	backgroundRunner   BackgroundRunner
+	forumReplyNotifier ForumReplyNotifier
 
 	session      *sessions.Session
 	sessionProxy SessionManager
@@ -2575,6 +2576,9 @@ func (cd *CoreData) SelectedBoardID() int32 { return cd.currentBoardID }
 // SelectedThreadID returns the thread ID extracted from the request.
 func (cd *CoreData) SelectedThreadID() int32 { return cd.currentThreadID }
 
+// SelectedTopicID returns the topic ID extracted from the request.
+func (cd *CoreData) SelectedTopicID() int32 { return cd.currentTopicID }
+
 // SelectedImagePostID returns the image post ID extracted from the request.
 func (cd *CoreData) SelectedImagePostID() int32 { return cd.currentImagePostID }
 
@@ -2762,6 +2766,7 @@ func (cd *CoreData) SectionThreadComments(section, itemType string, id int32, op
 				LastIndex:      r.LastIndex,
 				Posterusername: r.Posterusername,
 				IsOwner:        r.IsOwner,
+				LastAppendID:   r.LastAppendID,
 			}
 		}
 		return out, nil
@@ -2959,6 +2964,26 @@ func WithHTTPClient(client *http.Client) CoreOption {
 // WithBackgroundRunner ties best-effort asynchronous work to application shutdown.
 func WithBackgroundRunner(runner BackgroundRunner) CoreOption {
 	return func(cd *CoreData) { cd.backgroundRunner = runner }
+}
+
+// WithForumReplyNotifier sets the application-level notifier used for canonical forum reply notifications.
+func WithForumReplyNotifier(notifier ForumReplyNotifier) CoreOption {
+	return func(cd *CoreData) { cd.forumReplyNotifier = notifier }
+}
+
+// SetForumReplyNotifier configures the application-level notifier for forum reply operations.
+func (cd *CoreData) SetForumReplyNotifier(notifier ForumReplyNotifier) {
+	if cd != nil {
+		cd.forumReplyNotifier = notifier
+	}
+}
+
+// ForumReplyNotifier returns the configured forum reply notifier, if any.
+func (cd *CoreData) ForumReplyNotifier() ForumReplyNotifier {
+	if cd == nil {
+		return nil
+	}
+	return cd.forumReplyNotifier
 }
 
 // WithSession stores the gorilla session on the CoreData object and
@@ -3254,6 +3279,7 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD.WebAuthn = cd.WebAuthn
 	userCD.httpClient = cd.httpClient
 	userCD.backgroundRunner = cd.backgroundRunner
+	userCD.forumReplyNotifier = cd.forumReplyNotifier
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
 	userCD.ForumBasePath = cd.ForumBasePath

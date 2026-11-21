@@ -3,10 +3,10 @@
 package db
 
 import (
-	"strings"
-
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -396,4 +396,248 @@ func TestMySQLAppendEligibilityMatrix(t *testing.T) {
 	mustExec(t, ctx, database, "DELETE FROM users")
 
 	testAppendEligibilityMatrix(t, database, queries, ctx)
+}
+
+func TestAppendCommentInSectionWithActivity_InsertFailureRollbackMySQL(t *testing.T) {
+	database := openReplyThreadTestDatabase(t)
+	createReplyThreadTestSchema(t, database)
+
+	execReplySQL(t, database,
+		`INSERT INTO users (idusers, username) VALUES (1, 'user1')`,
+		`INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (1000, 100, 1, 'initial text', DATE_SUB(NOW(), INTERVAL 10 MINUTE))`,
+		`INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (1, 'forum', 'topic', 100, 'append', 1, 'allow')`,
+	)
+
+	queries := NewForDriver(database, "mysql")
+	appender, ok := queries.(CommentAppender)
+	if !ok {
+		t.Fatalf("queries does not implement CommentAppender")
+	}
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	appendParams := AppendCommentInSectionForCommenterParams{
+		Text:             "new text mysql",
+		AppendWindowMins: 60,
+		Section:          "forum",
+		ItemType:         sql.NullString{String: "topic", Valid: true},
+		GrantUserID:      sql.NullInt32{Int32: 1, Valid: true},
+		ItemID:           sql.NullInt32{Int32: 100, Valid: true},
+		Written:          sql.NullTime{Time: now, Valid: true},
+		CommentID:        1000,
+		CommenterID:      1,
+		ForumthreadID:    100,
+	}
+
+	// Step 1: Install a trigger that aborts any INSERT into comment_appends to simulate a ledger write failure.
+	execReplySQL(t, database,
+		`CREATE TRIGGER fail_comment_appends BEFORE INSERT ON comment_appends FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected insert failure';`,
+	)
+
+	rowsAffected, appendID, err := appender.AppendCommentInSectionWithActivity(ctx, appendParams)
+	if err == nil {
+		t.Fatal("expected AppendCommentInSectionWithActivity to fail when comment_appends INSERT fails, but got nil error")
+	}
+	if !strings.Contains(err.Error(), "injected insert failure") && !strings.Contains(err.Error(), "record comment append") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+	if rowsAffected != 0 || appendID != 0 {
+		t.Fatalf("expected 0 rows affected and 0 appendID on failure, got rows=%d appendID=%d", rowsAffected, appendID)
+	}
+
+	// Verify atomic rollback: the comments row must still contain the unmutated 'initial text'.
+	comment, err := queries.GetCommentById(ctx, 1000)
+	if err != nil {
+		t.Fatalf("get comment after rollback: %v", err)
+	}
+	if comment.Text.String != "initial text" {
+		t.Fatalf("expected comment text to remain 'initial text' after rollback, got %q", comment.Text.String)
+	}
+
+	// Verify no orphaned records exist in comment_appends.
+	var appendCount int
+	if err := database.QueryRowContext(ctx, "SELECT COUNT(*) FROM comment_appends WHERE comment_id = ?", 1000).Scan(&appendCount); err != nil {
+		t.Fatalf("count comment_appends: %v", err)
+	}
+	if appendCount != 0 {
+		t.Fatalf("expected 0 comment_appends rows after rollback, got %d", appendCount)
+	}
+
+	// Step 2: Remove the failure trigger and retry the exact same logical operation.
+	execReplySQL(t, database, `DROP TRIGGER fail_comment_appends;`)
+
+	rowsAffected, appendID, err = appender.AppendCommentInSectionWithActivity(ctx, appendParams)
+	if err != nil {
+		t.Fatalf("retry append after removing failure trigger: %v", err)
+	}
+	if rowsAffected != 1 {
+		t.Fatalf("expected 1 row affected on retry, got %d", rowsAffected)
+	}
+	if appendID <= 0 {
+		t.Fatalf("expected positive append ID on retry, got %d", appendID)
+	}
+
+	// Verify successful commit: comment text is updated and append ledger contains 1 record.
+	comment, err = queries.GetCommentById(ctx, 1000)
+	if err != nil {
+		t.Fatalf("get comment after retry: %v", err)
+	}
+	expectedText := "initial text\n\n[hr]\n\nnew text mysql"
+	if comment.Text.String != expectedText {
+		t.Fatalf("expected comment text %q, got %q", expectedText, comment.Text.String)
+	}
+
+	appends, err := queries.SystemListCommentAppendsByCommentID(ctx, 1000)
+	if err != nil {
+		t.Fatalf("list comment appends: %v", err)
+	}
+	if len(appends) != 1 || int64(appends[0].ID) != appendID {
+		t.Fatalf("expected 1 append record with ID %d, got %+v", appendID, appends)
+	}
+}
+
+func TestAppendCommentInSectionWithActivity_ZeroRowsAffectedNoActivityMySQL(t *testing.T) {
+	database := openReplyThreadTestDatabase(t)
+	createReplyThreadTestSchema(t, database)
+
+	execReplySQL(t, database,
+		`INSERT INTO users (idusers, username) VALUES (1, 'user1')`,
+		`INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (1000, 100, 1, 'initial text', DATE_SUB(NOW(), INTERVAL 30 MINUTE))`,
+	)
+
+	queries := NewForDriver(database, "mysql")
+	appender, ok := queries.(CommentAppender)
+	if !ok {
+		t.Fatalf("queries does not implement CommentAppender")
+	}
+	ctx := context.Background()
+
+	// AppendWindowMins is 10, but comment was written 30 minutes ago: UPDATE matches 0 rows.
+	appendParams := AppendCommentInSectionForCommenterParams{
+		Text:             "should not append",
+		AppendWindowMins: 10,
+		Section:          "forum",
+		ItemType:         sql.NullString{String: "topic", Valid: true},
+		GrantUserID:      sql.NullInt32{Int32: 1, Valid: true},
+		ItemID:           sql.NullInt32{Int32: 100, Valid: true},
+		Written:          sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		CommentID:        1000,
+		CommenterID:      1,
+		ForumthreadID:    100,
+	}
+
+	rowsAffected, appendID, err := appender.AppendCommentInSectionWithActivity(ctx, appendParams)
+	if err != nil {
+		t.Fatalf("unexpected error on 0 rows affected: %v", err)
+	}
+	if rowsAffected != 0 || appendID != 0 {
+		t.Fatalf("expected rows=0 appendID=0, got rows=%d appendID=%d", rowsAffected, appendID)
+	}
+
+	// Verify no comment_appends record was created.
+	var appendCount int
+	if err := database.QueryRowContext(ctx, "SELECT COUNT(*) FROM comment_appends WHERE comment_id = ?", 1000).Scan(&appendCount); err != nil {
+		t.Fatalf("count comment_appends: %v", err)
+	}
+	if appendCount != 0 {
+		t.Fatalf("expected 0 comment_appends rows when UPDATE affects 0 rows, got %d", appendCount)
+	}
+
+	// Verify comment text was unchanged.
+	comment, err := queries.GetCommentById(ctx, 1000)
+	if err != nil {
+		t.Fatalf("get comment: %v", err)
+	}
+	if comment.Text.String != "initial text" {
+		t.Fatalf("comment text changed to %q", comment.Text.String)
+	}
+}
+
+func TestAppendCommentInSectionWithActivity_ConcurrencyMySQL(t *testing.T) {
+	database := openReplyThreadTestDatabase(t)
+	createReplyThreadTestSchema(t, database)
+
+	execReplySQL(t, database,
+		`INSERT INTO users (idusers, username) VALUES (1, 'user1')`,
+		`INSERT INTO grants (user_id, section, item, item_id, action, active, rule_type) VALUES (1, 'forum', 'topic', 100, 'append', 1, 'allow')`,
+	)
+
+	// Create multiple distinct comments to test concurrent atomic appends in MySQL.
+	// numConcurrentAppends specifies the number of parallel append operations.
+	const numConcurrentAppends = 5
+	for i := 1; i <= numConcurrentAppends; i++ {
+		execReplySQL(t, database,
+			fmt.Sprintf(`INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (%d, %d, 1, 'initial text %d', DATE_SUB(NOW(), INTERVAL 5 MINUTE))`, 1000+i, 100+i, i),
+		)
+	}
+
+	queries := NewForDriver(database, "mysql")
+	appender, ok := queries.(CommentAppender)
+	if !ok {
+		t.Fatalf("queries does not implement CommentAppender")
+	}
+	ctx := context.Background()
+
+	type appendRes struct {
+		commentID int32
+		appendID  int64
+		err       error
+	}
+	results := make(chan appendRes, numConcurrentAppends)
+
+	for i := 1; i <= numConcurrentAppends; i++ {
+		cID := int32(1000 + i)
+		tID := int32(100 + i)
+		text := fmt.Sprintf("appended segment %d", i)
+		go func() {
+			var rows, appID int64
+			var err error
+			for attempt := 0; attempt < 5; attempt++ {
+				rows, appID, err = appender.AppendCommentInSectionWithActivity(ctx, AppendCommentInSectionForCommenterParams{
+					Text:             text,
+					AppendWindowMins: 60,
+					Section:          "forum",
+					ItemType:         sql.NullString{String: "topic", Valid: true},
+					GrantUserID:      sql.NullInt32{Int32: 1, Valid: true},
+					ItemID:           sql.NullInt32{Int32: 100, Valid: true},
+					Written:          sql.NullTime{Time: time.Now().UTC(), Valid: true},
+					CommentID:        cID,
+					CommenterID:      1,
+					ForumthreadID:    tID,
+				})
+				if err == nil || !strings.Contains(err.Error(), "Deadlock") {
+					break
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			if err != nil {
+				results <- appendRes{commentID: cID, err: err}
+				return
+			}
+			if rows != 1 {
+				results <- appendRes{commentID: cID, err: fmt.Errorf("expected 1 row affected, got %d", rows)}
+				return
+			}
+			results <- appendRes{commentID: cID, appendID: appID}
+		}()
+	}
+
+	seenAppendIDs := make(map[int64]bool)
+	for i := 0; i < numConcurrentAppends; i++ {
+		select {
+		case res := <-results:
+			if res.err != nil {
+				t.Fatalf("concurrent append error on comment %d: %v", res.commentID, res.err)
+			}
+			if res.appendID <= 0 {
+				t.Fatalf("expected positive append ID, got %d", res.appendID)
+			}
+			if seenAppendIDs[res.appendID] {
+				t.Fatalf("duplicate append ID %d allocated concurrently", res.appendID)
+			}
+			seenAppendIDs[res.appendID] = true
+		case <-time.After(10 * time.Second):
+			t.Fatal("timeout waiting for concurrent appends")
+		}
+	}
 }

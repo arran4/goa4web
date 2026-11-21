@@ -103,6 +103,13 @@ type Comment struct {
 	LastIndex     sql.NullTime
 }
 
+type CommentAppend struct {
+	ID           int64
+	CommentID    int64
+	UsersIdusers int64
+	CreatedAt    time.Time
+}
+
 type CommentsSearch struct {
 	SearchwordlistIdsearchwordlist int64
 	CommentID                      int64
@@ -133,11 +140,12 @@ type ContentPublicLabel struct {
 }
 
 type ContentReadMarker struct {
-	ID            int64
-	Item          string
-	ItemID        int64
-	UserID        int64
-	LastCommentID int64
+	ID                   int64
+	Item                 string
+	ItemID               int64
+	UserID               int64
+	LastCommentID        int64
+	LastActivityPosition int64
 }
 
 type DeactivatedBlog struct {
@@ -455,12 +463,17 @@ type LoginAttempt struct {
 }
 
 type Notification struct {
-	ID           int64
-	UsersIdusers int64
-	Link         sql.NullString
-	Message      sql.NullString
-	CreatedAt    time.Time
-	ReadAt       sql.NullTime
+	ID               int64
+	UsersIdusers     int64
+	Link             sql.NullString
+	Message          sql.NullString
+	ActivityKey      sql.NullString
+	Priority         int64
+	ResourceType     sql.NullString
+	ResourceID       sql.NullInt64
+	ActivityPosition sql.NullInt64
+	CreatedAt        time.Time
+	ReadAt           sql.NullTime
 }
 
 type Password struct {

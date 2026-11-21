@@ -13,9 +13,10 @@ type Message interface {
 }
 ```
 
-Two main message types are supported:
+Message types include:
 - `TaskMessageType` for application actions (`TaskEvent`)
 - `EmailQueueMessageType` for email processing triggers (`EmailQueueEvent`)
+- `NotificationsChangedMessageType` for recipient inbox invalidation (`NotificationsChanged`)
 
 ### TaskEvent
 
@@ -73,3 +74,15 @@ Subscriber lists are built by `notifySubscribers`. The worker calls
 subscription patterns. It then calls `collectSubscribers` for `email` and
 `internal` methods to produce unique recipient sets before sending the
 notifications.
+
+## Live notification refresh
+
+After the notifier stores an inbox entry, it can publish a best-effort signal
+for the recipient. The authenticated `/ws/events` connection and the legacy
+`/ws/notifications` route filter that signal by session user. The browser gets
+only the notification event kind and timestamp.
+
+The browser fetches server-rendered fragments from the page's
+`data-live-url` endpoints on a signal and whenever the connection opens.
+Those endpoints handle authorization and rendering. Clients can re-fetch
+the current state independently of the delivery or ordering of socket events.

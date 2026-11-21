@@ -4,18 +4,22 @@ package db
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/arran4/goa4web/database"
+	"github.com/arran4/goa4web/migrations"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMySQLPruneTerminalDurableJobHistory(t *testing.T) {
 	ctx := t.Context()
 	conn := openReplyThreadTestDatabase(t)
-	_, err := conn.ExecContext(ctx, string(database.SchemaMySQL))
+	migration, err := migrations.FS.ReadFile("0104_mysql.sql")
 	require.NoError(t, err)
+	up, _, ok := strings.Cut(string(migration), "-- +goose Down")
+	require.True(t, ok)
+	execReplySQL(t, conn, "CREATE TABLE schema_version (version INT NOT NULL)", up)
 	execReplySQL(t, conn, `
 		INSERT INTO durable_jobs (id, job_type, dedupe_key, target_type, status, completed_at)
 		VALUES (1, 'external_link', 'first', 'external_link', 'failed', '2026-11-15 11:00:00'),

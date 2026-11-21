@@ -2,6 +2,24 @@
 INSERT INTO notifications (users_idusers, link, message)
 VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message));
 
+-- name: SystemRecordAdminJobFailureNotification :exec
+INSERT INTO notifications (
+    users_idusers, link, activity_key, resource_type, activity_position, created_at
+) VALUES (
+    sqlc.arg(recipient_id), '/admin/jobs?status=failed', sqlc.narg(activity_key),
+    'durable_job_failure', 1, sqlc.arg(latest_at)
+)
+ON CONFLICT(users_idusers, activity_key) DO UPDATE SET
+    activity_position = activity_position + 1,
+    created_at = MAX(notifications.created_at, excluded.created_at);
+
+-- name: SystemSummarizeAdminJobFailureNotification :exec
+UPDATE notifications
+SET message = sqlc.arg(summary) || ' (' || activity_position || CASE WHEN activity_position = 1 THEN ' failure)' ELSE ' failures)' END,
+    read_at = CASE WHEN datetime(read_at) <= datetime(substr(sqlc.arg(reopen_before), 1, 19)) THEN NULL ELSE read_at END
+WHERE users_idusers = sqlc.arg(recipient_id) AND activity_key = sqlc.narg(activity_key)
+  AND resource_type = 'durable_job_failure';
+
 -- name: SystemCreateNotificationForActivity :exec
 INSERT INTO notifications (users_idusers, link, message, activity_key, priority, resource_type, resource_id, activity_position, read_at)
 VALUES (sqlc.arg(recipient_id), sqlc.arg(link), sqlc.arg(message), sqlc.arg(activity_key), sqlc.arg(priority), sqlc.arg(resource_type), sqlc.arg(resource_id), sqlc.arg(activity_position), sqlc.arg(read_at))

@@ -245,13 +245,15 @@ type QuerierStub struct {
 	SystemGetLastNotificationForRecipientByMessageErr   error
 	SystemGetLastNotificationForRecipientByMessageCalls []SystemGetLastNotificationForRecipientByMessageParams
 
-	SystemCreateNotificationErr                    error
-	SystemCreateNotificationCalls                  []SystemCreateNotificationParams
-	SystemCreateNotificationForActivityErr         error
-	SystemCreateNotificationForActivityCalls       []SystemCreateNotificationForActivityParams
-	SystemAcknowledgeNotificationsForResourceErr   error
-	SystemAcknowledgeNotificationsForResourceCalls []SystemAcknowledgeNotificationsForResourceParams
-	SystemAcknowledgeNotificationsForResourceFn    func(context.Context, SystemAcknowledgeNotificationsForResourceParams) error
+	SystemCreateNotificationErr                     error
+	SystemCreateNotificationCalls                   []SystemCreateNotificationParams
+	SystemRecordAdminJobFailureNotificationCalls    []SystemRecordAdminJobFailureNotificationParams
+	SystemSummarizeAdminJobFailureNotificationCalls []SystemSummarizeAdminJobFailureNotificationParams
+	SystemCreateNotificationForActivityErr          error
+	SystemCreateNotificationForActivityCalls        []SystemCreateNotificationForActivityParams
+	SystemAcknowledgeNotificationsForResourceErr    error
+	SystemAcknowledgeNotificationsForResourceCalls  []SystemAcknowledgeNotificationsForResourceParams
+	SystemAcknowledgeNotificationsForResourceFn     func(context.Context, SystemAcknowledgeNotificationsForResourceParams) error
 
 	GetContentReadMarkerCalls []GetContentReadMarkerParams
 	GetContentReadMarkerRow   *GetContentReadMarkerRow
@@ -2677,6 +2679,22 @@ func (s *QuerierStub) SystemCreateNotification(ctx context.Context, arg SystemCr
 	s.SystemCreateNotificationCalls = append(s.SystemCreateNotificationCalls, arg)
 	s.mu.Unlock()
 	return s.SystemCreateNotificationErr
+}
+
+// SystemRecordAdminJobFailureNotification records a failure aggregate write.
+func (s *QuerierStub) SystemRecordAdminJobFailureNotification(_ context.Context, arg SystemRecordAdminJobFailureNotificationParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemRecordAdminJobFailureNotificationCalls = append(s.SystemRecordAdminJobFailureNotificationCalls, arg)
+	return nil
+}
+
+// SystemSummarizeAdminJobFailureNotification records a failure summary update.
+func (s *QuerierStub) SystemSummarizeAdminJobFailureNotification(_ context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.SystemSummarizeAdminJobFailureNotificationCalls = append(s.SystemSummarizeAdminJobFailureNotificationCalls, arg)
+	return nil
 }
 
 // SystemCreateNotificationForActivity records the activity-keyed notification upsert.

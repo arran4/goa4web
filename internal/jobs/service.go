@@ -75,13 +75,14 @@ type HandlerFunc func(ctx context.Context, job *db.DurableJob) error
 
 // Service coordinates durable job persistence, deduplication, leasing, cooldowns, and worker execution.
 type Service struct {
-	Queries             db.Querier
-	Now                 func() time.Time
-	Wakeup              chan struct{}
-	CooldownDuration    time.Duration
-	LeaseDuration       time.Duration
-	AdminNotifyDebounce time.Duration
-	NotifyAdmins        func(ctx context.Context, message, link string) error
+	Queries                  db.Querier
+	Now                      func() time.Time
+	Wakeup                   chan struct{}
+	CooldownDuration         time.Duration
+	LeaseDuration            time.Duration
+	AdminNotifyDebounce      time.Duration
+	NotifyAdmins             func(ctx context.Context, message, link string) error
+	recordAdminFailureAlerts bool
 }
 
 // NewService constructs a Service with sensible defaults.
@@ -374,7 +375,10 @@ func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jo
 		}
 		applied = true
 		notify, err = s.recordTerminalCooldown(ctx, q, claimed.Job.DedupeKey, errText, now, permanent)
-		return err
+		if err != nil || !s.recordAdminFailureAlerts || s.NotifyAdmins != nil {
+			return err
+		}
+		return s.recordAdminFailureAlertsForJob(ctx, q, claimed.Job, jobErr, now)
 	})
 	if err != nil {
 		return false, fmt.Errorf("record terminal durable job %d: %w", claimed.Job.ID, err)

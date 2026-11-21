@@ -85,6 +85,14 @@ using `Retry-After`, capped at five minutes. Exhausted transient failures use
 the configured cooldown. Invalid destinations and permanent HTTP failures
 remain suppressed until an explicit retry.
 
+## Durable job failure alerts
+
+Terminal failure, cooldown and administrator inbox updates commit together.
+Each recipient has one alert for a work type, target and error class. A
+repeated failure updates the alert count and latest time. An acknowledged
+alert reopens after the debounce window. The grouping key and summary omit
+the target URL. Pruning terminal job history leaves the alert intact.
+
 ## Shutdown
 
 Calling `Bus.Shutdown(ctx)` stops new publications, closes delivery to each

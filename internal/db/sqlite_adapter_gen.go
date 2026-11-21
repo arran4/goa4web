@@ -11328,6 +11328,14 @@ func (s *sqliteQuerier) SystemRebuildForumTopicMetaByID(ctx context.Context, idf
 	return s.q.SystemRebuildForumTopicMetaByID(ctx, int64(idforumtopic))
 }
 
+func (s *sqliteQuerier) SystemRecordAdminJobFailureNotification(ctx context.Context, arg SystemRecordAdminJobFailureNotificationParams) error {
+	return s.q.SystemRecordAdminJobFailureNotification(ctx, dbsqlite.SystemRecordAdminJobFailureNotificationParams{
+		RecipientID: int64(arg.RecipientID),
+		ActivityKey: arg.ActivityKey,
+		LatestAt:    arg.LatestAt,
+	})
+}
+
 func (s *sqliteQuerier) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
 	return s.q.SystemRegisterExternalLinkClick(ctx, url)
 }
@@ -11398,6 +11406,26 @@ func (s *sqliteQuerier) SystemSetSiteNewsLastIndex(ctx context.Context, idsitene
 
 func (s *sqliteQuerier) SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error {
 	return s.q.SystemSetWritingLastIndex(ctx, int64(idwriting))
+}
+
+func (s *sqliteQuerier) SystemSummarizeAdminJobFailureNotification(ctx context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error {
+	return s.q.SystemSummarizeAdminJobFailureNotification(ctx, dbsqlite.SystemSummarizeAdminJobFailureNotificationParams{
+		Summary: func(v interface{}) sql.NullString {
+			if s, ok := v.(string); ok {
+				return sql.NullString{String: s, Valid: true}
+			}
+			if s, ok := v.(sql.NullString); ok {
+				return s
+			}
+			if s, ok := v.(*string); ok && s != nil {
+				return sql.NullString{String: *s, Valid: true}
+			}
+			return sql.NullString{}
+		}(arg.Summary),
+		ReopenBefore: arg.ReopenBefore,
+		RecipientID:  int64(arg.RecipientID),
+		ActivityKey:  arg.ActivityKey,
+	})
 }
 
 func (s *sqliteQuerier) SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error {

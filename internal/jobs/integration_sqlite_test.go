@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -18,7 +19,9 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/workers/searchworker"
+	"github.com/stretchr/testify/require"
 )
 
 func openSharedSQLiteFile(t *testing.T) (*sql.DB, db.Querier) {
@@ -147,6 +150,99 @@ func TestDurableJobFailureNotifiesActiveAdminsUnread(t *testing.T) {
 	if err != nil || deletedUnread != 0 {
 		t.Fatalf("deleted admin unread = (%d, %v), want (0, nil)", deletedUnread, err)
 	}
+}
+
+func TestDurableJobFailureAggregatesUnreadByErrorClassAcrossHistoryPruning(t *testing.T) {
+	database, q := openSharedSQLiteFile(t)
+	ctx := t.Context()
+	for _, statement := range []string{
+		`INSERT INTO roles (id, name, is_admin) VALUES (1, 'admin', 1)`,
+		`INSERT INTO users (idusers, username) VALUES (10, 'operator')`,
+		`INSERT INTO user_roles (users_idusers, role_id) VALUES (10, 1)`,
+	} {
+		_, err := database.ExecContext(ctx, statement)
+		require.NoError(t, err)
+	}
+	now := time.Now().UTC().Truncate(time.Second)
+	svc := jobs.NewConfiguredService(q)
+	svc.Now = func() time.Time { return now }
+	// target identifies the same URL through pruning and operator retries.
+	const target = "https://example.test/private?key=fixture-secret"
+	claimFailure := func() *jobs.ClaimedJob {
+		t.Helper()
+		created, err := svc.Enqueue(ctx, jobs.EnqueueRequest{
+			JobType: jobs.JobTypeExternalLink, TargetType: jobs.JobTypeExternalLink, TargetKey: target,
+			MaxAttempts: 1, ForceRetry: true,
+		})
+		require.NoError(t, err)
+		require.True(t, created)
+		claim, err := svc.ClaimNext(ctx, "worker", jobs.JobTypeExternalLink)
+		require.NoError(t, err)
+		require.NotNil(t, claim)
+		return claim
+	}
+	fail := func(status int) {
+		t.Helper()
+		claim := claimFailure()
+		applied, err := svc.FailOrRetryFenced(ctx, claim, &opengraph.HTTPStatusError{StatusCode: status})
+		require.NoError(t, err)
+		require.True(t, applied)
+	}
+	read := func() []*db.Notification {
+		t.Helper()
+		rows, err := q.ListUnreadNotificationsForLister(ctx, db.ListUnreadNotificationsForListerParams{ListerID: 10, Limit: 10})
+		require.NoError(t, err)
+		return rows
+	}
+
+	fail(http.StatusServiceUnavailable)
+	original := read()
+	require.Len(t, original, 1)
+	pruned, err := svc.AdminPurge(ctx, jobs.StatusFailed)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, pruned)
+	now = now.Add(30 * time.Second)
+	fail(http.StatusServiceUnavailable)
+	repeated := read()
+	require.Len(t, repeated, 1)
+	require.Equal(t, original[0].ID, repeated[0].ID)
+	require.Contains(t, repeated[0].Message.String, "2 failures")
+	require.True(t, repeated[0].CreatedAt.After(original[0].CreatedAt))
+
+	now = now.Add(30 * time.Second)
+	fail(http.StatusNotFound)
+	groups := read()
+	require.Len(t, groups, 2, "a different failure class gets its own unread group")
+	for _, group := range groups {
+		require.NotContains(t, group.Message.String, "fixture-secret")
+		require.NotContains(t, group.Link.String, "fixture-secret")
+	}
+
+	require.NoError(t, q.SetNotificationReadForLister(ctx, db.SetNotificationReadForListerParams{
+		ID: repeated[0].ID, ListerID: 10,
+	}))
+	fail(http.StatusServiceUnavailable)
+	require.Len(t, read(), 1, "the read group stays debounced")
+	now = now.Add(svc.AdminNotifyDebounce + time.Second)
+	fail(http.StatusServiceUnavailable)
+	reopened, err := q.GetNotificationForLister(ctx, db.GetNotificationForListerParams{
+		ID: repeated[0].ID, ListerID: 10,
+	})
+	require.NoError(t, err)
+	require.False(t, reopened.ReadAt.Valid)
+	require.Contains(t, reopened.Message.String, "4 failures")
+
+	_, err = database.ExecContext(ctx, `CREATE TRIGGER reject_failure_summary BEFORE UPDATE OF message ON notifications
+		WHEN NEW.resource_type = 'durable_job_failure' BEGIN SELECT RAISE(ABORT, 'summary unavailable'); END`)
+	require.NoError(t, err)
+	claim := claimFailure()
+	applied, err := svc.FailOrRetryFenced(ctx, claim, &opengraph.HTTPStatusError{StatusCode: http.StatusBadGateway})
+	require.ErrorContains(t, err, "summary unavailable")
+	require.False(t, applied)
+	active, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+	require.NoError(t, err)
+	require.Equal(t, jobs.StatusRunning, active.Status)
+	require.Len(t, read(), 2, "no partial alert can survive a failed terminal transaction")
 }
 
 func TestSearchDirtyWorkerIndexesLatestRevision(t *testing.T) {

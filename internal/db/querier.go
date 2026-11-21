@@ -697,6 +697,7 @@ type Querier interface {
 	SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error)
 	SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error)
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
+	SystemRecordAdminJobFailureNotification(ctx context.Context, arg SystemRecordAdminJobFailureNotificationParams) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemReleaseDurableJobOnShutdownFenced(ctx context.Context, arg SystemReleaseDurableJobOnShutdownFencedParams) (int64, error)
 	SystemRenewDurableJobLease(ctx context.Context, arg SystemRenewDurableJobLeaseParams) (int64, error)
@@ -708,6 +709,7 @@ type Querier interface {
 	SystemSetLinkerLastIndex(ctx context.Context, id int32) error
 	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int32) error
 	SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error
+	SystemSummarizeAdminJobFailureNotification(ctx context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error
 	SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error
 	SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error
 	SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error

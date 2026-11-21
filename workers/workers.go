@@ -170,7 +170,7 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 	}
 	log.Printf("Starting durable external link worker (%s)", prefix)
 	group.Go(func(ctx context.Context) {
-		externallinkworker.RunDurableWorker(ctx, svc, q, cfg, prefix+"-externallink")
+		externallinkworker.RunDurableWorker(ctx, svc, q, cfg, prefix+"-externallink", wc.HTTPClient)
 	})
 	log.Printf("Starting durable search index worker (%s)", prefix)
 	group.Go(func(ctx context.Context) {

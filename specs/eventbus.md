@@ -71,6 +71,13 @@ inputs to the durable external-link queue. The same queue handles links
 observed directly by newer thread operations. Observing a link preserves the
 schedule of an active retry and respects its cooldown.
 
+The worker fetches outside the job transaction and checks the current lease
+when publishing metadata or its image reference. It rejects unsuccessful HTTP
+responses before parsing metadata. HTTP 429 and 503 can extend the retry delay
+using `Retry-After`, capped at five minutes. Exhausted transient failures use
+the configured cooldown. Invalid destinations and permanent HTTP failures
+remain suppressed until an explicit retry.
+
 ## Shutdown
 
 Calling `Bus.Shutdown(ctx)` stops new publications, closes delivery to each

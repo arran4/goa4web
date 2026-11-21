@@ -12,6 +12,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/opengraph"
 )
 
 func openTestJobsDB(t *testing.T) (*sql.DB, db.Querier) {
@@ -197,6 +198,45 @@ func TestDurableJobsLeaseExpiryFencingAndShutdownRelease(t *testing.T) {
 	}
 	if after.Status != StatusPending || after.Attempts != beforeAttempts-1 {
 		t.Fatalf("after shutdown release: status=%q attempts=%d (before=%d)", after.Status, after.Attempts, beforeAttempts)
+	}
+}
+
+func TestTerminalFailureRollsBackWhenCooldownWriteFails(t *testing.T) {
+	database, q := openTestJobsDB(t)
+	ctx := context.Background()
+	svc := NewService(q)
+	_, err := svc.Enqueue(ctx, EnqueueRequest{
+		JobType:    JobTypeExternalLink,
+		TargetType: JobTypeExternalLink,
+		TargetKey:  "https://example.com/unavailable",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim, err := svc.ClaimNext(ctx, "worker", JobTypeExternalLink)
+	if err != nil || claim == nil {
+		t.Fatalf("claim = %v, err = %v", claim, err)
+	}
+	if _, err := database.ExecContext(ctx, `CREATE TRIGGER reject_cooldown BEFORE INSERT ON durable_job_cooldowns
+		BEGIN SELECT RAISE(ABORT, 'cooldown unavailable'); END`); err != nil {
+		t.Fatal(err)
+	}
+
+	if applied, err := svc.FailOrRetryFenced(ctx, claim, opengraph.ErrInvalidDestination); applied || err == nil {
+		t.Fatalf("failed cooldown applied = %v, err = %v", applied, err)
+	}
+	job, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != StatusRunning || job.LeaseToken.String != claim.LeaseToken {
+		t.Fatalf("job state = %s, lease token = %v", job.Status, job.LeaseToken)
+	}
+	if _, err := database.ExecContext(ctx, "DROP TRIGGER reject_cooldown"); err != nil {
+		t.Fatal(err)
+	}
+	if applied, err := svc.FailOrRetryFenced(ctx, claim, opengraph.ErrInvalidDestination); !applied || err != nil {
+		t.Fatalf("retried cooldown applied = %v, err = %v", applied, err)
 	}
 }
 

@@ -342,8 +342,9 @@ func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jo
 		errText = jobErr.Error()
 	}
 
-	if claimed.Job.Attempts < claimed.Job.MaxAttempts {
-		backoff := retryBackoff(claimed.Job.JobType, claimed.Job.Attempts)
+	permanent, retryAfter := fetchRetryPolicy(claimed.Job.JobType, jobErr, now)
+	if !permanent && claimed.Job.Attempts < claimed.Job.MaxAttempts {
+		backoff := max(retryBackoff(claimed.Job.JobType, claimed.Job.Attempts), retryAfter)
 		rows, err := s.Queries.SystemRetryDurableJobFenced(ctx, db.SystemRetryDurableJobFencedParams{
 			RunAfter:   now.Add(backoff),
 			LastError:  sql.NullString{String: errText, Valid: errText != ""},
@@ -356,46 +357,60 @@ func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jo
 		return rows > 0, nil
 	}
 
-	rows, err := s.Queries.SystemFailDurableJobFenced(ctx, db.SystemFailDurableJobFencedParams{
-		LastError:   sql.NullString{String: errText, Valid: errText != ""},
-		CompletedAt: sql.NullTime{Time: now, Valid: true},
-		ID:          claimed.Job.ID,
-		LeaseToken:  sql.NullString{String: claimed.LeaseToken, Valid: true},
+	tx, ok := s.Queries.(db.JobTransactor)
+	if !ok {
+		return false, fmt.Errorf("durable job transactions unavailable")
+	}
+	var applied, notify bool
+	err := tx.WithJobTransaction(ctx, func(q db.Querier) error {
+		rows, err := q.SystemFailDurableJobFenced(ctx, db.SystemFailDurableJobFencedParams{
+			LastError:   sql.NullString{String: errText, Valid: errText != ""},
+			CompletedAt: sql.NullTime{Time: now, Valid: true},
+			ID:          claimed.Job.ID,
+			LeaseToken:  sql.NullString{String: claimed.LeaseToken, Valid: true},
+		})
+		if err != nil || rows == 0 {
+			return err
+		}
+		applied = true
+		notify, err = s.recordTerminalCooldown(ctx, q, claimed.Job.DedupeKey, errText, now, permanent)
+		return err
 	})
 	if err != nil {
-		return false, fmt.Errorf("fail durable job %d: %w", claimed.Job.ID, err)
+		return false, fmt.Errorf("record terminal durable job %d: %w", claimed.Job.ID, err)
 	}
-	if rows == 0 {
-		return false, nil
-	}
-
-	s.recordCooldownAndNotify(ctx, claimed.Job, errText, now)
-	return true, nil
-}
-
-func (s *Service) recordCooldownAndNotify(ctx context.Context, job *db.DurableJob, errText string, now time.Time) {
-	cooldownUntil := now.Add(s.cooldownDuration())
-	existing, err := s.Queries.SystemGetJobCooldown(ctx, job.DedupeKey)
-	shouldNotify := s.NotifyAdmins != nil && (err != nil || !existing.LastNotifiedAt.Valid || now.Sub(existing.LastNotifiedAt.Time) >= s.notifyDebounce())
-
-	var notifiedAt sql.NullTime
-	if shouldNotify {
-		notifiedAt = sql.NullTime{Time: now, Valid: true}
-	}
-	if err := s.Queries.SystemUpsertJobCooldown(ctx, db.SystemUpsertJobCooldownParams{
-		DedupeKey:      job.DedupeKey,
-		CooldownUntil:  cooldownUntil,
-		LastError:      sql.NullString{String: errText, Valid: errText != ""},
-		LastNotifiedAt: notifiedAt,
-	}); err != nil {
-		log.Printf("upsert job cooldown %s: %v", job.DedupeKey, err)
-	}
-	if shouldNotify {
-		msg := fmt.Sprintf("Durable %s job #%d (%s) failed after %d attempts: %s", job.JobType, job.ID, job.TargetKey, job.Attempts, errText)
+	if notify {
+		msg := fmt.Sprintf("Durable %s job #%d failed after %d attempts: %s", claimed.Job.JobType, claimed.Job.ID, claimed.Job.Attempts, errText)
 		if err := s.NotifyAdmins(ctx, msg, "/admin/jobs?status=failed"); err != nil {
 			log.Printf("notify admins of durable job failure: %v", err)
 		}
 	}
+	return applied, nil
+}
+
+func (s *Service) recordTerminalCooldown(ctx context.Context, q db.Querier, key, errText string, now time.Time, permanent bool) (bool, error) {
+	cooldownUntil := now.Add(s.cooldownDuration())
+	if permanent {
+		// An explicit operator retry can lift this durable suppression.
+		cooldownUntil = time.Date(9999, time.December, 31, 0, 0, 0, 0, time.UTC)
+	}
+	existing, err := q.SystemGetJobCooldown(ctx, key)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return false, err
+	}
+	notify := s.NotifyAdmins != nil && (existing == nil || !existing.LastNotifiedAt.Valid || now.Sub(existing.LastNotifiedAt.Time) >= s.notifyDebounce())
+
+	var notifiedAt sql.NullTime
+	if notify {
+		notifiedAt = sql.NullTime{Time: now, Valid: true}
+	}
+	err = q.SystemUpsertJobCooldown(ctx, db.SystemUpsertJobCooldownParams{
+		DedupeKey:      key,
+		CooldownUntil:  cooldownUntil,
+		LastError:      sql.NullString{String: errText, Valid: errText != ""},
+		LastNotifiedAt: notifiedAt,
+	})
+	return notify, err
 }
 
 // ReleaseOnShutdownFenced returns an interrupted job to pending without charging an attempt.

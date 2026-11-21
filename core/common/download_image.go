@@ -348,7 +348,7 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imgURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create image request: %w", err)
+		return nil, opengraph.ErrInvalidDestination
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -356,8 +356,8 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 	}
 	defer func() { _ = resp.Body.Close() }()
 	log.Printf("image cache fetch http response: url=%q status=%q content_type=%q", imgURL, resp.Status, resp.Header.Get("Content-Type"))
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("http status: %s", resp.Status)
+	if err := opengraph.CheckHTTPStatus(resp); err != nil {
+		return nil, err
 	}
 
 	body, err := io.ReadAll(resp.Body)

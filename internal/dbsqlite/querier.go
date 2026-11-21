@@ -332,7 +332,6 @@ type Querier interface {
 	DeleteUserEmailForOwner(ctx context.Context, arg DeleteUserEmailForOwnerParams) error
 	DeleteUserLanguagesForUser(ctx context.Context, usersIdusers int64) error
 	EnsureExternalLink(ctx context.Context, url string) (sql.Result, error)
-	GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error)
 	GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error)
 	GetAdministratorUserRole(ctx context.Context, usersIdusers int64) (*UserRole, error)
 	GetAllAnsweredFAQWithFAQCategoriesForUser(ctx context.Context, userID sql.NullInt64) ([]*GetAllAnsweredFAQWithFAQCategoriesForUserRow, error)
@@ -612,6 +611,7 @@ type Querier interface {
 	// This query deletes all data from the "writing_search" table.
 	SystemDeleteWritingSearch(ctx context.Context) error
 	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int64) error
+	SystemGetActiveAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error)
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
 	SystemGetBlogEntryByID(ctx context.Context, idblogs int64) (*SystemGetBlogEntryByIDRow, error)
 	SystemGetDeadLetter(ctx context.Context, id int64) (*DeadLetter, error)

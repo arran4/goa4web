@@ -37,27 +37,6 @@ func (q *Queries) CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (int
 	return result.LastInsertId()
 }
 
-const getAPIKeyByHash = `-- name: GetAPIKeyByHash :one
-SELECT id, users_idusers, api_key, name, scopes, expires_at, last_used_at, created_at, revoked_at FROM api_keys WHERE api_key = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
-`
-
-func (q *Queries) GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
-	row := q.db.QueryRowContext(ctx, getAPIKeyByHash, apiKey)
-	var i ApiKey
-	err := row.Scan(
-		&i.ID,
-		&i.UsersIdusers,
-		&i.ApiKey,
-		&i.Name,
-		&i.Scopes,
-		&i.ExpiresAt,
-		&i.LastUsedAt,
-		&i.CreatedAt,
-		&i.RevokedAt,
-	)
-	return &i, err
-}
-
 const listAPIKeysByUser = `-- name: ListAPIKeysByUser :many
 SELECT id, users_idusers, api_key, name, scopes, expires_at, last_used_at, created_at, revoked_at FROM api_keys WHERE users_idusers = ? ORDER BY created_at DESC
 `
@@ -107,6 +86,33 @@ type RevokeAPIKeyParams struct {
 func (q *Queries) RevokeAPIKey(ctx context.Context, arg RevokeAPIKeyParams) error {
 	_, err := q.db.ExecContext(ctx, revokeAPIKey, arg.ID, arg.UsersIdusers)
 	return err
+}
+
+const systemGetActiveAPIKeyByHash = `-- name: SystemGetActiveAPIKeyByHash :one
+SELECT k.id, k.users_idusers, k.api_key, k.name, k.scopes, k.expires_at, k.last_used_at, k.created_at, k.revoked_at
+FROM api_keys k
+JOIN users u ON u.idusers = k.users_idusers
+WHERE k.api_key = ?
+  AND k.revoked_at IS NULL
+  AND (k.expires_at IS NULL OR k.expires_at > CURRENT_TIMESTAMP)
+  AND u.deleted_at IS NULL
+`
+
+func (q *Queries) SystemGetActiveAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
+	row := q.db.QueryRowContext(ctx, systemGetActiveAPIKeyByHash, apiKey)
+	var i ApiKey
+	err := row.Scan(
+		&i.ID,
+		&i.UsersIdusers,
+		&i.ApiKey,
+		&i.Name,
+		&i.Scopes,
+		&i.ExpiresAt,
+		&i.LastUsedAt,
+		&i.CreatedAt,
+		&i.RevokedAt,
+	)
+	return &i, err
 }
 
 const updateAPIKeyLastUsed = `-- name: UpdateAPIKeyLastUsed :exec

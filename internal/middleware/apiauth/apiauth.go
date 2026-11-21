@@ -38,9 +38,9 @@ func APIKeyAuthMiddleware(next http.Handler) http.Handler {
 		hash := sha256.Sum256([]byte(token))
 		tokenHash := hex.EncodeToString(hash[:])
 
-		apiKey, err := cd.Queries().GetAPIKeyByHash(r.Context(), tokenHash)
-		if err != nil {
-			// Token not found or invalid
+		apiKey, err := cd.ActiveAPIKey(r.Context(), tokenHash)
+		if err != nil || apiKey == nil {
+			// Treat missing, disabled, and invalid credentials uniformly.
 			writeAPIError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}

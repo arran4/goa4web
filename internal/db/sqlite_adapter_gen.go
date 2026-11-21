@@ -6872,6 +6872,7 @@ func (s *sqliteQuerier) GetPreferenceForLister(ctx context.Context, listerID int
 			LanguageID:              sql.NullInt32{Int32: int32(v.LanguageID.Int64), Valid: v.LanguageID.Valid},
 			UsersIdusers:            int32(v.UsersIdusers),
 			Emailforumupdates:       sql.NullBool{Bool: v.Emailforumupdates.Int64 != 0, Valid: v.Emailforumupdates.Valid},
+			OptionalEmailGeneration: v.OptionalEmailGeneration,
 			PageSize:                int32(v.PageSize),
 			AutoSubscribeReplies:    (v.AutoSubscribeReplies != 0),
 			Timezone:                v.Timezone,
@@ -9911,6 +9912,20 @@ func (s *sqliteQuerier) SystemClaimDurableJobByID(ctx context.Context, arg Syste
 	return res, nil
 }
 
+func (s *sqliteQuerier) SystemClaimForumReplyEmailWindow(ctx context.Context, arg SystemClaimForumReplyEmailWindowParams) (int64, error) {
+	res, err := s.q.SystemClaimForumReplyEmailWindow(ctx, dbsqlite.SystemClaimForumReplyEmailWindowParams{
+		LeaseToken:       arg.LeaseToken,
+		LeaseUntil:       arg.LeaseUntil,
+		RecipientID:      int64(arg.RecipientID),
+		WindowEnd:        arg.WindowEnd,
+		LeaseAvailableAt: arg.LeaseAvailableAt,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error {
 	return s.q.SystemClearContentLabelStatus(ctx, dbsqlite.SystemClearContentLabelStatusParams{
 		Item:   arg.Item,
@@ -10282,6 +10297,26 @@ func (s *sqliteQuerier) SystemGetDeadLetter(ctx context.Context, id int32) (*Dea
 			ID:        int32(v.ID),
 			Message:   v.Message,
 			CreatedAt: v.CreatedAt,
+		}
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemGetDueForumReplyEmailWindow(ctx context.Context, arg SystemGetDueForumReplyEmailWindowParams) (*SystemGetDueForumReplyEmailWindowRow, error) {
+	res, err := s.q.SystemGetDueForumReplyEmailWindow(ctx, dbsqlite.SystemGetDueForumReplyEmailWindowParams{
+		LeaseAvailableAt: arg.LeaseAvailableAt,
+		ThrottleAfter:    arg.ThrottleAfter,
+		DueAt:            arg.DueAt,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetDueForumReplyEmailWindowRow) *SystemGetDueForumReplyEmailWindowRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetDueForumReplyEmailWindowRow{
+			RecipientID: int32(v.RecipientID),
+			WindowEnd:   v.WindowEnd,
 		}
 	}(res), nil
 }
@@ -11059,6 +11094,38 @@ func (s *sqliteQuerier) SystemListDeadLetters(ctx context.Context, limit int32) 
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemListEligibleForumReplyEmailThreads(ctx context.Context, arg SystemListEligibleForumReplyEmailThreadsParams) ([]*SystemListEligibleForumReplyEmailThreadsRow, error) {
+	res, err := s.q.SystemListEligibleForumReplyEmailThreads(ctx, dbsqlite.SystemListEligibleForumReplyEmailThreadsParams{
+		Offset:      int64(arg.Offset),
+		Limit:       int64(arg.Limit),
+		RecipientID: int64(arg.RecipientID),
+		WindowEnd:   arg.WindowEnd,
+		LeaseToken:  arg.LeaseToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(items []*dbsqlite.SystemListEligibleForumReplyEmailThreadsRow) []*SystemListEligibleForumReplyEmailThreadsRow {
+		if items == nil {
+			return nil
+		}
+		out := make([]*SystemListEligibleForumReplyEmailThreadsRow, len(items))
+		for i, item := range items {
+			if item == nil {
+				continue
+			}
+			out[i] = &SystemListEligibleForumReplyEmailThreadsRow{
+				ThreadID:   int32(item.ThreadID),
+				TopicID:    int32(item.TopicID),
+				Handler:    item.Handler,
+				Title:      item.Title,
+				ReplyCount: item.ReplyCount,
+			}
+		}
+		return out
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemListLanguages(ctx context.Context) ([]*Language, error) {
 	res, err := s.q.SystemListLanguages(ctx)
 	if err != nil {
@@ -11334,6 +11401,15 @@ func (s *sqliteQuerier) SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx 
 	return s.q.SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx, int64(id))
 }
 
+func (s *sqliteQuerier) SystemMarkForumReplyEmailWindowSent(ctx context.Context, arg SystemMarkForumReplyEmailWindowSentParams) error {
+	return s.q.SystemMarkForumReplyEmailWindowSent(ctx, dbsqlite.SystemMarkForumReplyEmailWindowSentParams{
+		SentAt:      arg.SentAt,
+		RecipientID: int64(arg.RecipientID),
+		WindowEnd:   arg.WindowEnd,
+		LeaseToken:  arg.LeaseToken,
+	})
+}
+
 func (s *sqliteQuerier) SystemMarkPasswordResetVerified(ctx context.Context, id int32) error {
 	return s.q.SystemMarkPasswordResetVerified(ctx, int64(id))
 }
@@ -11380,6 +11456,15 @@ func (s *sqliteQuerier) SystemPurgePasswordResetsBefore(ctx context.Context, cre
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *sqliteQuerier) SystemQueueForumReplyEmailActivity(ctx context.Context, arg SystemQueueForumReplyEmailActivityParams) error {
+	return s.q.SystemQueueForumReplyEmailActivity(ctx, dbsqlite.SystemQueueForumReplyEmailActivityParams{
+		ActivityPosition: arg.ActivityPosition,
+		ThreadID:         int64(arg.ThreadID),
+		WindowEnd:        arg.WindowEnd,
+		RecipientID:      int64(arg.RecipientID),
+	})
 }
 
 func (s *sqliteQuerier) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error {
@@ -11429,6 +11514,20 @@ func (s *sqliteQuerier) SystemRetryDurableJobFenced(ctx context.Context, arg Sys
 		LastError:  arg.LastError,
 		ID:         arg.ID,
 		LeaseToken: arg.LeaseToken,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemSealForumReplyEmailWindow(ctx context.Context, arg SystemSealForumReplyEmailWindowParams) (int64, error) {
+	res, err := s.q.SystemSealForumReplyEmailWindow(ctx, dbsqlite.SystemSealForumReplyEmailWindowParams{
+		AttemptedAt:  arg.AttemptedAt,
+		RecipientID:  int64(arg.RecipientID),
+		WindowEnd:    arg.WindowEnd,
+		LeaseToken:   arg.LeaseToken,
+		LeaseValidAt: arg.LeaseValidAt,
 	})
 	if err != nil {
 		return 0, err

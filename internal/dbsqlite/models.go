@@ -330,6 +330,19 @@ type FaqRevision struct {
 	Timezone     sql.NullString
 }
 
+type ForumReplyEmailActivity struct {
+	RecipientID          int64
+	ActivityPosition     int64
+	ThreadID             int64
+	WindowEnd            int64
+	PreferenceGeneration int64
+	ClaimCount           int64
+	LeaseToken           sql.NullString
+	LeaseUntil           int64
+	AttemptedAt          sql.NullInt64
+	SentAt               sql.NullInt64
+}
+
 type Forumcategory struct {
 	Idforumcategory              int64
 	ForumcategoryIdforumcategory int64
@@ -556,6 +569,7 @@ type Preference struct {
 	LanguageID              sql.NullInt64
 	UsersIdusers            int64
 	Emailforumupdates       sql.NullInt64
+	OptionalEmailGeneration int64
 	PageSize                int64
 	AutoSubscribeReplies    int64
 	Timezone                sql.NullString

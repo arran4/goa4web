@@ -833,3 +833,33 @@ func (s *QuerierStub) SystemDiscardQueuedDigest(ctx context.Context, id int32) e
 	}
 	return nil
 }
+
+func (s *QuerierStub) SystemQueueForumReplyEmailActivity(ctx context.Context, args SystemQueueForumReplyEmailActivityParams) error {
+	s.mu.Lock()
+	s.SystemQueueForumReplyEmailActivityCalls = append(s.SystemQueueForumReplyEmailActivityCalls, args)
+	s.mu.Unlock()
+	if s.SystemQueueForumReplyEmailActivityFn != nil {
+		return s.SystemQueueForumReplyEmailActivityFn(ctx, args)
+	}
+	return nil
+}
+
+func (s *QuerierStub) SystemGetDueForumReplyEmailWindow(context.Context, SystemGetDueForumReplyEmailWindowParams) (*SystemGetDueForumReplyEmailWindowRow, error) {
+	return nil, sql.ErrNoRows
+}
+
+func (s *QuerierStub) SystemClaimForumReplyEmailWindow(context.Context, SystemClaimForumReplyEmailWindowParams) (int64, error) {
+	return 0, nil
+}
+
+func (s *QuerierStub) SystemListEligibleForumReplyEmailThreads(context.Context, SystemListEligibleForumReplyEmailThreadsParams) ([]*SystemListEligibleForumReplyEmailThreadsRow, error) {
+	return nil, nil
+}
+
+func (s *QuerierStub) SystemSealForumReplyEmailWindow(context.Context, SystemSealForumReplyEmailWindowParams) (int64, error) {
+	return 0, nil
+}
+
+func (s *QuerierStub) SystemMarkForumReplyEmailWindowSent(context.Context, SystemMarkForumReplyEmailWindowSentParams) error {
+	return nil
+}

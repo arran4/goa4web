@@ -576,6 +576,7 @@ type Querier interface {
 	SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int32, error)
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int32, error)
 	SystemClaimDurableJobByID(ctx context.Context, arg SystemClaimDurableJobByIDParams) (int64, error)
+	SystemClaimForumReplyEmailWindow(ctx context.Context, arg SystemClaimForumReplyEmailWindowParams) (int64, error)
 	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
 	SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
 	SystemClearJobCooldownWindow(ctx context.Context, arg SystemClearJobCooldownWindowParams) error
@@ -635,6 +636,7 @@ type Querier interface {
 	SystemGetBlogEntryByID(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error)
 	SystemGetCommentTextForSearchIndex(ctx context.Context, idcomments int32) (*SystemGetCommentTextForSearchIndexRow, error)
 	SystemGetDeadLetter(ctx context.Context, id int32) (*DeadLetter, error)
+	SystemGetDueForumReplyEmailWindow(ctx context.Context, arg SystemGetDueForumReplyEmailWindowParams) (*SystemGetDueForumReplyEmailWindowRow, error)
 	SystemGetDurableJobByID(ctx context.Context, id int64) (*DurableJob, error)
 	SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error)
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
@@ -678,6 +680,7 @@ type Querier interface {
 	SystemListCommentAppendsByCommentID(ctx context.Context, commentID int32) ([]*CommentAppend, error)
 	SystemListCommentsByThreadID(ctx context.Context, forumthreadID int32) ([]*SystemListCommentsByThreadIDRow, error)
 	SystemListDeadLetters(ctx context.Context, limit int32) ([]*DeadLetter, error)
+	SystemListEligibleForumReplyEmailThreads(ctx context.Context, arg SystemListEligibleForumReplyEmailThreadsParams) ([]*SystemListEligibleForumReplyEmailThreadsRow, error)
 	// SystemListLanguages lists all languages.
 	SystemListLanguages(ctx context.Context) ([]*Language, error)
 	SystemListPendingEmails(ctx context.Context, arg SystemListPendingEmailsParams) ([]*SystemListPendingEmailsRow, error)
@@ -689,6 +692,7 @@ type Querier interface {
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
 	SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error
+	SystemMarkForumReplyEmailWindowSent(ctx context.Context, arg SystemMarkForumReplyEmailWindowSentParams) error
 	SystemMarkPasswordResetVerified(ctx context.Context, id int32) error
 	SystemMarkPendingEmailSent(ctx context.Context, id int32) error
 	SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error)
@@ -697,12 +701,14 @@ type Querier interface {
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	// Remove password reset entries that have expired or were already verified
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
+	SystemQueueForumReplyEmailActivity(ctx context.Context, arg SystemQueueForumReplyEmailActivityParams) error
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemReleaseDurableJobOnShutdownFenced(ctx context.Context, arg SystemReleaseDurableJobOnShutdownFencedParams) (int64, error)
 	SystemRenewDurableJobLease(ctx context.Context, arg SystemRenewDurableJobLeaseParams) (int64, error)
 	SystemReopenThreadUnreadLabelForNewerActivity(ctx context.Context, arg SystemReopenThreadUnreadLabelForNewerActivityParams) error
 	SystemRetryDurableJobFenced(ctx context.Context, arg SystemRetryDurableJobFencedParams) (int64, error)
+	SystemSealForumReplyEmailWindow(ctx context.Context, arg SystemSealForumReplyEmailWindowParams) (int64, error)
 	SystemSetBlogLastIndex(ctx context.Context, id int32) error
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int32) error
 	SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error

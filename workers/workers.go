@@ -14,9 +14,11 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/scheduler"
+	"github.com/arran4/goa4web/internal/upload"
 
 	"github.com/arran4/goa4web/workers/auditworker"
 	"github.com/arran4/goa4web/workers/backgroundtaskworker"
@@ -191,6 +193,14 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 			return cd.ProcessClaimedRemoteImageCacheJob(ctx, svc, job)
 		})
 	})
+	if cfg != nil {
+		group.Go(func(ctx context.Context) {
+			provider := upload.ProviderFromConfig(cfg)
+			svc.RunWorkerLoop(ctx, prefix+"-imageboard-thumbnails", 0, []string{jobs.JobTypeImageBoardThumbnail}, func(ctx context.Context, job *db.DurableJob) error {
+				return images.WriteImageBoardThumbnail(ctx, provider, job.TargetKey)
+			})
+		})
+	}
 	historyHours, historyLimit := config.DefaultDurableJobHistoryHours, config.DefaultDurableJobHistoryLimit
 	if cfg != nil && cfg.DurableJobHistoryHours > 0 {
 		historyHours = cfg.DurableJobHistoryHours

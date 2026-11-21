@@ -71,6 +71,15 @@ Remote responses have a 50 MiB read limit, including when the server omits
 the length. Raster decoding is limited to 40 million pixels and 16,384
 pixels per side.
 
+## Image board thumbnails
+
+Image board uploads record thumbnail work in the same transaction as the post
+and upload metadata. Embedded and standalone workers use the existing durable
+queue. They regenerate the 200-pixel square thumbnail from the original stored
+under its content hash, preserving existing thumbnail URLs. A replacement worker
+can reclaim the job after its lease expires. Repeated processing writes the
+same bytes to the same key.
+
 ## Observed external links
 
 The embedded server treats successful task events from older producers as

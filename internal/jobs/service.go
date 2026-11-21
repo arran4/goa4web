@@ -20,6 +20,8 @@ const (
 	JobTypeExternalLink = "external_link"
 	// JobTypeImageCache identifies durable remote image fetch and thumbnail cache jobs.
 	JobTypeImageCache = "image_cache"
+	// JobTypeImageBoardThumbnail identifies work derived from an image board upload.
+	JobTypeImageBoardThumbnail = "imageboard_thumbnail"
 	// JobTypeSearchIndex identifies durable search-index refresh jobs backed by dirty revisions.
 	JobTypeSearchIndex = "search_index"
 
@@ -225,6 +227,18 @@ func enqueueActiveJob(ctx context.Context, q db.Querier, req EnqueueRequest, ded
 		return false, fmt.Errorf("insert durable job: %w", err)
 	}
 	return true, nil
+}
+
+// RecordImageBoardThumbnail records work within the caller's upload transaction.
+func (s *Service) RecordImageBoardThumbnail(ctx context.Context, q db.Querier, filename string, uploaderID int32) error {
+	req := EnqueueRequest{
+		JobType:         JobTypeImageBoardThumbnail,
+		TargetType:      "imageboard_upload",
+		TargetKey:       filename,
+		CreatedByUserID: sql.NullInt32{Int32: uploaderID, Valid: uploaderID > 0},
+	}
+	_, err := enqueueActiveJob(ctx, q, req, DedupeKey(req.JobType, req.TargetKey), s.now())
+	return err
 }
 
 // EnqueueSearchDirty bumps the dirty revision for a searchable resource and coalesces a search_index job.

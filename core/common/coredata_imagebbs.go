@@ -141,8 +141,8 @@ func (cd *CoreData) ImageBBSThreadPosts() (ImageBBSThreadPosts, error) {
 // ImageBBSThreadPosts represents comments within a thread.
 type ImageBBSThreadPosts []*db.GetCommentsByThreadIdForUserRow
 
-// CreateImageBoardUpload records a post, upload metadata and its index work.
-func (cd *CoreData) CreateImageBoardUpload(uploaded db.CreateUploadedImageForUploaderParams, post db.CreateImagePostForPosterParams) (int64, error) {
+// CreateImageBoardUpload records a post, upload metadata and its background work.
+func (cd *CoreData) CreateImageBoardUpload(uploaded db.CreateUploadedImageForUploaderParams, post db.CreateImagePostForPosterParams, storedFilename string) (int64, error) {
 	return cd.withSearchWork(searchindex.TypeImage, func(q db.Querier) (int64, error) {
 		if _, err := q.CreateUploadedImageForUploader(cd.ctx, uploaded); err != nil {
 			return 0, fmt.Errorf("record uploaded image: %w", err)
@@ -158,6 +158,15 @@ func (cd *CoreData) CreateImageBoardUpload(uploaded db.CreateUploadedImageForUpl
 		if rows == 0 {
 			return 0, sql.ErrNoRows
 		}
-		return result.LastInsertId()
+		id, err := result.LastInsertId()
+		if err != nil {
+			return 0, err
+		}
+		if cd.jobService != nil && storedFilename != "" {
+			if err := cd.jobService.RecordImageBoardThumbnail(cd.ctx, q, storedFilename, uploaded.UploaderID); err != nil {
+				return 0, err
+			}
+		}
+		return id, nil
 	})
 }

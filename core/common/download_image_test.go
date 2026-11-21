@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/png"
@@ -304,6 +306,87 @@ func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 		t.Fatalf("metadata requests = %d, want 1", requests)
 	}
 }
+
+func TestDownloadExternalImageRejectsOversizedResponseBeforeReading(t *testing.T) {
+	body := &imageResponseReadProbe{}
+	client := &http.Client{Transport: imageRoundTripper(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"image/png"}},
+			ContentLength: 1 << 30, Body: body,
+		}, nil
+	})}
+	app := NewCoreData(t.Context(), nil, config.NewRuntimeConfig(), WithHTTPClient(client))
+	if _, err := app.downloadExternalImage(t.Context(), "https://example.test/oversized.png"); err == nil {
+		t.Fatal("oversized image was accepted")
+	}
+	if body.read {
+		t.Fatal("oversized image response body was read")
+	}
+}
+
+func TestReadRemoteImageResponseLimitsUnknownLength(t *testing.T) {
+	t.Run("At the limit", func(t *testing.T) {
+		resp := &http.Response{StatusCode: http.StatusOK, ContentLength: -1, Body: io.NopCloser(strings.NewReader("1234"))}
+		body, err := readRemoteImageResponse(resp, 4)
+		if err != nil || string(body) != "1234" {
+			t.Fatalf("read at limit = %q, %v", body, err)
+		}
+	})
+	t.Run("Over the limit", func(t *testing.T) {
+		stream := strings.NewReader("123456789")
+		resp := &http.Response{StatusCode: http.StatusOK, ContentLength: -1, Body: io.NopCloser(stream)}
+		body, err := readRemoteImageResponse(resp, 4)
+		if err == nil || body != nil || stream.Len() != 4 {
+			t.Fatalf("oversized read = %q, %v, unread bytes = %d", body, err, stream.Len())
+		}
+	})
+}
+
+func TestDownloadExternalImageRejectsOversizedRaster(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		width, height uint32
+	}{
+		{name: "Pixel count", width: 10_000, height: 10_000},
+		{name: "Side length", width: 20_000, height: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var encoded bytes.Buffer
+			if err := png.Encode(&encoded, image.NewRGBA(image.Rect(0, 0, 1, 1))); err != nil {
+				t.Fatal(err)
+			}
+			// Change the declared IHDR dimensions without allocating a full raster.
+			body := encoded.Bytes()
+			binary.BigEndian.PutUint32(body[16:20], tc.width)
+			binary.BigEndian.PutUint32(body[20:24], tc.height)
+			binary.BigEndian.PutUint32(body[29:33], crc32.ChecksumIEEE(body[12:29]))
+			if _, _, err := image.DecodeConfig(bytes.NewReader(body)); err != nil {
+				t.Fatalf("read the fixture header: %v", err)
+			}
+			client := &http.Client{Transport: imageRoundTripper(func(*http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"image/png"}},
+					Body: io.NopCloser(bytes.NewReader(body)),
+				}, nil
+			})}
+			app := NewCoreData(t.Context(), nil, config.NewRuntimeConfig(), WithHTTPClient(client))
+			if _, err := app.downloadExternalImage(t.Context(), "https://example.test/oversized.png"); err == nil {
+				t.Fatal("oversized raster was accepted")
+			}
+		})
+	}
+}
+
+type imageResponseReadProbe struct {
+	read bool
+}
+
+func (p *imageResponseReadProbe) Read([]byte) (int, error) {
+	p.read = true
+	return 0, errors.New("image body was read")
+}
+
+func (*imageResponseReadProbe) Close() error { return nil }
 
 func TestCreateCommentStartsImmediateRemoteImageFetch(t *testing.T) {
 	var imageBytes bytes.Buffer

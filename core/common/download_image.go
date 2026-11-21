@@ -49,6 +49,8 @@ const (
 	versionedImageChecksumPrefix = "sha256:"
 	// maxImageMetadataBytes limits the HTML inspected for an image URL.
 	maxImageMetadataBytes = 5 * 1024 * 1024
+	// maxRemoteImageBytes limits the bytes read from a remote image response.
+	maxRemoteImageBytes = 50 * 1024 * 1024
 )
 
 type downloadedImage struct {
@@ -351,6 +353,24 @@ type remoteImageFetchError struct {
 func (e remoteImageFetchError) Error() string { return e.message }
 func (e remoteImageFetchError) Unwrap() error { return e.cause }
 
+func readRemoteImageResponse(resp *http.Response, limit int64) ([]byte, error) {
+	defer func() { _ = resp.Body.Close() }()
+	if err := opengraph.CheckHTTPStatus(resp); err != nil {
+		return nil, err
+	}
+	if resp.ContentLength > limit {
+		return nil, fmt.Errorf("remote image response exceeds the download limit")
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
+	if int64(len(body)) > limit {
+		return nil, fmt.Errorf("remote image response exceeds the download limit")
+	}
+	if err != nil {
+		return nil, remoteImageFetchError{message: "read remote image response", cause: err}
+	}
+	return body, nil
+}
+
 func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL string, depth int) (*downloadedImage, error) {
 	if depth > 3 {
 		return nil, fmt.Errorf("too many image metadata redirects")
@@ -371,14 +391,9 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 		}
 		return nil, remoteImageFetchError{message: "request remote image", cause: err}
 	}
-	defer func() { _ = resp.Body.Close() }()
-	if err := opengraph.CheckHTTPStatus(resp); err != nil {
-		return nil, err
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := readRemoteImageResponse(resp, maxRemoteImageBytes)
 	if err != nil {
-		return nil, remoteImageFetchError{message: "read remote image response", cause: err}
+		return nil, err
 	}
 	if len(body) == 0 {
 		return nil, fmt.Errorf("empty body")
@@ -393,6 +408,9 @@ func (cd *CoreData) downloadExternalImageAtDepth(ctx context.Context, imgURL str
 	}
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(body))
 	if err == nil {
+		if err := intimages.CheckDecodeDimensions(cfg); err != nil {
+			return nil, err
+		}
 		img.width = sql.NullInt32{Int32: int32(cfg.Width), Valid: cfg.Width > 0}
 		img.height = sql.NullInt32{Int32: int32(cfg.Height), Valid: cfg.Height > 0}
 		return img, nil
@@ -447,7 +465,7 @@ func (cd *CoreData) writeRemoteImageThumbnail(ctx context.Context, id, ext strin
 	if img == nil || len(img.body) == 0 {
 		return nil
 	}
-	src, _, err := image.Decode(bytes.NewReader(img.body))
+	src, err := intimages.DecodeForResize(img.body)
 	if err != nil {
 		return nil
 	}

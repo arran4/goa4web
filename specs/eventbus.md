@@ -67,6 +67,9 @@ URL serves. A late write by a replaced worker cannot select its bytes. Existing
 cache rows with unqualified checksums still resolve their original filenames.
 Fetch diagnostics identify the operation or upstream status without exposing
 the remote image URL.
+Remote responses have a 50 MiB read limit, including when the server omits
+the length. Raster decoding is limited to 40 million pixels and 16,384
+pixels per side.
 
 ## Observed external links
 

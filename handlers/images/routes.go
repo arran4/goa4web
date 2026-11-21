@@ -255,7 +255,7 @@ func enforceSafeImageSize(w http.ResponseWriter, r *http.Request, cd *common.Cor
 					return nil, true, nil
 				}
 			}
-			img, _, err := image.Decode(bytes.NewReader(data))
+			img, err := intimages.DecodeForResize(data)
 			if err == nil {
 				ext := filepath.Ext(id)
 				generator := "bild"
@@ -331,7 +331,7 @@ func generateAndSaveThumbnail(ctx context.Context, cd *common.CoreData, p upload
 }
 
 func generateCacheThumbnail(cfg *config.RuntimeConfig, originalID string, origBytes []byte, thumbnailSize config.ThumbnailSize) ([]byte, image.Image, error) {
-	img, _, err := image.Decode(bytes.NewReader(origBytes))
+	img, err := intimages.DecodeForResize(origBytes)
 	if err != nil {
 		return nil, nil, err
 	}

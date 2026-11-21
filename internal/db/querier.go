@@ -584,6 +584,7 @@ type Querier interface {
 	SystemConsumePendingAction(ctx context.Context, id string) (int64, error)
 	SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error
 	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
+	SystemCountActiveDurableJobsByKey(ctx context.Context, activeKey sql.NullString) (int64, error)
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	SystemCountDigestDeliveryMembers(ctx context.Context, digestDeliveryID int32) (int64, error)
 	// SystemCountLanguages counts all languages.

@@ -280,3 +280,8 @@ SELECT idimagepost, description
 FROM imagepost
 WHERE idimagepost = ? AND deleted_at IS NULL
 LIMIT 1;
+
+-- name: SystemCountActiveDurableJobsByKey :one
+SELECT COUNT(*) FROM durable_jobs
+WHERE active_dedupe_key = sqlc.arg(active_key)
+  AND status IN ('pending', 'running');

@@ -205,7 +205,14 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		if tn, ok := evt.Task.(tasks.Name); ok {
 			name = tn.Name()
 		}
-		patterns = append(patterns, buildPatterns(tasks.TaskString(name), evt.Path)...)
+		// Forum-wide follows subscribe to ordinary thread announcements.
+		// They must not also opt administrators into the administrative variant.
+		for _, pattern := range buildPatterns(tasks.TaskString(name), evt.Path) {
+			if isForumThreadCreation(*evt) && pattern == common.PublicForumNewThreadsPattern {
+				continue
+			}
+			patterns = append(patterns, pattern)
+		}
 	}
 
 	emailSubs, err := collectSubscribers(ctx, n.Queries, patterns, "email")
@@ -238,6 +245,10 @@ func (n *Notifier) notifyAdmins(ctx context.Context, et *EmailTemplates, nt *str
 		}
 
 		if uid != nil && *uid == actorID {
+			continue
+		}
+
+		if evt != nil && isForumThreadCreation(*evt) && (uid == nil || !n.canReceiveForumThreadCreation(ctx, *uid, *evt)) {
 			continue
 		}
 

@@ -37,6 +37,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	fr.HandleFunc("/topic/{topic}.atom", TopicAtomPage).Methods("GET")
 	fr.HandleFunc("/topic/{topic}.atom/u/{username}", TopicAtomPage).Methods("GET")
 	fr.HandleFunc("", Page).Methods("GET")
+	fr.HandleFunc("/follow", setPublicForumFollow).Methods(http.MethodPost).MatcherFunc(handlers.RequiresAnAccount())
 	fr.HandleFunc("/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/categories/category/{category}", Page).Methods("GET")
 	fr.HandleFunc("/topic/{topic}", TopicsPage).Methods("GET")
@@ -73,6 +74,8 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
 	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
 
+	fr.Handle("/topic/{topic}/thread/{thread}/link-preview", RequireThreadAndTopic(http.HandlerFunc(LinkCardFragment))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
+	fr.Handle("/topic/{topic}/thread/{thread}/live", RequireThreadAndTopic(http.HandlerFunc(ThreadActivityFragment))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	fr.Handle("/topic/{topic}/thread/{thread}/replies", RequireThreadAndTopic(http.HandlerFunc(ReplyThreadsPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("POST")

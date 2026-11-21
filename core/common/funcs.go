@@ -249,8 +249,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 				err := cd.executeIncludedSiteTemplate(&buf, r, name, data)
 				return template.HTML(buf.String()), err
 			}
-			funcs["a4code2html"] = func(s string) template.HTML {
-				provider := NewGoa4WebLinkProvider(cd, r.Context())
+			renderCode := func(s string, provider *Goa4WebLinkProvider) template.HTML {
 				root, err := a4code.ParseString(s)
 				if err != nil {
 					log.Printf("parse markup: %v", err)
@@ -269,6 +268,23 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 					return template.HTML("")
 				}
 				return template.HTML(buf.String())
+			}
+			funcs["a4code2html"] = func(s string) template.HTML {
+				return renderCode(s, NewGoa4WebLinkProvider(cd, r.Context()))
+			}
+			funcs["forumCommentHTML"] = func(commentID int32, s string) template.HTML {
+				provider := NewGoa4WebLinkProvider(cd, r.Context())
+				provider.forumCard = func(canonicalURL string) (string, bool) {
+					card, err := cd.StoredLinkCard(r.Context(), canonicalURL)
+					if err != nil {
+						return "", false
+					}
+					key := fmt.Sprintf("%d-%s", commentID, forumLinkKey(canonicalURL))
+					var buf bytes.Buffer
+					err = cd.RenderForumLinkCard(&buf, r, key, r.URL.Path, card)
+					return buf.String(), err == nil
+				}
+				return renderCode(s, provider)
 			}
 			funcs["addmode"] = func(u string) string {
 				cd, _ := r.Context().Value(consts.KeyCoreData).(*CoreData)

@@ -366,6 +366,22 @@ func (n *Notifier) notifySubscribers(ctx context.Context, evt eventbus.TaskEvent
 	delete(emailSubs, evt.UserID)
 	delete(internalSubs, evt.UserID)
 
+	if isForumThreadCreation(evt) {
+		visible := make(map[int32]bool)
+		for _, recipients := range []map[int32]struct{}{internalSubs, emailSubs} {
+			for id := range recipients {
+				allowed, checked := visible[id]
+				if !checked {
+					allowed = n.canReceiveForumThreadCreation(ctx, id, evt)
+					visible[id] = allowed
+				}
+				if !allowed {
+					delete(recipients, id)
+				}
+			}
+		}
+	}
+
 	if gp, ok := evt.Task.(GrantsRequiredProvider); ok {
 		reqs, err := gp.GrantsRequired(evt)
 		if err != nil {

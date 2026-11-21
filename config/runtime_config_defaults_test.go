@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/arran4/goa4web/config"
@@ -46,6 +47,9 @@ func TestRuntimeConfigDefaultsFromOptions(t *testing.T) {
 	}
 	if sizes := cfg.ThumbnailSizes(); len(sizes) != 2 || sizes[0] != (config.ThumbnailSize{Width: config.DefaultImageThumbnailWidth, Height: config.DefaultImageThumbnailHeight}) || sizes[1] != (config.ThumbnailSize{Width: 2048, Height: 1600}) {
 		t.Fatalf("thumbnail sizes = %v", sizes)
+	}
+	if sizes := cfg.CardThumbnailSizes(); len(sizes) != 1 || sizes[0] != (config.ThumbnailSize{Width: config.DefaultCardImageThumbnailWidth, Height: config.DefaultCardImageThumbnailHeight}) {
+		t.Fatalf("card thumbnail sizes = %v", sizes)
 	}
 	if cfg.LoginAttemptWindow != 15 || cfg.LoginAttemptThreshold != 5 {
 		t.Fatalf("login attempt defaults = %d/%d", cfg.LoginAttemptWindow, cfg.LoginAttemptThreshold)
@@ -105,5 +109,21 @@ func TestThumbnailSizes(t *testing.T) {
 		if got[i] != size {
 			t.Fatalf("thumbnail sizes = %v, want %v", got, want)
 		}
+	}
+}
+
+func TestCardThumbnailSizesRemainSeparateFromNormalSizes(t *testing.T) {
+	cfg := &config.RuntimeConfig{
+		ImageThumbnailSizes:     "1024x800,2048x1600",
+		ImageCardThumbnailSizes: "300x300,600x400,300x300,invalid",
+	}
+	if got, want := cfg.ThumbnailSizes(), []config.ThumbnailSize{{Width: 1024, Height: 800}, {Width: 2048, Height: 1600}}; !slices.Equal(got, want) {
+		t.Fatalf("normal thumbnail sizes = %v, want %v", got, want)
+	}
+	if got, want := cfg.CardThumbnailSizes(), []config.ThumbnailSize{{Width: 300, Height: 300}, {Width: 600, Height: 400}}; !slices.Equal(got, want) {
+		t.Fatalf("card thumbnail sizes = %v, want %v", got, want)
+	}
+	if got, want := cfg.PermittedThumbnailSizes(), []config.ThumbnailSize{{Width: 1024, Height: 800}, {Width: 2048, Height: 1600}, {Width: 300, Height: 300}, {Width: 600, Height: 400}}; !slices.Equal(got, want) {
+		t.Fatalf("permitted thumbnail sizes = %v, want %v", got, want)
 	}
 }

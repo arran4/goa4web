@@ -2,10 +2,7 @@ package externallinkworker
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"log"
-	"time"
 
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/a4code/ast"
@@ -63,85 +60,26 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						return nil
 					}
 
-					res, err := q.EnsureExternalLink(ctx, canonicalURL)
+					linkID, err := domainexternallink.ResolveRecord(ctx, q, canonicalURL)
 					if err != nil {
-						log.Printf("EnsureExternalLink %s: %v", canonicalURL, err)
+						log.Printf("resolve external link %s: %v", canonicalURL, err)
 						return nil
-					}
-					id, err := res.LastInsertId()
-					if err != nil {
-						log.Printf("LastInsertId for %s: %v", canonicalURL, err)
-						return nil
-					}
-					linkID := int32(id)
-					if linkID == 0 {
-						if existing, err := q.GetExternalLink(ctx, canonicalURL); err == nil && existing != nil {
-							linkID = existing.ID
-						}
 					}
 					if linkID == 0 {
 						return nil
 					}
 
-					// Check if we need to fetch metadata
-					existing, err := q.GetExternalLinkByID(ctx, linkID)
-					if err != nil && !errors.Is(err, sql.ErrNoRows) {
-						log.Printf("GetExternalLinkByID %d: %v", linkID, err)
-						return nil
-					}
-					if existing != nil && existing.CardTitle.Valid && existing.CardTitle.String != "" {
-						return nil // Already has title
-					}
-
-					var info *opengraph.Info
-					for i := range 3 {
-						info, err = opengraph.Fetch(canonicalURL, nil)
-						if err == nil {
-							break
-						}
-						time.Sleep(time.Duration(i+1) * 2 * time.Second)
-					}
+					_, err = domainexternallink.RefreshMissingMetadata(ctx, q, linkID, canonicalURL,
+						func(ctx context.Context, url string) (*opengraph.Info, error) {
+							return domainexternallink.FetchMetadata(ctx, url, func(ctx context.Context, url string) (*opengraph.Info, error) {
+								return opengraph.Fetch(ctx, url, nil)
+							}, domainexternallink.Wait)
+						},
+						func(ctx context.Context, image string) (string, error) {
+							return common.NewCoreData(ctx, q, cfg).DownloadAndCacheImage(image)
+						})
 					if err != nil {
-						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
-						return nil
-					}
-
-					var cachedImage string
-					if info.Image != "" {
-						cd := common.NewCoreData(ctx, q, cfg)
-						cached, err := cd.DownloadAndCacheImage(info.Image)
-						if err != nil {
-							log.Printf("DownloadAndCacheImage %s: %v", info.Image, err)
-						} else {
-							cachedImage = cached
-						}
-					}
-
-					desc := info.Description
-					if len(desc) > 65000 {
-						runes := []rune(desc)
-						if len(runes) > 16000 {
-							desc = string(runes[:16000])
-						}
-						for len(desc) > 65000 {
-							runes = []rune(desc)
-							desc = string(runes[:len(runes)-100])
-						}
-					}
-
-					metadata := *info
-					metadata.Description = desc
-					if err := q.UpdateExternalLinkMetadata(ctx, domainexternallink.MetadataParams(linkID, &metadata)); err != nil {
-						log.Printf("UpdateExternalLinkMetadata %d: %v", linkID, err)
-					}
-
-					if cachedImage != "" {
-						if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-							CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-							ID:             linkID,
-						}); err != nil {
-							log.Printf("UpdateExternalLinkImageCache %d: %v", linkID, err)
-						}
+						log.Printf("refresh external-link metadata %d: %v", linkID, err)
 					}
 
 					return nil

@@ -18,6 +18,9 @@ func TestBus_Shutdown(t *testing.T) {
 
 	ch1 := bus.Subscribe(TaskMessageType)
 	ch2 := bus.Subscribe(TaskMessageType)
+	slowConsumerStarted := make(chan struct{})
+	allowSlowConsumerAck := make(chan struct{})
+	var slowConsumerStartOnce sync.Once
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -38,7 +41,7 @@ func TestBus_Shutdown(t *testing.T) {
 		}
 	}()
 
-	// Consumer 2 (Simulate slow processing)
+	// Consumer 2 waits for the test to release its acknowledgement.
 	go func() {
 		defer wg.Done()
 		for {
@@ -47,7 +50,8 @@ func TestBus_Shutdown(t *testing.T) {
 				if !ok {
 					return
 				}
-				time.Sleep(10 * time.Millisecond)
+				slowConsumerStartOnce.Do(func() { close(slowConsumerStarted) })
+				<-allowSlowConsumerAck
 				env.Ack()
 			case <-ctx.Done():
 				return
@@ -59,12 +63,14 @@ func TestBus_Shutdown(t *testing.T) {
 	for i := range 5 {
 		_ = bus.Publish(TaskEvent{UserID: int32(i)})
 	}
+	<-slowConsumerStarted
 
 	// Shutdown
 	done := make(chan error)
 	go func() {
 		done <- bus.Shutdown(context.Background())
 	}()
+	close(allowSlowConsumerAck)
 
 	select {
 	case err := <-done:
@@ -113,9 +119,8 @@ func TestBus_Backpressure(t *testing.T) {
 	_ = bus.Publish(TaskEvent{UserID: 101})
 	_ = bus.Publish(TaskEvent{UserID: 102})
 
-	// Shutdown should succeed even if we only ack the messages we received
+	// Shutdown should succeed even if we only ack the messages we received.
 	go func() {
-		time.Sleep(10 * time.Millisecond)
 		for {
 			select {
 			case env := <-ch:
@@ -276,9 +281,6 @@ func TestPublish_NonBlocking(t *testing.T) {
 	msg1 := TaskEvent{Task: mockTask("1")}
 	msg2 := TaskEvent{Task: mockTask("2")}
 
-	// Wait a moment for the subscription to be established
-	time.Sleep(10 * time.Millisecond)
-
 	// Since channel capacity is 100, we can fill it up
 	// and only 100 will be buffered, wait! The capacity is exactly 100.
 	// We can loop over the capacity of ch directly.
@@ -337,18 +339,27 @@ func TestShutdown(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	// Drain the channel in background so Shutdown can complete
+	// Hold the acknowledgement until the test releases it.
+	drainingStarted := make(chan struct{})
+	allowDrain := make(chan struct{})
 	go func() {
-		// Wait a bit to simulate processing time, but less than context timeout
-		time.Sleep(50 * time.Millisecond)
 		env := <-ch
+		close(drainingStarted)
+		<-allowDrain
 		env.Ack()
 		for env := range ch {
 			env.Ack()
 		}
 	}()
+	<-drainingStarted
 
-	err = bus.Shutdown(ctx)
+	done := make(chan error, 1)
+	go func() {
+		done <- bus.Shutdown(ctx)
+	}()
+	close(allowDrain)
+
+	err = <-done
 	require.NoError(t, err)
 	assert.True(t, bus.closed)
 
@@ -627,8 +638,7 @@ func TestPublish_ShutdownRace(t *testing.T) {
 			}
 		}()
 
-		// Shutdown concurrently
-		time.Sleep(1 * time.Millisecond)
+		// Shutdown concurrently without relying on a scheduler delay.
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		err := bus.Shutdown(ctx)
 		cancel()

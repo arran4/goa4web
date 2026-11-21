@@ -58,7 +58,7 @@ permissions:
 jobs:
   route:
     name: Route event
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       run_code_checks: ${{ steps.route.outputs.run_code_checks }}
       run_build: ${{ steps.route.outputs.run_build }}
@@ -155,7 +155,7 @@ jobs:
   discover:
     name: Discover capabilities and cost profile
     needs: route
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       profile: ${{ steps.profile.outputs.profile }}
       has_go: ${{ steps.detect.outputs.has_go }}
@@ -211,7 +211,7 @@ jobs:
     name: Build Go App
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_build == 'true' && needs.discover.outputs.has_go == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -224,7 +224,7 @@ jobs:
     name: Dependency Maintenance
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_maintenance == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
@@ -256,7 +256,7 @@ jobs:
     name: Release Quality Gates Passed
     needs: [route, discover, build, gitleaks, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]
     if: ${{ always() && (needs.route.outputs.run_release == 'true' || needs.route.outputs.run_publisher == 'true') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Require release gates
         env:
@@ -288,7 +288,7 @@ jobs:
     name: Prepare Release Tag
     needs: [route, release-ready]
     if: ${{ needs.route.outputs.run_release == 'true' && needs.release-ready.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-release-preparation
       cancel-in-progress: false
@@ -412,7 +412,7 @@ jobs:
     name: Secret scan
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_code_checks == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -425,7 +425,7 @@ jobs:
     name: Secret scan full
     needs: [route, discover]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_history == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -442,7 +442,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.25.x]
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         tags:
           - 'nosqlite'
           - 'nosqlite,s3'
@@ -468,7 +468,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.25.x]
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         tags:
           - 'nosqlite'
           - 'nosqlite,s3'
@@ -491,7 +491,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         tags:
           - 'nosqlite'
           - 'nosqlite,s3'
@@ -508,10 +508,10 @@ jobs:
         run: go test -tags '${{ matrix.tags }}' ./... -v
 
   go-test-sqlite:
-    name: Go test SQLite (ubuntu-latest)
+    name: Go test SQLite (ubuntu-24.04)
     needs: [route, discover, golangci, go-vet]
     if: ${{ needs.discover.outputs.has_go == 'true' && needs.route.outputs.run_code_checks == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -528,10 +528,10 @@ jobs:
           go test -tags sqlite3 ./... -v
 
   go-test-mysql:
-    name: Go test MySQL (ubuntu-latest)
+    name: Go test MySQL (ubuntu-24.04)
     needs: [route, discover, golangci, go-vet]
     if: ${{ needs.discover.outputs.has_go == 'true' && needs.route.outputs.run_code_checks == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       mysql:
         image: mysql:8.0
@@ -557,7 +557,7 @@ jobs:
     name: Node JS tests
     needs: [route, discover]
     if: ${{ needs.discover.outputs.has_node == 'true' && needs.route.outputs.run_code_checks == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -569,7 +569,7 @@ jobs:
     name: Update SQLC Output
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_code_checks == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
@@ -609,7 +609,7 @@ jobs:
     name: Update Config Examples
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_code_checks == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
@@ -649,7 +649,7 @@ jobs:
     name: Release Publisher
     needs: [route, release-ready]
     if: ${{ needs.route.outputs.run_publisher == 'true' && needs.release-ready.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-publish-${{ github.ref }}
       cancel-in-progress: false
@@ -693,7 +693,7 @@ jobs:
     name: Auto-format and open PR
     needs: [route, discover]
     if: ${{ needs.route.outputs.run_autofix == 'true' && (github.event_name != 'workflow_dispatch' || inputs.allow_prs == true) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
@@ -755,7 +755,7 @@ jobs:
     name: Cleanup autofix PRs on parent close
     needs: [route]
     if: ${{ needs.route.outputs.run_cleanup == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write

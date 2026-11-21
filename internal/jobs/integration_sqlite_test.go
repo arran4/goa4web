@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -256,6 +257,9 @@ func TestSearchDirtyWorkerIndexesLatestRevision(t *testing.T) {
 	if _, err := sdb.ExecContext(ctx, `INSERT INTO comments (idcomments, forumthread_id, users_idusers, text, written) VALUES (42, 1, 1, 'initial words', CURRENT_TIMESTAMP)`); err != nil {
 		t.Fatalf("insert comment: %v", err)
 	}
+	require.NoError(t, searchworker.Index(ctx, q, searchworker.IndexEventData{
+		Type: searchworker.TypeComment, ID: 42, Text: "initial words",
+	}))
 
 	svc := jobs.NewConfiguredService(q)
 	if err := svc.EnqueueSearchDirty(ctx, searchworker.TypeComment, 42); err != nil {
@@ -268,30 +272,80 @@ func TestSearchDirtyWorkerIndexesLatestRevision(t *testing.T) {
 		t.Fatalf("EnqueueSearchDirty 2: %v", err)
 	}
 
+	marked, err := q.SystemMarkSearchTargetIndexed(ctx, db.SystemMarkSearchTargetIndexedParams{
+		IndexedRevision: 1, TargetType: searchworker.TypeComment, TargetID: 42,
+	})
+	require.NoError(t, err)
+	require.Zero(t, marked, "a superseded revision cannot be published")
+
+	_, err = sdb.ExecContext(ctx, `CREATE TRIGGER reject_search_replacement BEFORE INSERT ON comments_search
+		WHEN NEW.comment_id = 42 BEGIN SELECT RAISE(ABORT, 'search replacement unavailable'); END`)
+	require.NoError(t, err)
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		_ = config.RuntimeConfig{}
 		searchworker.RunDurableWorker(ctx, svc, q, "search-test-worker")
 	}()
 
-	deadline := time.Now().Add(4 * time.Second)
-	for time.Now().Before(deadline) {
-		dirty, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
-			TargetType: searchworker.TypeComment,
-			TargetID:   42,
-		})
-		if err == nil && dirty.Revision == 2 && dirty.IndexedRevision == 2 {
-			cancel()
-			wg.Wait()
-			return
-		}
-		time.Sleep(20 * time.Millisecond)
+	defer func() {
+		cancel()
+		wg.Wait()
+	}()
+	waitIndexed := func(revision int64) {
+		t.Helper()
+		require.Eventually(t, func() bool {
+			dirty, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
+				TargetType: searchworker.TypeComment, TargetID: 42,
+			})
+			return err == nil && dirty.Revision == revision && dirty.IndexedRevision == revision
+		}, 4*time.Second, 20*time.Millisecond)
 	}
-	cancel()
-	wg.Wait()
-	t.Fatal("timed out waiting for search_dirty_targets indexed_revision to reach 2")
+	readWords := func() []string {
+		t.Helper()
+		rows, err := sdb.QueryContext(ctx, `SELECT word FROM searchwordlist sw
+			JOIN comments_search sc ON sc.searchwordlist_idsearchwordlist = sw.idsearchwordlist
+			WHERE sc.comment_id = 42`)
+		require.NoError(t, err)
+		defer func() { _ = rows.Close() }()
+		var words []string
+		for rows.Next() {
+			var word string
+			require.NoError(t, rows.Scan(&word))
+			words = append(words, word)
+		}
+		require.NoError(t, rows.Err())
+		return words
+	}
+	require.Eventually(t, func() bool {
+		var status, lastError string
+		err := sdb.QueryRowContext(ctx, `SELECT status, last_error FROM durable_jobs
+			WHERE job_type = 'search_index' AND target_id = 42`).Scan(&status, &lastError)
+		return err == nil && status == jobs.StatusPending && strings.Contains(lastError, "search replacement unavailable")
+	}, 4*time.Second, 20*time.Millisecond)
+	dirty, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
+		TargetType: searchworker.TypeComment, TargetID: 42,
+	})
+	require.NoError(t, err)
+	require.Zero(t, dirty.IndexedRevision)
+	require.ElementsMatch(t, []string{"initial", "words"}, readWords())
+
+	_, err = sdb.ExecContext(ctx, `DROP TRIGGER reject_search_replacement`)
+	require.NoError(t, err)
+	_, err = svc.Enqueue(ctx, jobs.EnqueueRequest{
+		JobType: jobs.JobTypeSearchIndex, TargetType: searchworker.TypeComment,
+		TargetID: 42, TargetKey: "comment:42", TargetRevision: 2, ForceRetry: true,
+	})
+	require.NoError(t, err)
+	waitIndexed(2)
+	require.ElementsMatch(t, []string{"updated", "durable", "searchable", "words"}, readWords())
+
+	_, err = sdb.ExecContext(ctx, `UPDATE comments SET deleted_at = CURRENT_TIMESTAMP WHERE idcomments = 42`)
+	require.NoError(t, err)
+	require.NoError(t, svc.EnqueueSearchDirty(ctx, searchworker.TypeComment, 42))
+	waitIndexed(3)
+	require.Empty(t, readWords())
 }
 
 func TestThreadUpdateEnqueuesDurableWorkWithoutTaskEvent(t *testing.T) {

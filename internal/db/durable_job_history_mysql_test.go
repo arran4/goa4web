@@ -190,3 +190,29 @@ func TestMySQLObservedExternalLinksPreserveActiveRetry(t *testing.T) {
 	require.Equal(t, int32(1), existing.Attempts)
 	require.True(t, existing.RunAfter.Equal(time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)))
 }
+
+func TestMySQLSearchIndexRejectsSupersededRevision(t *testing.T) {
+	ctx := t.Context()
+	conn := openReplyThreadTestDatabase(t)
+	loadMySQLDurableJobMigration(t, conn)
+	q := NewForDriver(conn, "mysql")
+	for range 2 {
+		require.NoError(t, q.SystemBumpSearchDirtyTarget(ctx, SystemBumpSearchDirtyTargetParams{
+			TargetType: "comment", TargetID: 42,
+		}))
+	}
+	params := SystemMarkSearchTargetIndexedParams{
+		IndexedRevision: 1, TargetType: "comment", TargetID: 42,
+	}
+	rows, err := q.SystemMarkSearchTargetIndexed(ctx, params)
+	require.NoError(t, err)
+	require.Zero(t, rows)
+
+	params.IndexedRevision = 2
+	rows, err = q.SystemMarkSearchTargetIndexed(ctx, params)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, rows)
+	rows, err = q.SystemMarkSearchTargetIndexed(ctx, params)
+	require.NoError(t, err)
+	require.Zero(t, rows)
+}

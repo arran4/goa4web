@@ -592,6 +592,7 @@ type Querier interface {
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error
 	SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error)
+	// Older migration-built databases do not have a unique index on word.
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
 	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int64) (int64, error)
 	// This query inserts a new permission into the "permissions" table.
@@ -606,14 +607,17 @@ type Querier interface {
 	SystemCreateUserRoleByID(ctx context.Context, arg SystemCreateUserRoleByIDParams) error
 	// This query deletes all data from the "blogs_search" table.
 	SystemDeleteBlogsSearch(ctx context.Context) error
+	SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int64) error
 	// This query deletes all data from the "comments_search" table.
 	SystemDeleteCommentsSearch(ctx context.Context) error
 	SystemDeleteDeadLetter(ctx context.Context, id int64) error
 	SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error)
 	SystemDeleteImagePostSearch(ctx context.Context) error
+	SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int64) error
 	SystemDeleteJobCooldown(ctx context.Context, dedupeKey string) error
 	// This query deletes all data from the "linker_search" table.
 	SystemDeleteLinkerSearch(ctx context.Context) error
+	SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int64) error
 	SystemDeletePasswordReset(ctx context.Context, id int64) error
 	// Delete all password reset entries for the given user and return the result
 	SystemDeletePasswordResetsByUser(ctx context.Context, userID int64) (sql.Result, error)

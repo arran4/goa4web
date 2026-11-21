@@ -1138,6 +1138,16 @@ func (q *Queries) SystemDeleteBlogsSearch(ctx context.Context) error {
 	return err
 }
 
+const systemDeleteCommentSearchByCommentID = `-- name: SystemDeleteCommentSearchByCommentID :exec
+DELETE FROM comments_search
+WHERE comment_id = ?
+`
+
+func (q *Queries) SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int32) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteCommentSearchByCommentID, commentID)
+	return err
+}
+
 const systemDeleteCommentsSearch = `-- name: SystemDeleteCommentsSearch :exec
 DELETE FROM comments_search
 `
@@ -1157,6 +1167,16 @@ func (q *Queries) SystemDeleteImagePostSearch(ctx context.Context) error {
 	return err
 }
 
+const systemDeleteImagePostSearchByImagePostID = `-- name: SystemDeleteImagePostSearchByImagePostID :exec
+DELETE FROM imagepost_search
+WHERE image_post_id = ?
+`
+
+func (q *Queries) SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int32) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteImagePostSearchByImagePostID, imagePostID)
+	return err
+}
+
 const systemDeleteLinkerSearch = `-- name: SystemDeleteLinkerSearch :exec
 DELETE FROM linker_search
 `
@@ -1164,6 +1184,16 @@ DELETE FROM linker_search
 // This query deletes all data from the "linker_search" table.
 func (q *Queries) SystemDeleteLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, systemDeleteLinkerSearch)
+	return err
+}
+
+const systemDeleteLinkerSearchByLinkerID = `-- name: SystemDeleteLinkerSearchByLinkerID :exec
+DELETE FROM linker_search
+WHERE linker_id = ?
+`
+
+func (q *Queries) SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int32) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteLinkerSearchByLinkerID, linkerID)
 	return err
 }
 

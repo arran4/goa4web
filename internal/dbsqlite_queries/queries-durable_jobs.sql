@@ -255,10 +255,11 @@ LIMIT 1;
 
 -- name: SystemMarkSearchTargetIndexed :execrows
 UPDATE search_dirty_targets
-SET indexed_revision = ?, updated_at = CURRENT_TIMESTAMP
-WHERE target_type = ?
-  AND target_id = ?
-  AND indexed_revision < ?;
+SET indexed_revision = sqlc.arg(indexed_revision), updated_at = CURRENT_TIMESTAMP
+WHERE target_type = sqlc.arg(target_type)
+  AND target_id = sqlc.arg(target_id)
+  AND revision = sqlc.arg(indexed_revision)
+  AND indexed_revision < sqlc.arg(indexed_revision);
 
 -- name: SystemListActiveAdminUserIDs :many
 SELECT DISTINCT u.idusers

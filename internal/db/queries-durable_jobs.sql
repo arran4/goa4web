@@ -255,10 +255,11 @@ LIMIT 1;
 
 -- name: SystemMarkSearchTargetIndexed :execrows
 UPDATE search_dirty_targets
-SET indexed_revision = ?, updated_at = NOW()
-WHERE target_type = ?
-  AND target_id = ?
-  AND indexed_revision < ?;
+SET indexed_revision = sqlc.arg(indexed_revision), updated_at = NOW()
+WHERE target_type = sqlc.arg(target_type)
+  AND target_id = sqlc.arg(target_id)
+  AND revision = sqlc.arg(indexed_revision)
+  AND indexed_revision < sqlc.arg(indexed_revision);
 
 -- name: SystemListActiveAdminUserIDs :many
 SELECT DISTINCT u.idusers
@@ -273,25 +274,29 @@ ORDER BY u.idusers;
 SELECT idcomments, text
 FROM comments
 WHERE idcomments = ? AND deleted_at IS NULL
-LIMIT 1;
+LIMIT 1
+FOR UPDATE;
 
 -- name: SystemGetWritingTextForSearchIndex :one
 SELECT idwriting, title, writing, abstract
 FROM writing
 WHERE idwriting = ? AND deleted_at IS NULL
-LIMIT 1;
+LIMIT 1
+FOR UPDATE;
 
 -- name: SystemGetLinkerTextForSearchIndex :one
 SELECT id, title, url, description
 FROM linker
 WHERE id = ? AND deleted_at IS NULL
-LIMIT 1;
+LIMIT 1
+FOR UPDATE;
 
 -- name: SystemGetImagePostTextForSearchIndex :one
 SELECT idimagepost, description
 FROM imagepost
 WHERE idimagepost = ? AND deleted_at IS NULL
-LIMIT 1;
+LIMIT 1
+FOR UPDATE;
 
 -- name: SystemQueuePendingImageCacheJobs :execrows
 INSERT INTO durable_jobs (

@@ -764,26 +764,21 @@ func (q *Queries) SystemLockActiveDurableJobLease(ctx context.Context, arg Syste
 
 const systemMarkSearchTargetIndexed = `-- name: SystemMarkSearchTargetIndexed :execrows
 UPDATE search_dirty_targets
-SET indexed_revision = ?, updated_at = CURRENT_TIMESTAMP
-WHERE target_type = ?
-  AND target_id = ?
-  AND indexed_revision < ?
+SET indexed_revision = ?1, updated_at = CURRENT_TIMESTAMP
+WHERE target_type = ?2
+  AND target_id = ?3
+  AND revision = ?1
+  AND indexed_revision < ?1
 `
 
 type SystemMarkSearchTargetIndexedParams struct {
-	IndexedRevision   int64
-	TargetType        string
-	TargetID          int64
-	IndexedRevision_2 int64
+	IndexedRevision int64
+	TargetType      string
+	TargetID        int64
 }
 
 func (q *Queries) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemMarkSearchTargetIndexed,
-		arg.IndexedRevision,
-		arg.TargetType,
-		arg.TargetID,
-		arg.IndexedRevision_2,
-	)
+	result, err := q.db.ExecContext(ctx, systemMarkSearchTargetIndexed, arg.IndexedRevision, arg.TargetType, arg.TargetID)
 	if err != nil {
 		return 0, err
 	}

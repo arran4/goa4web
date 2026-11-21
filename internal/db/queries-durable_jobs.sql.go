@@ -380,6 +380,7 @@ SELECT idcomments, text
 FROM comments
 WHERE idcomments = ? AND deleted_at IS NULL
 LIMIT 1
+FOR UPDATE
 `
 
 type SystemGetCommentTextForSearchIndexRow struct {
@@ -439,6 +440,7 @@ SELECT idimagepost, description
 FROM imagepost
 WHERE idimagepost = ? AND deleted_at IS NULL
 LIMIT 1
+FOR UPDATE
 `
 
 type SystemGetImagePostTextForSearchIndexRow struct {
@@ -478,6 +480,7 @@ SELECT id, title, url, description
 FROM linker
 WHERE id = ? AND deleted_at IS NULL
 LIMIT 1
+FOR UPDATE
 `
 
 type SystemGetLinkerTextForSearchIndexRow struct {
@@ -639,6 +642,7 @@ SELECT idwriting, title, writing, abstract
 FROM writing
 WHERE idwriting = ? AND deleted_at IS NULL
 LIMIT 1
+FOR UPDATE
 `
 
 type SystemGetWritingTextForSearchIndexRow struct {
@@ -768,14 +772,14 @@ UPDATE search_dirty_targets
 SET indexed_revision = ?, updated_at = NOW()
 WHERE target_type = ?
   AND target_id = ?
+  AND revision = ?
   AND indexed_revision < ?
 `
 
 type SystemMarkSearchTargetIndexedParams struct {
-	IndexedRevision   int64
-	TargetType        string
-	TargetID          int32
-	IndexedRevision_2 int64
+	IndexedRevision int64
+	TargetType      string
+	TargetID        int32
 }
 
 func (q *Queries) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error) {
@@ -783,7 +787,8 @@ func (q *Queries) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemM
 		arg.IndexedRevision,
 		arg.TargetType,
 		arg.TargetID,
-		arg.IndexedRevision_2,
+		arg.IndexedRevision,
+		arg.IndexedRevision,
 	)
 	if err != nil {
 		return 0, err

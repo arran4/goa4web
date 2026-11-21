@@ -89,6 +89,13 @@ using `Retry-After`, capped at five minutes. Exhausted transient failures use
 the configured cooldown. Invalid destinations and permanent HTTP failures
 remain suppressed until an explicit retry.
 
+## Durable search indexing
+
+A search job reads the current source and replaces its per-item terms.
+The term replacement and indexed revision commit together under an active
+job lease. A superseded revision cannot advance the indexed revision.
+Deleted or empty content clears its previous terms.
+
 ## Durable job outcomes
 
 Completion, retry and failure require an unexpired lease. An expired

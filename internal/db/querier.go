@@ -606,14 +606,17 @@ type Querier interface {
 	SystemCreateUserRoleByID(ctx context.Context, arg SystemCreateUserRoleByIDParams) error
 	// This query deletes all data from the "blogs_search" table.
 	SystemDeleteBlogsSearch(ctx context.Context) error
+	SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int32) error
 	// This query deletes all data from the "comments_search" table.
 	SystemDeleteCommentsSearch(ctx context.Context) error
 	SystemDeleteDeadLetter(ctx context.Context, id int32) error
 	SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error)
 	SystemDeleteImagePostSearch(ctx context.Context) error
+	SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int32) error
 	SystemDeleteJobCooldown(ctx context.Context, dedupeKey string) error
 	// This query deletes all data from the "linker_search" table.
 	SystemDeleteLinkerSearch(ctx context.Context) error
+	SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int32) error
 	SystemDeletePasswordReset(ctx context.Context, id int32) error
 	// Delete all password reset entries for the given user and return the result
 	SystemDeletePasswordResetsByUser(ctx context.Context, userID int32) (sql.Result, error)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"strings"
 
@@ -29,90 +28,77 @@ func RunDurableWorker(ctx context.Context, jobSvc *jobs.Service, q db.Querier, w
 		if targetType == "" || targetID == 0 {
 			return nil
 		}
-		dirty, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
-			TargetType: targetType,
-			TargetID:   targetID,
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		text, found, err := loadSearchableText(ctx, q, targetType, targetID)
-		if err != nil {
-			return err
-		}
-		if found && text != "" {
-			if err := index(ctx, q, IndexEventData{Type: targetType, ID: targetID, Text: text}); err != nil {
+		return jobSvc.WriteWithActiveLease(ctx, job, func(tx db.Querier) error {
+			dirty, err := tx.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
+				TargetType: targetType, TargetID: targetID,
+			})
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil
+			}
+			if err != nil {
 				return err
 			}
-		}
-		if _, err := q.SystemMarkSearchTargetIndexed(ctx, db.SystemMarkSearchTargetIndexedParams{
-			IndexedRevision:   dirty.Revision,
-			TargetType:        targetType,
-			TargetID:          targetID,
-			IndexedRevision_2: dirty.Revision,
-		}); err != nil {
-			return err
-		}
-		after, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
-			TargetType: targetType,
-			TargetID:   targetID,
-		})
-		if err == nil && after.Revision > dirty.Revision {
-			_, _ = jobSvc.Enqueue(ctx, jobs.EnqueueRequest{
-				JobType:        jobs.JobTypeSearchIndex,
-				TargetType:     targetType,
-				TargetID:       int64(targetID),
-				TargetKey:      fmt.Sprintf("%s:%d", targetType, targetID),
-				TargetRevision: after.Revision,
+			if dirty.IndexedRevision == dirty.Revision {
+				return nil
+			}
+
+			// Lock the revision being published. A concurrent producer that has
+			// already advanced the target leaves this attempt with nothing to do.
+			marked, err := tx.SystemMarkSearchTargetIndexed(ctx, db.SystemMarkSearchTargetIndexedParams{
+				IndexedRevision: dirty.Revision, TargetType: targetType, TargetID: targetID,
 			})
-		}
-		return nil
+			if err != nil || marked == 0 {
+				return err
+			}
+			text, err := loadSearchableText(ctx, tx, targetType, targetID)
+			if err != nil {
+				return err
+			}
+			return searchindex.Replace(ctx, tx, IndexEventData{Type: targetType, ID: targetID, Text: text})
+		})
 	})
 }
 
-func loadSearchableText(ctx context.Context, q db.Querier, targetType string, targetID int32) (string, bool, error) {
+func loadSearchableText(ctx context.Context, q db.Querier, targetType string, targetID int32) (string, error) {
 	switch targetType {
 	case TypeComment:
 		row, err := q.SystemGetCommentTextForSearchIndex(ctx, targetID)
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", false, nil
+			return "", nil
 		}
 		if err != nil {
-			return "", false, err
+			return "", err
 		}
-		return row.Text.String, true, nil
+		return row.Text.String, nil
 	case TypeWriting:
 		row, err := q.SystemGetWritingTextForSearchIndex(ctx, targetID)
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", false, nil
+			return "", nil
 		}
 		if err != nil {
-			return "", false, err
+			return "", err
 		}
-		return strings.TrimSpace(row.Title.String + "\n" + row.Abstract.String + "\n" + row.Writing.String), true, nil
+		return strings.TrimSpace(row.Title.String + "\n" + row.Abstract.String + "\n" + row.Writing.String), nil
 	case TypeLinker:
 		row, err := q.SystemGetLinkerTextForSearchIndex(ctx, targetID)
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", false, nil
+			return "", nil
 		}
 		if err != nil {
-			return "", false, err
+			return "", err
 		}
-		return strings.TrimSpace(row.Title.String + "\n" + row.Url.String + "\n" + row.Description.String), true, nil
+		return strings.TrimSpace(row.Title.String + "\n" + row.Url.String + "\n" + row.Description.String), nil
 	case TypeImage:
 		row, err := q.SystemGetImagePostTextForSearchIndex(ctx, targetID)
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", false, nil
+			return "", nil
 		}
 		if err != nil {
-			return "", false, err
+			return "", err
 		}
-		return row.Description.String, true, nil
+		return row.Description.String, nil
 	default:
-		return "", false, nil
+		return "", nil
 	}
 }
 

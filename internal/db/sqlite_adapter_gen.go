@@ -10021,6 +10021,10 @@ func (s *sqliteQuerier) SystemDeleteBlogsSearch(ctx context.Context) error {
 	return s.q.SystemDeleteBlogsSearch(ctx)
 }
 
+func (s *sqliteQuerier) SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int32) error {
+	return s.q.SystemDeleteCommentSearchByCommentID(ctx, int64(commentID))
+}
+
 func (s *sqliteQuerier) SystemDeleteCommentsSearch(ctx context.Context) error {
 	return s.q.SystemDeleteCommentsSearch(ctx)
 }
@@ -10041,12 +10045,20 @@ func (s *sqliteQuerier) SystemDeleteImagePostSearch(ctx context.Context) error {
 	return s.q.SystemDeleteImagePostSearch(ctx)
 }
 
+func (s *sqliteQuerier) SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int32) error {
+	return s.q.SystemDeleteImagePostSearchByImagePostID(ctx, int64(imagePostID))
+}
+
 func (s *sqliteQuerier) SystemDeleteJobCooldown(ctx context.Context, dedupeKey string) error {
 	return s.q.SystemDeleteJobCooldown(ctx, dedupeKey)
 }
 
 func (s *sqliteQuerier) SystemDeleteLinkerSearch(ctx context.Context) error {
 	return s.q.SystemDeleteLinkerSearch(ctx)
+}
+
+func (s *sqliteQuerier) SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int32) error {
+	return s.q.SystemDeleteLinkerSearchByLinkerID(ctx, int64(linkerID))
 }
 
 func (s *sqliteQuerier) SystemDeletePasswordReset(ctx context.Context, id int32) error {
@@ -11252,10 +11264,9 @@ func (s *sqliteQuerier) SystemMarkPendingEmailSent(ctx context.Context, id int32
 
 func (s *sqliteQuerier) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error) {
 	res, err := s.q.SystemMarkSearchTargetIndexed(ctx, dbsqlite.SystemMarkSearchTargetIndexedParams{
-		IndexedRevision:   arg.IndexedRevision,
-		TargetType:        arg.TargetType,
-		TargetID:          int64(arg.TargetID),
-		IndexedRevision_2: arg.IndexedRevision_2,
+		IndexedRevision: arg.IndexedRevision,
+		TargetType:      arg.TargetType,
+		TargetID:        int64(arg.TargetID),
 	})
 	if err != nil {
 		return 0, err

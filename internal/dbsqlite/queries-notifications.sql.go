@@ -186,6 +186,23 @@ func (q *Queries) GetNotificationForLister(ctx context.Context, arg GetNotificat
 	return &i, err
 }
 
+const getNotificationIDByActivityForLister = `-- name: GetNotificationIDByActivityForLister :one
+SELECT id FROM notifications
+WHERE users_idusers = ?1 AND activity_key = ?2
+`
+
+type GetNotificationIDByActivityForListerParams struct {
+	ListerID    int64
+	ActivityKey sql.NullString
+}
+
+func (q *Queries) GetNotificationIDByActivityForLister(ctx context.Context, arg GetNotificationIDByActivityForListerParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationIDByActivityForLister, arg.ListerID, arg.ActivityKey)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getUnreadNotificationCountForLister = `-- name: GetUnreadNotificationCountForLister :one
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = ?1 AND read_at IS NULL
@@ -304,7 +321,7 @@ func (q *Queries) ListUnreadNotificationsForLister(ctx context.Context, arg List
 const setNotificationReadForLister = `-- name: SetNotificationReadForLister :exec
 UPDATE notifications
 SET read_at = CURRENT_TIMESTAMP
-WHERE id = ?1 AND users_idusers = ?2
+WHERE id = ?1 AND users_idusers = ?2 AND read_at IS NULL
 `
 
 type SetNotificationReadForListerParams struct {

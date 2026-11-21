@@ -18,6 +18,38 @@ func runNotificationReadStateLinearizabilitySuite(t *testing.T, q Querier) {
 		t.Fatalf("%T does not implement NotificationReadStateCoordinator", q)
 	}
 
+	t.Run("dismissal requires the notification recipient", func(t *testing.T) {
+		ctx := t.Context()
+		const recipientID int32 = 121 // Intended recipient of the test notification.
+		const otherUserID int32 = 122 // Actor who does not own the notification.
+		key := sql.NullString{String: "reply:comment:321:append:1", Valid: true}
+		if err := q.SystemCreateNotificationForActivity(ctx, SystemCreateNotificationForActivityParams{
+			RecipientID: recipientID,
+			ActivityKey: key,
+		}); err != nil {
+			t.Fatalf("create notification: %v", err)
+		}
+		id, err := q.GetNotificationIDByActivityForLister(ctx, GetNotificationIDByActivityForListerParams{ListerID: recipientID, ActivityKey: key})
+		if err != nil || id <= 0 {
+			t.Fatalf("lookup own notification: id=%d, err=%v", id, err)
+		}
+		if _, err := q.GetNotificationIDByActivityForLister(ctx, GetNotificationIDByActivityForListerParams{ListerID: otherUserID, ActivityKey: key}); !errors.Is(err, sql.ErrNoRows) {
+			t.Fatalf("lookup another user's notification returned %v, want no rows", err)
+		}
+		for _, actor := range []int32{otherUserID, recipientID} {
+			if err := q.SetNotificationReadForLister(ctx, SetNotificationReadForListerParams{ListerID: actor, ID: id}); err != nil {
+				t.Fatalf("dismiss notification as %d: %v", actor, err)
+			}
+			note, err := q.GetNotificationForLister(ctx, GetNotificationForListerParams{ListerID: recipientID, ID: id})
+			if err != nil {
+				t.Fatalf("check notification after dismissal: %v", err)
+			}
+			if note.ReadAt.Valid != (actor == recipientID) {
+				t.Errorf("read state after actor %d = %v", actor, note.ReadAt.Valid)
+			}
+		}
+	})
+
 	t.Run("deliver_first_barrier_blocks_ack_until_commit", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

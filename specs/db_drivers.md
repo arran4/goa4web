@@ -13,3 +13,8 @@ mysql examples:
   - user:pass@tcp(127.0.0.1:3306)/dbname?parseTime=true
   - user:pass@unix(/var/run/mysqld/mysqld.sock)/dbname?parseTime=true
 ```
+
+The MySQL `db create` and `db setup` commands install the canonical schema and
+record its baseline from the embedded migration versions. Migrate an existing
+database with `db migrate`, using the separate migration connection when it
+requires multi-statement execution.

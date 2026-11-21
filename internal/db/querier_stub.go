@@ -1852,6 +1852,10 @@ func (s *QuerierStub) ListUnreadNotificationsForLister(ctx context.Context, arg 
 	return ret, err
 }
 
+func (s *QuerierStub) GetNotificationIDByActivityForLister(context.Context, GetNotificationIDByActivityForListerParams) (int32, error) {
+	return 0, sql.ErrNoRows
+}
+
 func (s *QuerierStub) SetNotificationReadForLister(ctx context.Context, arg SetNotificationReadForListerParams) error {
 	s.mu.Lock()
 	s.SetNotificationReadForListerCalls = append(s.SetNotificationReadForListerCalls, arg)

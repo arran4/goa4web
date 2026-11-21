@@ -56,7 +56,11 @@ LIMIT sqlc.arg(limit) OFFSET sqlc.arg(offset);
 -- name: SetNotificationReadForLister :exec
 UPDATE notifications
 SET read_at = CURRENT_TIMESTAMP
-WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id);
+WHERE id = sqlc.arg(id) AND users_idusers = sqlc.arg(lister_id) AND read_at IS NULL;
+
+-- name: GetNotificationIDByActivityForLister :one
+SELECT id FROM notifications
+WHERE users_idusers = sqlc.arg(lister_id) AND activity_key = sqlc.arg(activity_key);
 
 -- name: SetNotificationsReadForListerBatch :exec
 UPDATE notifications

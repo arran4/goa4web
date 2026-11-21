@@ -30,6 +30,12 @@ const (
 
 var _ common.ForumReplyNotifier = (*Notifier)(nil)
 
+// ForumReplyActivityKey identifies the notification for a logical forum reply
+// or append. The key uses the same namespace as canonical delivery.
+func ForumReplyActivityKey(activityID string) string {
+	return formatNotificationActivityKey(forumReplyTaskName.Name(), activityID)
+}
+
 // NotifyForumReply resolves eligible recipients and delivers one canonical
 // forum-reply notification and subscriber email per recipient.
 func (n *Notifier) NotifyForumReply(ctx context.Context, intent common.ForumReplyNotificationIntent) error {

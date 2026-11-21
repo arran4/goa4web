@@ -552,6 +552,7 @@ jobs:
           GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
         run: |
           go test -tags nosqlite ./migrations ./internal/db -v
+          go test -tags nosqlite ./cmd/goa4web -run '^TestCanonicalMySQLInstallCanRunMigrations$' -v
 
   node-lint-test:
     name: Node JS tests

@@ -81,6 +81,12 @@ func (c *dbSetupCmd) Run() error {
 		}
 	}
 
+	if cfg.DBDriver == "mysql" {
+		if err := dbstart.RecordMySQLSnapshotBaseline(ctx, sdb); err != nil {
+			return fmt.Errorf("record canonical schema baseline: %w", err)
+		}
+	}
+
 	log.Println("Database setup successfully.")
 	return nil
 }

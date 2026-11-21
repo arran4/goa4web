@@ -6559,6 +6559,17 @@ func (s *sqliteQuerier) GetNotificationForLister(ctx context.Context, arg GetNot
 	}(res), nil
 }
 
+func (s *sqliteQuerier) GetNotificationIDByActivityForLister(ctx context.Context, arg GetNotificationIDByActivityForListerParams) (int32, error) {
+	res, err := s.q.GetNotificationIDByActivityForLister(ctx, dbsqlite.GetNotificationIDByActivityForListerParams{
+		ListerID:    int64(arg.ListerID),
+		ActivityKey: arg.ActivityKey,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int32(res), nil
+}
+
 func (s *sqliteQuerier) GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error) {
 	res, err := s.q.GetPasskeyByCredentialID(ctx, credentialID)
 	if err != nil {

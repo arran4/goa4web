@@ -364,13 +364,17 @@ func (n *Notifier) notificationStored(userID int32, err error) error {
 }
 
 func notificationActivityKey(evt eventbus.TaskEvent) string {
-	activityID := strings.TrimSpace(evt.ActivityID)
-	if activityID == "" {
-		return ""
-	}
 	name := "task"
 	if named, ok := evt.Task.(tasks.Name); ok && named.Name() != "" {
-		name = strings.ToLower(named.Name())
+		name = named.Name()
 	}
-	return name + ":" + activityID
+	return formatNotificationActivityKey(name, evt.ActivityID)
+}
+
+func formatNotificationActivityKey(name, activityID string) string {
+	id := strings.TrimSpace(activityID)
+	if id == "" {
+		return ""
+	}
+	return strings.ToLower(name) + ":" + id
 }

@@ -88,6 +88,7 @@ func NewRunner(cd *common.CoreData, opts ...Option) *Runner {
 			"forum.thread.create":  true,
 			"forum.reply":          true,
 			"forum.thread.read":    true,
+			"notification.dismiss": true,
 			"forum.subscribe":      true,
 			"forum.unsubscribe":    true,
 			"private-forum.edit":   true,
@@ -214,6 +215,10 @@ func (r *Runner) applyEvent(ctx context.Context, evt *Event) error {
 			return fmt.Errorf("invalid operation data for forum.thread.read")
 		}
 		return r.applyForumThreadRead(ctx, data)
+
+	case "notification.dismiss":
+		data := evt.OpData.(*NotificationDismissData)
+		return r.applyNotificationDismiss(ctx, data)
 
 	case "forum.subscribe":
 		data, ok := evt.OpData.(*ForumSubscribeData)
@@ -400,6 +405,9 @@ func (r *Runner) applyForumReply(ctx context.Context, data *ForumReplyData) erro
 	if data.Ref != "" {
 		if err := r.refRegistry.Bind(RefTypePost, data.Ref, result.CommentID); err != nil {
 			return fmt.Errorf("bind post ref %q: %w", data.Ref, err)
+		}
+		if err := r.refRegistry.Bind(refTypeReplyActivity, data.Ref, result.ActivityID); err != nil {
+			return fmt.Errorf("bind reply activity ref %q: %w", data.Ref, err)
 		}
 	}
 	return nil

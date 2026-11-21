@@ -411,6 +411,7 @@ type Querier interface {
 	GetNotificationCountForLister(ctx context.Context, listerID int64) (int64, error)
 	GetNotificationEmailByUserID(ctx context.Context, userID int64) (*UserEmail, error)
 	GetNotificationForLister(ctx context.Context, arg GetNotificationForListerParams) (*Notification, error)
+	GetNotificationIDByActivityForLister(ctx context.Context, arg GetNotificationIDByActivityForListerParams) (int64, error)
 	GetPasskeyByCredentialID(ctx context.Context, credentialID []byte) (*UserPasskey, error)
 	GetPasskeysByUserID(ctx context.Context, userID int64) ([]*UserPasskey, error)
 	GetPasswordResetByCode(ctx context.Context, arg GetPasswordResetByCodeParams) (*PendingPassword, error)

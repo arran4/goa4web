@@ -246,17 +246,14 @@ func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	ids := r.Form["id"]
-	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
+	actor := cd.ForUser(uid)
 	for _, idStr := range ids {
-		id, _ := strconv.Atoi(idStr)
-		if id == 0 {
+		id, err := strconv.ParseInt(idStr, 10, 32)
+		if err != nil || id <= 0 {
 			continue
 		}
-		n, err := queries.GetNotificationForLister(r.Context(), db.GetNotificationForListerParams{ID: int32(id), ListerID: uid})
-		if err == nil && !n.ReadAt.Valid {
-			if err := queries.SetNotificationReadForLister(r.Context(), db.SetNotificationReadForListerParams{ID: n.ID, ListerID: uid}); err != nil {
-				log.Printf("mark notification read: %v", err)
-			}
+		if err := actor.DismissNotification(r.Context(), int32(id)); err != nil {
+			log.Printf("dismiss notification: %v", err)
 		}
 	}
 	return handlers.RefreshDirectHandler{TargetURL: "/usr/notifications"}

@@ -353,31 +353,20 @@ func TestCreateCommentStartsImmediateRemoteImageFetch(t *testing.T) {
 	}
 }
 
-func TestProcessPendingRemoteImageCacheEntriesRecordsRetryFailure(t *testing.T) {
+func TestRemoteImageCacheJobRecordsRetryFailure(t *testing.T) {
 	queries := testhelpers.NewQuerierStub()
 	cfg := config.NewRuntimeConfig()
 	cfg.ImageCacheFetchMaxRetries = 3
 	cfg.ImageCacheFetchRetryDelay = "1m"
 	cd := NewCoreData(context.Background(), queries, cfg)
-	queries.ListDuePendingImageCacheEntriesReturns = []*db.ImageCacheEntry{{
+	queries.GetImageCacheEntryReturns = &db.ImageCacheEntry{
 		ID:         "abcd1234.png",
 		SourceUrl:  sql.NullString{String: "http://127.0.0.1/logo.png", Valid: true},
 		SourceKind: imageCacheSourceKindRemote,
 		Status:     imageCacheStatusPending,
-	}}
-
-	if err := cd.ProcessPendingRemoteImageCacheEntries(context.Background(), 5); err != nil {
-		t.Fatalf("ProcessPendingRemoteImageCacheEntries: %v", err)
 	}
-	if len(queries.ListDuePendingImageCacheEntriesCalls) != 1 {
-		t.Fatalf("expected pending list call, got %d", len(queries.ListDuePendingImageCacheEntriesCalls))
-	}
-	listCall := queries.ListDuePendingImageCacheEntriesCalls[0]
-	if listCall.RetryCount != 3 {
-		t.Fatalf("retry limit = %d, want 3", listCall.RetryCount)
-	}
-	if !listCall.NextAttemptAt.Valid {
-		t.Fatal("expected due-at filter")
+	if err := cd.ProcessRemoteImageCacheEntryJob(context.Background(), "abcd1234.png"); err == nil {
+		t.Fatal("expected fetch failure")
 	}
 	if len(queries.RecordImageCacheFetchFailureCalls) != 1 {
 		t.Fatalf("expected failure record, got %d", len(queries.RecordImageCacheFetchFailureCalls))
@@ -440,7 +429,7 @@ func TestImmediateRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T)
 	}
 }
 
-func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
+func TestDurableRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	started := make(chan struct{})
 	client := &http.Client{Transport: imageRoundTripper(func(req *http.Request) (*http.Response, error) {
@@ -449,20 +438,20 @@ func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T)
 		return nil, req.Context().Err()
 	})}
 	queries := testhelpers.NewQuerierStub()
-	queries.ListDuePendingImageCacheEntriesReturns = []*db.ImageCacheEntry{{
+	queries.GetImageCacheEntryReturns = &db.ImageCacheEntry{
 		ID:            "abcd1234.png",
 		SourceUrl:     sql.NullString{String: "https://example.test/image.png", Valid: true},
 		SourceKind:    imageCacheSourceKindRemote,
 		Status:        imageCacheStatusPending,
 		RetryCount:    2,
 		NextAttemptAt: sql.NullTime{Time: time.Now().Add(-time.Minute), Valid: true},
-	}}
+	}
 	cfg := config.NewRuntimeConfig()
 	cfg.ImageCacheFetchMaxRetries = 3
 	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
 	done := make(chan error, 1)
 	go func() {
-		done <- cd.ProcessPendingRemoteImageCacheEntries(ctx, 1)
+		done <- cd.ProcessRemoteImageCacheEntryJob(ctx, "abcd1234.png")
 	}()
 	select {
 	case <-started:
@@ -473,7 +462,7 @@ func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T)
 	select {
 	case err := <-done:
 		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("ProcessPendingRemoteImageCacheEntries() error = %v, want context.Canceled", err)
+			t.Fatalf("ProcessRemoteImageCacheEntryJob() error = %v, want context.Canceled", err)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("scheduled image fetch did not stop after cancellation")

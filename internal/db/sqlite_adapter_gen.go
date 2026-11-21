@@ -8402,51 +8402,6 @@ func (s *sqliteQuerier) ListContentPublicLabels(ctx context.Context, arg ListCon
 	}(res), nil
 }
 
-func (s *sqliteQuerier) ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
-	res, err := s.q.ListDuePendingImageCacheEntries(ctx, dbsqlite.ListDuePendingImageCacheEntriesParams{
-		RetryCount:    int64(arg.RetryCount),
-		NextAttemptAt: arg.NextAttemptAt,
-		Limit:         int64(arg.Limit),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return func(items []*dbsqlite.ImageCacheEntry) []*ImageCacheEntry {
-		if items == nil {
-			return nil
-		}
-		out := make([]*ImageCacheEntry, len(items))
-		for i, item := range items {
-			if item == nil {
-				continue
-			}
-			out[i] = &ImageCacheEntry{
-				ID:               item.ID,
-				SourceUrl:        item.SourceUrl,
-				SourceKind:       item.SourceKind,
-				Status:           item.Status,
-				CreatedAt:        item.CreatedAt,
-				LastUsedAt:       item.LastUsedAt,
-				FetchedAt:        item.FetchedAt,
-				ExpiresAt:        item.ExpiresAt,
-				ContentExpiresAt: item.ContentExpiresAt,
-				ContentType:      item.ContentType,
-				SizeBytes:        item.SizeBytes,
-				Width:            sql.NullInt32{Int32: int32(item.Width.Int64), Valid: item.Width.Valid},
-				Height:           sql.NullInt32{Int32: int32(item.Height.Int64), Valid: item.Height.Valid},
-				Checksum:         item.Checksum,
-				ThumbnailID:      item.ThumbnailID,
-				UploadedImageID:  sql.NullInt32{Int32: int32(item.UploadedImageID.Int64), Valid: item.UploadedImageID.Valid},
-				ErrorMessage:     item.ErrorMessage,
-				RetryCount:       int32(item.RetryCount),
-				LastAttemptAt:    item.LastAttemptAt,
-				NextAttemptAt:    item.NextAttemptAt,
-			}
-		}
-		return out
-	}(res), nil
-}
-
 func (s *sqliteQuerier) ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error) {
 	res, err := s.q.ListEffectiveRoleIDsByUserID(ctx, int64(usersIdusers))
 	if err != nil {
@@ -11312,6 +11267,22 @@ func (s *sqliteQuerier) SystemPurgePasswordResetsBefore(ctx context.Context, cre
 	res, err := s.q.SystemPurgePasswordResetsBefore(ctx, createdAt)
 	if err != nil {
 		return nil, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error) {
+	res, err := s.q.SystemQueuePendingImageCacheJobs(ctx, dbsqlite.SystemQueuePendingImageCacheJobsParams{
+		MaxAttempts: int64(arg.MaxAttempts),
+		RunAfter:    arg.RunAfter,
+		ActorID:     sql.NullInt64{Int64: int64(arg.ActorID.Int32), Valid: arg.ActorID.Valid},
+		CooldownAt:  arg.CooldownAt,
+		EntryID:     arg.EntryID,
+		DueAt:       arg.DueAt,
+		RetryFailed: arg.RetryFailed,
+	})
+	if err != nil {
+		return 0, err
 	}
 	return res, nil
 }

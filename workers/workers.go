@@ -177,12 +177,20 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 		searchworker.RunDurableWorker(ctx, svc, q, prefix+"-search")
 	})
 	log.Printf("Starting durable image cache worker (%s)", prefix)
+	group.Go(svc.RunImageCacheRecoveryLoop)
+	imageOptions := wc.CoreOptions
+	if wc.HTTPClient != nil {
+		imageOptions = append(append([]common.CoreOption(nil), imageOptions...), common.WithHTTPClient(wc.HTTPClient))
+	}
 	group.Go(func(ctx context.Context) {
 		svc.RunWorkerLoop(ctx, prefix+"-imagecache", 0, []string{jobs.JobTypeImageCache}, func(ctx context.Context, job *db.DurableJob) error {
 			if job == nil {
 				return nil
 			}
-			cd := common.NewCoreData(ctx, q, cfg, wc.CoreOptions...)
+			cd := common.NewCoreData(ctx, q, cfg, imageOptions...)
+			if job.TargetType == jobs.TargetTypeImageCacheEntry {
+				return cd.ProcessRemoteImageCacheEntryJob(ctx, job.TargetKey)
+			}
 			return cd.ProcessRemoteImageCacheJob(ctx, job.TargetKey)
 		})
 	})
@@ -247,16 +255,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 			Interval:  time.Duration(cfg.EmailWorkerInterval) * time.Second,
 			Ephemeral: true,
 		})
-		s.Register(scheduler.Task{
-			Name: "image_cache_fetch",
-			Handler: func(ctx context.Context, t time.Time) error {
-				cd := common.NewCoreData(ctx, q, cfg)
-				return cd.ProcessPendingRemoteImageCacheEntries(ctx, 10)
-			},
-			Type:      scheduler.TaskTypePeriodic,
-			Interval:  time.Minute,
-			Ephemeral: true,
-		})
+
 		s.Run(ctx, 1*time.Second)
 	})
 	log.Printf("Starting event bus logger worker")

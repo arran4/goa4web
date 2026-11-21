@@ -518,11 +518,6 @@ type QuerierStub struct {
 	ListExpiredExternalImageCacheEntriesErr     error
 	ListExpiredExternalImageCacheEntriesFn      func(context.Context, ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 
-	ListDuePendingImageCacheEntriesCalls   []ListDuePendingImageCacheEntriesParams
-	ListDuePendingImageCacheEntriesReturns []*ImageCacheEntry
-	ListDuePendingImageCacheEntriesErr     error
-	ListDuePendingImageCacheEntriesFn      func(context.Context, ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error)
-
 	ListOldestUsedImageCacheEntriesCalls   []int32
 	ListOldestUsedImageCacheEntriesReturns []*ImageCacheEntry
 	ListOldestUsedImageCacheEntriesErr     error
@@ -3273,19 +3268,6 @@ func (s *QuerierStub) ListExpiredExternalImageCacheEntries(ctx context.Context, 
 	fn := s.ListExpiredExternalImageCacheEntriesFn
 	ret := s.ListExpiredExternalImageCacheEntriesReturns
 	err := s.ListExpiredExternalImageCacheEntriesErr
-	s.mu.Unlock()
-	if fn != nil {
-		return fn(ctx, arg)
-	}
-	return ret, err
-}
-
-func (s *QuerierStub) ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
-	s.mu.Lock()
-	s.ListDuePendingImageCacheEntriesCalls = append(s.ListDuePendingImageCacheEntriesCalls, arg)
-	fn := s.ListDuePendingImageCacheEntriesFn
-	ret := s.ListDuePendingImageCacheEntriesReturns
-	err := s.ListDuePendingImageCacheEntriesErr
 	s.mu.Unlock()
 	if fn != nil {
 		return fn(ctx, arg)

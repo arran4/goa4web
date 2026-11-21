@@ -289,3 +289,31 @@ SELECT idimagepost, description
 FROM imagepost
 WHERE idimagepost = ? AND deleted_at IS NULL
 LIMIT 1;
+
+-- name: SystemQueuePendingImageCacheJobs :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'image_cache', ('image_cache_entry:' || img.id),
+       ('image_cache_entry:' || img.id), 'image_cache_entry', img.id,
+       sqlc.arg(max_attempts), sqlc.arg(run_after), sqlc.narg(actor_id), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM image_cache_entries img
+LEFT JOIN durable_job_cooldowns cooldown
+  ON cooldown.dedupe_key IN (('image_cache_entry:' || img.id), ('image_cache:' || img.source_url))
+  AND cooldown.cooldown_until > sqlc.arg(cooldown_at)
+WHERE img.source_kind = 'remote'
+  AND img.source_url IS NOT NULL AND img.source_url <> ''
+  AND img.id = COALESCE(sqlc.narg(entry_id), img.id)
+  AND (
+      (img.status = 'pending' AND (img.next_attempt_at IS NULL OR img.next_attempt_at <= sqlc.arg(due_at)))
+      OR (img.status = 'failed' AND sqlc.arg(retry_failed) = TRUE)
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.active_dedupe_key IN (('image_cache_entry:' || img.id), ('image_cache:' || img.source_url))
+  )
+  AND cooldown.dedupe_key IS NULL
+ORDER BY img.created_at, img.id
+LIMIT 10
+ON CONFLICT(active_dedupe_key) DO NOTHING;

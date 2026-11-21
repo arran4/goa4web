@@ -506,7 +506,6 @@ type Querier interface {
 	ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error)
 	ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
 	ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
-	ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error)
 	ListExpiredExternalImageCacheEntries(ctx context.Context, arg ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 	ListForumcategoryPath(ctx context.Context, categoryID int32) ([]*ListForumcategoryPathRow, error)
@@ -693,6 +692,7 @@ type Querier interface {
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	// Remove password reset entries that have expired or were already verified
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
+	SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error)
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
 	SystemReleaseDurableJobOnShutdownFenced(ctx context.Context, arg SystemReleaseDurableJobOnShutdownFencedParams) (int64, error)

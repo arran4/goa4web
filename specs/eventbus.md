@@ -53,6 +53,13 @@ only releases in-memory shutdown accounting; it does not persist the message or
 prove that work can resume after a process exit. Reliable subscriptions apply
 backpressure while the process is running, but are not durable queues.
 
+## Remote image cache recovery
+
+Embedded and standalone workers reconcile due remote image cache entries into the
+durable job queue at startup and periodically. Both reconciliation and the
+immediate enqueue use the cache entry ID and leave existing job retry schedules
+intact. Workers also accept previously queued URL-keyed image jobs.
+
 ## Shutdown
 
 Calling `Bus.Shutdown(ctx)` stops new publications, closes delivery to each

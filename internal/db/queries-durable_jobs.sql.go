@@ -770,6 +770,61 @@ func (q *Queries) SystemPruneTerminalDurableJobs(ctx context.Context, arg System
 	return result.RowsAffected()
 }
 
+const systemQueuePendingImageCacheJobs = `-- name: SystemQueuePendingImageCacheJobs :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'image_cache', CONCAT('image_cache_entry:', img.id),
+       CONCAT('image_cache_entry:', img.id), 'image_cache_entry', img.id,
+       ?, ?, ?, NOW(), NOW()
+FROM image_cache_entries img
+LEFT JOIN durable_job_cooldowns cooldown
+  ON cooldown.dedupe_key IN (CONCAT('image_cache_entry:', img.id), CONCAT('image_cache:', img.source_url))
+  AND cooldown.cooldown_until > ?
+WHERE img.source_kind = 'remote'
+  AND img.source_url IS NOT NULL AND img.source_url <> ''
+  AND img.id = COALESCE(?, img.id)
+  AND (
+      (img.status = 'pending' AND (img.next_attempt_at IS NULL OR img.next_attempt_at <= ?))
+      OR (img.status = 'failed' AND ? = TRUE)
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.active_dedupe_key IN (CONCAT('image_cache_entry:', img.id), CONCAT('image_cache:', img.source_url))
+  )
+  AND cooldown.dedupe_key IS NULL
+ORDER BY img.created_at, img.id
+LIMIT 10
+ON DUPLICATE KEY UPDATE id = durable_jobs.id
+`
+
+type SystemQueuePendingImageCacheJobsParams struct {
+	MaxAttempts int32
+	RunAfter    time.Time
+	ActorID     sql.NullInt32
+	CooldownAt  time.Time
+	EntryID     sql.NullString
+	DueAt       sql.NullTime
+	RetryFailed interface{}
+}
+
+func (q *Queries) SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemQueuePendingImageCacheJobs,
+		arg.MaxAttempts,
+		arg.RunAfter,
+		arg.ActorID,
+		arg.CooldownAt,
+		arg.EntryID,
+		arg.DueAt,
+		arg.RetryFailed,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const systemReleaseDurableJobOnShutdownFenced = `-- name: SystemReleaseDurableJobOnShutdownFenced :execrows
 UPDATE durable_jobs
 SET

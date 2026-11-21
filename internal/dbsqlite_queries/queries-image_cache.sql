@@ -82,16 +82,6 @@ WHERE id = ?;
 DELETE FROM image_cache_entries
 WHERE id = ?;
 
--- name: ListDuePendingImageCacheEntries :many
-SELECT *
-FROM image_cache_entries
-WHERE source_kind = 'remote'
-  AND status = 'pending'
-  AND retry_count < ?
-  AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
-ORDER BY created_at ASC
-LIMIT ?;
-
 -- name: ListExpiredExternalImageCacheEntries :many
 SELECT *
 FROM image_cache_entries

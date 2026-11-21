@@ -26,7 +26,6 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
-	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/upload"
 )
@@ -42,6 +41,8 @@ const (
 	imageCacheStatusReady = "ready"
 	// imageCacheStatusPending identifies cache entries awaiting download.
 	imageCacheStatusPending = "pending"
+	// imageCacheStatusFailed identifies entries whose previous download failed.
+	imageCacheStatusFailed = "failed"
 )
 
 type downloadedImage struct {
@@ -140,14 +141,9 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 		if ctx == nil {
 			ctx = context.Background()
 		}
-		_, err := cd.jobService.Enqueue(ctx, jobs.EnqueueRequest{
-			JobType:         jobs.JobTypeImageCache,
-			TargetType:      jobs.JobTypeImageCache,
-			TargetKey:       sourceURL,
-			CreatedByUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0},
-		})
-		if err != nil && !errors.Is(err, jobs.ErrInCooldown) {
-			log.Printf("enqueue durable image cache job %s: %v", sourceURL, err)
+		err := cd.jobService.QueuePendingImageCacheJobs(ctx, id, sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0})
+		if err != nil {
+			log.Printf("enqueue durable image cache job %s: %v", id, err)
 		}
 		return
 	}
@@ -209,6 +205,26 @@ func (cd *CoreData) ProcessRemoteImageCacheJob(ctx context.Context, sourceURL st
 			NextAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
 		})
 	}
+	return cd.fetchRemoteImageCacheJob(ctx, id, sourceURL, attemptTime)
+}
+
+// ProcessRemoteImageCacheEntryJob fetches a persisted remote cache entry by its stable ID.
+func (cd *CoreData) ProcessRemoteImageCacheEntryJob(ctx context.Context, id string) error {
+	entry, err := cd.ImageCacheEntry(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("load remote image cache entry: %w", err)
+	}
+	if entry == nil || entry.SourceKind != imageCacheSourceKindRemote ||
+		(entry.Status != imageCacheStatusPending && entry.Status != imageCacheStatusFailed) || !entry.SourceUrl.Valid || entry.SourceUrl.String == "" {
+		return nil
+	}
+	return cd.fetchRemoteImageCacheJob(ctx, id, entry.SourceUrl.String, time.Now().UTC())
+}
+
+func (cd *CoreData) fetchRemoteImageCacheJob(ctx context.Context, id, sourceURL string, attemptTime time.Time) error {
 	if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
 		if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
 			return interrupted
@@ -226,62 +242,6 @@ func (cd *CoreData) ProcessRemoteImageCacheJob(ctx context.Context, sourceURL st
 			NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
 		})
 		return err
-	}
-	return nil
-}
-
-// ProcessPendingRemoteImageCacheEntries materializes queued remote cache
-// entries. Failed downloads are marked failed so requests keep seeing a
-// placeholder instead of blocking repeatedly.
-func (cd *CoreData) ProcessPendingRemoteImageCacheEntries(ctx context.Context, limit int32) error {
-	if cd == nil || cd.queries == nil {
-		return nil
-	}
-	if limit <= 0 {
-		limit = 10
-	}
-	now := time.Now().UTC()
-	maxRetries := cd.imageCacheFetchMaxRetries()
-	entries, err := cd.queries.ListDuePendingImageCacheEntries(ctx, db.ListDuePendingImageCacheEntriesParams{
-		RetryCount:    int32(maxRetries),
-		NextAttemptAt: sql.NullTime{Time: now, Valid: true},
-		Limit:         limit,
-	})
-	if err != nil {
-		return fmt.Errorf("list pending image cache entries: %w", err)
-	}
-	for _, entry := range entries {
-		if entry == nil || !entry.SourceUrl.Valid || entry.SourceUrl.String == "" {
-			continue
-		}
-		attemptTime := time.Now().UTC()
-		log.Printf("image cache fetch start: mode=worker id=%s source=%q attempt_at=%s retry_count=%d", entry.ID, entry.SourceUrl.String, attemptTime.Format(time.RFC3339), entry.RetryCount)
-		if err := cd.refreshRemoteImageCacheEntry(ctx, entry.ID, entry.SourceUrl.String, attemptTime); err != nil {
-			if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
-				log.Printf("image cache fetch interrupted: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, interrupted.Error())
-				return interrupted
-			}
-			log.Printf("image cache fetch failed: mode=worker id=%s source=%q retry_count=%d error=%q", entry.ID, entry.SourceUrl.String, entry.RetryCount, err.Error())
-			retryDelay := cd.imageCacheFetchRetryDelay()
-			cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
-			recErr := cd.queries.RecordImageCacheFetchFailure(cleanupCtx, db.RecordImageCacheFetchFailureParams{
-				ID:            entry.ID,
-				RetryCount:    int32(maxRetries),
-				RetryCount_2:  int32(maxRetries),
-				ErrorMessage:  sql.NullString{String: err.Error(), Valid: true},
-				LastAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
-				NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
-			})
-			cancel()
-			if recErr != nil {
-				log.Printf("record worker image cache fetch failure: id=%s source=%q error=%q", entry.ID, entry.SourceUrl.String, recErr.Error())
-			}
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			continue
-		}
-		log.Printf("image cache fetch complete: mode=worker id=%s source=%q", entry.ID, entry.SourceUrl.String)
 	}
 	return nil
 }

@@ -7,8 +7,7 @@ import (
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
-// MetadataParams maps fetched Open Graph data to the external-link persistence contract.
-func MetadataParams(id int32, info *opengraph.Info) db.UpdateExternalLinkMetadataParams {
+func metadataParams(id int32, info *opengraph.Info) db.UpdateExternalLinkMetadataParams {
 	if info == nil {
 		info = &opengraph.Info{}
 	}

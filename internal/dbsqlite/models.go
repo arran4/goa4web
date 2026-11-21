@@ -529,12 +529,15 @@ type PendingAction struct {
 
 type PendingEmail struct {
 	ID               int64
-	ToUserID         sql.NullInt64
-	DirectEmail      int64
+	ToEmail          string
+	Subject          string
 	Body             string
-	ErrorCount       int64
 	CreatedAt        time.Time
 	SentAt           sql.NullTime
+	HtmlBody         sql.NullString
+	ErrorCount       int64
+	ToUserID         sql.NullInt64
+	DirectEmail      interface{}
 	DigestDeliveryID sql.NullInt64
 }
 

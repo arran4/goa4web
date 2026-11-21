@@ -389,13 +389,16 @@ CREATE INDEX IF NOT EXISTS digest_delivery_notifications_notification_idx ON dig
 
 CREATE TABLE IF NOT EXISTS pending_emails (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
-to_user_id int DEFAULT NULL,
-direct_email INTEGER NOT NULL DEFAULT 0,
+to_email TEXT NOT NULL DEFAULT '',
+subject TEXT NOT NULL DEFAULT '',
 body TEXT NOT NULL,
-error_count int NOT NULL DEFAULT 0,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 sent_at DATETIME DEFAULT NULL,
-digest_delivery_id int DEFAULT NULL
+html_body TEXT,
+error_count INT NOT NULL DEFAULT 0,
+to_user_id INT DEFAULT NULL,
+direct_email TINYINT(1) NOT NULL DEFAULT 0,
+digest_delivery_id INT DEFAULT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS pending_emails_digest_delivery_idx ON pending_emails (digest_delivery_id);
 
@@ -798,3 +801,4 @@ CREATE TABLE IF NOT EXISTS search_dirty_targets (
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);

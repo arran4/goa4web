@@ -109,7 +109,7 @@ type AdminGetPendingEmailByIDRow struct {
 	ToUserID    sql.NullInt64
 	Body        string
 	ErrorCount  int64
-	DirectEmail int64
+	DirectEmail interface{}
 }
 
 // admin task
@@ -205,7 +205,7 @@ type AdminListFailedEmailsRow struct {
 	Body        string
 	ErrorCount  int64
 	CreatedAt   time.Time
-	DirectEmail int64
+	DirectEmail interface{}
 }
 
 // admin task
@@ -331,7 +331,7 @@ type AdminListSentEmailsRow struct {
 	ErrorCount  int64
 	CreatedAt   time.Time
 	SentAt      sql.NullTime
-	DirectEmail int64
+	DirectEmail interface{}
 }
 
 // admin task
@@ -410,7 +410,7 @@ type AdminListUnsentPendingEmailsRow struct {
 	Body        string
 	ErrorCount  int64
 	CreatedAt   time.Time
-	DirectEmail int64
+	DirectEmail interface{}
 }
 
 // admin task
@@ -471,7 +471,7 @@ VALUES (?, ?, ?)
 type InsertPendingEmailParams struct {
 	ToUserID    sql.NullInt64
 	Body        string
-	DirectEmail int64
+	DirectEmail interface{}
 }
 
 func (q *Queries) InsertPendingEmail(ctx context.Context, arg InsertPendingEmailParams) error {
@@ -506,7 +506,7 @@ type SystemListPendingEmailsRow struct {
 	ToUserID         sql.NullInt64
 	Body             string
 	ErrorCount       int64
-	DirectEmail      int64
+	DirectEmail      interface{}
 	CreatedAt        time.Time
 	DigestDeliveryID sql.NullInt64
 }

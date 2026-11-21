@@ -1,3 +1,14 @@
     {{ template "head" $ }}
+    {{ if .CanFollowNewThreads }}
+        <form action="/forum/follow" method="post">
+            {{ csrfField }}
+            {{ if .FollowsNewThreads }}
+                <button type="submit" name="follow" value="no">Unfollow new threads</button>
+            {{ else }}
+                <button type="submit" name="follow" value="yes">Follow new threads</button>
+            {{ end }}
+        </form>
+        <p>Get in-site notifications for new threads in the public forum.</p>
+    {{ end }}
         {{ template "getAllForumCategories" . }}
     {{ template "tail" $ }}

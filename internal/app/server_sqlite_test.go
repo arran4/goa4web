@@ -308,6 +308,8 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 	}
 	categoryTree := forum.NewCategoryTree(catRows, topicRows)
 	type ForumData struct {
+		CanFollowNewThreads     bool
+		FollowsNewThreads       bool
 		Categories              []*forum.ForumcategoryPlus
 		Admin                   bool
 		CopyDataToSubCategories func(rootCategory *forum.ForumcategoryPlus) *ForumData

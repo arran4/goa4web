@@ -32,6 +32,8 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		Admin                   bool
 		Back                    bool
 		Subscribed              bool
+		CanFollowNewThreads     bool
+		FollowsForumNewThreads  bool
 		Topic                   *ForumtopicPlus
 		Threads                 []*threadWithLabels
 		Categories              []*ForumcategoryPlus
@@ -181,8 +183,10 @@ func TopicsPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 	sort.Slice(labels, func(i, j int) bool { return labels[i].Name < labels[j].Name })
 	data.Labels = labels
 
-	if subscribedToTopic(cd, topicRow.Idforumtopic, topicRow.Handler == "private") {
-		data.Subscribed = true
+	data.CanFollowNewThreads = cd.UserID > 0 && cd.Config.NotificationsEnabled && topicRow.Handler != "private"
+	if data.CanFollowNewThreads {
+		data.Subscribed = subscribedToTopic(cd, topicRow.Idforumtopic, false)
+		data.FollowsForumNewThreads = cd.FollowsPublicForumNewThreads()
 	}
 
 	_ = ForumTopicsPageTmpl.Handle(w, r, data)

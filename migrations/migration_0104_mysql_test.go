@@ -33,6 +33,13 @@ func TestMySQLMigration0104UpgradePathsAndDown(t *testing.T) {
 			if _, err := conn.ExecContext(ctx, "CREATE TABLE schema_version (version INT NOT NULL); INSERT INTO schema_version VALUES (104)"); err != nil {
 				t.Fatalf("initialize legacy schema version: %v", err)
 			}
+			// Canonical snapshots list recent migrations. Model the complete
+			// ledger of an installation transitioned from the legacy version.
+			for version := 1; version < 92; version++ {
+				if _, err := conn.ExecContext(ctx, "INSERT INTO goose_db_version (version_id, is_applied) VALUES (?, 1)", version); err != nil {
+					t.Fatalf("record historical migration %d: %v", version, err)
+				}
+			}
 			provider, err := goose.NewProvider(goose.DialectMySQL, conn, ForDriver("mysql"))
 			if err != nil {
 				t.Fatalf("create MySQL migration provider: %v", err)

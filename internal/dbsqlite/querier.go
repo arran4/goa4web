@@ -640,6 +640,7 @@ type Querier interface {
 	SystemGetDueForumReplyEmailWindow(ctx context.Context, arg SystemGetDueForumReplyEmailWindowParams) (*SystemGetDueForumReplyEmailWindowRow, error)
 	SystemGetDurableJobByID(ctx context.Context, id int64) (*DurableJob, error)
 	SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error)
+	SystemGetForumReplyNotificationSource(ctx context.Context, arg SystemGetForumReplyNotificationSourceParams) (*SystemGetForumReplyNotificationSourceRow, error)
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	SystemGetImagePostTextForSearchIndex(ctx context.Context, idimagepost int64) (*SystemGetImagePostTextForSearchIndexRow, error)
 	SystemGetJobCooldown(ctx context.Context, dedupeKey string) (*DurableJobCooldown, error)

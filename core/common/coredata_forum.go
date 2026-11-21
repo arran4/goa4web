@@ -53,28 +53,62 @@ func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThrea
 // CanReceiveForumReply checks the currently applicable account, topic, thread
 // and comment visibility. Long-lived connections use a fresh viewer cache each time.
 func (cd *CoreData) CanReceiveForumReply(topicID, threadID, commentID int32) bool {
-	return cd.forumCommentForViewer(topicID, threadID, commentID) != nil
+	comment, err := cd.forumCommentForViewer(topicID, threadID, commentID, false)
+	return err == nil && comment != nil
+}
+
+// CheckForumReplyVisibility checks the reply and opener using current grants.
+// A missing or inaccessible resource is a denial. Query failures are returned
+// so durable delivery can retry the authorization check.
+func (cd *CoreData) CheckForumReplyVisibility(topicID, threadID, commentID int32) (bool, error) {
+	comment, err := cd.forumCommentForViewer(topicID, threadID, commentID, true)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return comment != nil, err
 }
 
 // forumCommentForViewer loads the source with fresh grants. A zero topicID
 // takes the topic from the authorized thread.
-func (cd *CoreData) forumCommentForViewer(topicID, threadID, commentID int32) *db.GetCommentByIdForUserRow {
-	if cd == nil || !cd.CanLogIn() {
-		return nil
+func (cd *CoreData) forumCommentForViewer(topicID, threadID, commentID int32, requireOpener bool) (*db.GetCommentByIdForUserRow, error) {
+	if cd == nil || cd.queries == nil || cd.UserID <= 0 {
+		return nil, sql.ErrNoRows
+	}
+	if _, err := cd.queries.GetLoginRoleForUser(cd.ctx, cd.UserID); err != nil {
+		return nil, err
 	}
 	viewer := cd.ForUser(cd.UserID)
 	thread, err := viewer.ForumThreadByID(threadID)
-	if err != nil || thread == nil || (topicID != 0 && thread.ForumtopicIdforumtopic != topicID) {
-		return nil
+	if err != nil {
+		return nil, err
 	}
-	if topic, err := viewer.ForumTopicByID(thread.ForumtopicIdforumtopic); err != nil || topic == nil {
-		return nil
+	if thread == nil || (topicID != 0 && thread.ForumtopicIdforumtopic != topicID) {
+		return nil, sql.ErrNoRows
+	}
+	topic, err := viewer.ForumTopicByID(thread.ForumtopicIdforumtopic)
+	if err != nil {
+		return nil, err
+	}
+	if topic == nil {
+		return nil, sql.ErrNoRows
+	}
+	if requireOpener && thread.Firstpost != commentID {
+		opener, err := viewer.CommentByID(thread.Firstpost)
+		if err != nil {
+			return nil, err
+		}
+		if opener == nil || opener.DeletedAt.Valid || opener.ForumthreadID != threadID {
+			return nil, sql.ErrNoRows
+		}
 	}
 	comment, err := viewer.CommentByID(commentID)
-	if err != nil || comment == nil || comment.DeletedAt.Valid || comment.ForumthreadID != threadID {
-		return nil
+	if err != nil {
+		return nil, err
 	}
-	return comment
+	if comment == nil || comment.DeletedAt.Valid || comment.ForumthreadID != threadID {
+		return nil, sql.ErrNoRows
+	}
+	return comment, nil
 }
 
 // AdminForumThreadByID returns a thread without applying user-facing grants.

@@ -47,8 +47,8 @@ func (cd *CoreData) ForumLinkCardForViewer(ctx context.Context, threadID int32, 
 	if _, err := hex.DecodeString(urlKey); err != nil {
 		return ForumLinkCard{}, sql.ErrNoRows
 	}
-	comment := cd.forumCommentForViewer(0, threadID, int32(commentID))
-	if comment == nil || !comment.Text.Valid {
+	comment, err := cd.forumCommentForViewer(0, threadID, int32(commentID), false)
+	if err != nil || comment == nil || !comment.Text.Valid {
 		return ForumLinkCard{}, sql.ErrNoRows
 	}
 	root, err := a4code.ParseString(comment.Text.String)

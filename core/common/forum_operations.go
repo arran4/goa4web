@@ -127,6 +127,8 @@ type ForumReplyCommand = ReplyForumThreadParams
 // forum reply so notification policy can evaluate recipients and render payloads
 // without depending on HTTP requests, transport paths, or handler Task types.
 type ForumReplyNotificationIntent struct {
+	// Queued records that the notification intent committed with the reply.
+	Queued              bool
 	ActorID             int32
 	Username            string
 	TopicID             int32
@@ -200,7 +202,7 @@ func (s *ForumReplyService) Reply(ctx context.Context, cmd ForumReplyCommand) (*
 	if err != nil {
 		return nil, err
 	}
-	if !cmd.SynchronousSideEffects && cd.forumReplyNotifier != nil {
+	if !cmd.SynchronousSideEffects && !res.Intent.Queued && cd.forumReplyNotifier != nil {
 		if err := cd.forumReplyNotifier.NotifyForumReply(ctx, res.Intent); err != nil {
 			res.SideEffectError = errors.Join(res.SideEffectError, fmt.Errorf("notify forum reply: %w", err))
 		}
@@ -702,6 +704,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	data["Private"] = isPrivate
 
 	intent := ForumReplyNotificationIntent{
+		Queued:              cd.jobService != nil,
 		ActorID:             params.ActorID,
 		Username:            username,
 		TopicID:             topic.Idforumtopic,
@@ -757,7 +760,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		if err := cd.applyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, commentText, canonicalTextAvailable); err != nil {
 			sideEffectErr = fmt.Errorf("apply forum reply workers: %w", err)
 		}
-		if cd.forumReplyNotifier != nil {
+		if !intent.Queued && cd.forumReplyNotifier != nil {
 			if err := cd.forumReplyNotifier.NotifyForumReply(ctx, intent); err != nil {
 				sideEffectErr = errors.Join(sideEffectErr, fmt.Errorf("notify forum reply: %w", err))
 			}

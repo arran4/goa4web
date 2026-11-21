@@ -10395,6 +10395,30 @@ func (s *sqliteQuerier) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, erro
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetForumReplyNotificationSource(ctx context.Context, arg SystemGetForumReplyNotificationSourceParams) (*SystemGetForumReplyNotificationSourceRow, error) {
+	res, err := s.q.SystemGetForumReplyNotificationSource(ctx, dbsqlite.SystemGetForumReplyNotificationSourceParams{
+		CommentID: int64(arg.CommentID),
+		ActorID:   int64(arg.ActorID),
+		AppendID:  arg.AppendID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetForumReplyNotificationSourceRow) *SystemGetForumReplyNotificationSourceRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetForumReplyNotificationSourceRow{
+			TopicID:    int32(v.TopicID),
+			TopicTitle: v.TopicTitle,
+			Handler:    v.Handler,
+			ThreadID:   int32(v.ThreadID),
+			ReplyText:  v.ReplyText,
+			Username:   v.Username,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error) {
 	res, err := s.q.SystemGetForumTopicByTitle(ctx, title)
 	if err != nil {

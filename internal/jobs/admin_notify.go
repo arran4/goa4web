@@ -3,17 +3,14 @@ package jobs
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
 
 	"github.com/arran4/goa4web/internal/db"
 )
 
-const (
-	// defaultPruneInterval controls how often terminal durable jobs are pruned.
-	defaultPruneInterval = 6 * time.Hour
-	// defaultPruneMaxAge controls how long completed/failed/cancelled durable jobs are retained.
-	defaultPruneMaxAge = 7 * 24 * time.Hour
-)
+// jobHistoryPruneInterval is the interval between terminal history cleanup passes.
+const jobHistoryPruneInterval = time.Minute
 
 // NewConfiguredService constructs a durable job service wired to notify active administrators
 // when a job exhausts its retries.
@@ -46,25 +43,18 @@ func NewAdminNotifier(q db.Querier) func(ctx context.Context, message, link stri
 	}
 }
 
-// RunPruneLoop periodically removes old terminal durable jobs while preserving cooldowns.
-func (s *Service) RunPruneLoop(ctx context.Context, interval, maxAge time.Duration) {
-	if s == nil {
-		return
-	}
-	if interval <= 0 {
-		interval = defaultPruneInterval
-	}
-	if maxAge <= 0 {
-		maxAge = defaultPruneMaxAge
-	}
-	ticker := time.NewTicker(interval)
+// RunPruneLoop removes excess terminal job history at startup and periodically.
+func (s *Service) RunPruneLoop(ctx context.Context, maxAge time.Duration, maxPerKind int) {
+	ticker := time.NewTicker(jobHistoryPruneInterval)
 	defer ticker.Stop()
-	for {
+	for ctx.Err() == nil {
+		if _, err := s.PruneTerminal(ctx, maxAge, maxPerKind); err != nil && ctx.Err() == nil {
+			log.Printf("prune terminal durable jobs: %v", err)
+		}
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			_, _ = s.PruneTerminal(ctx, maxAge)
 		}
 	}
 }

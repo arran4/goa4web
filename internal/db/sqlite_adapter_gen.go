@@ -11293,8 +11293,11 @@ func (s *sqliteQuerier) SystemMarkUserEmailVerified(ctx context.Context, arg Sys
 	})
 }
 
-func (s *sqliteQuerier) SystemPruneTerminalDurableJobsBefore(ctx context.Context, completedAt sql.NullTime) (int64, error) {
-	res, err := s.q.SystemPruneTerminalDurableJobsBefore(ctx, completedAt)
+func (s *sqliteQuerier) SystemPruneTerminalDurableJobs(ctx context.Context, arg SystemPruneTerminalDurableJobsParams) (int64, error) {
+	res, err := s.q.SystemPruneTerminalDurableJobs(ctx, dbsqlite.SystemPruneTerminalDurableJobsParams{
+		Cutoff:     arg.Cutoff,
+		MaxPerKind: arg.MaxPerKind,
+	})
 	if err != nil {
 		return 0, err
 	}

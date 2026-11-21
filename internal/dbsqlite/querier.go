@@ -689,7 +689,7 @@ type Querier interface {
 	SystemMarkPendingEmailSent(ctx context.Context, id int64) error
 	SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error)
 	SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error
-	SystemPruneTerminalDurableJobsBefore(ctx context.Context, completedAt sql.NullTime) (int64, error)
+	SystemPruneTerminalDurableJobs(ctx context.Context, arg SystemPruneTerminalDurableJobsParams) (int64, error)
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	// Remove password reset entries that have expired or were already verified
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)

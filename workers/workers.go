@@ -186,8 +186,15 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 			return cd.ProcessRemoteImageCacheJob(ctx, job.TargetKey)
 		})
 	})
+	historyHours, historyLimit := config.DefaultDurableJobHistoryHours, config.DefaultDurableJobHistoryLimit
+	if cfg != nil && cfg.DurableJobHistoryHours > 0 {
+		historyHours = cfg.DurableJobHistoryHours
+	}
+	if cfg != nil && cfg.DurableJobHistoryLimit > 0 {
+		historyLimit = cfg.DurableJobHistoryLimit
+	}
 	group.Go(func(ctx context.Context) {
-		svc.RunPruneLoop(ctx, 6*time.Hour, 7*24*time.Hour)
+		svc.RunPruneLoop(ctx, time.Duration(historyHours)*time.Hour, historyLimit)
 	})
 }
 

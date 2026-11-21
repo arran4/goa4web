@@ -198,11 +198,20 @@ DELETE FROM durable_jobs
 WHERE status IN ('completed', 'failed', 'cancelled')
   AND (? = '' OR status = ?);
 
--- name: SystemPruneTerminalDurableJobsBefore :execrows
+-- name: SystemPruneTerminalDurableJobs :execrows
 DELETE FROM durable_jobs
-WHERE status IN ('completed', 'failed', 'cancelled')
-  AND completed_at IS NOT NULL
-  AND completed_at < ?;
+WHERE durable_jobs.status IN ('completed', 'failed', 'cancelled')
+  AND (
+    durable_jobs.completed_at < sqlc.arg(cutoff)
+    OR durable_jobs.id IN (
+        SELECT ranked.id FROM (
+            SELECT history.id, ROW_NUMBER() OVER (PARTITION BY history.job_type ORDER BY history.completed_at DESC, history.id DESC) AS history_rank
+            FROM durable_jobs history
+            WHERE history.status IN ('completed', 'failed', 'cancelled')
+        ) ranked
+        WHERE history_rank > CAST(sqlc.arg(max_per_kind) AS INTEGER)
+    )
+  );
 
 -- name: SystemGetJobCooldown :one
 SELECT dedupe_key, cooldown_until, last_error, last_notified_at, updated_at

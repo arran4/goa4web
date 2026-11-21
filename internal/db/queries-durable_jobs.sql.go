@@ -741,15 +741,29 @@ func (q *Queries) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemM
 	return result.RowsAffected()
 }
 
-const systemPruneTerminalDurableJobsBefore = `-- name: SystemPruneTerminalDurableJobsBefore :execrows
+const systemPruneTerminalDurableJobs = `-- name: SystemPruneTerminalDurableJobs :execrows
 DELETE FROM durable_jobs
-WHERE status IN ('completed', 'failed', 'cancelled')
-  AND completed_at IS NOT NULL
-  AND completed_at < ?
+WHERE durable_jobs.status IN ('completed', 'failed', 'cancelled')
+  AND (
+    durable_jobs.completed_at < ?
+    OR durable_jobs.id IN (
+        SELECT ranked.id FROM (
+            SELECT history.id, ROW_NUMBER() OVER (PARTITION BY history.job_type ORDER BY history.completed_at DESC, history.id DESC) AS history_rank
+            FROM durable_jobs history
+            WHERE history.status IN ('completed', 'failed', 'cancelled')
+        ) ranked
+        WHERE history_rank > CAST(? AS SIGNED)
+    )
+  )
 `
 
-func (q *Queries) SystemPruneTerminalDurableJobsBefore(ctx context.Context, completedAt sql.NullTime) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemPruneTerminalDurableJobsBefore, completedAt)
+type SystemPruneTerminalDurableJobsParams struct {
+	Cutoff     sql.NullTime
+	MaxPerKind int64
+}
+
+func (q *Queries) SystemPruneTerminalDurableJobs(ctx context.Context, arg SystemPruneTerminalDurableJobsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemPruneTerminalDurableJobs, arg.Cutoff, arg.MaxPerKind)
 	if err != nil {
 		return 0, err
 	}

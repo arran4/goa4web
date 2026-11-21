@@ -237,7 +237,7 @@ func TestDurableJobsCooldownSurvivesPruningAndDebouncesAdminNotifications(t *tes
 
 	// Prune terminal records immediately; cooldown must still block passive re-enqueue!
 	now = now.Add(1 * time.Minute)
-	pruned, err := svc.PruneTerminal(ctx, 0)
+	pruned, err := svc.PruneTerminal(ctx, 0, 1000)
 	if err != nil || pruned != 1 {
 		t.Fatalf("PruneTerminal = (%d, %v), want (1, nil)", pruned, err)
 	}
@@ -268,5 +268,54 @@ func TestDurableJobsCooldownSurvivesPruningAndDebouncesAdminNotifications(t *tes
 	}
 	if notifications != 1 {
 		t.Fatalf("debounced notifications = %d, want 1", notifications)
+	}
+}
+
+func TestDurableJobHistoryPrunesByAgeAndKind(t *testing.T) {
+	conn, q := openTestJobsDB(t)
+	ctx := t.Context()
+	now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+	svc := NewService(q)
+	svc.Now = func() time.Time { return now }
+
+	_, err := conn.ExecContext(ctx, `
+		WITH RECURSIVE rows(id) AS (
+			SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id < 1002
+		)
+		INSERT INTO durable_jobs (id, job_type, dedupe_key, target_type, status, completed_at)
+		SELECT id, 'external_link', 'history', 'external_link', 'completed', ? FROM rows`, now.Add(-time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = conn.ExecContext(ctx, `
+		INSERT INTO durable_jobs (id, job_type, dedupe_key, target_type, status, completed_at)
+		VALUES (2000, 'image_cache', 'old', 'image_cache', 'failed', ?),
+		       (2001, 'image_cache', 'recent', 'image_cache', 'cancelled', ?),
+		       (2002, 'external_link', 'pending', 'external_link', 'pending', NULL),
+		       (2003, 'external_link', 'running', 'external_link', 'running', NULL)`, now.Add(-25*time.Hour), now.Add(-time.Minute))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pruned, err := svc.PruneTerminal(ctx, 24*time.Hour, 1000)
+	if err != nil || pruned != 3 {
+		t.Fatalf("pruned %d jobs, want 3, err %v", pruned, err)
+	}
+	var recentCount, oldestRemaining int
+	err = conn.QueryRowContext(ctx, `SELECT COUNT(*), MIN(id) FROM durable_jobs WHERE job_type = 'external_link' AND status = 'completed'`).Scan(&recentCount, &oldestRemaining)
+	if err != nil || recentCount != 1000 || oldestRemaining != 3 {
+		t.Fatalf("retained %d external-link jobs down to %d, want 1000 down to 3, err %v", recentCount, oldestRemaining, err)
+	}
+	var kept int
+	if err := conn.QueryRowContext(ctx, "SELECT COUNT(*) FROM durable_jobs WHERE id IN (2001, 2002, 2003)").Scan(&kept); err != nil || kept != 3 {
+		t.Fatalf("retained %d of the other-kind or active jobs, want 3, err %v", kept, err)
+	}
+
+	pruned, err = svc.PruneTerminal(ctx, 24*time.Hour, 1)
+	if err != nil || pruned != 999 {
+		t.Fatalf("pruned %d jobs with the smaller cap, want 999, err %v", pruned, err)
+	}
+	var latest int
+	if err := conn.QueryRowContext(ctx, `SELECT id FROM durable_jobs WHERE job_type = 'external_link' AND status = 'completed'`).Scan(&latest); err != nil || latest != 1002 {
+		t.Fatalf("remaining job %d, want 1002, err %v", latest, err)
 	}
 }

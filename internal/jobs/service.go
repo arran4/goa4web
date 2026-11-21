@@ -478,13 +478,20 @@ func (s *Service) AdminPurge(ctx context.Context, statusFilter string) (int64, e
 	})
 }
 
-// PruneTerminal deletes completed/failed/cancelled jobs older than olderThan while preserving cooldowns.
-func (s *Service) PruneTerminal(ctx context.Context, olderThan time.Duration) (int64, error) {
+// PruneTerminal removes terminal jobs beyond the age or per-kind history limit.
+// Active jobs and cooldowns are retained.
+func (s *Service) PruneTerminal(ctx context.Context, olderThan time.Duration, maxPerKind int) (int64, error) {
 	if s == nil || s.Queries == nil {
 		return 0, nil
 	}
+	if maxPerKind <= 0 {
+		return 0, fmt.Errorf("terminal job history limit must be positive")
+	}
 	cutoff := s.now().Add(-olderThan)
-	return s.Queries.SystemPruneTerminalDurableJobsBefore(ctx, sql.NullTime{Time: cutoff, Valid: true})
+	return s.Queries.SystemPruneTerminalDurableJobs(ctx, db.SystemPruneTerminalDurableJobsParams{
+		Cutoff:     sql.NullTime{Time: cutoff, Valid: true},
+		MaxPerKind: int64(maxPerKind),
+	})
 }
 
 // RunWorkerLoop runs a bounded, shutdown-aware worker loop for the given job types.

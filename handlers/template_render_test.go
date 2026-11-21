@@ -53,10 +53,12 @@ func TestHappyPathPageTemplatesRender(t *testing.T) {
 		}{&common.CoreData{}, nil, nil, false, 0}},
 		{"domains/forum/page.gohtml", struct {
 			*common.CoreData
-			Categories []*forum.ForumcategoryPlus
-			Category   *forum.ForumcategoryPlus
-			Admin      bool
-		}{&common.CoreData{}, nil, nil, false}},
+			Categories          []*forum.ForumcategoryPlus
+			Category            *forum.ForumcategoryPlus
+			CanFollowNewThreads bool
+			FollowsNewThreads   bool
+			Admin               bool
+		}{CoreData: &common.CoreData{}}},
 		{"domains/bookmarks/page.gohtml", struct{ *common.CoreData }{&common.CoreData{}}},
 		{"domains/imagebbs/page.gohtml", struct {
 			*common.CoreData

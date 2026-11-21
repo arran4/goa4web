@@ -308,7 +308,7 @@ type Querier interface {
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
-	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
+	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error)
 	CreateExternalLink(ctx context.Context, url string) (sql.Result, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
@@ -584,6 +584,7 @@ type Querier interface {
 	SystemConsumePendingAction(ctx context.Context, id string) (int64, error)
 	SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error
 	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
+	SystemCountActiveDurableJobsByKey(ctx context.Context, activeKey sql.NullString) (int64, error)
 	SystemCountDeadLetters(ctx context.Context) (int64, error)
 	SystemCountDigestDeliveryMembers(ctx context.Context, digestDeliveryID int64) (int64, error)
 	// SystemCountLanguages counts all languages.
@@ -639,6 +640,7 @@ type Querier interface {
 	SystemGetDueForumReplyEmailWindow(ctx context.Context, arg SystemGetDueForumReplyEmailWindowParams) (*SystemGetDueForumReplyEmailWindowRow, error)
 	SystemGetDurableJobByID(ctx context.Context, id int64) (*DurableJob, error)
 	SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error)
+	SystemGetForumReplyNotificationSource(ctx context.Context, arg SystemGetForumReplyNotificationSourceParams) (*SystemGetForumReplyNotificationSourceRow, error)
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
 	SystemGetImagePostTextForSearchIndex(ctx context.Context, idimagepost int64) (*SystemGetImagePostTextForSearchIndexRow, error)
 	SystemGetJobCooldown(ctx context.Context, dedupeKey string) (*DurableJobCooldown, error)

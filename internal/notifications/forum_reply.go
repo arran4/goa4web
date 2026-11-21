@@ -49,9 +49,10 @@ func (n *Notifier) OnForumReply(ctx context.Context, intent common.ForumReplyNot
 
 // NotifyForumReplyWithDLQ delivers a canonical forum.reply notification intent and records failures to q when provided.
 func (n *Notifier) NotifyForumReplyWithDLQ(ctx context.Context, intent common.ForumReplyNotificationIntent, q dlq.DLQ) error {
-	intent = n.normalizeForumReplyIntent(intent, nil)
-	evt := buildTaskEventFromForumReplyIntent(intent)
-	return n.notifyForumReplyFromEvent(ctx, evt, intent, q)
+	if intent.Queued {
+		return nil
+	}
+	return n.notifyForumReply(ctx, nil, intent, q, false)
 }
 
 func (n *Notifier) extractForumReplyIntent(evt eventbus.TaskEvent) (common.ForumReplyNotificationIntent, bool) {
@@ -392,10 +393,14 @@ func (n *Notifier) userHasGrants(ctx context.Context, userID int32, reqs []Grant
 }
 
 func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.TaskEvent, intent common.ForumReplyNotificationIntent, q dlq.DLQ) error {
+	return n.notifyForumReply(ctx, &evt, intent, q, false)
+}
+
+func (n *Notifier) notifyForumReply(ctx context.Context, legacyEvent *eventbus.TaskEvent, intent common.ForumReplyNotificationIntent, q dlq.DLQ, checkCurrentVisibility bool) error {
 	if n.Config == nil || n.Queries == nil {
 		return nil
 	}
-	intent = n.normalizeForumReplyIntent(intent, &evt)
+	intent = n.normalizeForumReplyIntent(intent, legacyEvent)
 
 	// Hydrate missing display metadata from queries when invoked with a minimal intent.
 	if intent.Username == "" && intent.ActorID != 0 {
@@ -405,11 +410,11 @@ func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.T
 	}
 
 	canonicalEvt := buildTaskEventFromForumReplyIntent(intent)
-	if evt.Task != nil {
-		canonicalEvt.Task = evt.Task
-	}
-	if evt.Data != nil {
-		for k, v := range evt.Data {
+	if legacyEvent != nil {
+		if legacyEvent.Task != nil {
+			canonicalEvt.Task = legacyEvent.Task
+		}
+		for k, v := range legacyEvent.Data {
 			if _, exists := canonicalEvt.Data[k]; !exists {
 				canonicalEvt.Data[k] = v
 			}
@@ -442,15 +447,31 @@ func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.T
 	if err != nil {
 		return n.recordForumReplyDLQ(ctx, q, "notify subscribers", err, &canonicalEvt)
 	}
-	if len(reqs) != 0 {
-		for id := range emailSubs {
-			if !n.userHasGrants(ctx, id, reqs) {
-				delete(emailSubs, id)
+	eligible := func(id int32) (bool, error) {
+		return n.userHasGrants(ctx, id, reqs), nil
+	}
+	if checkCurrentVisibility {
+		current := common.NewCoreData(ctx, n.Queries, n.Config)
+		checked := make(map[int32]bool)
+		eligible = func(id int32) (bool, error) {
+			if allowed, ok := checked[id]; ok {
+				return allowed, nil
 			}
+			allowed, err := current.ForUser(id).CheckForumReplyVisibility(intent.TopicID, intent.ThreadID, intent.CommentID)
+			if err == nil {
+				checked[id] = allowed
+			}
+			return allowed, err
 		}
-		for id := range internalSubs {
-			if !n.userHasGrants(ctx, id, reqs) {
-				delete(internalSubs, id)
+	}
+	for _, subscribers := range []map[int32]struct{}{emailSubs, internalSubs} {
+		for id := range subscribers {
+			allowed, err := eligible(id)
+			if err != nil {
+				return n.recordForumReplyDLQ(ctx, q, "notify subscribers", fmt.Errorf("check forum reply visibility: %w", err), &canonicalEvt)
+			}
+			if !allowed {
+				delete(subscribers, id)
 			}
 		}
 	}
@@ -498,10 +519,16 @@ func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.T
 		}
 	}
 
-	if err := n.propagateForumReplyAutoSubscribers(ctx, patterns, intent, reqs); err != nil {
+	if err := n.propagateForumReplyAutoSubscribers(ctx, patterns, intent, eligible); err != nil {
 		return n.recordForumReplyDLQ(ctx, q, "notify subscribers", err, &canonicalEvt)
 	}
 
+	if checkCurrentVisibility {
+		allowed, err := eligible(intent.ActorID)
+		if err != nil || !allowed {
+			return err
+		}
+	}
 	if err := n.ensureForumReplyActorAutoSubscription(ctx, intent); err != nil {
 		return fmt.Errorf("AutoSubscribeProvider: %w", err)
 	}
@@ -509,7 +536,7 @@ func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.T
 	return nil
 }
 
-func (n *Notifier) propagateForumReplyAutoSubscribers(ctx context.Context, patterns []string, intent common.ForumReplyNotificationIntent, reqs []GrantRequirement) error {
+func (n *Notifier) propagateForumReplyAutoSubscribers(ctx context.Context, patterns []string, intent common.ForumReplyNotificationIntent, eligible func(int32) (bool, error)) error {
 	if intent.CanonicalPath == "" {
 		return nil
 	}
@@ -530,7 +557,11 @@ func (n *Notifier) propagateForumReplyAutoSubscribers(ctx context.Context, patte
 		if id == intent.ActorID {
 			continue
 		}
-		if n.userHasGrants(ctx, id, reqs) {
+		allowed, err := eligible(id)
+		if err != nil {
+			return err
+		}
+		if allowed {
 			if err := common.EnsureSubscriptionIdempotent(ctx, n.Queries, id, newPattern, "internal"); err != nil {
 				return fmt.Errorf("ensure auto internal subscription: %w", err)
 			}
@@ -540,7 +571,11 @@ func (n *Notifier) propagateForumReplyAutoSubscribers(ctx context.Context, patte
 		if id == intent.ActorID {
 			continue
 		}
-		if n.userHasGrants(ctx, id, reqs) {
+		allowed, err := eligible(id)
+		if err != nil {
+			return err
+		}
+		if allowed {
 			if err := common.EnsureSubscriptionIdempotent(ctx, n.Queries, id, newPattern, "email"); err != nil {
 				return fmt.Errorf("ensure auto email subscription: %w", err)
 			}
@@ -583,6 +618,9 @@ func (n *Notifier) ensureForumReplyActorAutoSubscription(ctx context.Context, in
 }
 
 func (n *Notifier) recordForumReplyDLQ(ctx context.Context, q dlq.DLQ, prefix string, err error, evt *eventbus.TaskEvent) error {
+	if q == nil {
+		return fmt.Errorf("%s: %w", prefix, err)
+	}
 	if evt != nil && strings.HasPrefix(evt.Path, "/private/") {
 		// Keep stable replay coordinates without storing protected template data.
 		redacted := *evt

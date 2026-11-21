@@ -23,6 +23,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		CopyDataToSubCategories func(rootCategory *ForumcategoryPlus) *Data
 		Category                *ForumcategoryPlus
 		Back                    bool
+		CanFollowNewThreads     bool
+		FollowsNewThreads       bool
 	}
 
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
@@ -45,7 +47,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	categoryId, _ := strconv.Atoi(vars["category"])
 
 	data := &Data{
-		Admin: cd.IsAdmin() && cd.IsAdminMode(),
+		Admin:               cd.IsAdmin() && cd.IsAdminMode(),
+		CanFollowNewThreads: r.URL.Path == "/forum" && cd.UserID > 0 && cd.Config.NotificationsEnabled,
+	}
+
+	if data.CanFollowNewThreads {
+		data.FollowsNewThreads = cd.FollowsPublicForumNewThreads()
 	}
 
 	copyDataToSubCategories := func(rootCategory *ForumcategoryPlus) *Data {

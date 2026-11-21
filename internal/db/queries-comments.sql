@@ -159,7 +159,7 @@ WHERE c.Idcomments IN (sqlc.slice('ids'))
 ORDER BY c.written DESC
 ;
 
--- name: CreateCommentInSectionForCommenter :execlastid
+-- name: CreateCommentInSectionForCommenter :execresult
 INSERT INTO comments (language_id, users_idusers, forumthread_id, text, written, timezone)
 SELECT sqlc.narg(language_id), sqlc.narg(commenter_id), sqlc.arg(forumthread_id), sqlc.arg(text), sqlc.arg(written), sqlc.arg(timezone)
 WHERE EXISTS (

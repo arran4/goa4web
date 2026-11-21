@@ -12,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 // ForumOperationForbiddenError reports that an actor lacks permission for a forum operation.
@@ -126,6 +127,8 @@ type ForumReplyCommand = ReplyForumThreadParams
 // forum reply so notification policy can evaluate recipients and render payloads
 // without depending on HTTP requests, transport paths, or handler Task types.
 type ForumReplyNotificationIntent struct {
+	// Queued records that the notification intent committed with the reply.
+	Queued              bool
 	ActorID             int32
 	Username            string
 	TopicID             int32
@@ -199,7 +202,7 @@ func (s *ForumReplyService) Reply(ctx context.Context, cmd ForumReplyCommand) (*
 	if err != nil {
 		return nil, err
 	}
-	if !cmd.SynchronousSideEffects && cd.forumReplyNotifier != nil {
+	if !cmd.SynchronousSideEffects && !res.Intent.Queued && cd.forumReplyNotifier != nil {
 		if err := cd.forumReplyNotifier.NotifyForumReply(ctx, res.Intent); err != nil {
 			res.SideEffectError = errors.Join(res.SideEffectError, fmt.Errorf("notify forum reply: %w", err))
 		}
@@ -328,7 +331,7 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 
 	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
-	rowsAffected, appendID, err := cd.AppendCommentInSectionWithActivity(ctx, db.AppendCommentInSectionForCommenterParams{
+	rowsAffected, appendID, err := cd.appendForumReply(ctx, db.AppendCommentInSectionForCommenterParams{
 		Text:             text,
 		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		CommentID:        commentID,
@@ -471,7 +474,7 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 	}
 	commentID64, err := cd.createCommentInSectionForCommenterAt(
 		commentSection, consts.PermissionItemTopic, consts.PermissionActionPost,
-		params.TopicID, threadID, params.ActorID, params.LanguageID, params.Text, writtenAt,
+		params.TopicID, threadID, params.ActorID, params.LanguageID, params.Text, writtenAt, cd.insertComment,
 	)
 	if err != nil {
 		return nil, cd.cleanupUninitializedForumThread(ctx, threadID, fmt.Errorf("create forum opening comment: %w", err))
@@ -635,7 +638,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	} else {
 		commentID64, createErr := cd.createCommentInSectionForCommenterAt(
 			section, itemType, consts.PermissionActionReply, itemID,
-			thread.Idforumthread, params.ActorID, params.LanguageID, params.Text, writtenAt,
+			thread.Idforumthread, params.ActorID, params.LanguageID, params.Text, writtenAt, cd.insertForumReply,
 		)
 		if createErr != nil {
 			return nil, fmt.Errorf("create forum reply: %w", createErr)
@@ -644,6 +647,14 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 			return nil, ForumOperationForbiddenError{Action: "reply"}
 		}
 		commentID = int32(commentID64)
+	}
+
+	// Live delivery is a best-effort wake-up. The next page or fragment request
+	// can read the committed reply even if no subscriber received this signal.
+	if cd.bus != nil {
+		_ = cd.Publish(eventbus.ForumReplyCommitted{
+			TopicID: topic.Idforumtopic, ThreadID: thread.Idforumthread, CommentID: commentID, Time: writtenAt,
+		})
 	}
 
 	anchor := fmt.Sprintf("c%d", commentID)
@@ -693,6 +704,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	data["Private"] = isPrivate
 
 	intent := ForumReplyNotificationIntent{
+		Queued:              cd.jobService != nil,
 		ActorID:             params.ActorID,
 		Username:            username,
 		TopicID:             topic.Idforumtopic,
@@ -748,7 +760,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		if err := cd.applyForumMutationWorkers(ctx, thread.Idforumthread, topic.Idforumtopic, commentID, commentText, canonicalTextAvailable); err != nil {
 			sideEffectErr = fmt.Errorf("apply forum reply workers: %w", err)
 		}
-		if cd.forumReplyNotifier != nil {
+		if !intent.Queued && cd.forumReplyNotifier != nil {
 			if err := cd.forumReplyNotifier.NotifyForumReply(ctx, intent); err != nil {
 				sideEffectErr = errors.Join(sideEffectErr, fmt.Errorf("notify forum reply: %w", err))
 			}

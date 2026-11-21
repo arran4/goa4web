@@ -64,6 +64,10 @@ func TestHappyPathCreateThreadNotificationLink(t *testing.T) {
 	qs.CreateCommentInSectionForCommenterFn = func(ctx context.Context, arg db.CreateCommentInSectionForCommenterParams) (int64, error) {
 		return 999, nil
 	}
+	qs.GetLoginRoleForUserReturns = 1
+	qs.GetCommentByIdForUserFn = func(_ context.Context, arg db.GetCommentByIdForUserParams) (*db.GetCommentByIdForUserRow, error) {
+		return &db.GetCommentByIdForUserRow{Idcomments: arg.ID, ForumthreadID: newThreadID}, nil
+	}
 	qs.GetForumTopicByIdForUserFn = func(ctx context.Context, arg db.GetForumTopicByIdForUserParams) (*db.GetForumTopicByIdForUserRow, error) {
 		return &db.GetForumTopicByIdForUserRow{
 			Idforumtopic: topicID,

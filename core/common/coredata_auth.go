@@ -39,6 +39,15 @@ func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, err
 	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
 }
 
+// CanLogIn reports whether the current user has a role that permits login.
+func (cd *CoreData) CanLogIn() bool {
+	if cd.UserID <= 0 || cd.queries == nil {
+		return false
+	}
+	_, err := cd.queries.GetLoginRoleForUser(cd.ctx, cd.UserID)
+	return err == nil
+}
+
 // VerifiedEmailsForUser returns all verified email addresses ordered by notification priority.
 func (cd *CoreData) VerifiedEmailsForUser(userID int32) ([]string, error) {
 	if cd.queries == nil {

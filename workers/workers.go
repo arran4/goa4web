@@ -148,11 +148,11 @@ func StartDurableWorkers(ctx context.Context, q db.Querier, cfg *config.RuntimeC
 		}
 	}
 	group := NewGroup(ctx)
-	startDurableWorkerLoops(group, q, cfg, wc)
+	startDurableWorkerLoops(group, q, cfg, wc, nil)
 	return group
 }
 
-func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConfig, wc *WorkersConfig) {
+func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConfig, wc *WorkersConfig, bus *eventbus.Bus) {
 	if group == nil || q == nil {
 		return
 	}
@@ -185,6 +185,11 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 			cd := common.NewCoreData(ctx, q, cfg, wc.CoreOptions...)
 			return cd.ProcessRemoteImageCacheJob(ctx, job.TargetKey)
 		})
+	})
+	log.Printf("Starting durable forum reply notification worker (%s)", prefix)
+	group.Go(func(ctx context.Context) {
+		notifier := notifications.New(notifications.WithQueries(q), notifications.WithConfig(cfg), notifications.WithBus(bus))
+		svc.RunWorkerLoop(ctx, prefix+"-forumreply", 0, []string{jobs.JobTypeForumReplyNotification}, notifier.DeliverForumReplyJob)
 	})
 	group.Go(func(ctx context.Context) {
 		svc.RunPruneLoop(ctx, 6*time.Hour, 7*24*time.Hour)
@@ -290,6 +295,6 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	group.Go(func(ctx context.Context) { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")
 	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg) })
-	startDurableWorkerLoops(group, q, cfg, wc)
+	startDurableWorkerLoops(group, q, cfg, wc, bus)
 	return group
 }

@@ -40,6 +40,7 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		BasePath          string
 		Labels            []templates.TopicLabel
 		BackURL           string
+		LiveReplyURL      string
 	}
 
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -198,6 +199,11 @@ func ThreadPageWithBasePath(w http.ResponseWriter, r *http.Request, basePath str
 		data.IsReplyable = false
 	}
 
+	if cd.UserID != 0 && cd.HasModule("websocket") {
+		if shown, err := cd.SelectedSectionThreadComments(); err == nil {
+			data.LiveReplyURL = fmt.Sprintf("%s/live?after=%d", r.URL.Path, latestReplyPosition(shown))
+		}
+	}
 	data.Thread = threadRow
 	data.Topic = &ForumtopicPlus{
 		Idforumtopic:                 topicRow.Idforumtopic,

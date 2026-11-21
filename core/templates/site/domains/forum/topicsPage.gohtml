@@ -7,6 +7,22 @@
 {{ $topicTitle := topicTitleOrDefault .Topic.Title.String }}
 {{ if .Topic.DisplayTitle }}{{ $topicTitle = topicTitleOrDefault .Topic.DisplayTitle }}{{ end }}
 <h2>Topic: {{ $topicTitle }}</h2>
+{{ if .CanFollowNewThreads }}
+    {{ if .FollowsForumNewThreads }}
+        <p>You follow new threads from the <a href="/forum">public forum</a>.</p>
+    {{ end }}
+    {{ if .Subscribed }}
+        <form action="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}/unsubscribe" method="post">
+            {{ csrfField }}
+            <button type="submit" name="task" value="Unsubscribe From Topic">Remove direct topic follow</button>
+        </form>
+    {{ else }}
+        <form action="{{ .BasePath }}/topic/{{ .Topic.Idforumtopic }}/subscribe" method="post">
+            {{ csrfField }}
+            <button type="submit" name="task" value="Subscribe To Topic">Follow new threads in this topic</button>
+        </form>
+    {{ end }}
+{{ end }}
     {{ if gt (len .Labels) 0 }}
         {{ template "topicLabels" .Labels }}
     {{ end }}

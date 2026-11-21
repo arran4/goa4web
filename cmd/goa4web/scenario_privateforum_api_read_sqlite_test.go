@@ -11,11 +11,11 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
-	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/scenario"
 	"github.com/stretchr/testify/require"
 )
@@ -54,21 +54,10 @@ func TestE2EPrivateForumAPIReadActivity(t *testing.T) {
 	require.NoError(t, env.cd.SubscribeForum(ctx, common.SubscribeForumParams{
 		ActorID: aliceID, TopicID: staffTopic, ThreadID: staffThread,
 	}))
-	// Drain the HTTP-produced intents through the usual notifier without
-	// relying on a background worker's timing or seeding notification rows.
-	intents := env.server.Bus.SubscribeWithOptions(
-		eventbus.WithTypes(eventbus.TaskMessageType),
-		eventbus.WithBufferSize(8),
-		eventbus.WithFilter(func(message eventbus.Message) bool {
-			event, ok := message.(eventbus.TaskEvent)
-			if !ok {
-				return false
-			}
-			_, ok = event.Data[common.ForumReplyIntentEventKey].(common.ForumReplyNotificationIntent)
-			return ok
-		}),
-	)
-	defer intents.Close()
+	// Claim the committed jobs through the same path as a background worker.
+	q := env.cd.Queries()
+	queue := jobs.NewService(q)
+	notifier := notifications.New(notifications.WithConfig(env.server.Config), notifications.WithQueries(q))
 
 	unreadNotificationPositions := func(activities ...map[string]any) []int64 {
 		rows, err := env.cd.Queries().ListUnreadNotificationsForLister(ctx, db.ListUnreadNotificationsForListerParams{
@@ -118,16 +107,14 @@ func TestE2EPrivateForumAPIReadActivity(t *testing.T) {
 	post := func(text string) map[string]any {
 		resp, body := apiRequest(t, env, http.MethodPost, path+"/reply", bob, url.Values{"text": {text}})
 		require.Equal(t, http.StatusOK, resp.StatusCode, "%v", body)
-		select {
-		case envelope := <-intents.Channel():
-			event := envelope.Msg.(eventbus.TaskEvent)
-			intent := event.Data[common.ForumReplyIntentEventKey].(common.ForumReplyNotificationIntent)
-			envelope.Ack()
-			require.Equal(t, body["activity_id"], intent.ActivityID)
-			require.NoError(t, env.cd.ForumReplyNotifier().NotifyForumReply(ctx, intent))
-		case <-time.After(5 * time.Second):
-			t.Fatal("REST reply did not publish its notification intent")
-		}
+		claimed, err := queue.ClaimNext(ctx, "rest-read-scenario", jobs.JobTypeForumReplyNotification)
+		require.NoError(t, err)
+		require.NotNil(t, claimed, "REST reply must commit a durable intent")
+		require.Equal(t, body["activity_id"], claimed.Job.TargetKey)
+		require.NoError(t, notifier.DeliverForumReplyJob(ctx, claimed.Job))
+		completed, err := queue.CompleteFenced(ctx, claimed)
+		require.NoError(t, err)
+		require.True(t, completed)
 		return body
 	}
 	mark := func(path, token, activity string, code int) {

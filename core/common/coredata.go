@@ -2181,10 +2181,10 @@ func (cd *CoreData) CreateCommentInSectionForCommenter(section consts.Permission
 }
 
 func (cd *CoreData) createCommentInSectionForCommenter(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string) (int64, error) {
-	return cd.createCommentInSectionForCommenterAt(section, itemType, action, itemID, threadID, commenterID, languageID, text, time.Now().UTC())
+	return cd.createCommentInSectionForCommenterAt(section, itemType, action, itemID, threadID, commenterID, languageID, text, time.Now().UTC(), cd.insertComment)
 }
 
-func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string, writtenAt time.Time) (int64, error) {
+func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.PermissionSection, itemType consts.PermissionItem, action consts.PermissionAction, itemID, threadID, commenterID, languageID int32, text string, writtenAt time.Time, insert func(context.Context, db.CreateCommentInSectionForCommenterParams) (int64, error)) (int64, error) {
 	if cd.queries == nil {
 		return 0, nil
 	}
@@ -2200,7 +2200,7 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
 	}
-	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+	commentID, err := insert(cd.ctx, db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
@@ -2212,7 +2212,7 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 		Action:        action.String(),
 	})
-	if err != nil {
+	if err != nil || commentID == 0 {
 		return 0, err
 	}
 	if err := cd.recordThreadImages(threadID, paths); err != nil {

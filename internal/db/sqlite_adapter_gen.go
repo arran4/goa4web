@@ -4299,7 +4299,7 @@ func (s *sqliteQuerier) CreateBookmarksForLister(ctx context.Context, arg Create
 	})
 }
 
-func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error) {
 	res, err := s.q.CreateCommentInSectionForCommenter(ctx, dbsqlite.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
 		CommenterID:   int64(arg.CommenterID.Int32),
@@ -4313,7 +4313,7 @@ func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, 
 		ItemID:        sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }
@@ -9980,6 +9980,14 @@ func (s *sqliteQuerier) SystemCopyPrivateTopicGrantsToThread(ctx context.Context
 	})
 }
 
+func (s *sqliteQuerier) SystemCountActiveDurableJobsByKey(ctx context.Context, activeKey sql.NullString) (int64, error) {
+	res, err := s.q.SystemCountActiveDurableJobsByKey(ctx, activeKey)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemCountDeadLetters(ctx context.Context) (int64, error) {
 	res, err := s.q.SystemCountDeadLetters(ctx)
 	if err != nil {
@@ -10384,6 +10392,30 @@ func (s *sqliteQuerier) SystemGetFAQQuestions(ctx context.Context) ([]*Faq, erro
 			}
 		}
 		return out
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemGetForumReplyNotificationSource(ctx context.Context, arg SystemGetForumReplyNotificationSourceParams) (*SystemGetForumReplyNotificationSourceRow, error) {
+	res, err := s.q.SystemGetForumReplyNotificationSource(ctx, dbsqlite.SystemGetForumReplyNotificationSourceParams{
+		CommentID: int64(arg.CommentID),
+		ActorID:   int64(arg.ActorID),
+		AppendID:  arg.AppendID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetForumReplyNotificationSourceRow) *SystemGetForumReplyNotificationSourceRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetForumReplyNotificationSourceRow{
+			TopicID:    int32(v.TopicID),
+			TopicTitle: v.TopicTitle,
+			Handler:    v.Handler,
+			ThreadID:   int32(v.ThreadID),
+			ReplyText:  v.ReplyText,
+			Username:   v.Username,
+		}
 	}(res), nil
 }
 

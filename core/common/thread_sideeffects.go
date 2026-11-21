@@ -13,8 +13,8 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/jobs"
-	"github.com/arran4/goa4web/workers/postcountworker"
-	"github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/internal/postcount"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // ThreadUpdatedEvent captures side effects tied to thread updates.
@@ -82,7 +82,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 	jobService := cd.JobService()
 	durableSearch := jobService != nil && event.CommentID != 0
 	if durableSearch && event.IncludeSearch {
-		if err := jobService.EnqueueSearchDirty(ctx, searchworker.TypeComment, event.CommentID); err != nil {
+		if err := jobService.EnqueueSearchDirty(ctx, searchindex.TypeComment, event.CommentID); err != nil {
 			errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
 		}
 	}
@@ -162,15 +162,15 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		}
 		maps.Copy(evt.Data, event.AdditionalData)
 		if event.IncludePostCount {
-			evt.Data[postcountworker.EventKey] = postcountworker.UpdateEventData{
+			evt.Data[postcount.PostCountEventKey] = postcount.PostCountUpdate{
 				CommentID: event.CommentID,
 				ThreadID:  event.ThreadID,
 				TopicID:   event.TopicID,
 			}
 		}
 		if event.IncludeSearch && !durableSearch {
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{
-				Type: searchworker.TypeComment,
+			evt.Data[searchindex.IndexEventKey] = searchindex.IndexEventData{
+				Type: searchindex.TypeComment,
 				ID:   event.CommentID,
 				Text: event.CommentText,
 			}
@@ -190,7 +190,7 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	if err := postcountworker.PostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
+	if err := postcount.ApplyPostUpdate(ctx, cd.queries, threadID, topicID); err != nil {
 		return err
 	}
 
@@ -201,8 +201,8 @@ func (cd *CoreData) applyForumMutationWorkers(ctx context.Context, threadID, top
 	if !includeSearch {
 		return nil
 	}
-	return searchworker.Index(ctx, cd.queries, searchworker.IndexEventData{
-		Type: searchworker.TypeComment,
+	return searchindex.Index(ctx, cd.queries, searchindex.IndexEventData{
+		Type: searchindex.TypeComment,
 		ID:   commentID,
 		Text: text,
 	})

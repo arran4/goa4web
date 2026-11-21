@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // RunDurableWorker processes durable search_index jobs using search_dirty_targets revisions
@@ -115,23 +116,19 @@ func loadSearchableText(ctx context.Context, q db.Querier, targetType string, ta
 	}
 }
 
-// EventKey is the map key used for search index events.
-const EventKey = "search_index"
+// EventKey is retained as a compatibility alias for the searchindex event key.
+const EventKey = searchindex.IndexEventKey
 
-// Index types handled by the worker.
+// Index types are retained as compatibility aliases for the searchindex contract.
 const (
-	TypeComment = "comment"
-	TypeWriting = "writing"
-	TypeLinker  = "linker"
-	TypeImage   = "image"
+	TypeComment = searchindex.TypeComment
+	TypeWriting = searchindex.TypeWriting
+	TypeLinker  = searchindex.TypeLinker
+	TypeImage   = searchindex.TypeImage
 )
 
-// IndexEventData describes content to index.
-type IndexEventData struct {
-	Type string
-	ID   int32
-	Text string
-}
+// IndexEventData is retained as a compatibility alias for the searchindex contract.
+type IndexEventData = searchindex.IndexEventData
 
 // Worker listens for index events and updates the search tables.
 func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
@@ -168,45 +165,7 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 }
 
 func index(ctx context.Context, q db.Querier, data IndexEventData) error {
-	counts := map[string]int32{}
-	for _, w := range BreakupTextToWords(data.Text) {
-		counts[strings.ToLower(w)]++
-	}
-	for word, count := range counts {
-		id, err := q.SystemCreateSearchWord(ctx, strings.ToLower(word))
-		if err != nil {
-			return err
-		}
-		switch data.Type {
-		case TypeComment:
-			if err := q.SystemAddToForumCommentSearch(ctx, db.SystemAddToForumCommentSearchParams{CommentID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
-				return err
-			}
-		case TypeWriting:
-			if err := q.SystemAddToForumWritingSearch(ctx, db.SystemAddToForumWritingSearchParams{WritingID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
-				return err
-			}
-		case TypeLinker:
-			if err := q.SystemAddToLinkerSearch(ctx, db.SystemAddToLinkerSearchParams{LinkerID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
-				return err
-			}
-		case TypeImage:
-			if err := q.SystemAddToImagePostSearch(ctx, db.SystemAddToImagePostSearchParams{ImagePostID: data.ID, SearchwordlistIdsearchwordlist: int32(id), WordCount: count}); err != nil {
-				return err
-			}
-		}
-	}
-	switch data.Type {
-	case TypeComment:
-		return q.SystemSetCommentLastIndex(ctx, data.ID)
-	case TypeWriting:
-		return q.SystemSetWritingLastIndex(ctx, data.ID)
-	case TypeLinker:
-		return q.SystemSetLinkerLastIndex(ctx, data.ID)
-	case TypeImage:
-		return q.SystemSetImagePostLastIndex(ctx, data.ID)
-	}
-	return nil
+	return searchindex.Index(ctx, q, data)
 }
 
 // Index synchronously updates the search index for one item.

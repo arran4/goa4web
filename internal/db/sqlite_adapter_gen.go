@@ -472,7 +472,7 @@ func (s *sqliteQuerier) AdminCreateForumCategory(ctx context.Context, arg AdminC
 func (s *sqliteQuerier) AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error) {
 	res, err := s.q.AdminCreateForumTopic(ctx, dbsqlite.AdminCreateForumTopicParams{
 		ForumcategoryID: int64(arg.ForumcategoryID),
-		LanguageID:      sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
+		LanguageID:      arg.LanguageID,
 		Title:           arg.Title,
 		Description:     arg.Description,
 		Handler:         arg.Handler,

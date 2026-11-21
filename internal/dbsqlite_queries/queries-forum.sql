@@ -497,8 +497,9 @@ FROM category_path
 ORDER BY category_path.depth DESC;
 
 -- name: AdminCreateForumTopic :execlastid
+-- Historical SQLite tables use zero for a language-neutral topic.
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
-VALUES (sqlc.arg(forumcategory_id), sqlc.arg(language_id), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));
+VALUES (sqlc.arg(forumcategory_id), COALESCE(sqlc.narg(language_id), 0), sqlc.arg(title), sqlc.arg(description), sqlc.arg(handler));
 
 -- name: AdminGetTopicGrants :many
 SELECT g.section, g.role_id, r.name as role_name, g.user_id, u.username

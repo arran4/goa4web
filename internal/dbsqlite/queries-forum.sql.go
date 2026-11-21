@@ -57,17 +57,18 @@ func (q *Queries) AdminCreateForumCategory(ctx context.Context, arg AdminCreateF
 
 const adminCreateForumTopic = `-- name: AdminCreateForumTopic :execlastid
 INSERT INTO forumtopic (forumcategory_idforumcategory, language_id, title, description, handler)
-VALUES (?1, ?2, ?3, ?4, ?5)
+VALUES (?1, COALESCE(?2, 0), ?3, ?4, ?5)
 `
 
 type AdminCreateForumTopicParams struct {
 	ForumcategoryID int64
-	LanguageID      sql.NullInt64
+	LanguageID      interface{}
 	Title           sql.NullString
 	Description     sql.NullString
 	Handler         string
 }
 
+// Historical SQLite tables use zero for a language-neutral topic.
 func (q *Queries) AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, adminCreateForumTopic,
 		arg.ForumcategoryID,

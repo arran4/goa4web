@@ -3,13 +3,19 @@ package externallink
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/arran4/goa4web/internal/db"
 )
 
+type recordStore interface {
+	EnsureExternalLink(context.Context, string) (sql.Result, error)
+	GetExternalLink(context.Context, string) (*db.ExternalLink, error)
+}
+
 // ResolveRecord ensures url has an external-link record and returns its ID.
-func ResolveRecord(ctx context.Context, q db.Querier, url string) (int32, error) {
+func ResolveRecord(ctx context.Context, q recordStore, url string) (int32, error) {
 	result, err := q.EnsureExternalLink(ctx, url)
 	if err == nil {
 		id, idErr := result.LastInsertId()

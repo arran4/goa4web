@@ -287,6 +287,14 @@ func (s *sqliteQuerier) AdminCancelBannedIp(ctx context.Context, ipNet string) e
 	return s.q.AdminCancelBannedIp(ctx, ipNet)
 }
 
+func (s *sqliteQuerier) AdminCancelDurableJob(ctx context.Context, id int64) (int64, error) {
+	res, err := s.q.AdminCancelDurableJob(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error {
 	return s.q.AdminClearExternalLinkCache(ctx, dbsqlite.AdminClearExternalLinkCacheParams{
 		UpdatedBy: sql.NullInt64{Int64: int64(arg.UpdatedBy.Int32), Valid: arg.UpdatedBy.Valid},
@@ -2236,6 +2244,55 @@ func (s *sqliteQuerier) AdminListDeactivatedWritings(ctx context.Context, arg Ad
 	}(res), nil
 }
 
+func (s *sqliteQuerier) AdminListDurableJobs(ctx context.Context, arg AdminListDurableJobsParams) ([]*DurableJob, error) {
+	res, err := s.q.AdminListDurableJobs(ctx, dbsqlite.AdminListDurableJobsParams{
+		Column1: arg.Column1,
+		Status:  arg.Status,
+		Column3: arg.Column3,
+		JobType: arg.JobType,
+		Limit:   int64(arg.Limit),
+		Offset:  int64(arg.Offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(items []*dbsqlite.DurableJob) []*DurableJob {
+		if items == nil {
+			return nil
+		}
+		out := make([]*DurableJob, len(items))
+		for i, item := range items {
+			if item == nil {
+				continue
+			}
+			out[i] = &DurableJob{
+				ID:              item.ID,
+				JobType:         item.JobType,
+				DedupeKey:       item.DedupeKey,
+				ActiveDedupeKey: item.ActiveDedupeKey,
+				TargetType:      item.TargetType,
+				TargetID:        item.TargetID,
+				TargetKey:       item.TargetKey,
+				TargetRevision:  item.TargetRevision,
+				NeedsRerun:      (item.NeedsRerun != 0),
+				Status:          item.Status,
+				Attempts:        int32(item.Attempts),
+				MaxAttempts:     int32(item.MaxAttempts),
+				RunAfter:        item.RunAfter,
+				LeaseOwner:      item.LeaseOwner,
+				LeaseToken:      item.LeaseToken,
+				LeaseExpiresAt:  item.LeaseExpiresAt,
+				LastError:       item.LastError,
+				CreatedByUserID: sql.NullInt32{Int32: int32(item.CreatedByUserID.Int64), Valid: item.CreatedByUserID.Valid},
+				CreatedAt:       item.CreatedAt,
+				UpdatedAt:       item.UpdatedAt,
+				CompletedAt:     item.CompletedAt,
+			}
+		}
+		return out
+	}(res), nil
+}
+
 func (s *sqliteQuerier) AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error) {
 	res, err := s.q.AdminListExternalLinks(ctx, dbsqlite.AdminListExternalLinksParams{
 		Limit:  int64(arg.Limit),
@@ -3588,6 +3645,17 @@ func (s *sqliteQuerier) AdminPurgeReadNotifications(ctx context.Context) error {
 	return s.q.AdminPurgeReadNotifications(ctx)
 }
 
+func (s *sqliteQuerier) AdminPurgeTerminalDurableJobs(ctx context.Context, arg AdminPurgeTerminalDurableJobsParams) (int64, error) {
+	res, err := s.q.AdminPurgeTerminalDurableJobs(ctx, dbsqlite.AdminPurgeTerminalDurableJobsParams{
+		Column1: arg.Column1,
+		Status:  arg.Status,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error {
 	return s.q.AdminRebuildAllForumTopicMetaColumns(ctx)
 }
@@ -3690,6 +3758,14 @@ func (s *sqliteQuerier) AdminRestoreWriting(ctx context.Context, arg AdminRestor
 		}(arg.Private),
 		Idwriting: int64(arg.Idwriting),
 	})
+}
+
+func (s *sqliteQuerier) AdminRetryDurableJob(ctx context.Context, id int64) (int64, error) {
+	res, err := s.q.AdminRetryDurableJob(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) AdminScrubBlog(ctx context.Context, arg AdminScrubBlogParams) error {
@@ -9704,6 +9780,27 @@ func (s *sqliteQuerier) SystemAssignWritingThreadID(ctx context.Context, arg Sys
 	})
 }
 
+func (s *sqliteQuerier) SystemBumpActiveDurableJob(ctx context.Context, arg SystemBumpActiveDurableJobParams) (int64, error) {
+	res, err := s.q.SystemBumpActiveDurableJob(ctx, dbsqlite.SystemBumpActiveDurableJobParams{
+		TargetRevision:   arg.TargetRevision,
+		TargetRevision_2: arg.TargetRevision_2,
+		RunAfter:         arg.RunAfter,
+		RunAfter_2:       arg.RunAfter_2,
+		ActiveDedupeKey:  arg.ActiveDedupeKey,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemBumpSearchDirtyTarget(ctx context.Context, arg SystemBumpSearchDirtyTargetParams) error {
+	return s.q.SystemBumpSearchDirtyTarget(ctx, dbsqlite.SystemBumpSearchDirtyTargetParams{
+		TargetType: arg.TargetType,
+		TargetID:   int64(arg.TargetID),
+	})
+}
+
 func (s *sqliteQuerier) SystemCapturePendingAction(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error) {
 	res, err := s.q.SystemCapturePendingAction(ctx, dbsqlite.SystemCapturePendingActionParams{
 		FormData: arg.FormData,
@@ -9742,6 +9839,21 @@ func (s *sqliteQuerier) SystemCheckRoleGrant(ctx context.Context, arg SystemChec
 	return int32(res), nil
 }
 
+func (s *sqliteQuerier) SystemClaimDurableJobByID(ctx context.Context, arg SystemClaimDurableJobByIDParams) (int64, error) {
+	res, err := s.q.SystemClaimDurableJobByID(ctx, dbsqlite.SystemClaimDurableJobByIDParams{
+		LeaseOwner:       arg.LeaseOwner,
+		LeaseToken:       arg.LeaseToken,
+		LeaseExpiresAt:   arg.LeaseExpiresAt,
+		ID:               arg.ID,
+		RunAfter:         arg.RunAfter,
+		LeaseExpiresAt_2: arg.LeaseExpiresAt_2,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error {
 	return s.q.SystemClearContentLabelStatus(ctx, dbsqlite.SystemClearContentLabelStatusParams{
 		Item:   arg.Item,
@@ -9755,6 +9867,26 @@ func (s *sqliteQuerier) SystemClearContentPrivateLabel(ctx context.Context, arg 
 		ItemID: int64(arg.ItemID),
 		Label:  arg.Label,
 	})
+}
+
+func (s *sqliteQuerier) SystemClearJobCooldownWindow(ctx context.Context, arg SystemClearJobCooldownWindowParams) error {
+	return s.q.SystemClearJobCooldownWindow(ctx, dbsqlite.SystemClearJobCooldownWindowParams{
+		CooldownUntil: arg.CooldownUntil,
+		DedupeKey:     arg.DedupeKey,
+	})
+}
+
+func (s *sqliteQuerier) SystemCompleteDurableJobFenced(ctx context.Context, arg SystemCompleteDurableJobFencedParams) (int64, error) {
+	res, err := s.q.SystemCompleteDurableJobFenced(ctx, dbsqlite.SystemCompleteDurableJobFencedParams{
+		RunAfter:    arg.RunAfter,
+		CompletedAt: arg.CompletedAt,
+		ID:          arg.ID,
+		LeaseToken:  arg.LeaseToken,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemConsumePendingAction(ctx context.Context, id string) (int64, error) {
@@ -9945,6 +10077,10 @@ func (s *sqliteQuerier) SystemDeleteImagePostSearch(ctx context.Context) error {
 	return s.q.SystemDeleteImagePostSearch(ctx)
 }
 
+func (s *sqliteQuerier) SystemDeleteJobCooldown(ctx context.Context, dedupeKey string) error {
+	return s.q.SystemDeleteJobCooldown(ctx, dedupeKey)
+}
+
 func (s *sqliteQuerier) SystemDeleteLinkerSearch(ctx context.Context) error {
 	return s.q.SystemDeleteLinkerSearch(ctx)
 }
@@ -9996,6 +10132,19 @@ func (s *sqliteQuerier) SystemDeleteWritingSearchByWritingID(ctx context.Context
 	return s.q.SystemDeleteWritingSearchByWritingID(ctx, int64(writingID))
 }
 
+func (s *sqliteQuerier) SystemFailDurableJobFenced(ctx context.Context, arg SystemFailDurableJobFencedParams) (int64, error) {
+	res, err := s.q.SystemFailDurableJobFenced(ctx, dbsqlite.SystemFailDurableJobFencedParams{
+		LastError:   arg.LastError,
+		CompletedAt: arg.CompletedAt,
+		ID:          arg.ID,
+		LeaseToken:  arg.LeaseToken,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error) {
 	res, err := s.q.SystemGetAllBlogsForIndex(ctx)
 	if err != nil {
@@ -10035,6 +10184,22 @@ func (s *sqliteQuerier) SystemGetBlogEntryByID(ctx context.Context, idblogs int3
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetCommentTextForSearchIndex(ctx context.Context, idcomments int32) (*SystemGetCommentTextForSearchIndexRow, error) {
+	res, err := s.q.SystemGetCommentTextForSearchIndex(ctx, int64(idcomments))
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetCommentTextForSearchIndexRow) *SystemGetCommentTextForSearchIndexRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetCommentTextForSearchIndexRow{
+			Idcomments: int32(v.Idcomments),
+			Text:       v.Text,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetDeadLetter(ctx context.Context, id int32) (*DeadLetter, error) {
 	res, err := s.q.SystemGetDeadLetter(ctx, int64(id))
 	if err != nil {
@@ -10048,6 +10213,41 @@ func (s *sqliteQuerier) SystemGetDeadLetter(ctx context.Context, id int32) (*Dea
 			ID:        int32(v.ID),
 			Message:   v.Message,
 			CreatedAt: v.CreatedAt,
+		}
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemGetDurableJobByID(ctx context.Context, id int64) (*DurableJob, error) {
+	res, err := s.q.SystemGetDurableJobByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.DurableJob) *DurableJob {
+		if v == nil {
+			return nil
+		}
+		return &DurableJob{
+			ID:              v.ID,
+			JobType:         v.JobType,
+			DedupeKey:       v.DedupeKey,
+			ActiveDedupeKey: v.ActiveDedupeKey,
+			TargetType:      v.TargetType,
+			TargetID:        v.TargetID,
+			TargetKey:       v.TargetKey,
+			TargetRevision:  v.TargetRevision,
+			NeedsRerun:      (v.NeedsRerun != 0),
+			Status:          v.Status,
+			Attempts:        int32(v.Attempts),
+			MaxAttempts:     int32(v.MaxAttempts),
+			RunAfter:        v.RunAfter,
+			LeaseOwner:      v.LeaseOwner,
+			LeaseToken:      v.LeaseToken,
+			LeaseExpiresAt:  v.LeaseExpiresAt,
+			LastError:       v.LastError,
+			CreatedByUserID: sql.NullInt32{Int32: int32(v.CreatedByUserID.Int64), Valid: v.CreatedByUserID.Valid},
+			CreatedAt:       v.CreatedAt,
+			UpdatedAt:       v.UpdatedAt,
+			CompletedAt:     v.CompletedAt,
 		}
 	}(res), nil
 }
@@ -10108,6 +10308,41 @@ func (s *sqliteQuerier) SystemGetForumTopicByTitle(ctx context.Context, title sq
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetImagePostTextForSearchIndex(ctx context.Context, idimagepost int32) (*SystemGetImagePostTextForSearchIndexRow, error) {
+	res, err := s.q.SystemGetImagePostTextForSearchIndex(ctx, int64(idimagepost))
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetImagePostTextForSearchIndexRow) *SystemGetImagePostTextForSearchIndexRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetImagePostTextForSearchIndexRow{
+			Idimagepost: int32(v.Idimagepost),
+			Description: v.Description,
+		}
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemGetJobCooldown(ctx context.Context, dedupeKey string) (*DurableJobCooldown, error) {
+	res, err := s.q.SystemGetJobCooldown(ctx, dedupeKey)
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.DurableJobCooldown) *DurableJobCooldown {
+		if v == nil {
+			return nil
+		}
+		return &DurableJobCooldown{
+			DedupeKey:      v.DedupeKey,
+			CooldownUntil:  v.CooldownUntil,
+			LastError:      v.LastError,
+			LastNotifiedAt: v.LastNotifiedAt,
+			UpdatedAt:      v.UpdatedAt,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int32, error) {
 	res, err := s.q.SystemGetLanguageIDByName(ctx, nameof)
 	if err != nil {
@@ -10144,6 +10379,24 @@ func (s *sqliteQuerier) SystemGetLastNotificationForRecipientByMessage(ctx conte
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetLinkerTextForSearchIndex(ctx context.Context, id int32) (*SystemGetLinkerTextForSearchIndexRow, error) {
+	res, err := s.q.SystemGetLinkerTextForSearchIndex(ctx, int64(id))
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetLinkerTextForSearchIndexRow) *SystemGetLinkerTextForSearchIndexRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetLinkerTextForSearchIndexRow{
+			ID:          int32(v.ID),
+			Title:       v.Title,
+			Url:         v.Url,
+			Description: v.Description,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error) {
 	res, err := s.q.SystemGetLogin(ctx, username)
 	if err != nil {
@@ -10170,6 +10423,83 @@ func (s *sqliteQuerier) SystemGetNewsPostByID(ctx context.Context, idsitenews in
 	return int32(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetNextClaimableDurableJob(ctx context.Context, arg SystemGetNextClaimableDurableJobParams) (*DurableJob, error) {
+	res, err := s.q.SystemGetNextClaimableDurableJob(ctx, dbsqlite.SystemGetNextClaimableDurableJobParams{
+		RunAfter:       arg.RunAfter,
+		LeaseExpiresAt: arg.LeaseExpiresAt,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.DurableJob) *DurableJob {
+		if v == nil {
+			return nil
+		}
+		return &DurableJob{
+			ID:              v.ID,
+			JobType:         v.JobType,
+			DedupeKey:       v.DedupeKey,
+			ActiveDedupeKey: v.ActiveDedupeKey,
+			TargetType:      v.TargetType,
+			TargetID:        v.TargetID,
+			TargetKey:       v.TargetKey,
+			TargetRevision:  v.TargetRevision,
+			NeedsRerun:      (v.NeedsRerun != 0),
+			Status:          v.Status,
+			Attempts:        int32(v.Attempts),
+			MaxAttempts:     int32(v.MaxAttempts),
+			RunAfter:        v.RunAfter,
+			LeaseOwner:      v.LeaseOwner,
+			LeaseToken:      v.LeaseToken,
+			LeaseExpiresAt:  v.LeaseExpiresAt,
+			LastError:       v.LastError,
+			CreatedByUserID: sql.NullInt32{Int32: int32(v.CreatedByUserID.Int64), Valid: v.CreatedByUserID.Valid},
+			CreatedAt:       v.CreatedAt,
+			UpdatedAt:       v.UpdatedAt,
+			CompletedAt:     v.CompletedAt,
+		}
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemGetNextClaimableDurableJobByTypes(ctx context.Context, arg SystemGetNextClaimableDurableJobByTypesParams) (*DurableJob, error) {
+	res, err := s.q.SystemGetNextClaimableDurableJobByTypes(ctx, dbsqlite.SystemGetNextClaimableDurableJobByTypesParams{
+		JobTypes:       arg.JobTypes,
+		RunAfter:       arg.RunAfter,
+		LeaseExpiresAt: arg.LeaseExpiresAt,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.DurableJob) *DurableJob {
+		if v == nil {
+			return nil
+		}
+		return &DurableJob{
+			ID:              v.ID,
+			JobType:         v.JobType,
+			DedupeKey:       v.DedupeKey,
+			ActiveDedupeKey: v.ActiveDedupeKey,
+			TargetType:      v.TargetType,
+			TargetID:        v.TargetID,
+			TargetKey:       v.TargetKey,
+			TargetRevision:  v.TargetRevision,
+			NeedsRerun:      (v.NeedsRerun != 0),
+			Status:          v.Status,
+			Attempts:        int32(v.Attempts),
+			MaxAttempts:     int32(v.MaxAttempts),
+			RunAfter:        v.RunAfter,
+			LeaseOwner:      v.LeaseOwner,
+			LeaseToken:      v.LeaseToken,
+			LeaseExpiresAt:  v.LeaseExpiresAt,
+			LastError:       v.LastError,
+			CreatedByUserID: sql.NullInt32{Int32: int32(v.CreatedByUserID.Int64), Valid: v.CreatedByUserID.Valid},
+			CreatedAt:       v.CreatedAt,
+			UpdatedAt:       v.UpdatedAt,
+			CompletedAt:     v.CompletedAt,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error) {
 	res, err := s.q.SystemGetPendingAction(ctx, id)
 	if err != nil {
@@ -10188,6 +10518,28 @@ func (s *sqliteQuerier) SystemGetPendingAction(ctx context.Context, id string) (
 			CreatedAt:  v.CreatedAt,
 			ExpiresAt:  v.ExpiresAt,
 			ConsumedAt: toNullTime(v.ConsumedAt),
+		}
+	}(res), nil
+}
+
+func (s *sqliteQuerier) SystemGetSearchDirtyTarget(ctx context.Context, arg SystemGetSearchDirtyTargetParams) (*SearchDirtyTarget, error) {
+	res, err := s.q.SystemGetSearchDirtyTarget(ctx, dbsqlite.SystemGetSearchDirtyTargetParams{
+		TargetType: arg.TargetType,
+		TargetID:   int64(arg.TargetID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SearchDirtyTarget) *SearchDirtyTarget {
+		if v == nil {
+			return nil
+		}
+		return &SearchDirtyTarget{
+			TargetType:      v.TargetType,
+			TargetID:        int32(v.TargetID),
+			Revision:        v.Revision,
+			IndexedRevision: v.IndexedRevision,
+			UpdatedAt:       v.UpdatedAt,
 		}
 	}(res), nil
 }
@@ -10326,6 +10678,24 @@ func (s *sqliteQuerier) SystemGetWritingByID(ctx context.Context, idwriting int3
 	return int32(res), nil
 }
 
+func (s *sqliteQuerier) SystemGetWritingTextForSearchIndex(ctx context.Context, idwriting int32) (*SystemGetWritingTextForSearchIndexRow, error) {
+	res, err := s.q.SystemGetWritingTextForSearchIndex(ctx, int64(idwriting))
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.SystemGetWritingTextForSearchIndexRow) *SystemGetWritingTextForSearchIndexRow {
+		if v == nil {
+			return nil
+		}
+		return &SystemGetWritingTextForSearchIndexRow{
+			Idwriting: int32(v.Idwriting),
+			Title:     v.Title,
+			Writing:   v.Writing,
+			Abstract:  v.Abstract,
+		}
+	}(res), nil
+}
+
 func (s *sqliteQuerier) SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error) {
 	res, err := s.q.SystemHasOtherUserReadItemAtOrBeyond(ctx, dbsqlite.SystemHasOtherUserReadItemAtOrBeyondParams{
 		Item:          arg.Item,
@@ -10359,6 +10729,25 @@ func (s *sqliteQuerier) SystemInsertDigestPendingEmail(ctx context.Context, arg 
 		}(arg.DirectEmail),
 		DigestDeliveryID: sql.NullInt64{Int64: int64(arg.DigestDeliveryID.Int32), Valid: arg.DigestDeliveryID.Valid},
 	})
+}
+
+func (s *sqliteQuerier) SystemInsertDurableJob(ctx context.Context, arg SystemInsertDurableJobParams) (sql.Result, error) {
+	res, err := s.q.SystemInsertDurableJob(ctx, dbsqlite.SystemInsertDurableJobParams{
+		JobType:         arg.JobType,
+		DedupeKey:       arg.DedupeKey,
+		ActiveDedupeKey: arg.ActiveDedupeKey,
+		TargetType:      arg.TargetType,
+		TargetID:        arg.TargetID,
+		TargetKey:       arg.TargetKey,
+		TargetRevision:  arg.TargetRevision,
+		MaxAttempts:     int64(arg.MaxAttempts),
+		RunAfter:        arg.RunAfter,
+		CreatedByUserID: sql.NullInt64{Int64: int64(arg.CreatedByUserID.Int32), Valid: arg.CreatedByUserID.Valid},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error {
@@ -10401,6 +10790,23 @@ func (s *sqliteQuerier) SystemLatestDeadLetter(ctx context.Context) (interface{}
 		return nil, err
 	}
 	return res, nil
+}
+
+func (s *sqliteQuerier) SystemListActiveAdminUserIDs(ctx context.Context) ([]int32, error) {
+	res, err := s.q.SystemListActiveAdminUserIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return func(s []int64) []int32 {
+		if s == nil {
+			return nil
+		}
+		out := make([]int32, len(s))
+		for i, v := range s {
+			out[i] = int32(v)
+		}
+		return out
+	}(res), nil
 }
 
 func (s *sqliteQuerier) SystemListAllUnverifiedEmails(ctx context.Context) ([]*UserEmail, error) {
@@ -10867,11 +11273,32 @@ func (s *sqliteQuerier) SystemMarkPendingEmailSent(ctx context.Context, id int32
 	return s.q.SystemMarkPendingEmailSent(ctx, int64(id))
 }
 
+func (s *sqliteQuerier) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error) {
+	res, err := s.q.SystemMarkSearchTargetIndexed(ctx, dbsqlite.SystemMarkSearchTargetIndexedParams{
+		IndexedRevision:   arg.IndexedRevision,
+		TargetType:        arg.TargetType,
+		TargetID:          int64(arg.TargetID),
+		IndexedRevision_2: arg.IndexedRevision_2,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error {
 	return s.q.SystemMarkUserEmailVerified(ctx, dbsqlite.SystemMarkUserEmailVerifiedParams{
 		VerifiedAt: arg.VerifiedAt,
 		ID:         int64(arg.ID),
 	})
+}
+
+func (s *sqliteQuerier) SystemPruneTerminalDurableJobsBefore(ctx context.Context, completedAt sql.NullTime) (int64, error) {
+	res, err := s.q.SystemPruneTerminalDurableJobsBefore(ctx, completedAt)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error {
@@ -10892,6 +11319,43 @@ func (s *sqliteQuerier) SystemRebuildForumTopicMetaByID(ctx context.Context, idf
 
 func (s *sqliteQuerier) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
 	return s.q.SystemRegisterExternalLinkClick(ctx, url)
+}
+
+func (s *sqliteQuerier) SystemReleaseDurableJobOnShutdownFenced(ctx context.Context, arg SystemReleaseDurableJobOnShutdownFencedParams) (int64, error) {
+	res, err := s.q.SystemReleaseDurableJobOnShutdownFenced(ctx, dbsqlite.SystemReleaseDurableJobOnShutdownFencedParams{
+		RunAfter:   arg.RunAfter,
+		ID:         arg.ID,
+		LeaseToken: arg.LeaseToken,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemRenewDurableJobLease(ctx context.Context, arg SystemRenewDurableJobLeaseParams) (int64, error) {
+	res, err := s.q.SystemRenewDurableJobLease(ctx, dbsqlite.SystemRenewDurableJobLeaseParams{
+		LeaseExpiresAt: arg.LeaseExpiresAt,
+		ID:             arg.ID,
+		LeaseToken:     arg.LeaseToken,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemRetryDurableJobFenced(ctx context.Context, arg SystemRetryDurableJobFencedParams) (int64, error) {
+	res, err := s.q.SystemRetryDurableJobFenced(ctx, dbsqlite.SystemRetryDurableJobFencedParams{
+		RunAfter:   arg.RunAfter,
+		LastError:  arg.LastError,
+		ID:         arg.ID,
+		LeaseToken: arg.LeaseToken,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) SystemSetBlogLastIndex(ctx context.Context, id int32) error {
@@ -10945,6 +11409,15 @@ func (s *sqliteQuerier) SystemUpdateVerificationCode(ctx context.Context, arg Sy
 		LastVerificationCode:  arg.LastVerificationCode,
 		VerificationExpiresAt: arg.VerificationExpiresAt,
 		ID:                    int64(arg.ID),
+	})
+}
+
+func (s *sqliteQuerier) SystemUpsertJobCooldown(ctx context.Context, arg SystemUpsertJobCooldownParams) error {
+	return s.q.SystemUpsertJobCooldown(ctx, dbsqlite.SystemUpsertJobCooldownParams{
+		DedupeKey:      arg.DedupeKey,
+		CooldownUntil:  arg.CooldownUntil,
+		LastError:      arg.LastError,
+		LastNotifiedAt: arg.LastNotifiedAt,
 	})
 }
 

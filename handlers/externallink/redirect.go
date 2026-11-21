@@ -1,6 +1,7 @@
 package externallink
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
+	domainexternallink "github.com/arran4/goa4web/internal/externallink"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
@@ -58,38 +60,16 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if needFetch && canonicalURL != "" && !isInternal {
-		info, err := opengraph.Fetch(r.Context(), canonicalURL, cd.HTTPClient())
-		if err == nil {
-			if linkID == 0 {
-				res, err := cd.EnsureExternalLink(r.Context(), canonicalURL)
-				if err == nil {
-					id, _ := res.LastInsertId()
-					linkID = int32(id)
-				} else {
-					log.Printf("EnsureExternalLink error: %v", err)
-				}
-				if linkID == 0 {
-					if l, err := cd.GetExternalLink(r.Context(), canonicalURL); err == nil && l != nil {
-						linkID = l.ID
-					}
-				}
-			}
+		_, err := domainexternallink.RefreshMetadata(r.Context(), cd, canonicalURL, func(ctx context.Context) (int32, error) {
 			if linkID != 0 {
-				err := cd.UpdateExternalLinkMetadata(r.Context(), db.UpdateExternalLinkMetadataParams{
-					CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-					CardDescription: sql.NullString{String: info.Description, Valid: info.Description != ""},
-					CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-					CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-					CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-					CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-					ID:              linkID,
-				})
-				if err != nil {
-					log.Printf("UpdateExternalLinkMetadata error: %v", err)
-				}
+				return linkID, nil
 			}
-		} else {
-			log.Printf("fetchOpenGraph error: %v", err)
+			return domainexternallink.ResolveRecord(ctx, cd, canonicalURL)
+		}, func(ctx context.Context, target string) (*opengraph.Info, error) {
+			return opengraph.Fetch(ctx, target, cd.HTTPClient())
+		}, nil)
+		if err != nil {
+			log.Printf("refresh external link for confirmation page: %v", err)
 		}
 	}
 

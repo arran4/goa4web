@@ -41,6 +41,7 @@ import (
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
 	imagesign "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/sign"
 	"github.com/arran4/goa4web/internal/tasks"
 )
@@ -214,6 +215,7 @@ type CoreData struct {
 
 	httpClient         *http.Client
 	backgroundRunner   BackgroundRunner
+	jobService         *jobs.Service
 	forumReplyNotifier ForumReplyNotifier
 
 	session      *sessions.Session
@@ -2966,6 +2968,19 @@ func WithBackgroundRunner(runner BackgroundRunner) CoreOption {
 	return func(cd *CoreData) { cd.backgroundRunner = runner }
 }
 
+// WithJobService attaches the durable background job service to CoreData.
+func WithJobService(svc *jobs.Service) CoreOption {
+	return func(cd *CoreData) { cd.jobService = svc }
+}
+
+// JobService returns the configured durable job service, if any.
+func (cd *CoreData) JobService() *jobs.Service {
+	if cd == nil {
+		return nil
+	}
+	return cd.jobService
+}
+
 // WithForumReplyNotifier sets the application-level notifier used for canonical forum reply notifications.
 func WithForumReplyNotifier(notifier ForumReplyNotifier) CoreOption {
 	return func(cd *CoreData) { cd.forumReplyNotifier = notifier }
@@ -3279,6 +3294,7 @@ func (cd *CoreData) ForUser(userID int32) *CoreData {
 	userCD.WebAuthn = cd.WebAuthn
 	userCD.httpClient = cd.httpClient
 	userCD.backgroundRunner = cd.backgroundRunner
+	userCD.jobService = cd.jobService
 	userCD.forumReplyNotifier = cd.forumReplyNotifier
 	userCD.TasksReg = cd.TasksReg
 	userCD.SiteTitle = cd.SiteTitle
@@ -3818,4 +3834,27 @@ func isPrivateOrLocalhost(host string) bool {
 		return true
 	}
 	return false
+}
+
+// ValidateEnqueueExternalURL canonicalizes raw and rejects non-HTTP(S), localhost,
+// internal domains, and private/loopback/link-local IP literals before enqueueing.
+func ValidateEnqueueExternalURL(raw string) string {
+	canonical := CanonicalizeExternalURL(raw)
+	if canonical == "" {
+		return ""
+	}
+	u, err := url.Parse(canonical)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	host := strings.ToLower(strings.TrimSpace(u.Hostname()))
+	if host == "" || host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".internal") {
+		return ""
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+			return ""
+		}
+	}
+	return canonical
 }

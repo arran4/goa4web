@@ -2,10 +2,12 @@ package websocket
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -77,6 +79,45 @@ func TestNotificationsJSRoute(t *testing.T) {
 	}
 	if rec.Body.Len() == 0 {
 		t.Fatal("empty body")
+	}
+}
+
+func TestNotificationLiveEventEnvelopeContainsOnlyInvalidation(t *testing.T) {
+	timestamp := time.Date(2026, time.October, 16, 0, 0, 0, 0, time.UTC)
+	got, err := json.Marshal(LiveEvent{Kind: LiveEventKindNotification, Time: timestamp})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"kind":"notification","time":"2026-10-16T00:00:00Z"}`; string(got) != want {
+		t.Fatalf("envelope = %s, want %s", got, want)
+	}
+}
+
+func TestLiveEventsJSRoute(t *testing.T) {
+	reg := routerpkg.NewRegistry()
+	mod := NewModule(nil, &config.RuntimeConfig{})
+	mod.Register(reg)
+	r := mux.NewRouter()
+	navReg := nav.NewRegistry()
+	routerpkg.RegisterRoutes(r, reg, &config.RuntimeConfig{}, navReg)
+
+	req := httptest.NewRequest("GET", "http://example.com/websocket/live-events.js", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/javascript" {
+		t.Fatalf("content-type=%q", ct)
+	}
+	if !strings.Contains(rec.Body.String(), "'/ws/events'") {
+		t.Fatalf("live-events asset does not use the generic endpoint: %q", rec.Body.String())
+	}
+
+	match := &mux.RouteMatch{}
+	if !r.Match(httptest.NewRequest(http.MethodGet, "http://example.com/ws/events", nil), match) {
+		t.Fatal("generic live-events endpoint is not registered")
 	}
 }
 

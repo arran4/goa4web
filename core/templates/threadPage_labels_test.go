@@ -23,6 +23,7 @@ func TestThreadPageShowsDefaultPrivateLabels(t *testing.T) {
 		Labels            []TopicLabel
 		BasePath          string
 		BackURL           string
+		LiveReplyURL      string
 		TotalReplyThreads int
 		SourceReference   any
 	}{}
@@ -55,6 +56,7 @@ func TestThreadPageAuthorizedSourceUsesDatabaseCommentAnchor(t *testing.T) {
 		Labels            []TopicLabel
 		BasePath          string
 		BackURL           string
+		LiveReplyURL      string
 		TotalReplyThreads int
 		SourceReference   *sourceReference
 	}{

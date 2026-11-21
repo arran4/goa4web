@@ -1,26 +1,24 @@
 package websocket
 
 import (
-	"encoding/json"
 	"fmt"
-	corecommon "github.com/arran4/goa4web/core/common"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
-	coreconsts "github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
-	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/navigation"
 	routerpkg "github.com/arran4/goa4web/internal/router"
-	"github.com/arran4/goa4web/internal/tasks"
 )
 
 // Module bundles the event bus for websocket handlers.
@@ -33,7 +31,18 @@ type Module struct {
 type NotificationsHandler struct {
 	Bus      *eventbus.Bus      // event source
 	Upgrader websocket.Upgrader // websocket upgrader
-	Config   *config.RuntimeConfig
+}
+
+// LiveEventKindNotification asks the browser to re-fetch its own inbox fragments.
+const LiveEventKindNotification = "notification"
+
+// LiveEventKindThreadReply asks the open thread's page to check for new replies.
+const LiveEventKindThreadReply = "thread-reply"
+
+// LiveEvent is a browser invalidation signal. The HTML endpoint supplies the data.
+type LiveEvent struct {
+	Kind string    `json:"kind"`
+	Time time.Time `json:"time"`
 }
 
 // NewModule returns a websocket module using bus for events.
@@ -41,23 +50,6 @@ func NewModule(bus *eventbus.Bus, cfg *config.RuntimeConfig) *Module {
 	return &Module{Bus: bus, Config: cfg}
 }
 
-func buildPatterns(task, path string) []string {
-	name := strings.ToLower(task)
-	path = strings.Trim(path, "/")
-	if path == "" {
-		return []string{fmt.Sprintf("%s:/*", name)}
-	}
-	parts := strings.Split(path, "/")
-	patterns := []string{fmt.Sprintf("%s:/%s", name, path)}
-	for i := len(parts) - 1; i >= 1; i-- {
-		prefix := strings.Join(parts[:i], "/")
-		patterns = append(patterns, fmt.Sprintf("%s:/%s/*", name, prefix))
-	}
-	patterns = append(patterns, fmt.Sprintf("%s:/*", name))
-	return patterns
-}
-
-// NewNotificationsHandler returns a handler using bus for events.
 func parseHosts(s string) []string {
 	var hosts []string
 	for part := range strings.SplitSeq(s, ",") {
@@ -75,7 +67,7 @@ func parseHosts(s string) []string {
 }
 
 func NewNotificationsHandler(bus *eventbus.Bus, cfg *config.RuntimeConfig) *NotificationsHandler {
-	h := &NotificationsHandler{Bus: bus, Config: cfg}
+	h := &NotificationsHandler{Bus: bus}
 	cfgHosts := parseHosts(cfg.BaseURL)
 	upgrader := websocket.Upgrader{}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
@@ -115,39 +107,37 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries := r.Context().Value(coreconsts.KeyCoreData).(*corecommon.CoreData).Queries()
-	if queries == nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, fmt.Errorf("db unavailable"))
+	if h.Bus == nil {
+		http.Error(w, "live updates unavailable", http.StatusServiceUnavailable)
 		return
 	}
-
-	ctx := r.Context()
-
-	loadSubs := func() ([]*db.ListSubscriptionsByUserRow, map[string]bool, error) {
-		rows, err := queries.ListSubscriptionsByUser(ctx, uid)
-		if err != nil {
-			return nil, nil, err
-		}
-		p := make(map[string]bool)
-		for _, row := range rows {
-			if row.Method == "internal" {
-				p[row.Pattern] = true
+	var threadID int32
+	var cd *common.CoreData
+	var cards *linkCardWatch
+	if r.URL.Path == "/ws/events" {
+		if id, err := strconv.ParseInt(r.URL.Query().Get("thread"), 10, 32); err == nil && id > 0 {
+			threadID = int32(id)
+			cd = common.FromContext(r.Context())
+			if cd != nil && cd.UserID == uid {
+				cards = watchLinkCards(r.Context(), cd, threadID, r.URL.Query()["card"])
 			}
 		}
-		return rows, p, nil
 	}
-
-	subsRows, patterns, err := loadSubs()
-	if err != nil {
-		log.Printf("list subscriptions: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		handlers.RenderErrorPage(w, r, corecommon.ErrInternalServerError)
-		return
-	}
-	if h.Config.LogFlags&config.LogFlagDebug != 0 {
-		log.Printf("subscriptions loaded: %d entries", len(subsRows))
-	}
+	sub := h.Bus.SubscribeWithOptions(
+		eventbus.WithTypes(eventbus.NotificationsChangedMessageType, eventbus.ForumReplyCommittedMessageType),
+		eventbus.WithBufferSize(8),
+		eventbus.WithFilter(func(msg eventbus.Message) bool {
+			switch evt := msg.(type) {
+			case eventbus.NotificationsChanged:
+				return evt.RecipientID == uid
+			case eventbus.ForumReplyCommitted:
+				return threadID != 0 && evt.ThreadID == threadID
+			default:
+				return false
+			}
+		}),
+	)
+	defer sub.Close()
 
 	conn, err := h.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -156,82 +146,80 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	defer func() { _ = conn.Close() }()
 
-	ch := h.Bus.Subscribe(eventbus.TaskMessageType)
+	// Read control frames so closed clients release their subscriptions.
+	disconnected := make(chan struct{})
+	conn.SetReadLimit(1024)
+	go func() {
+		defer close(disconnected)
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
+
+	var cardTick <-chan time.Time
+	var ticker *time.Ticker
+	if cards != nil {
+		ticker = time.NewTicker(linkCardPollInterval)
+		defer ticker.Stop()
+		cardTick = ticker.C
+	}
+
 	for {
 		select {
-		case env, ok := <-ch:
+		case env, ok := <-sub.Channel():
 			if !ok {
 				return
 			}
-			shouldReturn := func() bool {
-				defer env.Ack()
-				evt, ok := env.Msg.(eventbus.TaskEvent)
-				if !ok {
-					return false
+			var signal LiveEvent
+			switch evt := env.Msg.(type) {
+			case eventbus.NotificationsChanged:
+				signal = LiveEvent{Kind: LiveEventKindNotification, Time: evt.Time}
+			case eventbus.ForumReplyCommitted:
+				if cd != nil && cd.UserID == uid && cd.CanReceiveForumReply(evt.TopicID, evt.ThreadID, evt.CommentID) {
+					signal = LiveEvent{Kind: LiveEventKindThreadReply, Time: evt.Time}
 				}
-				if evt.UserID == uid && strings.HasPrefix(evt.Path, "/usr/subscriptions") {
-					if n, ok := evt.Task.(tasks.Name); ok {
-						if name := n.Name(); name == "Update" || name == "Delete" {
-							var err error
-							subsRows, patterns, err = loadSubs()
-							if err != nil {
-								log.Printf("refresh subscriptions: %v", err)
-							} else if h.Config.LogFlags&config.LogFlagDebug != 0 {
-								log.Printf("subscriptions updated: %d entries", len(subsRows))
-							}
-							return false
-						}
-					}
-				}
-				if evt.UserID == uid {
-					return false
-				}
-				allowed := false
-				name := ""
-				if n, ok := evt.Task.(tasks.Name); ok {
-					name = n.Name()
-				}
-				candidatePaths := []string{evt.Path}
-				if evt.Data != nil {
-					if intent, ok := evt.Data[corecommon.ForumReplyIntentEventKey].(corecommon.ForumReplyNotificationIntent); ok && intent.CanonicalPath != "" {
-						candidatePaths = append(candidatePaths, intent.CanonicalPath, intent.CanonicalPath+"/reply")
-					} else if canonicalPath, ok := evt.Data["CanonicalPath"].(string); ok && canonicalPath != "" {
-						candidatePaths = append(candidatePaths, canonicalPath, canonicalPath+"/reply")
-					}
-				}
-				for _, candidatePath := range candidatePaths {
-					for _, p := range buildPatterns(name, candidatePath) {
-						if patterns[p] {
-							allowed = true
-							break
-						}
-					}
-					if allowed {
-						break
-					}
-				}
-				if !allowed {
-					return false
-				}
-				data, _ := json.Marshal(evt)
-				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
-					return true
-				}
-				return false
-			}()
-			if shouldReturn {
+			}
+			var err error
+			if signal.Kind != "" {
+				err = writeLiveEvent(conn, signal)
+			}
+			env.Ack()
+			if err != nil {
 				return
 			}
-		case <-ctx.Done():
+		case now := <-cardTick:
+			if cards.changed(r.Context()) {
+				if err := writeLiveEvent(conn, LiveEvent{Kind: LiveEventKindExternalLinkCard, Time: now.UTC()}); err != nil {
+					return
+				}
+			}
+			if len(cards.seen) == 0 {
+				ticker.Stop()
+				cardTick = nil
+			}
+		case <-disconnected:
+			return
+		case <-r.Context().Done():
 			return
 		}
 	}
 }
 
+func writeLiveEvent(conn *websocket.Conn, signal LiveEvent) error {
+	if err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return err
+	}
+	return conn.WriteJSON(signal)
+}
+
 // registerRoutes attaches the websocket handler to r.
 func (m *Module) registerRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navigation.RouterOptions {
 	h := NewNotificationsHandler(m.Bus, cfg)
+	r.Handle("/ws/events", h).Methods(http.MethodGet)
 	r.Handle("/ws/notifications", h).Methods(http.MethodGet)
+	r.HandleFunc("/websocket/live-events.js", LiveEventsJS(cfg)).Methods(http.MethodGet)
 	r.HandleFunc("/websocket/notifications.js", NotificationsJS(cfg)).Methods(http.MethodGet)
 	return nil
 }

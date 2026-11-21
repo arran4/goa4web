@@ -9908,6 +9908,14 @@ func (s *sqliteQuerier) SystemCopyPrivateTopicGrantsToThread(ctx context.Context
 	})
 }
 
+func (s *sqliteQuerier) SystemCountActiveDurableJobsByKey(ctx context.Context, activeKey sql.NullString) (int64, error) {
+	res, err := s.q.SystemCountActiveDurableJobsByKey(ctx, activeKey)
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemCountDeadLetters(ctx context.Context) (int64, error) {
 	res, err := s.q.SystemCountDeadLetters(ctx)
 	if err != nil {

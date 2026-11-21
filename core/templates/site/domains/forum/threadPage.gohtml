@@ -15,6 +15,9 @@
     <div class="label-bar">
         {{ template "topicLabels" .Labels }}
     </div>
+    {{ if .LiveReplyURL }}
+        <div role="status" data-live-event="thread-reply" data-live-thread="{{ .Thread.Idforumthread }}" data-live-url="{{ .LiveReplyURL }}"></div>
+    {{ end }}
     {{ template "threadComments" $ }}
     {{ template "forumReply" $ }}
 

@@ -66,7 +66,8 @@ WHERE users_idusers = sqlc.arg(lister_id) AND activity_key = sqlc.arg(activity_k
 UPDATE notifications
 SET read_at = NOW()
 WHERE users_idusers = sqlc.arg(lister_id)
-  AND id IN (sqlc.slice('ids'));
+  AND id IN (sqlc.slice('ids'))
+  AND read_at IS NULL;
 
 -- name: SetNotificationUnreadForLister :exec
 UPDATE notifications
@@ -114,3 +115,101 @@ ORDER BY id DESC LIMIT ?;
 -- name: AdminDeleteNotificationsByMessage :exec
 DELETE FROM notifications
 WHERE message LIKE ?;
+
+-- name: ListVisibleNotificationEntriesForLister :many
+WITH viewer AS (
+    SELECT u.idusers AS viewer_id FROM users u WHERE u.idusers = sqlc.arg(lister_id) AND u.deleted_at IS NULL
+),
+viewer_roles AS (
+    SELECT ur.role_id AS id FROM user_roles ur JOIN viewer v ON v.viewer_id = ur.users_idusers
+    UNION
+    SELECT id FROM roles WHERE name = 'anyone'
+),
+viewer_languages AS (
+    SELECT ul.language_id AS id FROM user_language ul JOIN viewer v ON v.viewer_id = ul.users_idusers
+),
+visible AS (
+    SELECT n.id, n.users_idusers, n.link, n.message, n.activity_key, n.priority,
+           n.resource_type, n.resource_id, n.activity_position, n.created_at, n.read_at,
+           COALESCE(t.title, '') AS topic_title,
+           COALESCE(author.username, '') AS reply_author,
+           CASE WHEN n.resource_type = 'thread' AND n.activity_key LIKE 'reply:comment:%' THEN 1 ELSE 0 END AS forum_reply,
+           CAST(CASE WHEN sqlc.arg(group_unread) = 1 AND n.read_at IS NULL
+                     AND n.resource_type = 'thread' AND n.activity_key LIKE 'reply:comment:%'
+                THEN n.resource_id ELSE NULL END AS SIGNED) AS reply_group
+    FROM notifications n
+    JOIN viewer v ON v.viewer_id = n.users_idusers
+    LEFT JOIN forumthread th ON n.resource_type = 'thread' AND th.idforumthread = n.resource_id
+    LEFT JOIN forumtopic t ON t.idforumtopic = th.forumtopic_idforumtopic
+    LEFT JOIN comments opener ON opener.idcomments = th.firstpost
+    LEFT JOIN comments reply ON n.activity_key LIKE 'reply:comment:%'
+        AND reply.idcomments = (n.activity_position >> 32) AND reply.forumthread_id = th.idforumthread
+    LEFT JOIN users author ON author.idusers = reply.users_idusers
+    WHERE (sqlc.arg(include_read) OR n.read_at IS NULL)
+      AND (sqlc.arg(notification_id) = 0 OR n.id = sqlc.arg(notification_id))
+      AND (
+          sqlc.arg(delivery_id) = 0 OR EXISTS (
+              SELECT 1 FROM digest_delivery_notifications item
+              WHERE item.notification_id = n.id AND item.digest_delivery_id = sqlc.arg(delivery_id)
+          )
+      )
+      AND (
+          (COALESCE(n.resource_type, '') <> 'thread'
+              AND LOWER(COALESCE(n.link, '')) NOT LIKE '%/private/%')
+          OR (n.resource_type = 'thread'
+              AND (t.language_id IS NULL OR t.language_id = 0 OR t.language_id IN (SELECT id FROM viewer_languages)
+                  OR NOT EXISTS (SELECT 1 FROM viewer_languages))
+              AND (opener.language_id IS NULL OR opener.language_id = 0 OR opener.language_id IN (SELECT id FROM viewer_languages)
+                  OR NOT EXISTS (SELECT 1 FROM viewer_languages))
+              AND (
+                  COALESCE(n.activity_key, '') NOT LIKE 'reply:comment:%'
+                  OR (reply.idcomments IS NOT NULL AND reply.deleted_at IS NULL
+                      AND (reply.language_id IS NULL OR reply.language_id = 0 OR reply.language_id IN (SELECT id FROM viewer_languages)
+                          OR NOT EXISTS (SELECT 1 FROM viewer_languages)))
+              )
+              AND EXISTS (
+                  SELECT 1 FROM grants g
+                  WHERE g.section = CASE WHEN t.handler = 'private' THEN 'privateforum' ELSE 'forum' END
+                    AND (g.item = 'topic' OR g.item IS NULL)
+                    AND g.action = 'view' AND g.active = 1
+                    AND (g.item_id = t.idforumtopic OR (t.handler <> 'private' AND g.item_id IS NULL))
+                    AND (g.user_id = v.viewer_id OR g.user_id IS NULL)
+                    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM viewer_roles))
+              )
+              AND (t.handler <> 'private' OR EXISTS (
+                  SELECT 1 FROM grants g
+                  WHERE g.section = 'privateforum_thread' AND g.item = 'thread'
+                    AND g.action = 'view' AND g.active = 1 AND g.item_id = th.idforumthread
+                    AND (g.user_id = v.viewer_id OR g.user_id IS NULL)
+                    AND (g.role_id IS NULL OR g.role_id IN (SELECT id FROM viewer_roles))
+              ))
+          )
+      )
+),
+reply_groups AS (
+    SELECT v.reply_group, COUNT(*) AS reply_count, MAX(v.id) AS latest_notification_id,
+           JSON_ARRAYAGG(v.id) AS snapshot
+    FROM visible v
+    WHERE v.reply_group IS NOT NULL
+    GROUP BY v.reply_group
+),
+ranked AS (
+    SELECT v.id, v.users_idusers, v.link, v.message, v.activity_key, v.priority,
+           v.resource_type, v.resource_id, v.activity_position, v.created_at, v.read_at,
+           v.topic_title, v.reply_author, v.forum_reply, v.reply_group, ROW_NUMBER() OVER (
+        PARTITION BY v.reply_group, CASE WHEN v.reply_group IS NULL THEN v.id ELSE 0 END
+        ORDER BY v.activity_position DESC, v.id DESC
+    ) AS display_order
+    FROM visible v
+)
+SELECT ranked.id, ranked.users_idusers, ranked.link, ranked.message, ranked.activity_key,
+       ranked.priority, ranked.resource_type, ranked.resource_id, ranked.activity_position,
+       ranked.created_at, ranked.read_at, ranked.topic_title, ranked.reply_author, ranked.forum_reply,
+       CAST(COALESCE(reply_groups.reply_count, 1) AS SIGNED) AS reply_count,
+       CAST(COALESCE(reply_groups.snapshot, '') AS CHAR) AS snapshot,
+       CAST(COUNT(*) OVER () AS SIGNED) AS total_entries
+FROM ranked
+LEFT JOIN reply_groups ON reply_groups.reply_group = ranked.reply_group
+WHERE ranked.display_order = 1
+ORDER BY COALESCE(reply_groups.latest_notification_id, ranked.id) DESC
+LIMIT ? OFFSET ?;

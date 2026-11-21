@@ -54,7 +54,6 @@ type DataCache struct {
 	linkerItems                   map[int32]*lazy.Value[*db.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescendingForUserRow]
 	newsAnnouncements             map[int32]*lazy.Value[*db.SiteAnnouncement]
 	newsPosts                     map[int32]*lazy.Value[*db.GetForumThreadIdByNewsPostIdRow]
-	notifications                 map[string]*lazy.Value[[]*db.Notification]
 	perms                         lazy.Value[[]*db.GetPermissionsByUserIDRow]
 	pref                          lazy.Value[*db.Preference]
 	preferredLanguageID           lazy.Value[int32]

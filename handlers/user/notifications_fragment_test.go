@@ -28,20 +28,17 @@ type fragmentTestQuerier struct {
 	unreadCount   int64
 }
 
-func (q *fragmentTestQuerier) GetUnreadNotificationCountForLister(_ context.Context, _ int32) (int64, error) {
-	return q.unreadCount, nil
-}
-
-func (q *fragmentTestQuerier) ListUnreadNotificationsForLister(_ context.Context, _ db.ListUnreadNotificationsForListerParams) ([]*db.Notification, error) {
-	return q.notifications, nil
-}
-
-func (q *fragmentTestQuerier) ListNotificationsForLister(_ context.Context, _ db.ListNotificationsForListerParams) ([]*db.Notification, error) {
-	return q.notifications, nil
-}
-
-func (q *fragmentTestQuerier) GetNotificationCountForLister(_ context.Context, _ int32) (int64, error) {
-	return int64(len(q.notifications)), nil
+func (q *fragmentTestQuerier) ListVisibleNotificationEntriesForLister(_ context.Context, _ db.ListVisibleNotificationEntriesForListerParams) ([]*db.ListVisibleNotificationEntriesForListerRow, error) {
+	var rows []*db.ListVisibleNotificationEntriesForListerRow
+	for _, n := range q.notifications {
+		rows = append(rows, &db.ListVisibleNotificationEntriesForListerRow{
+			ID: n.ID, Link: n.Link, Message: n.Message, CreatedAt: n.CreatedAt, TotalEntries: q.unreadCount,
+		})
+	}
+	if len(rows) == 0 && q.unreadCount > 0 {
+		rows = append(rows, &db.ListVisibleNotificationEntriesForListerRow{TotalEntries: q.unreadCount})
+	}
+	return rows, nil
 }
 
 func (q *fragmentTestQuerier) ListSubscriptionsByUser(_ context.Context, _ int32) ([]*db.ListSubscriptionsByUserRow, error) {

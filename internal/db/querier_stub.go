@@ -43,6 +43,10 @@ type QuerierStub struct {
 	InsertPasskeyStub           func(ctx context.Context, arg InsertPasskeyParams) error
 	UpdatePasskeyAfterLoginStub func(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
 
+	ListVisibleNotificationEntriesForListerFn func(context.Context, ListVisibleNotificationEntriesForListerParams) ([]*ListVisibleNotificationEntriesForListerRow, error)
+	SystemCountDigestDeliveryMembersFn        func(context.Context, int32) (int64, error)
+	SystemDiscardQueuedDigestFn               func(context.Context, int32) error
+
 	Querier
 	mu sync.Mutex
 

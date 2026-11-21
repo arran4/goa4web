@@ -26,3 +26,11 @@ UPDATE digest_deliveries dd
 JOIN pending_emails pe ON pe.digest_delivery_id = dd.id
 SET dd.acknowledged_at = COALESCE(dd.acknowledged_at, NOW())
 WHERE pe.id = ?;
+
+-- name: SystemCountDigestDeliveryMembers :one
+SELECT COUNT(*) FROM digest_delivery_notifications
+WHERE digest_delivery_id = ?;
+
+-- name: SystemDiscardQueuedDigest :exec
+DELETE FROM pending_emails
+WHERE id = ? AND digest_delivery_id IS NOT NULL AND sent_at IS NULL;

@@ -1687,41 +1687,6 @@ func (cd *CoreData) NewsPostByID(id int32, ops ...lazy.Option[int32, *db.GetForu
 	return lazy.Map(&cd.cache.newsPosts, &cd.cache.mapMu, id, fetch, ops...)
 }
 
-// Notifications returns the notifications for the current user using query
-// parameters to control pagination. Results are cached per offset and filter
-// combination.
-func (cd *CoreData) Notifications(r *http.Request) ([]*db.Notification, error) {
-	if cd.cache.notifications == nil {
-		cd.cache.notifications = map[string]*lazy.Value[[]*db.Notification]{}
-	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	showAll := r.URL.Query().Get("all") == "1"
-	key := fmt.Sprintf("%t:%d", showAll, offset)
-	lv, ok := cd.cache.notifications[key]
-	if !ok {
-		lv = &lazy.Value[[]*db.Notification]{}
-		cd.cache.notifications[key] = lv
-	}
-	return lv.Load(func() ([]*db.Notification, error) {
-		if cd.queries == nil || cd.UserID == 0 {
-			return nil, nil
-		}
-		limit := int32(cd.PageSize())
-		if showAll {
-			return cd.queries.ListNotificationsForLister(cd.ctx, db.ListNotificationsForListerParams{
-				ListerID: cd.UserID,
-				Limit:    limit,
-				Offset:   int32(offset),
-			})
-		}
-		return cd.queries.ListUnreadNotificationsForLister(cd.ctx, db.ListUnreadNotificationsForListerParams{
-			ListerID: cd.UserID,
-			Limit:    limit,
-			Offset:   int32(offset),
-		})
-	})
-}
-
 // PageSize returns the preferred page size within configured limits.
 func (cd *CoreData) PageSize() int {
 	size := cd.Config.PageSizeDefault
@@ -2782,7 +2747,7 @@ func (cd *CoreData) UnreadNotificationCount() int64 {
 		if cd.queries == nil || cd.UserID == 0 {
 			return 0, nil
 		}
-		return cd.queries.GetUnreadNotificationCountForLister(cd.ctx, cd.UserID)
+		return cd.InboxNotificationCount(false)
 	})
 	if err != nil {
 		log.Printf("load unread notification count: %v", err)

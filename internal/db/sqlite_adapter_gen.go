@@ -9278,6 +9278,52 @@ func (s *sqliteQuerier) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWit
 	}(res), nil
 }
 
+func (s *sqliteQuerier) ListVisibleNotificationEntriesForLister(ctx context.Context, arg ListVisibleNotificationEntriesForListerParams) ([]*ListVisibleNotificationEntriesForListerRow, error) {
+	res, err := s.q.ListVisibleNotificationEntriesForLister(ctx, dbsqlite.ListVisibleNotificationEntriesForListerParams{
+		Offset:         int64(arg.Offset),
+		Limit:          int64(arg.Limit),
+		ListerID:       int64(arg.ListerID),
+		GroupUnread:    arg.GroupUnread,
+		IncludeRead:    arg.IncludeRead,
+		NotificationID: arg.NotificationID,
+		DeliveryID:     arg.DeliveryID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return func(items []*dbsqlite.ListVisibleNotificationEntriesForListerRow) []*ListVisibleNotificationEntriesForListerRow {
+		if items == nil {
+			return nil
+		}
+		out := make([]*ListVisibleNotificationEntriesForListerRow, len(items))
+		for i, item := range items {
+			if item == nil {
+				continue
+			}
+			out[i] = &ListVisibleNotificationEntriesForListerRow{
+				ID:               int32(item.ID),
+				UsersIdusers:     int32(item.UsersIdusers),
+				Link:             item.Link,
+				Message:          item.Message,
+				ActivityKey:      item.ActivityKey,
+				Priority:         uint8(item.Priority),
+				ResourceType:     item.ResourceType,
+				ResourceID:       sql.NullInt32{Int32: int32(item.ResourceID.Int64), Valid: item.ResourceID.Valid},
+				ActivityPosition: item.ActivityPosition,
+				CreatedAt:        item.CreatedAt,
+				ReadAt:           item.ReadAt,
+				TopicTitle:       item.TopicTitle,
+				ReplyAuthor:      item.ReplyAuthor,
+				ForumReply:       int32(item.ForumReply),
+				ReplyCount:       item.ReplyCount,
+				Snapshot:         item.Snapshot,
+				TotalEntries:     item.TotalEntries,
+			}
+		}
+		return out
+	}(res), nil
+}
+
 func (s *sqliteQuerier) ListWritersForLister(ctx context.Context, arg ListWritersForListerParams) ([]*ListWritersForListerRow, error) {
 	res, err := s.q.ListWritersForLister(ctx, dbsqlite.ListWritersForListerParams{
 		UserID:   sql.NullInt64{Int64: int64(arg.UserID.Int32), Valid: arg.UserID.Valid},
@@ -9795,6 +9841,14 @@ func (s *sqliteQuerier) SystemCountDeadLetters(ctx context.Context) (int64, erro
 	return res, nil
 }
 
+func (s *sqliteQuerier) SystemCountDigestDeliveryMembers(ctx context.Context, digestDeliveryID int32) (int64, error) {
+	res, err := s.q.SystemCountDigestDeliveryMembers(ctx, int64(digestDeliveryID))
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemCountLanguages(ctx context.Context) (int64, error) {
 	res, err := s.q.SystemCountLanguages(ctx)
 	if err != nil {
@@ -10005,6 +10059,10 @@ func (s *sqliteQuerier) SystemDeleteWritingSearch(ctx context.Context) error {
 
 func (s *sqliteQuerier) SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error {
 	return s.q.SystemDeleteWritingSearchByWritingID(ctx, int64(writingID))
+}
+
+func (s *sqliteQuerier) SystemDiscardQueuedDigest(ctx context.Context, id int32) error {
+	return s.q.SystemDiscardQueuedDigest(ctx, int64(id))
 }
 
 func (s *sqliteQuerier) SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error) {

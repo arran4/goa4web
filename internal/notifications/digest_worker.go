@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 )
@@ -212,15 +213,14 @@ func (n *Notifier) safeSendDigest(ctx context.Context, userID int32, email strin
 // SendDigestToUser sends a digest email.
 func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email string, markRead, preview bool, dtype DigestType) error {
 	limit := int32(2147483647)
-	notifs, err := n.Queries.ListUnreadNotificationsForLister(ctx, db.ListUnreadNotificationsForListerParams{
-		ListerID: userID,
-		Limit:    limit,
-		Offset:   0,
+	viewer := common.NewCoreData(ctx, n.Queries, n.Config, common.WithUserID(userID))
+	entries, err := viewer.VisibleNotificationEntries(db.ListVisibleNotificationEntriesForListerParams{
+		GroupUnread: 1, IncludeRead: false, Limit: limit,
 	})
 	if err != nil {
 		return err
 	}
-	if len(notifs) == 0 {
+	if len(entries) == 0 {
 		return nil
 	}
 
@@ -251,7 +251,7 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 		LastSentAt    sql.NullTime
 		DigestTitle   string
 	}{
-		Notifications: notifs,
+		Notifications: common.RenderedNotifications(entries),
 		BaseURL:       baseURL,
 		LastSentAt:    lastSentAt,
 		DigestTitle:   digestTitle,
@@ -261,11 +261,11 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 	if err != nil {
 		return err
 	}
-	if preview {
-		return n.queueEmail(ctx, &userID, false, msg)
-	}
-	if err := n.queueDigestEmail(ctx, userID, markRead, notifs, msg); err != nil {
+	if err := n.queueDigestEmail(ctx, userID, markRead && !preview, common.NotificationSnapshotIDs(entries), msg); err != nil {
 		return err
+	}
+	if preview {
+		return nil
 	}
 
 	now := time.Now().UTC()

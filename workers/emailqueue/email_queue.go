@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
@@ -145,6 +146,20 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		return false
 	}
 	e := emails[0]
+	if e.DigestDeliveryID.Valid {
+		visible, err := queuedDigestStillVisible(ctx, q, cfg, e)
+		if err != nil {
+			log.Printf("validate queued digest %d: %v", e.ID, err)
+			return false
+		}
+		if !visible {
+			if err := q.SystemDiscardQueuedDigest(ctx, e.ID); err != nil {
+				log.Printf("discard inaccessible digest %d: %v", e.ID, err)
+				return false
+			}
+			return true
+		}
+	}
 	addr, err := ResolveQueuedEmailAddress(ctx, q, cfg, e)
 	if err != nil {
 		log.Printf("ResolveQueuedEmailAddress: %v", err)
@@ -161,8 +176,8 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		}
 		if time.Since(e.CreatedAt) > dlqThreshold {
 			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: no provider configured (age %s)\n%s", e.ID, addr.Address, time.Since(e.CreatedAt), e.Body)
-				_ = dlqProvider.Record(ctx, msg)
+				msg := fmt.Sprintf("email %d to %s failed: no provider configured (age %s)", e.ID, addr.Address, time.Since(e.CreatedAt))
+				_ = dlqProvider.Record(ctx, queuedEmailDiagnostic(e, msg))
 			}
 			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
 				log.Printf("mark sent: %v", err)
@@ -171,15 +186,22 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		return true
 	}
 	if err := provider.Send(ctx, addr, []byte(e.Body)); err != nil {
-		log.Printf("send queued mail: %v", err)
+		if e.DigestDeliveryID.Valid {
+			log.Printf("send queued digest %d failed", e.ID)
+		} else {
+			log.Printf("send queued mail: %v", err)
+		}
 		if err := q.SystemIncrementPendingEmailError(ctx, e.ID); err != nil {
 			log.Printf("increment email error: %v", err)
 			return true
 		}
 		if time.Since(e.CreatedAt) > dlqThreshold {
 			if dlqProvider != nil {
-				msg := fmt.Sprintf("email %d to %s failed: %v (age %s)\n%s", e.ID, addr.Address, err, time.Since(e.CreatedAt), e.Body)
-				_ = dlqProvider.Record(ctx, msg)
+				msg := fmt.Sprintf("email %d to %s failed: %v (age %s)", e.ID, addr.Address, err, time.Since(e.CreatedAt))
+				if e.DigestDeliveryID.Valid {
+					msg = fmt.Sprintf("digest %d failed after %s", e.ID, time.Since(e.CreatedAt))
+				}
+				_ = dlqProvider.Record(ctx, queuedEmailDiagnostic(e, msg))
 			}
 			if err := q.SystemMarkPendingEmailSent(ctx, e.ID); err != nil {
 				log.Printf("mark sent: %v", err)
@@ -205,4 +227,29 @@ func ProcessPendingEmail(ctx context.Context, q db.Querier, provider email.Provi
 		log.Printf("mark sent: %v", err)
 	}
 	return true
+}
+
+func queuedDigestStillVisible(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, e *db.SystemListPendingEmailsRow) (bool, error) {
+	if !e.ToUserID.Valid || e.ToUserID.Int32 <= 0 {
+		return false, nil
+	}
+	expected, err := q.SystemCountDigestDeliveryMembers(ctx, e.DigestDeliveryID.Int32)
+	if err != nil || expected == 0 {
+		return false, err
+	}
+	viewer := common.NewCoreData(ctx, q, cfg, common.WithUserID(e.ToUserID.Int32))
+	entries, err := viewer.VisibleNotificationEntries(db.ListVisibleNotificationEntriesForListerParams{
+		DeliveryID: e.DigestDeliveryID.Int32, IncludeRead: true, Limit: 1,
+	})
+	if err != nil || len(entries) == 0 {
+		return false, err
+	}
+	return entries[0].TotalEntries == expected, nil
+}
+
+func queuedEmailDiagnostic(e *db.SystemListPendingEmailsRow, description string) string {
+	if e.DigestDeliveryID.Valid {
+		return description
+	}
+	return description + "\n" + e.Body
 }

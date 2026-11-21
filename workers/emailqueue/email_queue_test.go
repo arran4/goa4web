@@ -22,6 +22,19 @@ func (failingProvider) Send(context.Context, mail.Address, []byte) error {
 
 func (failingProvider) TestConfig(context.Context) error { return nil }
 
+func allowDigestSnapshot(q *db.QuerierStub, row *db.SystemListPendingEmailsRow) {
+	row.ToUserID = sql.NullInt32{Int32: 101, Valid: true}
+	q.SystemGetUserByIDFn = func(context.Context, int32) (*db.SystemGetUserByIDRow, error) {
+		return &db.SystemGetUserByIDRow{Email: sql.NullString{String: "verified@example.com", Valid: true}}, nil
+	}
+	q.SystemCountDigestDeliveryMembersFn = func(context.Context, int32) (int64, error) {
+		return 1, nil
+	}
+	q.ListVisibleNotificationEntriesForListerFn = func(context.Context, db.ListVisibleNotificationEntriesForListerParams) ([]*db.ListVisibleNotificationEntriesForListerRow, error) {
+		return []*db.ListVisibleNotificationEntriesForListerRow{{TotalEntries: 1}}, nil
+	}
+}
+
 func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 	q := &db.QuerierStub{}
 	cfg := &config.RuntimeConfig{
@@ -41,6 +54,7 @@ func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 		},
 	}
 
+	allowDigestSnapshot(q, e)
 	listCalled := false
 	q.SystemListPendingEmailsFn = func(ctx context.Context, arg db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		listCalled = true
@@ -101,6 +115,7 @@ func TestProcessPendingEmail_ProviderFailureDoesNotAcknowledgeDigest(t *testing.
 		CreatedAt:        time.Now(),
 		DigestDeliveryID: sql.NullInt32{Int32: 9, Valid: true},
 	}
+	allowDigestSnapshot(q, e)
 	q.SystemListPendingEmailsFn = func(context.Context, db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		return []*db.SystemListPendingEmailsRow{e}, nil
 	}
@@ -130,6 +145,7 @@ func TestProcessPendingEmail_DeadLetterDoesNotAcknowledgeDigest(t *testing.T) {
 		CreatedAt:        time.Now().Add(-5 * 24 * time.Hour),
 		DigestDeliveryID: sql.NullInt32{Int32: 10, Valid: true},
 	}
+	allowDigestSnapshot(q, e)
 	q.SystemListPendingEmailsFn = func(context.Context, db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		return []*db.SystemListPendingEmailsRow{e}, nil
 	}
@@ -161,6 +177,7 @@ func TestProcessPendingEmail_DigestAcknowledgesOnlyAfterProviderAcceptance(t *te
 		CreatedAt:        time.Now(),
 		DigestDeliveryID: sql.NullInt32{Int32: 8, Valid: true},
 	}
+	allowDigestSnapshot(q, e)
 	q.SystemListPendingEmailsFn = func(context.Context, db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
 		return []*db.SystemListPendingEmailsRow{e}, nil
 	}

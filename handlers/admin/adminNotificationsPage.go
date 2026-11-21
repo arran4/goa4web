@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"database/sql"
+	"strings"
 	"github.com/arran4/goa4web/internal/tasks"
 	"log"
 	"net/http"
@@ -56,8 +58,14 @@ func AdminNotificationsPage(w http.ResponseWriter, r *http.Request) {
 		if !n.ReadAt.Valid {
 			unread++
 		}
+		note := *n
+		// Operational visibility into notification state carries no forum grant.
+		if n.ResourceType.String == "thread" || strings.Contains(strings.ToLower(n.Link.String), "/private/") {
+			note.Link = sql.NullString{}
+			note.Message = sql.NullString{String: "Forum notification", Valid: true}
+		}
+		data.Notifications = append(data.Notifications, &note)
 	}
-	data.Notifications = items
 	data.Total = len(items)
 	data.Unread = unread
 	_ = AdminNotificationsPageTmpl.Handle(w, r, data)

@@ -166,7 +166,7 @@ func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, m
 // queueDigestEmail persists the exact notification snapshot before queueing a
 // digest. The worker acknowledges that snapshot only after the provider accepts
 // the email, so a queue failure cannot dismiss a notification.
-func (n *Notifier) queueDigestEmail(ctx context.Context, userID int32, markRead bool, notifications []*db.Notification, msg []byte) error {
+func (n *Notifier) queueDigestEmail(ctx context.Context, userID int32, markRead bool, notificationIDs []int32, msg []byte) error {
 	deliveryID, err := n.Queries.SystemCreateDigestDelivery(ctx, db.SystemCreateDigestDeliveryParams{
 		UserID:               userID,
 		DismissNotifications: markRead,
@@ -174,10 +174,10 @@ func (n *Notifier) queueDigestEmail(ctx context.Context, userID int32, markRead 
 	if err != nil {
 		return err
 	}
-	for _, notification := range notifications {
+	for _, notificationID := range notificationIDs {
 		if err := n.Queries.SystemCreateDigestDeliveryNotification(ctx, db.SystemCreateDigestDeliveryNotificationParams{
 			DigestDeliveryID: int32(deliveryID),
-			NotificationID:   notification.ID,
+			NotificationID:   notificationID,
 		}); err != nil {
 			return err
 		}

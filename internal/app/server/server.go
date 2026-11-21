@@ -92,19 +92,40 @@ type Server struct {
 }
 
 // Addr returns the address the server is listening on after Start is called.
-func (s *Server) Addr() string { return s.addr }
+func (s *Server) Addr() string {
+	s.shutdownMu.Lock()
+	defer s.shutdownMu.Unlock()
+	return s.addr
+}
 
 // Start begins serving HTTP requests on the given address. If the port is
 // specified as :0, the automatically chosen address can be retrieved via Addr().
 func (s *Server) Start(addr string) error {
+	s.shutdownMu.Lock()
+	stopping := s.shutdownAttempted
+	s.shutdownMu.Unlock()
+	if stopping {
+		return nil
+	}
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("listen %s: %w", addr, err)
 	}
-	s.addr = ln.Addr().String()
-	s.httpServer = &http.Server{Handler: s.Router}
-	log.Printf("Server started on http://%s", s.addr)
-	if err := s.httpServer.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	boundAddr := ln.Addr().String()
+	httpServer := &http.Server{Handler: s.Router}
+
+	s.shutdownMu.Lock()
+	if s.shutdownAttempted {
+		s.shutdownMu.Unlock()
+		_ = ln.Close()
+		return nil
+	}
+	s.addr = boundAddr
+	s.httpServer = httpServer
+	s.shutdownMu.Unlock()
+
+	log.Printf("Server started on http://%s", boundAddr)
+	if err := httpServer.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("serve: %w", err)
 	}
 	return nil
@@ -114,12 +135,13 @@ func (s *Server) Start(addr string) error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.shutdownMu.Lock()
 	s.shutdownAttempted = true
+	httpServer := s.httpServer
 	s.shutdownMu.Unlock()
 	var firstErr error
-	if s.httpServer != nil {
-		if err := s.httpServer.Shutdown(ctx); err != nil {
+	if httpServer != nil {
+		if err := httpServer.Shutdown(ctx); err != nil {
 			firstErr = fmt.Errorf("shutdown server: %w", err)
-			if closeErr := s.httpServer.Close(); closeErr != nil && !errors.Is(closeErr, http.ErrServerClosed) {
+			if closeErr := httpServer.Close(); closeErr != nil && !errors.Is(closeErr, http.ErrServerClosed) {
 				log.Printf("force close HTTP server: %v", closeErr)
 			}
 		}

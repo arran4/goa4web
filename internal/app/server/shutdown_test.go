@@ -83,3 +83,42 @@ func TestShutdownForcesBlockedHTTPRequestAtDeadline(t *testing.T) {
 		t.Fatal("HTTP serve loop did not stop")
 	}
 }
+
+func TestStartAfterShutdownDoesNotBind(t *testing.T) {
+	srv := &Server{Router: http.NotFoundHandler()}
+	if err := srv.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	// An invalid address makes any attempt to bind after shutdown observable
+	// without creating a listener or racing a goroutine.
+	if err := srv.Start("invalid-listen-address"); err != nil {
+		t.Fatalf("start after shutdown attempted to listen: %v", err)
+	}
+	if addr := srv.Addr(); addr != "" {
+		t.Fatalf("start after shutdown published address %q", addr)
+	}
+}
+
+func TestStartAndShutdownCanOverlap(t *testing.T) {
+	srv := &Server{Router: http.NotFoundHandler()}
+	start := make(chan struct{})
+	serveDone := make(chan error, 1)
+	go func() {
+		<-start
+		// A real loopback listener exercises the handoff to http.Server.Serve.
+		serveDone <- srv.Start("127.0.0.1:0")
+	}()
+	close(start)
+	_ = srv.Addr()
+	if err := srv.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	select {
+	case err := <-serveDone:
+		if err != nil {
+			t.Fatalf("Start: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("server started accepting after shutdown")
+	}
+}

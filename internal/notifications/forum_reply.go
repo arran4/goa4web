@@ -37,7 +37,7 @@ func ForumReplyActivityKey(activityID string) string {
 }
 
 // NotifyForumReply resolves eligible recipients and delivers one canonical
-// forum-reply notification and subscriber email per recipient.
+// forum-reply notification and records eligible optional email membership.
 func (n *Notifier) NotifyForumReply(ctx context.Context, intent common.ForumReplyNotificationIntent) error {
 	return n.NotifyForumReplyWithDLQ(ctx, intent, nil)
 }
@@ -392,7 +392,7 @@ func (n *Notifier) userHasGrants(ctx context.Context, userID int32, reqs []Grant
 }
 
 func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.TaskEvent, intent common.ForumReplyNotificationIntent, q dlq.DLQ) error {
-	if n.Config == nil || !n.Config.NotificationsEnabled || n.Queries == nil {
+	if n.Config == nil || n.Queries == nil {
 		return nil
 	}
 	intent = n.normalizeForumReplyIntent(intent, &evt)
@@ -456,7 +456,7 @@ func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.T
 	}
 
 	internalTmpl := forumReplyNotificationTemplate.NotificationTemplate()
-	sendInternal := true
+	sendInternal := n.Config.NotificationsEnabled
 	emailTmpl := forumReplyEmailTemplate.EmailTemplates()
 	sendEmail := true
 	if canonicalEvt.Task != nil {
@@ -484,8 +484,8 @@ func (n *Notifier) notifyForumReplyFromEvent(ctx context.Context, evt eventbus.T
 
 	if sendEmail && emailTmpl != nil {
 		for id := range emailSubs {
-			if err := n.sendSubscriberEmail(ctx, id, canonicalEvt, emailTmpl); err != nil {
-				return n.recordForumReplyDLQ(ctx, q, "notify subscribers", fmt.Errorf("deliver email to %d: %w", id, err), &canonicalEvt)
+			if err := n.queueForumReplyEmail(ctx, id, intent); err != nil {
+				return n.recordForumReplyDLQ(ctx, q, "notify subscribers", fmt.Errorf("queue forum reply email: %w", err), &canonicalEvt)
 			}
 		}
 	}
@@ -583,6 +583,13 @@ func (n *Notifier) ensureForumReplyActorAutoSubscription(ctx context.Context, in
 }
 
 func (n *Notifier) recordForumReplyDLQ(ctx context.Context, q dlq.DLQ, prefix string, err error, evt *eventbus.TaskEvent) error {
+	if evt != nil && strings.HasPrefix(evt.Path, "/private/") {
+		// Keep stable replay coordinates without storing protected template data.
+		redacted := *evt
+		redacted.Task = forumReplyTaskName
+		redacted.Data = nil
+		evt = &redacted
+	}
 	errW := fmt.Errorf("SubscribersNotificationTemplateProvider: %w", err)
 	if dlqErr := n.dlqRecordAndNotify(ctx, q, fmt.Sprintf("%s: %v", prefix, errW), evt); dlqErr != nil {
 		return dlqErr

@@ -125,16 +125,14 @@ func (n *Notifier) RegisterSync(bus *eventbus.Bus, q dlq.DLQ) {
 }
 
 func (n *Notifier) ProcessEvent(ctx context.Context, evt eventbus.TaskEvent, q dlq.DLQ) error {
-	if !n.Config.NotificationsEnabled {
+	if n.Config == nil || evt.Outcome != eventbus.TaskOutcomeSuccess {
 		return nil
 	}
-
-	if evt.Outcome != eventbus.TaskOutcomeSuccess {
-		return nil
-	}
-
 	if intent, ok := n.extractForumReplyIntent(evt); ok {
 		return n.notifyForumReplyFromEvent(ctx, evt, intent, q)
+	}
+	if !n.Config.NotificationsEnabled {
+		return nil
 	}
 
 	if evt.Task == nil {

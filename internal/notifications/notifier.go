@@ -26,18 +26,19 @@ import (
 // Notifier dispatches updates via email and internal notifications.
 // Notifier dispatches updates via email and internal notifications.
 type Notifier struct {
-	Bus            *eventbus.Bus
-	EmailProvider  email.Provider
-	Queries        db.Querier
-	Config         *config.RuntimeConfig
-	noteOnce       sync.Once
-	noteTmpls      *ttemplate.Template
-	emailTextOnce  sync.Once
-	emailTextTmpls *ttemplate.Template
-	emailHTMLOnce  sync.Once
-	emailHTMLTmpls *htemplate.Template
-	CustomQueries  db.CustomQueries
-	Silent         bool
+	Bus             *eventbus.Bus
+	EmailProvider   email.Provider
+	Queries         db.Querier
+	Config          *config.RuntimeConfig
+	noteOnce        sync.Once
+	noteTmpls       *ttemplate.Template
+	emailTextOnce   sync.Once
+	emailTextTmpls  *ttemplate.Template
+	emailHTMLOnce   sync.Once
+	emailHTMLTmpls  *htemplate.Template
+	CustomQueries   db.CustomQueries
+	Silent          bool
+	replyEmailClock func() time.Time
 }
 
 const (

@@ -118,6 +118,7 @@ var IntOptions = []IntOption{
 	{"image-cache-placeholder-min-height", EnvImageCachePlaceholderMinHeight, "The minimum SVG height for image cache diagnostic placeholders.", DefaultImageCachePlaceholderMinHeight, "", func(c *RuntimeConfig) *int { return &c.ImageCachePlaceholderMinHeight }},
 	{"image-thumbnail-size", EnvImageThumbnailSize, "The legacy square fallback size of generated thumbnails.", 0, "", func(c *RuntimeConfig) *int { return &c.ImageThumbnailSize }},
 	{"image-max-resize-bytes", EnvImageMaxResizeBytes, "The maximum byte size of an image that triggers resizing in the cache server.", 20971520, "", func(c *RuntimeConfig) *int { return &c.ImageMaxResizeBytes }},
+	{"forum-reply-email-batch-minutes", EnvForumReplyEmailBatchMinutes, "Window in minutes for optional forum reply email summaries.", 15, "", func(c *RuntimeConfig) *int { return &c.ForumReplyEmailBatchMinutes }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "The interval in seconds between runs of the email worker.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
 	{"email-verification-expiry-hours", EnvEmailVerificationExpiryHours, "The number of hours an email verification request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailVerificationExpiryHours }},
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "The number of hours a password reset request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},

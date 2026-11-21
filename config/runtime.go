@@ -177,6 +177,8 @@ type RuntimeConfig struct {
 	// EmailSignOff defines the optional sign-off appended to emails.
 	EmailSignOff string
 
+	// ForumReplyEmailBatchMinutes sets the optional reply email window in minutes.
+	ForumReplyEmailBatchMinutes int
 	// EmailEnabled toggles sending queued emails.
 	EmailEnabled bool
 	// NotificationsEnabled toggles the internal notification system.

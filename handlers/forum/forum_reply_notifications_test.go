@@ -1,13 +1,9 @@
 package forum
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
-	"io"
-	"mime"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/mail"
@@ -28,7 +24,6 @@ import (
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/testhelpers"
-	"github.com/arran4/goa4web/workers/emailqueue"
 	"github.com/arran4/goa4web/workers/postcountworker"
 )
 
@@ -256,50 +251,16 @@ func TestHappyPathForumReply(t *testing.T) {
 			}
 		})
 
-		t.Run("Missing Email Notifications", func(t *testing.T) {
-			t.Helper()
-			expected := "missing email address"
-			if !findNotification(missingEmailUID, expected, "") {
-				t.Fatalf("expected missing email notification %q, got %q", expected, notificationsByRecipient[missingEmailUID])
+		t.Run("Optional Email Activities", func(t *testing.T) {
+			byRecipient := make(map[int32]db.SystemQueueForumReplyEmailActivityParams)
+			for _, call := range qs.SystemQueueForumReplyEmailActivityCalls {
+				byRecipient[call.RecipientID] = call
 			}
-		})
-
-		t.Run("Emails", func(t *testing.T) {
-			for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
+			if len(qs.SystemQueueForumReplyEmailActivityCalls) != 2 || byRecipient[subscriberUID].ThreadID != threadID || byRecipient[missingEmailUID].ThreadID != threadID {
+				t.Fatalf("expected durable activity for both subscribers: %+v", byRecipient)
 			}
-
-			if len(mockProvider.SentMessages) != 1 {
-				t.Fatalf("expected 1 email sent (subscriber only, no unsolicited admin reply email), got %d", len(mockProvider.SentMessages))
-			}
-
-			var subscriberEmail, adminEmail *mail.Message
-			for i, raw := range mockProvider.SentMessages {
-				msg, err := mail.ReadMessage(strings.NewReader(string(raw)))
-				if err != nil {
-					t.Fatalf("parse email %d: %v", i, err)
-				}
-				to := mockProvider.Recipients[i].Address
-				switch to {
-				case "subscriber@example.com":
-					subscriberEmail = msg
-				case "admin@example.com":
-					adminEmail = msg
-				}
-			}
-
-			if subscriberEmail == nil {
-				t.Fatal("subscriber email not found")
-			}
-			if subscriberEmail.Header.Get("Subject") != "[goa4web] Reply in Test Topic - Original thread content" {
-				t.Errorf("subscriber email subject mismatch: %s", subscriberEmail.Header.Get("Subject"))
-			}
-			subBody := getEmailBody(t, subscriberEmail)
-			expectedSubBody := "Hi subscriber,\n\nreplier posted a reply in Test Topic:\n\nThis is a test message with a link [a https://example.com] and enough words to trigger the truncation of twenty words limit plus more.\n\nView comment:\nhttp://example.com/forum/topic/5/thread/42#c999\n\nManage notifications: http://example.com/usr/subscriptions"
-			if subBody != expectedSubBody {
-				t.Errorf("subscriber email body mismatch: %q, want %q", subBody, expectedSubBody)
-			}
-			if adminEmail != nil {
-				t.Errorf("expected no admin email for non-subscriber admin on ordinary reply, got %v", adminEmail.Header.Get("Subject"))
+			if len(mockProvider.SentMessages) != 0 || len(qs.InsertPendingEmailCalls) != 0 {
+				t.Fatal("reply email must wait for the batch worker")
 			}
 		})
 
@@ -329,38 +290,6 @@ func TestHappyPathForumReply(t *testing.T) {
 			}
 		})
 	})
-}
-
-func getEmailBody(t *testing.T, msg *mail.Message) string {
-	t.Helper()
-	ct := msg.Header.Get("Content-Type")
-	if strings.Contains(ct, "multipart/alternative") {
-		_, params, err := mime.ParseMediaType(ct)
-		if err != nil {
-			t.Fatal(err)
-		}
-		mr := multipart.NewReader(msg.Body, params["boundary"])
-		for {
-			p, err := mr.NextPart()
-			if err != nil {
-				break
-			}
-			pct := p.Header.Get("Content-Type")
-			if strings.Contains(pct, "text/plain") {
-				buf := new(bytes.Buffer)
-				if _, err := io.Copy(buf, p); err != nil {
-					t.Fatal(err)
-				}
-				return strings.ReplaceAll(buf.String(), "\r\n", "\n")
-			}
-		}
-	}
-
-	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, msg.Body); err != nil {
-		t.Fatal(err)
-	}
-	return strings.ReplaceAll(buf.String(), "\r\n", "\n")
 }
 
 func TestForumAutoSubscribeTasks(t *testing.T) {
@@ -619,8 +548,6 @@ func TestPrivateForumReply_CanonicalMatrixTransportAndAppend(t *testing.T) {
 			if err := n.ProcessEvent(ctx, *evt, cdlq); err != nil {
 				t.Fatalf("ProcessEvent: %v", err)
 			}
-			for emailqueue.ProcessPendingEmail(ctx, qs, mockProvider, cdlq, cfg) {
-			}
 
 			expectedMsg := "bob replied to Staff Room: Confidential reply from Bob"
 			expectedLink := fmt.Sprintf("http://example.com/private/topic/%d/thread/%d#c%d", topicID, threadID, firstCommentID)
@@ -657,14 +584,17 @@ func TestPrivateForumReply_CanonicalMatrixTransportAndAppend(t *testing.T) {
 				t.Errorf("actor (user %d) received self-notification: %+v", actorUID, notifsByRecipient[actorUID])
 			}
 
-			if len(mockProvider.Recipients) != 2 {
-				t.Fatalf("emails sent = %d, want 2 (alice and dave only): %+v", len(mockProvider.Recipients), mockProvider.Recipients)
+			byRecipient := make(map[int32]int64)
+			for _, call := range qs.SystemQueueForumReplyEmailActivityCalls {
+				byRecipient[call.RecipientID] = call.ActivityPosition
 			}
-			for _, r := range mockProvider.Recipients {
-				if r.Address == "carol@example.com" || r.Address == "erin@example.com" || r.Address == "bob@example.com" {
-					t.Errorf("unexpected email recipient %q", r.Address)
-				}
+			if len(qs.SystemQueueForumReplyEmailActivityCalls) != 2 || byRecipient[overlappingAdminUID] == 0 || byRecipient[ordinarySubUID] == 0 {
+				t.Fatalf("expected email activity for Alice and Dave only: %+v", byRecipient)
 			}
+			if len(mockProvider.Recipients) != 0 || len(qs.InsertPendingEmailCalls) != 0 {
+				t.Fatal("private replies must wait for the batch worker")
+			}
+
 		})
 	}
 

@@ -233,6 +233,7 @@ idpreferences INTEGER PRIMARY KEY AUTOINCREMENT,
 language_id INTEGER DEFAULT NULL,
 users_idusers INTEGER NOT NULL DEFAULT 0,
 emailforumupdates INTEGER DEFAULT 0,
+optional_email_generation INTEGER NOT NULL DEFAULT 0,
 page_size INTEGER NOT NULL DEFAULT 15,
 auto_subscribe_replies INTEGER NOT NULL DEFAULT 1,
 timezone TEXT DEFAULT NULL,
@@ -248,6 +249,22 @@ monthly_digest_hour INT DEFAULT NULL,
 last_monthly_digest_sent_at DATETIME DEFAULT NULL,
 image_safe_dimension TEXT DEFAULT NULL
 );
+
+CREATE TABLE forum_reply_email_activities (
+    recipient_id INTEGER NOT NULL,
+    activity_position INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL,
+    window_end INTEGER NOT NULL,
+    preference_generation INTEGER NOT NULL DEFAULT 0,
+    claim_count INTEGER NOT NULL DEFAULT 0,
+    lease_token TEXT DEFAULT NULL,
+    lease_until INTEGER NOT NULL DEFAULT 0,
+    attempted_at INTEGER DEFAULT NULL,
+    sent_at INTEGER DEFAULT NULL,
+    PRIMARY KEY (recipient_id, activity_position)
+);
+CREATE INDEX forum_reply_email_due ON forum_reply_email_activities (attempted_at, window_end, lease_until, recipient_id);
+CREATE INDEX forum_reply_email_window ON forum_reply_email_activities (recipient_id, window_end, lease_token);
 
 CREATE TABLE searchwordlist (
 idsearchwordlist INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -802,3 +819,4 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (106, 1);

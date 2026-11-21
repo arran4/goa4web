@@ -1,11 +1,14 @@
 -- name: UpdateEmailForumUpdatesForLister :exec
 UPDATE preferences
-SET emailforumupdates = sqlc.arg(email_forum_updates)
+SET optional_email_generation = optional_email_generation
+        + CASE WHEN sqlc.arg(email_forum_updates) = 0 THEN 1 ELSE 0 END,
+    emailforumupdates = sqlc.arg(email_forum_updates)
 WHERE users_idusers = sqlc.arg(lister_id);
 
 -- name: InsertEmailPreferenceForLister :exec
-INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
-VALUES (sqlc.arg(email_forum_updates), sqlc.arg(auto_subscribe_replies), sqlc.arg(lister_id));
+INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers, optional_email_generation)
+VALUES (sqlc.arg(email_forum_updates), sqlc.arg(auto_subscribe_replies), sqlc.arg(lister_id),
+        CASE WHEN sqlc.arg(email_forum_updates) = 0 THEN 1 ELSE 0 END);
 
 -- name: UpdateAutoSubscribeRepliesForLister :exec
 UPDATE preferences
@@ -49,7 +52,7 @@ WHERE p.daily_digest_hour = sqlc.arg(hour)
   AND (p.last_digest_sent_at IS NULL OR p.last_digest_sent_at < sqlc.arg(cutoff));
 
 -- name: GetPreferenceForLister :one
-SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css,
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, optional_email_generation, page_size, auto_subscribe_replies, timezone, custom_css,
        daily_digest_hour, daily_digest_mark_read, last_digest_sent_at,
        weekly_digest_day, weekly_digest_hour, last_weekly_digest_sent_at,
        monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at, image_safe_dimension

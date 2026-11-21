@@ -65,6 +65,8 @@ const (
 	// main application configuration file.
 	EnvConfigFile = "CONFIG_FILE"
 
+	// EnvForumReplyEmailBatchMinutes configures the optional reply email window.
+	EnvForumReplyEmailBatchMinutes = "FORUM_REPLY_EMAIL_BATCH_MINUTES"
 	// EnvEmailEnabled toggles sending queued emails.
 	EnvEmailEnabled = "EMAIL_ENABLED"
 	// EnvNotificationsEnabled toggles the internal notification system.

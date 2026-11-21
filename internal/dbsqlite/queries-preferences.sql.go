@@ -42,7 +42,7 @@ func (q *Queries) GetDigestTimezones(ctx context.Context) ([]sql.NullString, err
 }
 
 const getPreferenceForLister = `-- name: GetPreferenceForLister :one
-SELECT idpreferences, language_id, users_idusers, emailforumupdates, page_size, auto_subscribe_replies, timezone, custom_css,
+SELECT idpreferences, language_id, users_idusers, emailforumupdates, optional_email_generation, page_size, auto_subscribe_replies, timezone, custom_css,
        daily_digest_hour, daily_digest_mark_read, last_digest_sent_at,
        weekly_digest_day, weekly_digest_hour, last_weekly_digest_sent_at,
        monthly_digest_day, monthly_digest_hour, last_monthly_digest_sent_at, image_safe_dimension
@@ -58,6 +58,7 @@ func (q *Queries) GetPreferenceForLister(ctx context.Context, listerID int64) (*
 		&i.LanguageID,
 		&i.UsersIdusers,
 		&i.Emailforumupdates,
+		&i.OptionalEmailGeneration,
 		&i.PageSize,
 		&i.AutoSubscribeReplies,
 		&i.Timezone,
@@ -426,8 +427,9 @@ func (q *Queries) GetUsersForWeeklyDigestNoTimezone(ctx context.Context, arg Get
 }
 
 const insertEmailPreferenceForLister = `-- name: InsertEmailPreferenceForLister :exec
-INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers)
-VALUES (?1, ?2, ?3)
+INSERT INTO preferences (emailforumupdates, auto_subscribe_replies, users_idusers, optional_email_generation)
+VALUES (?1, ?2, ?3,
+        CASE WHEN ?1 = 0 THEN 1 ELSE 0 END)
 `
 
 type InsertEmailPreferenceForListerParams struct {
@@ -497,7 +499,9 @@ func (q *Queries) UpdateCustomCssForLister(ctx context.Context, arg UpdateCustom
 
 const updateEmailForumUpdatesForLister = `-- name: UpdateEmailForumUpdatesForLister :exec
 UPDATE preferences
-SET emailforumupdates = ?1
+SET optional_email_generation = optional_email_generation
+        + CASE WHEN ?1 = 0 THEN 1 ELSE 0 END,
+    emailforumupdates = ?1
 WHERE users_idusers = ?2
 `
 

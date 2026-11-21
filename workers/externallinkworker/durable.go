@@ -29,6 +29,19 @@ func RunDurableWorker(ctx context.Context, jobSvc *jobs.Service, q db.Querier, c
 
 // ProcessExternalLink resolves, fetches OpenGraph metadata for, and persists an external link.
 func ProcessExternalLink(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, linkID int32, targetURL string) error {
+	return processExternalLink(ctx, q, linkID, targetURL, func(ctx context.Context, target string) (*opengraph.Info, error) {
+		return domainexternallink.FetchMetadata(ctx, target, func(ctx context.Context, u string) (*opengraph.Info, error) {
+			return opengraph.Fetch(ctx, u, nil)
+		}, domainexternallink.Wait)
+	}, func(ctx context.Context, imageURL string) (string, error) {
+		return common.NewCoreData(ctx, q, cfg).DownloadAndCacheImage(imageURL)
+	})
+}
+
+func processExternalLink(ctx context.Context, q db.Querier, linkID int32, targetURL string,
+	fetch func(context.Context, string) (*opengraph.Info, error),
+	cacheImage func(context.Context, string) (string, error),
+) error {
 	canonicalURL := common.CanonicalizeExternalURL(targetURL)
 	if canonicalURL == "" {
 		return nil
@@ -44,59 +57,39 @@ func ProcessExternalLink(ctx context.Context, q db.Querier, cfg *config.RuntimeC
 		return nil
 	}
 	existing, err := q.GetExternalLinkByID(ctx, linkID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return err
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil // The record was removed after the job was queued.
 	}
-	if !domainexternallink.NeedsMetadata(existing) {
-		return nil
-	}
-	info, err := domainexternallink.FetchMetadata(ctx, canonicalURL, func(ctx context.Context, u string) (*opengraph.Info, error) {
-		return opengraph.Fetch(ctx, u, nil)
-	}, domainexternallink.Wait)
 	if err != nil {
 		return err
 	}
-	if info == nil {
+	if existing == nil || common.CanonicalizeExternalURL(existing.Url) != canonicalURL || !domainexternallink.NeedsMetadata(existing) {
 		return nil
 	}
-	var cachedImage string
-	if info.Image != "" {
-		cd := common.NewCoreData(ctx, q, cfg)
-		if cached, cacheErr := cd.DownloadAndCacheImage(info.Image); cacheErr != nil {
-			log.Printf("DownloadAndCacheImage %s: %v", info.Image, cacheErr)
-		} else {
-			cachedImage = cached
+	cacheErr, err := domainexternallink.RefreshMetadata(ctx, q, canonicalURL, func(context.Context) (int32, error) {
+		return linkID, ctx.Err()
+	}, func(ctx context.Context, target string) (*opengraph.Info, error) {
+		info, err := fetch(ctx, target)
+		if err != nil {
+			// The jobs service stores error strings and may send them to operators.
+			return nil, metadataFetchError{cause: err}
 		}
-	}
-	desc := info.Description
-	if len(desc) > 65000 {
-		runes := []rune(desc)
-		if len(runes) > 16000 {
-			desc = string(runes[:16000])
+		return info, nil
+	}, func(ctx context.Context, imageURL string) (string, error) {
+		ref, err := cacheImage(ctx, imageURL)
+		if ctx.Err() != nil {
+			return "", ctx.Err()
 		}
-		for len(desc) > 65000 {
-			runes = []rune(desc)
-			desc = string(runes[:len(runes)-100])
+		if err != nil {
+			log.Printf("external link %d image cache unavailable", linkID)
+			return "", nil
 		}
-	}
-	if err := q.UpdateExternalLinkMetadata(ctx, db.UpdateExternalLinkMetadataParams{
-		CardTitle:       sql.NullString{String: info.Title, Valid: info.Title != ""},
-		CardDescription: sql.NullString{String: desc, Valid: desc != ""},
-		CardImage:       sql.NullString{String: info.Image, Valid: info.Image != ""},
-		CardDuration:    sql.NullString{String: info.Duration, Valid: info.Duration != ""},
-		CardUploadDate:  sql.NullString{String: info.UploadDate, Valid: info.UploadDate != ""},
-		CardAuthor:      sql.NullString{String: info.Author, Valid: info.Author != ""},
-		ID:              linkID,
-	}); err != nil {
-		return err
-	}
-	if cachedImage != "" {
-		if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-			CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-			ID:             linkID,
-		}); err != nil {
-			return err
-		}
-	}
-	return nil
+		return ref, err
+	})
+	return errors.Join(err, cacheErr)
 }
+
+type metadataFetchError struct{ cause error }
+
+func (e metadataFetchError) Error() string { return "external link fetch failed" }
+func (e metadataFetchError) Unwrap() error { return e.cause }

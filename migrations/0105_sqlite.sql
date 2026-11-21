@@ -11,7 +11,7 @@ CREATE TABLE pending_emails_0105 (
     html_body TEXT,
     error_count INT NOT NULL DEFAULT 0,
     to_user_id INT DEFAULT NULL,
-    direct_email TINYINT(1) NOT NULL DEFAULT 0,
+    direct_email INTEGER NOT NULL DEFAULT 0,
     digest_delivery_id INT DEFAULT NULL
 );
 
@@ -45,7 +45,7 @@ CREATE TABLE pending_emails_0104 (
     html_body TEXT,
     error_count INT NOT NULL DEFAULT 0,
     to_user_id INT NOT NULL DEFAULT 0,
-    direct_email TINYINT(1) NOT NULL DEFAULT 0,
+    direct_email INTEGER NOT NULL DEFAULT 0,
     digest_delivery_id INT DEFAULT NULL
 );
 

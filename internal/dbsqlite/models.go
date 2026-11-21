@@ -537,7 +537,7 @@ type PendingEmail struct {
 	HtmlBody         sql.NullString
 	ErrorCount       int64
 	ToUserID         sql.NullInt64
-	DirectEmail      interface{}
+	DirectEmail      int64
 	DigestDeliveryID sql.NullInt64
 }
 

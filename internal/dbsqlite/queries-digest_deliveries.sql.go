@@ -71,7 +71,7 @@ VALUES (?, ?, ?, ?)
 type SystemInsertDigestPendingEmailParams struct {
 	ToUserID         sql.NullInt64
 	Body             string
-	DirectEmail      interface{}
+	DirectEmail      int64
 	DigestDeliveryID sql.NullInt64
 }
 

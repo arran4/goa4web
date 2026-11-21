@@ -397,7 +397,7 @@ sent_at DATETIME DEFAULT NULL,
 html_body TEXT,
 error_count INT NOT NULL DEFAULT 0,
 to_user_id INT DEFAULT NULL,
-direct_email TINYINT(1) NOT NULL DEFAULT 0,
+direct_email INTEGER NOT NULL DEFAULT 0,
 digest_delivery_id INT DEFAULT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS pending_emails_digest_delivery_idx ON pending_emails (digest_delivery_id);

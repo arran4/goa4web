@@ -35,13 +35,13 @@ type QuerierStub struct {
 	AppendCommentInSectionForCommenterFn   func(context.Context, AppendCommentInSectionForCommenterParams) (int64, error)
 	SystemHasOtherUserReadItemAtOrBeyondFn func(context.Context, SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)
 
-	CreateAPIKeyStub            func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
-	GetAPIKeyByHashStub         func(ctx context.Context, apiKey string) (*ApiKey, error)
-	ListAPIKeysByUserStub       func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
-	UpdateAPIKeyLastUsedStub    func(ctx context.Context, id int32) error
-	RevokeAPIKeyStub            func(ctx context.Context, arg RevokeAPIKeyParams) error
-	InsertPasskeyStub           func(ctx context.Context, arg InsertPasskeyParams) error
-	UpdatePasskeyAfterLoginStub func(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
+	CreateAPIKeyStub                func(ctx context.Context, arg CreateAPIKeyParams) (int64, error)
+	SystemGetActiveAPIKeyByHashStub func(ctx context.Context, apiKey string) (*ApiKey, error)
+	ListAPIKeysByUserStub           func(ctx context.Context, usersIdusers int32) ([]*ApiKey, error)
+	UpdateAPIKeyLastUsedStub        func(ctx context.Context, id int32) error
+	RevokeAPIKeyStub                func(ctx context.Context, arg RevokeAPIKeyParams) error
+	InsertPasskeyStub               func(ctx context.Context, arg InsertPasskeyParams) error
+	UpdatePasskeyAfterLoginStub     func(ctx context.Context, arg UpdatePasskeyAfterLoginParams) error
 
 	Querier
 	mu sync.Mutex
@@ -3368,9 +3368,9 @@ func (q *QuerierStub) CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) 
 	return 0, nil
 }
 
-func (q *QuerierStub) GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
-	if q.GetAPIKeyByHashStub != nil {
-		return q.GetAPIKeyByHashStub(ctx, apiKey)
+func (q *QuerierStub) SystemGetActiveAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
+	if q.SystemGetActiveAPIKeyByHashStub != nil {
+		return q.SystemGetActiveAPIKeyByHashStub(ctx, apiKey)
 	}
 	return nil, nil
 }

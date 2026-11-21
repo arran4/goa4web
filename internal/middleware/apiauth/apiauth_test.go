@@ -18,7 +18,7 @@ type mockQuerier struct {
 	db.Querier
 }
 
-func (m mockQuerier) GetAPIKeyByHash(ctx context.Context, apiKey string) (*db.ApiKey, error) {
+func (m mockQuerier) SystemGetActiveAPIKeyByHash(ctx context.Context, apiKey string) (*db.ApiKey, error) {
 	return &db.ApiKey{
 		ID:           1,
 		UsersIdusers: 42,
@@ -44,7 +44,7 @@ func TestAPIKeyAuthMiddlewareEventPreservation(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "/api/action", nil)
 
-	// Create a dummy token. GetAPIKeyByHash will always return success above.
+	// Create a dummy token. SystemGetActiveAPIKeyByHash will always return success above.
 	token := "valid_token_123"
 	req.Header.Set("Authorization", "Bearer "+token)
 

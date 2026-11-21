@@ -184,7 +184,7 @@ func TestE2EPrivateForumAPI(t *testing.T) {
 		ExpiresAt:    sql.NullTime{Time: time.Now().Add(24 * time.Hour), Valid: true},
 	})
 	require.NoError(t, err)
-	storedAliceKey, err := env.cd.Queries().GetAPIKeyByHash(ctx, hex.EncodeToString(apiKeyHash[:]))
+	storedAliceKey, err := env.cd.Queries().SystemGetActiveAPIKeyByHash(ctx, hex.EncodeToString(apiKeyHash[:]))
 	require.NoError(t, err)
 	assert.Equal(t, aliceID, storedAliceKey.UsersIdusers)
 	assert.Equal(t, "private_forum:read,private_forum:write", storedAliceKey.Scopes)

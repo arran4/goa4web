@@ -4500,29 +4500,6 @@ func (s *sqliteQuerier) EnsureExternalLink(ctx context.Context, url string) (sql
 	return res, nil
 }
 
-func (s *sqliteQuerier) GetAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
-	res, err := s.q.GetAPIKeyByHash(ctx, apiKey)
-	if err != nil {
-		return nil, err
-	}
-	return func(v *dbsqlite.ApiKey) *ApiKey {
-		if v == nil {
-			return nil
-		}
-		return &ApiKey{
-			ID:           int32(v.ID),
-			UsersIdusers: int32(v.UsersIdusers),
-			ApiKey:       v.ApiKey,
-			Name:         v.Name,
-			Scopes:       v.Scopes,
-			ExpiresAt:    v.ExpiresAt,
-			LastUsedAt:   v.LastUsedAt,
-			CreatedAt:    v.CreatedAt,
-			RevokedAt:    v.RevokedAt,
-		}
-	}(res), nil
-}
-
 func (s *sqliteQuerier) GetActiveAnnouncementWithNewsForLister(ctx context.Context, arg GetActiveAnnouncementWithNewsForListerParams) (*GetActiveAnnouncementWithNewsForListerRow, error) {
 	res, err := s.q.GetActiveAnnouncementWithNewsForLister(ctx, dbsqlite.GetActiveAnnouncementWithNewsForListerParams{
 		ListerID: int64(arg.ListerID),
@@ -9907,6 +9884,29 @@ func (s *sqliteQuerier) SystemDeleteWritingSearch(ctx context.Context) error {
 
 func (s *sqliteQuerier) SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error {
 	return s.q.SystemDeleteWritingSearchByWritingID(ctx, int64(writingID))
+}
+
+func (s *sqliteQuerier) SystemGetActiveAPIKeyByHash(ctx context.Context, apiKey string) (*ApiKey, error) {
+	res, err := s.q.SystemGetActiveAPIKeyByHash(ctx, apiKey)
+	if err != nil {
+		return nil, err
+	}
+	return func(v *dbsqlite.ApiKey) *ApiKey {
+		if v == nil {
+			return nil
+		}
+		return &ApiKey{
+			ID:           int32(v.ID),
+			UsersIdusers: int32(v.UsersIdusers),
+			ApiKey:       v.ApiKey,
+			Name:         v.Name,
+			Scopes:       v.Scopes,
+			ExpiresAt:    v.ExpiresAt,
+			LastUsedAt:   v.LastUsedAt,
+			CreatedAt:    v.CreatedAt,
+			RevokedAt:    v.RevokedAt,
+		}
+	}(res), nil
 }
 
 func (s *sqliteQuerier) SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error) {

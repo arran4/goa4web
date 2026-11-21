@@ -2,8 +2,14 @@
 INSERT INTO api_keys (users_idusers, api_key, name, scopes, expires_at)
 VALUES (?, ?, ?, ?, ?);
 
--- name: GetAPIKeyByHash :one
-SELECT * FROM api_keys WHERE api_key = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW());
+-- name: SystemGetActiveAPIKeyByHash :one
+SELECT k.*
+FROM api_keys k
+JOIN users u ON u.idusers = k.users_idusers
+WHERE k.api_key = ?
+  AND k.revoked_at IS NULL
+  AND (k.expires_at IS NULL OR k.expires_at > NOW())
+  AND u.deleted_at IS NULL;
 
 -- name: ListAPIKeysByUser :many
 SELECT * FROM api_keys WHERE users_idusers = ? ORDER BY created_at DESC;

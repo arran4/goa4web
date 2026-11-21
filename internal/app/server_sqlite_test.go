@@ -483,9 +483,9 @@ func TestServerEndToEndWithSQLite(t *testing.T) {
 		t.Fatalf("failed to create API key in SQLite: %v", err)
 	}
 
-	fetchedKey, err := srv.Queries.GetAPIKeyByHash(ctx, "hash-12345-test-key")
+	fetchedKey, err := srv.Queries.SystemGetActiveAPIKeyByHash(ctx, "hash-12345-test-key")
 	if err != nil {
-		t.Fatalf("failed to retrieve API key in SQLite (GetAPIKeyByHash): %v", err)
+		t.Fatalf("failed to retrieve API key in SQLite (SystemGetActiveAPIKeyByHash): %v", err)
 	}
 	if fetchedKey.Name != "test-sqlite-api-key" {
 		t.Errorf("expected API key name 'test-sqlite-api-key', got %q", fetchedKey.Name)

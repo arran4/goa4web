@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
@@ -37,6 +38,14 @@ func (cd *CoreData) UserCredentials(username string) (*db.SystemGetLoginRow, err
 		return nil, fmt.Errorf("CoreData.UserCredentials: no queries available")
 	}
 	return cd.queries.SystemGetLogin(cd.ctx, sql.NullString{String: username, Valid: true})
+}
+
+// ActiveAPIKey resolves a bearer credential for a current account.
+func (cd *CoreData) ActiveAPIKey(ctx context.Context, hash string) (*db.ApiKey, error) {
+	if cd.queries == nil {
+		return nil, sql.ErrNoRows
+	}
+	return cd.queries.SystemGetActiveAPIKeyByHash(ctx, hash)
 }
 
 // VerifiedEmailsForUser returns all verified email addresses ordered by notification priority.

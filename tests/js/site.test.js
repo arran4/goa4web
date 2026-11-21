@@ -847,3 +847,31 @@ console.log("Running pasteimg.js Tests...");
     global.document = _originalDoc;
     global.window = _originalWin;
 }
+
+// Run the asset as a classic script so currentScript reflects the template's flag.
+{
+    const vm = require('node:vm');
+    function loadSite(revalidate) {
+        const listeners = new Map();
+        let reloads = 0;
+        vm.runInNewContext(siteJsContent, {
+            document: {
+                addEventListener() {},
+                currentScript: { hasAttribute: (name) => revalidate && name === 'data-revalidate-on-restore' },
+            },
+            window: {
+                addEventListener: (event, listener) => listeners.set(event, listener),
+                location: { reload: () => reloads++ },
+            },
+        });
+        return {listeners, countReloads: () => reloads};
+    }
+    const {listeners, countReloads} = loadSite(true);
+    const show = listeners.get('pageshow');
+    assert(typeof show === 'function', 'sensitive page uses the restoration listener');
+    show({persisted: false});
+    assert(countReloads() === 0, 'initial page load does not reload');
+    show({persisted: true});
+    assert(countReloads() === 1, 'persisted page restoration reloads once');
+    assert(!loadSite(false).listeners.has('pageshow'), 'public pages retain their normal restoration behavior');
+}

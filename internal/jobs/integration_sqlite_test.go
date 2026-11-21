@@ -15,6 +15,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/arran4/goa4web/config"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/workers/searchworker"
@@ -195,4 +196,29 @@ func TestSearchDirtyWorkerIndexesLatestRevision(t *testing.T) {
 	cancel()
 	wg.Wait()
 	t.Fatal("timed out waiting for search_dirty_targets indexed_revision to reach 2")
+}
+
+func TestThreadUpdateEnqueuesDurableWorkWithoutTaskEvent(t *testing.T) {
+	_, q := openSharedSQLiteFile(t)
+	ctx := t.Context()
+	svc := jobs.NewConfiguredService(q)
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithJobService(svc))
+	if err := cd.HandleThreadUpdated(ctx, common.ThreadUpdatedEvent{
+		ThreadID:      7,
+		CommentID:     42,
+		CommentText:   "[url=https://example.com/reference]Reference[/url]",
+		IncludeSearch: true,
+	}); err != nil {
+		t.Fatalf("apply thread side effects: %v", err)
+	}
+
+	for _, want := range []struct{ jobType, targetKey string }{
+		{jobs.JobTypeSearchIndex, "comment:42"},
+		{jobs.JobTypeExternalLink, "https://example.com/reference"},
+	} {
+		claimed, err := svc.ClaimNext(ctx, "worker", want.jobType)
+		if err != nil || claimed == nil || claimed.Job.TargetKey != want.targetKey {
+			t.Errorf("claim %s = (%v, %v), want target %q", want.jobType, claimed, err, want.targetKey)
+		}
+	}
 }

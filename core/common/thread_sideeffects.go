@@ -79,6 +79,19 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 		}
 	}
 
+	jobService := cd.JobService()
+	durableSearch := jobService != nil && event.CommentID != 0
+	if durableSearch && event.IncludeSearch {
+		if err := jobService.EnqueueSearchDirty(ctx, searchworker.TypeComment, event.CommentID); err != nil {
+			errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
+		}
+	}
+	if jobService != nil && event.CommentText != "" {
+		if err := cd.EnqueueExternalLinksFromBody(ctx, event.CommentText); err != nil {
+			errs = append(errs, fmt.Errorf("enqueue external links: %w", err))
+		}
+	}
+
 	evt := event.Event
 	if evt == nil && cd != nil {
 		evt = cd.Event()
@@ -155,25 +168,13 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 				TopicID:   event.TopicID,
 			}
 		}
-		if event.IncludeSearch {
-			if cd != nil && cd.jobService != nil && event.CommentID != 0 {
-				if err := cd.jobService.EnqueueSearchDirty(ctx, searchworker.TypeComment, event.CommentID); err != nil {
-					errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
-				}
-			} else {
-				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{
-					Type: searchworker.TypeComment,
-					ID:   event.CommentID,
-					Text: event.CommentText,
-				}
+		if event.IncludeSearch && !durableSearch {
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{
+				Type: searchworker.TypeComment,
+				ID:   event.CommentID,
+				Text: event.CommentText,
 			}
 		}
-		if event.CommentText != "" && cd != nil && cd.jobService != nil {
-			if err := cd.EnqueueExternalLinksFromBody(ctx, event.CommentText); err != nil {
-				errs = append(errs, fmt.Errorf("enqueue external links: %w", err))
-			}
-		}
-
 	}
 
 	return errors.Join(errs...)

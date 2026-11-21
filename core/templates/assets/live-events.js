@@ -8,7 +8,7 @@
     }
 
     function isSafeFragmentURL(url){
-        return typeof url === 'string' && url.length > 1 && url[0] === '/' && url[1] !== '/';
+        return typeof url === 'string' && url.length > 1 && url[0] === '/' && url[1] !== '/' && !/[\\\x00-\x20\x7f]/.test(url);
     }
 
     function parseEventKind(raw){
@@ -67,9 +67,10 @@
         const resp = await doFetch(url, {
             method: 'GET',
             credentials: 'same-origin',
+            redirect: 'error',
             headers: { 'X-Live-Fragment': '1' }
         });
-        if(!resp || !resp.ok || resp.redirected){
+        if(!resp || !resp.ok || resp.redirected || resp.status === 204){
             return false;
         }
         const ct = resp.headers && typeof resp.headers.get === 'function' ? (resp.headers.get('content-type') || '') : 'text/html';
@@ -128,7 +129,10 @@
 
         function connect(){
             if(typeof root.WebSocket !== 'function') return;
-            conn = new root.WebSocket(buildWebSocketURL(endpoint));
+            const target = root.document.querySelector('[data-live-thread]');
+            const thread = target && target.getAttribute('data-live-thread');
+            const scope = /^[1-9][0-9]*$/.test(thread || '') ? '?thread=' + thread : '';
+            conn = new root.WebSocket(buildWebSocketURL(endpoint + scope));
             conn.onopen = () => {
                 retryDelay = 1000;
                 refreshAllTargets(root.document).catch(e => console.log('ws reconcile error', e));

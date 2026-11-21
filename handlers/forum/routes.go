@@ -73,6 +73,7 @@ func RegisterRoutes(r *mux.Router, cfg *config.RuntimeConfig) []navpkg.RouterOpt
 	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/ts/{ts}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
 	fr.HandleFunc("/shared/topic/{topic}/thread/{thread}/nonce/{nonce}/sign/{sign}", SharedThreadPreviewPage).Methods("GET", "HEAD")
 
+	fr.Handle("/topic/{topic}/thread/{thread}/live", RequireThreadAndTopic(http.HandlerFunc(ThreadActivityFragment))).Methods(http.MethodGet).MatcherFunc(handlers.RequiresAnAccount())
 	fr.Handle("/topic/{topic}/thread/{thread}/replies", RequireThreadAndTopic(http.HandlerFunc(ReplyThreadsPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("GET")
 	fr.Handle("/topic/{topic}/thread/{thread}", RequireThreadAndTopic(http.HandlerFunc(ThreadPage))).Methods("POST")

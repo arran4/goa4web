@@ -11,6 +11,7 @@ import (
 	"github.com/arran4/goa4web/a4code"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/eventbus"
 )
 
 // ForumOperationForbiddenError reports that an actor lacks permission for a forum operation.
@@ -638,6 +639,14 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 			return nil, ForumOperationForbiddenError{Action: "reply"}
 		}
 		commentID = int32(commentID64)
+	}
+
+	// Live delivery is a best-effort wake-up. The next page or fragment request
+	// can read the committed reply even if no subscriber received this signal.
+	if cd.bus != nil {
+		_ = cd.Publish(eventbus.ForumReplyCommitted{
+			TopicID: topic.Idforumtopic, ThreadID: thread.Idforumthread, CommentID: commentID, Time: writtenAt,
+		})
 	}
 
 	anchor := fmt.Sprintf("c%d", commentID)

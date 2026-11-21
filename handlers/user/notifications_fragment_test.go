@@ -28,6 +28,14 @@ type fragmentTestQuerier struct {
 	unreadCount   int64
 }
 
+func (q *fragmentTestQuerier) GetLatestNotificationIDForLister(_ context.Context, _ int32) (int32, error) {
+	var latest int32
+	for _, notification := range q.notifications {
+		latest = max(latest, notification.ID)
+	}
+	return latest, nil
+}
+
 func (q *fragmentTestQuerier) ListVisibleNotificationEntriesForLister(_ context.Context, _ db.ListVisibleNotificationEntriesForListerParams) ([]*db.ListVisibleNotificationEntriesForListerRow, error) {
 	var rows []*db.ListVisibleNotificationEntriesForListerRow
 	for _, n := range q.notifications {

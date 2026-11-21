@@ -6164,6 +6164,14 @@ func (s *sqliteQuerier) GetLatestAnnouncementByNewsID(ctx context.Context, siteN
 	}(res), nil
 }
 
+func (s *sqliteQuerier) GetLatestNotificationIDForLister(ctx context.Context, listerID int32) (int32, error) {
+	res, err := s.q.GetLatestNotificationIDForLister(ctx, int64(listerID))
+	if err != nil {
+		return 0, err
+	}
+	return int32(res), nil
+}
+
 func (s *sqliteQuerier) GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error) {
 	res, err := s.q.GetLinkerCategoriesWithCount(ctx)
 	if err != nil {
@@ -9357,13 +9365,14 @@ func (s *sqliteQuerier) ListUsersWithRoles(ctx context.Context) ([]*ListUsersWit
 
 func (s *sqliteQuerier) ListVisibleNotificationEntriesForLister(ctx context.Context, arg ListVisibleNotificationEntriesForListerParams) ([]*ListVisibleNotificationEntriesForListerRow, error) {
 	res, err := s.q.ListVisibleNotificationEntriesForLister(ctx, dbsqlite.ListVisibleNotificationEntriesForListerParams{
-		Offset:         int64(arg.Offset),
-		Limit:          int64(arg.Limit),
-		ListerID:       int64(arg.ListerID),
-		GroupUnread:    arg.GroupUnread,
-		IncludeRead:    arg.IncludeRead,
-		NotificationID: arg.NotificationID,
-		DeliveryID:     arg.DeliveryID,
+		Offset:              int64(arg.Offset),
+		Limit:               int64(arg.Limit),
+		ListerID:            int64(arg.ListerID),
+		GroupUnread:         arg.GroupUnread,
+		IncludeRead:         arg.IncludeRead,
+		AfterNotificationID: int64(arg.AfterNotificationID),
+		NotificationID:      arg.NotificationID,
+		DeliveryID:          arg.DeliveryID,
 	})
 	if err != nil {
 		return nil, err

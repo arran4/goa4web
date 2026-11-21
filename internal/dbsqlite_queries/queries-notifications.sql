@@ -23,6 +23,19 @@ WHERE users_idusers = sqlc.arg(recipient_id)
   AND activity_position <= sqlc.arg(activity_position)
   AND read_at IS NULL;
 
+-- name: GetLatestNotificationIDForLister :one
+SELECT n.id
+FROM notifications n
+JOIN users u ON u.idusers = n.users_idusers AND u.deleted_at IS NULL
+WHERE n.users_idusers = sqlc.arg(lister_id)
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id AND r.can_login = 1
+      WHERE ur.users_idusers = u.idusers
+  )
+ORDER BY n.id DESC
+LIMIT 1;
+
 -- GetUnreadNotificationCountForLister returns the number of unread notifications for a
 -- lister.
 -- Parameters:
@@ -146,6 +159,7 @@ visible AS (
         AND reply.idcomments = (n.activity_position >> 32) AND reply.forumthread_id = th.idforumthread
     LEFT JOIN users author ON author.idusers = reply.users_idusers
     WHERE (sqlc.arg(include_read) OR n.read_at IS NULL)
+      AND n.id > sqlc.arg(after_notification_id)
       AND (sqlc.arg(notification_id) = 0 OR n.id = sqlc.arg(notification_id))
       AND (
           sqlc.arg(delivery_id) = 0 OR EXISTS (

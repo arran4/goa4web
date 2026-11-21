@@ -394,6 +394,7 @@ type Querier interface {
 	GetImagePostsByUserDescending(ctx context.Context, arg GetImagePostsByUserDescendingParams) ([]*GetImagePostsByUserDescendingRow, error)
 	GetImagePostsByUserDescendingAll(ctx context.Context, arg GetImagePostsByUserDescendingAllParams) ([]*GetImagePostsByUserDescendingAllRow, error)
 	GetLatestAnnouncementByNewsID(ctx context.Context, siteNewsID int64) (*SiteAnnouncement, error)
+	GetLatestNotificationIDForLister(ctx context.Context, listerID int64) (int64, error)
 	GetLinkerCategoriesWithCount(ctx context.Context) ([]*GetLinkerCategoriesWithCountRow, error)
 	GetLinkerCategoryById(ctx context.Context, id int64) (*LinkerCategory, error)
 	GetLinkerCategoryLinkCounts(ctx context.Context) ([]*GetLinkerCategoryLinkCountsRow, error)

@@ -64,3 +64,32 @@ func TestMySQLNotificationEntriesRespectGrantsAndGroupSnapshot(t *testing.T) {
 		t.Fatalf("revoked entry count = %d, err = %v", len(rows), err)
 	}
 }
+
+func TestMySQLNotificationObservationIsScopedToActiveLister(t *testing.T) {
+	ctx := t.Context()
+	conn := openReplyThreadTestDatabase(t)
+	if _, err := conn.ExecContext(ctx, string(database.SchemaMySQL)); err != nil {
+		t.Fatalf("load canonical schema: %v", err)
+	}
+	execReplySQL(t, conn,
+		"INSERT INTO users (idusers, username) VALUES (1, 'viewer'), (2, 'other viewer')",
+		"INSERT INTO roles (id, name, can_login) VALUES (1, 'member', 1)",
+		"INSERT INTO user_roles (users_idusers, role_id) VALUES (1, 1), (2, 1)",
+		"INSERT INTO notifications (id, users_idusers, message) VALUES (1, 1, 'first'), (2, 1, 'second'), (3, 2, 'other')",
+	)
+	q := NewForDriver(conn, "mysql")
+	id, err := q.GetLatestNotificationIDForLister(ctx, 1)
+	if err != nil || id != 2 {
+		t.Fatalf("viewer latest ID = %d, error = %v, want 2", id, err)
+	}
+	rows, err := q.ListVisibleNotificationEntriesForLister(ctx, ListVisibleNotificationEntriesForListerParams{
+		ListerID: 1, AfterNotificationID: 1, IncludeRead: true, Limit: 10,
+	})
+	if err != nil || len(rows) != 1 || rows[0].ID != 2 {
+		t.Fatalf("viewer newer notifications = %+v, error = %v", rows, err)
+	}
+	execReplySQL(t, conn, "DELETE FROM user_roles WHERE users_idusers = 1")
+	if _, err := q.GetLatestNotificationIDForLister(ctx, 1); err != sql.ErrNoRows {
+		t.Fatalf("viewer without login role: error = %v, want sql.ErrNoRows", err)
+	}
+}

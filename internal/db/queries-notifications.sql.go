@@ -140,6 +140,27 @@ func (q *Queries) DeleteNotificationForLister(ctx context.Context, arg DeleteNot
 	return err
 }
 
+const getLatestNotificationIDForLister = `-- name: GetLatestNotificationIDForLister :one
+SELECT n.id
+FROM notifications n
+JOIN users u ON u.idusers = n.users_idusers AND u.deleted_at IS NULL
+WHERE n.users_idusers = ?
+  AND EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON r.id = ur.role_id AND r.can_login = 1
+      WHERE ur.users_idusers = u.idusers
+  )
+ORDER BY n.id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestNotificationIDForLister(ctx context.Context, listerID int32) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getLatestNotificationIDForLister, listerID)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getNotificationCountForLister = `-- name: GetNotificationCountForLister :one
 SELECT COUNT(*) FROM notifications
 WHERE users_idusers = ?
@@ -349,6 +370,7 @@ visible AS (
         AND reply.idcomments = (n.activity_position >> 32) AND reply.forumthread_id = th.idforumthread
     LEFT JOIN users author ON author.idusers = reply.users_idusers
     WHERE (? OR n.read_at IS NULL)
+      AND n.id > ?
       AND (? = 0 OR n.id = ?)
       AND (
           ? = 0 OR EXISTS (
@@ -419,13 +441,14 @@ LIMIT ? OFFSET ?
 `
 
 type ListVisibleNotificationEntriesForListerParams struct {
-	ListerID       int32
-	GroupUnread    interface{}
-	IncludeRead    interface{}
-	NotificationID int32
-	DeliveryID     int32
-	Limit          int32
-	Offset         int32
+	ListerID            int32
+	GroupUnread         interface{}
+	IncludeRead         interface{}
+	AfterNotificationID int32
+	NotificationID      int32
+	DeliveryID          int32
+	Limit               int32
+	Offset              int32
 }
 
 type ListVisibleNotificationEntriesForListerRow struct {
@@ -453,6 +476,7 @@ func (q *Queries) ListVisibleNotificationEntriesForLister(ctx context.Context, a
 		arg.ListerID,
 		arg.GroupUnread,
 		arg.IncludeRead,
+		arg.AfterNotificationID,
 		arg.NotificationID,
 		arg.NotificationID,
 		arg.DeliveryID,

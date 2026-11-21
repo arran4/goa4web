@@ -80,7 +80,10 @@ notifications.
 After the notifier stores an inbox entry, it can publish a best-effort signal
 for the recipient. The authenticated `/ws/events` connection and the legacy
 `/ws/notifications` route filter that signal by session user. The browser gets
-only the notification event kind and timestamp.
+only the notification event kind and timestamp. The gateway also checks the
+recipient's newest persisted inbox ID every five seconds. When that ID advances,
+the gateway checks for new entries visible to the recipient and sends the same
+signal. This covers worker processes that do not share the web process's bus.
 
 The browser fetches server-rendered fragments from the page's
 `data-live-url` endpoints on a signal and whenever the connection opens.

@@ -45,6 +45,7 @@ type Querier interface {
 	AdminCreateFAQ(ctx context.Context, arg AdminCreateFAQParams) (sql.Result, error)
 	AdminCreateFAQCategory(ctx context.Context, arg AdminCreateFAQCategoryParams) (sql.Result, error)
 	AdminCreateForumCategory(ctx context.Context, arg AdminCreateForumCategoryParams) (int64, error)
+	// Historical SQLite tables use zero for a language-neutral topic.
 	AdminCreateForumTopic(ctx context.Context, arg AdminCreateForumTopicParams) (int64, error)
 	AdminCreateGrant(ctx context.Context, arg AdminCreateGrantParams) (int64, error)
 	AdminCreateImageBoard(ctx context.Context, arg AdminCreateImageBoardParams) error

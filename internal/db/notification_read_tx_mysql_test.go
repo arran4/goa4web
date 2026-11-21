@@ -2,7 +2,10 @@
 
 package db
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestNotificationReadStateLinearizabilityMySQL(t *testing.T) {
 	database := openReplyThreadTestDatabase(t)
@@ -37,4 +40,49 @@ func TestNotificationReadStateLinearizabilityMySQL(t *testing.T) {
 
 	queries := NewForDriver(database, "mysql")
 	runNotificationReadStateLinearizabilitySuite(t, queries)
+
+	t.Run("keep thread unread through a partial append acknowledgment", func(t *testing.T) {
+		execReplySQL(t, database,
+			`CREATE TABLE content_private_labels (
+				item varchar(64) NOT NULL, item_id int NOT NULL, user_id int NOT NULL,
+				label varchar(32) NOT NULL, invert boolean NOT NULL,
+				UNIQUE (item, item_id, user_id, label)
+			)`,
+			`CREATE TABLE comments (idcomments int PRIMARY KEY, forumthread_id int, language_id int, deleted_at datetime)`,
+			`CREATE TABLE comment_appends (id int PRIMARY KEY, comment_id int)`,
+			`CREATE TABLE user_language (users_idusers int, language_id int)`,
+			`INSERT INTO comments (idcomments, forumthread_id, language_id) VALUES (400, 500, 1), (401, 500, 2)`,
+			`INSERT INTO comment_appends (id, comment_id) VALUES (20, 400), (21, 400)`,
+			`INSERT INTO user_language (users_idusers, language_id) VALUES (600, 1)`,
+		)
+		ctx := context.Background()
+		acknowledge := func(appendID int64, wantRead bool) {
+			t.Helper()
+			if err := queries.(NotificationReadStateCoordinator).AcknowledgeThreadReadActivity(ctx, AcknowledgeThreadReadActivityParams{
+				RecipientID: 600, ThreadID: 500, CommentID: 400,
+				ActivityPosition: int64(400)<<32 | appendID,
+				UpdateLabels:     true,
+			}); err != nil {
+				t.Fatalf("acknowledge append %d: %v", appendID, err)
+			}
+			labels, err := queries.ListContentPrivateLabels(ctx, ListContentPrivateLabelsParams{
+				Item: "thread", ItemID: 500, UserID: 600,
+			})
+			if err != nil {
+				t.Fatalf("list read labels: %v", err)
+			}
+			read := false
+			for _, label := range labels {
+				if label.Label == "unread" && label.Invert {
+					read = true
+				}
+			}
+			if read != wantRead {
+				t.Fatalf("after append %d, read = %t, want %t", appendID, read, wantRead)
+			}
+		}
+		acknowledge(20, false)
+		acknowledge(21, true)
+		acknowledge(20, true)
+	})
 }

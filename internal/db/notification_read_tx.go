@@ -22,6 +22,7 @@ type AcknowledgeThreadReadActivityParams struct {
 	ThreadID         int32
 	CommentID        int32
 	ActivityPosition int64
+	UpdateLabels     bool
 }
 
 // NotificationReadStateCoordinator defines linearizable, transactional operations for
@@ -123,11 +124,41 @@ func acknowledgeThreadReadActivityTx(
 		}); err != nil {
 			return fmt.Errorf("acknowledge thread notifications: %w", err)
 		}
+		if arg.UpdateLabels {
+			if err := updateAcknowledgedThreadLabels(ctx, qtx, arg); err != nil {
+				return err
+			}
+		}
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("commit acknowledge read-state tx: %w", err)
 		}
 		return nil
 	})
+}
+
+func updateAcknowledgedThreadLabels(ctx context.Context, qtx Querier, arg AcknowledgeThreadReadActivityParams) error {
+	for _, label := range []string{"new", "unread"} {
+		if err := qtx.AddContentPrivateLabel(ctx, AddContentPrivateLabelParams{
+			Item: "thread", ItemID: arg.ThreadID, UserID: arg.RecipientID, Label: label, Invert: true,
+		}); err != nil {
+			return fmt.Errorf("record thread %s label: %w", label, err)
+		}
+	}
+	marker, err := qtx.GetContentReadMarkerForUpdate(ctx, GetContentReadMarkerForUpdateParams{
+		Item: "thread", ItemID: arg.ThreadID, UserID: arg.RecipientID,
+	})
+	if err != nil {
+		return fmt.Errorf("read effective thread watermark: %w", err)
+	}
+	if err := qtx.SystemReopenThreadUnreadLabelForNewerActivity(ctx, SystemReopenThreadUnreadLabelForNewerActivityParams{
+		ThreadID:      arg.ThreadID,
+		RecipientID:   arg.RecipientID,
+		LastCommentID: marker.LastCommentID,
+		LastAppendID:  int32(marker.LastActivityPosition & 0xFFFFFFFF),
+	}); err != nil {
+		return fmt.Errorf("retain unread label for unseen thread activities: %w", err)
+	}
+	return nil
 }
 
 func deliverThreadNotificationForActivityTx(

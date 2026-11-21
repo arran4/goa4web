@@ -79,11 +79,17 @@ components:
         total_participants: {type: integer}
         threads: {type: integer, format: int32}
         comments: {type: integer, format: int32}
+    DisplayedActivityID:
+      type: string
+      pattern: '^comment:[1-9][0-9]*(:append:[1-9][0-9]*)?$'
+      description: Opaque position of a rendered comment and its latest displayed append, if present.
+      example: 'comment:27:append:3'
     Comment:
       type: object
-      required: [id, username, text, html, written]
+      required: [id, username, text, html, written, activity_id]
       properties:
         id: {$ref: '#/components/schemas/PositiveInt32'}
+        activity_id: {$ref: '#/components/schemas/DisplayedActivityID'}
         username: {type: string}
         text: {type: string}
         html: {type: string}
@@ -193,7 +199,7 @@ paths:
   /private/api/topic/{topic}/thread/{thread}:
     get:
       summary: List comments in a visible private thread
-      description: Topic/thread mismatches and inaccessible IDs return a non-enumerating 404.
+      description: This request leaves the read watermark unchanged. Topic/thread mismatches and inaccessible IDs return a non-enumerating 404.
       x-required-scopes: [private_forum:read]
       parameters:
         - $ref: '#/components/parameters/TopicID'
@@ -235,14 +241,22 @@ paths:
               required: [text]
               properties:
                 text: {type: string, minLength: 1, example: I agree.}
+                last_comment:
+                  allOf:
+                    - $ref: '#/components/schemas/PositiveInt32'
+                  description: Optional ID of the displayed comment to acknowledge. Supply last_activity to include displayed appends.
+                last_activity:
+                  allOf:
+                    - $ref: '#/components/schemas/DisplayedActivityID'
+                  description: Optional previously displayed activity to acknowledge after committing the reply.
       responses:
         '200':
-          description: Comment created.
+          description: Reply committed as a new comment or an append.
           content:
             application/json:
               schema:
                 type: object
-                required: [status, thread_id, topic_id, comment_id, url, appended]
+                required: [status, thread_id, topic_id, comment_id, url, appended, activity_id]
                 properties:
                   status: {type: string, example: success}
                   thread_id: {$ref: '#/components/schemas/PositiveInt32'}
@@ -250,9 +264,54 @@ paths:
                   comment_id: {$ref: '#/components/schemas/PositiveInt32'}
                   url: {type: string}
                   appended: {type: boolean}
+                  activity_id:
+                    type: string
+                    description: Identity of the newly committed reply activity.
+                    example: 'comment:27:append:3'
+                  acknowledgement_failed:
+                    type: boolean
+                    description: Present with value true if the reply succeeded but acknowledgement of previously displayed activity failed.
         '400': {$ref: '#/components/responses/PrivateBadRequest'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/PrivateNotFound'}
+        '500': {$ref: '#/components/responses/PrivateServerError'}
+  /private/api/topic/{topic}/thread/{thread}/read:
+    post:
+      summary: Mark a visible private thread read through the displayed activity
+      description: Advances the read watermark and acknowledges linked notifications up to the supplied position. Later replies stay unread.
+      x-required-scopes: [private_forum:write]
+      parameters:
+        - $ref: '#/components/parameters/TopicID'
+        - $ref: '#/components/parameters/ThreadID'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [last_activity]
+              properties:
+                last_activity: {$ref: '#/components/schemas/DisplayedActivityID'}
+      responses:
+        '200':
+          description: The supplied activity was acknowledged.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, enum: [success]}
+        '400': {$ref: '#/components/responses/PrivateBadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403':
+          description: Required API scope is missing, or the browser form failed the CSRF check before bearer authentication.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivateAPIError'}
+            text/plain:
+              schema: {type: string}
         '404': {$ref: '#/components/responses/PrivateNotFound'}
         '500': {$ref: '#/components/responses/PrivateServerError'}
   /images/api:

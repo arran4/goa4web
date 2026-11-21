@@ -261,31 +261,38 @@ func APIListThreads(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// APIShowComments handles GET /api/privateforum/topic/{topic}/thread/{thread}
-func APIShowComments(w http.ResponseWriter, r *http.Request) {
-	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-
-	topicID, err := parsePrivateAPIID(mux.Vars(r)["topic"])
+// privateAPIThreadScope resolves the requested private topic and its visible thread.
+func privateAPIThreadScope(w http.ResponseWriter, r *http.Request, cd *common.CoreData) (topicID, threadID int32, ok bool) {
+	vars := mux.Vars(r)
+	topicID, err := parsePrivateAPIID(vars["topic"])
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid topic ID")
-		return
+		return 0, 0, false
 	}
-
-	threadID, err := parsePrivateAPIID(mux.Vars(r)["thread"])
+	threadID, err = parsePrivateAPIID(vars["thread"])
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid thread ID")
-		return
+		return 0, 0, false
 	}
 
-	// Enforce topic/thread relationship and basic visibility before reading
-	thread, err := cd.ForumThreadByID(threadID)
-	if err != nil || thread == nil {
+	topic, err := cd.ForumTopicByID(topicID)
+	if err != nil || topic == nil || topic.Handler != "private" {
 		writeAPIError(w, http.StatusNotFound, "thread not found")
-		return
+		return 0, 0, false
 	}
-	if thread.ForumtopicIdforumtopic != topicID {
-		// Visible thread belongs to a different topic, reject it
+	thread, err := cd.ForumThreadByID(threadID)
+	if err != nil || thread == nil || thread.ForumtopicIdforumtopic != topicID {
 		writeAPIError(w, http.StatusNotFound, "thread not found")
+		return 0, 0, false
+	}
+	return topicID, threadID, true
+}
+
+// APIShowComments handles GET /private/api/topic/{topic}/thread/{thread}.
+func APIShowComments(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	_, threadID, ok := privateAPIThreadScope(w, r, cd)
+	if !ok {
 		return
 	}
 
@@ -316,11 +323,12 @@ func APIShowComments(w http.ResponseWriter, r *http.Request) {
 
 	// Format text into HTML for the API response
 	type apiComment struct {
-		ID       int32  `json:"id"`
-		Username string `json:"username"`
-		Text     string `json:"text"`
-		HTML     string `json:"html"`
-		Written  string `json:"written"`
+		ID         int32  `json:"id"`
+		ActivityID string `json:"activity_id"`
+		Username   string `json:"username"`
+		Text       string `json:"text"`
+		HTML       string `json:"html"`
+		Written    string `json:"written"`
 	}
 
 	apiComments := make([]apiComment, 0, len(comments))
@@ -336,11 +344,12 @@ func APIShowComments(w http.ResponseWriter, r *http.Request) {
 		}
 
 		apiComments = append(apiComments, apiComment{
-			ID:       c.Idcomments,
-			Username: username,
-			Text:     c.Text.String,
-			HTML:     html,
-			Written:  c.Written.Time.Format("2006-01-02T15:04:05Z"),
+			ID:         c.Idcomments,
+			ActivityID: cd.CommentDisplayActivity(c),
+			Username:   username,
+			Text:       c.Text.String,
+			HTML:       html,
+			Written:    c.Written.Time.Format("2006-01-02T15:04:05Z"),
 		})
 	}
 
@@ -375,7 +384,37 @@ func mapAPIError(w http.ResponseWriter, err error) {
 	}
 }
 
-// APIPostComment handles POST /api/privateforum/topic/{topic}/thread/{thread}/reply
+// APIMarkThreadRead acknowledges the activity position displayed by the client.
+func APIMarkThreadRead(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	_, threadID, ok := privateAPIThreadScope(w, r, cd)
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "invalid form")
+		return
+	}
+
+	activityID := r.PostForm.Get("last_activity")
+	position, err := common.ParseActivityPosition(activityID)
+	commentID, appendID := common.ActivityPositionCommentAndAppend(position)
+	if err != nil || position <= 0 || common.FormatActivityPosition(commentID, appendID) != activityID {
+		writeAPIError(w, http.StatusBadRequest, "last_activity must be a displayed activity ID")
+		return
+	}
+	if err := cd.ReadForumThread(r.Context(), common.ReadForumThreadParams{
+		ActorID:              cd.UserID,
+		ThreadID:             threadID,
+		LastActivityPosition: position,
+	}); err != nil {
+		mapAPIError(w, err)
+		return
+	}
+	writeAPIJSON(w, http.StatusOK, map[string]string{"status": "success"})
+}
+
+// APIPostComment handles POST /private/api/topic/{topic}/thread/{thread}/reply.
 func APIPostComment(w http.ResponseWriter, r *http.Request) {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 
@@ -390,31 +429,11 @@ func APIPostComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicID, err := parsePrivateAPIID(mux.Vars(r)["topic"])
-	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "invalid topic ID")
+	topicID, threadID, ok := privateAPIThreadScope(w, r, cd)
+	if !ok {
 		return
 	}
-
-	threadID, err := parsePrivateAPIID(mux.Vars(r)["thread"])
-	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "invalid thread ID")
-		return
-	}
-
 	cd.SetEventTask(forumhandlers.ReplyTaskHandler)
-
-	// Enforce topic/thread relationship and basic visibility before mutation
-	thread, err := cd.ForumThreadByID(threadID)
-	if err != nil || thread == nil {
-		writeAPIError(w, http.StatusNotFound, "thread not found")
-		return
-	}
-	if thread.ForumtopicIdforumtopic != topicID {
-		// Visible thread belongs to a different topic, reject it
-		writeAPIError(w, http.StatusNotFound, "thread not found")
-		return
-	}
 
 	// Resolve language
 	langID := cd.PreferredLanguageID("")

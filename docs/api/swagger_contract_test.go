@@ -243,6 +243,7 @@ func assertPublishedPayloadAndScopeContracts(t *testing.T, spec map[string]any) 
 		"/private/api/topic/{topic}/threads":               {method: "get", scope: "private_forum:read"},
 		"/private/api/topic/{topic}/thread/{thread}":       {method: "get", scope: "private_forum:read"},
 		"/private/api/topic/{topic}/thread/{thread}/reply": {method: "post", scope: "private_forum:write"},
+		"/private/api/topic/{topic}/thread/{thread}/read":  {method: "post", scope: "private_forum:write"},
 		"/images/api":        {method: "get", scope: "images:read"},
 		"/images/api/upload": {method: "post", scope: "images:write"},
 	} {
@@ -259,6 +260,11 @@ func assertPublishedPayloadAndScopeContracts(t *testing.T, spec map[string]any) 
 	}
 	assertTopicCreateContract(t, mapAt(t, mapAt(t, paths, "/private/api/topics"), "post"))
 	assertReplyContract(t, mapAt(t, mapAt(t, paths, "/private/api/topic/{topic}/thread/{thread}/reply"), "post"))
+	assertMarkReadContract(t, mapAt(t, mapAt(t, paths, "/private/api/topic/{topic}/thread/{thread}/read"), "post"))
+	comments := mapAt(t, mapAt(t, mapAt(t, mapAt(t, spec, "components"), "schemas"), "Comment"), "properties")
+	if got := stringAt(t, mapAt(t, comments, "activity_id"), "$ref"); got != "#/components/schemas/DisplayedActivityID" {
+		t.Fatalf("comment activity identifier reference = %q", got)
+	}
 }
 
 func assertTopicCreateContract(t *testing.T, operation map[string]any) {
@@ -287,11 +293,31 @@ func assertTopicCreateContract(t *testing.T, operation map[string]any) {
 func assertReplyContract(t *testing.T, operation map[string]any) {
 	t.Helper()
 	responses := mapAt(t, operation, "responses")
-	assertResponseProperties(t, mapAt(t, responses, "200"), "status", "thread_id", "topic_id", "comment_id", "url", "appended")
+	assertResponseProperties(t, mapAt(t, responses, "200"), "status", "thread_id", "topic_id", "comment_id", "url", "appended", "activity_id", "acknowledgement_failed")
 	for _, status := range []string{"400", "401", "403", "404", "500"} {
 		if _, ok := responses[status]; !ok {
 			t.Fatalf("reply missing %s response", status)
 		}
+	}
+}
+
+func assertMarkReadContract(t *testing.T, operation map[string]any) {
+	t.Helper()
+	responses := mapAt(t, operation, "responses")
+	assertResponseProperties(t, mapAt(t, responses, "200"), "status")
+	for _, status := range []string{"400", "401", "403", "404", "500"} {
+		if _, ok := responses[status]; !ok {
+			t.Fatalf("mark read missing %s response", status)
+		}
+	}
+	form := mapAt(t, mapAt(t, mapAt(t, operation, "requestBody"), "content"), "application/x-www-form-urlencoded")
+	schema := mapAt(t, form, "schema")
+	if !reflect.DeepEqual(schema["required"], []any{"last_activity"}) {
+		t.Fatalf("mark read required fields = %#v", schema["required"])
+	}
+	properties := mapAt(t, schema, "properties")
+	if got := stringAt(t, mapAt(t, properties, "last_activity"), "$ref"); got != "#/components/schemas/DisplayedActivityID" {
+		t.Fatalf("mark read activity identifier reference = %q", got)
 	}
 }
 

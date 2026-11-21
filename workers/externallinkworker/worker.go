@@ -2,8 +2,6 @@ package externallinkworker
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"log"
 
 	"github.com/arran4/goa4web/a4code"
@@ -71,60 +69,17 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 						return nil
 					}
 
-					// Check if we need to fetch metadata
-					existing, err := q.GetExternalLinkByID(ctx, linkID)
-					if err != nil && !errors.Is(err, sql.ErrNoRows) {
-						log.Printf("GetExternalLinkByID %d: %v", linkID, err)
-						return nil
-					}
-					if !domainexternallink.NeedsMetadata(existing) {
-						return nil // Already has title
-					}
-
-					info, err := domainexternallink.FetchMetadata(ctx, canonicalURL, func(ctx context.Context, url string) (*opengraph.Info, error) {
-						return opengraph.Fetch(ctx, url, nil)
-					}, domainexternallink.Wait)
+					_, err = domainexternallink.RefreshMissingMetadata(ctx, q, linkID, canonicalURL,
+						func(ctx context.Context, url string) (*opengraph.Info, error) {
+							return domainexternallink.FetchMetadata(ctx, url, func(ctx context.Context, url string) (*opengraph.Info, error) {
+								return opengraph.Fetch(ctx, url, nil)
+							}, domainexternallink.Wait)
+						},
+						func(ctx context.Context, image string) (string, error) {
+							return common.NewCoreData(ctx, q, cfg).DownloadAndCacheImage(image)
+						})
 					if err != nil {
-						log.Printf("opengraph.Fetch %s: %v", canonicalURL, err)
-						return nil
-					}
-
-					var cachedImage string
-					if info.Image != "" {
-						cd := common.NewCoreData(ctx, q, cfg)
-						cached, err := cd.DownloadAndCacheImage(info.Image)
-						if err != nil {
-							log.Printf("DownloadAndCacheImage %s: %v", info.Image, err)
-						} else {
-							cachedImage = cached
-						}
-					}
-
-					desc := info.Description
-					if len(desc) > 65000 {
-						runes := []rune(desc)
-						if len(runes) > 16000 {
-							desc = string(runes[:16000])
-						}
-						for len(desc) > 65000 {
-							runes = []rune(desc)
-							desc = string(runes[:len(runes)-100])
-						}
-					}
-
-					metadata := *info
-					metadata.Description = desc
-					if err := q.UpdateExternalLinkMetadata(ctx, domainexternallink.MetadataParams(linkID, &metadata)); err != nil {
-						log.Printf("UpdateExternalLinkMetadata %d: %v", linkID, err)
-					}
-
-					if cachedImage != "" {
-						if err := q.UpdateExternalLinkImageCache(ctx, db.UpdateExternalLinkImageCacheParams{
-							CardImageCache: sql.NullString{String: cachedImage, Valid: true},
-							ID:             linkID,
-						}); err != nil {
-							log.Printf("UpdateExternalLinkImageCache %d: %v", linkID, err)
-						}
+						log.Printf("refresh external-link metadata %d: %v", linkID, err)
 					}
 
 					return nil

@@ -3,7 +3,7 @@ package common
 import (
 	"net/http"
 
-	searchutil "github.com/arran4/goa4web/workers/searchworker"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // SearchWords returns the cached search terms for the current request.
@@ -19,7 +19,7 @@ func (cd *CoreData) searchWordsFromRequest(r *http.Request) []string {
 	if cd.cache.searchWords != nil {
 		return cd.cache.searchWords
 	}
-	words := searchutil.BreakupTextToWords(r.PostFormValue("searchwords"))
+	words := searchindex.BreakupTextToWords(r.PostFormValue("searchwords"))
 	if len(words) == 0 {
 		cd.cache.searchWords = []string{}
 		return cd.cache.searchWords

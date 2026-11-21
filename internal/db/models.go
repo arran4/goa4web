@@ -248,6 +248,38 @@ type DigestDeliveryNotification struct {
 	NotificationID   int32
 }
 
+type DurableJob struct {
+	ID              int64
+	JobType         string
+	DedupeKey       string
+	ActiveDedupeKey sql.NullString
+	TargetType      string
+	TargetID        int64
+	TargetKey       string
+	TargetRevision  int64
+	NeedsRerun      bool
+	Status          string
+	Attempts        int32
+	MaxAttempts     int32
+	RunAfter        time.Time
+	LeaseOwner      sql.NullString
+	LeaseToken      sql.NullString
+	LeaseExpiresAt  sql.NullTime
+	LastError       sql.NullString
+	CreatedByUserID sql.NullInt32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	CompletedAt     sql.NullTime
+}
+
+type DurableJobCooldown struct {
+	DedupeKey      string
+	CooldownUntil  time.Time
+	LastError      sql.NullString
+	LastNotifiedAt sql.NullTime
+	UpdatedAt      time.Time
+}
+
 type ExternalLink struct {
 	ID              int32
 	Url             string
@@ -560,6 +592,14 @@ type SchedulerState struct {
 	TaskName  string
 	LastRunAt sql.NullTime
 	Metadata  sql.NullString
+}
+
+type SearchDirtyTarget struct {
+	TargetType      string
+	TargetID        int32
+	Revision        int64
+	IndexedRevision int64
+	UpdatedAt       time.Time
 }
 
 type Searchwordlist struct {

@@ -26,6 +26,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/upload"
 )
@@ -134,6 +135,22 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 		return
 	}
 	sourceURL = canonicalRemoteImageSourceURL(sourceURL)
+	if cd.jobService != nil {
+		ctx := cd.ctx
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		_, err := cd.jobService.Enqueue(ctx, jobs.EnqueueRequest{
+			JobType:         jobs.JobTypeImageCache,
+			TargetType:      jobs.JobTypeImageCache,
+			TargetKey:       sourceURL,
+			CreatedByUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0},
+		})
+		if err != nil && !errors.Is(err, jobs.ErrInCooldown) {
+			log.Printf("enqueue durable image cache job %s: %v", sourceURL, err)
+		}
+		return
+	}
 	run := func(ctx context.Context) {
 		attemptTime := time.Now().UTC()
 		log.Printf("image cache fetch start: mode=immediate id=%s source=%q attempt_at=%s", id, sourceURL, attemptTime.Format(time.RFC3339))
@@ -169,6 +186,48 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 		ctx = context.Background()
 	}
 	run(ctx)
+}
+
+// ProcessRemoteImageCacheJob executes a durable image_cache job for sourceURL.
+func (cd *CoreData) ProcessRemoteImageCacheJob(ctx context.Context, sourceURL string) error {
+	if cd == nil || cd.queries == nil || sourceURL == "" {
+		return nil
+	}
+	sourceURL = canonicalRemoteImageSourceURL(sourceURL)
+	id, err := remoteImageCacheIDForURL(sourceURL)
+	if err != nil {
+		return err
+	}
+	attemptTime := time.Now().UTC()
+	if _, err := cd.queries.GetImageCacheEntry(ctx, id); errors.Is(err, sql.ErrNoRows) {
+		_ = cd.queries.CreatePendingImageCacheEntry(ctx, db.CreatePendingImageCacheEntryParams{
+			ID:            id,
+			SourceUrl:     sql.NullString{String: sourceURL, Valid: true},
+			SourceKind:    imageCacheSourceKindRemote,
+			CreatedAt:     attemptTime,
+			LastUsedAt:    sql.NullTime{Time: attemptTime, Valid: true},
+			NextAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
+		})
+	}
+	if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
+		if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
+			return interrupted
+		}
+		retryDelay := cd.imageCacheFetchRetryDelay()
+		maxRetries := cd.imageCacheFetchMaxRetries()
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+		defer cancel()
+		_ = cd.queries.RecordImageCacheFetchFailure(cleanupCtx, db.RecordImageCacheFetchFailureParams{
+			ID:            id,
+			RetryCount:    int32(maxRetries),
+			RetryCount_2:  int32(maxRetries),
+			ErrorMessage:  sql.NullString{String: err.Error(), Valid: true},
+			LastAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
+			NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
+		})
+		return err
+	}
+	return nil
 }
 
 // ProcessPendingRemoteImageCacheEntries materializes queued remote cache

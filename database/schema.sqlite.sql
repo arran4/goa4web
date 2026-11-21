@@ -389,13 +389,16 @@ CREATE INDEX IF NOT EXISTS digest_delivery_notifications_notification_idx ON dig
 
 CREATE TABLE IF NOT EXISTS pending_emails (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
-to_user_id int DEFAULT NULL,
-direct_email INTEGER NOT NULL DEFAULT 0,
+to_email TEXT NOT NULL DEFAULT '',
+subject TEXT NOT NULL DEFAULT '',
 body TEXT NOT NULL,
-error_count int NOT NULL DEFAULT 0,
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 sent_at DATETIME DEFAULT NULL,
-digest_delivery_id int DEFAULT NULL
+html_body TEXT,
+error_count INT NOT NULL DEFAULT 0,
+to_user_id INT DEFAULT NULL,
+direct_email INTEGER NOT NULL DEFAULT 0,
+digest_delivery_id INT DEFAULT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS pending_emails_digest_delivery_idx ON pending_emails (digest_delivery_id);
 
@@ -749,5 +752,53 @@ CREATE INDEX idx_pending_actions_uid ON pending_actions (uid);
 
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (100, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (101, 1);
+CREATE TABLE IF NOT EXISTS durable_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_type TEXT NOT NULL,
+    dedupe_key TEXT NOT NULL,
+    active_dedupe_key TEXT DEFAULT NULL,
+    target_type TEXT NOT NULL,
+    target_id INTEGER NOT NULL DEFAULT 0,
+    target_key TEXT NOT NULL DEFAULT '',
+    target_revision INTEGER NOT NULL DEFAULT 0,
+    needs_rerun INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    max_attempts INTEGER NOT NULL DEFAULT 5,
+    run_after DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lease_owner TEXT DEFAULT NULL,
+    lease_token TEXT DEFAULT NULL,
+    lease_expires_at DATETIME DEFAULT NULL,
+    last_error TEXT DEFAULT NULL,
+    created_by_user_id INTEGER DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME DEFAULT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_durable_jobs_active_dedupe ON durable_jobs (active_dedupe_key);
+CREATE INDEX IF NOT EXISTS idx_durable_jobs_claim ON durable_jobs (status, run_after, lease_expires_at);
+CREATE INDEX IF NOT EXISTS idx_durable_jobs_dedupe ON durable_jobs (dedupe_key);
+CREATE INDEX IF NOT EXISTS idx_durable_jobs_completed ON durable_jobs (status, completed_at);
+
+CREATE TABLE IF NOT EXISTS durable_job_cooldowns (
+    dedupe_key TEXT NOT NULL PRIMARY KEY,
+    cooldown_until DATETIME NOT NULL,
+    last_error TEXT DEFAULT NULL,
+    last_notified_at DATETIME DEFAULT NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_durable_job_cooldowns_until ON durable_job_cooldowns (cooldown_until);
+
+CREATE TABLE IF NOT EXISTS search_dirty_targets (
+    target_type TEXT NOT NULL,
+    target_id INTEGER NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 1,
+    indexed_revision INTEGER NOT NULL DEFAULT 0,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (target_type, target_id)
+);
+
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (102, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);

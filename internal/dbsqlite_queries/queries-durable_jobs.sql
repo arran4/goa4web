@@ -329,3 +329,8 @@ WHERE image_cache_entries.status = sqlc.arg(previous_status)
         AND ((job.target_type = 'image_cache_entry' AND job.target_key = image_cache_entries.id)
           OR (job.target_type = 'image_cache' AND job.target_key = image_cache_entries.source_url))
   );
+
+-- name: SystemLockActiveDurableJobLease :one
+SELECT id FROM durable_jobs
+WHERE id = sqlc.arg(id) AND status = 'running'
+  AND lease_token = sqlc.arg(lease_token) AND lease_expires_at > sqlc.arg(now_at);

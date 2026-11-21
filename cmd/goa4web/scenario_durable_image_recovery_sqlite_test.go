@@ -3,9 +3,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
+	"image"
+	"image/png"
+	"io"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -138,4 +142,63 @@ func TestScenarioImageRecoveryHonorsCancellation(t *testing.T) {
 	rows, err = queue.AdminList(ctx, jobs.StatusPending, jobs.JobTypeImageCache, 20, 0)
 	require.NoError(t, err)
 	require.Empty(t, rows, "pruning the job history must not undo cancellation")
+}
+
+func TestScenarioCancelledImageDoesNotPublishInFlightSuccess(t *testing.T) {
+	env, cleanup := setupAPITestEnv(t)
+	defer cleanup()
+	ctx := t.Context()
+	q := env.cd.Queries()
+	queue := jobs.NewService(q)
+
+	ref, err := env.cd.QueueRemoteImageCache("https://example.test/cancel-during-fetch.png")
+	require.NoError(t, err)
+	id := strings.TrimPrefix(ref, "cache:")
+	require.NoError(t, queue.QueuePendingImageCacheJobs(ctx, id, sql.NullInt32{}))
+	claim, err := queue.ClaimNext(ctx, "image-worker", jobs.JobTypeImageCache)
+	require.NoError(t, err)
+	require.NotNil(t, claim)
+
+	var pngBytes bytes.Buffer
+	require.NoError(t, png.Encode(&pngBytes, image.NewGray(image.Rect(0, 0, 1, 1))))
+	started := make(chan struct{})
+	complete := make(chan struct{})
+	client := &http.Client{Transport: pendingImageTestTransport(func(request *http.Request) (*http.Response, error) {
+		close(started)
+		select {
+		case <-complete:
+			return &http.Response{
+				StatusCode: http.StatusOK, Status: "200 OK", Body: io.NopCloser(bytes.NewReader(pngBytes.Bytes())),
+				Header: http.Header{"Content-Type": {"image/png"}},
+			}, nil
+		case <-request.Context().Done():
+			return nil, request.Context().Err()
+		}
+	})}
+
+	workerCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	app := common.NewCoreData(workerCtx, q, env.server.Config, common.WithHTTPClient(client))
+	result := make(chan error, 1)
+	go func() { result <- app.ProcessClaimedRemoteImageCacheJob(workerCtx, queue, claim.Job) }()
+
+	select {
+	case <-started:
+	case <-time.After(3 * time.Second):
+		t.Fatal("claimed image fetch did not start")
+	}
+	cancelled, err := queue.AdminCancel(ctx, claim.Job.ID)
+	require.NoError(t, err)
+	require.True(t, cancelled)
+	close(complete)
+	select {
+	case err := <-result:
+		require.ErrorIs(t, err, jobs.ErrLeaseLost)
+	case <-time.After(3 * time.Second):
+		t.Fatal("claimed image fetch did not finish")
+	}
+
+	entry, err := app.ImageCacheEntry(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, jobs.StatusCancelled, entry.Status, "a stale fetch must not publish after cancellation")
 }

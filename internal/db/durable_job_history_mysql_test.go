@@ -97,6 +97,22 @@ func TestMySQLQueuePendingImageCacheJobs(t *testing.T) {
 	require.Equal(t, "image_cache_entry", rows[1].TargetType)
 
 	id := rows[1].ID
+	lease := sql.NullString{String: "worker-token", Valid: true}
+	n, err = q.SystemClaimDurableJobByID(ctx, SystemClaimDurableJobByIDParams{
+		ID: id, LeaseToken: lease,
+		RunAfter: now, LeaseExpiresAt: sql.NullTime{Time: now.Add(time.Minute), Valid: true},
+		LeaseExpiresAt_2: sql.NullTime{Time: now, Valid: true},
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), n)
+	require.NoError(t, q.(JobTransactor).WithJobTransaction(ctx, func(tx Querier) error {
+		locked, err := tx.SystemLockActiveDurableJobLease(ctx, SystemLockActiveDurableJobLeaseParams{
+			ID: id, LeaseToken: lease, NowAt: sql.NullTime{Time: now, Valid: true},
+		})
+		require.NoError(t, err)
+		require.Equal(t, id, locked)
+		return nil
+	}))
 	require.NoError(t, q.(JobTransactor).WithJobTransaction(ctx, func(tx Querier) error {
 		if _, err := tx.AdminCancelDurableJob(ctx, id); err != nil {
 			return err
@@ -108,4 +124,8 @@ func TestMySQLQueuePendingImageCacheJobs(t *testing.T) {
 	var status string
 	require.NoError(t, conn.QueryRowContext(ctx, "SELECT status FROM image_cache_entries WHERE id = ?", "recover.png").Scan(&status))
 	require.Equal(t, "cancelled", status)
+	_, err = q.SystemLockActiveDurableJobLease(ctx, SystemLockActiveDurableJobLeaseParams{
+		ID: id, LeaseToken: lease, NowAt: sql.NullTime{Time: now, Valid: true},
+	})
+	require.ErrorIs(t, err, sql.ErrNoRows)
 }

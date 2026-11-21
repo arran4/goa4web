@@ -60,7 +60,9 @@ durable job queue at startup and periodically. Both reconciliation and the
 immediate enqueue use the cache entry ID and leave existing job retry schedules
 intact. Workers also accept previously queued URL-keyed image jobs. Cancelling
 a queued image updates its cache entry in the same transaction, so recovery
-respects cancellation even after the job history is pruned.
+respects cancellation even after the job history is pruned. The worker checks
+its claim after downloading and locks the active lease while recording the
+cache metadata.
 
 ## Shutdown
 

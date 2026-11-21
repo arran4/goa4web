@@ -11224,6 +11224,18 @@ func (s *sqliteQuerier) SystemListWritingCategories(ctx context.Context, arg Sys
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemLockActiveDurableJobLease(ctx context.Context, arg SystemLockActiveDurableJobLeaseParams) (int64, error) {
+	res, err := s.q.SystemLockActiveDurableJobLease(ctx, dbsqlite.SystemLockActiveDurableJobLeaseParams{
+		ID:         arg.ID,
+		LeaseToken: arg.LeaseToken,
+		NowAt:      arg.NowAt,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error {
 	return s.q.SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx, int64(id))
 }

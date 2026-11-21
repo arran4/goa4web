@@ -188,10 +188,7 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 				return nil
 			}
 			cd := common.NewCoreData(ctx, q, cfg, imageOptions...)
-			if job.TargetType == jobs.TargetTypeImageCacheEntry {
-				return cd.ProcessRemoteImageCacheEntryJob(ctx, job.TargetKey)
-			}
-			return cd.ProcessRemoteImageCacheJob(ctx, job.TargetKey)
+			return cd.ProcessClaimedRemoteImageCacheJob(ctx, svc, job)
 		})
 	})
 	historyHours, historyLimit := config.DefaultDurableJobHistoryHours, config.DefaultDurableJobHistoryLimit

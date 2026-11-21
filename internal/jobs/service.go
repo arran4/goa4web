@@ -572,6 +572,9 @@ func (s *Service) RunWorkerLoop(ctx context.Context, owner string, pollInterval 
 
 func (s *Service) executeClaimed(ctx context.Context, claimed *ClaimedJob, handler HandlerFunc) {
 	err := handler(ctx, claimed.Job)
+	if errors.Is(err, ErrLeaseLost) {
+		return
+	}
 	if err != nil {
 		if ctx.Err() != nil || errors.Is(err, context.Canceled) {
 			relCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)

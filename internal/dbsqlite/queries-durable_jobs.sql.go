@@ -737,6 +737,25 @@ func (q *Queries) SystemListActiveAdminUserIDs(ctx context.Context) ([]int64, er
 	return items, nil
 }
 
+const systemLockActiveDurableJobLease = `-- name: SystemLockActiveDurableJobLease :one
+SELECT id FROM durable_jobs
+WHERE id = ?1 AND status = 'running'
+  AND lease_token = ?2 AND lease_expires_at > ?3
+`
+
+type SystemLockActiveDurableJobLeaseParams struct {
+	ID         int64
+	LeaseToken sql.NullString
+	NowAt      sql.NullTime
+}
+
+func (q *Queries) SystemLockActiveDurableJobLease(ctx context.Context, arg SystemLockActiveDurableJobLeaseParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemLockActiveDurableJobLease, arg.ID, arg.LeaseToken, arg.NowAt)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const systemMarkSearchTargetIndexed = `-- name: SystemMarkSearchTargetIndexed :execrows
 UPDATE search_dirty_targets
 SET indexed_revision = ?, updated_at = CURRENT_TIMESTAMP

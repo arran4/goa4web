@@ -359,3 +359,42 @@ func TestDurableFetchRetrySchedule(t *testing.T) {
 		})
 	}
 }
+
+func TestWriteWithActiveLeaseRejectsExpiredAndReplacedClaims(t *testing.T) {
+	_, q := openTestJobsDB(t)
+	ctx := t.Context()
+	now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+	svc := NewService(q)
+	svc.Now = func() time.Time { return now }
+	svc.LeaseDuration = time.Second
+
+	if _, err := svc.Enqueue(ctx, EnqueueRequest{JobType: JobTypeExternalLink, TargetKey: "lease-fixture"}); err != nil {
+		t.Fatal(err)
+	}
+	first, err := svc.ClaimNext(ctx, "first")
+	if err != nil || first == nil {
+		t.Fatalf("first claim: %+v, %v", first, err)
+	}
+	writes := 0
+	write := func(db.Querier) error { writes++; return nil }
+	if err := svc.WriteWithActiveLease(ctx, first.Job, write); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(2 * time.Second)
+	if err := svc.WriteWithActiveLease(ctx, first.Job, write); !errors.Is(err, ErrLeaseLost) {
+		t.Fatalf("expired claim: %v, want ErrLeaseLost", err)
+	}
+	second, err := svc.ClaimNext(ctx, "second")
+	if err != nil || second == nil {
+		t.Fatalf("second claim: %+v, %v", second, err)
+	}
+	if err := svc.WriteWithActiveLease(ctx, first.Job, write); !errors.Is(err, ErrLeaseLost) {
+		t.Fatalf("replaced claim: %v, want ErrLeaseLost", err)
+	}
+	if err := svc.WriteWithActiveLease(ctx, second.Job, write); err != nil {
+		t.Fatal(err)
+	}
+	if writes != 2 {
+		t.Fatalf("applied %d writes, want one per active lease", writes)
+	}
+}

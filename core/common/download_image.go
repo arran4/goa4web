@@ -26,6 +26,7 @@ import (
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
 	intimages "github.com/arran4/goa4web/internal/images"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/upload"
 )
@@ -184,32 +185,42 @@ func (cd *CoreData) StartRemoteImageCacheFetch(id, sourceURL string) {
 	run(ctx)
 }
 
-// ProcessRemoteImageCacheJob executes a durable image_cache job for sourceURL.
-func (cd *CoreData) ProcessRemoteImageCacheJob(ctx context.Context, sourceURL string) error {
-	if cd == nil || cd.queries == nil || sourceURL == "" {
-		return nil
+// imageJobWrite commits a cache record while checking the job claim.
+type imageJobWrite func(ctx context.Context, update func(db.Querier) error) error
+
+// ProcessClaimedRemoteImageCacheJob fetches an image and publishes cache metadata
+// while its worker still owns the durable job. Older jobs identify the URL.
+func (cd *CoreData) ProcessClaimedRemoteImageCacheJob(ctx context.Context, svc *jobs.Service, job *db.DurableJob) error {
+	write := func(ctx context.Context, update func(db.Querier) error) error {
+		return svc.WriteWithActiveLease(ctx, job, update)
 	}
-	sourceURL = canonicalRemoteImageSourceURL(sourceURL)
+	if job.TargetType == jobs.TargetTypeImageCacheEntry {
+		return cd.processRemoteImageCacheEntryJob(ctx, job.TargetKey, write)
+	}
+	sourceURL := canonicalRemoteImageSourceURL(job.TargetKey)
 	id, err := remoteImageCacheIDForURL(sourceURL)
 	if err != nil {
 		return err
 	}
 	attemptTime := time.Now().UTC()
 	if _, err := cd.queries.GetImageCacheEntry(ctx, id); errors.Is(err, sql.ErrNoRows) {
-		_ = cd.queries.CreatePendingImageCacheEntry(ctx, db.CreatePendingImageCacheEntryParams{
-			ID:            id,
-			SourceUrl:     sql.NullString{String: sourceURL, Valid: true},
-			SourceKind:    imageCacheSourceKindRemote,
-			CreatedAt:     attemptTime,
-			LastUsedAt:    sql.NullTime{Time: attemptTime, Valid: true},
-			NextAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
-		})
+		if err := write(ctx, func(q db.Querier) error {
+			return q.CreatePendingImageCacheEntry(ctx, db.CreatePendingImageCacheEntryParams{
+				ID: id, SourceUrl: sql.NullString{String: sourceURL, Valid: sourceURL != ""},
+				SourceKind: imageCacheSourceKindRemote, CreatedAt: attemptTime,
+				LastUsedAt:    sql.NullTime{Time: attemptTime, Valid: true},
+				NextAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
+			})
+		}); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return fmt.Errorf("load remote image cache entry: %w", err)
 	}
-	return cd.fetchRemoteImageCacheJob(ctx, id, sourceURL, attemptTime)
+	return cd.fetchRemoteImageCacheJob(ctx, id, sourceURL, attemptTime, write)
 }
 
-// ProcessRemoteImageCacheEntryJob fetches a persisted remote cache entry by its stable ID.
-func (cd *CoreData) ProcessRemoteImageCacheEntryJob(ctx context.Context, id string) error {
+func (cd *CoreData) processRemoteImageCacheEntryJob(ctx context.Context, id string, write imageJobWrite) error {
 	entry, err := cd.ImageCacheEntry(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil
@@ -221,19 +232,30 @@ func (cd *CoreData) ProcessRemoteImageCacheEntryJob(ctx context.Context, id stri
 		(entry.Status != imageCacheStatusPending && entry.Status != imageCacheStatusFailed) || !entry.SourceUrl.Valid || entry.SourceUrl.String == "" {
 		return nil
 	}
-	return cd.fetchRemoteImageCacheJob(ctx, id, entry.SourceUrl.String, time.Now().UTC())
+	return cd.fetchRemoteImageCacheJob(ctx, id, entry.SourceUrl.String, time.Now().UTC(), write)
 }
 
-func (cd *CoreData) fetchRemoteImageCacheJob(ctx context.Context, id, sourceURL string, attemptTime time.Time) error {
-	if err := cd.refreshRemoteImageCacheEntry(ctx, id, sourceURL, attemptTime); err != nil {
-		if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
-			return interrupted
+func (cd *CoreData) fetchRemoteImageCacheJob(ctx context.Context, id, sourceURL string, attemptTime time.Time, write imageJobWrite) error {
+	img, err := cd.downloadExternalImage(ctx, sourceURL)
+	if err == nil {
+		// A lease can be revoked while the network request is in progress.
+		if err := write(ctx, func(db.Querier) error { return nil }); err != nil {
+			return err
 		}
-		retryDelay := cd.imageCacheFetchRetryDelay()
-		maxRetries := cd.imageCacheFetchMaxRetries()
-		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
-		defer cancel()
-		_ = cd.queries.RecordImageCacheFetchFailure(cleanupCtx, db.RecordImageCacheFetchFailureParams{
+		err = cd.storeRemoteImageCacheFiles(ctx, id, img)
+	}
+	if err == nil {
+		return write(ctx, func(q db.Querier) error {
+			return cd.recordRemoteImageCacheMetadata(ctx, q, id, sourceURL, img, attemptTime)
+		})
+	}
+	if interrupted := imageFetchInterruption(ctx, err); interrupted != nil {
+		return interrupted
+	}
+	retryDelay := cd.imageCacheFetchRetryDelay()
+	maxRetries := cd.imageCacheFetchMaxRetries()
+	recordErr := write(ctx, func(q db.Querier) error {
+		return q.RecordImageCacheFetchFailure(ctx, db.RecordImageCacheFetchFailureParams{
 			ID:            id,
 			RetryCount:    int32(maxRetries),
 			RetryCount_2:  int32(maxRetries),
@@ -241,9 +263,8 @@ func (cd *CoreData) fetchRemoteImageCacheJob(ctx context.Context, id, sourceURL 
 			LastAttemptAt: sql.NullTime{Time: attemptTime, Valid: true},
 			NextAttemptAt: sql.NullTime{Time: attemptTime.Add(retryDelay), Valid: true},
 		})
-		return err
-	}
-	return nil
+	})
+	return errors.Join(err, recordErr)
 }
 
 func imageFetchInterruption(ctx context.Context, err error) error {
@@ -449,7 +470,11 @@ func (cd *CoreData) recordRemoteImageCacheEntry(ctx context.Context, id, sourceU
 	if cd == nil || cd.queries == nil {
 		return nil
 	}
-	if err := cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+	return cd.recordRemoteImageCacheMetadata(ctx, cd.queries, id, sourceURL, img, now)
+}
+
+func (cd *CoreData) recordRemoteImageCacheMetadata(ctx context.Context, q db.Querier, id, sourceURL string, img *downloadedImage, now time.Time) error {
+	if err := q.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
 		ID:               id,
 		SourceUrl:        sql.NullString{String: sourceURL, Valid: sourceURL != ""},
 		SourceKind:       imageCacheSourceKindRemote,
@@ -471,7 +496,7 @@ func (cd *CoreData) recordRemoteImageCacheEntry(ctx context.Context, id, sourceU
 	if !img.thumbnailID.Valid || len(img.thumbnailBytes) == 0 {
 		return nil
 	}
-	return cd.queries.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
+	return q.UpsertImageCacheEntry(ctx, db.UpsertImageCacheEntryParams{
 		ID:          img.thumbnailID.String,
 		SourceUrl:   sql.NullString{String: sourceURL, Valid: sourceURL != ""},
 		SourceKind:  imageCacheSourceKindRemote,
@@ -691,6 +716,13 @@ func (cd *CoreData) refreshRemoteImageCacheEntry(ctx context.Context, id, source
 	if err != nil {
 		return err
 	}
+	if err := cd.storeRemoteImageCacheFiles(ctx, id, img); err != nil {
+		return err
+	}
+	return cd.recordRemoteImageCacheEntry(ctx, id, sourceURL, img, now)
+}
+
+func (cd *CoreData) storeRemoteImageCacheFiles(ctx context.Context, id string, img *downloadedImage) error {
 	key, err := imageCacheKey(id)
 	if err != nil {
 		return err
@@ -699,10 +731,7 @@ func (cd *CoreData) refreshRemoteImageCacheEntry(ctx context.Context, id, source
 		return err
 	}
 	ext := path.Ext(id)
-	if err := cd.writeRemoteImageThumbnail(ctx, id, ext, img); err != nil {
-		return err
-	}
-	return cd.recordRemoteImageCacheEntry(ctx, id, sourceURL, img, now)
+	return cd.writeRemoteImageThumbnail(ctx, id, ext, img)
 }
 
 // ImageCacheEntry returns metadata for a cache entry when present.

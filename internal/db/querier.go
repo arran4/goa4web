@@ -684,6 +684,7 @@ type Querier interface {
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int32) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	SystemLockActiveDurableJobLease(ctx context.Context, arg SystemLockActiveDurableJobLeaseParams) (int64, error)
 	SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error
 	SystemMarkPasswordResetVerified(ctx context.Context, id int32) error
 	SystemMarkPendingEmailSent(ctx context.Context, id int32) error

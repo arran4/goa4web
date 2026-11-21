@@ -365,7 +365,7 @@ func TestRemoteImageCacheJobRecordsRetryFailure(t *testing.T) {
 		SourceKind: imageCacheSourceKindRemote,
 		Status:     imageCacheStatusPending,
 	}
-	if err := cd.ProcessRemoteImageCacheEntryJob(context.Background(), "abcd1234.png"); err == nil {
+	if err := cd.processRemoteImageCacheEntryJob(context.Background(), "abcd1234.png", func(_ context.Context, write func(db.Querier) error) error { return write(queries) }); err == nil {
 		t.Fatal("expected fetch failure")
 	}
 	if len(queries.RecordImageCacheFetchFailureCalls) != 1 {
@@ -451,7 +451,7 @@ func TestDurableRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
 	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
 	done := make(chan error, 1)
 	go func() {
-		done <- cd.ProcessRemoteImageCacheEntryJob(ctx, "abcd1234.png")
+		done <- cd.processRemoteImageCacheEntryJob(ctx, "abcd1234.png", func(_ context.Context, write func(db.Querier) error) error { return write(queries) })
 	}()
 	select {
 	case <-started:
@@ -462,7 +462,7 @@ func TestDurableRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
 	select {
 	case err := <-done:
 		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("ProcessRemoteImageCacheEntryJob() error = %v, want context.Canceled", err)
+			t.Fatalf("processRemoteImageCacheEntryJob() error = %v, want context.Canceled", err)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("scheduled image fetch did not stop after cancellation")

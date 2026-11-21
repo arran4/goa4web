@@ -149,19 +149,6 @@ func (n *Notifier) ProcessForumReplyEmailWindow(ctx context.Context) error {
 
 func (n *Notifier) replyEmailSummary(ctx context.Context, window *db.SystemGetDueForumReplyEmailWindowRow, token sql.NullString) (replyEmailSummary, error) {
 	var summary replyEmailSummary
-	subscriptions, err := n.Queries.ListSubscriptionsByUser(ctx, window.RecipientID)
-	if err != nil {
-		return summary, fmt.Errorf("check current forum email subscriptions: %w", err)
-	}
-	patterns := make(map[string]bool)
-	for _, sub := range subscriptions {
-		if sub.Method == "email" {
-			patterns[sub.Pattern] = true
-		}
-	}
-	if len(patterns) == 0 {
-		return summary, nil
-	}
 	args := db.SystemListEligibleForumReplyEmailThreadsParams{
 		RecipientID: window.RecipientID, WindowEnd: window.WindowEnd, LeaseToken: token, Limit: 50,
 	}
@@ -173,7 +160,12 @@ func (n *Notifier) replyEmailSummary(ctx context.Context, window *db.SystemGetDu
 		for _, row := range rows {
 			private := row.Handler == "private"
 			path := fmt.Sprintf("%s/topic/%d/thread/%d", common.CanonicalForumBasePath(private, ""), row.TopicID, row.ThreadID)
-			if !n.hasReplyEmailSubscription(path, patterns) {
+			patterns := n.forumReplyPatterns(common.ForumReplyNotificationIntent{CanonicalPath: path})
+			subscribers, err := collectSubscribers(ctx, n.Queries, patterns, "email")
+			if err != nil {
+				return summary, fmt.Errorf("check current forum reply email subscription: %w", err)
+			}
+			if _, subscribed := subscribers[window.RecipientID]; !subscribed {
 				continue
 			}
 			if len(summary.Threads) == replyEmailThreadsPerMessage {
@@ -196,13 +188,4 @@ func (n *Notifier) replyEmailSummary(ctx context.Context, window *db.SystemGetDu
 		}
 		args.Offset += args.Limit
 	}
-}
-
-func (n *Notifier) hasReplyEmailSubscription(path string, subscriptions map[string]bool) bool {
-	for _, pattern := range expandPatternSeparators(n.forumReplyPatterns(common.ForumReplyNotificationIntent{CanonicalPath: path})) {
-		if subscriptions[pattern] {
-			return true
-		}
-	}
-	return false
 }

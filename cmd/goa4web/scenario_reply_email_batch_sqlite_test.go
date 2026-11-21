@@ -117,11 +117,16 @@ func TestScenarioBatchesOptionalReplyEmailAtWindowBoundary(t *testing.T) {
 	require.Len(t, provider.Messages, 1, "re-enabling mail does not release the old generation")
 
 	cfg.NotificationsEnabled = false
+	cfg.ForumReplyEmailBatchMinutes = 5
 	reply(bob, "New activity while eligible for email only")
 	cfg.NotificationsEnabled = true
-	now = now.Add(15 * time.Minute)
+	now = now.Add(5*time.Minute - time.Second)
 	require.NoError(t, worker.ProcessForumReplyEmailWindow(ctx))
-	require.Len(t, provider.Messages, 2)
+	require.Len(t, provider.Messages, 1)
+	now = now.Add(time.Second)
+	require.NoError(t, worker.ProcessForumReplyEmailWindow(ctx))
+	require.Len(t, provider.Messages, 2, "a configured five-minute window closes on its own boundary")
+	cfg.ForumReplyEmailBatchMinutes = 15
 	require.Contains(t, provider.Messages[1].Text, "1 new reply")
 
 	reply(bob, "Reply before Alice unsubscribes from email")

@@ -174,7 +174,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	err = cd.updateForumCommentWithObservedLinks(db.UpdateForumCommentForEditorParams{
+	err = cd.updateForumCommentWithWork(db.UpdateForumCommentForEditorParams{
 		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:         sql.NullString{String: text, Valid: true},
 		CommentID:    commentID,
@@ -207,7 +207,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	err = cd.updateForumCommentWithObservedLinks(db.UpdateForumCommentForEditorParams{
+	err = cd.updateForumCommentWithWork(db.UpdateForumCommentForEditorParams{
 		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:         sql.NullString{String: text, Valid: true},
 		CommentID:    commentID,
@@ -223,17 +223,16 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	return nil
 }
 
-func (cd *CoreData) updateForumCommentWithObservedLinks(arg db.UpdateForumCommentForEditorParams) error {
-	var links []string
-	if cd.jobService != nil {
-		links = externalLinksFromBody(arg.Text.String)
-	}
-	return cd.withForumLinkObservations(cd.ctx, links, arg.EditorUserID, func(q db.Querier) (bool, error) {
+func (cd *CoreData) updateForumCommentWithWork(arg db.UpdateForumCommentForEditorParams) error {
+	return cd.withCommentWork(cd.ctx, cd.jobService != nil, arg.Text.String, arg.EditorUserID, func(q db.Querier) (int64, error) {
 		rows, err := q.UpdateForumCommentForEditor(cd.ctx, arg)
-		if err == nil && rows == 0 {
-			return false, fmt.Errorf("edit denied: access restricted or comment not found")
+		if err != nil {
+			return 0, err
 		}
-		return rows != 0, err
+		if rows == 0 {
+			return 0, fmt.Errorf("edit denied: access restricted or comment not found")
+		}
+		return int64(arg.CommentID), nil
 	})
 }
 

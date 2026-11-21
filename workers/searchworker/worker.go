@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -28,7 +29,17 @@ func RunDurableWorker(ctx context.Context, jobSvc *jobs.Service, q db.Querier, w
 		if targetType == "" || targetID == 0 {
 			return nil
 		}
-		return jobSvc.WriteWithActiveLease(ctx, job, func(tx db.Querier) error {
+		transactor, ok := q.(db.JobTransactor)
+		if !ok {
+			return fmt.Errorf("durable search transactions unavailable")
+		}
+		return transactor.WithJobTransaction(ctx, func(tx db.Querier) error {
+			// Take the source, revision and job locks in the same order as
+			// the producer that writes the source and records its work.
+			text, err := loadSearchableText(ctx, tx, targetType, targetID)
+			if err != nil {
+				return err
+			}
 			dirty, err := tx.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
 				TargetType: targetType, TargetID: targetID,
 			})
@@ -50,8 +61,7 @@ func RunDurableWorker(ctx context.Context, jobSvc *jobs.Service, q db.Querier, w
 			if err != nil || marked == 0 {
 				return err
 			}
-			text, err := loadSearchableText(ctx, tx, targetType, targetID)
-			if err != nil {
+			if err := jobSvc.LockActiveLease(ctx, tx, job); err != nil {
 				return err
 			}
 			return searchindex.Replace(ctx, tx, IndexEventData{Type: targetType, ID: targetID, Text: text})

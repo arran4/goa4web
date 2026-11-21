@@ -2247,12 +2247,11 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 		Action:        action.String(),
 	}
-	links := cd.commentLinkObservations(section, text)
 	var commentID int64
-	err = cd.withForumLinkObservations(cd.ctx, links, arg.CommenterID, func(q db.Querier) (bool, error) {
+	err = cd.withCommentWork(cd.ctx, cd.recordsCommentWork(section), text, arg.CommenterID, func(q db.Querier) (int64, error) {
 		var err error
 		commentID, err = insertCommentForCommenter(cd.ctx, q, arg)
-		return commentID != 0, err
+		return commentID, err
 	})
 	if err != nil || commentID == 0 {
 		return 0, err

@@ -206,6 +206,7 @@ func (ReplyBlogTask) Action(w http.ResponseWriter, r *http.Request) any {
 		LabelItemID:           int32(bid),
 		CommentText:           text,
 		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 		CommentURL:            cd.AbsoluteURL(endUrl),
 		ClearUnreadForOthers:  true,
 		MarkThreadRead:        true,

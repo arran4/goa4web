@@ -165,6 +165,12 @@ func TestScenarioForumReplyAppendAndEditCommitWithObservedLinks(t *testing.T) {
 		})
 	})
 	require.NotZero(t, replyID)
+	search, err := queue.ClaimNext(ctx, "standalone-search", jobs.JobTypeSearchIndex)
+	require.NoError(t, err)
+	require.NotNil(t, search)
+	require.Equal(t, int64(replyID), search.Job.TargetID)
+	require.EqualValues(t, 1, search.Job.TargetRevision)
+
 	cfg.PrivateForumPostAppendWindow = 60
 	t.Run("Append", func(t *testing.T) {
 		tryMutation(t, "https://example.test/from-forum-append", func(body string) error {
@@ -187,6 +193,19 @@ func TestScenarioForumReplyAppendAndEditCommitWithObservedLinks(t *testing.T) {
 			})
 		})
 	})
+
+	updated, err := q.SystemGetDurableJobByID(ctx, search.Job.ID)
+	require.NoError(t, err)
+	require.EqualValues(t, 3, updated.TargetRevision, "append and edit each advance the source revision once")
+	require.True(t, updated.NeedsRerun)
+	completed, err := queue.CompleteFenced(ctx, search)
+	require.NoError(t, err)
+	require.True(t, completed)
+	next, err := queue.ClaimNext(ctx, "standalone-search", jobs.JobTypeSearchIndex)
+	require.NoError(t, err)
+	require.NotNil(t, next)
+	require.Equal(t, search.Job.ID, next.Job.ID)
+	require.EqualValues(t, 3, next.Job.TargetRevision)
 }
 
 func TestScenarioLegacyExternalLinkEventsUseDurableQueue(t *testing.T) {
@@ -363,4 +382,42 @@ func TestScenarioCancelledExternalLinkClaimCannotPublishMetadata(t *testing.T) {
 	record, err := q.GetExternalLink(ctx, target)
 	require.NoError(t, err)
 	require.Empty(t, record.CardTitle.String)
+}
+
+func TestScenarioForumOpeningCommentCommitsWithSearchIntent(t *testing.T) {
+	env, cleanup := setupAPITestEnv(t)
+	defer cleanup()
+	ctx := t.Context()
+	q := env.cd.Queries()
+	queue := jobs.NewService(q)
+	alice, ok := env.registry.ResolveUser("alice")
+	require.True(t, ok)
+	topic := requireScenarioID(t, env.registry, scenario.RefTypeForum, "staff-room")
+	app := common.NewCoreData(ctx, q, env.server.Config, common.WithJobService(queue)).ForUser(alice)
+	params := common.CreateForumThreadParams{
+		ActorID: alice, TopicID: topic, LanguageID: 1,
+		Text: "A searchable private opening comment", Private: true, EnforceHandler: true,
+	}
+	threads, err := q.AdminListPrivateForumThreads(ctx, db.AdminListPrivateForumThreadsParams{Limit: 200})
+	require.NoError(t, err)
+	_, err = env.db.ExecContext(ctx, `CREATE TRIGGER reject_search_intent BEFORE INSERT ON durable_jobs
+		WHEN NEW.job_type = 'search_index' BEGIN SELECT RAISE(ABORT, 'injected search intent failure'); END`)
+	require.NoError(t, err)
+	result, err := app.CreateForumThread(ctx, params)
+	require.ErrorContains(t, err, "injected search intent failure")
+	require.Nil(t, result)
+	after, err := q.AdminListPrivateForumThreads(ctx, db.AdminListPrivateForumThreadsParams{Limit: 200})
+	require.NoError(t, err)
+	require.Len(t, after, len(threads))
+
+	_, err = env.db.ExecContext(ctx, "DROP TRIGGER reject_search_intent")
+	require.NoError(t, err)
+	result, err = app.CreateForumThread(ctx, params)
+	require.NoError(t, err)
+	require.NotZero(t, result.CommentID)
+	claim, err := queue.ClaimNext(ctx, "standalone-search", jobs.JobTypeSearchIndex)
+	require.NoError(t, err)
+	require.NotNil(t, claim)
+	require.Equal(t, int64(result.CommentID), claim.Job.TargetID)
+	require.EqualValues(t, 1, claim.Job.TargetRevision)
 }

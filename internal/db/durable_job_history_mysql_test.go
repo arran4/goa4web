@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/migrations"
+	"github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -215,4 +216,32 @@ func TestMySQLSearchIndexRejectsSupersededRevision(t *testing.T) {
 	rows, err = q.SystemMarkSearchTargetIndexed(ctx, params)
 	require.NoError(t, err)
 	require.Zero(t, rows)
+}
+
+func TestMySQLSearchIndexSourceReadLocksConcurrentEdit(t *testing.T) {
+	ctx := t.Context()
+	database := openReplyThreadTestDatabase(t)
+	createReplyThreadTestSchema(t, database)
+	execReplySQL(t, database, `INSERT INTO comments (idcomments, forumthread_id, users_idusers, text)
+		VALUES (42, 1, 1, 'before edit')`)
+
+	writer, err := database.Conn(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = writer.Close() })
+	_, err = writer.ExecContext(ctx, "SET innodb_lock_wait_timeout = 1")
+	require.NoError(t, err)
+
+	err = New(database).WithJobTransaction(ctx, func(q Querier) error {
+		source, err := q.SystemGetCommentTextForSearchIndex(ctx, 42)
+		require.NoError(t, err)
+		require.Equal(t, "before edit", source.Text.String)
+		_, err = writer.ExecContext(ctx, "UPDATE comments SET text = 'after edit' WHERE idcomments = 42")
+		var lockErr *mysql.MySQLError
+		require.ErrorAs(t, err, &lockErr)
+		require.EqualValues(t, 1205, lockErr.Number)
+		return nil
+	})
+	require.NoError(t, err)
+	_, err = writer.ExecContext(ctx, "UPDATE comments SET text = 'after edit' WHERE idcomments = 42")
+	require.NoError(t, err)
 }

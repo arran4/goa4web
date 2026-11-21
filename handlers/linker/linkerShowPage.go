@@ -198,6 +198,7 @@ func ShowReplyPage(w http.ResponseWriter, r *http.Request) {
 		LabelItemID:           int32(linkId),
 		CommentText:           text,
 		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 		CommentURL:            cd.AbsoluteURL(endUrl),
 		ClearUnreadForOthers:  true,
 		MarkThreadRead:        true,

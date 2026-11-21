@@ -323,7 +323,7 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 
 	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
-	rowsAffected, appendID, err := cd.appendForumCommentWithObservedLinks(ctx, text, db.AppendCommentInSectionForCommenterParams{
+	rowsAffected, appendID, err := cd.appendForumCommentWithWork(ctx, text, db.AppendCommentInSectionForCommenterParams{
 		Text:             text,
 		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		CommentID:        commentID,
@@ -512,6 +512,7 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 		IncludeSearch:         true,
 		MarkThreadRead:        true,
 		ExternalLinksRecorded: cd.jobService != nil,
+		SearchRecorded:        cd.jobService != nil,
 		AdditionalData: map[string]any{
 			"ThreadOpenerPreview": a4code.SnipTextWords(params.Text, 10),
 			"SubjectPrefix":       subjectPrefix,
@@ -726,6 +727,7 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 		IncludePostCount:      true,
 		IncludeSearch:         canonicalTextAvailable,
 		ExternalLinksRecorded: cd.jobService != nil,
+		SearchRecorded:        cd.jobService != nil,
 		AdditionalData:        data,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
@@ -1130,6 +1132,7 @@ func (cd *CoreData) EditForumCommentAction(ctx context.Context, params EditForum
 		IncludePostCount:      true,
 		IncludeSearch:         true,
 		ExternalLinksRecorded: actorCD.jobService != nil,
+		SearchRecorded:        actorCD.jobService != nil,
 	}); err != nil {
 		log.Printf("thread comment update side effects: %v", err)
 	}

@@ -168,6 +168,14 @@ func (s *Service) Enqueue(ctx context.Context, req EnqueueRequest) (bool, error)
 		}
 	}
 
+	created, err := enqueueActiveJob(ctx, s.Queries, req, dedupeKey, now)
+	if err == nil {
+		s.SignalWakeup()
+	}
+	return created, err
+}
+
+func enqueueActiveJob(ctx context.Context, q db.Querier, req EnqueueRequest, dedupeKey string, now time.Time) (bool, error) {
 	maxAttempts := req.MaxAttempts
 	if maxAttempts <= 0 {
 		maxAttempts = DefaultMaxAttempts
@@ -176,7 +184,7 @@ func (s *Service) Enqueue(ctx context.Context, req EnqueueRequest) (bool, error)
 		}
 	}
 
-	updated, err := s.Queries.SystemBumpActiveDurableJob(ctx, db.SystemBumpActiveDurableJobParams{
+	updated, err := q.SystemBumpActiveDurableJob(ctx, db.SystemBumpActiveDurableJobParams{
 		TargetRevision:   req.TargetRevision,
 		TargetRevision_2: req.TargetRevision,
 		RunAfter:         now,
@@ -187,11 +195,10 @@ func (s *Service) Enqueue(ctx context.Context, req EnqueueRequest) (bool, error)
 		return false, fmt.Errorf("coalesce active durable job: %w", err)
 	}
 	if updated > 0 {
-		s.SignalWakeup()
 		return false, nil
 	}
 
-	_, err = s.Queries.SystemInsertDurableJob(ctx, db.SystemInsertDurableJobParams{
+	_, err = q.SystemInsertDurableJob(ctx, db.SystemInsertDurableJobParams{
 		JobType:         req.JobType,
 		DedupeKey:       dedupeKey,
 		ActiveDedupeKey: sql.NullString{String: dedupeKey, Valid: true},
@@ -205,7 +212,7 @@ func (s *Service) Enqueue(ctx context.Context, req EnqueueRequest) (bool, error)
 	})
 	if err != nil {
 		// Handle concurrent insert race on uq_durable_jobs_active_dedupe by coalescing.
-		bumped, bumpErr := s.Queries.SystemBumpActiveDurableJob(ctx, db.SystemBumpActiveDurableJobParams{
+		bumped, bumpErr := q.SystemBumpActiveDurableJob(ctx, db.SystemBumpActiveDurableJobParams{
 			TargetRevision:   req.TargetRevision,
 			TargetRevision_2: req.TargetRevision,
 			RunAfter:         now,
@@ -213,12 +220,10 @@ func (s *Service) Enqueue(ctx context.Context, req EnqueueRequest) (bool, error)
 			ActiveDedupeKey:  sql.NullString{String: dedupeKey, Valid: true},
 		})
 		if bumpErr == nil && bumped > 0 {
-			s.SignalWakeup()
 			return false, nil
 		}
 		return false, fmt.Errorf("insert durable job: %w", err)
 	}
-	s.SignalWakeup()
 	return true, nil
 }
 
@@ -227,28 +232,55 @@ func (s *Service) EnqueueSearchDirty(ctx context.Context, targetType string, tar
 	if s == nil || s.Queries == nil || targetID <= 0 {
 		return nil
 	}
-	if err := s.Queries.SystemBumpSearchDirtyTarget(ctx, db.SystemBumpSearchDirtyTargetParams{
+	tx, ok := s.Queries.(db.JobTransactor)
+	if !ok {
+		return fmt.Errorf("durable job transactions unavailable")
+	}
+	err := tx.WithJobTransaction(ctx, func(q db.Querier) error {
+		return s.RecordSearchDirty(ctx, q, targetType, targetID)
+	})
+	if err == nil {
+		s.SignalWakeup()
+	}
+	return err
+}
+
+// RecordSearchDirty updates the dirty revision and its job in the caller's
+// transaction. The caller signals any local worker after the commit.
+func (s *Service) RecordSearchDirty(ctx context.Context, q db.Querier, targetType string, targetID int32) error {
+	if err := q.SystemBumpSearchDirtyTarget(ctx, db.SystemBumpSearchDirtyTargetParams{
 		TargetType: targetType,
 		TargetID:   targetID,
 	}); err != nil {
 		return fmt.Errorf("bump search dirty target: %w", err)
 	}
-	state, err := s.Queries.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
+	state, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
 		TargetType: targetType,
 		TargetID:   targetID,
 	})
 	if err != nil {
 		return fmt.Errorf("read search dirty target: %w", err)
 	}
-	_, err = s.Enqueue(ctx, EnqueueRequest{
+	targetKey := fmt.Sprintf("%s:%d", targetType, targetID)
+	dedupeKey := DedupeKey(JobTypeSearchIndex, targetKey)
+	now := s.now()
+	_, err = enqueueActiveJob(ctx, q, EnqueueRequest{
 		JobType:        JobTypeSearchIndex,
 		TargetType:     targetType,
 		TargetID:       int64(targetID),
-		TargetKey:      fmt.Sprintf("%s:%d", targetType, targetID),
+		TargetKey:      targetKey,
 		TargetRevision: state.Revision,
-		ForceRetry:     true,
-	})
-	return err
+	}, dedupeKey, now)
+	if err != nil {
+		return err
+	}
+	// Terminal outcomes also lock the job before updating its cooldown.
+	if err := q.SystemClearJobCooldownWindow(ctx, db.SystemClearJobCooldownWindowParams{
+		CooldownUntil: now, DedupeKey: dedupeKey,
+	}); err != nil {
+		return fmt.Errorf("clear search cooldown: %w", err)
+	}
+	return nil
 }
 
 // ClaimNext claims the next eligible pending or expired-lease job, optionally filtered by jobTypes.

@@ -20,16 +20,25 @@ func (s *Service) WriteWithActiveLease(ctx context.Context, job *db.DurableJob, 
 		return fmt.Errorf("durable job transactions unavailable")
 	}
 	return tx.WithJobTransaction(ctx, func(q db.Querier) error {
-		_, err := q.SystemLockActiveDurableJobLease(ctx, db.SystemLockActiveDurableJobLeaseParams{
-			ID: job.ID, LeaseToken: job.LeaseToken,
-			NowAt: sql.NullTime{Time: s.now(), Valid: true},
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			return ErrLeaseLost
-		}
-		if err != nil {
-			return fmt.Errorf("check durable job lease: %w", err)
+		if err := s.LockActiveLease(ctx, q, job); err != nil {
+			return err
 		}
 		return write(q)
 	})
+}
+
+// LockActiveLease verifies the attempt and holds the queue row until the
+// caller's transaction commits or rolls back.
+func (s *Service) LockActiveLease(ctx context.Context, q db.Querier, job *db.DurableJob) error {
+	_, err := q.SystemLockActiveDurableJobLease(ctx, db.SystemLockActiveDurableJobLeaseParams{
+		ID: job.ID, LeaseToken: job.LeaseToken,
+		NowAt: sql.NullTime{Time: s.now(), Valid: true},
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrLeaseLost
+	}
+	if err != nil {
+		return fmt.Errorf("check durable job lease: %w", err)
+	}
+	return nil
 }

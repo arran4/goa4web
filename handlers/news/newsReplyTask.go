@@ -132,6 +132,7 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		LabelItemID:           int32(pid),
 		CommentText:           text,
 		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 		CommentURL:            endURL,
 		PostURL:               endURL,
 		Username:              username,

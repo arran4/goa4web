@@ -43,6 +43,7 @@ type ThreadUpdatedEvent struct {
 	IncludePostCount      bool
 	IncludeSearch         bool
 	ExternalLinksRecorded bool
+	SearchRecorded        bool
 
 	AdditionalData map[string]any
 }
@@ -81,7 +82,7 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 
 	jobService := cd.JobService()
 	durableSearch := jobService != nil && event.CommentID != 0
-	if durableSearch && event.IncludeSearch {
+	if durableSearch && event.IncludeSearch && !event.SearchRecorded {
 		if err := jobService.EnqueueSearchDirty(ctx, searchindex.TypeComment, event.CommentID); err != nil {
 			errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
 		}

@@ -91,6 +91,9 @@ remain suppressed until an explicit retry.
 
 ## Durable search indexing
 
+Forum opening comments, replies, appends and edits record a search revision
+and coalesce its job in the source transaction. Blog, image board, linker,
+news and writing reply creation use the same transaction boundary.
 A search job reads the current source and replaces its per-item terms.
 The term replacement and indexed revision commit together under an active
 job lease. A superseded revision cannot advance the indexed revision.

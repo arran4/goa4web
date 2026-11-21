@@ -7,19 +7,20 @@ import (
 
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
-func (cd *CoreData) commentLinkObservations(section consts.PermissionSection, body string) []string {
+func (cd *CoreData) recordsCommentWork(section consts.PermissionSection) bool {
 	if cd.jobService == nil {
-		return nil
+		return false
 	}
 	switch section {
 	case consts.PermissionSectionForum, consts.PermissionSectionPrivateForum, consts.PermissionSectionPrivateForumThread,
 		consts.PermissionSectionBlogs, consts.PermissionSectionImageBBS, consts.PermissionSectionLinker,
 		consts.PermissionSectionNews, consts.PermissionSectionWriting:
-		return externalLinksFromBody(body)
+		return true
 	default:
-		return nil
+		return false
 	}
 }
 
@@ -36,44 +37,50 @@ func insertCommentForCommenter(ctx context.Context, q db.Querier, arg db.CreateC
 	return result.LastInsertId()
 }
 
-func (cd *CoreData) withForumLinkObservations(ctx context.Context, links []string, actorID sql.NullInt32, write func(db.Querier) (bool, error)) error {
-	if len(links) == 0 || cd.jobService == nil {
+func (cd *CoreData) withCommentWork(ctx context.Context, recordWork bool, body string, actorID sql.NullInt32, write func(db.Querier) (int64, error)) error {
+	if !recordWork {
 		_, err := write(cd.queries)
 		return err
 	}
 	tx, ok := cd.queries.(db.CommentTransactor)
 	if !ok {
-		return fmt.Errorf("persist forum link observations: database does not support comment transactions")
+		return fmt.Errorf("persist comment work: database does not support comment transactions")
 	}
-	queued := false
+	links := externalLinksFromBody(body)
+	written := false
 	err := tx.WithCommentTransaction(ctx, func(q db.Querier) error {
-		written, err := write(q)
-		if err != nil || !written {
+		commentID, err := write(q)
+		if err != nil || commentID == 0 {
 			return err
 		}
-		queued, err = cd.jobService.RecordObservedExternalLinks(ctx, q, links, actorID)
-		return err
+		if err := cd.jobService.RecordSearchDirty(ctx, q, searchindex.TypeComment, int32(commentID)); err != nil {
+			return err
+		}
+		if _, err := cd.jobService.RecordObservedExternalLinks(ctx, q, links, actorID); err != nil {
+			return err
+		}
+		written = true
+		return nil
 	})
-	if err == nil && queued {
+	if err == nil && written {
 		cd.jobService.SignalWakeup()
 	}
 	return err
 }
 
-func (cd *CoreData) appendForumCommentWithObservedLinks(ctx context.Context, body string, arg db.AppendCommentInSectionForCommenterParams) (int64, int64, error) {
+func (cd *CoreData) appendForumCommentWithWork(ctx context.Context, body string, arg db.AppendCommentInSectionForCommenterParams) (int64, int64, error) {
 	if cd.jobService == nil {
-		return cd.AppendCommentInSectionWithActivity(ctx, arg)
-	}
-	links := externalLinksFromBody(body)
-	if len(links) == 0 {
 		return cd.AppendCommentInSectionWithActivity(ctx, arg)
 	}
 	var rows, appendID int64
 	actor := sql.NullInt32{Int32: arg.CommenterID, Valid: arg.CommenterID != 0}
-	err := cd.withForumLinkObservations(ctx, links, actor, func(q db.Querier) (bool, error) {
+	err := cd.withCommentWork(ctx, true, body, actor, func(q db.Querier) (int64, error) {
 		var err error
 		rows, appendID, err = db.AppendCommentAndRecordActivity(ctx, q, arg)
-		return rows != 0, err
+		if rows == 0 || err != nil {
+			return 0, err
+		}
+		return int64(arg.CommentID), nil
 	})
 	if err != nil {
 		return 0, 0, err

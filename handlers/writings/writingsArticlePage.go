@@ -209,6 +209,7 @@ func ArticleReplyActionPage(w http.ResponseWriter, r *http.Request) {
 		LabelItemID:           writing.Idwriting,
 		CommentText:           text,
 		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 		ClearUnreadForOthers:  true,
 		MarkThreadRead:        true,
 		IncludePostCount:      true,

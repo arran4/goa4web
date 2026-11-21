@@ -4,6 +4,7 @@ package db
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,9 +15,13 @@ import (
 func TestMySQLRecordsAndSummarizesAdminJobFailures(t *testing.T) {
 	conn := openReplyThreadTestDatabase(t)
 	ctx := t.Context()
-	if _, err := conn.ExecContext(ctx, string(database.SchemaMySQL)); err != nil {
-		t.Fatalf("apply fresh schema: %v", err)
-	}
+	// notificationTable identifies the canonical table used by this query contract.
+	const notificationTable = "CREATE TABLE IF NOT EXISTS `notifications` ("
+	_, rest, found := strings.Cut(string(database.SchemaMySQL), notificationTable)
+	require.True(t, found, "canonical notifications table")
+	definition, _, found := strings.Cut(rest, ";")
+	require.True(t, found, "complete notifications table definition")
+	execReplySQL(t, conn, notificationTable+definition)
 	q := NewForDriver(conn, "mysql")
 	key := sql.NullString{String: "failure-group", Valid: true}
 	now := time.Now().UTC().Truncate(time.Second)

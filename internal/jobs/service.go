@@ -42,6 +42,8 @@ const (
 	DefaultPollInterval = 2 * time.Second
 	// DefaultMaxAttempts is the default attempt limit before marking a job failed.
 	DefaultMaxAttempts = 5
+	// defaultFetchMaxAttempts allows an initial external fetch and three scheduled retries.
+	defaultFetchMaxAttempts = 4
 	// DefaultAdminNotifyDebounce bounds how often repeated failures emit unread admin notifications.
 	DefaultAdminNotifyDebounce = 15 * time.Minute
 )
@@ -168,6 +170,9 @@ func (s *Service) Enqueue(ctx context.Context, req EnqueueRequest) (bool, error)
 	maxAttempts := req.MaxAttempts
 	if maxAttempts <= 0 {
 		maxAttempts = DefaultMaxAttempts
+		if req.JobType == JobTypeExternalLink || req.JobType == JobTypeImageCache {
+			maxAttempts = defaultFetchMaxAttempts
+		}
 	}
 
 	updated, err := s.Queries.SystemBumpActiveDurableJob(ctx, db.SystemBumpActiveDurableJobParams{
@@ -338,7 +343,7 @@ func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jo
 	}
 
 	if claimed.Job.Attempts < claimed.Job.MaxAttempts {
-		backoff := retryBackoff(claimed.Job.Attempts)
+		backoff := retryBackoff(claimed.Job.JobType, claimed.Job.Attempts)
 		rows, err := s.Queries.SystemRetryDurableJobFenced(ctx, db.SystemRetryDurableJobFencedParams{
 			RunAfter:   now.Add(backoff),
 			LastError:  sql.NullString{String: errText, Valid: errText != ""},
@@ -572,7 +577,10 @@ func (s *Service) executeClaimed(ctx context.Context, claimed *ClaimedJob, handl
 	}
 }
 
-func retryBackoff(attempts int32) time.Duration {
+func retryBackoff(jobType string, attempts int32) time.Duration {
+	if jobType == JobTypeExternalLink || jobType == JobTypeImageCache {
+		return time.Duration(min(3, max(1, attempts))) * 10 * time.Second
+	}
 	if attempts < 1 {
 		attempts = 1
 	}

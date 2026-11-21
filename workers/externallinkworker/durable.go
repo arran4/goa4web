@@ -30,9 +30,7 @@ func RunDurableWorker(ctx context.Context, jobSvc *jobs.Service, q db.Querier, c
 // ProcessExternalLink resolves, fetches OpenGraph metadata for, and persists an external link.
 func ProcessExternalLink(ctx context.Context, q db.Querier, cfg *config.RuntimeConfig, linkID int32, targetURL string) error {
 	return processExternalLink(ctx, q, linkID, targetURL, func(ctx context.Context, target string) (*opengraph.Info, error) {
-		return domainexternallink.FetchMetadata(ctx, target, func(ctx context.Context, u string) (*opengraph.Info, error) {
-			return opengraph.Fetch(ctx, u, nil)
-		}, domainexternallink.Wait)
+		return opengraph.Fetch(ctx, target, nil)
 	}, func(ctx context.Context, imageURL string) (string, error) {
 		return common.NewCoreData(ctx, q, cfg).DownloadAndCacheImage(imageURL)
 	})

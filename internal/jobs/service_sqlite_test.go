@@ -319,3 +319,43 @@ func TestDurableJobHistoryPrunesByAgeAndKind(t *testing.T) {
 		t.Fatalf("remaining job %d, want 1002, err %v", latest, err)
 	}
 }
+
+func TestDurableFetchRetrySchedule(t *testing.T) {
+	for _, jobType := range []string{JobTypeExternalLink, JobTypeImageCache} {
+		t.Run(jobType, func(t *testing.T) {
+			_, q := openTestJobsDB(t)
+			ctx := t.Context()
+			now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+			svc := NewService(q)
+			svc.Now = func() time.Time { return now }
+			queued, err := svc.Enqueue(ctx, EnqueueRequest{JobType: jobType, TargetType: jobType, TargetKey: "test"})
+			if err != nil || !queued {
+				t.Fatalf("enqueue fetch: (%v, %v)", queued, err)
+			}
+			for _, delay := range []time.Duration{10 * time.Second, 20 * time.Second, 30 * time.Second, 0} {
+				claim, err := svc.ClaimNext(ctx, "worker", jobType)
+				if err != nil || claim == nil {
+					t.Fatalf("claim fetch: (%+v, %v)", claim, err)
+				}
+				applied, err := svc.FailOrRetryFenced(ctx, claim, errors.New("temporary fetch failure"))
+				if err != nil || !applied {
+					t.Fatalf("fail fetch: (%v, %v)", applied, err)
+				}
+				job, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if delay == 0 {
+					if job.Status != StatusFailed || job.Attempts != 4 {
+						t.Fatalf("fetch status %q after %d attempts, want failed after 4", job.Status, job.Attempts)
+					}
+					return
+				}
+				if job.Status != StatusPending || !job.RunAfter.Equal(now.Add(delay)) {
+					t.Fatalf("retry status %q and delay %v, want pending after %v", job.Status, job.RunAfter.Sub(now), delay)
+				}
+				now = job.RunAfter
+			}
+		})
+	}
+}

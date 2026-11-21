@@ -114,19 +114,23 @@ func TestCanonicalMySQLSchemaExecutesSuccessfully(t *testing.T) {
 	if dsn == "" {
 		t.Skip("set GOA4WEB_TEST_MYSQL_DSN to run MySQL/MariaDB canonical schema execution tests")
 	}
-	db := openTemporaryMySQLDatabase(t, dsn)
-	if _, err := db.Exec(string(database.SchemaMySQL)); err != nil {
-		t.Fatalf("execute canonical MySQL schema: %v", err)
-	}
-	if _, err := db.Exec(`INSERT INTO external_links (url) VALUES ('https://example.com/canonical-schema')`); err != nil {
-		t.Fatalf("insert external link using canonical generated hash: %v", err)
-	}
-	var hashCount int
-	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url_hash = UNHEX(SHA2('https://example.com/canonical-schema', 256))`).Scan(&hashCount); err != nil {
-		t.Fatalf("query canonical generated hash: %v", err)
-	}
-	if hashCount != 1 {
-		t.Fatalf("generated hash matches=%d, want 1", hashCount)
+	for _, charset := range []string{"latin1", "utf8mb4"} {
+		t.Run(charset, func(t *testing.T) {
+			db := openTemporaryMySQLDatabaseWithCharset(t, dsn, charset)
+			if _, err := db.Exec(string(database.SchemaMySQL)); err != nil {
+				t.Fatalf("execute canonical MySQL schema: %v", err)
+			}
+			if _, err := db.Exec(`INSERT INTO external_links (url) VALUES ('https://example.com/canonical-schema')`); err != nil {
+				t.Fatalf("insert external link using canonical generated hash: %v", err)
+			}
+			var hashCount int
+			if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url_hash = UNHEX(SHA2('https://example.com/canonical-schema', 256))`).Scan(&hashCount); err != nil {
+				t.Fatalf("query canonical generated hash: %v", err)
+			}
+			if hashCount != 1 {
+				t.Fatalf("generated hash matches=%d, want 1", hashCount)
+			}
+		})
 	}
 }
 
@@ -741,6 +745,11 @@ func TestMigration0096ExecutesSuccessfully(t *testing.T) {
 
 func openTemporaryMySQLDatabase(t *testing.T, dsn string) *sql.DB {
 	t.Helper()
+	return openTemporaryMySQLDatabaseWithCharset(t, dsn, "latin1")
+}
+
+func openTemporaryMySQLDatabaseWithCharset(t *testing.T, dsn, charset string) *sql.DB {
+	t.Helper()
 	cfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
 		t.Fatalf("parse MySQL DSN: %v", err)
@@ -752,7 +761,7 @@ func openTemporaryMySQLDatabase(t *testing.T, dsn string) *sql.DB {
 	if err != nil {
 		t.Fatalf("open MySQL admin connection: %v", err)
 	}
-	if _, err := adminDB.Exec("CREATE DATABASE `" + databaseName + "` DEFAULT CHARACTER SET latin1"); err != nil {
+	if _, err := adminDB.Exec("CREATE DATABASE `" + databaseName + "` DEFAULT CHARACTER SET " + charset); err != nil {
 		_ = adminDB.Close()
 		t.Fatalf("create temporary database: %v", err)
 	}

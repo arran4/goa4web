@@ -820,3 +820,4 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (103, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (106, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (107, 1);

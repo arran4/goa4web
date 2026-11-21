@@ -74,3 +74,33 @@ func TestDefaultDBTimezone(t *testing.T) {
 		t.Fatalf("want Australia/Melbourne got %q", cfg.DBTimezone)
 	}
 }
+
+func TestDBMigrationConnPrecedence(t *testing.T) {
+	env := map[string]string{config.EnvDBMigrationConn: "environment"}
+	vals := map[string]string{config.EnvDBMigrationConn: "file"}
+	fs := config.NewRuntimeFlagSet("test")
+	if err := fs.Parse([]string{"--db-migration-conn=cli"}); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.NewRuntimeConfig(
+		config.WithFlagSet(fs),
+		config.WithFileValues(vals),
+		config.WithGetenv(func(key string) string { return env[key] }),
+	)
+	if cfg.DBMigrationConn != "cli" {
+		t.Fatalf("expected CLI migration DSN to take precedence; got %q", cfg.DBMigrationConn)
+	}
+	cfg = config.NewRuntimeConfig(
+		config.WithFileValues(vals),
+		config.WithGetenv(func(key string) string { return env[key] }),
+	)
+	if cfg.DBMigrationConn != "file" {
+		t.Fatalf("expected file migration DSN to take precedence; got %q", cfg.DBMigrationConn)
+	}
+	cfg = config.NewRuntimeConfig(
+		config.WithGetenv(func(key string) string { return env[key] }),
+	)
+	if cfg.DBMigrationConn != "environment" {
+		t.Fatalf("expected env migration DSN; got %q", cfg.DBMigrationConn)
+	}
+}

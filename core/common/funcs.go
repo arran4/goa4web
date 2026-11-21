@@ -21,7 +21,6 @@ import (
 	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/a4code/goa4webhtml"
 	"github.com/arran4/goa4web/core/consts"
-	"github.com/arran4/goa4web/core/templates"
 	"github.com/arran4/goa4web/internal/eventbus"
 	csrfmiddleware "github.com/arran4/goa4web/internal/middleware/csrf"
 )
@@ -247,8 +246,7 @@ func GetTemplateFuncs(opts ...any) template.FuncMap {
 		if r != nil {
 			funcs["include"] = func(name string, data any) (template.HTML, error) {
 				var buf bytes.Buffer
-				t := templates.GetCompiledSiteTemplates(cd.Funcs(r))
-				err := t.ExecuteTemplate(&buf, name, data)
+				err := cd.executeIncludedSiteTemplate(&buf, r, name, data)
 				return template.HTML(buf.String()), err
 			}
 			funcs["a4code2html"] = func(s string) template.HTML {

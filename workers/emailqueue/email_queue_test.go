@@ -3,13 +3,24 @@ package emailqueue
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"net/mail"
 	"testing"
 	"time"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/email/mock"
 )
+
+type failingProvider struct{}
+
+func (failingProvider) Send(context.Context, mail.Address, []byte) error {
+	return errors.New("provider failure")
+}
+
+func (failingProvider) TestConfig(context.Context) error { return nil }
 
 func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 	q := &db.QuerierStub{}
@@ -24,6 +35,10 @@ func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 		Body:        fmt.Sprintf("To: %s\r\nSubject: Test\r\n\r\nBody", emailAddr),
 		DirectEmail: true,
 		CreatedAt:   time.Now(),
+		DigestDeliveryID: sql.NullInt32{
+			Int32: 7,
+			Valid: true,
+		},
 	}
 
 	listCalled := false
@@ -70,6 +85,117 @@ func TestProcessPendingEmail_NilProvider_IncrementsErrorCount(t *testing.T) {
 
 	if markSentCalled {
 		t.Error("Expected SystemMarkPendingEmailSent NOT to be called")
+	}
+	if len(q.SystemAcknowledgeDigestNotificationsForPendingEmailCalls) != 0 {
+		t.Error("missing provider must not acknowledge digest notifications")
+	}
+}
+
+func TestProcessPendingEmail_ProviderFailureDoesNotAcknowledgeDigest(t *testing.T) {
+	q := &db.QuerierStub{}
+	cfg := &config.RuntimeConfig{EmailEnabled: true}
+	e := &db.SystemListPendingEmailsRow{
+		ID:               43,
+		Body:             "To: verified@example.com\r\nSubject: Digest\r\n\r\nBody",
+		DirectEmail:      true,
+		CreatedAt:        time.Now(),
+		DigestDeliveryID: sql.NullInt32{Int32: 9, Valid: true},
+	}
+	q.SystemListPendingEmailsFn = func(context.Context, db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
+		return []*db.SystemListPendingEmailsRow{e}, nil
+	}
+	q.GetUserEmailByEmailFn = func(context.Context, string) (*db.UserEmail, error) {
+		return &db.UserEmail{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil
+	}
+	q.SystemIncrementPendingEmailErrorFn = func(context.Context, int32) error { return nil }
+
+	if !ProcessPendingEmail(context.Background(), q, failingProvider{}, nil, cfg) {
+		t.Fatal("expected queued email processing")
+	}
+	if len(q.SystemAcknowledgeDigestNotificationsForPendingEmailCalls) != 0 {
+		t.Fatal("provider failure must not acknowledge digest notifications")
+	}
+	if len(q.SystemMarkDigestDeliveryAcknowledgedForPendingEmailCalls) != 0 {
+		t.Fatal("provider failure must not acknowledge the digest delivery")
+	}
+}
+
+func TestProcessPendingEmail_DeadLetterDoesNotAcknowledgeDigest(t *testing.T) {
+	q := &db.QuerierStub{}
+	cfg := &config.RuntimeConfig{EmailEnabled: true}
+	e := &db.SystemListPendingEmailsRow{
+		ID:               44,
+		Body:             "To: verified@example.com\r\nSubject: Digest\r\n\r\nBody",
+		DirectEmail:      true,
+		CreatedAt:        time.Now().Add(-5 * 24 * time.Hour),
+		DigestDeliveryID: sql.NullInt32{Int32: 10, Valid: true},
+	}
+	q.SystemListPendingEmailsFn = func(context.Context, db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
+		return []*db.SystemListPendingEmailsRow{e}, nil
+	}
+	q.GetUserEmailByEmailFn = func(context.Context, string) (*db.UserEmail, error) {
+		return &db.UserEmail{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil
+	}
+	q.SystemIncrementPendingEmailErrorFn = func(context.Context, int32) error { return nil }
+	q.SystemMarkPendingEmailSentFn = func(context.Context, int32) error { return nil }
+
+	if !ProcessPendingEmail(context.Background(), q, nil, nil, cfg) {
+		t.Fatal("expected expired queued email processing")
+	}
+	if len(q.SystemMarkPendingEmailSentCalls) != 1 {
+		t.Fatal("expected dead-lettered email to leave the active queue")
+	}
+	if len(q.SystemAcknowledgeDigestNotificationsForPendingEmailCalls) != 0 {
+		t.Fatal("dead-lettered email must not acknowledge digest notifications")
+	}
+}
+
+func TestProcessPendingEmail_DigestAcknowledgesOnlyAfterProviderAcceptance(t *testing.T) {
+	q := &db.QuerierStub{}
+	cfg := &config.RuntimeConfig{EmailEnabled: true}
+	e := &db.SystemListPendingEmailsRow{
+		ID:               42,
+		ToUserID:         sql.NullInt32{Valid: false},
+		Body:             "To: verified@example.com\r\nSubject: Digest\r\n\r\nBody",
+		DirectEmail:      true,
+		CreatedAt:        time.Now(),
+		DigestDeliveryID: sql.NullInt32{Int32: 8, Valid: true},
+	}
+	q.SystemListPendingEmailsFn = func(context.Context, db.SystemListPendingEmailsParams) ([]*db.SystemListPendingEmailsRow, error) {
+		return []*db.SystemListPendingEmailsRow{e}, nil
+	}
+	q.GetUserEmailByEmailFn = func(context.Context, string) (*db.UserEmail, error) {
+		return &db.UserEmail{VerifiedAt: sql.NullTime{Time: time.Now(), Valid: true}}, nil
+	}
+
+	var order []string
+	q.SystemAcknowledgeDigestNotificationsForPendingEmailFn = func(_ context.Context, id int32) error {
+		if id != e.ID {
+			t.Fatalf("acknowledged email %d, want %d", id, e.ID)
+		}
+		order = append(order, "notifications")
+		return nil
+	}
+	q.SystemMarkDigestDeliveryAcknowledgedForPendingEmailFn = func(_ context.Context, id int32) error {
+		if id != e.ID {
+			t.Fatalf("acknowledged delivery for email %d, want %d", id, e.ID)
+		}
+		order = append(order, "delivery")
+		return nil
+	}
+	q.SystemMarkPendingEmailSentFn = func(_ context.Context, id int32) error {
+		if id != e.ID {
+			t.Fatalf("marked email %d sent, want %d", id, e.ID)
+		}
+		order = append(order, "sent")
+		return nil
+	}
+
+	if !ProcessPendingEmail(context.Background(), q, &mock.Provider{}, nil, cfg) {
+		t.Fatal("expected queued email processing")
+	}
+	if got, want := fmt.Sprint(order), "[notifications delivery sent]"; got != want {
+		t.Fatalf("acknowledgement order = %s, want %s", got, want)
 	}
 }
 

@@ -201,6 +201,63 @@ func TestDurableJobsLeaseExpiryFencingAndShutdownRelease(t *testing.T) {
 	}
 }
 
+func TestExpiredClaimCannotRecordAnOutcomeBeforeReclaim(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		maxAttempts int32
+		complete    bool
+	}{
+		{name: "Completion", maxAttempts: 2, complete: true},
+		{name: "Retry", maxAttempts: 2},
+		{name: "Terminal failure", maxAttempts: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, q := openTestJobsDB(t)
+			ctx := t.Context()
+			now := time.Date(2026, time.November, 21, 12, 0, 0, 0, time.UTC)
+			svc := NewService(q)
+			svc.Now = func() time.Time { return now }
+			svc.LeaseDuration = time.Second
+			if _, err := svc.Enqueue(ctx, EnqueueRequest{
+				JobType: JobTypeExternalLink, TargetKey: "https://example.test/claim", MaxAttempts: tc.maxAttempts,
+			}); err != nil {
+				t.Fatal(err)
+			}
+			claim, err := svc.ClaimNext(ctx, "expired-worker", JobTypeExternalLink)
+			if err != nil || claim == nil {
+				t.Fatalf("claim = %v, err = %v", claim, err)
+			}
+			now = claim.Job.LeaseExpiresAt.Time
+			var applied bool
+			if tc.complete {
+				applied, err = svc.CompleteFenced(ctx, claim)
+			} else {
+				applied, err = svc.FailOrRetryFenced(ctx, claim, errors.New("late failure"))
+			}
+			if err != nil || applied {
+				t.Fatalf("expired outcome applied = %v, err = %v", applied, err)
+			}
+			retained, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if retained.Status != StatusRunning || retained.LeaseToken.String != claim.LeaseToken || retained.LastError.Valid {
+				t.Fatalf("expired claim changed the job: %#v", retained)
+			}
+			if _, err := q.SystemGetJobCooldown(ctx, claim.Job.DedupeKey); !errors.Is(err, sql.ErrNoRows) {
+				t.Fatalf("cooldown lookup after expiry = %v", err)
+			}
+			replacement, err := svc.ClaimNext(ctx, "replacement-worker", JobTypeExternalLink)
+			if err != nil || replacement == nil || replacement.LeaseToken == claim.LeaseToken {
+				t.Fatalf("replacement = %v, err = %v", replacement, err)
+			}
+			if applied, err := svc.CompleteFenced(ctx, replacement); err != nil || !applied {
+				t.Fatalf("replacement completion applied = %v, err = %v", applied, err)
+			}
+		})
+	}
+}
+
 func TestTerminalFailureRollsBackWhenCooldownWriteFails(t *testing.T) {
 	database, q := openTestJobsDB(t)
 	ctx := context.Background()

@@ -89,7 +89,10 @@ using `Retry-After`, capped at five minutes. Exhausted transient failures use
 the configured cooldown. Invalid destinations and permanent HTTP failures
 remain suppressed until an explicit retry.
 
-## Durable job failure alerts
+## Durable job outcomes
+
+Completion, retry and failure require an unexpired lease. An expired
+attempt leaves the queue entry available for another worker to claim.
 
 Terminal failure, cooldown and administrator inbox updates commit together.
 Each recipient has one alert for a work type, target and error class. A

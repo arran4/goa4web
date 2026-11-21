@@ -36,6 +36,38 @@ func TestMySQLPruneTerminalDurableJobHistory(t *testing.T) {
 	}
 }
 
+func TestMySQLExpiredDurableClaimCannotRecordAnOutcome(t *testing.T) {
+	ctx := t.Context()
+	conn := openReplyThreadTestDatabase(t)
+	loadMySQLDurableJobMigration(t, conn)
+	execReplySQL(t, conn, `INSERT INTO durable_jobs
+		(id, job_type, dedupe_key, active_dedupe_key, target_type, status, lease_token, lease_expires_at)
+		VALUES (1, 'external_link', 'external_link:lease', 'external_link:lease', 'external_link',
+		        'running', 'attempt-1', '2026-11-21 12:00:00')`)
+	q := NewForDriver(conn, "mysql")
+	token := sql.NullString{String: "attempt-1", Valid: true}
+	expiry := time.Date(2026, time.November, 21, 12, 0, 0, 0, time.UTC)
+	now := sql.NullTime{Time: expiry, Valid: true}
+	rows, err := q.SystemCompleteDurableJobFenced(ctx, SystemCompleteDurableJobFencedParams{
+		ID: 1, LeaseToken: token, NowAt: now, RunAfter: expiry, CompletedAt: now,
+	})
+	require.NoError(t, err)
+	require.Zero(t, rows)
+	rows, err = q.SystemRetryDurableJobFenced(ctx, SystemRetryDurableJobFencedParams{
+		ID: 1, LeaseToken: token, NowAt: now, RunAfter: expiry.Add(time.Minute),
+	})
+	require.NoError(t, err)
+	require.Zero(t, rows)
+	rows, err = q.SystemFailDurableJobFenced(ctx, SystemFailDurableJobFencedParams{
+		ID: 1, LeaseToken: token, NowAt: now, CompletedAt: now,
+	})
+	require.NoError(t, err)
+	require.Zero(t, rows)
+	job, err := q.SystemGetDurableJobByID(ctx, 1)
+	require.NoError(t, err)
+	require.Equal(t, "running", job.Status)
+}
+
 func loadMySQLDurableJobMigration(t *testing.T, conn *sql.DB) {
 	t.Helper()
 	migration, err := migrations.FS.ReadFile("0104_mysql.sql")

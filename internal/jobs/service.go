@@ -312,7 +312,7 @@ func (s *Service) ClaimNext(ctx context.Context, owner string, jobTypes ...strin
 }
 
 // CompleteFenced marks a claimed job completed (or re-arms pending if needs_rerun was set mid-flight)
-// only if its fencing lease_token is still current.
+// only while its lease is current and unexpired.
 func (s *Service) CompleteFenced(ctx context.Context, claimed *ClaimedJob) (bool, error) {
 	if s == nil || s.Queries == nil || claimed == nil || claimed.Job == nil {
 		return false, nil
@@ -323,6 +323,7 @@ func (s *Service) CompleteFenced(ctx context.Context, claimed *ClaimedJob) (bool
 		CompletedAt: sql.NullTime{Time: now, Valid: true},
 		ID:          claimed.Job.ID,
 		LeaseToken:  sql.NullString{String: claimed.LeaseToken, Valid: true},
+		NowAt:       sql.NullTime{Time: now, Valid: true},
 	})
 	if err != nil {
 		return false, fmt.Errorf("complete durable job %d: %w", claimed.Job.ID, err)
@@ -330,7 +331,7 @@ func (s *Service) CompleteFenced(ctx context.Context, claimed *ClaimedJob) (bool
 	return rows > 0, nil
 }
 
-// FailOrRetryFenced records an execution error using the fencing token. If attempts remain,
+// FailOrRetryFenced records an execution error while the claim is active. If attempts remain,
 // it schedules durable exponential backoff; otherwise it transitions to failed, persists
 // a per-target cooldown, and emits a debounced unread admin notification.
 func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jobErr error) (bool, error) {
@@ -351,6 +352,7 @@ func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jo
 			LastError:  sql.NullString{String: errText, Valid: errText != ""},
 			ID:         claimed.Job.ID,
 			LeaseToken: sql.NullString{String: claimed.LeaseToken, Valid: true},
+			NowAt:      sql.NullTime{Time: now, Valid: true},
 		})
 		if err != nil {
 			return false, fmt.Errorf("schedule retry for durable job %d: %w", claimed.Job.ID, err)
@@ -369,6 +371,7 @@ func (s *Service) FailOrRetryFenced(ctx context.Context, claimed *ClaimedJob, jo
 			CompletedAt: sql.NullTime{Time: now, Valid: true},
 			ID:          claimed.Job.ID,
 			LeaseToken:  sql.NullString{String: claimed.LeaseToken, Valid: true},
+			NowAt:       sql.NullTime{Time: now, Valid: true},
 		})
 		if err != nil || rows == 0 {
 			return err

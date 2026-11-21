@@ -95,7 +95,8 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
   AND status = 'running'
-  AND lease_token = ?;
+  AND lease_token = ?
+  AND lease_expires_at > sqlc.arg(now_at);
 
 -- name: SystemRetryDurableJobFenced :execrows
 UPDATE durable_jobs
@@ -109,7 +110,8 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
   AND status = 'running'
-  AND lease_token = ?;
+  AND lease_token = ?
+  AND lease_expires_at > sqlc.arg(now_at);
 
 -- name: SystemFailDurableJobFenced :execrows
 UPDATE durable_jobs
@@ -125,7 +127,8 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
   AND status = 'running'
-  AND lease_token = ?;
+  AND lease_token = ?
+  AND lease_expires_at > sqlc.arg(now_at);
 
 -- name: SystemReleaseDurableJobOnShutdownFenced :execrows
 UPDATE durable_jobs

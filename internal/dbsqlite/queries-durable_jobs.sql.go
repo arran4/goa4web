@@ -300,6 +300,7 @@ SET
 WHERE id = ?
   AND status = 'running'
   AND lease_token = ?
+  AND lease_expires_at > ?5
 `
 
 type SystemCompleteDurableJobFencedParams struct {
@@ -307,6 +308,7 @@ type SystemCompleteDurableJobFencedParams struct {
 	CompletedAt sql.NullTime
 	ID          int64
 	LeaseToken  sql.NullString
+	NowAt       sql.NullTime
 }
 
 func (q *Queries) SystemCompleteDurableJobFenced(ctx context.Context, arg SystemCompleteDurableJobFencedParams) (int64, error) {
@@ -315,6 +317,7 @@ func (q *Queries) SystemCompleteDurableJobFenced(ctx context.Context, arg System
 		arg.CompletedAt,
 		arg.ID,
 		arg.LeaseToken,
+		arg.NowAt,
 	)
 	if err != nil {
 		return 0, err
@@ -347,6 +350,7 @@ SET
 WHERE id = ?
   AND status = 'running'
   AND lease_token = ?
+  AND lease_expires_at > ?5
 `
 
 type SystemFailDurableJobFencedParams struct {
@@ -354,6 +358,7 @@ type SystemFailDurableJobFencedParams struct {
 	CompletedAt sql.NullTime
 	ID          int64
 	LeaseToken  sql.NullString
+	NowAt       sql.NullTime
 }
 
 func (q *Queries) SystemFailDurableJobFenced(ctx context.Context, arg SystemFailDurableJobFencedParams) (int64, error) {
@@ -362,6 +367,7 @@ func (q *Queries) SystemFailDurableJobFenced(ctx context.Context, arg SystemFail
 		arg.CompletedAt,
 		arg.ID,
 		arg.LeaseToken,
+		arg.NowAt,
 	)
 	if err != nil {
 		return 0, err
@@ -976,6 +982,7 @@ SET
 WHERE id = ?
   AND status = 'running'
   AND lease_token = ?
+  AND lease_expires_at > ?5
 `
 
 type SystemRetryDurableJobFencedParams struct {
@@ -983,6 +990,7 @@ type SystemRetryDurableJobFencedParams struct {
 	LastError  sql.NullString
 	ID         int64
 	LeaseToken sql.NullString
+	NowAt      sql.NullTime
 }
 
 func (q *Queries) SystemRetryDurableJobFenced(ctx context.Context, arg SystemRetryDurableJobFencedParams) (int64, error) {
@@ -991,6 +999,7 @@ func (q *Queries) SystemRetryDurableJobFenced(ctx context.Context, arg SystemRet
 		arg.LastError,
 		arg.ID,
 		arg.LeaseToken,
+		arg.NowAt,
 	)
 	if err != nil {
 		return 0, err

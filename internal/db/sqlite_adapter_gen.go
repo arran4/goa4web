@@ -9845,6 +9845,7 @@ func (s *sqliteQuerier) SystemCompleteDurableJobFenced(ctx context.Context, arg 
 		CompletedAt: arg.CompletedAt,
 		ID:          arg.ID,
 		LeaseToken:  arg.LeaseToken,
+		NowAt:       arg.NowAt,
 	})
 	if err != nil {
 		return 0, err
@@ -10101,6 +10102,7 @@ func (s *sqliteQuerier) SystemFailDurableJobFenced(ctx context.Context, arg Syst
 		CompletedAt: arg.CompletedAt,
 		ID:          arg.ID,
 		LeaseToken:  arg.LeaseToken,
+		NowAt:       arg.NowAt,
 	})
 	if err != nil {
 		return 0, err
@@ -11370,6 +11372,7 @@ func (s *sqliteQuerier) SystemRetryDurableJobFenced(ctx context.Context, arg Sys
 		LastError:  arg.LastError,
 		ID:         arg.ID,
 		LeaseToken: arg.LeaseToken,
+		NowAt:      arg.NowAt,
 	})
 	if err != nil {
 		return 0, err

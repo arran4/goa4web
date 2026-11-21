@@ -322,7 +322,7 @@ type Querier interface {
 	CreateSubscriptionArchetype(ctx context.Context, arg CreateSubscriptionArchetypeParams) error
 	CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
-	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
+	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (sql.Result, error)
 	DeactivateNewsPost(ctx context.Context, idsitenews int64) error
 	DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error
 	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt64) error
@@ -742,7 +742,7 @@ type Querier interface {
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
 	UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
-	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
+	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (int64, error)
 	UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error
 	UpsertImageCacheEntry(ctx context.Context, arg UpsertImageCacheEntryParams) error
 	UpsertSchedulerState(ctx context.Context, arg UpsertSchedulerStateParams) error

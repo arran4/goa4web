@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 const (
@@ -241,7 +242,7 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
 		return fmt.Errorf("validate body images: %w", err)
 	}
-	return cd.queries.UpdateWritingForWriter(cd.ctx, db.UpdateWritingForWriterParams{
+	arg := db.UpdateWritingForWriterParams{
 		Title:      sql.NullString{Valid: true, String: title},
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
@@ -250,7 +251,15 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 		WritingID:  w.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	}
+	_, err := cd.withWritingSearch(func(q db.Querier) (int64, error) {
+		rows, err := q.UpdateWritingForWriter(cd.ctx, arg)
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return int64(arg.WritingID), nil
 	})
+	return err
 }
 
 // CreateWriting creates a new article in the given category.
@@ -270,7 +279,7 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
 		return 0, fmt.Errorf("validate body images: %w", err)
 	}
-	return cd.queries.CreateWritingForWriter(cd.ctx, db.CreateWritingForWriterParams{
+	arg := db.CreateWritingForWriterParams{
 		WriterID:          cd.UserID,
 		WritingCategoryID: categoryID,
 		Title:             sql.NullString{Valid: true, String: title},
@@ -282,7 +291,44 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		Timezone:          sql.NullString{String: cd.Location().String(), Valid: true},
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	}
+	return cd.withWritingSearch(func(q db.Querier) (int64, error) {
+		result, err := q.CreateWritingForWriter(cd.ctx, arg)
+		if err != nil {
+			return 0, err
+		}
+		rows, err := result.RowsAffected()
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return result.LastInsertId()
 	})
+}
+
+func (cd *CoreData) withWritingSearch(write func(db.Querier) (int64, error)) (int64, error) {
+	if cd.jobService == nil {
+		return write(cd.queries)
+	}
+	transactor, ok := cd.queries.(db.JobTransactor)
+	if !ok {
+		return 0, fmt.Errorf("persist writing and search job: database does not support transactions")
+	}
+	var id int64
+	err := transactor.WithJobTransaction(cd.ctx, func(q db.Querier) error {
+		var err error
+		id, err = write(q)
+		if err != nil || id == 0 {
+			return err
+		}
+		return cd.jobService.RecordSearchDirty(cd.ctx, q, searchindex.TypeWriting, int32(id))
+	})
+	if err != nil {
+		return 0, err
+	}
+	if id > 0 {
+		cd.jobService.SignalWakeup()
+	}
+	return id, nil
 }
 
 // GrantWritingCategory adds a grant for a writing category.

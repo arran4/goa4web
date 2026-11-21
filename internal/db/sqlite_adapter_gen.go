@@ -4483,7 +4483,7 @@ func (s *sqliteQuerier) CreateUploadedImageForUploader(ctx context.Context, arg 
 	return res, nil
 }
 
-func (s *sqliteQuerier) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error) {
+func (s *sqliteQuerier) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (sql.Result, error) {
 	res, err := s.q.CreateWritingForWriter(ctx, dbsqlite.CreateWritingForWriterParams{
 		WritingCategoryID: int64(arg.WritingCategoryID),
 		Title:             arg.Title,
@@ -4506,7 +4506,7 @@ func (s *sqliteQuerier) CreateWritingForWriter(ctx context.Context, arg CreateWr
 		GranteeID:       sql.NullInt64{Int64: int64(arg.GranteeID.Int32), Valid: arg.GranteeID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }
@@ -11696,8 +11696,8 @@ func (s *sqliteQuerier) UpdateUserPassword(ctx context.Context, arg UpdateUserPa
 	})
 }
 
-func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error {
-	return s.q.UpdateWritingForWriter(ctx, dbsqlite.UpdateWritingForWriterParams{
+func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (int64, error) {
+	res, err := s.q.UpdateWritingForWriter(ctx, dbsqlite.UpdateWritingForWriterParams{
 		Title:    arg.Title,
 		Abstract: arg.Abstract,
 		Content:  arg.Content,
@@ -11715,6 +11715,10 @@ func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWr
 		WriterID:   int64(arg.WriterID),
 		GranteeID:  sql.NullInt64{Int64: int64(arg.GranteeID.Int32), Valid: arg.GranteeID.Valid},
 	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {

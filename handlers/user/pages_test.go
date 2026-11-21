@@ -32,6 +32,7 @@ var allPages = []tasks.Template{
 	user.UserPagingPage,
 	user.UserSubscriptionAddPage,
 	user.UserSubscriptionsPage,
+	user.UserSubscriptionOverviewPage,
 	user.UserThreadSubscriptionsPage,
 	user.UserTimezonePage,
 }

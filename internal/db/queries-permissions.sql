@@ -63,7 +63,8 @@ LIMIT 1;
 SELECT 1
 FROM user_roles ur
 JOIN roles r ON ur.role_id = r.id
-WHERE ur.users_idusers = ? AND r.can_login = 1
+JOIN users u ON u.idusers = ur.users_idusers
+WHERE ur.users_idusers = ? AND u.deleted_at IS NULL AND r.can_login = 1
 LIMIT 1;
 
 -- name: SystemCheckGrant :one

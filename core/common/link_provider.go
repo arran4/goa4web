@@ -58,8 +58,9 @@ func formatDuration(duration string) string {
 }
 
 type Goa4WebLinkProvider struct {
-	cd  *CoreData
-	ctx context.Context
+	cd        *CoreData
+	ctx       context.Context
+	forumCard func(string) (string, bool)
 }
 
 func NewGoa4WebLinkProvider(cd *CoreData, ctx context.Context) *Goa4WebLinkProvider {
@@ -93,6 +94,11 @@ func (p *Goa4WebLinkProvider) RenderLink(rawURL string, isBlock bool, isImmediat
 		return html.EscapeString(rawURL), "", false
 	}
 
+	if isBlock && isImmediateClose && IsHTTPURL(canonicalURL) && p.forumCard != nil {
+		if rendered, ok := p.forumCard(canonicalURL); ok {
+			return rendered, "", true
+		}
+	}
 	targetURL := safe
 	if IsHTTPURL(canonicalURL) {
 		targetURL = p.cd.SignLinkURL(canonicalURL)

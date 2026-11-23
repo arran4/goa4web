@@ -358,3 +358,8 @@ FROM (SELECT 1 AS anchor_value) anchor
 LEFT JOIN durable_job_cooldowns cooldown ON cooldown.dedupe_key = sqlc.arg(check_key)
 WHERE cooldown.dedupe_key IS NULL OR cooldown.cooldown_until <= sqlc.arg(cooldown_at)
 ON CONFLICT(active_dedupe_key) DO NOTHING;
+
+-- name: SystemCountActiveDurableJobsByKey :one
+SELECT COUNT(*) FROM durable_jobs
+WHERE active_dedupe_key = sqlc.arg(active_key)
+  AND status IN ('pending', 'running');

@@ -325,6 +325,19 @@ func (q *Queries) SystemCompleteDurableJobFenced(ctx context.Context, arg System
 	return result.RowsAffected()
 }
 
+const systemCountActiveDurableJobsByKey = `-- name: SystemCountActiveDurableJobsByKey :one
+SELECT COUNT(*) FROM durable_jobs
+WHERE active_dedupe_key = ?1
+  AND status IN ('pending', 'running')
+`
+
+func (q *Queries) SystemCountActiveDurableJobsByKey(ctx context.Context, activeKey sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemCountActiveDurableJobsByKey, activeKey)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const systemDeleteJobCooldown = `-- name: SystemDeleteJobCooldown :exec
 DELETE FROM durable_job_cooldowns
 WHERE dedupe_key = ?

@@ -176,6 +176,64 @@ func userNotificationsPage(w http.ResponseWriter, r *http.Request) {
 
 const UserNotificationsPage tasks.Template = "domains/user/notifications.gohtml"
 
+// UserNotificationsListFragment renders the inner HTML of #notifications-list for live updates.
+const UserNotificationsListFragment tasks.Template = "domains/user/notificationsListFragment.gohtml"
+
+// UserNotificationsCountFragment renders the #notif-index link with unread count for live updates.
+const UserNotificationsCountFragment tasks.Template = "domains/user/notificationsCountFragment.gohtml"
+
+func notificationsListFragmentPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
+		http.NotFound(w, r)
+		return
+	}
+	ps := cd.PageSize()
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	showAll := r.URL.Query().Get("all") == "1"
+	var count int64
+	var err error
+	if showAll {
+		count, err = cd.Queries().GetNotificationCountForLister(r.Context(), cd.UserID)
+	} else {
+		count, err = cd.Queries().GetUnreadNotificationCountForLister(r.Context(), cd.UserID)
+	}
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	cd.Pagination = &common.OffsetPagination{
+		TotalItems: int(count),
+		PageSize:   ps,
+		Offset:     offset,
+		BaseURL:    "/usr/notifications",
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	data := struct {
+		Request *http.Request
+	}{
+		Request: r,
+	}
+	if err := UserNotificationsListFragment.TemplateExecute(w, r, data); err != nil {
+		log.Printf("render notifications list fragment: %v", err)
+	}
+}
+
+func notificationsCountFragmentPage(w http.ResponseWriter, r *http.Request) {
+	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
+	if !cd.Config.NotificationsEnabled {
+		http.NotFound(w, r)
+		return
+	}
+	cd.NotificationCount = int32(cd.UnreadNotificationCount())
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	if err := UserNotificationsCountFragment.TemplateExecute(w, r, struct{}{}); err != nil {
+		log.Printf("render notifications count fragment: %v", err)
+	}
+}
+
 func (DismissTask) Action(w http.ResponseWriter, r *http.Request) any {
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
 	if !cd.Config.NotificationsEnabled {

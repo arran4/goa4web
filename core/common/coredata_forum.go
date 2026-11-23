@@ -50,6 +50,33 @@ func (cd *CoreData) ForumThread(id int32, ops ...lazy.Option[int32, *db.GetThrea
 	return cd.ForumThreadByID(id, ops...)
 }
 
+// CanReceiveForumReply checks the currently applicable account, topic, thread
+// and comment visibility. Long-lived connections use a fresh viewer cache each time.
+func (cd *CoreData) CanReceiveForumReply(topicID, threadID, commentID int32) bool {
+	return cd.forumCommentForViewer(topicID, threadID, commentID) != nil
+}
+
+// forumCommentForViewer loads the source with fresh grants. A zero topicID
+// takes the topic from the authorized thread.
+func (cd *CoreData) forumCommentForViewer(topicID, threadID, commentID int32) *db.GetCommentByIdForUserRow {
+	if cd == nil || !cd.CanLogIn() {
+		return nil
+	}
+	viewer := cd.ForUser(cd.UserID)
+	thread, err := viewer.ForumThreadByID(threadID)
+	if err != nil || thread == nil || (topicID != 0 && thread.ForumtopicIdforumtopic != topicID) {
+		return nil
+	}
+	if topic, err := viewer.ForumTopicByID(thread.ForumtopicIdforumtopic); err != nil || topic == nil {
+		return nil
+	}
+	comment, err := viewer.CommentByID(commentID)
+	if err != nil || comment == nil || comment.DeletedAt.Valid || comment.ForumthreadID != threadID {
+		return nil
+	}
+	return comment
+}
+
 // AdminForumThreadByID returns a thread without applying user-facing grants.
 func (cd *CoreData) AdminForumThreadByID(id int32) (*db.AdminGetForumThreadByIdRow, error) {
 	if cd.queries == nil {

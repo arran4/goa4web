@@ -13,9 +13,10 @@ type Message interface {
 }
 ```
 
-Two main message types are supported:
+Message types include:
 - `TaskMessageType` for application actions (`TaskEvent`)
 - `EmailQueueMessageType` for email processing triggers (`EmailQueueEvent`)
+- `NotificationsChangedMessageType` for recipient inbox invalidation (`NotificationsChanged`)
 
 ### TaskEvent
 
@@ -164,3 +165,32 @@ Subscriber lists are built by `notifySubscribers`. The worker calls
 subscription patterns. It then calls `collectSubscribers` for `email` and
 `internal` methods to produce unique recipient sets before sending the
 notifications.
+
+## Live notification refresh
+
+After the notifier stores an inbox entry, it can publish a best-effort signal
+for the recipient. The authenticated `/ws/events` connection and the legacy
+`/ws/notifications` route filter that signal by session user. The browser gets
+only the notification event kind and timestamp.
+
+The browser fetches server-rendered fragments from the page's
+`data-live-url` endpoints on a signal and whenever the connection opens.
+Those endpoints handle authorization and rendering. Clients can re-fetch
+the current state independently of the delivery or ordering of socket events.
+
+## Live forum refresh
+
+The generic socket accepts a single visible thread scope and up to 12 block
+link cards on that page. Forum replies publish a committed resource signal.
+The gateway checks current account, topic, thread, and reply visibility before
+delivering a thread invalidation. The receiving page rechecks access and
+compares its displayed activity position with visible replies to render a
+refresh prompt. The prompt leaves the reply form and read marker intact.
+
+An external-link card is identified by its comment and the digest of its
+canonical URL. The server resolves the key against the current visible
+comment. The gateway observes stored metadata and active job state, so it
+detects changes from both an embedded and a standalone worker. It rechecks
+source visibility before sending a signal. Both consumers send only the kind
+and time to the browser. On connection or reconnection, the browser reads the
+authorized fragments to reconcile any changes it missed.

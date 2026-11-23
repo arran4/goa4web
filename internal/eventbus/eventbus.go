@@ -21,7 +21,32 @@ const (
 	EmailQueueMessageType
 	// DigestRunMessageType identifies a scheduled digest run.
 	DigestRunMessageType
+	// NotificationsChangedMessageType identifies recipient-owned refresh signals.
+	NotificationsChangedMessageType
+	// ForumReplyCommittedMessageType identifies committed forum reply signals.
+	ForumReplyCommittedMessageType
 )
+
+// NotificationsChanged tells the recipient to re-fetch their own notifications.
+// It carries no resource identifiers or notification content.
+type NotificationsChanged struct {
+	RecipientID int32
+	Time        time.Time
+}
+
+// Type implements Message.
+func (NotificationsChanged) Type() MessageType { return NotificationsChangedMessageType }
+
+// ForumReplyCommitted identifies a reply whose text or append has been committed.
+type ForumReplyCommitted struct {
+	TopicID   int32
+	ThreadID  int32
+	CommentID int32
+	Time      time.Time
+}
+
+// Type implements Message.
+func (ForumReplyCommitted) Type() MessageType { return ForumReplyCommittedMessageType }
 
 // Message represents an item sent over the event bus.
 type Message interface {

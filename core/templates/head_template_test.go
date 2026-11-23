@@ -46,8 +46,8 @@ func TestHeadTemplateIncludesModuleScripts(t *testing.T) {
 	if !strings.Contains(out, `<script src="/images/pasteimg.js"></script>`) {
 		t.Errorf("missing images script: %s", out)
 	}
-	if !strings.Contains(out, `<script src="/websocket/notifications.js"></script>`) {
-		t.Errorf("missing notifications script: %s", out)
+	if !strings.Contains(out, `<script src="/websocket/live-events.js"></script>`) {
+		t.Errorf("missing live-events script: %s", out)
 	}
 }
 

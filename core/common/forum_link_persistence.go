@@ -87,3 +87,21 @@ func (cd *CoreData) appendForumCommentWithWork(ctx context.Context, body string,
 	}
 	return rows, appendID, nil
 }
+
+// UpdateCommentForEditorWithWork updates a comment and records its durable
+// search revision and observed external links in one transaction when enabled.
+func (cd *CoreData) UpdateCommentForEditorWithWork(ctx context.Context, arg db.UpdateCommentForEditorParams) (int64, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	var rows int64
+	err := cd.withCommentWork(ctx, cd.jobService != nil, arg.Text.String, arg.EditorID, func(q db.Querier) (int64, error) {
+		var err error
+		rows, err = q.UpdateCommentForEditor(ctx, arg)
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return int64(arg.CommentID), nil
+	})
+	return rows, err
+}

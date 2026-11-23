@@ -34,7 +34,7 @@ func TestMySQLMigration0104UpgradePathsAndDown(t *testing.T) {
 			if err := conn.QueryRowContext(ctx, "SELECT version_id FROM goose_db_version ORDER BY id DESC LIMIT 1").Scan(&canonicalVersion); err != nil || canonicalVersion != 104 {
 				t.Fatalf("canonical schema version = %d, err %v, want 104", canonicalVersion, err)
 			}
-			if _, err := conn.ExecContext(ctx, "CREATE TABLE schema_version (version INT NOT NULL); INSERT INTO schema_version VALUES (104)"); err != nil {
+			if _, err := conn.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS schema_version (version INT NOT NULL); DELETE FROM schema_version; INSERT INTO schema_version VALUES (104)"); err != nil {
 				t.Fatalf("initialize legacy schema version: %v", err)
 			}
 			// Canonical snapshots list recent migrations. Model the complete

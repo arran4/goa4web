@@ -29,6 +29,13 @@ SET
 WHERE active_dedupe_key = ?
   AND status IN ('pending', 'running');
 
+-- name: SystemGetActiveDurableJobIDByDedupeKey :one
+SELECT id
+FROM durable_jobs
+WHERE active_dedupe_key = ?
+  AND status IN ('pending', 'running')
+LIMIT 1;
+
 -- name: SystemGetNextClaimableDurableJob :one
 SELECT
     id, job_type, dedupe_key, active_dedupe_key, target_type, target_id,

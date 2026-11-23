@@ -3852,6 +3852,13 @@ func (s *sqliteQuerier) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdate
 	})
 }
 
+func (s *sqliteQuerier) AdminUpdateCommentText(ctx context.Context, arg AdminUpdateCommentTextParams) error {
+	return s.q.AdminUpdateCommentText(ctx, dbsqlite.AdminUpdateCommentTextParams{
+		Text:       arg.Text,
+		Idcomments: int64(arg.Idcomments),
+	})
+}
+
 func (s *sqliteQuerier) AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error {
 	return s.q.AdminUpdateFAQ(ctx, dbsqlite.AdminUpdateFAQParams{
 		Answer:      arg.Answer,
@@ -10116,6 +10123,14 @@ func (s *sqliteQuerier) SystemFailDurableJobFenced(ctx context.Context, arg Syst
 		LeaseToken:  arg.LeaseToken,
 		NowAt:       arg.NowAt,
 	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemGetActiveDurableJobIDByDedupeKey(ctx context.Context, activeDedupeKey sql.NullString) (int64, error) {
+	res, err := s.q.SystemGetActiveDurableJobIDByDedupeKey(ctx, activeDedupeKey)
 	if err != nil {
 		return 0, err
 	}

@@ -90,6 +90,10 @@ type QuerierStub struct {
 	AdminScrubCommentErr   error
 	AdminScrubCommentFn    func(context.Context, AdminScrubCommentParams) error
 
+	AdminUpdateCommentTextCalls []AdminUpdateCommentTextParams
+	AdminUpdateCommentTextErr   error
+	AdminUpdateCommentTextFn    func(context.Context, AdminUpdateCommentTextParams) error
+
 	AdminArchiveCommentCalls []AdminArchiveCommentParams
 	AdminArchiveCommentErr   error
 	AdminArchiveCommentFn    func(context.Context, AdminArchiveCommentParams) error

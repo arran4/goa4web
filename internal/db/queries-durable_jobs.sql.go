@@ -375,6 +375,22 @@ func (q *Queries) SystemFailDurableJobFenced(ctx context.Context, arg SystemFail
 	return result.RowsAffected()
 }
 
+const systemGetActiveDurableJobIDByDedupeKey = `-- name: SystemGetActiveDurableJobIDByDedupeKey :one
+SELECT id
+FROM durable_jobs
+WHERE active_dedupe_key = ?
+  AND status IN ('pending', 'running')
+LIMIT 1
+FOR UPDATE
+`
+
+func (q *Queries) SystemGetActiveDurableJobIDByDedupeKey(ctx context.Context, activeDedupeKey sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemGetActiveDurableJobIDByDedupeKey, activeDedupeKey)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const systemGetCommentTextForSearchIndex = `-- name: SystemGetCommentTextForSearchIndex :one
 SELECT idcomments, text
 FROM comments

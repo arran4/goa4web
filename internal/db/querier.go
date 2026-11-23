@@ -270,6 +270,7 @@ type Querier interface {
 	AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	AdminUpdateCommentText(ctx context.Context, arg AdminUpdateCommentTextParams) error
 	AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error
 	AdminUpdateFAQCategory(ctx context.Context, arg AdminUpdateFAQCategoryParams) error
 	AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQPriorityParams) error
@@ -630,6 +631,7 @@ type Querier interface {
 	SystemDeleteWritingSearch(ctx context.Context) error
 	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int32) error
 	SystemFailDurableJobFenced(ctx context.Context, arg SystemFailDurableJobFencedParams) (int64, error)
+	SystemGetActiveDurableJobIDByDedupeKey(ctx context.Context, activeDedupeKey sql.NullString) (int64, error)
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
 	SystemGetBlogEntryByID(ctx context.Context, idblogs int32) (*SystemGetBlogEntryByIDRow, error)
 	SystemGetCommentTextForSearchIndex(ctx context.Context, idcomments int32) (*SystemGetCommentTextForSearchIndexRow, error)

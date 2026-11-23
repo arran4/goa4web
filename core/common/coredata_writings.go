@@ -65,7 +65,7 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[int32, *d
 // UpdateArticleComment updates a comment on a writing.
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -77,7 +77,7 @@ func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text strin
 	if err := cd.validateImagePathsForThread(uid, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.UpdateCommentForEditorWithWork(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
@@ -92,6 +92,9 @@ func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text strin
 	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return nil
 }
@@ -147,7 +150,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	uid := cd.UserID
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return nil, fmt.Errorf("parse images: %w", err)
@@ -163,7 +166,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.UpdateCommentForEditorWithWork(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
@@ -178,6 +181,9 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 	}
 	if err := cd.recordThreadImages(cmt.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return thread, nil
 }

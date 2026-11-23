@@ -126,10 +126,15 @@ const (
 // IndexEventData is retained as a compatibility alias for the searchindex contract.
 type IndexEventData = searchindex.IndexEventData
 
-// Worker listens for index events and updates the search tables.
-func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
+// Worker listens for index events and routes updates into durable search jobs
+// when jobSvc is supplied, or updates the search tables directly otherwise.
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, jobsOpt ...*jobs.Service) {
 	if bus == nil || q == nil {
 		return
+	}
+	var jobSvc *jobs.Service
+	if len(jobsOpt) > 0 {
+		jobSvc = jobsOpt[0]
 	}
 	ch := bus.Subscribe(eventbus.TaskMessageType)
 	for {
@@ -147,16 +152,27 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier) {
 			// then cancels it at the shutdown deadline.
 			evtCtx := ctx
 			if data, ok := evt.Data[EventKey].(IndexEventData); ok {
-				if err := index(evtCtx, q, data); err != nil {
+				if jobSvc != nil {
+					enqueueSearchIndex(evtCtx, jobSvc, data)
+				} else if err := index(evtCtx, q, data); err != nil {
 					log.Printf("index error: %v", err)
 				}
 			} else {
-				processEvent(evtCtx, evt, q)
+				processEvent(evtCtx, evt, q, jobSvc)
 			}
 			env.Ack()
 		case <-ctx.Done():
 			return
 		}
+	}
+}
+
+func enqueueSearchIndex(ctx context.Context, jobSvc *jobs.Service, data IndexEventData) {
+	if jobSvc == nil || data.Type == "" || data.ID == 0 {
+		return
+	}
+	if err := jobSvc.EnqueueSearchDirty(ctx, data.Type, data.ID); err != nil && ctx.Err() == nil {
+		log.Printf("enqueue durable search index (%s:%d): %v", data.Type, data.ID, err)
 	}
 }
 

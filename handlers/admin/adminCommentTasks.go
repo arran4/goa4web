@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"database/sql"
 	"fmt"
 	"math"
 	"net/http"
@@ -26,7 +25,7 @@ func (DeleteCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil || c == nil {
 		return fmt.Errorf("delete comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
-	if err := cd.Queries().AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: c.Idcomments}); err != nil {
+	if err := cd.AdminScrubComment(r.Context(), c.Idcomments, "", false); err != nil {
 		return fmt.Errorf("delete comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
@@ -46,7 +45,7 @@ func (EditCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("edit comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	text := r.PostFormValue("replytext")
-	if err := cd.Queries().AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: text, Valid: true}, Idcomments: c.Idcomments}); err != nil {
+	if err := cd.AdminEditComment(r.Context(), c.Idcomments, text); err != nil {
 		return fmt.Errorf("edit comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
@@ -73,7 +72,7 @@ func (DeactivateCommentTask) Action(w http.ResponseWriter, r *http.Request) any 
 	if deactivated {
 		return fmt.Errorf("comment already deactivated %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("already deactivated")))
 	}
-	if err := q.AdminArchiveComment(r.Context(), db.AdminArchiveCommentParams{
+	if err := cd.AdminDeactivateComment(r.Context(), db.AdminArchiveCommentParams{
 		Idcomments:    c.Idcomments,
 		ForumthreadID: c.ForumthreadID,
 		UsersIdusers:  c.UsersIdusers,
@@ -81,11 +80,8 @@ func (DeactivateCommentTask) Action(w http.ResponseWriter, r *http.Request) any 
 		Written:       c.Written,
 		Text:          c.Text,
 		Timezone:      c.Timezone,
-	}); err != nil {
-		return fmt.Errorf("archive comment %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if err := q.AdminScrubComment(r.Context(), db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: c.Idcomments}); err != nil {
-		return fmt.Errorf("scrub comment %w", handlers.ErrRedirectOnSamePageHandler(err))
+	}, ""); err != nil {
+		return fmt.Errorf("deactivate comment %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
 }
@@ -125,11 +121,8 @@ func (RestoreCommentTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if found == nil {
 		return fmt.Errorf("restore comment %w", handlers.ErrRedirectOnSamePageHandler(fmt.Errorf("not found")))
 	}
-	if err := q.AdminRestoreComment(r.Context(), db.AdminRestoreCommentParams{Text: found.Text, Idcomments: found.Idcomments}); err != nil {
+	if err := cd.AdminRestoreComment(r.Context(), found.Idcomments, found.Text); err != nil {
 		return fmt.Errorf("restore comment %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if err := q.AdminMarkCommentRestored(r.Context(), found.Idcomments); err != nil {
-		return fmt.Errorf("mark restored %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return nil
 }

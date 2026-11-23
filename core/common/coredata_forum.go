@@ -162,7 +162,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if cd.queries == nil {
 		return nil
 	}
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -187,6 +187,9 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
 	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
+	}
 	return nil
 }
 
@@ -195,7 +198,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if cd.queries == nil {
 		return nil
 	}
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -219,6 +222,9 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return nil
 }

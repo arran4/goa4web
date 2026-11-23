@@ -7,6 +7,8 @@ import (
 	"math"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // linksActivateCmd implements "links activate".
@@ -35,7 +37,7 @@ func (c *linksActivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	deactivated, err := queries.AdminIsLinkDeactivated(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("check deactivated: %w", err)
@@ -57,11 +59,16 @@ func (c *linksActivateCmd) Run() error {
 	if found == nil {
 		return fmt.Errorf("link %d not found", c.ID)
 	}
-	if err := queries.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: found.Title, Url: found.Url, Description: found.Description, ID: found.ID}); err != nil {
-		return fmt.Errorf("restore link: %w", err)
-	}
-	if err := queries.AdminMarkLinkRestored(ctx, found.ID); err != nil {
-		return fmt.Errorf("mark restored: %w", err)
-	}
-	return nil
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		if err := qtx.AdminRestoreLink(ctx, db.AdminRestoreLinkParams{Title: found.Title, Url: found.Url, Description: found.Description, ID: found.ID}); err != nil {
+			return fmt.Errorf("restore link: %w", err)
+		}
+		if err := qtx.AdminMarkLinkRestored(ctx, found.ID); err != nil {
+			return fmt.Errorf("mark restored: %w", err)
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeLinker, found.ID); err != nil {
+			return fmt.Errorf("record linker search dirty: %w", err)
+		}
+		return nil
+	})
 }

@@ -50,14 +50,16 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("update comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             thread.Idforumthread,
-		TopicID:              thread.ForumtopicIdforumtopic,
-		CommentID:            comment.Idcomments,
-		LabelItem:            "writing",
-		LabelItemID:          writing.Idwriting,
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
+		ThreadID:              thread.Idforumthread,
+		TopicID:               thread.ForumtopicIdforumtopic,
+		CommentID:             comment.Idcomments,
+		LabelItem:             "writing",
+		LabelItemID:           writing.Idwriting,
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        true,
+		IncludePostCount:      true,
+		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 	}); err != nil {
 		log.Printf("writing comment edit side effects: %v", err)
 	}

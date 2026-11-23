@@ -186,12 +186,13 @@ func enqueueActiveJob(ctx context.Context, q db.Querier, req EnqueueRequest, ded
 		}
 	}
 
+	activeKey := sql.NullString{String: dedupeKey, Valid: true}
 	updated, err := q.SystemBumpActiveDurableJob(ctx, db.SystemBumpActiveDurableJobParams{
 		TargetRevision:   req.TargetRevision,
 		TargetRevision_2: req.TargetRevision,
 		RunAfter:         now,
 		RunAfter_2:       now,
-		ActiveDedupeKey:  sql.NullString{String: dedupeKey, Valid: true},
+		ActiveDedupeKey:  activeKey,
 	})
 	if err != nil {
 		return false, fmt.Errorf("coalesce active durable job: %w", err)
@@ -199,11 +200,17 @@ func enqueueActiveJob(ctx context.Context, q db.Querier, req EnqueueRequest, ded
 	if updated > 0 {
 		return false, nil
 	}
+	// MySQL/MariaDB UPDATE reports 0 affected rows when an active row already has identical column values.
+	if _, getErr := q.SystemGetActiveDurableJobIDByDedupeKey(ctx, activeKey); getErr == nil {
+		return false, nil
+	} else if !errors.Is(getErr, sql.ErrNoRows) {
+		return false, fmt.Errorf("lookup active durable job: %w", getErr)
+	}
 
 	_, err = q.SystemInsertDurableJob(ctx, db.SystemInsertDurableJobParams{
 		JobType:         req.JobType,
 		DedupeKey:       dedupeKey,
-		ActiveDedupeKey: sql.NullString{String: dedupeKey, Valid: true},
+		ActiveDedupeKey: activeKey,
 		TargetType:      req.TargetType,
 		TargetID:        req.TargetID,
 		TargetKey:       req.TargetKey,
@@ -219,10 +226,15 @@ func enqueueActiveJob(ctx context.Context, q db.Querier, req EnqueueRequest, ded
 			TargetRevision_2: req.TargetRevision,
 			RunAfter:         now,
 			RunAfter_2:       now,
-			ActiveDedupeKey:  sql.NullString{String: dedupeKey, Valid: true},
+			ActiveDedupeKey:  activeKey,
 		})
 		if bumpErr == nil && bumped > 0 {
 			return false, nil
+		}
+		if bumpErr == nil {
+			if _, getErr := q.SystemGetActiveDurableJobIDByDedupeKey(ctx, activeKey); getErr == nil {
+				return false, nil
+			}
 		}
 		return false, fmt.Errorf("insert durable job: %w", err)
 	}
@@ -482,6 +494,31 @@ func (s *Service) ReleaseOnShutdownFenced(ctx context.Context, claimed *ClaimedJ
 	return rows > 0, nil
 }
 
+// JobDetails pairs a durable job with any active or retained cooldown record for its target.
+type JobDetails struct {
+	Job      *db.DurableJob
+	Cooldown *db.DurableJobCooldown
+}
+
+// AdminGet returns a single durable job and its associated cooldown record, if any.
+func (s *Service) AdminGet(ctx context.Context, id int64) (*JobDetails, error) {
+	if s == nil || s.Queries == nil {
+		return nil, sql.ErrNoRows
+	}
+	job, err := s.Queries.SystemGetDurableJobByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	details := &JobDetails{Job: job}
+	cooldown, err := s.Queries.SystemGetJobCooldown(ctx, job.DedupeKey)
+	if err == nil {
+		details.Cooldown = cooldown
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("lookup durable job %d cooldown: %w", id, err)
+	}
+	return details, nil
+}
+
 // AdminList returns durable jobs filtered by optional status and jobType.
 func (s *Service) AdminList(ctx context.Context, statusFilter, jobTypeFilter string, limit, offset int) ([]*db.DurableJob, error) {
 	if s == nil || s.Queries == nil {
@@ -638,6 +675,9 @@ func (s *Service) RunWorkerLoop(ctx context.Context, owner string, pollInterval 
 	}
 }
 
+// shutdownFinalizeTimeout bounds lease release, retry, or completion writes after a handler returns.
+const shutdownFinalizeTimeout = 5 * time.Second
+
 func (s *Service) executeClaimed(ctx context.Context, claimed *ClaimedJob, handler HandlerFunc) {
 	err := handler(ctx, claimed.Job)
 	if errors.Is(err, ErrLeaseLost) {
@@ -645,27 +685,31 @@ func (s *Service) executeClaimed(ctx context.Context, claimed *ClaimedJob, handl
 	}
 	if err != nil {
 		if ctx.Err() != nil || errors.Is(err, context.Canceled) {
-			relCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+			relCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownFinalizeTimeout)
 			defer cancel()
 			if _, relErr := s.ReleaseOnShutdownFenced(relCtx, claimed); relErr != nil {
 				log.Printf("release durable job %d on shutdown: %v", claimed.Job.ID, relErr)
 			}
 			return
 		}
-		if _, failErr := s.FailOrRetryFenced(ctx, claimed, err); failErr != nil {
+		failCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownFinalizeTimeout)
+		defer cancel()
+		if _, failErr := s.FailOrRetryFenced(failCtx, claimed, err); failErr != nil {
 			log.Printf("fail/retry durable job %d: %v", claimed.Job.ID, failErr)
 		}
 		return
 	}
 	if ctx.Err() != nil {
-		relCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		relCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownFinalizeTimeout)
 		defer cancel()
 		if _, relErr := s.ReleaseOnShutdownFenced(relCtx, claimed); relErr != nil {
 			log.Printf("release durable job %d on shutdown: %v", claimed.Job.ID, relErr)
 		}
 		return
 	}
-	if _, compErr := s.CompleteFenced(ctx, claimed); compErr != nil {
+	compCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownFinalizeTimeout)
+	defer cancel()
+	if _, compErr := s.CompleteFenced(compCtx, claimed); compErr != nil {
 		log.Printf("complete durable job %d: %v", claimed.Job.ID, compErr)
 	}
 }

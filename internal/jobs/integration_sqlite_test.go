@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -369,6 +370,157 @@ func TestThreadUpdateEnqueuesDurableWorkWithoutTaskEvent(t *testing.T) {
 		claimed, err := svc.ClaimNext(ctx, "worker", want.jobType)
 		if err != nil || claimed == nil || claimed.Job.TargetKey != want.targetKey {
 			t.Errorf("claim %s = (%v, %v), want target %q", want.jobType, claimed, err, want.targetKey)
+		}
+	}
+}
+
+func TestAdminEnqueueExternalURLCreatesAndReusesRecord(t *testing.T) {
+	sdb, q := openSharedSQLiteFile(t)
+	ctx := t.Context()
+	now := time.Date(2026, time.November, 23, 12, 0, 0, 0, time.UTC)
+	svc := jobs.NewConfiguredService(q)
+	svc.Now = func() time.Time { return now }
+
+	const target1 = "https://example.test/unused-one"
+	linkID, created, err := svc.AdminEnqueueExternalURL(ctx, target1, sql.NullInt32{Int32: 7, Valid: true}, false)
+	require.NoError(t, err)
+	require.True(t, created)
+	require.Positive(t, linkID)
+
+	linkRow, err := q.GetExternalLinkByID(ctx, linkID)
+	require.NoError(t, err)
+	require.Equal(t, target1, linkRow.Url)
+
+	listed, err := svc.AdminList(ctx, "", jobs.JobTypeExternalLink, 10, 0)
+	require.NoError(t, err)
+	require.Len(t, listed, 1)
+	require.Equal(t, int64(linkID), listed[0].TargetID)
+	require.Equal(t, target1, listed[0].TargetKey)
+	require.True(t, listed[0].CreatedByUserID.Valid)
+	require.EqualValues(t, 7, listed[0].CreatedByUserID.Int32)
+
+	// Advance SQLite last_insert_rowid() with a separate external_links row.
+	_, err = sdb.ExecContext(ctx, `INSERT INTO external_links (url, clicks) VALUES ('https://example.test/other', 0)`)
+	require.NoError(t, err)
+
+	// Re-enqueueing while active coalesces and preserves the original link ID.
+	reusedID, createdAgain, err := svc.AdminEnqueueExternalURL(ctx, target1, sql.NullInt32{Int32: 7, Valid: true}, false)
+	require.NoError(t, err)
+	require.False(t, createdAgain)
+	require.Equal(t, linkID, reusedID)
+
+	// Simulate cooldown after terminal failure and verify force bypasses it while reusing linkID.
+	_, err = sdb.ExecContext(ctx, `UPDATE durable_jobs SET status = 'failed', active_dedupe_key = NULL WHERE id = ?`, listed[0].ID)
+	require.NoError(t, err)
+	_, err = sdb.ExecContext(ctx, `INSERT INTO durable_job_cooldowns (dedupe_key, cooldown_until, last_error) VALUES (?, ?, 'HTTP 503')`,
+		jobs.DedupeKey(jobs.JobTypeExternalLink, target1), now.Add(time.Hour))
+	require.NoError(t, err)
+
+	_, _, err = svc.AdminEnqueueExternalURL(ctx, target1, sql.NullInt32{Int32: 7, Valid: true}, false)
+	require.ErrorIs(t, err, jobs.ErrInCooldown)
+
+	forcedID, createdForced, err := svc.AdminEnqueueExternalURL(ctx, target1, sql.NullInt32{Int32: 8, Valid: true}, true)
+	require.NoError(t, err)
+	require.True(t, createdForced)
+	require.Equal(t, linkID, forcedID)
+
+	var urlCount int
+	require.NoError(t, sdb.QueryRowContext(ctx, `SELECT COUNT(*) FROM external_links WHERE url = ?`, target1).Scan(&urlCount))
+	require.Equal(t, 1, urlCount)
+
+	// Failed job insert must roll back creation of a brand-new external_links row.
+	_, err = sdb.ExecContext(ctx, `CREATE TRIGGER reject_admin_link_job BEFORE INSERT ON durable_jobs
+		WHEN NEW.target_key = 'https://example.test/rollback-unused'
+		BEGIN SELECT RAISE(ABORT, 'injected admin job failure'); END`)
+	require.NoError(t, err)
+	_, _, err = svc.AdminEnqueueExternalURL(ctx, "https://example.test/rollback-unused", sql.NullInt32{Int32: 7, Valid: true}, false)
+	require.ErrorContains(t, err, "injected admin job failure")
+
+	require.NoError(t, sdb.QueryRowContext(ctx, `SELECT COUNT(*) FROM external_links WHERE url = 'https://example.test/rollback-unused'`).Scan(&urlCount))
+	require.Zero(t, urlCount)
+}
+
+func TestAdminGetReturnsJobAndCooldownMetadata(t *testing.T) {
+	sdb, q := openSharedSQLiteFile(t)
+	ctx := t.Context()
+	now := time.Date(2026, time.November, 23, 12, 0, 0, 0, time.UTC)
+	svc := jobs.NewConfiguredService(q)
+	svc.Now = func() time.Time { return now }
+
+	_, err := svc.AdminGet(ctx, 999999)
+	require.ErrorIs(t, err, sql.ErrNoRows)
+
+	// target is an external URL exercised by the AdminGet metadata test.
+	const target = "https://example.test/show-meta"
+	linkID, created, err := svc.AdminEnqueueExternalURL(ctx, target, sql.NullInt32{Int32: 4, Valid: true}, false)
+	require.NoError(t, err)
+	require.True(t, created)
+
+	list, err := svc.AdminList(ctx, "", "", 10, 0)
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+
+	details, err := svc.AdminGet(ctx, list[0].ID)
+	require.NoError(t, err)
+	require.Equal(t, int64(linkID), details.Job.TargetID)
+	require.Nil(t, details.Cooldown)
+
+	cooldownUntil := now.Add(2 * time.Hour)
+	_, err = sdb.ExecContext(ctx, `INSERT INTO durable_job_cooldowns (dedupe_key, cooldown_until, last_error) VALUES (?, ?, 'HTTP 502')`,
+		details.Job.DedupeKey, cooldownUntil)
+	require.NoError(t, err)
+
+	details, err = svc.AdminGet(ctx, list[0].ID)
+	require.NoError(t, err)
+	require.NotNil(t, details.Cooldown)
+	require.True(t, details.Cooldown.CooldownUntil.Equal(cooldownUntil))
+}
+
+func TestWorkerShutdownAtHandlerReturnNeverStrandsRunningLease(t *testing.T) {
+	_, q := openSharedSQLiteFile(t)
+	ctx := t.Context()
+	svc := jobs.NewConfiguredService(q)
+
+	for i := 0; i < 15; i++ {
+		targetID := int64(i + 1)
+		created, err := svc.Enqueue(ctx, jobs.EnqueueRequest{
+			JobType:    jobs.JobTypeSearchIndex,
+			TargetType: searchworker.TypeComment,
+			TargetID:   targetID,
+			TargetKey:  fmt.Sprintf("comment:%d", targetID),
+		})
+		require.NoError(t, err)
+		require.True(t, created)
+
+		pending, err := svc.AdminList(ctx, jobs.StatusPending, jobs.JobTypeSearchIndex, 10, 0)
+		require.NoError(t, err)
+		require.Len(t, pending, 1)
+		jobID := pending[0].ID
+
+		wCtx, cancel := context.WithCancel(ctx)
+		returning := make(chan struct{}, 1)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			svc.RunWorkerLoop(wCtx, "shutdown-race-worker", 5*time.Millisecond, []string{jobs.JobTypeSearchIndex}, func(context.Context, *db.DurableJob) error {
+				returning <- struct{}{}
+				return nil
+			})
+		}()
+
+		<-returning
+		cancel()
+		<-done
+
+		details, err := svc.AdminGet(ctx, jobID)
+		require.NoError(t, err)
+		require.NotEqual(t, jobs.StatusRunning, details.Job.Status)
+		require.Contains(t, []string{jobs.StatusCompleted, jobs.StatusPending}, details.Job.Status)
+		require.False(t, details.Job.LeaseToken.Valid)
+		if details.Job.Status == jobs.StatusPending {
+			cancelled, err := svc.AdminCancel(ctx, jobID)
+			require.NoError(t, err)
+			require.True(t, cancelled)
 		}
 	}
 }

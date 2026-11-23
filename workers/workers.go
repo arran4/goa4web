@@ -283,7 +283,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		n.BusWorker(ctx, bus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
-	group.Go(func(ctx context.Context) { searchworker.Worker(ctx, bus, q) })
+	group.Go(func(ctx context.Context) { searchworker.Worker(ctx, bus, q, wc.JobService) })
 	log.Printf("Starting background task worker")
 	group.Go(func(ctx context.Context) {
 		var bopts []backgroundtaskworker.Option

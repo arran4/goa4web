@@ -9,7 +9,9 @@ import (
 	"image"
 	"image/png"
 	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,6 +29,7 @@ import (
 	"github.com/arran4/goa4web/internal/upload/local"
 	"github.com/arran4/goa4web/migrations"
 	"github.com/arran4/goa4web/workers"
+	"github.com/arran4/goa4web/workers/searchworker"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/require"
@@ -181,4 +184,99 @@ func imageBoardUploadFixture(t *testing.T, cfg *config.RuntimeConfig) (*sql.DB, 
 	}
 
 	return conn, q, queue, run
+}
+
+func TestAdminImagePostUpdateAndDeleteCommitDurableSearch(t *testing.T) {
+	ctx := t.Context()
+	conn, err := sql.Open("sqlite", ":memory:")
+	require.NoError(t, err)
+	conn.SetMaxOpenConns(1)
+	t.Cleanup(func() { _ = conn.Close() })
+	require.NoError(t, dbstart.Apply(ctx, conn, migrations.FS, false, "sqlite"))
+
+	_, err = conn.ExecContext(ctx, `
+		INSERT INTO users (idusers, username) VALUES (50, 'image admin');
+		INSERT INTO imageboard (idimageboard, imageboard_idimageboard, title) VALUES (50, 0, 'Images');
+		INSERT INTO imagepost (idimagepost, forumthread_id, users_idusers, imageboard_idimageboard, description, approved)
+			VALUES (77, 1, 50, 50, 'Initial caption term', 1);
+	`)
+	require.NoError(t, err)
+
+	q := db.NewForDriver(conn, "sqlite")
+	queue := jobs.NewConfiguredService(q)
+	require.NoError(t, searchworker.Index(ctx, q, searchworker.IndexEventData{
+		Type: searchworker.TypeImage, ID: 77, Text: "Initial caption term",
+	}))
+	cd := common.NewCoreData(ctx, q, config.NewRuntimeConfig(), common.WithUserID(50), common.WithJobService(queue))
+
+	readImageWords := func() []string {
+		t.Helper()
+		rows, err := conn.QueryContext(ctx, `SELECT sw.word FROM searchwordlist sw
+			JOIN imagepost_search ips ON ips.searchwordlist_idsearchwordlist = sw.idsearchwordlist
+			WHERE ips.image_post_id = 77`)
+		require.NoError(t, err)
+		defer func() { _ = rows.Close() }()
+		var words []string
+		for rows.Next() {
+			var w string
+			require.NoError(t, rows.Scan(&w))
+			words = append(words, w)
+		}
+		require.NoError(t, rows.Err())
+		return words
+	}
+
+	runDurableSearchPass := func(wantRev int64) {
+		t.Helper()
+		wCtx, cancel := context.WithCancel(ctx)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			searchworker.RunDurableWorker(wCtx, queue, q, "image-search-worker")
+		}()
+		require.Eventually(t, func() bool {
+			state, err := q.SystemGetSearchDirtyTarget(ctx, db.SystemGetSearchDirtyTargetParams{
+				TargetType: searchindex.TypeImage, TargetID: 77,
+			})
+			return err == nil && state.Revision == wantRev && state.IndexedRevision == wantRev
+		}, 4*time.Second, 15*time.Millisecond)
+		cancel()
+		<-done
+	}
+
+	// 1. Trigger failure rolls back ModifyPostTask cleanly.
+	_, err = conn.ExecContext(ctx, `CREATE TRIGGER reject_image_edit_search BEFORE INSERT ON durable_jobs
+		WHEN NEW.job_type = 'search_index' AND NEW.target_type = 'image'
+		BEGIN SELECT RAISE(ABORT, 'injected image edit failure'); END`)
+	require.NoError(t, err)
+
+	runModify := func(desc string) any {
+		form := url.Values{"board": {"50"}, "desc": {desc}, "approved": {"1"}}
+		req := httptest.NewRequest(http.MethodPost, "/admin/user/50/imagebbs/post/77", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req = mux.SetURLVars(req, map[string]string{"user": "50", "post": "77"})
+		req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+		return modifyPostTask.Action(httptest.NewRecorder(), req)
+	}
+
+	editErr, ok := runModify("UpdatedImageSearchToken").(error)
+	require.True(t, ok)
+	require.ErrorContains(t, editErr, "injected image edit failure")
+	var curDesc string
+	require.NoError(t, conn.QueryRowContext(ctx, `SELECT description FROM imagepost WHERE idimagepost = 77`).Scan(&curDesc))
+	require.Equal(t, "Initial caption term", curDesc)
+
+	_, err = conn.ExecContext(ctx, `DROP TRIGGER reject_image_edit_search`)
+	require.NoError(t, err)
+	_ = runModify("UpdatedImageSearchToken")
+	runDurableSearchPass(1)
+	require.ElementsMatch(t, []string{"updatedimagesearchtoken"}, readImageWords())
+
+	// 2. DeletePostTask commits durable search clearance and removes indexed words.
+	req := httptest.NewRequest(http.MethodPost, "/admin/user/50/imagebbs/post/77/delete", nil)
+	req = mux.SetURLVars(req, map[string]string{"user": "50", "post": "77"})
+	req = req.WithContext(context.WithValue(req.Context(), consts.KeyCoreData, cd))
+	_ = deletePostTask.Action(httptest.NewRecorder(), req)
+	runDurableSearchPass(2)
+	require.Empty(t, readImageWords())
 }

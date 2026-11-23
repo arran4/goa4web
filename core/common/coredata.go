@@ -3440,11 +3440,6 @@ type queuedRemoteImageCacheFetch struct {
 	sourceURL string
 }
 
-func (cd *CoreData) sanitizeCodeImages(text string) string {
-	text, _ = cd.sanitizeCodeImagesAndQueue(text)
-	return text
-}
-
 func (cd *CoreData) sanitizeCodeImagesAndQueue(text string) (string, []queuedRemoteImageCacheFetch) {
 	root, err := a4code.ParseString(text)
 	if err != nil {

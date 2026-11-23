@@ -85,11 +85,14 @@ same bytes to the same key.
 The embedded server treats successful task events from older producers as
 inputs to the durable external-link queue. Forum opening comments, replies,
 appends and edits record eligible link jobs in the same transaction as their
-content. Blog, image board, linker, news and writing replies use the same
-transaction boundary. Worker wake-ups follow the commit. Task events indicate
-when their link jobs have already been recorded, so the compatibility worker does not
-enqueue them again. Observing a link preserves the schedule of an active
-retry and respects its cooldown.
+content. Blog, image board, linker, news and writing replies and edits use the
+same transaction boundary. Signed `/goto` reload requests and authenticated
+`/goto/prefetch` requests enqueue durable external-link work after validating
+destinations against internal/private hosts instead of attaching volatile
+background tasks when durable jobs are enabled. Worker wake-ups follow the
+commit. Task events indicate when their link jobs have already been recorded, so
+the compatibility worker does not enqueue them again. Observing a link preserves
+the schedule of an active retry and respects its cooldown.
 
 The worker fetches outside the job transaction and checks the current lease
 when publishing metadata or its image reference. It rejects unsuccessful HTTP
@@ -102,14 +105,33 @@ remain suppressed until an explicit retry.
 
 Forum opening comments, replies, appends and edits record a search revision
 and coalesce its job in the source transaction. Blog, image board, linker,
-news and writing reply creation use the same transaction boundary. Writing
-creation and edits record the article search job with the article change.
-Link approvals record a search job for every published link. Image board
-uploads commit the post, upload metadata and search job together.
-A search job reads the current source and replaces its per-item terms.
-The term replacement and indexed revision commit together under an active
-job lease. A superseded revision cannot advance the indexed revision.
+news and writing reply creation and edits use the same transaction boundary.
+Writing creation and edits, admin comment edit/delete/deactivate/restore,
+admin linker updates, link approvals, image board uploads/updates/deletions,
+and CLI content deactivation/restoration commands commit search revisions with
+their source changes. When enabled, `searchworker.Worker` converts any legacy
+bus index events into durable search revisions rather than mutating search
+tables without a lease. A search job reads the current source and replaces its
+per-item terms. The term replacement and indexed revision commit together under
+an active job lease. A superseded revision cannot advance the indexed revision.
 Deleted or empty content clears its previous terms.
+
+## Admin job controls and remaining bus workers
+
+Operators can list, inspect (`goa4web jobs show` and `/admin/jobs?id=...`),
+enqueue URLs, retry, cancel, and purge terminal jobs via CLI and authenticated
+admin routes. Enqueueing an unused external URL validates the destination and
+creates or reuses its `external_links` record atomically with the durable job.
+Standalone (`goa4web worker`) and embedded durable loops share database leases
+across restarts and forced crashes (`SIGKILL` or second `Ctrl+C`), reclaiming
+expired claims safely.
+
+Remaining non-durable bus workers keep their intended roles: `emailqueue` and
+DLQ remain database-backed; `notifications` keeps best-effort fan-out and
+scheduled digests; `postcountworker` recomputes regenerable thread/topic
+statistics; `auditworker` and `logworker` record operational logs best-effort;
+and `backgroundtaskworker` serves admin full-index remake tasks and fallback
+behavior when no durable job service is configured.
 
 ## Durable job outcomes
 

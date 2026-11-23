@@ -27,6 +27,7 @@ func (h *Handlers) AdminSiteSettingsPage(w http.ResponseWriter, r *http.Request)
 	fileVals, _ := config.LoadAppConfigFile(core.OSFS{}, h.ConfigFile)
 	hide := map[string]struct{}{
 		config.EnvDBConn:              {},
+		config.EnvDBMigrationConn:     {},
 		config.EnvSMTPPass:            {},
 		config.EnvJMAPPass:            {},
 		config.EnvSendGridKey:         {},

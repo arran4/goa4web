@@ -41,3 +41,4 @@ eventbus.Publish(ctx, "my_queue_topic", myDataStruct)
 
 - **Internal Dependencies**: Specific limitations depend on the internal implementations of the exposed functions. Agents should not modify core interfaces without strictly considering downstream dependencies within the Goa4Web repository.
 - **State Management**: Care must be taken to ensure thread safety and prevent race conditions when used concurrently.
+- **Digest acknowledgement**: A digest's notification snapshot is acknowledged only after the provider returns success. The acknowledgement and the pending-email completion are idempotent, so a worker restart or database failure cannot dismiss later notifications. Provider delivery is necessarily at-least-once: a crash after provider acceptance but before the durable acknowledgement may resend the email when processing resumes.

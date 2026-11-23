@@ -380,6 +380,10 @@ is_applied boolean NOT NULL,
 tstamp timestamp NULL default CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS schema_version (
+version INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS subscriptions (
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 users_idusers int NOT NULL,
@@ -821,3 +825,4 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (106, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (107, 1);
+INSERT INTO schema_version (version) VALUES (107);

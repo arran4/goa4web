@@ -610,6 +610,10 @@ type SchedulerState struct {
 	Metadata  sql.NullString
 }
 
+type SchemaVersion struct {
+	Version int64
+}
+
 type SearchDirtyTarget struct {
 	TargetType      string
 	TargetID        int64

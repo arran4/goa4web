@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/arran4/goa4web/database"
+	"github.com/arran4/goa4web/internal/app/dbstart"
 	"github.com/arran4/goa4web/internal/sqlutil"
 )
 
@@ -59,6 +60,12 @@ func (c *dbCreateCmd) Run() error {
 	log.Println("Applying schema...")
 	if err := sqlutil.RunStatements(context.Background(), sdb, strings.NewReader(string(database.SchemaMySQL))); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)
+	}
+
+	if cfg.DBDriver == "mysql" {
+		if err := dbstart.RecordMySQLSnapshotBaseline(context.Background(), sdb); err != nil {
+			return fmt.Errorf("record canonical schema baseline: %w", err)
+		}
 	}
 
 	log.Println("Database created successfully.")

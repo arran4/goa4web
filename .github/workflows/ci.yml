@@ -254,7 +254,7 @@ jobs:
           gh pr create --title "chore(deps): automated dependency update" --body "Automated dependency freshness update" --base main --head "$BRANCH" --label "dependencies"
   release-ready:
     name: Release Quality Gates Passed
-    needs: [route, discover, build, gitleaks, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, node-lint-test, sqlc-update, config-examples-update]
+    needs: [route, discover, build, gitleaks, golangci, go-vet, go-test, go-test-sqlite, go-test-mysql, go-test-mariadb, node-lint-test, sqlc-update, config-examples-update]
     if: ${{ always() && (needs.route.outputs.run_release == 'true' || needs.route.outputs.run_publisher == 'true') }}
     runs-on: ubuntu-24.04
     steps:
@@ -267,6 +267,7 @@ jobs:
           GO_TEST_RESULT: ${{ needs.go-test.result }}
           GO_TEST_SQLITE_RESULT: ${{ needs.go-test-sqlite.result }}
           GO_TEST_MYSQL_RESULT: ${{ needs.go-test-mysql.result }}
+          GO_TEST_MARIADB_RESULT: ${{ needs.go-test-mariadb.result }}
           NODE_TEST_RESULT: ${{ needs.node-lint-test.result }}
           SQLC_RESULT: ${{ needs.sqlc-update.result }}
           CONFIG_RESULT: ${{ needs.config-examples-update.result }}
@@ -279,6 +280,7 @@ jobs:
           [[ "$GO_TEST_RESULT" == "success" ]]
           [[ "$GO_TEST_SQLITE_RESULT" == "success" ]]
           [[ "$GO_TEST_MYSQL_RESULT" == "success" ]]
+          [[ "$GO_TEST_MARIADB_RESULT" == "success" ]]
           [[ "$NODE_TEST_RESULT" == "success" ]]
           [[ "$SQLC_RESULT" == "success" ]]
           [[ "$CONFIG_RESULT" == "success" ]]
@@ -551,7 +553,43 @@ jobs:
         env:
           GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
         run: |
-          go test -tags nosqlite ./migrations ./internal/db -v
+          go test -tags nosqlite ./migrations ./internal/db ./internal/app/dbstart -v
+          go test -tags nosqlite ./cmd/goa4web -run '^Test(CanonicalMySQLInstallCanRunMigrations|ProductionMySQLUpgradeFromV98AndStartupSmoke)$' -v
+
+  go-test-mariadb:
+    name: Go test MariaDB ${{ matrix.version }} (ubuntu-24.04)
+    needs: [route, discover, golangci, go-vet]
+    if: ${{ needs.discover.outputs.has_go == 'true' && needs.route.outputs.run_code_checks == 'true' }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['10.11', '11.4']
+    services:
+      mariadb:
+        image: mariadb:${{ matrix.version }}
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: goa4web_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test MariaDB migrations and database queries
+        env:
+          GOA4WEB_TEST_MYSQL_DSN: root:root@tcp(127.0.0.1:3306)/goa4web_test?parseTime=true&multiStatements=true
+        run: |
+          go test -tags nosqlite ./migrations ./internal/db ./internal/app/dbstart -v
+          go test -tags nosqlite ./cmd/goa4web -run '^Test(CanonicalMySQLInstallCanRunMigrations|ProductionMySQLUpgradeFromV98AndStartupSmoke)$' -v
 
   node-lint-test:
     name: Node JS tests

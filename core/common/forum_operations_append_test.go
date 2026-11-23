@@ -70,6 +70,11 @@ const (
 
 func newForumReplyAppendCoreData(t *testing.T, cfg *config.RuntimeConfig, private bool, options ...CoreOption) (*CoreData, *forumReplyAppendQuerier, *eventbus.TaskEvent) {
 	t.Helper()
+	runner := newControlledBackgroundRunner()
+	t.Cleanup(func() {
+		runner.cancel()
+		runner.wg.Wait()
+	})
 	q := &forumReplyAppendQuerier{QuerierStub: testhelpers.NewQuerierStub()}
 	handler := "forum"
 	if private {
@@ -108,7 +113,7 @@ func newForumReplyAppendCoreData(t *testing.T, cfg *config.RuntimeConfig, privat
 		return nil, sql.ErrNoRows
 	}
 	evt := &eventbus.TaskEvent{Data: map[string]any{}}
-	options = append(options, WithEvent(evt), WithUserRoles([]string{"user"}))
+	options = append(options, WithEvent(evt), WithUserRoles([]string{"user"}), WithBackgroundRunner(runner))
 	cd := NewCoreData(context.Background(), q, cfg, options...)
 	cd.UserID = forumReplyAppendActorID
 	return cd, q, evt

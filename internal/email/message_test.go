@@ -63,9 +63,14 @@ func TestBuildMessageMetadata(t *testing.T) {
 	})
 
 	t.Run("invalid unsubscribe URL is rejected", func(t *testing.T) {
-		_, err := BuildMessage(from, to, "Subject", "Text", "", WithListUnsubscribe("http://example.com/unsubscribe"))
-		if err == nil {
-			t.Fatal("BuildMessage succeeded with an insecure List-Unsubscribe URL")
+		for _, bad := range []string{
+			"http://example.com/unsubscribe",
+			"https://example.com/u>\r\nBcc:evil@example.com",
+			"https://example.com/u<injected>",
+		} {
+			if _, err := BuildMessage(from, to, "Subject", "Text", "", WithListUnsubscribe(bad)); err == nil {
+				t.Fatalf("BuildMessage accepted invalid List-Unsubscribe URL %q", bad)
+			}
 		}
 	})
 }

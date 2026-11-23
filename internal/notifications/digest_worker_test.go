@@ -214,4 +214,7 @@ func TestNotificationDigestWorker_MarksDigestEmailAutomatic(t *testing.T) {
 	if got := parsed.Header.Get("Auto-Submitted"); got != "auto-generated" {
 		t.Errorf("digest Auto-Submitted=%q, want auto-generated", got)
 	}
+	if got := parsed.Header.Get("List-Unsubscribe"); got != "" {
+		t.Errorf("digest List-Unsubscribe=%q, want empty", got)
+	}
 }

@@ -87,6 +87,9 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string, opt
 		hdr.Set("Reply-To", replyTo.String())
 	}
 	if options.ListUnsubscribeURL != "" {
+		if strings.ContainsAny(options.ListUnsubscribeURL, "\r\n<> \t") {
+			return nil, fmt.Errorf("invalid List-Unsubscribe URL")
+		}
 		unsubURL, err := url.ParseRequestURI(options.ListUnsubscribeURL)
 		if err != nil || unsubURL.Scheme != "https" || unsubURL.Host == "" {
 			return nil, fmt.Errorf("invalid List-Unsubscribe URL")

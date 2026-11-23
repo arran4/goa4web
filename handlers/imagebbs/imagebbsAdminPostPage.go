@@ -31,7 +31,7 @@ func (ModifyPostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	board, _ := strconv.Atoi(r.PostFormValue("board"))
 	desc := r.PostFormValue("desc")
 	approved := r.PostFormValue("approved") == "1"
-	if err := cd.Queries().AdminUpdateImagePost(r.Context(), db.AdminUpdateImagePostParams{
+	if err := cd.AdminUpdateImagePost(r.Context(), db.AdminUpdateImagePostParams{
 		ImageboardIdimageboard: sql.NullInt32{Int32: int32(board), Valid: board != 0},
 		Description:            sql.NullString{Valid: true, String: desc},
 		Approved:               approved,
@@ -54,7 +54,7 @@ func (DeletePostTask) Action(w http.ResponseWriter, r *http.Request) any {
 	vars := mux.Vars(r)
 	pid, _ := strconv.Atoi(vars["post"])
 	userID, _ := strconv.Atoi(vars["user"])
-	if err := cd.Queries().AdminDeleteImagePost(r.Context(), int32(pid)); err != nil {
+	if err := cd.AdminDeleteImagePost(r.Context(), int32(pid)); err != nil {
 		return fmt.Errorf("delete image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	return handlers.RedirectHandler(fmt.Sprintf("/admin/user/%d/imagebbs", userID))

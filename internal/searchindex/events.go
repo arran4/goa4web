@@ -3,6 +3,8 @@ package searchindex
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -52,14 +54,36 @@ func BreakupTextToWords(input string) []string {
 	return tokens
 }
 
+// Replace clears and rebuilds one target's search index in the caller's transaction.
+func Replace(ctx context.Context, q db.Querier, data IndexEventData) error {
+	var err error
+	switch data.Type {
+	case TypeComment:
+		err = q.SystemDeleteCommentSearchByCommentID(ctx, data.ID)
+	case TypeWriting:
+		err = q.SystemDeleteWritingSearchByWritingID(ctx, data.ID)
+	case TypeLinker:
+		err = q.SystemDeleteLinkerSearchByLinkerID(ctx, data.ID)
+	case TypeImage:
+		err = q.SystemDeleteImagePostSearchByImagePostID(ctx, data.ID)
+	default:
+		return nil
+	}
+	if err != nil || data.Text == "" {
+		return err
+	}
+	return Index(ctx, q, data)
+}
+
 // Index synchronously updates the search index for one item.
 func Index(ctx context.Context, q db.Querier, data IndexEventData) error {
 	counts := map[string]int32{}
 	for _, word := range BreakupTextToWords(data.Text) {
 		counts[strings.ToLower(word)]++
 	}
-	for word, count := range counts {
-		id, err := q.SystemCreateSearchWord(ctx, strings.ToLower(word))
+	for _, word := range slices.Sorted(maps.Keys(counts)) {
+		count := counts[word]
+		id, err := q.SystemCreateSearchWord(ctx, word)
 		if err != nil {
 			return err
 		}

@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 )
 
 const adminDeleteNotification = `-- name: AdminDeleteNotification :exec
@@ -473,4 +474,52 @@ func (q *Queries) SystemGetLastNotificationForRecipientByMessage(ctx context.Con
 		&i.ReadAt,
 	)
 	return &i, err
+}
+
+const systemRecordAdminJobFailureNotification = `-- name: SystemRecordAdminJobFailureNotification :exec
+INSERT INTO notifications (
+    users_idusers, link, activity_key, resource_type, activity_position, created_at
+) VALUES (
+    ?1, '/admin/jobs?status=failed', ?2,
+    'durable_job_failure', 1, ?3
+)
+ON CONFLICT(users_idusers, activity_key) DO UPDATE SET
+    activity_position = activity_position + 1,
+    created_at = MAX(notifications.created_at, excluded.created_at)
+`
+
+type SystemRecordAdminJobFailureNotificationParams struct {
+	RecipientID int64
+	ActivityKey sql.NullString
+	LatestAt    time.Time
+}
+
+func (q *Queries) SystemRecordAdminJobFailureNotification(ctx context.Context, arg SystemRecordAdminJobFailureNotificationParams) error {
+	_, err := q.db.ExecContext(ctx, systemRecordAdminJobFailureNotification, arg.RecipientID, arg.ActivityKey, arg.LatestAt)
+	return err
+}
+
+const systemSummarizeAdminJobFailureNotification = `-- name: SystemSummarizeAdminJobFailureNotification :exec
+UPDATE notifications
+SET message = ?1 || ' (' || activity_position || CASE WHEN activity_position = 1 THEN ' failure)' ELSE ' failures)' END,
+    read_at = CASE WHEN datetime(read_at) <= datetime(substr(?2, 1, 19)) THEN NULL ELSE read_at END
+WHERE users_idusers = ?3 AND activity_key = ?4
+  AND resource_type = 'durable_job_failure'
+`
+
+type SystemSummarizeAdminJobFailureNotificationParams struct {
+	Summary      sql.NullString
+	ReopenBefore interface{}
+	RecipientID  int64
+	ActivityKey  sql.NullString
+}
+
+func (q *Queries) SystemSummarizeAdminJobFailureNotification(ctx context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error {
+	_, err := q.db.ExecContext(ctx, systemSummarizeAdminJobFailureNotification,
+		arg.Summary,
+		arg.ReopenBefore,
+		arg.RecipientID,
+		arg.ActivityKey,
+	)
+	return err
 }

@@ -11,15 +11,23 @@ import (
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
 	domainexternallink "github.com/arran4/goa4web/internal/externallink"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 )
 
-// Worker listens for new content and fetches metadata for external links.
-func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.RuntimeConfig) {
+// Worker queues links observed in task events. Callers without a durable queue
+// retain the direct metadata adapter.
+func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.RuntimeConfig, jobsOpt ...*jobs.Service) {
 	if bus == nil || q == nil {
 		return
 	}
-	ch := bus.Subscribe(eventbus.TaskMessageType)
+	var app *common.CoreData
+	if len(jobsOpt) != 0 && jobsOpt[0] != nil {
+		app = common.NewCoreData(ctx, q, cfg, common.WithJobService(jobsOpt[0]))
+	}
+	subscription := bus.SubscribeWithOptions(eventbus.WithTypes(eventbus.TaskMessageType))
+	defer subscription.Close()
+	ch := subscription.Channel()
 
 	for {
 		select {
@@ -36,8 +44,18 @@ func Worker(ctx context.Context, bus *eventbus.Bus, q db.Querier, cfg *config.Ru
 				if evt.Outcome != eventbus.TaskOutcomeSuccess {
 					return
 				}
+				if recorded, _ := evt.Data[eventbus.ExternalLinksRecordedKey].(bool); recorded {
+					return
+				}
 				body, ok := evt.Data["Body"].(string)
 				if !ok || body == "" {
+					return
+				}
+
+				if app != nil {
+					if err := app.ForUser(evt.UserID).EnqueueExternalLinksFromBody(ctx, body); err != nil && ctx.Err() == nil {
+						log.Printf("queue links from task event: %v", err)
+					}
 					return
 				}
 

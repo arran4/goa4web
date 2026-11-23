@@ -16,6 +16,12 @@ import (
 // DefaultPageSize defines the number of items shown per page.
 const DefaultPageSize = 15
 
+// DefaultDurableJobHistoryHours is the maximum age of terminal durable jobs by default.
+const DefaultDurableJobHistoryHours = 24
+
+// DefaultDurableJobHistoryLimit caps terminal history per job kind by default.
+const DefaultDurableJobHistoryLimit = 1000
+
 const (
 	// DefaultImageCachePlaceholderMinWidth is the default cache placeholder diagnostic SVG width.
 	DefaultImageCachePlaceholderMinWidth = 760
@@ -189,6 +195,11 @@ type RuntimeConfig struct {
 	// AdminEmails holds a comma-separated list of administrator email
 	// addresses.
 	AdminEmails string
+
+	// DurableJobHistoryHours caps the age of terminal durable jobs.
+	DurableJobHistoryHours int
+	// DurableJobHistoryLimit caps the terminal history per durable job kind.
+	DurableJobHistoryLimit int
 
 	// EmailWorkerInterval sets how often the email worker runs in seconds.
 	EmailWorkerInterval int
@@ -569,6 +580,12 @@ func normalizeRuntimeConfig(cfg *RuntimeConfig) {
 	}
 	if cfg.EmailSMTPAuth == "" {
 		cfg.EmailSMTPAuth = "plain"
+	}
+	if cfg.DurableJobHistoryHours <= 0 {
+		cfg.DurableJobHistoryHours = DefaultDurableJobHistoryHours
+	}
+	if cfg.DurableJobHistoryLimit <= 0 {
+		cfg.DurableJobHistoryLimit = DefaultDurableJobHistoryLimit
 	}
 	if cfg.EmailWorkerInterval == 0 {
 		cfg.EmailWorkerInterval = 60

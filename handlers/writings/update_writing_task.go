@@ -83,17 +83,19 @@ func (UpdateWritingTask) Action(w http.ResponseWriter, r *http.Request) any {
 		}
 	}
 
-	if err := queries.SystemDeleteWritingSearchByWritingID(r.Context(), writing.Idwriting); err != nil {
-		return fmt.Errorf("writing search delete fail %w", err)
-	}
+	if cd.JobService() == nil {
+		if err := queries.SystemDeleteWritingSearchByWritingID(r.Context(), writing.Idwriting); err != nil {
+			return fmt.Errorf("writing search delete fail %w", err)
+		}
 
-	fullText := strings.Join([]string{abstract, title, body}, " ")
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
+		fullText := strings.Join([]string{abstract, title, body}, " ")
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: writing.Idwriting, Text: fullText}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: writing.Idwriting, Text: fullText}
 		}
 	}
 

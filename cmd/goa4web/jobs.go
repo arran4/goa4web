@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"text/tabwriter"
+	"time"
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
@@ -45,6 +47,8 @@ func (c *jobsCmd) Run() error {
 	switch args[0] {
 	case "list":
 		return c.runList(args[1:])
+	case "show":
+		return c.runShow(args[1:])
 	case "enqueue-url":
 		return c.runEnqueueURL(args[1:])
 	case "retry":
@@ -102,9 +106,76 @@ func (c *jobsCmd) runList(args []string) error {
 		return enc.Encode(rows)
 	}
 	tw := tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
-	_, _ = fmt.Fprintln(tw, "ID\tTYPE\tSTATUS\tATTEMPTS\tKEY\tERROR")
+	_, _ = fmt.Fprintln(tw, "ID\tTYPE\tSTATUS\tATTEMPTS\tNEXT RUN\tKEY\tERROR")
 	for _, r := range rows {
-		_, _ = fmt.Fprintf(tw, "%d\t%s\t%s\t%d/%d\t%s\t%s\n", r.ID, r.JobType, r.Status, r.Attempts, r.MaxAttempts, r.TargetKey, r.LastError.String)
+		_, _ = fmt.Fprintf(tw, "%d\t%s\t%s\t%d/%d\t%s\t%s\t%s\n", r.ID, r.JobType, r.Status, r.Attempts, r.MaxAttempts, r.RunAfter.UTC().Format(time.RFC3339), r.TargetKey, r.LastError.String)
+	}
+	return tw.Flush()
+}
+
+func (c *jobsCmd) runShow(args []string) error {
+	var jsonOut bool
+	fs, _, err := parseFlags("show", args, func(fs *flag.FlagSet) {
+		fs.BoolVar(&jsonOut, "json", false, "Output JSON")
+	})
+	if err != nil {
+		return err
+	}
+	if fs.NArg() != 1 {
+		return fmt.Errorf("usage: goa4web jobs show [--json] <id>")
+	}
+	id, err := strconv.ParseInt(fs.Arg(0), 10, 64)
+	if err != nil || id <= 0 {
+		return fmt.Errorf("invalid job id %q", fs.Arg(0))
+	}
+	svc, cleanup, err := c.openService()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	details, err := svc.AdminGet(context.Background(), id)
+	if err != nil {
+		return err
+	}
+	if jsonOut {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(details)
+	}
+	job := details.Job
+	tw := tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
+	_, _ = fmt.Fprintf(tw, "ID:\t%d\n", job.ID)
+	_, _ = fmt.Fprintf(tw, "Type:\t%s\n", job.JobType)
+	_, _ = fmt.Fprintf(tw, "Status:\t%s\n", job.Status)
+	_, _ = fmt.Fprintf(tw, "Target:\t%s:%d:%s\n", job.TargetType, job.TargetID, job.TargetKey)
+	_, _ = fmt.Fprintf(tw, "TargetID:\t%d\n", job.TargetID)
+	_, _ = fmt.Fprintf(tw, "Revision:\t%d\n", job.TargetRevision)
+	_, _ = fmt.Fprintf(tw, "NeedsRerun:\t%t\n", job.NeedsRerun)
+	_, _ = fmt.Fprintf(tw, "Attempts:\t%d/%d\n", job.Attempts, job.MaxAttempts)
+	_, _ = fmt.Fprintf(tw, "NextRun:\t%s\n", job.RunAfter.UTC().Format(time.RFC3339))
+	if job.LeaseOwner.Valid {
+		_, _ = fmt.Fprintf(tw, "LeaseOwner:\t%s\n", job.LeaseOwner.String)
+	}
+	if job.LeaseExpiresAt.Valid {
+		_, _ = fmt.Fprintf(tw, "LeaseExpires:\t%s\n", job.LeaseExpiresAt.Time.UTC().Format(time.RFC3339))
+	}
+	if job.LastError.Valid {
+		_, _ = fmt.Fprintf(tw, "LastError:\t%s\n", job.LastError.String)
+	}
+	if job.CreatedByUserID.Valid {
+		_, _ = fmt.Fprintf(tw, "CreatedBy:\t%d\n", job.CreatedByUserID.Int32)
+	}
+	_, _ = fmt.Fprintf(tw, "CreatedAt:\t%s\n", job.CreatedAt.UTC().Format(time.RFC3339))
+	_, _ = fmt.Fprintf(tw, "UpdatedAt:\t%s\n", job.UpdatedAt.UTC().Format(time.RFC3339))
+	if job.CompletedAt.Valid {
+		_, _ = fmt.Fprintf(tw, "CompletedAt:\t%s\n", job.CompletedAt.Time.UTC().Format(time.RFC3339))
+	}
+	if details.Cooldown != nil {
+		_, _ = fmt.Fprintf(tw, "CooldownUntil:\t%s\n", details.Cooldown.CooldownUntil.UTC().Format(time.RFC3339))
+		if details.Cooldown.LastNotifiedAt.Valid {
+			_, _ = fmt.Fprintf(tw, "LastNotifiedAt:\t%s\n", details.Cooldown.LastNotifiedAt.Time.UTC().Format(time.RFC3339))
+		}
 	}
 	return tw.Flush()
 }
@@ -130,19 +201,14 @@ func (c *jobsCmd) runEnqueueURL(args []string) error {
 	}
 	defer cleanup()
 
-	created, err := svc.Enqueue(context.Background(), jobs.EnqueueRequest{
-		JobType:    jobs.JobTypeExternalLink,
-		TargetType: jobs.JobTypeExternalLink,
-		TargetKey:  canonical,
-		ForceRetry: force,
-	})
+	linkID, created, err := svc.AdminEnqueueExternalURL(context.Background(), canonical, sql.NullInt32{}, force)
 	if err != nil {
 		return err
 	}
 	if created {
-		fmt.Printf("Enqueued external_link job for %s\n", canonical)
+		fmt.Printf("Enqueued external_link job for %s (external_link #%d)\n", canonical, linkID)
 	} else {
-		fmt.Printf("Coalesced active external_link job for %s\n", canonical)
+		fmt.Printf("Coalesced active external_link job for %s (external_link #%d)\n", canonical, linkID)
 	}
 	return nil
 }
@@ -233,6 +299,7 @@ func (c *jobsCmd) Usage() {
 
 Subcommands:
   list         List durable background jobs
+  show         Show metadata and cooldown state for one job
   enqueue-url  Enqueue an external URL metadata fetch job
   retry        Retry a failed/cancelled/completed job (clears cooldown)
   cancel       Cancel a pending/running job

@@ -29,6 +29,13 @@ SET
 WHERE active_dedupe_key = ?
   AND status IN ('pending', 'running');
 
+-- name: SystemGetActiveDurableJobIDByDedupeKey :one
+SELECT id
+FROM durable_jobs
+WHERE active_dedupe_key = ?
+  AND status IN ('pending', 'running')
+LIMIT 1;
+
 -- name: SystemGetNextClaimableDurableJob :one
 SELECT
     id, job_type, dedupe_key, active_dedupe_key, target_type, target_id,
@@ -95,7 +102,8 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
   AND status = 'running'
-  AND lease_token = ?;
+  AND lease_token = ?
+  AND lease_expires_at > sqlc.arg(now_at);
 
 -- name: SystemRetryDurableJobFenced :execrows
 UPDATE durable_jobs
@@ -109,7 +117,8 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
   AND status = 'running'
-  AND lease_token = ?;
+  AND lease_token = ?
+  AND lease_expires_at > sqlc.arg(now_at);
 
 -- name: SystemFailDurableJobFenced :execrows
 UPDATE durable_jobs
@@ -125,7 +134,8 @@ SET
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
   AND status = 'running'
-  AND lease_token = ?;
+  AND lease_token = ?
+  AND lease_expires_at > sqlc.arg(now_at);
 
 -- name: SystemReleaseDurableJobOnShutdownFenced :execrows
 UPDATE durable_jobs
@@ -198,11 +208,20 @@ DELETE FROM durable_jobs
 WHERE status IN ('completed', 'failed', 'cancelled')
   AND (? = '' OR status = ?);
 
--- name: SystemPruneTerminalDurableJobsBefore :execrows
+-- name: SystemPruneTerminalDurableJobs :execrows
 DELETE FROM durable_jobs
-WHERE status IN ('completed', 'failed', 'cancelled')
-  AND completed_at IS NOT NULL
-  AND completed_at < ?;
+WHERE durable_jobs.status IN ('completed', 'failed', 'cancelled')
+  AND (
+    durable_jobs.completed_at < sqlc.arg(cutoff)
+    OR durable_jobs.id IN (
+        SELECT ranked.id FROM (
+            SELECT history.id, ROW_NUMBER() OVER (PARTITION BY history.job_type ORDER BY history.completed_at DESC, history.id DESC) AS history_rank
+            FROM durable_jobs history
+            WHERE history.status IN ('completed', 'failed', 'cancelled')
+        ) ranked
+        WHERE history_rank > CAST(sqlc.arg(max_per_kind) AS INTEGER)
+    )
+  );
 
 -- name: SystemGetJobCooldown :one
 SELECT dedupe_key, cooldown_until, last_error, last_notified_at, updated_at
@@ -243,10 +262,11 @@ LIMIT 1;
 
 -- name: SystemMarkSearchTargetIndexed :execrows
 UPDATE search_dirty_targets
-SET indexed_revision = ?, updated_at = CURRENT_TIMESTAMP
-WHERE target_type = ?
-  AND target_id = ?
-  AND indexed_revision < ?;
+SET indexed_revision = sqlc.arg(indexed_revision), updated_at = CURRENT_TIMESTAMP
+WHERE target_type = sqlc.arg(target_type)
+  AND target_id = sqlc.arg(target_id)
+  AND revision = sqlc.arg(indexed_revision)
+  AND indexed_revision < sqlc.arg(indexed_revision);
 
 -- name: SystemListActiveAdminUserIDs :many
 SELECT DISTINCT u.idusers
@@ -280,3 +300,61 @@ SELECT idimagepost, description
 FROM imagepost
 WHERE idimagepost = ? AND deleted_at IS NULL
 LIMIT 1;
+
+-- name: SystemQueuePendingImageCacheJobs :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'image_cache', ('image_cache_entry:' || img.id),
+       ('image_cache_entry:' || img.id), 'image_cache_entry', img.id,
+       sqlc.arg(max_attempts), sqlc.arg(run_after), sqlc.narg(actor_id), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM image_cache_entries img
+LEFT JOIN durable_job_cooldowns cooldown
+  ON cooldown.dedupe_key IN (('image_cache_entry:' || img.id), ('image_cache:' || img.source_url))
+  AND cooldown.cooldown_until > sqlc.arg(cooldown_at)
+WHERE img.source_kind = 'remote'
+  AND img.source_url IS NOT NULL AND img.source_url <> ''
+  AND img.id = COALESCE(sqlc.narg(entry_id), img.id)
+  AND (
+      (img.status = 'pending' AND (img.next_attempt_at IS NULL OR img.next_attempt_at <= sqlc.arg(due_at)))
+      OR (img.status = 'failed' AND sqlc.arg(retry_failed) = TRUE)
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.active_dedupe_key IN (('image_cache_entry:' || img.id), ('image_cache:' || img.source_url))
+  )
+  AND cooldown.dedupe_key IS NULL
+ORDER BY img.created_at, img.id
+LIMIT 10
+ON CONFLICT(active_dedupe_key) DO NOTHING;
+
+-- name: AdminSetImageCacheStateForDurableJob :exec
+UPDATE image_cache_entries
+SET status = sqlc.arg(next_status), next_attempt_at = NULL, error_message = NULL
+WHERE image_cache_entries.status = sqlc.arg(previous_status)
+  AND image_cache_entries.source_kind = 'remote'
+  AND EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.id = sqlc.arg(job_id) AND job.job_type = 'image_cache'
+        AND ((job.target_type = 'image_cache_entry' AND job.target_key = image_cache_entries.id)
+          OR (job.target_type = 'image_cache' AND job.target_key = image_cache_entries.source_url))
+  );
+
+-- name: SystemLockActiveDurableJobLease :one
+SELECT id FROM durable_jobs
+WHERE id = sqlc.arg(id) AND status = 'running'
+  AND lease_token = sqlc.arg(lease_token) AND lease_expires_at > sqlc.arg(now_at);
+
+-- name: SystemQueueObservedExternalLinkJob :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'external_link', sqlc.arg(dedupe_key), sqlc.narg(active_key), 'external_link',
+       sqlc.arg(target_key), sqlc.arg(max_attempts), sqlc.arg(run_after),
+       sqlc.narg(actor_id), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM (SELECT 1 AS anchor_value) anchor
+LEFT JOIN durable_job_cooldowns cooldown ON cooldown.dedupe_key = sqlc.arg(check_key)
+WHERE cooldown.dedupe_key IS NULL OR cooldown.cooldown_until <= sqlc.arg(cooldown_at)
+ON CONFLICT(active_dedupe_key) DO NOTHING;

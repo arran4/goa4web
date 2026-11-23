@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // commentDeactivateCmd implements "comment deactivate".
@@ -35,7 +37,7 @@ func (c *commentDeactivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	cm, err := queries.GetCommentById(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("fetch comment: %w", err)
@@ -47,19 +49,24 @@ func (c *commentDeactivateCmd) Run() error {
 	if deactivated {
 		return fmt.Errorf("comment already deactivated")
 	}
-	if err := queries.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
-		Idcomments:    cm.Idcomments,
-		ForumthreadID: cm.ForumthreadID,
-		UsersIdusers:  cm.UsersIdusers,
-		LanguageID:    cm.LanguageID,
-		Written:       cm.Written,
-		Text:          cm.Text,
-		Timezone:      cm.Timezone,
-	}); err != nil {
-		return fmt.Errorf("archive comment: %w", err)
-	}
-	if err := queries.AdminScrubComment(ctx, db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: cm.Idcomments}); err != nil {
-		return fmt.Errorf("scrub comment: %w", err)
-	}
-	return nil
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		if err := qtx.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
+			Idcomments:    cm.Idcomments,
+			ForumthreadID: cm.ForumthreadID,
+			UsersIdusers:  cm.UsersIdusers,
+			LanguageID:    cm.LanguageID,
+			Written:       cm.Written,
+			Text:          cm.Text,
+			Timezone:      cm.Timezone,
+		}); err != nil {
+			return fmt.Errorf("archive comment: %w", err)
+		}
+		if err := qtx.AdminScrubComment(ctx, db.AdminScrubCommentParams{Text: sql.NullString{String: "", Valid: true}, Idcomments: cm.Idcomments}); err != nil {
+			return fmt.Errorf("scrub comment: %w", err)
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeComment, cm.Idcomments); err != nil {
+			return fmt.Errorf("record comment search invalidation: %w", err)
+		}
+		return nil
+	})
 }

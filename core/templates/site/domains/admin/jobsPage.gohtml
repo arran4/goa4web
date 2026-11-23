@@ -39,6 +39,29 @@
     <button type="submit">Purge Terminal Jobs (Preserves Cooldowns)</button>
 </form>
 
+{{- if .SelectedJob }}
+{{- with .SelectedJob }}
+<div style="border: 1px solid #ccc; padding: 12px; margin-bottom: 16px;">
+    <h3>Job #{{ .Job.ID }} Details (<a href="/admin/jobs">Close</a>)</h3>
+    <dl>
+        <dt>Type</dt><dd>{{ .Job.JobType }}</dd>
+        <dt>Status</dt><dd>{{ .Job.Status }}</dd>
+        <dt>Target</dt><dd>{{ .Job.TargetType }} / ID {{ .Job.TargetID }} / {{ .Job.TargetKey }}</dd>
+        <dt>Revision / Needs Rerun</dt><dd>{{ .Job.TargetRevision }} / {{ .Job.NeedsRerun }}</dd>
+        <dt>Attempts</dt><dd>{{ .Job.Attempts }} / {{ .Job.MaxAttempts }}</dd>
+        <dt>Next Run</dt><dd>{{ .Job.RunAfter.UTC.Format "2006-01-02 15:04:05 UTC" }}</dd>
+        <dt>Lease</dt><dd>{{ if .Job.LeaseOwner.Valid }}{{ .Job.LeaseOwner.String }}{{ else }}-{{ end }}{{ if .Job.LeaseExpiresAt.Valid }} (expires {{ .Job.LeaseExpiresAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}){{ end }}</dd>
+        <dt>Last Error</dt><dd>{{ if .Job.LastError.Valid }}{{ .Job.LastError.String }}{{ else }}-{{ end }}</dd>
+        <dt>Created / Updated / Completed</dt>
+        <dd>{{ .Job.CreatedAt.UTC.Format "2006-01-02 15:04:05 UTC" }} / {{ .Job.UpdatedAt.UTC.Format "2006-01-02 15:04:05 UTC" }} / {{ if .Job.CompletedAt.Valid }}{{ .Job.CompletedAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}{{ else }}-{{ end }}</dd>
+        {{- if .Cooldown }}
+        <dt>Cooldown Until</dt><dd>{{ .Cooldown.CooldownUntil.UTC.Format "2006-01-02 15:04:05 UTC" }}{{ if .Cooldown.LastNotifiedAt.Valid }} (last notified {{ .Cooldown.LastNotifiedAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}){{ end }}</dd>
+        {{- end }}
+    </dl>
+</div>
+{{- end }}
+{{- end }}
+
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -47,6 +70,7 @@
             <th>Status</th>
             <th>Target</th>
             <th>Attempts</th>
+            <th>Next Run</th>
             <th>Lease</th>
             <th>Error</th>
             <th>Actions</th>
@@ -55,12 +79,13 @@
     <tbody>
     {{- range .Jobs }}
         <tr>
-            <td>{{ .ID }}</td>
+            <td><a href="/admin/jobs?id={{ .ID }}">{{ .ID }}</a></td>
             <td>{{ .JobType }}</td>
             <td>{{ .Status }}</td>
             <td>{{ .TargetKey }}</td>
             <td>{{ .Attempts }} / {{ .MaxAttempts }}</td>
-            <td>{{ if .LeaseOwner.Valid }}{{ .LeaseOwner.String }}{{ end }}</td>
+            <td>{{ .RunAfter.UTC.Format "2006-01-02 15:04:05 UTC" }}{{ if .CompletedAt.Valid }}<br /><small>Done: {{ .CompletedAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}</small>{{ end }}</td>
+            <td>{{ if .LeaseOwner.Valid }}{{ .LeaseOwner.String }}{{ end }}{{ if .LeaseExpiresAt.Valid }}<br /><small>Exp: {{ .LeaseExpiresAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}</small>{{ end }}</td>
             <td>{{ if .LastError.Valid }}{{ .LastError.String }}{{ end }}</td>
             <td>
                 {{- if or (eq .Status "failed") (eq .Status "cancelled") (eq .Status "completed") }}
@@ -82,7 +107,7 @@
             </td>
         </tr>
     {{- else }}
-        <tr><td colspan="8">No durable jobs found.</td></tr>
+        <tr><td colspan="9">No durable jobs found.</td></tr>
     {{- end }}
     </tbody>
 </table>

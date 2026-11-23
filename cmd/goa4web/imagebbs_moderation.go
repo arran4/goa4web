@@ -9,6 +9,10 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // imagebbsModerationCmd handles ImageBBS moderation subcommands.
@@ -178,7 +182,18 @@ func (c *imagebbsModerationRejectCmd) Run() error {
 		return fmt.Errorf("querier: %w", err)
 	}
 	ctx := c.Context()
-	actionErr := q.AdminDeleteImagePost(ctx, int32(c.ID))
+	var actionErr error
+	if tx, ok := q.(db.JobTransactor); ok {
+		svc := jobs.NewConfiguredService(q)
+		actionErr = tx.WithJobTransaction(ctx, func(qtx db.Querier) error {
+			if err := qtx.AdminDeleteImagePost(ctx, int32(c.ID)); err != nil {
+				return err
+			}
+			return svc.RecordSearchDirty(ctx, qtx, searchindex.TypeImage, int32(c.ID))
+		})
+	} else {
+		actionErr = q.AdminDeleteImagePost(ctx, int32(c.ID))
+	}
 	result := imagebbsModerationResult{ID: int32(c.ID), Action: "reject", Status: "rejected", Err: actionErr}
 	if actionErr != nil {
 		result.Status = "error"

@@ -95,9 +95,9 @@ FROM linker_queue l
 JOIN users u ON l.submitter_id = idusers
 JOIN linker_category c ON l.category_id = c.id
 ;
--- name: AdminInsertQueuedLinkFromQueue :execlastid
-INSERT INTO linker (author_id, category_id, language_id, title, `url`, description, timezone)
-SELECT l.submitter_id, l.category_id, l.language_id, l.title, l.url, l.description, l.timezone
+-- name: AdminInsertQueuedLinkFromQueue :execresult
+INSERT INTO linker (author_id, category_id, language_id, title, `url`, description, timezone, listed)
+SELECT l.submitter_id, l.category_id, l.language_id, l.title, l.url, l.description, l.timezone, CURRENT_TIMESTAMP
 FROM linker_queue l
 WHERE l.id = ?;
 

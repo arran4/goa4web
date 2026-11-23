@@ -6,6 +6,7 @@ import (
 
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/jobs"
 )
 
 // IndexedTask describes a task that can be indexed by the search worker.
@@ -20,7 +21,7 @@ type IndexedTask interface {
 }
 
 // processEvent indexes text for tasks implementing IndexableTask.
-func processEvent(ctx context.Context, evt eventbus.TaskEvent, q db.Querier) {
+func processEvent(ctx context.Context, evt eventbus.TaskEvent, q db.Querier, jobSvc *jobs.Service) {
 	task, ok := evt.Task.(IndexedTask)
 	if !ok || evt.Data == nil {
 		return
@@ -35,7 +36,11 @@ func processEvent(ctx context.Context, evt eventbus.TaskEvent, q db.Querier) {
 		if d.Type == "" {
 			d.Type = typ
 		}
-		if d.ID == 0 || d.Text == "" {
+		if d.ID == 0 || (jobSvc == nil && d.Text == "") {
+			continue
+		}
+		if jobSvc != nil {
+			enqueueSearchIndex(ctx, jobSvc, d)
 			continue
 		}
 		if err := index(ctx, q, d); err != nil {

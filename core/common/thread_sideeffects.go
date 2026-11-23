@@ -12,7 +12,6 @@ import (
 	"github.com/arran4/goa4web/a4code/ast"
 	"github.com/arran4/goa4web/internal/db"
 	"github.com/arran4/goa4web/internal/eventbus"
-	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/postcount"
 	"github.com/arran4/goa4web/internal/searchindex"
 )
@@ -39,10 +38,12 @@ type ThreadUpdatedEvent struct {
 	PostURL     string
 	ThreadURL   string
 
-	ClearUnreadForOthers bool
-	MarkThreadRead       bool
-	IncludePostCount     bool
-	IncludeSearch        bool
+	ClearUnreadForOthers  bool
+	MarkThreadRead        bool
+	IncludePostCount      bool
+	IncludeSearch         bool
+	ExternalLinksRecorded bool
+	SearchRecorded        bool
 
 	AdditionalData map[string]any
 }
@@ -81,14 +82,17 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 
 	jobService := cd.JobService()
 	durableSearch := jobService != nil && event.CommentID != 0
-	if durableSearch && event.IncludeSearch {
+	if durableSearch && event.IncludeSearch && !event.SearchRecorded {
 		if err := jobService.EnqueueSearchDirty(ctx, searchindex.TypeComment, event.CommentID); err != nil {
 			errs = append(errs, fmt.Errorf("enqueue search dirty: %w", err))
 		}
 	}
-	if jobService != nil && event.CommentText != "" {
+	externalLinksRecorded := event.ExternalLinksRecorded
+	if jobService != nil && !externalLinksRecorded && event.CommentText != "" {
 		if err := cd.EnqueueExternalLinksFromBody(ctx, event.CommentText); err != nil {
 			errs = append(errs, fmt.Errorf("enqueue external links: %w", err))
+		} else {
+			externalLinksRecorded = true
 		}
 	}
 
@@ -161,6 +165,9 @@ func (cd *CoreData) HandleThreadUpdated(ctx context.Context, event ThreadUpdated
 			evt.Data["ThreadURL"] = event.ThreadURL
 		}
 		maps.Copy(evt.Data, event.AdditionalData)
+		if externalLinksRecorded {
+			evt.Data[eventbus.ExternalLinksRecordedKey] = true
+		}
 		if event.IncludePostCount {
 			evt.Data[postcount.PostCountEventKey] = postcount.PostCountUpdate{
 				CommentID: event.CommentID,
@@ -245,11 +252,21 @@ func (cd *CoreData) EnqueueExternalLinksFromBody(ctx context.Context, body strin
 	if cd == nil || cd.jobService == nil || body == "" {
 		return nil
 	}
+	var errs []error
+	for _, target := range externalLinksFromBody(body) {
+		if err := cd.jobService.QueueObservedExternalLink(ctx, target, sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0}); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func externalLinksFromBody(body string) []string {
 	root, err := a4code.ParseString(body)
 	if err != nil {
 		return nil
 	}
-	var errs []error
+	var links []string
 	seen := make(map[string]struct{})
 	_ = ast.Walk(root, func(n ast.Node) error {
 		link, ok := n.(*ast.Link)
@@ -264,16 +281,8 @@ func (cd *CoreData) EnqueueExternalLinksFromBody(ctx context.Context, body strin
 			return nil
 		}
 		seen[canonicalURL] = struct{}{}
-		_, err := cd.jobService.Enqueue(ctx, jobs.EnqueueRequest{
-			JobType:         jobs.JobTypeExternalLink,
-			TargetType:      jobs.JobTypeExternalLink,
-			TargetKey:       canonicalURL,
-			CreatedByUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0},
-		})
-		if err != nil && !errors.Is(err, jobs.ErrInCooldown) {
-			errs = append(errs, err)
-		}
+		links = append(links, canonicalURL)
 		return nil
 	})
-	return errors.Join(errs...)
+	return links
 }

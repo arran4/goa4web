@@ -102,7 +102,7 @@ ORDER BY w.published DESC
 LIMIT ? OFFSET ?
 ;
 
--- name: UpdateWritingForWriter :exec
+-- name: UpdateWritingForWriter :execrows
 UPDATE writing w
 SET title = sqlc.arg(title),
     abstract = sqlc.arg(abstract),
@@ -128,7 +128,7 @@ WHERE w.idwriting = sqlc.arg(writing_id)
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, users_idusers)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
--- name: CreateWritingForWriter :execlastid
+-- name: CreateWritingForWriter :execresult
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, timezone, users_idusers)
 SELECT sqlc.arg(writing_category_id), sqlc.arg(title), sqlc.arg(abstract), sqlc.arg(writing), sqlc.arg(private), sqlc.narg(language_id), sqlc.arg(published), sqlc.arg(timezone), sqlc.arg(writer_id)
 WHERE EXISTS (

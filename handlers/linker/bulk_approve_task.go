@@ -49,7 +49,7 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	for _, q := range r.Form["qid"] {
 		id, _ := strconv.Atoi(q)
 		cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-		lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), int32(id))
+		lid, err := cd.AdminApproveQueuedLink(int32(id))
 		if err != nil {
 			log.Printf("selectInsert Error: %s", err)
 			continue
@@ -63,7 +63,6 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			log.Printf("getLinkerItemById Error: %s", err)
 			continue
 		}
-		text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
 		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 			if evt := cd.Event(); evt != nil {
 				if evt.Data == nil {
@@ -80,7 +79,10 @@ func (bulkApproveTask) Action(w http.ResponseWriter, r *http.Request) any {
 				if len(links) == 1 {
 					evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
 				}
-				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
+				if cd.JobService() == nil {
+					text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+					evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
+				}
 			}
 		}
 	}

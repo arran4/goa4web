@@ -162,7 +162,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if cd.queries == nil {
 		return nil
 	}
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -174,7 +174,7 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if err := cd.validateImagePathsForThread(cd.UserID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateForumCommentForEditor(cd.ctx, db.UpdateForumCommentForEditorParams{
+	err = cd.updateForumCommentWithWork(db.UpdateForumCommentForEditorParams{
 		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:         sql.NullString{String: text, Valid: true},
 		CommentID:    commentID,
@@ -184,11 +184,11 @@ func (cd *CoreData) UpdateForumComment(commentID, languageID int32, text string)
 	if err != nil {
 		return err
 	}
-	if rows == 0 {
-		return fmt.Errorf("edit denied: access restricted or comment not found")
-	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return nil
 }
@@ -198,7 +198,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if cd.queries == nil {
 		return nil
 	}
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -210,7 +210,7 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateForumCommentForEditor(cd.ctx, db.UpdateForumCommentForEditorParams{
+	err = cd.updateForumCommentWithWork(db.UpdateForumCommentForEditorParams{
 		LanguageID:   sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:         sql.NullString{String: text, Valid: true},
 		CommentID:    commentID,
@@ -220,13 +220,26 @@ func (cd *CoreData) EditForumComment(commentID, commenterID, languageID int32, t
 	if err != nil {
 		return err
 	}
-	if rows == 0 {
-		return fmt.Errorf("edit denied: access restricted or comment not found")
-	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
 	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
+	}
 	return nil
+}
+
+func (cd *CoreData) updateForumCommentWithWork(arg db.UpdateForumCommentForEditorParams) error {
+	return cd.withCommentWork(cd.ctx, cd.jobService != nil, arg.Text.String, arg.EditorUserID, func(q db.Querier) (int64, error) {
+		rows, err := q.UpdateForumCommentForEditor(cd.ctx, arg)
+		if err != nil {
+			return 0, err
+		}
+		if rows == 0 {
+			return 0, fmt.Errorf("edit denied: access restricted or comment not found")
+		}
+		return int64(arg.CommentID), nil
+	})
 }
 
 func TopicSubscriptionPattern(topicID int32, isPrivate bool) string {

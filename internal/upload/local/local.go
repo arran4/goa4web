@@ -27,11 +27,30 @@ type osFS struct{}
 func (osFS) MkdirAll(path string, perm fs.FileMode) error { return os.MkdirAll(path, perm) }
 func (osFS) Stat(path string) (fs.FileInfo, error)        { return os.Stat(path) }
 func (osFS) WriteFile(path string, data []byte, perm fs.FileMode) error {
-	return os.WriteFile(path, data, perm)
+	return WriteFileAtomically(path, data, perm)
 }
 func (osFS) ReadFile(path string) ([]byte, error)         { return os.ReadFile(path) }
 func (osFS) Remove(path string) error                     { return os.Remove(path) }
 func (osFS) WalkDir(root string, fn fs.WalkDirFunc) error { return filepath.WalkDir(root, fn) }
+
+// WriteFileAtomically makes a complete file visible to readers in one rename.
+func WriteFileAtomically(path string, data []byte, perm fs.FileMode) error {
+	dir, err := os.MkdirTemp(filepath.Dir(path), ".image-*")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.RemoveAll(dir) }()
+	staged := filepath.Join(dir, "image")
+	if err := os.WriteFile(staged, data, perm); err != nil {
+		return err
+	}
+	if previous, err := os.Lstat(path); err == nil && previous.Mode().IsRegular() {
+		if err := os.Chmod(staged, previous.Mode().Perm()); err != nil {
+			return err
+		}
+	}
+	return os.Rename(staged, path)
+}
 
 type Provider struct {
 	Dir string

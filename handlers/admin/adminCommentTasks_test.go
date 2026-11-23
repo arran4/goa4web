@@ -87,8 +87,11 @@ func TestHappyPathEditCommentTask(t *testing.T) {
 	if err, ok := editCommentTask.Action(rr, req).(error); ok && err != nil {
 		t.Fatalf("Action: %v", err)
 	}
-	if len(queries.AdminScrubCommentCalls) != 1 || queries.AdminScrubCommentCalls[0].Idcomments != 22 || queries.AdminScrubCommentCalls[0].Text.String != "updated" {
-		t.Fatalf("unexpected scrub args: %#v", queries.AdminScrubCommentCalls)
+	if len(queries.AdminUpdateCommentTextCalls) != 1 || queries.AdminUpdateCommentTextCalls[0].Idcomments != 22 || queries.AdminUpdateCommentTextCalls[0].Text.String != "updated" {
+		t.Fatalf("unexpected edit args: %#v", queries.AdminUpdateCommentTextCalls)
+	}
+	if len(queries.AdminScrubCommentCalls) != 0 {
+		t.Fatalf("edit should not call AdminScrubComment: %#v", queries.AdminScrubCommentCalls)
 	}
 }
 

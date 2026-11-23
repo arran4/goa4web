@@ -323,7 +323,7 @@ func (cd *CoreData) attemptAppendForumComment(ctx context.Context, actorID, thre
 	}
 
 	section, itemType, itemID := forumAppendGrantTarget(isPrivate, topicID, threadID)
-	rowsAffected, appendID, err := cd.AppendCommentInSectionWithActivity(ctx, db.AppendCommentInSectionForCommenterParams{
+	rowsAffected, appendID, err := cd.appendForumCommentWithWork(ctx, text, db.AppendCommentInSectionForCommenterParams{
 		Text:             text,
 		Written:          sql.NullTime{Time: writtenAt.UTC(), Valid: true},
 		CommentID:        commentID,
@@ -498,19 +498,21 @@ func (cd *CoreData) CreateForumThread(ctx context.Context, params CreateForumThr
 		evt.Path = endURL
 	}
 	if err := cd.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
-		Event:            evt,
-		ThreadID:         threadID,
-		TopicID:          params.TopicID,
-		CommentID:        commentID,
-		TopicTitle:       topic.Title.String,
-		Author:           username,
-		Username:         username,
-		CommentText:      params.Text,
-		PostURL:          cd.AbsoluteURL(endURL),
-		ThreadURL:        cd.AbsoluteURL(endURL),
-		IncludePostCount: true,
-		IncludeSearch:    true,
-		MarkThreadRead:   true,
+		Event:                 evt,
+		ThreadID:              threadID,
+		TopicID:               params.TopicID,
+		CommentID:             commentID,
+		TopicTitle:            topic.Title.String,
+		Author:                username,
+		Username:              username,
+		CommentText:           params.Text,
+		PostURL:               cd.AbsoluteURL(endURL),
+		ThreadURL:             cd.AbsoluteURL(endURL),
+		IncludePostCount:      true,
+		IncludeSearch:         true,
+		MarkThreadRead:        true,
+		ExternalLinksRecorded: cd.jobService != nil,
+		SearchRecorded:        cd.jobService != nil,
 		AdditionalData: map[string]any{
 			"ThreadOpenerPreview": a4code.SnipTextWords(params.Text, 10),
 			"SubjectPrefix":       subjectPrefix,
@@ -710,21 +712,23 @@ func (cd *CoreData) ReplyForumThread(ctx context.Context, params ReplyForumThrea
 	data[ForumReplyIntentEventKey] = intent
 
 	if err := cd.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
-		ThreadID:             thread.Idforumthread,
-		TopicID:              topic.Idforumtopic,
-		CommentID:            commentID,
-		ActivityID:           activityID,
-		ActivityPosition:     activityPosition,
-		Thread:               thread,
-		TopicTitle:           topic.Title.String,
-		Username:             username,
-		CommentText:          commentText,
-		CommentURL:           absCommentURL,
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       false,
-		IncludePostCount:     true,
-		IncludeSearch:        canonicalTextAvailable,
-		AdditionalData:       data,
+		ThreadID:              thread.Idforumthread,
+		TopicID:               topic.Idforumtopic,
+		CommentID:             commentID,
+		ActivityID:            activityID,
+		ActivityPosition:      activityPosition,
+		Thread:                thread,
+		TopicTitle:            topic.Title.String,
+		Username:              username,
+		CommentText:           commentText,
+		CommentURL:            absCommentURL,
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        false,
+		IncludePostCount:      true,
+		IncludeSearch:         canonicalTextAvailable,
+		ExternalLinksRecorded: cd.jobService != nil,
+		SearchRecorded:        cd.jobService != nil,
+		AdditionalData:        data,
 	}); err != nil {
 		log.Printf("thread reply side effects: %v", err)
 	}
@@ -1117,16 +1121,18 @@ func (cd *CoreData) EditForumCommentAction(ctx context.Context, params EditForum
 	}
 
 	if err := actorCD.HandleThreadUpdated(ctx, ThreadUpdatedEvent{
-		ThreadID:             fullComment.ForumthreadID,
-		TopicID:              thread.ForumtopicIdforumtopic,
-		CommentID:            params.CommentID,
-		TopicTitle:           topic.Title.String,
-		CommentText:          params.Text,
-		CommentURL:           cd.AbsoluteURL(endURL),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
-		IncludeSearch:        true,
+		ThreadID:              fullComment.ForumthreadID,
+		TopicID:               thread.ForumtopicIdforumtopic,
+		CommentID:             params.CommentID,
+		TopicTitle:            topic.Title.String,
+		CommentText:           params.Text,
+		CommentURL:            cd.AbsoluteURL(endURL),
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        true,
+		IncludePostCount:      true,
+		IncludeSearch:         true,
+		ExternalLinksRecorded: actorCD.jobService != nil,
+		SearchRecorded:        actorCD.jobService != nil,
 	}); err != nil {
 		log.Printf("thread comment update side effects: %v", err)
 	}

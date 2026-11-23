@@ -14,9 +14,11 @@ import (
 	"github.com/arran4/goa4web/internal/dlq"
 	"github.com/arran4/goa4web/internal/email"
 	"github.com/arran4/goa4web/internal/eventbus"
+	"github.com/arran4/goa4web/internal/images"
 	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/notifications"
 	"github.com/arran4/goa4web/internal/scheduler"
+	"github.com/arran4/goa4web/internal/upload"
 
 	"github.com/arran4/goa4web/workers/auditworker"
 	"github.com/arran4/goa4web/workers/backgroundtaskworker"
@@ -170,24 +172,44 @@ func startDurableWorkerLoops(group *Group, q db.Querier, cfg *config.RuntimeConf
 	}
 	log.Printf("Starting durable external link worker (%s)", prefix)
 	group.Go(func(ctx context.Context) {
-		externallinkworker.RunDurableWorker(ctx, svc, q, cfg, prefix+"-externallink")
+		externallinkworker.RunDurableWorker(ctx, svc, q, cfg, prefix+"-externallink", wc.HTTPClient)
 	})
 	log.Printf("Starting durable search index worker (%s)", prefix)
 	group.Go(func(ctx context.Context) {
 		searchworker.RunDurableWorker(ctx, svc, q, prefix+"-search")
 	})
 	log.Printf("Starting durable image cache worker (%s)", prefix)
+	group.Go(svc.RunImageCacheRecoveryLoop)
+	imageOptions := wc.CoreOptions
+	if wc.HTTPClient != nil {
+		imageOptions = append(append([]common.CoreOption(nil), imageOptions...), common.WithHTTPClient(wc.HTTPClient))
+	}
 	group.Go(func(ctx context.Context) {
 		svc.RunWorkerLoop(ctx, prefix+"-imagecache", 0, []string{jobs.JobTypeImageCache}, func(ctx context.Context, job *db.DurableJob) error {
 			if job == nil {
 				return nil
 			}
-			cd := common.NewCoreData(ctx, q, cfg, wc.CoreOptions...)
-			return cd.ProcessRemoteImageCacheJob(ctx, job.TargetKey)
+			cd := common.NewCoreData(ctx, q, cfg, imageOptions...)
+			return cd.ProcessClaimedRemoteImageCacheJob(ctx, svc, job)
 		})
 	})
+	if cfg != nil {
+		group.Go(func(ctx context.Context) {
+			provider := upload.ProviderFromConfig(cfg)
+			svc.RunWorkerLoop(ctx, prefix+"-imageboard-thumbnails", 0, []string{jobs.JobTypeImageBoardThumbnail}, func(ctx context.Context, job *db.DurableJob) error {
+				return images.WriteImageBoardThumbnail(ctx, provider, job.TargetKey)
+			})
+		})
+	}
+	historyHours, historyLimit := config.DefaultDurableJobHistoryHours, config.DefaultDurableJobHistoryLimit
+	if cfg != nil && cfg.DurableJobHistoryHours > 0 {
+		historyHours = cfg.DurableJobHistoryHours
+	}
+	if cfg != nil && cfg.DurableJobHistoryLimit > 0 {
+		historyLimit = cfg.DurableJobHistoryLimit
+	}
 	group.Go(func(ctx context.Context) {
-		svc.RunPruneLoop(ctx, 6*time.Hour, 7*24*time.Hour)
+		svc.RunPruneLoop(ctx, time.Duration(historyHours)*time.Hour, historyLimit)
 	})
 }
 
@@ -198,6 +220,9 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		if opt != nil {
 			opt(wc)
 		}
+	}
+	if wc.JobService == nil && q != nil {
+		wc.JobService = jobs.NewConfiguredService(q)
 	}
 	group := NewGroup(ctx)
 
@@ -240,16 +265,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 			Interval:  time.Duration(cfg.EmailWorkerInterval) * time.Second,
 			Ephemeral: true,
 		})
-		s.Register(scheduler.Task{
-			Name: "image_cache_fetch",
-			Handler: func(ctx context.Context, t time.Time) error {
-				cd := common.NewCoreData(ctx, q, cfg)
-				return cd.ProcessPendingRemoteImageCacheEntries(ctx, 10)
-			},
-			Type:      scheduler.TaskTypePeriodic,
-			Interval:  time.Minute,
-			Ephemeral: true,
-		})
+
 		s.Run(ctx, 1*time.Second)
 	})
 	log.Printf("Starting event bus logger worker")
@@ -267,7 +283,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 		n.BusWorker(ctx, bus, dlqProvider)
 	})
 	log.Printf("Starting search index worker")
-	group.Go(func(ctx context.Context) { searchworker.Worker(ctx, bus, q) })
+	group.Go(func(ctx context.Context) { searchworker.Worker(ctx, bus, q, wc.JobService) })
 	log.Printf("Starting background task worker")
 	group.Go(func(ctx context.Context) {
 		var bopts []backgroundtaskworker.Option
@@ -282,7 +298,7 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 	log.Printf("Starting post count worker")
 	group.Go(func(ctx context.Context) { postcountworker.Worker(ctx, bus, q) })
 	log.Printf("Starting external link worker")
-	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg) })
+	group.Go(func(ctx context.Context) { externallinkworker.Worker(ctx, bus, q, cfg, wc.JobService) })
 	startDurableWorkerLoops(group, q, cfg, wc)
 	return group
 }

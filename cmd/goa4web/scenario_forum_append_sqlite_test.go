@@ -16,6 +16,7 @@ import (
 
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/scenario"
 )
 
 func newTestScenarioServeCmd(t *testing.T, args []string) (*scenarioServeCmd, func()) {
@@ -48,21 +49,13 @@ func doScenarioLogin(t *testing.T, ts *httptest.Server, client *http.Client, use
 	scenarioHTTPPostForm(t, client, ts.URL+"/login", form)
 }
 
-func getTopicAndThreadIDForUser(ctx context.Context, t *testing.T, dbConn db.DBTX, username string) (int32, int32) {
-	var uid int32
-	err := dbConn.QueryRowContext(ctx, "SELECT idusers FROM users WHERE username = ?;", username).Scan(&uid)
-	if err != nil {
-		t.Fatalf("query user: %v", err)
+func getStaffWelcomeTopicAndThreadID(t *testing.T, reg *scenario.RefRegistry) (int32, int32) {
+	t.Helper()
+	if reg == nil {
+		t.Fatal("scenario registry is nil after Bootstrap")
 	}
-	var topicID, threadID int32
-	err = dbConn.QueryRowContext(ctx, "SELECT idforumtopic FROM forumtopic WHERE title = 'Staff Room' OR title = 'Staff Room - Edited Title';").Scan(&topicID)
-	if err != nil {
-		t.Fatalf("query Staff Room topic: %v", err)
-	}
-	err = dbConn.QueryRowContext(ctx, "SELECT forumthread_id FROM comments WHERE text = 'Welcome to the staff room. This conversation is for Alice and Bob.';").Scan(&threadID)
-	if err != nil {
-		t.Fatalf("query staff-welcome thread via comment: %v", err)
-	}
+	topicID := getScenarioEntityID(t, reg, scenario.RefTypeForum, "staff-room")
+	threadID := getScenarioEntityID(t, reg, scenario.RefTypeThread, "staff-welcome")
 	return topicID, threadID
 }
 
@@ -79,7 +72,7 @@ func TestScenarioForumAppend_RapidPosts(t *testing.T) {
 	}
 	defer cleanupServe()
 
-	topicID, threadID := getTopicAndThreadIDForUser(ctx, t, dbConn, "alice")
+	topicID, threadID := getStaffWelcomeTopicAndThreadID(t, serveCmd.Registry)
 
 	ts := httptest.NewServer(srv.Router)
 	defer ts.Close()
@@ -346,7 +339,7 @@ func TestScenarioForumAppend_DisabledByConfig(t *testing.T) {
 	}
 	defer cleanupServe()
 
-	topicID, threadID := getTopicAndThreadIDForUser(ctx, t, dbConn, "alice")
+	topicID, threadID := getStaffWelcomeTopicAndThreadID(t, serveCmd.Registry)
 
 	ts := httptest.NewServer(srv.Router)
 	defer ts.Close()

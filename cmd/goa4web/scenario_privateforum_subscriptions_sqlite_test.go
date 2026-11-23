@@ -35,6 +35,9 @@ func buildScenarioTxtar(sc *scenario.Scenario) string {
 		sb.WriteString("-- " + evt.File + " --\n")
 		sb.WriteString("Op: " + evt.Op + "\n")
 		for _, k := range evt.Headers.Keys() {
+			if k == "Asset" {
+				continue
+			}
 			for _, v := range evt.Headers.Values(k) {
 				if k != "Op" {
 					sb.WriteString(k + ": " + v + "\n")

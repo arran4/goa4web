@@ -1,15 +1,8 @@
 package images
 
 import (
-	"bytes"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"image"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
 	"io"
 	"net/http"
 	"strconv"
@@ -17,7 +10,6 @@ import (
 	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/core/consts"
 	"github.com/arran4/goa4web/internal/db"
-	intimages "github.com/arran4/goa4web/internal/images"
 )
 
 // APIListGallery handles GET /api/images
@@ -100,26 +92,13 @@ func APIUploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img, _, err := image.Decode(bytes.NewReader(data))
+	prepared, err := common.PrepareImageUpload(data, header.Filename)
 	if err != nil {
-		http.Error(w, "Failed to decode image data", http.StatusBadRequest)
+		http.Error(w, "Invalid image data", http.StatusBadRequest)
 		return
 	}
-
-	hash := sha256.Sum256(data)
-	id := fmt.Sprintf("%x", hash[:20])
-	ext, err := intimages.CleanExtension(header.Filename)
-	if err != nil {
-		http.Error(w, "Invalid file extension", http.StatusBadRequest)
-		return
-	}
-	if !intimages.ValidID(id) {
-		http.Error(w, "Invalid ID generated", http.StatusInternalServerError)
-		return
-	}
-
 	uid := cd.UserID
-	fname, err := cd.StoreImage(common.StoreImageParams{ID: id, Ext: ext, Data: data, Image: img, UploaderID: uid})
+	fname, err := cd.StorePreparedImage(prepared, uid)
 	if err != nil {
 		http.Error(w, "Failed to store image", http.StatusInternalServerError)
 		return

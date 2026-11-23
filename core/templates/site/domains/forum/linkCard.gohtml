@@ -1,0 +1,16 @@
+<div class="external-link-card" data-live-event="external-link-card" data-live-card="{{ .Key }}" data-live-url="{{ .FragmentURL }}" data-live-swap="outerHTML">
+    <a href="{{ .TargetURL }}" target="_blank" rel="noopener noreferrer" class="external-link-card-inner">
+        {{ if .SafeImage }}
+        <div class="external-link-image-container">
+            <img src="{{ .SafeImage }}" class="external-link-image" referrerpolicy="no-referrer" alt="">
+            {{ if .Duration }}<span class="external-link-duration">{{ .Duration }}</span>{{ end }}
+        </div>
+        {{ end }}
+        <div class="external-link-content">
+            <div class="external-link-title">{{ .DisplayTitle }}</div>
+            {{ if .Description }}<div class="external-link-description">{{ .Description }}</div>{{ end }}
+            {{ if and .Title (ne .Title .URL) }}<div class="external-link-footer">{{ .URL }}</div>{{ end }}
+            {{ if .Pending }}<div class="external-link-footer">{{ if .Title }}Refreshing link preview…{{ else }}Fetching link preview…{{ end }}</div>{{ end }}
+        </div>
+    </a>
+</div>

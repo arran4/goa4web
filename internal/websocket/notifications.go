@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/core"
+	"github.com/arran4/goa4web/core/common"
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/eventbus"
 	"github.com/arran4/goa4web/internal/navigation"
@@ -33,6 +35,9 @@ type NotificationsHandler struct {
 
 // LiveEventKindNotification asks the browser to re-fetch its own inbox fragments.
 const LiveEventKindNotification = "notification"
+
+// LiveEventKindThreadReply asks the open thread's page to check for new replies.
+const LiveEventKindThreadReply = "thread-reply"
 
 // LiveEvent is a browser invalidation signal. The HTML endpoint supplies the data.
 type LiveEvent struct {
@@ -106,12 +111,30 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "live updates unavailable", http.StatusServiceUnavailable)
 		return
 	}
+	var threadID int32
+	var cd *common.CoreData
+	var cards *linkCardWatch
+	if r.URL.Path == "/ws/events" {
+		if id, err := strconv.ParseInt(r.URL.Query().Get("thread"), 10, 32); err == nil && id > 0 {
+			threadID = int32(id)
+			cd = common.FromContext(r.Context())
+			if cd != nil && cd.UserID == uid {
+				cards = watchLinkCards(r.Context(), cd, threadID, r.URL.Query()["card"])
+			}
+		}
+	}
 	sub := h.Bus.SubscribeWithOptions(
-		eventbus.WithTypes(eventbus.NotificationsChangedMessageType),
-		eventbus.WithBufferSize(1),
+		eventbus.WithTypes(eventbus.NotificationsChangedMessageType, eventbus.ForumReplyCommittedMessageType),
+		eventbus.WithBufferSize(8),
 		eventbus.WithFilter(func(msg eventbus.Message) bool {
-			evt, ok := msg.(eventbus.NotificationsChanged)
-			return ok && evt.RecipientID == uid
+			switch evt := msg.(type) {
+			case eventbus.NotificationsChanged:
+				return evt.RecipientID == uid
+			case eventbus.ForumReplyCommitted:
+				return threadID != 0 && evt.ThreadID == threadID
+			default:
+				return false
+			}
 		}),
 	)
 	defer sub.Close()
@@ -135,20 +158,46 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}()
 
+	var cardTick <-chan time.Time
+	var ticker *time.Ticker
+	if cards != nil {
+		ticker = time.NewTicker(linkCardPollInterval)
+		defer ticker.Stop()
+		cardTick = ticker.C
+	}
+
 	for {
 		select {
 		case env, ok := <-sub.Channel():
 			if !ok {
 				return
 			}
-			evt := env.Msg.(eventbus.NotificationsChanged)
-			err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-			if err == nil {
-				err = conn.WriteJSON(LiveEvent{Kind: LiveEventKindNotification, Time: evt.Time})
+			var signal LiveEvent
+			switch evt := env.Msg.(type) {
+			case eventbus.NotificationsChanged:
+				signal = LiveEvent{Kind: LiveEventKindNotification, Time: evt.Time}
+			case eventbus.ForumReplyCommitted:
+				if cd != nil && cd.UserID == uid && cd.CanReceiveForumReply(evt.TopicID, evt.ThreadID, evt.CommentID) {
+					signal = LiveEvent{Kind: LiveEventKindThreadReply, Time: evt.Time}
+				}
+			}
+			var err error
+			if signal.Kind != "" {
+				err = writeLiveEvent(conn, signal)
 			}
 			env.Ack()
 			if err != nil {
 				return
+			}
+		case now := <-cardTick:
+			if cards.changed(r.Context()) {
+				if err := writeLiveEvent(conn, LiveEvent{Kind: LiveEventKindExternalLinkCard, Time: now.UTC()}); err != nil {
+					return
+				}
+			}
+			if len(cards.seen) == 0 {
+				ticker.Stop()
+				cardTick = nil
 			}
 		case <-disconnected:
 			return
@@ -156,6 +205,13 @@ func (h *NotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
+}
+
+func writeLiveEvent(conn *websocket.Conn, signal LiveEvent) error {
+	if err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		return err
+	}
+	return conn.WriteJSON(signal)
 }
 
 // registerRoutes attaches the websocket handler to r.

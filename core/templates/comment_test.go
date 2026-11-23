@@ -27,11 +27,12 @@ func (*fakeCD) LocalTimeIn(t time.Time, _ string) time.Time                   { 
 
 func TestCommentTimestampSelfLink(t *testing.T) {
 	funcMap := template.FuncMap{
-		"cd":          func() *fakeCD { return &fakeCD{} },
-		"a4code2html": func(s string) template.HTML { return template.HTML(s) },
-		"csrfField":   func() template.HTML { return "" },
-		"since":       func(time.Time, time.Time) string { return "" },
-		"timeAgo":     func(time.Time) string { return "" },
+		"cd":               func() *fakeCD { return &fakeCD{} },
+		"a4code2html":      func(s string) template.HTML { return template.HTML(s) },
+		"forumCommentHTML": func(_ int32, s string) template.HTML { return template.HTML(s) },
+		"csrfField":        func() template.HTML { return "" },
+		"since":            func(time.Time, time.Time) string { return "" },
+		"timeAgo":          func(time.Time) string { return "" },
 	}
 	tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/partials/common/comment.gohtml", "site/partials/forms/languageCombobox.gohtml"))
 	var buf bytes.Buffer
@@ -86,11 +87,12 @@ func TestCommentUsernameBold(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			funcMap := template.FuncMap{
-				"cd":          func() *fakeCD { return &fakeCD{UserID: tt.currentUser} },
-				"a4code2html": func(s string) template.HTML { return template.HTML(s) },
-				"csrfField":   func() template.HTML { return "" },
-				"since":       func(time.Time, time.Time) string { return "" },
-				"timeAgo":     func(time.Time) string { return "" },
+				"cd":               func() *fakeCD { return &fakeCD{UserID: tt.currentUser} },
+				"a4code2html":      func(s string) template.HTML { return template.HTML(s) },
+				"forumCommentHTML": func(_ int32, s string) template.HTML { return template.HTML(s) },
+				"csrfField":        func() template.HTML { return "" },
+				"since":            func(time.Time, time.Time) string { return "" },
+				"timeAgo":          func(time.Time) string { return "" },
 			}
 			tmpl := template.Must(template.New("root").Funcs(funcMap).ParseFiles("site/partials/common/comment.gohtml", "site/partials/forms/languageCombobox.gohtml"))
 			var buf bytes.Buffer

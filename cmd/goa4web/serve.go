@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/arran4/goa4web/config"
@@ -19,6 +20,27 @@ import (
 type serveCmd struct {
 	*rootCmd
 	fs *flag.FlagSet
+}
+
+func notifyShutdownContext(parent context.Context) (context.Context, context.CancelFunc) {
+	signalCtx, stopNotify := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(parent)
+	var once sync.Once
+	stop := func() {
+		once.Do(func() {
+			stopNotify()
+			cancel()
+		})
+	}
+	go func() {
+		select {
+		case <-signalCtx.Done():
+			// Restoring the default handlers makes a second signal terminate promptly.
+			stop()
+		case <-ctx.Done():
+		}
+	}()
+	return ctx, stop
 }
 
 func parseServeCmd(parent *rootCmd, args []string) (*serveCmd, error) {
@@ -82,7 +104,7 @@ func (c *serveCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("admin api secret: %w", err)
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := notifyShutdownContext(context.Background())
 	defer stop()
 	srv, err := app.NewServer(ctx, cfg, c.adminHandlers,
 		app.WithSessionSecret(secret),

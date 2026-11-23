@@ -494,11 +494,11 @@ let forumScope = {};
 (function() {
     const fnStr = forumJsContent
         .replace(/document\.addEventListener\('DOMContentLoaded',\s*\(\)\s*=>\s*\{/, '(function() {')
-        .replace(/const labelFilter = document\.querySelector\('\.label-filter'\);[\s\S]*$/, 'return { tokenize, parse, evaluateAST }; })()');
+        .replace(/const labelFilter = document\.querySelector\('\.label-filter'\);[\s\S]*$/, 'return { tokenize, parse, evaluateAST, getFilterClickTarget }; })()');
     forumScope = eval(fnStr);
 })();
 
-const { tokenize, parse, evaluateAST } = forumScope;
+const { tokenize, parse, evaluateAST, getFilterClickTarget } = forumScope;
 
 // Test forum filtering across labels, participants, posters, topics
 const labels = ["announcement", "help"];
@@ -534,7 +534,7 @@ function filterItemWithQuery(item, query) {
     const labels = item.querySelectorAll('.label').map(el => el.textContent.toLowerCase());
     const participants = item.querySelectorAll('.participant').map(el => el.textContent.toLowerCase());
     const posters = item.querySelectorAll('.poster-name').map(el => el.textContent.toLowerCase());
-    const topics = item.querySelectorAll('.topic-name-filter').map(el => el.textContent.toLowerCase());
+    const topics = item.querySelectorAll('.topic-name-search').map(el => el.textContent.toLowerCase());
     const ast = parse(tokenize(query));
     return evaluateAST(ast, labels, participants, posters, topics);
 }
@@ -546,7 +546,7 @@ const topicNameDiv = new MockNode(Node.ELEMENT_NODE, "", "DIV");
 topicNameDiv.classList.add("topic-name");
 
 const topicLink = new MockNode(Node.ELEMENT_NODE, "", "A");
-topicLink.classList.add("topic-name-filter");
+topicLink.classList.add("topic-name-search");
 topicLink.appendChild(new MockNode(Node.TEXT_NODE, "Community Guidelines"));
 topicNameDiv.appendChild(topicLink);
 
@@ -586,6 +586,8 @@ assert(filterItemWithQuery(topicItem, "poster_charlie") === true, "DOM fixture u
 assert(filterItemWithQuery(topicItem, "topic:missing") === false, "DOM fixture non-matching topic");
 assert(filterItemWithQuery(topicItem, "poster:mod_alice") === false, "DOM fixture participant searched as poster should fail");
 assert(filterItemWithQuery(topicItem, "participant:poster_charlie") === false, "DOM fixture poster searched as participant should fail");
+assert(getFilterClickTarget(topicLink) === null, "Topic title click remains navigation-only");
+assert(getFilterClickTarget(part1) === part1, "Participant click remains filterable");
 
 // 2. Fixture: Unread thread item in unread.gohtml
 const unreadThread = new MockNode(Node.ELEMENT_NODE, "", "DIV");
@@ -600,7 +602,7 @@ unreadFirstPoster.appendChild(new MockNode(Node.TEXT_NODE, "alice_starter"));
 unreadHeader.appendChild(unreadFirstPoster);
 
 const unreadTopicStrong = new MockNode(Node.ELEMENT_NODE, "", "STRONG");
-unreadTopicStrong.classList.add("topic-name-filter");
+unreadTopicStrong.classList.add("topic-name-search");
 unreadTopicStrong.appendChild(new MockNode(Node.TEXT_NODE, "Secret Meeting"));
 unreadHeader.appendChild(unreadTopicStrong);
 

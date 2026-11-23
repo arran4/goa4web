@@ -52,9 +52,12 @@ func TestTableTopicsFilterMarkers(t *testing.T) {
 
 	out := buf.String()
 
-	// Assert semantic markers wrap actual values
-	if !strings.Contains(out, `class="topic-name-filter"`) || !strings.Contains(out, "Secret Discussion") {
-		t.Errorf("tableTopics missing topic-name-filter wrapping topic title: %s", out)
+	// The title stays searchable but must not be a delegated click-to-filter target.
+	if !strings.Contains(out, `<a href="/private/topic/1" class="topic-name-search">`) || !strings.Contains(out, "Secret Discussion") {
+		t.Errorf("tableTopics missing the searchable topic title link: %s", out)
+	}
+	if strings.Contains(out, `class="topic-name-filter"`) {
+		t.Errorf("tableTopics title must not use the click-to-filter marker: %s", out)
 	}
 	if !strings.Contains(out, `class="poster-name">charlie_poster`) {
 		t.Errorf("tableTopics missing poster-name wrapping poster username: %s", out)
@@ -175,8 +178,8 @@ func TestUnreadFilterMarkers(t *testing.T) {
 	out := buf.String()
 
 	// Assert semantic markers wrap actual values
-	if !strings.Contains(out, `<strong class="topic-name-filter">Private Conversation A</strong>`) {
-		t.Errorf("unread.gohtml missing topic-name-filter wrapping topic title: %s", out)
+	if !strings.Contains(out, `<strong class="topic-name-search">Private Conversation A</strong>`) {
+		t.Errorf("unread.gohtml missing topic-name-search wrapping topic title: %s", out)
 	}
 	if !strings.Contains(out, `class="poster-name first"`) || !strings.Contains(out, `unread_starter`) {
 		t.Errorf("unread.gohtml missing poster-name wrapping first poster: %s", out)

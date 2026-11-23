@@ -13,7 +13,9 @@ Every message implements `Message` by returning a `MessageType`. The built-in
 messages are `TaskEvent`, `EmailQueueEvent`, and `DigestRunEvent`. A `Bus` is an
 instance passed to publishers and workers; there are no package-level publish or
 subscribe functions. Subscribers receive `Envelope` values and must call `Ack`
-once processing is finished so `Shutdown` can drain outstanding delivery.
+once processing is finished so `Shutdown` can drain outstanding delivery. An
+acknowledgement only updates process-local accounting; it is not a durable
+completion record.
 
 ## Publishing and consuming
 
@@ -42,4 +44,6 @@ err := bus.Publish(eventbus.TaskEvent{
 
 Subscribe before publishing. Delivery is non-blocking and a full subscriber
 buffer drops the message, so do not use this API for required or retryable work.
-On shutdown, stop publishers and call `bus.Shutdown(ctx)` with a deadline.
+On shutdown, stop publishers and call `bus.Shutdown(ctx)` with a deadline. A
+deadline is required because a consumer may be blocked. Messages not completed
+before process exit are not recoverable from this bus.

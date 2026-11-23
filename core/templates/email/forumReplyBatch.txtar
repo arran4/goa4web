@@ -1,0 +1,23 @@
+-- subject.gotxt --
+[{{ .SubjectPrefix }}] Forum reply summary
+-- body.gotxt --
+There are new replies in threads you follow.
+
+{{ range .Item.Threads -}}
+{{ .Count }} {{ if eq .Count 1 }}new reply{{ else }}new replies{{ end }} · {{ .Label }}
+{{ .Link }}
+
+{{ end -}}
+{{ if .Item.MoreThreads }}More threads have new replies. Visit the forum to see them.
+
+{{ end -}}
+Manage your subscriptions: {{ .UnsubscribeUrl }}
+-- body.gohtml --
+<p>There are new replies in threads you follow.</p>
+<ul>
+{{ range .Item.Threads -}}
+<li>{{ .Count }} {{ if eq .Count 1 }}new reply{{ else }}new replies{{ end }} · <a href="{{ .Link }}">{{ .Label }}</a></li>
+{{ end -}}
+</ul>
+{{ if .Item.MoreThreads }}<p>More threads have new replies. Visit the forum to see them.</p>{{ end }}
+<p><a href="{{ .UnsubscribeUrl }}">Manage your subscriptions</a></p>

@@ -231,6 +231,13 @@ func Start(ctx context.Context, q db.Querier, provider email.Provider, dlqProvid
 			Interval: time.Hour,
 		})
 		s.Register(scheduler.Task{
+			Name:      "forum_reply_email_batch",
+			Handler:   func(ctx context.Context, _ time.Time) error { return n.ProcessForumReplyEmailWindow(ctx) },
+			Type:      scheduler.TaskTypePeriodic,
+			Interval:  5 * time.Second,
+			Ephemeral: true,
+		})
+		s.Register(scheduler.Task{
 			Name: "email_queue_poll",
 			Handler: func(ctx context.Context, t time.Time) error {
 				emailqueue.ProcessPendingEmail(ctx, q, provider, dlqProvider, cfg)

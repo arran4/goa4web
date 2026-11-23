@@ -294,6 +294,7 @@ CREATE TABLE `preferences` (
   `language_id` int(10) DEFAULT NULL,
   `users_idusers` int(10) NOT NULL DEFAULT 0,
   `emailforumupdates` tinyint(1) DEFAULT 0,
+  optional_email_generation BIGINT NOT NULL DEFAULT 0,
   `page_size` int(10) NOT NULL DEFAULT 15,
   `auto_subscribe_replies` tinyint(1) NOT NULL DEFAULT 1,
   `timezone` tinytext DEFAULT NULL,
@@ -312,6 +313,22 @@ CREATE TABLE `preferences` (
   KEY `preferences_FKIndex1` (`users_idusers`),
   KEY `preferences_FKIndex2` (`language_id`)
 );
+
+CREATE TABLE forum_reply_email_activities (
+    recipient_id INT NOT NULL,
+    activity_position BIGINT NOT NULL,
+    thread_id INT NOT NULL,
+    window_end BIGINT NOT NULL,
+    preference_generation BIGINT NOT NULL DEFAULT 0,
+    claim_count INT NOT NULL DEFAULT 0,
+    lease_token VARCHAR(36) DEFAULT NULL,
+    lease_until BIGINT NOT NULL DEFAULT 0,
+    attempted_at BIGINT DEFAULT NULL,
+    sent_at BIGINT DEFAULT NULL,
+    PRIMARY KEY (recipient_id, activity_position)
+);
+CREATE INDEX forum_reply_email_due ON forum_reply_email_activities (attempted_at, window_end, lease_until, recipient_id);
+CREATE INDEX forum_reply_email_window ON forum_reply_email_activities (recipient_id, window_end, lease_token);
 
 CREATE TABLE `searchwordlist` (
   `idsearchwordlist` int(10) NOT NULL AUTO_INCREMENT,
@@ -951,3 +968,4 @@ CREATE TABLE IF NOT EXISTS search_dirty_targets (
 
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (106, 1);

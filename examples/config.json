@@ -32,6 +32,7 @@
   "EXTERNAL_URL": "",
   "FEEDS_ENABLED": "true",
   "FORUM_POST_APPEND_WINDOW": "60",
+  "FORUM_REPLY_EMAIL_BATCH_MINUTES": "15",
   "HOST": "",
   "HOSTNAME": "",
   "HSTS_HEADER": "max-age=63072000; includeSubDomains",

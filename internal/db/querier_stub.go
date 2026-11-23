@@ -25,12 +25,14 @@ func (r FakeSQLResult) RowsAffected() (int64, error) {
 
 // QuerierStub records calls for selective db.Querier methods in tests.
 type QuerierStub struct {
-	SystemCapturePendingActionFn        func(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error)
-	SystemConsumePendingActionFn        func(ctx context.Context, id string) (int64, error)
-	SystemDeleteExpiredPendingActionsFn func(ctx context.Context) (int64, error)
-	SystemGetPendingActionFn            func(ctx context.Context, id string) (*PendingAction, error)
-	SystemInsertPendingActionFn         func(ctx context.Context, arg SystemInsertPendingActionParams) error
-	SystemGetSessionByIDFn              func(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
+	SystemQueueForumReplyEmailActivityCalls []SystemQueueForumReplyEmailActivityParams
+	SystemQueueForumReplyEmailActivityFn    func(context.Context, SystemQueueForumReplyEmailActivityParams) error
+	SystemCapturePendingActionFn            func(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error)
+	SystemConsumePendingActionFn            func(ctx context.Context, id string) (int64, error)
+	SystemDeleteExpiredPendingActionsFn     func(ctx context.Context) (int64, error)
+	SystemGetPendingActionFn                func(ctx context.Context, id string) (*PendingAction, error)
+	SystemInsertPendingActionFn             func(ctx context.Context, arg SystemInsertPendingActionParams) error
+	SystemGetSessionByIDFn                  func(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
 
 	AppendCommentInSectionForCommenterFn   func(context.Context, AppendCommentInSectionForCommenterParams) (int64, error)
 	SystemHasOtherUserReadItemAtOrBeyondFn func(context.Context, SystemHasOtherUserReadItemAtOrBeyondParams) (bool, error)

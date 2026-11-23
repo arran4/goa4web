@@ -1,11 +1,13 @@
 package admin
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -32,7 +34,7 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 
 	cd.PageTitle = fmt.Sprintf("Image Cache Details: %s", id)
 
-	fullPath, err := getCachePath(cd.Config.ImageCacheDir, id)
+	fullPath, entry, err := getCachePath(r.Context(), cd, id)
 	if err != nil {
 		handlers.RenderErrorPage(w, r, err)
 		return
@@ -54,17 +56,20 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 	ext := filepath.Ext(id)
 	base := strings.TrimSuffix(id, ext)
 
-	if before, ok := strings.CutSuffix(base, "_thumb"); ok {
-		parentID = before + ext
+	if parent := cacheParentImageID(id); parent != "" {
+		parentID = parent
 		thumbID = id
 	} else {
 		parentID = id
 		thumbID = base + "_thumb" + ext
+		if entry != nil && entry.ThumbnailID.Valid {
+			thumbID = entry.ThumbnailID.String
+		}
 	}
 
 	parentExists := false
 	if parentID != id {
-		if p, err := getCachePath(cd.Config.ImageCacheDir, parentID); err == nil {
+		if p, _, err := getCachePath(r.Context(), cd, parentID); err == nil {
 			if _, err := os.Stat(p); err == nil {
 				parentExists = true
 			}
@@ -73,7 +78,7 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 
 	thumbExists := false
 	if thumbID != id {
-		if p, err := getCachePath(cd.Config.ImageCacheDir, thumbID); err == nil {
+		if p, _, err := getCachePath(r.Context(), cd, thumbID); err == nil {
 			if _, err := os.Stat(p); err == nil {
 				thumbExists = true
 			}
@@ -144,10 +149,39 @@ func AdminImageCacheDetailsPage(w http.ResponseWriter, r *http.Request) {
 	_ = AdminImageCacheDetailsPageTmpl.Handle(w, r, data)
 }
 
-func getCachePath(dir, id string) (string, error) {
-	if !intimages.ValidID(id) {
-		return "", fmt.Errorf("invalid cache id")
+func getCachePath(ctx context.Context, cd *common.CoreData, id string) (string, *db.ImageCacheEntry, error) {
+	entry, err := cd.ImageCacheEntry(ctx, id)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return "", nil, fmt.Errorf("load cache entry: %w", err)
 	}
-	sub1, sub2 := id[:2], id[2:4]
-	return filepath.Join(dir, sub1, sub2, id), nil
+	key, err := common.ImageCacheObjectKey(id, entry)
+	if err != nil {
+		return "", nil, err
+	}
+	if parentID := cacheParentImageID(id); parentID != "" {
+		parent, err := cd.ImageCacheEntry(ctx, parentID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return "", nil, fmt.Errorf("load parent cache entry: %w", err)
+		}
+		if parent != nil && (!parent.ThumbnailID.Valid || parent.ThumbnailID.String != id) {
+			parentKey, err := common.ImageCacheObjectKey(parentID, parent)
+			if err != nil {
+				return "", nil, err
+			}
+			key = path.Join(path.Dir(parentKey), id)
+		}
+	}
+	return filepath.Join(cd.Config.ImageCacheDir, filepath.FromSlash(key)), entry, nil
+}
+
+func cacheParentImageID(id string) string {
+	ext := filepath.Ext(id)
+	base := strings.TrimSuffix(id, ext)
+	if parent, ok := strings.CutSuffix(base, "_thumb"); ok {
+		return parent + ext
+	}
+	if index := strings.LastIndex(base, "_thumb_"); index >= 0 {
+		return base[:index] + ext
+	}
+	return ""
 }

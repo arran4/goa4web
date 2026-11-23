@@ -25,6 +25,7 @@ type Querier interface {
 	AdminArchiveWriting(ctx context.Context, arg AdminArchiveWritingParams) error
 	AdminAuditLogActionSummary(ctx context.Context, arg AdminAuditLogActionSummaryParams) ([]*AdminAuditLogActionSummaryRow, error)
 	AdminCancelBannedIp(ctx context.Context, ipNet string) error
+	AdminCancelDurableJob(ctx context.Context, id int64) (int64, error)
 	AdminClearExternalLinkCache(ctx context.Context, arg AdminClearExternalLinkCacheParams) error
 	// This query selects all words from the "searchwordlist" table and prints them.
 	AdminCompleteWordList(ctx context.Context) ([]sql.NullString, error)
@@ -129,7 +130,7 @@ type Querier interface {
 	AdminInsertBannedIp(ctx context.Context, arg AdminInsertBannedIpParams) error
 	// AdminInsertLanguage adds a new language returning a result.
 	AdminInsertLanguage(ctx context.Context, nameof sql.NullString) (sql.Result, error)
-	AdminInsertQueuedLinkFromQueue(ctx context.Context, id int64) (int64, error)
+	AdminInsertQueuedLinkFromQueue(ctx context.Context, id int64) (sql.Result, error)
 	AdminInsertRequestComment(ctx context.Context, arg AdminInsertRequestCommentParams) error
 	AdminInsertRequestQueue(ctx context.Context, arg AdminInsertRequestQueueParams) (sql.Result, error)
 	AdminInsertWritingCategory(ctx context.Context, arg AdminInsertWritingCategoryParams) error
@@ -165,6 +166,7 @@ type Querier interface {
 	AdminListDeactivatedLinks(ctx context.Context, arg AdminListDeactivatedLinksParams) ([]*AdminListDeactivatedLinksRow, error)
 	AdminListDeactivatedUsers(ctx context.Context, arg AdminListDeactivatedUsersParams) ([]*AdminListDeactivatedUsersRow, error)
 	AdminListDeactivatedWritings(ctx context.Context, arg AdminListDeactivatedWritingsParams) ([]*AdminListDeactivatedWritingsRow, error)
+	AdminListDurableJobs(ctx context.Context, arg AdminListDurableJobsParams) ([]*DurableJob, error)
 	AdminListExternalLinks(ctx context.Context, arg AdminListExternalLinksParams) ([]*ExternalLink, error)
 	AdminListFAQCategories(ctx context.Context) ([]*FaqCategory, error)
 	// admin task
@@ -235,6 +237,7 @@ type Querier interface {
 	// admin task
 	AdminPromoteAnnouncement(ctx context.Context, siteNewsID int64) error
 	AdminPurgeReadNotifications(ctx context.Context) error
+	AdminPurgeTerminalDurableJobs(ctx context.Context, arg AdminPurgeTerminalDurableJobsParams) (int64, error)
 	AdminRebuildAllForumTopicMetaColumns(ctx context.Context) error
 	AdminRecalculateAllForumThreadMetaData(ctx context.Context) error
 	AdminRecalculateForumThreadByIdMetaData(ctx context.Context, idforumthread int64) error
@@ -254,6 +257,7 @@ type Querier interface {
 	AdminRestoreUserEmail(ctx context.Context, idusers int64) error
 	AdminRestoreUserPassword(ctx context.Context, idusers int64) error
 	AdminRestoreWriting(ctx context.Context, arg AdminRestoreWritingParams) error
+	AdminRetryDurableJob(ctx context.Context, id int64) (int64, error)
 	AdminScrubBlog(ctx context.Context, arg AdminScrubBlogParams) error
 	AdminScrubComment(ctx context.Context, arg AdminScrubCommentParams) error
 	AdminScrubImagepost(ctx context.Context, idimagepost int64) error
@@ -263,8 +267,10 @@ type Querier interface {
 	AdminScrubUserPasswords(ctx context.Context, usersIdusers int64) error
 	AdminScrubWriting(ctx context.Context, arg AdminScrubWritingParams) error
 	AdminSetAnnouncementActive(ctx context.Context, arg AdminSetAnnouncementActiveParams) error
+	AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error
 	AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error
 	AdminUpdateBannedIp(ctx context.Context, arg AdminUpdateBannedIpParams) error
+	AdminUpdateCommentText(ctx context.Context, arg AdminUpdateCommentTextParams) error
 	AdminUpdateFAQ(ctx context.Context, arg AdminUpdateFAQParams) error
 	AdminUpdateFAQCategory(ctx context.Context, arg AdminUpdateFAQCategoryParams) error
 	AdminUpdateFAQPriority(ctx context.Context, arg AdminUpdateFAQPriorityParams) error
@@ -304,12 +310,12 @@ type Querier interface {
 	CreateBlogEntryForWriter(ctx context.Context, arg CreateBlogEntryForWriterParams) (int64, error)
 	// This query adds a new entry to the "bookmarks" table for a lister.
 	CreateBookmarksForLister(ctx context.Context, arg CreateBookmarksForListerParams) error
-	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error)
+	CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error)
 	CreateExternalLink(ctx context.Context, url string) (sql.Result, error)
 	CreateFAQQuestionForWriter(ctx context.Context, arg CreateFAQQuestionForWriterParams) error
 	CreateForumTopicForPoster(ctx context.Context, arg CreateForumTopicForPosterParams) (int64, error)
 	CreateGrant(ctx context.Context, arg CreateGrantParams) error
-	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error)
+	CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (sql.Result, error)
 	CreateLinkerQueuedItemForWriter(ctx context.Context, arg CreateLinkerQueuedItemForWriterParams) error
 	CreateNewsPostForWriter(ctx context.Context, arg CreateNewsPostForWriterParams) (int64, error)
 	CreatePasswordResetForUser(ctx context.Context, arg CreatePasswordResetForUserParams) error
@@ -317,7 +323,7 @@ type Querier interface {
 	CreateSubscriptionArchetype(ctx context.Context, arg CreateSubscriptionArchetypeParams) error
 	CreateThreadImage(ctx context.Context, arg CreateThreadImageParams) error
 	CreateUploadedImageForUploader(ctx context.Context, arg CreateUploadedImageForUploaderParams) (int64, error)
-	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error)
+	CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (sql.Result, error)
 	DeactivateNewsPost(ctx context.Context, idsitenews int64) error
 	DeleteGrantByProperties(ctx context.Context, arg DeleteGrantByPropertiesParams) error
 	DeleteGrantsByRoleID(ctx context.Context, roleID sql.NullInt64) error
@@ -502,7 +508,6 @@ type Querier interface {
 	ListContentLabelStatus(ctx context.Context, arg ListContentLabelStatusParams) ([]*ListContentLabelStatusRow, error)
 	ListContentPrivateLabels(ctx context.Context, arg ListContentPrivateLabelsParams) ([]*ListContentPrivateLabelsRow, error)
 	ListContentPublicLabels(ctx context.Context, arg ListContentPublicLabelsParams) ([]*ListContentPublicLabelsRow, error)
-	ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 	ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int64) ([]int64, error)
 	ListExpiredExternalImageCacheEntries(ctx context.Context, arg ListExpiredExternalImageCacheEntriesParams) ([]*ImageCacheEntry, error)
 	ListForumcategoryPath(ctx context.Context, categoryID int64) ([]*ListForumcategoryPathRow, error)
@@ -564,11 +569,16 @@ type Querier interface {
 	SystemAssignLinkerThreadID(ctx context.Context, arg SystemAssignLinkerThreadIDParams) error
 	SystemAssignNewsThreadID(ctx context.Context, arg SystemAssignNewsThreadIDParams) error
 	SystemAssignWritingThreadID(ctx context.Context, arg SystemAssignWritingThreadIDParams) error
+	SystemBumpActiveDurableJob(ctx context.Context, arg SystemBumpActiveDurableJobParams) (int64, error)
+	SystemBumpSearchDirtyTarget(ctx context.Context, arg SystemBumpSearchDirtyTargetParams) error
 	SystemCapturePendingAction(ctx context.Context, arg SystemCapturePendingActionParams) (int64, error)
 	SystemCheckGrant(ctx context.Context, arg SystemCheckGrantParams) (int64, error)
 	SystemCheckRoleGrant(ctx context.Context, arg SystemCheckRoleGrantParams) (int64, error)
+	SystemClaimDurableJobByID(ctx context.Context, arg SystemClaimDurableJobByIDParams) (int64, error)
 	SystemClearContentLabelStatus(ctx context.Context, arg SystemClearContentLabelStatusParams) error
 	SystemClearContentPrivateLabel(ctx context.Context, arg SystemClearContentPrivateLabelParams) error
+	SystemClearJobCooldownWindow(ctx context.Context, arg SystemClearJobCooldownWindowParams) error
+	SystemCompleteDurableJobFenced(ctx context.Context, arg SystemCompleteDurableJobFencedParams) (int64, error)
 	SystemConsumePendingAction(ctx context.Context, id string) (int64, error)
 	SystemCopyPrivateThreadGrantsToThread(ctx context.Context, arg SystemCopyPrivateThreadGrantsToThreadParams) error
 	SystemCopyPrivateTopicGrantsToThread(ctx context.Context, arg SystemCopyPrivateTopicGrantsToThreadParams) error
@@ -583,6 +593,7 @@ type Querier interface {
 	SystemCreateNotification(ctx context.Context, arg SystemCreateNotificationParams) error
 	SystemCreateNotificationForActivity(ctx context.Context, arg SystemCreateNotificationForActivityParams) error
 	SystemCreateReplyThread(ctx context.Context, arg SystemCreateReplyThreadParams) (int64, error)
+	// Older migration-built databases do not have a unique index on word.
 	SystemCreateSearchWord(ctx context.Context, word string) (int64, error)
 	SystemCreateThread(ctx context.Context, forumtopicIdforumtopic int64) (int64, error)
 	// This query inserts a new permission into the "permissions" table.
@@ -597,13 +608,17 @@ type Querier interface {
 	SystemCreateUserRoleByID(ctx context.Context, arg SystemCreateUserRoleByIDParams) error
 	// This query deletes all data from the "blogs_search" table.
 	SystemDeleteBlogsSearch(ctx context.Context) error
+	SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int64) error
 	// This query deletes all data from the "comments_search" table.
 	SystemDeleteCommentsSearch(ctx context.Context) error
 	SystemDeleteDeadLetter(ctx context.Context, id int64) error
 	SystemDeleteExpiredPendingActions(ctx context.Context) (int64, error)
 	SystemDeleteImagePostSearch(ctx context.Context) error
+	SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int64) error
+	SystemDeleteJobCooldown(ctx context.Context, dedupeKey string) error
 	// This query deletes all data from the "linker_search" table.
 	SystemDeleteLinkerSearch(ctx context.Context) error
+	SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int64) error
 	SystemDeletePasswordReset(ctx context.Context, id int64) error
 	// Delete all password reset entries for the given user and return the result
 	SystemDeletePasswordResetsByUser(ctx context.Context, userID int64) (sql.Result, error)
@@ -616,17 +631,27 @@ type Querier interface {
 	// This query deletes all data from the "writing_search" table.
 	SystemDeleteWritingSearch(ctx context.Context) error
 	SystemDeleteWritingSearchByWritingID(ctx context.Context, writingID int64) error
+	SystemFailDurableJobFenced(ctx context.Context, arg SystemFailDurableJobFencedParams) (int64, error)
+	SystemGetActiveDurableJobIDByDedupeKey(ctx context.Context, activeDedupeKey sql.NullString) (int64, error)
 	SystemGetAllBlogsForIndex(ctx context.Context) ([]*SystemGetAllBlogsForIndexRow, error)
 	SystemGetBlogEntryByID(ctx context.Context, idblogs int64) (*SystemGetBlogEntryByIDRow, error)
+	SystemGetCommentTextForSearchIndex(ctx context.Context, idcomments int64) (*SystemGetCommentTextForSearchIndexRow, error)
 	SystemGetDeadLetter(ctx context.Context, id int64) (*DeadLetter, error)
+	SystemGetDurableJobByID(ctx context.Context, id int64) (*DurableJob, error)
 	SystemGetFAQQuestions(ctx context.Context) ([]*Faq, error)
 	SystemGetForumTopicByTitle(ctx context.Context, title sql.NullString) (*Forumtopic, error)
+	SystemGetImagePostTextForSearchIndex(ctx context.Context, idimagepost int64) (*SystemGetImagePostTextForSearchIndexRow, error)
+	SystemGetJobCooldown(ctx context.Context, dedupeKey string) (*DurableJobCooldown, error)
 	// SystemGetLanguageIDByName resolves a language ID by name.
 	SystemGetLanguageIDByName(ctx context.Context, nameof sql.NullString) (int64, error)
 	SystemGetLastNotificationForRecipientByMessage(ctx context.Context, arg SystemGetLastNotificationForRecipientByMessageParams) (*Notification, error)
+	SystemGetLinkerTextForSearchIndex(ctx context.Context, id int64) (*SystemGetLinkerTextForSearchIndexRow, error)
 	SystemGetLogin(ctx context.Context, username sql.NullString) (*SystemGetLoginRow, error)
 	SystemGetNewsPostByID(ctx context.Context, idsitenews int64) (int64, error)
+	SystemGetNextClaimableDurableJob(ctx context.Context, arg SystemGetNextClaimableDurableJobParams) (*DurableJob, error)
+	SystemGetNextClaimableDurableJobByTypes(ctx context.Context, arg SystemGetNextClaimableDurableJobByTypesParams) (*DurableJob, error)
 	SystemGetPendingAction(ctx context.Context, id string) (*PendingAction, error)
+	SystemGetSearchDirtyTarget(ctx context.Context, arg SystemGetSearchDirtyTargetParams) (*SearchDirtyTarget, error)
 	SystemGetSearchWordByWordLowercased(ctx context.Context, lower string) (*Searchwordlist, error)
 	SystemGetSessionByID(ctx context.Context, sessionID string) (*SystemGetSessionByIDRow, error)
 	SystemGetTemplateOverride(ctx context.Context, name string) (string, error)
@@ -635,16 +660,19 @@ type Querier interface {
 	SystemGetUserByUsername(ctx context.Context, username sql.NullString) (*SystemGetUserByUsernameRow, error)
 	SystemGetUsersByIDs(ctx context.Context, ids []int64) ([]*SystemGetUsersByIDsRow, error)
 	SystemGetWritingByID(ctx context.Context, idwriting int64) (int64, error)
+	SystemGetWritingTextForSearchIndex(ctx context.Context, idwriting int64) (*SystemGetWritingTextForSearchIndexRow, error)
 	SystemHasOtherUserReadItemAtOrBeyond(ctx context.Context, arg SystemHasOtherUserReadItemAtOrBeyondParams) (int64, error)
 	SystemIncrementPendingEmailError(ctx context.Context, id int64) error
 	// System query only used internally
 	SystemInsertDeadLetter(ctx context.Context, message string) error
 	SystemInsertDigestPendingEmail(ctx context.Context, arg SystemInsertDigestPendingEmailParams) error
+	SystemInsertDurableJob(ctx context.Context, arg SystemInsertDurableJobParams) (sql.Result, error)
 	SystemInsertLoginAttempt(ctx context.Context, arg SystemInsertLoginAttemptParams) error
 	SystemInsertPendingAction(ctx context.Context, arg SystemInsertPendingActionParams) error
 	SystemInsertSession(ctx context.Context, arg SystemInsertSessionParams) error
 	SystemInsertUser(ctx context.Context, username sql.NullString) (int64, error)
 	SystemLatestDeadLetter(ctx context.Context) (interface{}, error)
+	SystemListActiveAdminUserIDs(ctx context.Context) ([]int64, error)
 	SystemListAllUnverifiedEmails(ctx context.Context) ([]*UserEmail, error)
 	SystemListAllUserEmails(ctx context.Context) ([]*SystemListAllUserEmailsRow, error)
 	SystemListAllUsers(ctx context.Context) ([]*SystemListAllUsersRow, error)
@@ -662,15 +690,24 @@ type Querier interface {
 	SystemListUserInfo(ctx context.Context) ([]*SystemListUserInfoRow, error)
 	SystemListVerifiedEmailsByUserID(ctx context.Context, userID int64) ([]*UserEmail, error)
 	SystemListWritingCategories(ctx context.Context, arg SystemListWritingCategoriesParams) ([]*WritingCategory, error)
+	SystemLockActiveDurableJobLease(ctx context.Context, arg SystemLockActiveDurableJobLeaseParams) (int64, error)
 	SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, pendingEmailID int64) error
 	SystemMarkPasswordResetVerified(ctx context.Context, id int64) error
 	SystemMarkPendingEmailSent(ctx context.Context, id int64) error
+	SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error)
 	SystemMarkUserEmailVerified(ctx context.Context, arg SystemMarkUserEmailVerifiedParams) error
+	SystemPruneTerminalDurableJobs(ctx context.Context, arg SystemPruneTerminalDurableJobsParams) (int64, error)
 	SystemPurgeDeadLettersBefore(ctx context.Context, createdAt time.Time) error
 	// Remove password reset entries that have expired or were already verified
 	SystemPurgePasswordResetsBefore(ctx context.Context, createdAt time.Time) (sql.Result, error)
+	SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error)
+	SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error)
 	SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int64) error
+	SystemRecordAdminJobFailureNotification(ctx context.Context, arg SystemRecordAdminJobFailureNotificationParams) error
 	SystemRegisterExternalLinkClick(ctx context.Context, url string) error
+	SystemReleaseDurableJobOnShutdownFenced(ctx context.Context, arg SystemReleaseDurableJobOnShutdownFencedParams) (int64, error)
+	SystemRenewDurableJobLease(ctx context.Context, arg SystemRenewDurableJobLeaseParams) (int64, error)
+	SystemRetryDurableJobFenced(ctx context.Context, arg SystemRetryDurableJobFencedParams) (int64, error)
 	SystemSetBlogLastIndex(ctx context.Context, id int64) error
 	SystemSetCommentLastIndex(ctx context.Context, idcomments int64) error
 	SystemSetForumTopicHandlerByID(ctx context.Context, arg SystemSetForumTopicHandlerByIDParams) error
@@ -678,9 +715,11 @@ type Querier interface {
 	SystemSetLinkerLastIndex(ctx context.Context, id int64) error
 	SystemSetSiteNewsLastIndex(ctx context.Context, idsitenews int64) error
 	SystemSetWritingLastIndex(ctx context.Context, idwriting int64) error
+	SystemSummarizeAdminJobFailureNotification(ctx context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error
 	SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error
 	SystemUpdateForumTopicTitleAndDescription(ctx context.Context, arg SystemUpdateForumTopicTitleAndDescriptionParams) error
 	SystemUpdateVerificationCode(ctx context.Context, arg SystemUpdateVerificationCodeParams) error
+	SystemUpsertJobCooldown(ctx context.Context, arg SystemUpsertJobCooldownParams) error
 	TouchImageCacheEntry(ctx context.Context, arg TouchImageCacheEntryParams) error
 	UpdateAPIKeyLastUsed(ctx context.Context, id int64) error
 	UpdateAutoSubscribeRepliesForLister(ctx context.Context, arg UpdateAutoSubscribeRepliesForListerParams) error
@@ -705,7 +744,7 @@ type Querier interface {
 	UpdateSubscriptionByIDForSubscriber(ctx context.Context, arg UpdateSubscriptionByIDForSubscriberParams) error
 	UpdateTimezoneForLister(ctx context.Context, arg UpdateTimezoneForListerParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
-	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error
+	UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (int64, error)
 	UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error
 	UpsertImageCacheEntry(ctx context.Context, arg UpsertImageCacheEntryParams) error
 	UpsertSchedulerState(ctx context.Context, arg UpsertSchedulerStateParams) error

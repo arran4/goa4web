@@ -85,19 +85,15 @@ func (q *Queries) AdminDeleteLinkerQueuedItem(ctx context.Context, id int32) err
 	return err
 }
 
-const adminInsertQueuedLinkFromQueue = `-- name: AdminInsertQueuedLinkFromQueue :execlastid
-INSERT INTO linker (author_id, category_id, language_id, title, ` + "`" + `url` + "`" + `, description, timezone)
-SELECT l.submitter_id, l.category_id, l.language_id, l.title, l.url, l.description, l.timezone
+const adminInsertQueuedLinkFromQueue = `-- name: AdminInsertQueuedLinkFromQueue :execresult
+INSERT INTO linker (author_id, category_id, language_id, title, ` + "`" + `url` + "`" + `, description, timezone, listed)
+SELECT l.submitter_id, l.category_id, l.language_id, l.title, l.url, l.description, l.timezone, UTC_TIMESTAMP()
 FROM linker_queue l
 WHERE l.id = ?
 `
 
-func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error) {
-	result, err := q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, id)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
+func (q *Queries) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (sql.Result, error) {
+	return q.db.ExecContext(ctx, adminInsertQueuedLinkFromQueue, id)
 }
 
 const adminRenameLinkerCategory = `-- name: AdminRenameLinkerCategory :exec

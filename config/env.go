@@ -121,6 +121,10 @@ const (
 
 	// EnvSendGridKey is the API key for the SendGrid email provider.
 	EnvSendGridKey = "SENDGRID_KEY"
+	// EnvDurableJobHistoryHours sets the age cutoff for terminal durable jobs.
+	EnvDurableJobHistoryHours = "DURABLE_JOB_HISTORY_HOURS"
+	// EnvDurableJobHistoryLimit caps terminal history per durable job kind.
+	EnvDurableJobHistoryLimit = "DURABLE_JOB_HISTORY_LIMIT"
 	// EnvEmailWorkerInterval controls how often the email worker processes
 	// pending messages in seconds.
 	EnvEmailWorkerInterval = "EMAIL_WORKER_INTERVAL"

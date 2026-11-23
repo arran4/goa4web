@@ -118,13 +118,17 @@ func listImageCacheEntries(dir string) ([]ImageCacheEntry, int64, error) {
 		wg.Wait()
 	}()
 
-	var entries []ImageCacheEntry
+	sizes := make(map[string]int64)
 	var total int64
 	for entry := range entriesChan {
-		entries = append(entries, entry)
+		sizes[entry.ID] += entry.Size
 		total += entry.Size
 	}
 
+	entries := make([]ImageCacheEntry, 0, len(sizes))
+	for id, size := range sizes {
+		entries = append(entries, ImageCacheEntry{ID: id, Size: size})
+	}
 	if err := <-errChan; err != nil {
 		return nil, total, err
 	}

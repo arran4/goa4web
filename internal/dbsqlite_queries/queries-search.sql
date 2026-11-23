@@ -68,14 +68,33 @@ DELETE FROM writing_search;
 -- This query deletes all data from the "linker_search" table.
 DELETE FROM linker_search;
 
+-- name: SystemDeleteCommentSearchByCommentID :exec
+DELETE FROM comments_search
+WHERE comment_id = ?;
+
+-- name: SystemDeleteLinkerSearchByLinkerID :exec
+DELETE FROM linker_search
+WHERE linker_id = ?;
+
+-- name: SystemDeleteImagePostSearchByImagePostID :exec
+DELETE FROM imagepost_search
+WHERE image_post_id = ?;
+
 -- name: SystemGetSearchWordByWordLowercased :one
 SELECT *
 FROM searchwordlist
 WHERE word = lower(?);
 
--- name: SystemCreateSearchWord :execlastid
-INSERT INTO searchwordlist (word)
-VALUES (lower(sqlc.arg(word)));
+-- name: SystemCreateSearchWord :one
+-- Older migration-built databases do not have a unique index on word.
+INSERT INTO searchwordlist (idsearchwordlist, word)
+VALUES (
+  (SELECT idsearchwordlist FROM searchwordlist
+   WHERE word = lower(sqlc.arg(word)) ORDER BY idsearchwordlist LIMIT 1),
+  lower(sqlc.arg(word))
+)
+ON CONFLICT(idsearchwordlist) DO UPDATE SET word = excluded.word
+RETURNING idsearchwordlist;
 
 -- name: SystemAddToForumCommentSearch :exec
 INSERT INTO comments_search

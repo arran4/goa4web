@@ -342,6 +342,18 @@ func (r *rootCmd) Run() error {
 			return fmt.Errorf("rootCmd.Run: dlq: %w", err)
 		}
 		return c.Run()
+	case "jobs":
+		c, err := parseJobsCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: jobs: %w", err)
+		}
+		return c.Run()
+	case "worker":
+		c, err := parseWorkerCmd(r, args[1:])
+		if err != nil {
+			return fmt.Errorf("rootCmd.Run: worker: %w", err)
+		}
+		return c.Run()
 	case "requests":
 		c, err := parseRequestsCmd(r, args[1:])
 		if err != nil {

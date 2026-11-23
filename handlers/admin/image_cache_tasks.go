@@ -79,12 +79,8 @@ func (ImageCacheDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("parse form fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	for _, id := range r.Form["id"] {
-		full, err := cachePath(cd.Config.ImageCacheDir, id)
-		if err != nil {
-			return fmt.Errorf("invalid cache id: %w", handlers.ErrRedirectOnSamePageHandler(err))
-		}
-		if err := os.Remove(full); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("delete cache file: %w", handlers.ErrRedirectOnSamePageHandler(err))
+		if err := removeImageCacheFiles(cd.Config.ImageCacheDir, id); err != nil {
+			return fmt.Errorf("delete cache entry: %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -99,9 +95,9 @@ func (ImageCacheDeleteTask) Action(w http.ResponseWriter, r *http.Request) any {
 // AuditRecord summarises deleted cache entries.
 func (ImageCacheDeleteTask) AuditRecord(data map[string]any) string {
 	if ids, ok := data["ImageCacheDeletedIDs"].([]string); ok && len(ids) > 0 {
-		return fmt.Sprintf("deleted %d image cache files (%s)", len(ids), strings.Join(ids, ","))
+		return fmt.Sprintf("deleted %d image cache entries (%s)", len(ids), strings.Join(ids, ","))
 	}
-	return "deleted image cache files"
+	return "deleted image cache entries"
 }
 
 // ImageCacheRefreshTask refreshes a specific cache entry.
@@ -135,12 +131,8 @@ func (ImageCacheRefreshTask) Action(w http.ResponseWriter, r *http.Request) any 
 		}
 	}
 
-	full, err := cachePath(cd.Config.ImageCacheDir, id)
-	if err != nil {
-		return fmt.Errorf("invalid cache id: %w", handlers.ErrRedirectOnSamePageHandler(err))
-	}
-	if err := os.Remove(full); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("delete cache file: %w", handlers.ErrRedirectOnSamePageHandler(err))
+	if err := removeImageCacheFiles(cd.Config.ImageCacheDir, id); err != nil {
+		return fmt.Errorf("delete cache entry: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	if evt := cd.Event(); evt != nil {
@@ -163,12 +155,30 @@ func (ImageCacheRefreshTask) AuditRecord(data map[string]any) string {
 	return fmt.Sprintf("refreshed image cache %s (link %d)", id, linkID)
 }
 
-func cachePath(dir, id string) (string, error) {
-	if !intimages.ValidID(id) {
-		return "", fmt.Errorf("invalid cache id")
+func removeImageCacheFiles(dir, id string) error {
+	key, err := common.ImageCacheObjectKey(id, nil)
+	if err != nil {
+		return err
 	}
-	sub1, sub2 := id[:2], id[2:4]
-	return filepath.Join(dir, sub1, sub2, id), nil
+	shard := filepath.Join(dir, filepath.Dir(filepath.FromSlash(key)))
+	entries, err := os.ReadDir(shard)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(filepath.Join(shard, id)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() && intimages.ValidCacheDigest(entry.Name()) {
+			if err := os.Remove(filepath.Join(shard, entry.Name(), id)); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func appendString(existing any, id string) []string {

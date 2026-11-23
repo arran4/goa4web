@@ -500,3 +500,21 @@ func TestParse(t *testing.T) {
 		})
 	}
 }
+
+func TestFetchRejectsErrorPageMetadata(t *testing.T) {
+	for _, status := range []int{http.StatusTooManyRequests, http.StatusServiceUnavailable, http.StatusNotFound} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Retry-After", "60")
+				w.WriteHeader(status)
+				_, _ = io.WriteString(w, "<html><head><title>Origin error</title></head></html>")
+			}))
+			defer srv.Close()
+
+			info, err := Fetch(t.Context(), srv.URL, srv.Client())
+			if err == nil || info != nil {
+				t.Fatalf("status %d: metadata = %+v, error = %v, want failure without metadata", status, info, err)
+			}
+		})
+	}
+}

@@ -1,0 +1,114 @@
+{{ template "head" $ }}
+<div>[<a href="/admin">Admin:</a> <a href="/admin/jobs">(This page/Refresh)</a>]</div>
+<h2>Durable Background Jobs</h2>
+
+{{- if .FlashError }}
+<p style="color: #b00020;"><strong>Error:</strong> {{ .FlashError }}</p>
+{{- end }}
+
+<form method="get" action="/admin/jobs" style="margin-bottom: 16px;">
+    <label>Status:
+        <select name="status">
+            <option value=""{{ if eq .StatusFilter "" }} selected{{ end }}>All</option>
+            <option value="pending"{{ if eq .StatusFilter "pending" }} selected{{ end }}>Pending</option>
+            <option value="running"{{ if eq .StatusFilter "running" }} selected{{ end }}>Running</option>
+            <option value="failed"{{ if eq .StatusFilter "failed" }} selected{{ end }}>Failed</option>
+            <option value="completed"{{ if eq .StatusFilter "completed" }} selected{{ end }}>Completed</option>
+            <option value="cancelled"{{ if eq .StatusFilter "cancelled" }} selected{{ end }}>Cancelled</option>
+        </select>
+    </label>
+    <label>Type:
+        <input type="text" name="type" value="{{ .TypeFilter }}" placeholder="external_link / image_cache / search_index" />
+    </label>
+    <button type="submit">Filter</button>
+</form>
+
+<h3>Enqueue External URL Metadata Fetch</h3>
+<form method="post" action="/admin/jobs" style="margin-bottom: 16px;">
+    {{ csrfField }}
+    <input type="hidden" name="action" value="enqueue_url" />
+    <input type="url" name="url" placeholder="https://example.com/article" required style="width: 360px;" />
+    <label><input type="checkbox" name="force" value="1" /> Force (ignore cooldown)</label>
+    <button type="submit">Enqueue URL</button>
+</form>
+
+<form method="post" action="/admin/jobs" style="margin-bottom: 16px;">
+    {{ csrfField }}
+    <input type="hidden" name="action" value="purge" />
+    <input type="hidden" name="status" value="{{ .StatusFilter }}" />
+    <button type="submit">Purge Terminal Jobs (Preserves Cooldowns)</button>
+</form>
+
+{{- if .SelectedJob }}
+{{- with .SelectedJob }}
+<div style="border: 1px solid #ccc; padding: 12px; margin-bottom: 16px;">
+    <h3>Job #{{ .Job.ID }} Details (<a href="/admin/jobs">Close</a>)</h3>
+    <dl>
+        <dt>Type</dt><dd>{{ .Job.JobType }}</dd>
+        <dt>Status</dt><dd>{{ .Job.Status }}</dd>
+        <dt>Target</dt><dd>{{ .Job.TargetType }} / ID {{ .Job.TargetID }} / {{ .Job.TargetKey }}</dd>
+        <dt>Revision / Needs Rerun</dt><dd>{{ .Job.TargetRevision }} / {{ .Job.NeedsRerun }}</dd>
+        <dt>Attempts</dt><dd>{{ .Job.Attempts }} / {{ .Job.MaxAttempts }}</dd>
+        <dt>Next Run</dt><dd>{{ .Job.RunAfter.UTC.Format "2006-01-02 15:04:05 UTC" }}</dd>
+        <dt>Lease</dt><dd>{{ if .Job.LeaseOwner.Valid }}{{ .Job.LeaseOwner.String }}{{ else }}-{{ end }}{{ if .Job.LeaseExpiresAt.Valid }} (expires {{ .Job.LeaseExpiresAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}){{ end }}</dd>
+        <dt>Last Error</dt><dd>{{ if .Job.LastError.Valid }}{{ .Job.LastError.String }}{{ else }}-{{ end }}</dd>
+        <dt>Created / Updated / Completed</dt>
+        <dd>{{ .Job.CreatedAt.UTC.Format "2006-01-02 15:04:05 UTC" }} / {{ .Job.UpdatedAt.UTC.Format "2006-01-02 15:04:05 UTC" }} / {{ if .Job.CompletedAt.Valid }}{{ .Job.CompletedAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}{{ else }}-{{ end }}</dd>
+        {{- if .Cooldown }}
+        <dt>Cooldown Until</dt><dd>{{ .Cooldown.CooldownUntil.UTC.Format "2006-01-02 15:04:05 UTC" }}{{ if .Cooldown.LastNotifiedAt.Valid }} (last notified {{ .Cooldown.LastNotifiedAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}){{ end }}</dd>
+        {{- end }}
+    </dl>
+</div>
+{{- end }}
+{{- end }}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Target</th>
+            <th>Attempts</th>
+            <th>Next Run</th>
+            <th>Lease</th>
+            <th>Error</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {{- range .Jobs }}
+        <tr>
+            <td><a href="/admin/jobs?id={{ .ID }}">{{ .ID }}</a></td>
+            <td>{{ .JobType }}</td>
+            <td>{{ .Status }}</td>
+            <td>{{ .TargetKey }}</td>
+            <td>{{ .Attempts }} / {{ .MaxAttempts }}</td>
+            <td>{{ .RunAfter.UTC.Format "2006-01-02 15:04:05 UTC" }}{{ if .CompletedAt.Valid }}<br /><small>Done: {{ .CompletedAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}</small>{{ end }}</td>
+            <td>{{ if .LeaseOwner.Valid }}{{ .LeaseOwner.String }}{{ end }}{{ if .LeaseExpiresAt.Valid }}<br /><small>Exp: {{ .LeaseExpiresAt.Time.UTC.Format "2006-01-02 15:04:05 UTC" }}</small>{{ end }}</td>
+            <td>{{ if .LastError.Valid }}{{ .LastError.String }}{{ end }}</td>
+            <td>
+                {{- if or (eq .Status "failed") (eq .Status "cancelled") (eq .Status "completed") }}
+                <form method="post" action="/admin/jobs" style="display:inline;">
+                    {{ csrfField }}
+                    <input type="hidden" name="action" value="retry" />
+                    <input type="hidden" name="id" value="{{ .ID }}" />
+                    <button type="submit">Retry</button>
+                </form>
+                {{- end }}
+                {{- if or (eq .Status "pending") (eq .Status "running") }}
+                <form method="post" action="/admin/jobs" style="display:inline;">
+                    {{ csrfField }}
+                    <input type="hidden" name="action" value="cancel" />
+                    <input type="hidden" name="id" value="{{ .ID }}" />
+                    <button type="submit">Cancel</button>
+                </form>
+                {{- end }}
+            </td>
+        </tr>
+    {{- else }}
+        <tr><td colspan="9">No durable jobs found.</td></tr>
+    {{- end }}
+    </tbody>
+</table>
+{{ template "tail" $ }}

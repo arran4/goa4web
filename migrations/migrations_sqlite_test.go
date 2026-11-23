@@ -149,6 +149,97 @@ func TestSQLiteMigration0099UpAndDown(t *testing.T) {
 	}
 }
 
+func TestSQLiteMigration0104UpgradePathsAndDown(t *testing.T) {
+	ctx := context.Background()
+	for _, startVersion := range []int{101, 102, 103} {
+		t.Run(fmt.Sprintf("from_%d", startVersion), func(t *testing.T) {
+			dsn := fmt.Sprintf("file:migration_0104_%d_%p?mode=memory&cache=shared", startVersion, t)
+			dbConn, err := sql.Open("sqlite", dsn)
+			if err != nil {
+				t.Fatalf("open SQLite database: %v", err)
+			}
+			t.Cleanup(func() { _ = dbConn.Close() })
+
+			for version := 1; version <= startVersion; version++ {
+				if _, err := dbConn.ExecContext(ctx, sqliteMigrationUpSQL(t, version)); err != nil {
+					t.Fatalf("apply historical SQLite migration %04d: %v", version, err)
+				}
+			}
+			if _, err := dbConn.ExecContext(ctx, `INSERT INTO users (idusers, username) VALUES (104, 'migration-user')`); err != nil {
+				t.Fatalf("seed version %d user: %v", startVersion, err)
+			}
+			for version := startVersion + 1; version <= 103; version++ {
+				if _, err := dbConn.ExecContext(ctx, sqliteMigrationUpSQL(t, version)); err != nil {
+					t.Fatalf("upgrade SQLite migration %04d: %v", version, err)
+				}
+			}
+
+			if _, err := dbConn.ExecContext(ctx, `
+				INSERT INTO notifications
+					(users_idusers, link, message, activity_key, priority, resource_type, resource_id, activity_position)
+				VALUES (104, '/forum/thread/7', 'preserve notification', 'forum.reply:7:11', 2, 'forum_thread', 7, 11);
+				INSERT INTO comment_appends (comment_id, users_idusers) VALUES (7, 104);
+			`); err != nil {
+				t.Fatalf("seed version 103 notification state: %v", err)
+			}
+
+			if _, err := dbConn.ExecContext(ctx, sqliteMigrationUpSQL(t, 104)); err != nil {
+				t.Fatalf("apply SQLite migration 0104: %v", err)
+			}
+			assertSQLiteSchemaVersion(t, ctx, dbConn, 104)
+			if _, err := dbConn.ExecContext(ctx, `
+				INSERT INTO durable_jobs (job_type, dedupe_key, active_dedupe_key, target_type, target_id)
+				VALUES ('search.index', 'forum_thread:7', 'forum_thread:7', 'forum_thread', 7);
+				INSERT INTO durable_job_cooldowns (dedupe_key, cooldown_until) VALUES ('forum_thread:7', CURRENT_TIMESTAMP);
+				INSERT INTO search_dirty_targets (target_type, target_id) VALUES ('forum_thread', 7);
+			`); err != nil {
+				t.Fatalf("use migration 0104 tables: %v", err)
+			}
+
+			if _, err := dbConn.ExecContext(ctx, sqliteMigrationDownSQL(t, 104)); err != nil {
+				t.Fatalf("roll back SQLite migration 0104: %v", err)
+			}
+			assertSQLiteSchemaVersion(t, ctx, dbConn, 103)
+
+			var username, message, activityKey, resourceType string
+			var priority, resourceID, activityPosition int
+			if err := dbConn.QueryRowContext(ctx, `
+				SELECT u.username, n.message, n.activity_key, n.priority,
+				       n.resource_type, n.resource_id, n.activity_position
+				FROM users u
+				JOIN notifications n ON n.users_idusers = u.idusers
+				WHERE u.idusers = 104
+			`).Scan(&username, &message, &activityKey, &priority, &resourceType, &resourceID, &activityPosition); err != nil {
+				t.Fatalf("load state retained after 0104 Down: %v", err)
+			}
+			if username != "migration-user" || message != "preserve notification" || activityKey != "forum.reply:7:11" || priority != 2 || resourceType != "forum_thread" || resourceID != 7 || activityPosition != 11 {
+				t.Fatalf("state changed after 0104 Down: user=%q message=%q activity=%q priority=%d resource=%q/%d position=%d", username, message, activityKey, priority, resourceType, resourceID, activityPosition)
+			}
+			var appendCount int
+			if err := dbConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM comment_appends WHERE comment_id = 7 AND users_idusers = 104`).Scan(&appendCount); err != nil || appendCount != 1 {
+				t.Fatalf("comment append state after 0104 Down: count=%d, err=%v", appendCount, err)
+			}
+			for _, table := range []string{"durable_jobs", "durable_job_cooldowns", "search_dirty_targets"} {
+				var tableCount int
+				if err := dbConn.QueryRowContext(ctx, `SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, table).Scan(&tableCount); err != nil {
+					t.Fatalf("inspect %s after 0104 Down: %v", table, err)
+				}
+				if tableCount != 0 {
+					t.Errorf("%s remains after 0104 Down", table)
+				}
+			}
+		})
+	}
+}
+
+func assertSQLiteSchemaVersion(t *testing.T, ctx context.Context, dbConn *sql.DB, want int) {
+	t.Helper()
+	var got int
+	if err := dbConn.QueryRowContext(ctx, `SELECT version FROM schema_version`).Scan(&got); err != nil || got != want {
+		t.Fatalf("schema version = %d, err %v; want %d", got, err, want)
+	}
+}
+
 func TestSQLiteMigration0098RepairsNullableColumnsAndParticipantQuery(t *testing.T) {
 	ctx := context.Background()
 	dsn := fmt.Sprintf("file:migration_0098_%p?mode=memory&cache=shared", t)

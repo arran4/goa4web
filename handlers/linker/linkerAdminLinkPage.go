@@ -64,9 +64,8 @@ func (editLinkTask) Action(w http.ResponseWriter, r *http.Request) any {
 	desc := r.PostFormValue("desc")
 	cat, _ := strconv.Atoi(r.PostFormValue("category"))
 	lang, _ := strconv.Atoi(r.PostFormValue("language"))
-	queries := cd.Queries()
 
-	if err := queries.AdminUpdateLinkerItem(r.Context(), db.AdminUpdateLinkerItemParams{
+	if err := cd.AdminUpdateLinkerItem(r.Context(), db.AdminUpdateLinkerItemParams{
 		Title:       sql.NullString{Valid: true, String: title},
 		Url:         sql.NullString{Valid: true, String: URL},
 		Description: sql.NullString{Valid: true, String: desc},

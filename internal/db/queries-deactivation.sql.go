@@ -1059,3 +1059,17 @@ func (q *Queries) AdminScrubWriting(ctx context.Context, arg AdminScrubWritingPa
 	)
 	return err
 }
+
+const adminUpdateCommentText = `-- name: AdminUpdateCommentText :exec
+UPDATE comments SET text = ? WHERE idcomments = ?
+`
+
+type AdminUpdateCommentTextParams struct {
+	Text       sql.NullString
+	Idcomments int32
+}
+
+func (q *Queries) AdminUpdateCommentText(ctx context.Context, arg AdminUpdateCommentTextParams) error {
+	_, err := q.db.ExecContext(ctx, adminUpdateCommentText, arg.Text, arg.Idcomments)
+	return err
+}

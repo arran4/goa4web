@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // linksDeactivateCmd implements "links deactivate".
@@ -35,7 +37,7 @@ func (c *linksDeactivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	l, err := queries.GetLinkerItemByIdWithPosterUsernameAndCategoryTitleDescending(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("fetch link: %w", err)
@@ -47,22 +49,27 @@ func (c *linksDeactivateCmd) Run() error {
 	if deactivated {
 		return fmt.Errorf("link already deactivated")
 	}
-	if err := queries.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
-		ID:          l.ID,
-		LanguageID:  l.LanguageID,
-		AuthorID:    l.AuthorID,
-		CategoryID:  l.CategoryID,
-		ThreadID:    l.ThreadID,
-		Title:       l.Title,
-		Url:         l.Url,
-		Description: l.Description,
-		Listed:      l.Listed,
-		Timezone:    l.Timezone,
-	}); err != nil {
-		return fmt.Errorf("archive link: %w", err)
-	}
-	if err := queries.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: "", Valid: true}, ID: l.ID}); err != nil {
-		return fmt.Errorf("scrub link: %w", err)
-	}
-	return nil
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		if err := qtx.AdminArchiveLink(ctx, db.AdminArchiveLinkParams{
+			ID:          l.ID,
+			LanguageID:  l.LanguageID,
+			AuthorID:    l.AuthorID,
+			CategoryID:  l.CategoryID,
+			ThreadID:    l.ThreadID,
+			Title:       l.Title,
+			Url:         l.Url,
+			Description: l.Description,
+			Listed:      l.Listed,
+			Timezone:    l.Timezone,
+		}); err != nil {
+			return fmt.Errorf("archive link: %w", err)
+		}
+		if err := qtx.AdminScrubLink(ctx, db.AdminScrubLinkParams{Title: sql.NullString{String: "", Valid: true}, ID: l.ID}); err != nil {
+			return fmt.Errorf("scrub link: %w", err)
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeLinker, l.ID); err != nil {
+			return fmt.Errorf("record linker search dirty: %w", err)
+		}
+		return nil
+	})
 }

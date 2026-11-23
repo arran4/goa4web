@@ -3,6 +3,7 @@ package linker
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,7 +46,7 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 	queries := r.Context().Value(consts.KeyCoreData).(*common.CoreData).Queries()
 	qid, _ := strconv.Atoi(r.URL.Query().Get("qid"))
 	cd := r.Context().Value(consts.KeyCoreData).(*common.CoreData)
-	lid, err := queries.AdminInsertQueuedLinkFromQueue(r.Context(), int32(qid))
+	lid, err := cd.AdminApproveQueuedLink(int32(qid))
 	if err != nil {
 		return fmt.Errorf("approve linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
@@ -56,10 +57,10 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 		ViewerUserID: sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
 	})
 	if err != nil {
-		return fmt.Errorf("get linker item fail %w", handlers.ErrRedirectOnSamePageHandler(err))
+		log.Printf("load approved link %d for notification: %v", lid, err)
+		return nil
 	}
 
-	text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
 	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
 		if evt := cd.Event(); evt != nil {
 			if evt.Data == nil {
@@ -75,7 +76,10 @@ func (approveTask) Action(w http.ResponseWriter, r *http.Request) any {
 			evt.Data["Moderator"] = mod
 			evt.Data["LinkURL"] = cd.AbsoluteURL(fmt.Sprintf("/linker/show/%d", lid))
 			evt.Data["UnsubURL"] = cd.AbsoluteURL("/usr/subscriptions")
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
+			if cd.JobService() == nil {
+				text := strings.Join([]string{link.Title.String, link.Description.String}, " ")
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeLinker, ID: int32(lid), Text: text}
+			}
 		}
 	}
 	return nil

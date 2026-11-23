@@ -1034,17 +1034,23 @@ func (q *Queries) SystemAddToSiteNewsSearch(ctx context.Context, arg SystemAddTo
 	return err
 }
 
-const systemCreateSearchWord = `-- name: SystemCreateSearchWord :execlastid
-INSERT INTO searchwordlist (word)
-VALUES (lower(?1))
+const systemCreateSearchWord = `-- name: SystemCreateSearchWord :one
+INSERT INTO searchwordlist (idsearchwordlist, word)
+VALUES (
+  (SELECT idsearchwordlist FROM searchwordlist
+   WHERE word = lower(?1) ORDER BY idsearchwordlist LIMIT 1),
+  lower(?1)
+)
+ON CONFLICT(idsearchwordlist) DO UPDATE SET word = excluded.word
+RETURNING idsearchwordlist
 `
 
+// Older migration-built databases do not have a unique index on word.
 func (q *Queries) SystemCreateSearchWord(ctx context.Context, word string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemCreateSearchWord, word)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
+	row := q.db.QueryRowContext(ctx, systemCreateSearchWord, word)
+	var idsearchwordlist int64
+	err := row.Scan(&idsearchwordlist)
+	return idsearchwordlist, err
 }
 
 const systemDeleteBlogsSearch = `-- name: SystemDeleteBlogsSearch :exec
@@ -1054,6 +1060,16 @@ DELETE FROM blogs_search
 // This query deletes all data from the "blogs_search" table.
 func (q *Queries) SystemDeleteBlogsSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, systemDeleteBlogsSearch)
+	return err
+}
+
+const systemDeleteCommentSearchByCommentID = `-- name: SystemDeleteCommentSearchByCommentID :exec
+DELETE FROM comments_search
+WHERE comment_id = ?
+`
+
+func (q *Queries) SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int64) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteCommentSearchByCommentID, commentID)
 	return err
 }
 
@@ -1076,6 +1092,16 @@ func (q *Queries) SystemDeleteImagePostSearch(ctx context.Context) error {
 	return err
 }
 
+const systemDeleteImagePostSearchByImagePostID = `-- name: SystemDeleteImagePostSearchByImagePostID :exec
+DELETE FROM imagepost_search
+WHERE image_post_id = ?
+`
+
+func (q *Queries) SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int64) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteImagePostSearchByImagePostID, imagePostID)
+	return err
+}
+
 const systemDeleteLinkerSearch = `-- name: SystemDeleteLinkerSearch :exec
 DELETE FROM linker_search
 `
@@ -1083,6 +1109,16 @@ DELETE FROM linker_search
 // This query deletes all data from the "linker_search" table.
 func (q *Queries) SystemDeleteLinkerSearch(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, systemDeleteLinkerSearch)
+	return err
+}
+
+const systemDeleteLinkerSearchByLinkerID = `-- name: SystemDeleteLinkerSearchByLinkerID :exec
+DELETE FROM linker_search
+WHERE linker_id = ?
+`
+
+func (q *Queries) SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int64) error {
+	_, err := q.db.ExecContext(ctx, systemDeleteLinkerSearchByLinkerID, linkerID)
 	return err
 }
 

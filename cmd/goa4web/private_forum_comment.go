@@ -9,6 +9,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 type privateForumCommentCmd struct {
@@ -187,7 +189,7 @@ func (c *privateForumCommentCmd) runDeactivate(args []string) error {
 	if err != nil {
 		return err
 	}
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	ctx := context.Background()
 
 	// Check scope
@@ -203,23 +205,31 @@ func (c *privateForumCommentCmd) runDeactivate(args []string) error {
 		return fmt.Errorf("comment %d is not in a private forum thread", *id)
 	}
 
-	// Archive first
-	if err := queries.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
-		Idcomments:    comment.Idcomments,
-		ForumthreadID: comment.ForumthreadID,
-		UsersIdusers:  comment.UsersIdusers,
-		LanguageID:    comment.LanguageID,
-		Written:       comment.Written,
-		Text:          comment.Text,
-		Timezone:      comment.Timezone,
-	}); err != nil {
-		return fmt.Errorf("failed to archive comment: %w", err)
-	}
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		// Archive first
+		if err := qtx.AdminArchiveComment(ctx, db.AdminArchiveCommentParams{
+			Idcomments:    comment.Idcomments,
+			ForumthreadID: comment.ForumthreadID,
+			UsersIdusers:  comment.UsersIdusers,
+			LanguageID:    comment.LanguageID,
+			Written:       comment.Written,
+			Text:          comment.Text,
+			Timezone:      comment.Timezone,
+		}); err != nil {
+			return fmt.Errorf("failed to archive comment: %w", err)
+		}
 
-	// Scrub (soft delete)
-	return queries.AdminScrubComment(ctx, db.AdminScrubCommentParams{
-		Text:       sql.NullString{String: "[Deleted]", Valid: true},
-		Idcomments: int32(*id),
+		// Scrub (soft delete)
+		if err := qtx.AdminScrubComment(ctx, db.AdminScrubCommentParams{
+			Text:       sql.NullString{String: "[Deleted]", Valid: true},
+			Idcomments: int32(*id),
+		}); err != nil {
+			return err
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeComment, int32(*id)); err != nil {
+			return fmt.Errorf("record comment search dirty: %w", err)
+		}
+		return nil
 	})
 }
 
@@ -237,7 +247,7 @@ func (c *privateForumCommentCmd) runActivate(args []string) error {
 	if err != nil {
 		return err
 	}
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	ctx := context.Background()
 
 	// Get archived content
@@ -255,14 +265,22 @@ func (c *privateForumCommentCmd) runActivate(args []string) error {
 		return fmt.Errorf("comment %d is not in a private forum thread", *id)
 	}
 
-	// Restore
-	if err := queries.AdminRestoreComment(ctx, db.AdminRestoreCommentParams{
-		Text:       archived.Text,
-		Idcomments: archived.Idcomments,
-	}); err != nil {
-		return fmt.Errorf("failed to restore comment: %w", err)
-	}
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		// Restore
+		if err := qtx.AdminRestoreComment(ctx, db.AdminRestoreCommentParams{
+			Text:       archived.Text,
+			Idcomments: archived.Idcomments,
+		}); err != nil {
+			return fmt.Errorf("failed to restore comment: %w", err)
+		}
 
-	// Mark restored in deactivated table
-	return queries.AdminMarkCommentRestored(ctx, int32(*id))
+		// Mark restored in deactivated table
+		if err := qtx.AdminMarkCommentRestored(ctx, int32(*id)); err != nil {
+			return err
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeComment, int32(*id)); err != nil {
+			return fmt.Errorf("record comment search dirty: %w", err)
+		}
+		return nil
+	})
 }

@@ -10,7 +10,7 @@ WHERE EXISTS (
       AND (g.item_id = 0 OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.site_news.users_idusers = sqlc.arg(writer_id)
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(writer_id)
       ))
 );
 
@@ -27,7 +27,7 @@ WHERE idsitenews = sqlc.arg(post_id)
       AND (g.item_id = sqlc.arg(grant_post_id) OR g.item_id IS NULL)
       AND (g.user_id = sqlc.arg(grantee_id) OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.site_news.users_idusers = sqlc.arg(writer_id)
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = sqlc.arg(writer_id)
       ))
   );
 

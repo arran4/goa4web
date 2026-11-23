@@ -13,6 +13,7 @@ import (
 	"github.com/arran4/go-be-lazy"
 	"github.com/arran4/goa4web/internal/algorithms"
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 const (
@@ -64,7 +65,7 @@ func (cd *CoreData) ArticleComment(r *http.Request, ops ...lazy.Option[int32, *d
 // UpdateArticleComment updates a comment on a writing.
 func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text string) error {
 	uid := cd.UserID
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -76,7 +77,7 @@ func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text strin
 	if err := cd.validateImagePathsForThread(uid, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.UpdateCommentForEditorWithWork(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
@@ -91,6 +92,9 @@ func (cd *CoreData) UpdateArticleComment(commentID, languageID int32, text strin
 	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return nil
 }
@@ -146,7 +150,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 		return nil, err
 	}
 	uid := cd.UserID
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return nil, fmt.Errorf("parse images: %w", err)
@@ -162,7 +166,7 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.UpdateCommentForEditorWithWork(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   cmt.Idcomments,
@@ -177,6 +181,9 @@ func (cd *CoreData) UpdateWritingReply(commentID, languageID int32, text string)
 	}
 	if err := cd.recordThreadImages(cmt.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return thread, nil
 }
@@ -241,7 +248,7 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
 		return fmt.Errorf("validate body images: %w", err)
 	}
-	return cd.queries.UpdateWritingForWriter(cd.ctx, db.UpdateWritingForWriterParams{
+	arg := db.UpdateWritingForWriterParams{
 		Title:      sql.NullString{Valid: true, String: title},
 		Abstract:   sql.NullString{Valid: true, String: abstract},
 		Content:    sql.NullString{Valid: true, String: body},
@@ -250,7 +257,15 @@ func (cd *CoreData) UpdateWriting(w *db.GetWritingForListerByIDRow, title, abstr
 		WritingID:  w.Idwriting,
 		WriterID:   cd.UserID,
 		GranteeID:  sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	}
+	_, err := cd.withSearchWork(searchindex.TypeWriting, func(q db.Querier) (int64, error) {
+		rows, err := q.UpdateWritingForWriter(cd.ctx, arg)
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return int64(arg.WritingID), nil
 	})
+	return err
 }
 
 // CreateWriting creates a new article in the given category.
@@ -270,7 +285,7 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 	if err := cd.validateCodeImagesForUser(cd.UserID, body); err != nil {
 		return 0, fmt.Errorf("validate body images: %w", err)
 	}
-	return cd.queries.CreateWritingForWriter(cd.ctx, db.CreateWritingForWriterParams{
+	arg := db.CreateWritingForWriterParams{
 		WriterID:          cd.UserID,
 		WritingCategoryID: categoryID,
 		Title:             sql.NullString{Valid: true, String: title},
@@ -282,6 +297,17 @@ func (cd *CoreData) CreateWriting(categoryID, languageID int32, title, abstract,
 		Timezone:          sql.NullString{String: cd.Location().String(), Valid: true},
 		GrantCategoryID:   sql.NullInt32{Int32: categoryID, Valid: true},
 		GranteeID:         sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0},
+	}
+	return cd.withSearchWork(searchindex.TypeWriting, func(q db.Querier) (int64, error) {
+		result, err := q.CreateWritingForWriter(cd.ctx, arg)
+		if err != nil {
+			return 0, err
+		}
+		rows, err := result.RowsAffected()
+		if err != nil || rows == 0 {
+			return 0, err
+		}
+		return result.LastInsertId()
 	})
 }
 

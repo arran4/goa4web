@@ -84,15 +84,17 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             thread.Idforumthread,
-		TopicID:              thread.ForumtopicIdforumtopic,
-		CommentID:            int32(commentId),
-		LabelItem:            "blog",
-		LabelItemID:          int32(blogId),
-		CommentURL:           cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d/comments", blogId)),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
+		ThreadID:              thread.Idforumthread,
+		TopicID:               thread.ForumtopicIdforumtopic,
+		CommentID:             int32(commentId),
+		LabelItem:             "blog",
+		LabelItemID:           int32(blogId),
+		CommentURL:            cd.AbsoluteURL(fmt.Sprintf("/blogs/blog/%d/comments", blogId)),
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        true,
+		IncludePostCount:      true,
+		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 	}); err != nil {
 		log.Printf("blog comment edit side effects: %v", err)
 	}

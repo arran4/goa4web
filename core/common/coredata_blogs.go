@@ -66,7 +66,7 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	if cd.queries == nil {
 		return nil
 	}
-	text = cd.sanitizeCodeImages(text)
+	text, queuedFetches := cd.sanitizeCodeImagesAndQueue(text)
 	paths, err := cd.imagePathsFromText(text)
 	if err != nil {
 		return fmt.Errorf("parse images: %w", err)
@@ -78,7 +78,7 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	if err := cd.validateImagePathsForThread(commenterID, comment.ForumthreadID, paths); err != nil {
 		return fmt.Errorf("validate images: %w", err)
 	}
-	rows, err := cd.queries.UpdateCommentForEditor(cd.ctx, db.UpdateCommentForEditorParams{
+	rows, err := cd.UpdateCommentForEditorWithWork(cd.ctx, db.UpdateCommentForEditorParams{
 		LanguageID:  sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		Text:        sql.NullString{String: text, Valid: true},
 		CommentID:   commentID,
@@ -93,6 +93,9 @@ func (cd *CoreData) UpdateBlogReply(commentID, commenterID, languageID int32, te
 	}
 	if err := cd.recordThreadImages(comment.ForumthreadID, paths); err != nil {
 		log.Printf("record thread images: %v", err)
+	}
+	for _, fetch := range queuedFetches {
+		cd.StartRemoteImageCacheFetch(fetch.id, fetch.sourceURL)
 	}
 	return nil
 }

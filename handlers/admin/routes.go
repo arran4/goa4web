@@ -50,6 +50,7 @@ func getAdminNavLinks() []navpkg.RouterOptions {
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Email Template", "/admin/email/template", 120),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Template Export", "/admin/templates/export", 121),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Email"), "Dead Letter Queue", "/admin/dlq", 130),
+		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Maintenance"), "Background Jobs", "/admin/jobs", 131),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Stats"), "Server Stats", "/admin/stats", 140),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Users"), "Requests", "/admin/requests", 145),
 		navpkg.NewAdminControlCenterLink(navpkg.AdminCCCategory("Core", "Users"), "Password Resets", "/admin/password_resets", 146),
@@ -161,6 +162,8 @@ func (h *Handlers) registerCommunicationRoutes(ar *mux.Router) {
 	ar.HandleFunc("/templates/export", handlers.TaskHandler(exportTemplatesTask)).Methods("POST").MatcherFunc(exportTemplatesTask.Matcher())
 
 	ar.HandleFunc("/dlq", AdminDLQPage).Methods("GET")
+	ar.HandleFunc("/jobs", AdminJobsPage).Methods("GET")
+	ar.HandleFunc("/jobs", AdminJobsAction).Methods("POST")
 	ar.HandleFunc("/dlq/{provider}/{id}", AdminDLQDetailsPage).Methods("GET")
 	ar.HandleFunc("/dlq", handlers.TaskHandler(deleteDLQTask)).Methods("POST").MatcherFunc(deleteDLQTask.Matcher())
 	ar.HandleFunc("/dlq", handlers.TaskHandler(reEnlistDLQTask)).Methods("POST").MatcherFunc(reEnlistDLQTask.Matcher())

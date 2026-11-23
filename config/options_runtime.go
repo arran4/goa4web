@@ -118,6 +118,8 @@ var IntOptions = []IntOption{
 	{"image-cache-placeholder-min-height", EnvImageCachePlaceholderMinHeight, "The minimum SVG height for image cache diagnostic placeholders.", DefaultImageCachePlaceholderMinHeight, "", func(c *RuntimeConfig) *int { return &c.ImageCachePlaceholderMinHeight }},
 	{"image-thumbnail-size", EnvImageThumbnailSize, "The legacy square fallback size of generated thumbnails.", 0, "", func(c *RuntimeConfig) *int { return &c.ImageThumbnailSize }},
 	{"image-max-resize-bytes", EnvImageMaxResizeBytes, "The maximum byte size of an image that triggers resizing in the cache server.", 20971520, "", func(c *RuntimeConfig) *int { return &c.ImageMaxResizeBytes }},
+	{"durable-job-history-hours", EnvDurableJobHistoryHours, "Maximum age in hours for terminal durable jobs.", DefaultDurableJobHistoryHours, "", func(c *RuntimeConfig) *int { return &c.DurableJobHistoryHours }},
+	{"durable-job-history-limit", EnvDurableJobHistoryLimit, "Maximum terminal durable jobs retained per job kind.", DefaultDurableJobHistoryLimit, "", func(c *RuntimeConfig) *int { return &c.DurableJobHistoryLimit }},
 	{"email-worker-interval", EnvEmailWorkerInterval, "The interval in seconds between runs of the email worker.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailWorkerInterval }},
 	{"email-verification-expiry-hours", EnvEmailVerificationExpiryHours, "The number of hours an email verification request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.EmailVerificationExpiryHours }},
 	{"password-reset-expiry-hours", EnvPasswordResetExpiryHours, "The number of hours a password reset request is valid for.", 0, "", func(c *RuntimeConfig) *int { return &c.PasswordResetExpiryHours }},

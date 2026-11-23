@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 )
 
 const adminDeleteNotification = `-- name: AdminDeleteNotification :exec
@@ -473,4 +474,52 @@ func (q *Queries) SystemGetLastNotificationForRecipientByMessage(ctx context.Con
 		&i.ReadAt,
 	)
 	return &i, err
+}
+
+const systemRecordAdminJobFailureNotification = `-- name: SystemRecordAdminJobFailureNotification :exec
+INSERT INTO notifications (
+    users_idusers, link, activity_key, resource_type, activity_position, created_at
+) VALUES (
+    ?, '/admin/jobs?status=failed', ?,
+    'durable_job_failure', 1, ?
+)
+ON DUPLICATE KEY UPDATE
+    activity_position = activity_position + 1,
+    created_at = GREATEST(created_at, VALUES(created_at))
+`
+
+type SystemRecordAdminJobFailureNotificationParams struct {
+	RecipientID int32
+	ActivityKey sql.NullString
+	LatestAt    time.Time
+}
+
+func (q *Queries) SystemRecordAdminJobFailureNotification(ctx context.Context, arg SystemRecordAdminJobFailureNotificationParams) error {
+	_, err := q.db.ExecContext(ctx, systemRecordAdminJobFailureNotification, arg.RecipientID, arg.ActivityKey, arg.LatestAt)
+	return err
+}
+
+const systemSummarizeAdminJobFailureNotification = `-- name: SystemSummarizeAdminJobFailureNotification :exec
+UPDATE notifications
+SET message = CONCAT(?, ' (', activity_position, CASE WHEN activity_position = 1 THEN ' failure)' ELSE ' failures)' END),
+    read_at = CASE WHEN read_at <= ? THEN NULL ELSE read_at END
+WHERE users_idusers = ? AND activity_key = ?
+  AND resource_type = 'durable_job_failure'
+`
+
+type SystemSummarizeAdminJobFailureNotificationParams struct {
+	Summary      interface{}
+	ReopenBefore sql.NullTime
+	RecipientID  int32
+	ActivityKey  sql.NullString
+}
+
+func (q *Queries) SystemSummarizeAdminJobFailureNotification(ctx context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error {
+	_, err := q.db.ExecContext(ctx, systemSummarizeAdminJobFailureNotification,
+		arg.Summary,
+		arg.ReopenBefore,
+		arg.RecipientID,
+		arg.ActivityKey,
+	)
+	return err
 }

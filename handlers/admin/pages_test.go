@@ -57,6 +57,7 @@ func TestHappyPathAdminTemplatesExist(t *testing.T) {
 		AdminUserProfilePageTmpl,
 		AdminRoleEditPageTmpl,
 		AdminDLQPageTmpl,
+		AdminJobsPageTmpl,
 		AdminUserSubscriptionsPageTmpl,
 		AdminExternalLinksPageTmpl,
 		AdminLinksToolsPageTmpl,

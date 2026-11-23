@@ -41,6 +41,18 @@ func (s *QuerierStub) AdminScrubComment(ctx context.Context, arg AdminScrubComme
 	return err
 }
 
+func (s *QuerierStub) AdminUpdateCommentText(ctx context.Context, arg AdminUpdateCommentTextParams) error {
+	s.mu.Lock()
+	s.AdminUpdateCommentTextCalls = append(s.AdminUpdateCommentTextCalls, arg)
+	fn := s.AdminUpdateCommentTextFn
+	err := s.AdminUpdateCommentTextErr
+	s.mu.Unlock()
+	if fn != nil {
+		return fn(ctx, arg)
+	}
+	return err
+}
+
 func (s *QuerierStub) AdminArchiveComment(ctx context.Context, arg AdminArchiveCommentParams) error {
 	s.mu.Lock()
 	s.AdminArchiveCommentCalls = append(s.AdminArchiveCommentCalls, arg)

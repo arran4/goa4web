@@ -54,6 +54,97 @@ only releases in-memory shutdown accounting; it does not persist the message or
 prove that work can resume after a process exit. Reliable subscriptions apply
 backpressure while the process is running, but are not durable queues.
 
+## Remote image cache recovery
+
+Embedded and standalone workers reconcile due remote image cache entries into the
+durable job queue at startup and periodically. Both reconciliation and the
+immediate enqueue use the cache entry ID and leave existing job retry schedules
+intact. Workers also accept previously queued URL-keyed image jobs. Cancelling
+a queued image updates its cache entry in the same transaction, so recovery
+respects cancellation even after the job history is pruned. The worker writes
+the original and thumbnail to content-addressed keys outside the transaction.
+The active lease gates the transaction that selects which keys a signed cache
+URL serves. A late write by a replaced worker cannot select its bytes. Existing
+cache rows with unqualified checksums still resolve their original filenames.
+Fetch diagnostics identify the operation or upstream status without exposing
+the remote image URL.
+Remote responses have a 50 MiB read limit, including when the server omits
+the length. Raster decoding is limited to 40 million pixels and 16,384
+pixels per side.
+
+## Image board thumbnails
+
+Image board uploads record thumbnail work in the same transaction as the post
+and upload metadata. Embedded and standalone workers use the existing durable
+queue. They regenerate the 200-pixel square thumbnail from the original stored
+under its content hash, preserving existing thumbnail URLs. A replacement worker
+can reclaim the job after its lease expires. Repeated processing writes the
+same bytes to the same key.
+
+## Observed external links
+
+The embedded server treats successful task events from older producers as
+inputs to the durable external-link queue. Forum opening comments, replies,
+appends and edits record eligible link jobs in the same transaction as their
+content. Blog, image board, linker, news and writing replies and edits use the
+same transaction boundary. Signed `/goto` reload requests and authenticated
+`/goto/prefetch` requests enqueue durable external-link work after validating
+destinations against internal/private hosts instead of attaching volatile
+background tasks when durable jobs are enabled. Worker wake-ups follow the
+commit. Task events indicate when their link jobs have already been recorded, so
+the compatibility worker does not enqueue them again. Observing a link preserves
+the schedule of an active retry and respects its cooldown.
+
+The worker fetches outside the job transaction and checks the current lease
+when publishing metadata or its image reference. It rejects unsuccessful HTTP
+responses before parsing metadata. HTTP 429 and 503 can extend the retry delay
+using `Retry-After`, capped at five minutes. Exhausted transient failures use
+the configured cooldown. Invalid destinations and permanent HTTP failures
+remain suppressed until an explicit retry.
+
+## Durable search indexing
+
+Forum opening comments, replies, appends and edits record a search revision
+and coalesce its job in the source transaction. Blog, image board, linker,
+news and writing reply creation and edits use the same transaction boundary.
+Writing creation and edits, admin comment edit/delete/deactivate/restore,
+admin linker updates, link approvals, image board uploads/updates/deletions,
+and CLI content deactivation/restoration commands commit search revisions with
+their source changes. When enabled, `searchworker.Worker` converts any legacy
+bus index events into durable search revisions rather than mutating search
+tables without a lease. A search job reads the current source and replaces its
+per-item terms. The term replacement and indexed revision commit together under
+an active job lease. A superseded revision cannot advance the indexed revision.
+Deleted or empty content clears its previous terms.
+
+## Admin job controls and remaining bus workers
+
+Operators can list, inspect (`goa4web jobs show` and `/admin/jobs?id=...`),
+enqueue URLs, retry, cancel, and purge terminal jobs via CLI and authenticated
+admin routes. Enqueueing an unused external URL validates the destination and
+creates or reuses its `external_links` record atomically with the durable job.
+Standalone (`goa4web worker`) and embedded durable loops share database leases
+across restarts and forced crashes (`SIGKILL` or second `Ctrl+C`), reclaiming
+expired claims safely.
+
+Remaining non-durable bus workers keep their intended roles: `emailqueue` and
+DLQ remain database-backed; `notifications` keeps best-effort fan-out and
+scheduled digests; `postcountworker` recomputes regenerable thread/topic
+statistics; `auditworker` and `logworker` record operational logs best-effort;
+and `backgroundtaskworker` serves admin full-index remake tasks and fallback
+behavior when no durable job service is configured.
+
+## Durable job outcomes
+
+Completion, retry and failure require an unexpired lease. An expired
+attempt leaves the queue entry available for another worker to claim.
+
+Terminal failure, cooldown and administrator inbox updates commit together.
+Each recipient has one alert for a work type, target and error class. A
+repeated failure updates the alert count and latest time. An acknowledged
+alert reopens after the debounce window. The grouping key and summary omit
+the target URL. Pruning terminal job history leaves the alert intact.
+
 ## Shutdown
 
 Calling `Bus.Shutdown(ctx)` stops new publications, closes delivery to each

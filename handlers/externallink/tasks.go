@@ -2,6 +2,8 @@ package externallink
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +13,7 @@ import (
 	"github.com/arran4/goa4web/handlers"
 	"github.com/arran4/goa4web/internal/db"
 	domainexternallink "github.com/arran4/goa4web/internal/externallink"
+	"github.com/arran4/goa4web/internal/jobs"
 	"github.com/arran4/goa4web/internal/opengraph"
 	"github.com/arran4/goa4web/internal/tasks"
 	"github.com/gorilla/mux"
@@ -42,15 +45,28 @@ func (t ReloadExternalLinkTask) Action(w http.ResponseWriter, r *http.Request) a
 	if err != nil {
 		return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
 	}
-	canonicalURL := common.CanonicalizeExternalURL(rawURL)
-	if canonicalURL == "" {
-		return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
-	}
+	if jobSvc := cd.JobService(); jobSvc != nil {
+		canonicalURL := common.ValidateEnqueueExternalURL(rawURL)
+		if canonicalURL == "" {
+			return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
+		}
+		actorID := sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID != 0}
+		if err := jobSvc.QueueObservedExternalLink(r.Context(), canonicalURL, actorID); err != nil && !errors.Is(err, jobs.ErrInCooldown) {
+			log.Printf("queue reload external link: %v", err)
+		}
+		// Avoid attaching ReloadExternalLinkTask (a BackgroundTasker) when durable jobs own execution.
+		cd.SetEventTask(tasks.TaskString(t.TaskString))
+	} else {
+		canonicalURL := common.CanonicalizeExternalURL(rawURL)
+		if canonicalURL == "" {
+			return fmt.Errorf("invalid link: %w", handlers.ErrForbidden)
+		}
 
-	cd.SetEventTask(ReloadExternalLinkTask{
-		TaskString: t.TaskString,
-		URL:        canonicalURL,
-	})
+		cd.SetEventTask(ReloadExternalLinkTask{
+			TaskString: t.TaskString,
+			URL:        canonicalURL,
+		})
+	}
 
 	// Return redirect to the current URL with msg parameter
 	redirectURI := r.RequestURI
@@ -94,6 +110,29 @@ func (t PrefetchExternalLinkTask) Action(w http.ResponseWriter, r *http.Request)
 			evt.Task = tasks.TaskString("MISSING")
 		}
 		return handlers.TextByteWriter("missing url")
+	}
+	if jobSvc := cd.JobService(); jobSvc != nil {
+		if cd.UserID == 0 {
+			if evt := cd.Event(); evt != nil {
+				evt.Task = tasks.TaskString("MISSING")
+			}
+			return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+			})
+		}
+		canonicalURL := common.ValidateEnqueueExternalURL(rawURL)
+		if canonicalURL == "" {
+			if evt := cd.Event(); evt != nil {
+				evt.Task = tasks.TaskString("MISSING")
+			}
+			return handlers.TextByteWriter("invalid url")
+		}
+		actorID := sql.NullInt32{Int32: cd.UserID, Valid: true}
+		if err := jobSvc.QueueObservedExternalLink(r.Context(), canonicalURL, actorID); err != nil && !errors.Is(err, jobs.ErrInCooldown) {
+			log.Printf("queue prefetch external link: %v", err)
+		}
+		cd.SetEventTask(tasks.TaskString(t.TaskString))
+		return handlers.TextByteWriter("ok")
 	}
 	canonicalURL := common.CanonicalizeExternalURL(rawURL)
 	if canonicalURL == "" {

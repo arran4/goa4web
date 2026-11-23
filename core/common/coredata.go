@@ -2235,7 +2235,7 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 	if err := cd.validateImagePathsForThread(commenterID, threadID, paths); err != nil {
 		return 0, fmt.Errorf("validate images: %w", err)
 	}
-	commentID, err := cd.queries.CreateCommentInSectionForCommenter(cd.ctx, db.CreateCommentInSectionForCommenterParams{
+	arg := db.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt32{Int32: languageID, Valid: languageID != 0},
 		CommenterID:   sql.NullInt32{Int32: commenterID, Valid: commenterID != 0},
 		ForumthreadID: threadID,
@@ -2246,8 +2246,14 @@ func (cd *CoreData) createCommentInSectionForCommenterAt(section consts.Permissi
 		ItemType:      sql.NullString{String: itemType.String(), Valid: itemType != ""},
 		ItemID:        sql.NullInt32{Int32: itemID, Valid: itemID != 0},
 		Action:        action.String(),
+	}
+	var commentID int64
+	err = cd.withCommentWork(cd.ctx, cd.recordsCommentWork(section), text, arg.CommenterID, func(q db.Querier) (int64, error) {
+		var err error
+		commentID, err = insertCommentForCommenter(cd.ctx, q, arg)
+		return commentID, err
 	})
-	if err != nil {
+	if err != nil || commentID == 0 {
 		return 0, err
 	}
 	if err := cd.recordThreadImages(threadID, paths); err != nil {
@@ -3432,11 +3438,6 @@ func sampleEmailData(cfg *config.RuntimeConfig) map[string]any {
 type queuedRemoteImageCacheFetch struct {
 	id        string
 	sourceURL string
-}
-
-func (cd *CoreData) sanitizeCodeImages(text string) string {
-	text, _ = cd.sanitizeCodeImagesAndQueue(text)
-	return text
 }
 
 func (cd *CoreData) sanitizeCodeImagesAndQueue(text string) (string, []queuedRemoteImageCacheFetch) {

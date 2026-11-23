@@ -79,13 +79,15 @@ func ArticleAddActionPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fullText := strings.Join([]string{abstract, title, body}, " ")
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
+	if cd.JobService() == nil {
+		fullText := strings.Join([]string{abstract, title, body}, " ")
+		if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
+			if evt := cd.Event(); evt != nil {
+				if evt.Data == nil {
+					evt.Data = map[string]any{}
+				}
+				evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleId), Text: fullText}
 			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeWriting, ID: int32(articleId), Text: fullText}
 		}
 	}
 }

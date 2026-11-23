@@ -12,6 +12,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/opengraph"
 )
 
 func openTestJobsDB(t *testing.T) (*sql.DB, db.Querier) {
@@ -200,6 +201,102 @@ func TestDurableJobsLeaseExpiryFencingAndShutdownRelease(t *testing.T) {
 	}
 }
 
+func TestExpiredClaimCannotRecordAnOutcomeBeforeReclaim(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		maxAttempts int32
+		complete    bool
+	}{
+		{name: "Completion", maxAttempts: 2, complete: true},
+		{name: "Retry", maxAttempts: 2},
+		{name: "Terminal failure", maxAttempts: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, q := openTestJobsDB(t)
+			ctx := t.Context()
+			now := time.Date(2026, time.November, 21, 12, 0, 0, 0, time.UTC)
+			svc := NewService(q)
+			svc.Now = func() time.Time { return now }
+			svc.LeaseDuration = time.Second
+			if _, err := svc.Enqueue(ctx, EnqueueRequest{
+				JobType: JobTypeExternalLink, TargetKey: "https://example.test/claim", MaxAttempts: tc.maxAttempts,
+			}); err != nil {
+				t.Fatal(err)
+			}
+			claim, err := svc.ClaimNext(ctx, "expired-worker", JobTypeExternalLink)
+			if err != nil || claim == nil {
+				t.Fatalf("claim = %v, err = %v", claim, err)
+			}
+			now = claim.Job.LeaseExpiresAt.Time
+			var applied bool
+			if tc.complete {
+				applied, err = svc.CompleteFenced(ctx, claim)
+			} else {
+				applied, err = svc.FailOrRetryFenced(ctx, claim, errors.New("late failure"))
+			}
+			if err != nil || applied {
+				t.Fatalf("expired outcome applied = %v, err = %v", applied, err)
+			}
+			retained, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if retained.Status != StatusRunning || retained.LeaseToken.String != claim.LeaseToken || retained.LastError.Valid {
+				t.Fatalf("expired claim changed the job: %#v", retained)
+			}
+			if _, err := q.SystemGetJobCooldown(ctx, claim.Job.DedupeKey); !errors.Is(err, sql.ErrNoRows) {
+				t.Fatalf("cooldown lookup after expiry = %v", err)
+			}
+			replacement, err := svc.ClaimNext(ctx, "replacement-worker", JobTypeExternalLink)
+			if err != nil || replacement == nil || replacement.LeaseToken == claim.LeaseToken {
+				t.Fatalf("replacement = %v, err = %v", replacement, err)
+			}
+			if applied, err := svc.CompleteFenced(ctx, replacement); err != nil || !applied {
+				t.Fatalf("replacement completion applied = %v, err = %v", applied, err)
+			}
+		})
+	}
+}
+
+func TestTerminalFailureRollsBackWhenCooldownWriteFails(t *testing.T) {
+	database, q := openTestJobsDB(t)
+	ctx := context.Background()
+	svc := NewService(q)
+	_, err := svc.Enqueue(ctx, EnqueueRequest{
+		JobType:    JobTypeExternalLink,
+		TargetType: JobTypeExternalLink,
+		TargetKey:  "https://example.com/unavailable",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim, err := svc.ClaimNext(ctx, "worker", JobTypeExternalLink)
+	if err != nil || claim == nil {
+		t.Fatalf("claim = %v, err = %v", claim, err)
+	}
+	if _, err := database.ExecContext(ctx, `CREATE TRIGGER reject_cooldown BEFORE INSERT ON durable_job_cooldowns
+		BEGIN SELECT RAISE(ABORT, 'cooldown unavailable'); END`); err != nil {
+		t.Fatal(err)
+	}
+
+	if applied, err := svc.FailOrRetryFenced(ctx, claim, opengraph.ErrInvalidDestination); applied || err == nil {
+		t.Fatalf("failed cooldown applied = %v, err = %v", applied, err)
+	}
+	job, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != StatusRunning || job.LeaseToken.String != claim.LeaseToken {
+		t.Fatalf("job state = %s, lease token = %v", job.Status, job.LeaseToken)
+	}
+	if _, err := database.ExecContext(ctx, "DROP TRIGGER reject_cooldown"); err != nil {
+		t.Fatal(err)
+	}
+	if applied, err := svc.FailOrRetryFenced(ctx, claim, opengraph.ErrInvalidDestination); !applied || err != nil {
+		t.Fatalf("retried cooldown applied = %v, err = %v", applied, err)
+	}
+}
+
 func TestDurableJobsCooldownSurvivesPruningAndDebouncesAdminNotifications(t *testing.T) {
 	_, q := openTestJobsDB(t)
 	ctx := context.Background()
@@ -237,7 +334,7 @@ func TestDurableJobsCooldownSurvivesPruningAndDebouncesAdminNotifications(t *tes
 
 	// Prune terminal records immediately; cooldown must still block passive re-enqueue!
 	now = now.Add(1 * time.Minute)
-	pruned, err := svc.PruneTerminal(ctx, 0)
+	pruned, err := svc.PruneTerminal(ctx, 0, 1000)
 	if err != nil || pruned != 1 {
 		t.Fatalf("PruneTerminal = (%d, %v), want (1, nil)", pruned, err)
 	}
@@ -268,5 +365,133 @@ func TestDurableJobsCooldownSurvivesPruningAndDebouncesAdminNotifications(t *tes
 	}
 	if notifications != 1 {
 		t.Fatalf("debounced notifications = %d, want 1", notifications)
+	}
+}
+
+func TestDurableJobHistoryPrunesByAgeAndKind(t *testing.T) {
+	conn, q := openTestJobsDB(t)
+	ctx := t.Context()
+	now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+	svc := NewService(q)
+	svc.Now = func() time.Time { return now }
+
+	_, err := conn.ExecContext(ctx, `
+		WITH RECURSIVE rows(id) AS (
+			SELECT 1 UNION ALL SELECT id+1 FROM rows WHERE id < 1002
+		)
+		INSERT INTO durable_jobs (id, job_type, dedupe_key, target_type, status, completed_at)
+		SELECT id, 'external_link', 'history', 'external_link', 'completed', ? FROM rows`, now.Add(-time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = conn.ExecContext(ctx, `
+		INSERT INTO durable_jobs (id, job_type, dedupe_key, target_type, status, completed_at)
+		VALUES (2000, 'image_cache', 'old', 'image_cache', 'failed', ?),
+		       (2001, 'image_cache', 'recent', 'image_cache', 'cancelled', ?),
+		       (2002, 'external_link', 'pending', 'external_link', 'pending', NULL),
+		       (2003, 'external_link', 'running', 'external_link', 'running', NULL)`, now.Add(-25*time.Hour), now.Add(-time.Minute))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pruned, err := svc.PruneTerminal(ctx, 24*time.Hour, 1000)
+	if err != nil || pruned != 3 {
+		t.Fatalf("pruned %d jobs, want 3, err %v", pruned, err)
+	}
+	var recentCount, oldestRemaining int
+	err = conn.QueryRowContext(ctx, `SELECT COUNT(*), MIN(id) FROM durable_jobs WHERE job_type = 'external_link' AND status = 'completed'`).Scan(&recentCount, &oldestRemaining)
+	if err != nil || recentCount != 1000 || oldestRemaining != 3 {
+		t.Fatalf("retained %d external-link jobs down to %d, want 1000 down to 3, err %v", recentCount, oldestRemaining, err)
+	}
+	var kept int
+	if err := conn.QueryRowContext(ctx, "SELECT COUNT(*) FROM durable_jobs WHERE id IN (2001, 2002, 2003)").Scan(&kept); err != nil || kept != 3 {
+		t.Fatalf("retained %d of the other-kind or active jobs, want 3, err %v", kept, err)
+	}
+
+	pruned, err = svc.PruneTerminal(ctx, 24*time.Hour, 1)
+	if err != nil || pruned != 999 {
+		t.Fatalf("pruned %d jobs with the smaller cap, want 999, err %v", pruned, err)
+	}
+	var latest int
+	if err := conn.QueryRowContext(ctx, `SELECT id FROM durable_jobs WHERE job_type = 'external_link' AND status = 'completed'`).Scan(&latest); err != nil || latest != 1002 {
+		t.Fatalf("remaining job %d, want 1002, err %v", latest, err)
+	}
+}
+
+func TestDurableFetchRetrySchedule(t *testing.T) {
+	for _, jobType := range []string{JobTypeExternalLink, JobTypeImageCache} {
+		t.Run(jobType, func(t *testing.T) {
+			_, q := openTestJobsDB(t)
+			ctx := t.Context()
+			now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+			svc := NewService(q)
+			svc.Now = func() time.Time { return now }
+			queued, err := svc.Enqueue(ctx, EnqueueRequest{JobType: jobType, TargetType: jobType, TargetKey: "test"})
+			if err != nil || !queued {
+				t.Fatalf("enqueue fetch: (%v, %v)", queued, err)
+			}
+			for _, delay := range []time.Duration{10 * time.Second, 20 * time.Second, 30 * time.Second, 0} {
+				claim, err := svc.ClaimNext(ctx, "worker", jobType)
+				if err != nil || claim == nil {
+					t.Fatalf("claim fetch: (%+v, %v)", claim, err)
+				}
+				applied, err := svc.FailOrRetryFenced(ctx, claim, errors.New("temporary fetch failure"))
+				if err != nil || !applied {
+					t.Fatalf("fail fetch: (%v, %v)", applied, err)
+				}
+				job, err := q.SystemGetDurableJobByID(ctx, claim.Job.ID)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if delay == 0 {
+					if job.Status != StatusFailed || job.Attempts != 4 {
+						t.Fatalf("fetch status %q after %d attempts, want failed after 4", job.Status, job.Attempts)
+					}
+					return
+				}
+				if job.Status != StatusPending || !job.RunAfter.Equal(now.Add(delay)) {
+					t.Fatalf("retry status %q and delay %v, want pending after %v", job.Status, job.RunAfter.Sub(now), delay)
+				}
+				now = job.RunAfter
+			}
+		})
+	}
+}
+
+func TestWriteWithActiveLeaseRejectsExpiredAndReplacedClaims(t *testing.T) {
+	_, q := openTestJobsDB(t)
+	ctx := t.Context()
+	now := time.Date(2026, time.November, 15, 12, 0, 0, 0, time.UTC)
+	svc := NewService(q)
+	svc.Now = func() time.Time { return now }
+	svc.LeaseDuration = time.Second
+
+	if _, err := svc.Enqueue(ctx, EnqueueRequest{JobType: JobTypeExternalLink, TargetKey: "lease-fixture"}); err != nil {
+		t.Fatal(err)
+	}
+	first, err := svc.ClaimNext(ctx, "first")
+	if err != nil || first == nil {
+		t.Fatalf("first claim: %+v, %v", first, err)
+	}
+	writes := 0
+	write := func(db.Querier) error { writes++; return nil }
+	if err := svc.WriteWithActiveLease(ctx, first.Job, write); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(2 * time.Second)
+	if err := svc.WriteWithActiveLease(ctx, first.Job, write); !errors.Is(err, ErrLeaseLost) {
+		t.Fatalf("expired claim: %v, want ErrLeaseLost", err)
+	}
+	second, err := svc.ClaimNext(ctx, "second")
+	if err != nil || second == nil {
+		t.Fatalf("second claim: %+v, %v", second, err)
+	}
+	if err := svc.WriteWithActiveLease(ctx, first.Job, write); !errors.Is(err, ErrLeaseLost) {
+		t.Fatalf("replaced claim: %v, want ErrLeaseLost", err)
+	}
+	if err := svc.WriteWithActiveLease(ctx, second.Job, write); err != nil {
+		t.Fatal(err)
+	}
+	if writes != 2 {
+		t.Fatalf("applied %d writes, want one per active lease", writes)
 	}
 }

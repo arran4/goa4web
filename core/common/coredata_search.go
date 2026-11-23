@@ -1,8 +1,10 @@
 package common
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -472,4 +474,37 @@ func (cd *CoreData) forumCommentSearchInRestrictedTopic(r *http.Request, forumTo
 	}
 
 	return comments, false, false, nil
+}
+
+func (cd *CoreData) withSearchWork(targetType string, write func(db.Querier) (int64, error)) (int64, error) {
+	return cd.withSearchWorkContext(cd.ctx, targetType, write)
+}
+
+func (cd *CoreData) withSearchWorkContext(ctx context.Context, targetType string, write func(db.Querier) (int64, error)) (int64, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if cd.jobService == nil {
+		return write(cd.queries)
+	}
+	transactor, ok := cd.queries.(db.JobTransactor)
+	if !ok {
+		return 0, fmt.Errorf("persist source and search job: database does not support transactions")
+	}
+	var id int64
+	err := transactor.WithJobTransaction(ctx, func(q db.Querier) error {
+		var err error
+		id, err = write(q)
+		if err != nil || id == 0 {
+			return err
+		}
+		return cd.jobService.RecordSearchDirty(ctx, q, targetType, int32(id))
+	})
+	if err != nil {
+		return 0, err
+	}
+	if id > 0 {
+		cd.jobService.SignalWakeup()
+	}
+	return id, nil
 }

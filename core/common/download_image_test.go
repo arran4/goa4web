@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/png"
@@ -16,6 +18,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -270,12 +273,16 @@ func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 		t.Fatalf("encode png: %v", err)
 	}
 
+	var metadataRequests atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/pin":
+			http.Redirect(w, r, "/landing/pin", http.StatusFound)
+		case "/landing/pin":
+			metadataRequests.Add(1)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			_, _ = fmt.Fprintf(w, `<html><head><meta property="og:image" content="%s/photo.png"></head><body></body></html>`, "http://"+r.Host)
-		case "/photo.png":
+			_, _ = io.WriteString(w, `<html><head><meta property="og:image" content="photo.png"></head><body></body></html>`)
+		case "/landing/photo.png":
 			w.Header().Set("Content-Type", "image/png")
 			_, _ = w.Write(imageBytes.Bytes())
 		default:
@@ -295,7 +302,91 @@ func TestDownloadExternalImageUsesOpenGraphImageFromHTML(t *testing.T) {
 	if got.contentType != "image/png" {
 		t.Fatalf("content type = %q, want image/png", got.contentType)
 	}
+	if requests := metadataRequests.Load(); requests != 1 {
+		t.Fatalf("metadata requests = %d, want 1", requests)
+	}
 }
+
+func TestDownloadExternalImageRejectsOversizedResponseBeforeReading(t *testing.T) {
+	body := &imageResponseReadProbe{}
+	client := &http.Client{Transport: imageRoundTripper(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"image/png"}},
+			ContentLength: 1 << 30, Body: body,
+		}, nil
+	})}
+	app := NewCoreData(t.Context(), nil, config.NewRuntimeConfig(), WithHTTPClient(client))
+	if _, err := app.downloadExternalImage(t.Context(), "https://example.test/oversized.png"); err == nil {
+		t.Fatal("oversized image was accepted")
+	}
+	if body.read {
+		t.Fatal("oversized image response body was read")
+	}
+}
+
+func TestReadRemoteImageResponseLimitsUnknownLength(t *testing.T) {
+	t.Run("At the limit", func(t *testing.T) {
+		resp := &http.Response{StatusCode: http.StatusOK, ContentLength: -1, Body: io.NopCloser(strings.NewReader("1234"))}
+		body, err := readRemoteImageResponse(resp, 4)
+		if err != nil || string(body) != "1234" {
+			t.Fatalf("read at limit = %q, %v", body, err)
+		}
+	})
+	t.Run("Over the limit", func(t *testing.T) {
+		stream := strings.NewReader("123456789")
+		resp := &http.Response{StatusCode: http.StatusOK, ContentLength: -1, Body: io.NopCloser(stream)}
+		body, err := readRemoteImageResponse(resp, 4)
+		if err == nil || body != nil || stream.Len() != 4 {
+			t.Fatalf("oversized read = %q, %v, unread bytes = %d", body, err, stream.Len())
+		}
+	})
+}
+
+func TestDownloadExternalImageRejectsOversizedRaster(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		width, height uint32
+	}{
+		{name: "Pixel count", width: 10_000, height: 10_000},
+		{name: "Side length", width: 20_000, height: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var encoded bytes.Buffer
+			if err := png.Encode(&encoded, image.NewRGBA(image.Rect(0, 0, 1, 1))); err != nil {
+				t.Fatal(err)
+			}
+			// Change the declared IHDR dimensions without allocating a full raster.
+			body := encoded.Bytes()
+			binary.BigEndian.PutUint32(body[16:20], tc.width)
+			binary.BigEndian.PutUint32(body[20:24], tc.height)
+			binary.BigEndian.PutUint32(body[29:33], crc32.ChecksumIEEE(body[12:29]))
+			if _, _, err := image.DecodeConfig(bytes.NewReader(body)); err != nil {
+				t.Fatalf("read the fixture header: %v", err)
+			}
+			client := &http.Client{Transport: imageRoundTripper(func(*http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"image/png"}},
+					Body: io.NopCloser(bytes.NewReader(body)),
+				}, nil
+			})}
+			app := NewCoreData(t.Context(), nil, config.NewRuntimeConfig(), WithHTTPClient(client))
+			if _, err := app.downloadExternalImage(t.Context(), "https://example.test/oversized.png"); err == nil {
+				t.Fatal("oversized raster was accepted")
+			}
+		})
+	}
+}
+
+type imageResponseReadProbe struct {
+	read bool
+}
+
+func (p *imageResponseReadProbe) Read([]byte) (int, error) {
+	p.read = true
+	return 0, errors.New("image body was read")
+}
+
+func (*imageResponseReadProbe) Close() error { return nil }
 
 func TestCreateCommentStartsImmediateRemoteImageFetch(t *testing.T) {
 	var imageBytes bytes.Buffer
@@ -353,31 +444,20 @@ func TestCreateCommentStartsImmediateRemoteImageFetch(t *testing.T) {
 	}
 }
 
-func TestProcessPendingRemoteImageCacheEntriesRecordsRetryFailure(t *testing.T) {
+func TestRemoteImageCacheJobRecordsRetryFailure(t *testing.T) {
 	queries := testhelpers.NewQuerierStub()
 	cfg := config.NewRuntimeConfig()
 	cfg.ImageCacheFetchMaxRetries = 3
 	cfg.ImageCacheFetchRetryDelay = "1m"
 	cd := NewCoreData(context.Background(), queries, cfg)
-	queries.ListDuePendingImageCacheEntriesReturns = []*db.ImageCacheEntry{{
+	queries.GetImageCacheEntryReturns = &db.ImageCacheEntry{
 		ID:         "abcd1234.png",
 		SourceUrl:  sql.NullString{String: "http://127.0.0.1/logo.png", Valid: true},
 		SourceKind: imageCacheSourceKindRemote,
 		Status:     imageCacheStatusPending,
-	}}
-
-	if err := cd.ProcessPendingRemoteImageCacheEntries(context.Background(), 5); err != nil {
-		t.Fatalf("ProcessPendingRemoteImageCacheEntries: %v", err)
 	}
-	if len(queries.ListDuePendingImageCacheEntriesCalls) != 1 {
-		t.Fatalf("expected pending list call, got %d", len(queries.ListDuePendingImageCacheEntriesCalls))
-	}
-	listCall := queries.ListDuePendingImageCacheEntriesCalls[0]
-	if listCall.RetryCount != 3 {
-		t.Fatalf("retry limit = %d, want 3", listCall.RetryCount)
-	}
-	if !listCall.NextAttemptAt.Valid {
-		t.Fatal("expected due-at filter")
+	if err := cd.processRemoteImageCacheEntryJob(context.Background(), "abcd1234.png", func(_ context.Context, write func(db.Querier) error) error { return write(queries) }); err == nil {
+		t.Fatal("expected fetch failure")
 	}
 	if len(queries.RecordImageCacheFetchFailureCalls) != 1 {
 		t.Fatalf("expected failure record, got %d", len(queries.RecordImageCacheFetchFailureCalls))
@@ -440,7 +520,7 @@ func TestImmediateRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T)
 	}
 }
 
-func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
+func TestDurableRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	started := make(chan struct{})
 	client := &http.Client{Transport: imageRoundTripper(func(req *http.Request) (*http.Response, error) {
@@ -449,20 +529,20 @@ func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T)
 		return nil, req.Context().Err()
 	})}
 	queries := testhelpers.NewQuerierStub()
-	queries.ListDuePendingImageCacheEntriesReturns = []*db.ImageCacheEntry{{
+	queries.GetImageCacheEntryReturns = &db.ImageCacheEntry{
 		ID:            "abcd1234.png",
 		SourceUrl:     sql.NullString{String: "https://example.test/image.png", Valid: true},
 		SourceKind:    imageCacheSourceKindRemote,
 		Status:        imageCacheStatusPending,
 		RetryCount:    2,
 		NextAttemptAt: sql.NullTime{Time: time.Now().Add(-time.Minute), Valid: true},
-	}}
+	}
 	cfg := config.NewRuntimeConfig()
 	cfg.ImageCacheFetchMaxRetries = 3
 	cd := NewCoreData(context.Background(), queries, cfg, WithHTTPClient(client))
 	done := make(chan error, 1)
 	go func() {
-		done <- cd.ProcessPendingRemoteImageCacheEntries(ctx, 1)
+		done <- cd.processRemoteImageCacheEntryJob(ctx, "abcd1234.png", func(_ context.Context, write func(db.Querier) error) error { return write(queries) })
 	}()
 	select {
 	case <-started:
@@ -473,7 +553,7 @@ func TestScheduledRemoteImageFetchCancellationPreservesRetryBudget(t *testing.T)
 	select {
 	case err := <-done:
 		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("ProcessPendingRemoteImageCacheEntries() error = %v, want context.Canceled", err)
+			t.Fatalf("processRemoteImageCacheEntryJob() error = %v, want context.Canceled", err)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("scheduled image fetch did not stop after cancellation")

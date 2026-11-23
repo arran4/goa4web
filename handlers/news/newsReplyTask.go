@@ -115,6 +115,9 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	if err != nil {
 		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
+	if cid == 0 {
+		return fmt.Errorf("create comment fail %w", handlers.ErrRedirectOnSamePageHandler(handlers.ErrForbidden))
+	}
 
 	endURL := cd.AbsoluteURL(fmt.Sprintf("/news/news/%d", pid))
 	username := ""
@@ -122,19 +125,21 @@ func (ReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		username = user.Username.String
 	}
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             ti.ThreadID,
-		TopicID:              ti.TopicID,
-		CommentID:            int32(cid),
-		LabelItem:            "news",
-		LabelItemID:          int32(pid),
-		CommentText:          text,
-		CommentURL:           endURL,
-		PostURL:              endURL,
-		Username:             username,
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
-		IncludeSearch:        true,
+		ThreadID:              ti.ThreadID,
+		TopicID:               ti.TopicID,
+		CommentID:             int32(cid),
+		LabelItem:             "news",
+		LabelItemID:           int32(pid),
+		CommentText:           text,
+		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
+		CommentURL:            endURL,
+		PostURL:               endURL,
+		Username:              username,
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        true,
+		IncludePostCount:      true,
+		IncludeSearch:         true,
 	}); err != nil {
 		log.Printf("news reply side effects: %v", err)
 	}

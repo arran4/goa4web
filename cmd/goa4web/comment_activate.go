@@ -7,6 +7,8 @@ import (
 	"math"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // commentActivateCmd implements "comment activate".
@@ -35,7 +37,7 @@ func (c *commentActivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	deactivated, err := queries.AdminIsCommentDeactivated(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("check deactivated: %w", err)
@@ -57,11 +59,16 @@ func (c *commentActivateCmd) Run() error {
 	if found == nil {
 		return fmt.Errorf("comment %d not found", c.ID)
 	}
-	if err := queries.AdminRestoreComment(ctx, db.AdminRestoreCommentParams{Text: found.Text, Idcomments: found.Idcomments}); err != nil {
-		return fmt.Errorf("restore comment: %w", err)
-	}
-	if err := queries.AdminMarkCommentRestored(ctx, found.Idcomments); err != nil {
-		return fmt.Errorf("mark restored: %w", err)
-	}
-	return nil
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		if err := qtx.AdminRestoreComment(ctx, db.AdminRestoreCommentParams{Text: found.Text, Idcomments: found.Idcomments}); err != nil {
+			return fmt.Errorf("restore comment: %w", err)
+		}
+		if err := qtx.AdminMarkCommentRestored(ctx, found.Idcomments); err != nil {
+			return fmt.Errorf("mark restored: %w", err)
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeComment, found.Idcomments); err != nil {
+			return fmt.Errorf("record comment search dirty: %w", err)
+		}
+		return nil
+	})
 }

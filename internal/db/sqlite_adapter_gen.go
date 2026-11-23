@@ -1595,10 +1595,10 @@ func (s *sqliteQuerier) AdminInsertLanguage(ctx context.Context, nameof sql.Null
 	return res, nil
 }
 
-func (s *sqliteQuerier) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (int64, error) {
+func (s *sqliteQuerier) AdminInsertQueuedLinkFromQueue(ctx context.Context, id int32) (sql.Result, error) {
 	res, err := s.q.AdminInsertQueuedLinkFromQueue(ctx, int64(id))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }
@@ -3829,6 +3829,14 @@ func (s *sqliteQuerier) AdminSetAnnouncementActive(ctx context.Context, arg Admi
 	})
 }
 
+func (s *sqliteQuerier) AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error {
+	return s.q.AdminSetImageCacheStateForDurableJob(ctx, dbsqlite.AdminSetImageCacheStateForDurableJobParams{
+		NextStatus:     arg.NextStatus,
+		PreviousStatus: arg.PreviousStatus,
+		JobID:          arg.JobID,
+	})
+}
+
 func (s *sqliteQuerier) AdminSetTemplateOverride(ctx context.Context, arg AdminSetTemplateOverrideParams) error {
 	return s.q.AdminSetTemplateOverride(ctx, dbsqlite.AdminSetTemplateOverrideParams{
 		Name: arg.Name,
@@ -3841,6 +3849,13 @@ func (s *sqliteQuerier) AdminUpdateBannedIp(ctx context.Context, arg AdminUpdate
 		Reason:    arg.Reason,
 		ExpiresAt: arg.ExpiresAt,
 		ID:        int64(arg.ID),
+	})
+}
+
+func (s *sqliteQuerier) AdminUpdateCommentText(ctx context.Context, arg AdminUpdateCommentTextParams) error {
+	return s.q.AdminUpdateCommentText(ctx, dbsqlite.AdminUpdateCommentTextParams{
+		Text:       arg.Text,
+		Idcomments: int64(arg.Idcomments),
 	})
 }
 
@@ -4299,7 +4314,7 @@ func (s *sqliteQuerier) CreateBookmarksForLister(ctx context.Context, arg Create
 	})
 }
 
-func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (int64, error) {
+func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, arg CreateCommentInSectionForCommenterParams) (sql.Result, error) {
 	res, err := s.q.CreateCommentInSectionForCommenter(ctx, dbsqlite.CreateCommentInSectionForCommenterParams{
 		LanguageID:    sql.NullInt64{Int64: int64(arg.LanguageID.Int32), Valid: arg.LanguageID.Valid},
 		CommenterID:   int64(arg.CommenterID.Int32),
@@ -4313,7 +4328,7 @@ func (s *sqliteQuerier) CreateCommentInSectionForCommenter(ctx context.Context, 
 		ItemID:        sql.NullInt64{Int64: int64(arg.ItemID.Int32), Valid: arg.ItemID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }
@@ -4372,7 +4387,7 @@ func (s *sqliteQuerier) CreateGrant(ctx context.Context, arg CreateGrantParams) 
 	})
 }
 
-func (s *sqliteQuerier) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (int64, error) {
+func (s *sqliteQuerier) CreateImagePostForPoster(ctx context.Context, arg CreateImagePostForPosterParams) (sql.Result, error) {
 	res, err := s.q.CreateImagePostForPoster(ctx, dbsqlite.CreateImagePostForPosterParams{
 		ImageboardID: sql.NullInt64{Int64: int64(arg.ImageboardID.Int32), Valid: arg.ImageboardID.Valid},
 		Thumbnail:    arg.Thumbnail,
@@ -4392,7 +4407,7 @@ func (s *sqliteQuerier) CreateImagePostForPoster(ctx context.Context, arg Create
 		GranteeID:    sql.NullInt64{Int64: int64(arg.GranteeID.Int32), Valid: arg.GranteeID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }
@@ -4475,7 +4490,7 @@ func (s *sqliteQuerier) CreateUploadedImageForUploader(ctx context.Context, arg 
 	return res, nil
 }
 
-func (s *sqliteQuerier) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error) {
+func (s *sqliteQuerier) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (sql.Result, error) {
 	res, err := s.q.CreateWritingForWriter(ctx, dbsqlite.CreateWritingForWriterParams{
 		WritingCategoryID: int64(arg.WritingCategoryID),
 		Title:             arg.Title,
@@ -4498,7 +4513,7 @@ func (s *sqliteQuerier) CreateWritingForWriter(ctx context.Context, arg CreateWr
 		GranteeID:       sql.NullInt64{Int64: int64(arg.GranteeID.Int32), Valid: arg.GranteeID.Valid},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	return res, nil
 }
@@ -8402,51 +8417,6 @@ func (s *sqliteQuerier) ListContentPublicLabels(ctx context.Context, arg ListCon
 	}(res), nil
 }
 
-func (s *sqliteQuerier) ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
-	res, err := s.q.ListDuePendingImageCacheEntries(ctx, dbsqlite.ListDuePendingImageCacheEntriesParams{
-		RetryCount:    int64(arg.RetryCount),
-		NextAttemptAt: arg.NextAttemptAt,
-		Limit:         int64(arg.Limit),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return func(items []*dbsqlite.ImageCacheEntry) []*ImageCacheEntry {
-		if items == nil {
-			return nil
-		}
-		out := make([]*ImageCacheEntry, len(items))
-		for i, item := range items {
-			if item == nil {
-				continue
-			}
-			out[i] = &ImageCacheEntry{
-				ID:               item.ID,
-				SourceUrl:        item.SourceUrl,
-				SourceKind:       item.SourceKind,
-				Status:           item.Status,
-				CreatedAt:        item.CreatedAt,
-				LastUsedAt:       item.LastUsedAt,
-				FetchedAt:        item.FetchedAt,
-				ExpiresAt:        item.ExpiresAt,
-				ContentExpiresAt: item.ContentExpiresAt,
-				ContentType:      item.ContentType,
-				SizeBytes:        item.SizeBytes,
-				Width:            sql.NullInt32{Int32: int32(item.Width.Int64), Valid: item.Width.Valid},
-				Height:           sql.NullInt32{Int32: int32(item.Height.Int64), Valid: item.Height.Valid},
-				Checksum:         item.Checksum,
-				ThumbnailID:      item.ThumbnailID,
-				UploadedImageID:  sql.NullInt32{Int32: int32(item.UploadedImageID.Int64), Valid: item.UploadedImageID.Valid},
-				ErrorMessage:     item.ErrorMessage,
-				RetryCount:       int32(item.RetryCount),
-				LastAttemptAt:    item.LastAttemptAt,
-				NextAttemptAt:    item.NextAttemptAt,
-			}
-		}
-		return out
-	}(res), nil
-}
-
 func (s *sqliteQuerier) ListEffectiveRoleIDsByUserID(ctx context.Context, usersIdusers int32) ([]int32, error) {
 	res, err := s.q.ListEffectiveRoleIDsByUserID(ctx, int64(usersIdusers))
 	if err != nil {
@@ -9882,6 +9852,7 @@ func (s *sqliteQuerier) SystemCompleteDurableJobFenced(ctx context.Context, arg 
 		CompletedAt: arg.CompletedAt,
 		ID:          arg.ID,
 		LeaseToken:  arg.LeaseToken,
+		NowAt:       arg.NowAt,
 	})
 	if err != nil {
 		return 0, err
@@ -10065,6 +10036,10 @@ func (s *sqliteQuerier) SystemDeleteBlogsSearch(ctx context.Context) error {
 	return s.q.SystemDeleteBlogsSearch(ctx)
 }
 
+func (s *sqliteQuerier) SystemDeleteCommentSearchByCommentID(ctx context.Context, commentID int32) error {
+	return s.q.SystemDeleteCommentSearchByCommentID(ctx, int64(commentID))
+}
+
 func (s *sqliteQuerier) SystemDeleteCommentsSearch(ctx context.Context) error {
 	return s.q.SystemDeleteCommentsSearch(ctx)
 }
@@ -10085,12 +10060,20 @@ func (s *sqliteQuerier) SystemDeleteImagePostSearch(ctx context.Context) error {
 	return s.q.SystemDeleteImagePostSearch(ctx)
 }
 
+func (s *sqliteQuerier) SystemDeleteImagePostSearchByImagePostID(ctx context.Context, imagePostID int32) error {
+	return s.q.SystemDeleteImagePostSearchByImagePostID(ctx, int64(imagePostID))
+}
+
 func (s *sqliteQuerier) SystemDeleteJobCooldown(ctx context.Context, dedupeKey string) error {
 	return s.q.SystemDeleteJobCooldown(ctx, dedupeKey)
 }
 
 func (s *sqliteQuerier) SystemDeleteLinkerSearch(ctx context.Context) error {
 	return s.q.SystemDeleteLinkerSearch(ctx)
+}
+
+func (s *sqliteQuerier) SystemDeleteLinkerSearchByLinkerID(ctx context.Context, linkerID int32) error {
+	return s.q.SystemDeleteLinkerSearchByLinkerID(ctx, int64(linkerID))
 }
 
 func (s *sqliteQuerier) SystemDeletePasswordReset(ctx context.Context, id int32) error {
@@ -10146,7 +10129,16 @@ func (s *sqliteQuerier) SystemFailDurableJobFenced(ctx context.Context, arg Syst
 		CompletedAt: arg.CompletedAt,
 		ID:          arg.ID,
 		LeaseToken:  arg.LeaseToken,
+		NowAt:       arg.NowAt,
 	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemGetActiveDurableJobIDByDedupeKey(ctx context.Context, activeDedupeKey sql.NullString) (int64, error) {
+	res, err := s.q.SystemGetActiveDurableJobIDByDedupeKey(ctx, activeDedupeKey)
 	if err != nil {
 		return 0, err
 	}
@@ -11269,6 +11261,18 @@ func (s *sqliteQuerier) SystemListWritingCategories(ctx context.Context, arg Sys
 	}(res), nil
 }
 
+func (s *sqliteQuerier) SystemLockActiveDurableJobLease(ctx context.Context, arg SystemLockActiveDurableJobLeaseParams) (int64, error) {
+	res, err := s.q.SystemLockActiveDurableJobLease(ctx, dbsqlite.SystemLockActiveDurableJobLeaseParams{
+		ID:         arg.ID,
+		LeaseToken: arg.LeaseToken,
+		NowAt:      arg.NowAt,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx context.Context, id int32) error {
 	return s.q.SystemMarkDigestDeliveryAcknowledgedForPendingEmail(ctx, int64(id))
 }
@@ -11283,10 +11287,9 @@ func (s *sqliteQuerier) SystemMarkPendingEmailSent(ctx context.Context, id int32
 
 func (s *sqliteQuerier) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error) {
 	res, err := s.q.SystemMarkSearchTargetIndexed(ctx, dbsqlite.SystemMarkSearchTargetIndexedParams{
-		IndexedRevision:   arg.IndexedRevision,
-		TargetType:        arg.TargetType,
-		TargetID:          int64(arg.TargetID),
-		IndexedRevision_2: arg.IndexedRevision_2,
+		IndexedRevision: arg.IndexedRevision,
+		TargetType:      arg.TargetType,
+		TargetID:        int64(arg.TargetID),
 	})
 	if err != nil {
 		return 0, err
@@ -11301,8 +11304,11 @@ func (s *sqliteQuerier) SystemMarkUserEmailVerified(ctx context.Context, arg Sys
 	})
 }
 
-func (s *sqliteQuerier) SystemPruneTerminalDurableJobsBefore(ctx context.Context, completedAt sql.NullTime) (int64, error) {
-	res, err := s.q.SystemPruneTerminalDurableJobsBefore(ctx, completedAt)
+func (s *sqliteQuerier) SystemPruneTerminalDurableJobs(ctx context.Context, arg SystemPruneTerminalDurableJobsParams) (int64, error) {
+	res, err := s.q.SystemPruneTerminalDurableJobs(ctx, dbsqlite.SystemPruneTerminalDurableJobsParams{
+		Cutoff:     arg.Cutoff,
+		MaxPerKind: arg.MaxPerKind,
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -11321,8 +11327,49 @@ func (s *sqliteQuerier) SystemPurgePasswordResetsBefore(ctx context.Context, cre
 	return res, nil
 }
 
+func (s *sqliteQuerier) SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error) {
+	res, err := s.q.SystemQueueObservedExternalLinkJob(ctx, dbsqlite.SystemQueueObservedExternalLinkJobParams{
+		DedupeKey:   arg.DedupeKey,
+		ActiveKey:   arg.ActiveKey,
+		TargetKey:   arg.TargetKey,
+		MaxAttempts: int64(arg.MaxAttempts),
+		RunAfter:    arg.RunAfter,
+		ActorID:     sql.NullInt64{Int64: int64(arg.ActorID.Int32), Valid: arg.ActorID.Valid},
+		CheckKey:    arg.CheckKey,
+		CooldownAt:  arg.CooldownAt,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
+func (s *sqliteQuerier) SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error) {
+	res, err := s.q.SystemQueuePendingImageCacheJobs(ctx, dbsqlite.SystemQueuePendingImageCacheJobsParams{
+		MaxAttempts: int64(arg.MaxAttempts),
+		RunAfter:    arg.RunAfter,
+		ActorID:     sql.NullInt64{Int64: int64(arg.ActorID.Int32), Valid: arg.ActorID.Valid},
+		CooldownAt:  arg.CooldownAt,
+		EntryID:     arg.EntryID,
+		DueAt:       arg.DueAt,
+		RetryFailed: arg.RetryFailed,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 func (s *sqliteQuerier) SystemRebuildForumTopicMetaByID(ctx context.Context, idforumtopic int32) error {
 	return s.q.SystemRebuildForumTopicMetaByID(ctx, int64(idforumtopic))
+}
+
+func (s *sqliteQuerier) SystemRecordAdminJobFailureNotification(ctx context.Context, arg SystemRecordAdminJobFailureNotificationParams) error {
+	return s.q.SystemRecordAdminJobFailureNotification(ctx, dbsqlite.SystemRecordAdminJobFailureNotificationParams{
+		RecipientID: int64(arg.RecipientID),
+		ActivityKey: arg.ActivityKey,
+		LatestAt:    arg.LatestAt,
+	})
 }
 
 func (s *sqliteQuerier) SystemRegisterExternalLinkClick(ctx context.Context, url string) error {
@@ -11359,6 +11406,7 @@ func (s *sqliteQuerier) SystemRetryDurableJobFenced(ctx context.Context, arg Sys
 		LastError:  arg.LastError,
 		ID:         arg.ID,
 		LeaseToken: arg.LeaseToken,
+		NowAt:      arg.NowAt,
 	})
 	if err != nil {
 		return 0, err
@@ -11395,6 +11443,26 @@ func (s *sqliteQuerier) SystemSetSiteNewsLastIndex(ctx context.Context, idsitene
 
 func (s *sqliteQuerier) SystemSetWritingLastIndex(ctx context.Context, idwriting int32) error {
 	return s.q.SystemSetWritingLastIndex(ctx, int64(idwriting))
+}
+
+func (s *sqliteQuerier) SystemSummarizeAdminJobFailureNotification(ctx context.Context, arg SystemSummarizeAdminJobFailureNotificationParams) error {
+	return s.q.SystemSummarizeAdminJobFailureNotification(ctx, dbsqlite.SystemSummarizeAdminJobFailureNotificationParams{
+		Summary: func(v interface{}) sql.NullString {
+			if s, ok := v.(string); ok {
+				return sql.NullString{String: s, Valid: true}
+			}
+			if s, ok := v.(sql.NullString); ok {
+				return s
+			}
+			if s, ok := v.(*string); ok && s != nil {
+				return sql.NullString{String: *s, Valid: true}
+			}
+			return sql.NullString{}
+		}(arg.Summary),
+		ReopenBefore: arg.ReopenBefore,
+		RecipientID:  int64(arg.RecipientID),
+		ActivityKey:  arg.ActivityKey,
+	})
 }
 
 func (s *sqliteQuerier) SystemUpdateDeadLetter(ctx context.Context, arg SystemUpdateDeadLetterParams) error {
@@ -11651,8 +11719,8 @@ func (s *sqliteQuerier) UpdateUserPassword(ctx context.Context, arg UpdateUserPa
 	})
 }
 
-func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error {
-	return s.q.UpdateWritingForWriter(ctx, dbsqlite.UpdateWritingForWriterParams{
+func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (int64, error) {
+	res, err := s.q.UpdateWritingForWriter(ctx, dbsqlite.UpdateWritingForWriterParams{
 		Title:    arg.Title,
 		Abstract: arg.Abstract,
 		Content:  arg.Content,
@@ -11670,6 +11738,10 @@ func (s *sqliteQuerier) UpdateWritingForWriter(ctx context.Context, arg UpdateWr
 		WriterID:   int64(arg.WriterID),
 		GranteeID:  sql.NullInt64{Int64: int64(arg.GranteeID.Int32), Valid: arg.GranteeID.Valid},
 	})
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
 }
 
 func (s *sqliteQuerier) UpsertContentReadMarker(ctx context.Context, arg UpsertContentReadMarkerParams) error {

@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -39,16 +41,33 @@ func AdminJobsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	flashError := strings.TrimSpace(r.URL.Query().Get("error"))
+	var selectedJob *jobs.JobDetails
+	if idRaw := strings.TrimSpace(r.URL.Query().Get("id")); idRaw != "" {
+		if id, parseErr := strconv.ParseInt(idRaw, 10, 64); parseErr == nil && id > 0 {
+			details, getErr := svc.AdminGet(r.Context(), id)
+			if getErr == nil {
+				selectedJob = details
+			} else if !errors.Is(getErr, sql.ErrNoRows) && flashError == "" {
+				flashError = getErr.Error()
+			}
+		} else if flashError == "" {
+			flashError = "Invalid job ID"
+		}
+	}
+
 	data := struct {
 		Jobs         []*db.DurableJob
+		SelectedJob  *jobs.JobDetails
 		StatusFilter string
 		TypeFilter   string
 		FlashError   string
 	}{
 		Jobs:         jobRows,
+		SelectedJob:  selectedJob,
 		StatusFilter: statusFilter,
 		TypeFilter:   typeFilter,
-		FlashError:   strings.TrimSpace(r.URL.Query().Get("error")),
+		FlashError:   flashError,
 	}
 	_ = AdminJobsPageTmpl.Handle(w, r, data)
 }
@@ -76,12 +95,8 @@ func AdminJobsAction(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		force := r.FormValue("force") == "1" || r.FormValue("force") == "true"
-		if _, err := svc.Enqueue(r.Context(), jobs.EnqueueRequest{
-			JobType:    jobs.JobTypeExternalLink,
-			TargetType: jobs.JobTypeExternalLink,
-			TargetKey:  canonical,
-			ForceRetry: force,
-		}); err != nil {
+		actorID := sql.NullInt32{Int32: cd.UserID, Valid: cd.UserID > 0}
+		if _, _, err := svc.AdminEnqueueExternalURL(r.Context(), canonical, actorID, force); err != nil {
 			http.Redirect(w, r, "/admin/jobs?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
 			return
 		}

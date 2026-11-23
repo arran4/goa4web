@@ -7,6 +7,8 @@ import (
 	"math"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // writingActivateCmd implements "writing activate".
@@ -35,7 +37,7 @@ func (c *writingActivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	deactivated, err := queries.AdminIsWritingDeactivated(ctx, int32(c.ID))
 	if err != nil {
 		return fmt.Errorf("check deactivated: %w", err)
@@ -57,11 +59,16 @@ func (c *writingActivateCmd) Run() error {
 	if found == nil {
 		return fmt.Errorf("writing %d not found", c.ID)
 	}
-	if err := queries.AdminRestoreWriting(ctx, db.AdminRestoreWritingParams{Title: found.Title, Writing: found.Writing, Abstract: found.Abstract, Private: found.Private, Idwriting: found.Idwriting}); err != nil {
-		return fmt.Errorf("restore writing: %w", err)
-	}
-	if err := queries.AdminMarkWritingRestored(ctx, found.Idwriting); err != nil {
-		return fmt.Errorf("mark restored: %w", err)
-	}
-	return nil
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		if err := qtx.AdminRestoreWriting(ctx, db.AdminRestoreWritingParams{Title: found.Title, Writing: found.Writing, Abstract: found.Abstract, Private: found.Private, Idwriting: found.Idwriting}); err != nil {
+			return fmt.Errorf("restore writing: %w", err)
+		}
+		if err := qtx.AdminMarkWritingRestored(ctx, found.Idwriting); err != nil {
+			return fmt.Errorf("mark restored: %w", err)
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeWriting, found.Idwriting); err != nil {
+			return fmt.Errorf("record writing search dirty: %w", err)
+		}
+		return nil
+	})
 }

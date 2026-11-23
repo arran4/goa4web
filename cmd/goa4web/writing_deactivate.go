@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/arran4/goa4web/internal/db"
+	"github.com/arran4/goa4web/internal/jobs"
+	"github.com/arran4/goa4web/internal/searchindex"
 )
 
 // writingDeactivateCmd implements "writing deactivate".
@@ -35,7 +37,7 @@ func (c *writingDeactivateCmd) Run() error {
 		return fmt.Errorf("database: %w", err)
 	}
 	ctx := context.Background()
-	queries := db.New(conn)
+	queries := newCLIQueries(conn, c.cfg)
 	w, err := queries.GetWritingForListerByID(ctx, db.GetWritingForListerByIDParams{ListerID: 0, Idwriting: int32(c.ID), ListerMatchID: sql.NullInt32{}})
 	if err != nil {
 		return fmt.Errorf("fetch writing: %w", err)
@@ -47,23 +49,28 @@ func (c *writingDeactivateCmd) Run() error {
 	if deactivated {
 		return fmt.Errorf("writing already deactivated")
 	}
-	if err := queries.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
-		Idwriting:         w.Idwriting,
-		UsersIdusers:      w.UsersIdusers,
-		ForumthreadID:     w.ForumthreadID,
-		LanguageID:        w.LanguageID,
-		WritingCategoryID: w.WritingCategoryID,
-		Title:             w.Title,
-		Published:         w.Published,
-		Timezone:          w.Timezone,
-		Writing:           w.Writing,
-		Abstract:          w.Abstract,
-		Private:           w.Private,
-	}); err != nil {
-		return fmt.Errorf("archive writing: %w", err)
-	}
-	if err := queries.AdminScrubWriting(ctx, db.AdminScrubWritingParams{Title: sql.NullString{String: "", Valid: true}, Writing: sql.NullString{String: "", Valid: true}, Abstract: sql.NullString{String: "", Valid: true}, Idwriting: w.Idwriting}); err != nil {
-		return fmt.Errorf("scrub writing: %w", err)
-	}
-	return nil
+	return withCLIJobTx(ctx, conn, c.cfg, func(qtx db.Querier, svc *jobs.Service) error {
+		if err := qtx.AdminArchiveWriting(ctx, db.AdminArchiveWritingParams{
+			Idwriting:         w.Idwriting,
+			UsersIdusers:      w.UsersIdusers,
+			ForumthreadID:     w.ForumthreadID,
+			LanguageID:        w.LanguageID,
+			WritingCategoryID: w.WritingCategoryID,
+			Title:             w.Title,
+			Published:         w.Published,
+			Timezone:          w.Timezone,
+			Writing:           w.Writing,
+			Abstract:          w.Abstract,
+			Private:           w.Private,
+		}); err != nil {
+			return fmt.Errorf("archive writing: %w", err)
+		}
+		if err := qtx.AdminScrubWriting(ctx, db.AdminScrubWritingParams{Title: sql.NullString{String: "", Valid: true}, Writing: sql.NullString{String: "", Valid: true}, Abstract: sql.NullString{String: "", Valid: true}, Idwriting: w.Idwriting}); err != nil {
+			return fmt.Errorf("scrub writing: %w", err)
+		}
+		if err := svc.RecordSearchDirty(ctx, qtx, searchindex.TypeWriting, w.Idwriting); err != nil {
+			return fmt.Errorf("record writing search dirty: %w", err)
+		}
+		return nil
+	})
 }

@@ -116,10 +116,12 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("decode image error %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 	fname := shaHex + ext
+	var storedFilename string
 	if p := upload.ProviderFromConfig(cd.Config); p != nil {
 		if err := p.Write(r.Context(), path.Join(sub1, sub2, fname), data); err != nil {
 			return fmt.Errorf("upload write fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 		}
+		storedFilename = fname
 	}
 
 	relBase := path.Join("/imagebbs/images", sub1, sub2)
@@ -127,19 +129,17 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 	thumbName := shaHex + "_thumb" + ext
 	relThumb := path.Join(relBase, thumbName)
 
-	if _, err := queries.CreateUploadedImageForUploader(r.Context(), db.CreateUploadedImageForUploaderParams{
+	uploaded := db.CreateUploadedImageForUploaderParams{
 		UploaderID: uid,
 		Path:       sql.NullString{String: relFull, Valid: true},
 		Width:      sql.NullInt32{Int32: int32(cfg.Width), Valid: true},
 		Height:     sql.NullInt32{Int32: int32(cfg.Height), Valid: true},
 		FileSize:   int32(size),
-	}); err != nil {
-		return fmt.Errorf("record uploaded image %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
 	approved := !board.ApprovalRequired
 
-	pid, err := queries.CreateImagePostForPoster(r.Context(), db.CreateImagePostForPosterParams{
+	pid, err := cd.CreateImageBoardUpload(uploaded, db.CreateImagePostForPosterParams{
 		ImageboardID: sql.NullInt32{Int32: int32(bid), Valid: true},
 		Thumbnail:    sql.NullString{Valid: true, String: relThumb},
 		Fullimage:    sql.NullString{Valid: true, String: relFull},
@@ -151,38 +151,27 @@ func (UploadImageTask) Action(w http.ResponseWriter, r *http.Request) any {
 		FileSize:     int32(size),
 		GrantBoardID: sql.NullInt32{Int32: int32(bid), Valid: true},
 		GranteeID:    sql.NullInt32{Int32: uid, Valid: true},
-	})
+	}, storedFilename)
 	if err != nil {
 		return fmt.Errorf("create image post fail %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	if cd, ok := r.Context().Value(consts.KeyCoreData).(*common.CoreData); ok {
-		if evt := cd.Event(); evt != nil {
-			if evt.Data == nil {
-				evt.Data = map[string]any{}
-			}
-			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
-			evt.Data["ImagePostID"] = int32(pid)
-			evt.Data["BoardID"] = int32(bid)
-
-			evt.Task = &ProcessImageTask{
-				TaskString: TaskUploadImage,
-				Config:     cd.Config,
-				ShaHex:     shaHex,
-				Ext:        ext,
-			}
-		} else {
-			// Schedule background thumbnail generation outside of event manager if no event manager exists.
-			go func(ctx context.Context, config *config.RuntimeConfig, shaHex string, ext string) {
-				t := &ProcessImageTask{
-					TaskString: TaskUploadImage,
-					Config:     config,
-					ShaHex:     shaHex,
-					Ext:        ext,
-				}
-				_, _ = t.BackgroundTask(ctx, queries)
-			}(context.WithoutCancel(r.Context()), cd.Config, shaHex, ext)
+	if evt := cd.Event(); evt != nil {
+		if evt.Data == nil {
+			evt.Data = map[string]any{}
 		}
+		evt.Data["ImagePostID"] = int32(pid)
+		evt.Data["BoardID"] = int32(bid)
+		if cd.JobService() == nil {
+			evt.Data[searchworker.EventKey] = searchworker.IndexEventData{Type: searchworker.TypeImage, ID: int32(pid), Text: text}
+			evt.Task = &ProcessImageTask{
+				TaskString: TaskUploadImage, Config: cd.Config, ShaHex: shaHex, Ext: ext,
+			}
+		}
+	} else if cd.JobService() == nil && storedFilename != "" {
+		go func(ctx context.Context, cfg *config.RuntimeConfig, filename string) {
+			_ = imagesign.WriteImageBoardThumbnail(ctx, upload.ProviderFromConfig(cfg), filename)
+		}(context.WithoutCancel(r.Context()), cd.Config, storedFilename)
 	}
 
 	return nil

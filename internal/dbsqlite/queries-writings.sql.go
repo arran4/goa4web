@@ -179,7 +179,7 @@ func (q *Queries) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdat
 	return err
 }
 
-const createWritingForWriter = `-- name: CreateWritingForWriter :execlastid
+const createWritingForWriter = `-- name: CreateWritingForWriter :execresult
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, timezone, users_idusers)
 SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9
 WHERE EXISTS (
@@ -191,7 +191,7 @@ WHERE EXISTS (
       AND (g.item_id = ?10 OR g.item_id IS NULL)
       AND (g.user_id = ?11 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.writing.users_idusers = ?9
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?9
       ))
   )
 `
@@ -210,8 +210,8 @@ type CreateWritingForWriterParams struct {
 	GranteeID         sql.NullInt64
 }
 
-func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createWritingForWriter,
+func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createWritingForWriter,
 		arg.WritingCategoryID,
 		arg.Title,
 		arg.Abstract,
@@ -224,10 +224,6 @@ func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingF
 		arg.GrantCategoryID,
 		arg.GranteeID,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }
 
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
@@ -1308,7 +1304,7 @@ func (q *Queries) SystemSetWritingLastIndex(ctx context.Context, idwriting int64
 	return err
 }
 
-const updateWritingForWriter = `-- name: UpdateWritingForWriter :exec
+const updateWritingForWriter = `-- name: UpdateWritingForWriter :execrows
 ;
 
 UPDATE writing SET title = ?1,
@@ -1327,7 +1323,7 @@ WHERE idwriting = ?6
       AND (g.item_id = idwriting OR g.item_id IS NULL)
       AND (g.user_id = ?8 OR g.user_id IS NULL)
       AND (g.role_id IS NULL OR g.role_id IN (
-          SELECT ur.role_id FROM user_roles ur WHERE ur.writing.users_idusers = ?7
+          SELECT ur.role_id FROM user_roles ur WHERE ur.users_idusers = ?7
       ))
   )
 `
@@ -1343,8 +1339,8 @@ type UpdateWritingForWriterParams struct {
 	GranteeID  sql.NullInt64
 }
 
-func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error {
-	_, err := q.db.ExecContext(ctx, updateWritingForWriter,
+func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateWritingForWriter,
 		arg.Title,
 		arg.Abstract,
 		arg.Content,
@@ -1354,5 +1350,8 @@ func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingF
 		arg.WriterID,
 		arg.GranteeID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

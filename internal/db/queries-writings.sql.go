@@ -179,7 +179,7 @@ func (q *Queries) AdminUpdateWritingCategory(ctx context.Context, arg AdminUpdat
 	return err
 }
 
-const createWritingForWriter = `-- name: CreateWritingForWriter :execlastid
+const createWritingForWriter = `-- name: CreateWritingForWriter :execresult
 INSERT INTO writing (writing_category_id, title, abstract, writing, private, language_id, published, timezone, users_idusers)
 SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
 WHERE EXISTS (
@@ -210,8 +210,8 @@ type CreateWritingForWriterParams struct {
 	GranteeID         sql.NullInt32
 }
 
-func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createWritingForWriter,
+func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingForWriterParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createWritingForWriter,
 		arg.WritingCategoryID,
 		arg.Title,
 		arg.Abstract,
@@ -225,10 +225,6 @@ func (q *Queries) CreateWritingForWriter(ctx context.Context, arg CreateWritingF
 		arg.GranteeID,
 		arg.WriterID,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
 }
 
 const getAllWritingsByAuthorForLister = `-- name: GetAllWritingsByAuthorForLister :many
@@ -1340,7 +1336,7 @@ func (q *Queries) SystemSetWritingLastIndex(ctx context.Context, idwriting int32
 	return err
 }
 
-const updateWritingForWriter = `-- name: UpdateWritingForWriter :exec
+const updateWritingForWriter = `-- name: UpdateWritingForWriter :execrows
 UPDATE writing w
 SET title = ?,
     abstract = ?,
@@ -1374,8 +1370,8 @@ type UpdateWritingForWriterParams struct {
 	GranteeID  sql.NullInt32
 }
 
-func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) error {
-	_, err := q.db.ExecContext(ctx, updateWritingForWriter,
+func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingForWriterParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateWritingForWriter,
 		arg.Title,
 		arg.Abstract,
 		arg.Content,
@@ -1386,5 +1382,8 @@ func (q *Queries) UpdateWritingForWriter(ctx context.Context, arg UpdateWritingF
 		arg.GranteeID,
 		arg.WriterID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

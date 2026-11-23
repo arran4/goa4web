@@ -64,7 +64,7 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 		return fmt.Errorf("validate images: %w", handlers.ErrRedirectOnSamePageHandler(err))
 	}
 
-	rows, err := queries.UpdateCommentForEditor(r.Context(), db.UpdateCommentForEditorParams{
+	rows, err := cd.UpdateCommentForEditorWithWork(r.Context(), db.UpdateCommentForEditorParams{
 		LanguageID: sql.NullInt32{Int32: int32(languageId), Valid: languageId != 0},
 		Text: sql.NullString{
 			String: text,
@@ -82,14 +82,16 @@ func (EditReplyTask) Action(w http.ResponseWriter, r *http.Request) any {
 	}
 
 	if err := cd.HandleThreadUpdated(r.Context(), common.ThreadUpdatedEvent{
-		ThreadID:             thread.Idforumthread,
-		TopicID:              thread.ForumtopicIdforumtopic,
-		CommentID:            int32(commentId),
-		LabelItem:            "link",
-		LabelItemID:          int32(linkId),
-		ClearUnreadForOthers: true,
-		MarkThreadRead:       true,
-		IncludePostCount:     true,
+		ThreadID:              thread.Idforumthread,
+		TopicID:               thread.ForumtopicIdforumtopic,
+		CommentID:             int32(commentId),
+		LabelItem:             "link",
+		LabelItemID:           int32(linkId),
+		ClearUnreadForOthers:  true,
+		MarkThreadRead:        true,
+		IncludePostCount:      true,
+		ExternalLinksRecorded: cd.JobService() != nil,
+		SearchRecorded:        cd.JobService() != nil,
 	}); err != nil {
 		log.Printf("linker comment edit side effects: %v", err)
 	}

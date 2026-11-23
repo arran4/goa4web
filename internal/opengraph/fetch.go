@@ -3,7 +3,6 @@ package opengraph
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -70,7 +69,7 @@ func newSafeClient(resolver IPResolver) *http.Client {
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
-				return errors.New("stopped after 10 redirects")
+				return fmt.Errorf("%w: stopped after 10 redirects", ErrInvalidDestination)
 			}
 			if err := validateFetchURL(req.Context(), req.URL, resolver); err != nil {
 				return fmt.Errorf("redirect: %w", err)
@@ -94,7 +93,7 @@ func fetch(ctx context.Context, urlStr string, client *http.Client, resolver IPR
 	if client == nil {
 		u, err := url.Parse(urlStr)
 		if err != nil {
-			return nil, err
+			return nil, ErrInvalidDestination
 		}
 		if err := validateFetchURL(ctx, u, resolver); err != nil {
 			return nil, err
@@ -103,7 +102,7 @@ func fetch(ctx context.Context, urlStr string, client *http.Client, resolver IPR
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlStr, nil)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidDestination
 	}
 	req.Header.Set("User-Agent", "goa4web/1.0 (+https://github.com/arran4/goa4web)")
 	resp, err := client.Do(req)
@@ -115,15 +114,18 @@ func fetch(ctx context.Context, urlStr string, client *http.Client, resolver IPR
 	}
 	defer func() { _ = resp.Body.Close() }()
 
+	if err := CheckHTTPStatus(resp); err != nil {
+		return nil, err
+	}
 	return Parse(io.LimitReader(resp.Body, 5*1024*1024))
 }
 
 func validateFetchURL(ctx context.Context, u *url.URL, resolver IPResolver) error {
 	if u == nil || (u.Scheme != "http" && u.Scheme != "https") {
-		return fmt.Errorf("unsupported URL scheme")
+		return fmt.Errorf("%w: unsupported URL scheme", ErrInvalidDestination)
 	}
 	if u.Hostname() == "" {
-		return fmt.Errorf("URL host required")
+		return fmt.Errorf("%w: URL host required", ErrInvalidDestination)
 	}
 	_, err := lookupPublicIPs(ctx, resolver, u.Hostname())
 	return err
@@ -140,7 +142,7 @@ func lookupPublicIPs(ctx context.Context, resolver IPResolver, host string) ([]n
 	for _, addr := range ips {
 		ip := addr.IP
 		if ip.IsPrivate() || ip.IsLoopback() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
-			return nil, fmt.Errorf("blocked internal ip: %s", ip)
+			return nil, fmt.Errorf("%w: non-public address", ErrInvalidDestination)
 		}
 	}
 	return ips, nil

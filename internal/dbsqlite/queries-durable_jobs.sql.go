@@ -153,6 +153,30 @@ func (q *Queries) AdminRetryDurableJob(ctx context.Context, id int64) (int64, er
 	return result.RowsAffected()
 }
 
+const adminSetImageCacheStateForDurableJob = `-- name: AdminSetImageCacheStateForDurableJob :exec
+UPDATE image_cache_entries
+SET status = ?1, next_attempt_at = NULL, error_message = NULL
+WHERE image_cache_entries.status = ?2
+  AND image_cache_entries.source_kind = 'remote'
+  AND EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.id = ?3 AND job.job_type = 'image_cache'
+        AND ((job.target_type = 'image_cache_entry' AND job.target_key = image_cache_entries.id)
+          OR (job.target_type = 'image_cache' AND job.target_key = image_cache_entries.source_url))
+  )
+`
+
+type AdminSetImageCacheStateForDurableJobParams struct {
+	NextStatus     string
+	PreviousStatus string
+	JobID          int64
+}
+
+func (q *Queries) AdminSetImageCacheStateForDurableJob(ctx context.Context, arg AdminSetImageCacheStateForDurableJobParams) error {
+	_, err := q.db.ExecContext(ctx, adminSetImageCacheStateForDurableJob, arg.NextStatus, arg.PreviousStatus, arg.JobID)
+	return err
+}
+
 const systemBumpActiveDurableJob = `-- name: SystemBumpActiveDurableJob :execrows
 UPDATE durable_jobs
 SET
@@ -276,6 +300,7 @@ SET
 WHERE id = ?
   AND status = 'running'
   AND lease_token = ?
+  AND lease_expires_at > ?5
 `
 
 type SystemCompleteDurableJobFencedParams struct {
@@ -283,6 +308,7 @@ type SystemCompleteDurableJobFencedParams struct {
 	CompletedAt sql.NullTime
 	ID          int64
 	LeaseToken  sql.NullString
+	NowAt       sql.NullTime
 }
 
 func (q *Queries) SystemCompleteDurableJobFenced(ctx context.Context, arg SystemCompleteDurableJobFencedParams) (int64, error) {
@@ -291,6 +317,7 @@ func (q *Queries) SystemCompleteDurableJobFenced(ctx context.Context, arg System
 		arg.CompletedAt,
 		arg.ID,
 		arg.LeaseToken,
+		arg.NowAt,
 	)
 	if err != nil {
 		return 0, err
@@ -336,6 +363,7 @@ SET
 WHERE id = ?
   AND status = 'running'
   AND lease_token = ?
+  AND lease_expires_at > ?5
 `
 
 type SystemFailDurableJobFencedParams struct {
@@ -343,6 +371,7 @@ type SystemFailDurableJobFencedParams struct {
 	CompletedAt sql.NullTime
 	ID          int64
 	LeaseToken  sql.NullString
+	NowAt       sql.NullTime
 }
 
 func (q *Queries) SystemFailDurableJobFenced(ctx context.Context, arg SystemFailDurableJobFencedParams) (int64, error) {
@@ -351,11 +380,27 @@ func (q *Queries) SystemFailDurableJobFenced(ctx context.Context, arg SystemFail
 		arg.CompletedAt,
 		arg.ID,
 		arg.LeaseToken,
+		arg.NowAt,
 	)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected()
+}
+
+const systemGetActiveDurableJobIDByDedupeKey = `-- name: SystemGetActiveDurableJobIDByDedupeKey :one
+SELECT id
+FROM durable_jobs
+WHERE active_dedupe_key = ?
+  AND status IN ('pending', 'running')
+LIMIT 1
+`
+
+func (q *Queries) SystemGetActiveDurableJobIDByDedupeKey(ctx context.Context, activeDedupeKey sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemGetActiveDurableJobIDByDedupeKey, activeDedupeKey)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const systemGetCommentTextForSearchIndex = `-- name: SystemGetCommentTextForSearchIndex :one
@@ -726,27 +771,112 @@ func (q *Queries) SystemListActiveAdminUserIDs(ctx context.Context) ([]int64, er
 	return items, nil
 }
 
+const systemLockActiveDurableJobLease = `-- name: SystemLockActiveDurableJobLease :one
+SELECT id FROM durable_jobs
+WHERE id = ?1 AND status = 'running'
+  AND lease_token = ?2 AND lease_expires_at > ?3
+`
+
+type SystemLockActiveDurableJobLeaseParams struct {
+	ID         int64
+	LeaseToken sql.NullString
+	NowAt      sql.NullTime
+}
+
+func (q *Queries) SystemLockActiveDurableJobLease(ctx context.Context, arg SystemLockActiveDurableJobLeaseParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, systemLockActiveDurableJobLease, arg.ID, arg.LeaseToken, arg.NowAt)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const systemMarkSearchTargetIndexed = `-- name: SystemMarkSearchTargetIndexed :execrows
 UPDATE search_dirty_targets
-SET indexed_revision = ?, updated_at = CURRENT_TIMESTAMP
-WHERE target_type = ?
-  AND target_id = ?
-  AND indexed_revision < ?
+SET indexed_revision = ?1, updated_at = CURRENT_TIMESTAMP
+WHERE target_type = ?2
+  AND target_id = ?3
+  AND revision = ?1
+  AND indexed_revision < ?1
 `
 
 type SystemMarkSearchTargetIndexedParams struct {
-	IndexedRevision   int64
-	TargetType        string
-	TargetID          int64
-	IndexedRevision_2 int64
+	IndexedRevision int64
+	TargetType      string
+	TargetID        int64
 }
 
 func (q *Queries) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemMarkSearchTargetIndexedParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemMarkSearchTargetIndexed,
-		arg.IndexedRevision,
-		arg.TargetType,
-		arg.TargetID,
-		arg.IndexedRevision_2,
+	result, err := q.db.ExecContext(ctx, systemMarkSearchTargetIndexed, arg.IndexedRevision, arg.TargetType, arg.TargetID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const systemPruneTerminalDurableJobs = `-- name: SystemPruneTerminalDurableJobs :execrows
+DELETE FROM durable_jobs
+WHERE durable_jobs.status IN ('completed', 'failed', 'cancelled')
+  AND (
+    durable_jobs.completed_at < ?1
+    OR durable_jobs.id IN (
+        SELECT ranked.id FROM (
+            SELECT history.id, ROW_NUMBER() OVER (PARTITION BY history.job_type ORDER BY history.completed_at DESC, history.id DESC) AS history_rank
+            FROM durable_jobs history
+            WHERE history.status IN ('completed', 'failed', 'cancelled')
+        ) ranked
+        WHERE history_rank > CAST(?2 AS INTEGER)
+    )
+  )
+`
+
+type SystemPruneTerminalDurableJobsParams struct {
+	Cutoff     sql.NullTime
+	MaxPerKind int64
+}
+
+func (q *Queries) SystemPruneTerminalDurableJobs(ctx context.Context, arg SystemPruneTerminalDurableJobsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemPruneTerminalDurableJobs, arg.Cutoff, arg.MaxPerKind)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const systemQueueObservedExternalLinkJob = `-- name: SystemQueueObservedExternalLinkJob :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'external_link', ?1, ?2, 'external_link',
+       ?3, ?4, ?5,
+       ?6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM (SELECT 1 AS anchor_value) anchor
+LEFT JOIN durable_job_cooldowns cooldown ON cooldown.dedupe_key = ?7
+WHERE cooldown.dedupe_key IS NULL OR cooldown.cooldown_until <= ?8
+ON CONFLICT(active_dedupe_key) DO NOTHING
+`
+
+type SystemQueueObservedExternalLinkJobParams struct {
+	DedupeKey   string
+	ActiveKey   sql.NullString
+	TargetKey   string
+	MaxAttempts int64
+	RunAfter    time.Time
+	ActorID     sql.NullInt64
+	CheckKey    string
+	CooldownAt  time.Time
+}
+
+func (q *Queries) SystemQueueObservedExternalLinkJob(ctx context.Context, arg SystemQueueObservedExternalLinkJobParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemQueueObservedExternalLinkJob,
+		arg.DedupeKey,
+		arg.ActiveKey,
+		arg.TargetKey,
+		arg.MaxAttempts,
+		arg.RunAfter,
+		arg.ActorID,
+		arg.CheckKey,
+		arg.CooldownAt,
 	)
 	if err != nil {
 		return 0, err
@@ -754,15 +884,55 @@ func (q *Queries) SystemMarkSearchTargetIndexed(ctx context.Context, arg SystemM
 	return result.RowsAffected()
 }
 
-const systemPruneTerminalDurableJobsBefore = `-- name: SystemPruneTerminalDurableJobsBefore :execrows
-DELETE FROM durable_jobs
-WHERE status IN ('completed', 'failed', 'cancelled')
-  AND completed_at IS NOT NULL
-  AND completed_at < ?
+const systemQueuePendingImageCacheJobs = `-- name: SystemQueuePendingImageCacheJobs :execrows
+INSERT INTO durable_jobs (
+    job_type, dedupe_key, active_dedupe_key, target_type, target_key,
+    max_attempts, run_after, created_by_user_id, created_at, updated_at
+)
+SELECT 'image_cache', ('image_cache_entry:' || img.id),
+       ('image_cache_entry:' || img.id), 'image_cache_entry', img.id,
+       ?1, ?2, ?3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM image_cache_entries img
+LEFT JOIN durable_job_cooldowns cooldown
+  ON cooldown.dedupe_key IN (('image_cache_entry:' || img.id), ('image_cache:' || img.source_url))
+  AND cooldown.cooldown_until > ?4
+WHERE img.source_kind = 'remote'
+  AND img.source_url IS NOT NULL AND img.source_url <> ''
+  AND img.id = COALESCE(?5, img.id)
+  AND (
+      (img.status = 'pending' AND (img.next_attempt_at IS NULL OR img.next_attempt_at <= ?6))
+      OR (img.status = 'failed' AND ?7 = TRUE)
+  )
+  AND NOT EXISTS (
+      SELECT 1 FROM durable_jobs job
+      WHERE job.active_dedupe_key IN (('image_cache_entry:' || img.id), ('image_cache:' || img.source_url))
+  )
+  AND cooldown.dedupe_key IS NULL
+ORDER BY img.created_at, img.id
+LIMIT 10
+ON CONFLICT(active_dedupe_key) DO NOTHING
 `
 
-func (q *Queries) SystemPruneTerminalDurableJobsBefore(ctx context.Context, completedAt sql.NullTime) (int64, error) {
-	result, err := q.db.ExecContext(ctx, systemPruneTerminalDurableJobsBefore, completedAt)
+type SystemQueuePendingImageCacheJobsParams struct {
+	MaxAttempts int64
+	RunAfter    time.Time
+	ActorID     sql.NullInt64
+	CooldownAt  time.Time
+	EntryID     sql.NullString
+	DueAt       sql.NullTime
+	RetryFailed interface{}
+}
+
+func (q *Queries) SystemQueuePendingImageCacheJobs(ctx context.Context, arg SystemQueuePendingImageCacheJobsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, systemQueuePendingImageCacheJobs,
+		arg.MaxAttempts,
+		arg.RunAfter,
+		arg.ActorID,
+		arg.CooldownAt,
+		arg.EntryID,
+		arg.DueAt,
+		arg.RetryFailed,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -835,6 +1005,7 @@ SET
 WHERE id = ?
   AND status = 'running'
   AND lease_token = ?
+  AND lease_expires_at > ?5
 `
 
 type SystemRetryDurableJobFencedParams struct {
@@ -842,6 +1013,7 @@ type SystemRetryDurableJobFencedParams struct {
 	LastError  sql.NullString
 	ID         int64
 	LeaseToken sql.NullString
+	NowAt      sql.NullTime
 }
 
 func (q *Queries) SystemRetryDurableJobFenced(ctx context.Context, arg SystemRetryDurableJobFencedParams) (int64, error) {
@@ -850,6 +1022,7 @@ func (q *Queries) SystemRetryDurableJobFenced(ctx context.Context, arg SystemRet
 		arg.LastError,
 		arg.ID,
 		arg.LeaseToken,
+		arg.NowAt,
 	)
 	if err != nil {
 		return 0, err

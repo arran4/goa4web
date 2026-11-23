@@ -26,6 +26,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
 -- name: AdminScrubComment :exec
 UPDATE comments SET text = ?, deleted_at = NOW() WHERE idcomments = ?;
 
+-- name: AdminUpdateCommentText :exec
+UPDATE comments SET text = ? WHERE idcomments = ?;
+
 -- name: AdminListPendingDeactivatedComments :many
 SELECT idcomments, text FROM deactivated_comments
 WHERE users_idusers = ? AND restored_at IS NULL

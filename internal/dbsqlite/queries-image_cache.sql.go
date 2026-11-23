@@ -95,67 +95,6 @@ func (q *Queries) GetImageCacheEntry(ctx context.Context, id string) (*ImageCach
 	return &i, err
 }
 
-const listDuePendingImageCacheEntries = `-- name: ListDuePendingImageCacheEntries :many
-SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, uploaded_image_id, error_message, retry_count, last_attempt_at, next_attempt_at
-FROM image_cache_entries
-WHERE source_kind = 'remote'
-  AND status = 'pending'
-  AND retry_count < ?
-  AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
-ORDER BY created_at ASC
-LIMIT ?
-`
-
-type ListDuePendingImageCacheEntriesParams struct {
-	RetryCount    int64
-	NextAttemptAt sql.NullTime
-	Limit         int64
-}
-
-func (q *Queries) ListDuePendingImageCacheEntries(ctx context.Context, arg ListDuePendingImageCacheEntriesParams) ([]*ImageCacheEntry, error) {
-	rows, err := q.db.QueryContext(ctx, listDuePendingImageCacheEntries, arg.RetryCount, arg.NextAttemptAt, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*ImageCacheEntry
-	for rows.Next() {
-		var i ImageCacheEntry
-		if err := rows.Scan(
-			&i.ID,
-			&i.SourceUrl,
-			&i.SourceKind,
-			&i.Status,
-			&i.CreatedAt,
-			&i.LastUsedAt,
-			&i.FetchedAt,
-			&i.ExpiresAt,
-			&i.ContentExpiresAt,
-			&i.ContentType,
-			&i.SizeBytes,
-			&i.Width,
-			&i.Height,
-			&i.Checksum,
-			&i.ThumbnailID,
-			&i.UploadedImageID,
-			&i.ErrorMessage,
-			&i.RetryCount,
-			&i.LastAttemptAt,
-			&i.NextAttemptAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listExpiredExternalImageCacheEntries = `-- name: ListExpiredExternalImageCacheEntries :many
 SELECT id, source_url, source_kind, status, created_at, last_used_at, fetched_at, expires_at, content_expires_at, content_type, size_bytes, width, height, checksum, thumbnail_id, uploaded_image_id, error_message, retry_count, last_attempt_at, next_attempt_at
 FROM image_cache_entries
@@ -275,7 +214,7 @@ SET status = CASE WHEN retry_count + 1 >= ? THEN 'failed' ELSE 'pending' END,
     retry_count = retry_count + 1,
     last_attempt_at = ?,
     next_attempt_at = CASE WHEN retry_count + 1 >= ? THEN NULL ELSE ? END
-WHERE id = ?
+WHERE id = ? AND status <> 'cancelled'
 `
 
 type RecordImageCacheFetchFailureParams struct {

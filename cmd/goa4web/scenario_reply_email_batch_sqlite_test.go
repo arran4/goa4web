@@ -50,7 +50,8 @@ func TestScenarioBatchesOptionalReplyEmailAtWindowBoundary(t *testing.T) {
 	cfg := *env.server.Config
 	cfg.EmailEnabled = true
 	require.Equal(t, 15, cfg.ForumReplyEmailBatchMinutes)
-	now := time.Date(2026, 11, 21, 10, 1, 0, 0, time.UTC)
+	windowStart := time.Now().UTC().Truncate(15 * time.Minute).Add(15 * time.Minute)
+	now := windowStart.Add(time.Minute)
 	provider := &mock.Provider{}
 	newWorker := func(q db.Querier, p email.Provider) *notifications.Notifier {
 		return notifications.New(notifications.WithQueries(q), notifications.WithConfig(&cfg),
@@ -87,7 +88,7 @@ func TestScenarioBatchesOptionalReplyEmailAtWindowBoundary(t *testing.T) {
 	require.Empty(t, messages, "optional replies must wait for the batch, including replayed activity")
 
 	worker := newWorker(queries, provider)
-	now = time.Date(2026, 11, 21, 10, 14, 59, 0, time.UTC)
+	now = windowStart.Add(15*time.Minute - time.Second)
 	require.NoError(t, worker.ProcessForumReplyEmailWindow(ctx))
 	require.Empty(t, provider.Messages)
 	now = now.Add(time.Second)

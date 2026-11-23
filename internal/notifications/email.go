@@ -163,6 +163,42 @@ func (n *Notifier) queueEmail(ctx context.Context, userID *int32, direct bool, m
 	return nil
 }
 
+// queueDigestEmail persists the exact notification snapshot before queueing a
+// digest. The worker acknowledges that snapshot only after the provider accepts
+// the email, so a queue failure cannot dismiss a notification.
+func (n *Notifier) queueDigestEmail(ctx context.Context, userID int32, markRead bool, notifications []*db.Notification, msg []byte) error {
+	deliveryID, err := n.Queries.SystemCreateDigestDelivery(ctx, db.SystemCreateDigestDeliveryParams{
+		UserID:               userID,
+		DismissNotifications: markRead,
+	})
+	if err != nil {
+		return err
+	}
+	for _, notification := range notifications {
+		if err := n.Queries.SystemCreateDigestDeliveryNotification(ctx, db.SystemCreateDigestDeliveryNotificationParams{
+			DigestDeliveryID: int32(deliveryID),
+			NotificationID:   notification.ID,
+		}); err != nil {
+			return err
+		}
+	}
+	if err := n.Queries.SystemInsertDigestPendingEmail(ctx, db.SystemInsertDigestPendingEmailParams{
+		ToUserID:         sql.NullInt32{Int32: userID, Valid: true},
+		Body:             string(msg),
+		DirectEmail:      false,
+		DigestDeliveryID: sql.NullInt32{Int32: int32(deliveryID), Valid: true},
+	}); err != nil {
+		return err
+	}
+	evt := eventbus.EmailQueueEvent{Time: time.Now()}
+	if n.Bus != nil {
+		if err := n.Bus.Publish(evt); err != nil && err != eventbus.ErrBusClosed {
+			log.Printf("publish email queue event: %v", err)
+		}
+	}
+	return nil
+}
+
 // sendSubscriberEmail queues an email notification for a subscriber.
 func (n *Notifier) sendSubscriberEmail(ctx context.Context, userID int32, evt eventbus.TaskEvent, et *EmailTemplates) error {
 	user, err := n.Queries.SystemGetUserByID(ctx, userID)

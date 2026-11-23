@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/arran4/goa4web/core/consts"
+	"github.com/arran4/goa4web/database"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -89,6 +90,43 @@ func TestMigrationFileNaming(t *testing.T) {
 		if _, ok := sqliteVersions[v]; !ok {
 			t.Errorf("Missing SQLite migration for version %04d", v)
 		}
+	}
+}
+
+func TestCanonicalMySQLSchemaGeneratedColumnMatchesMariaDBSyntax(t *testing.T) {
+	schema := string(database.SchemaMySQL)
+	if strings.Contains(schema, "`url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED NOT NULL") {
+		t.Fatal("canonical MySQL schema retains unsupported generated-column nullability")
+	}
+	if !strings.Contains(schema, "`url_hash` binary(32) GENERATED ALWAYS AS (unhex(sha2(`url`,256))) STORED") {
+		t.Fatal("canonical MySQL schema is missing the generated url_hash column")
+	}
+	if strings.Contains(schema, "`email` tinytext NOT NULL DEFAULT ''") {
+		t.Fatal("canonical MySQL schema retains an unsupported TEXT default for user email")
+	}
+	if !strings.Contains(schema, "`email` varchar(255) NOT NULL DEFAULT ''") {
+		t.Fatal("canonical MySQL schema is missing the compatible user email definition")
+	}
+}
+
+func TestCanonicalMySQLSchemaExecutesSuccessfully(t *testing.T) {
+	dsn := os.Getenv("GOA4WEB_TEST_MYSQL_DSN")
+	if dsn == "" {
+		t.Skip("set GOA4WEB_TEST_MYSQL_DSN to run MySQL/MariaDB canonical schema execution tests")
+	}
+	db := openTemporaryMySQLDatabase(t, dsn)
+	if _, err := db.Exec(string(database.SchemaMySQL)); err != nil {
+		t.Fatalf("execute canonical MySQL schema: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO external_links (url) VALUES ('https://example.com/canonical-schema')`); err != nil {
+		t.Fatalf("insert external link using canonical generated hash: %v", err)
+	}
+	var hashCount int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM external_links WHERE url_hash = UNHEX(SHA2('https://example.com/canonical-schema', 256))`).Scan(&hashCount); err != nil {
+		t.Fatalf("query canonical generated hash: %v", err)
+	}
+	if hashCount != 1 {
+		t.Fatalf("generated hash matches=%d, want 1", hashCount)
 	}
 }
 
@@ -267,6 +305,48 @@ func TestMigration0099ExecutesSuccessfully(t *testing.T) {
 	}
 	if tableCount != 0 {
 		t.Fatalf("pending_actions remains after Down migration")
+	}
+}
+
+func TestMigration0100ExecutesSuccessfully(t *testing.T) {
+	dsn := os.Getenv("GOA4WEB_TEST_MYSQL_DSN")
+	if dsn == "" {
+		t.Skip("set GOA4WEB_TEST_MYSQL_DSN to run MySQL/MariaDB migration execution tests")
+	}
+	db := openTemporaryMySQLDatabase(t, dsn)
+	if _, err := db.Exec(`CREATE TABLE user_emails (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, email TINYTEXT NOT NULL)`); err != nil {
+		t.Fatalf("create pre-0100 user_emails: %v", err)
+	}
+	if _, err := db.Exec(`CREATE TABLE schema_version (version INT NOT NULL)`); err != nil {
+		t.Fatalf("create schema_version: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO schema_version (version) VALUES (99)`); err != nil {
+		t.Fatalf("seed schema_version: %v", err)
+	}
+
+	contents, err := FS.ReadFile("0100_mysql.sql")
+	if err != nil {
+		t.Fatalf("read migration: %v", err)
+	}
+	upSQL, _ := migrationSections(string(contents))
+	for _, statement := range strings.Split(upSQL, ";") {
+		if statement = strings.TrimSpace(statement); statement != "" {
+			if _, err := db.Exec(statement); err != nil {
+				t.Fatalf("execute Up statement %q: %v", statement, err)
+			}
+		}
+	}
+
+	if _, err := db.Exec(`INSERT INTO user_emails (user_id) VALUES (1)`); err != nil {
+		t.Fatalf("insert user email using default: %v", err)
+	}
+	var email string
+	if err := db.QueryRow(`SELECT email FROM user_emails WHERE user_id = 1`).Scan(&email); err != nil || email != "" {
+		t.Fatalf("default email = %q, err %v", email, err)
+	}
+	var version int
+	if err := db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&version); err != nil || version != 100 {
+		t.Fatalf("expected schema version 100 after Up migration, got %d, err %v", version, err)
 	}
 }
 

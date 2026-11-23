@@ -950,3 +950,4 @@ CREATE TABLE IF NOT EXISTS search_dirty_targets (
 );
 
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
+INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);

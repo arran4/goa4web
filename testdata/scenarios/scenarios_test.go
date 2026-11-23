@@ -9,7 +9,28 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/arran4/goa4web/internal/scenario"
 )
+
+func TestCommittedScenariosValidate(t *testing.T) {
+	err := fs.WalkDir(FS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || filepath.Base(path) != "scenario.txtar" {
+			return nil
+		}
+		sc, err := scenario.ParseFS(FS, path)
+		if err != nil {
+			return err
+		}
+		return scenario.Validate(sc)
+	})
+	if err != nil {
+		t.Fatalf("validate committed scenarios: %v", err)
+	}
+}
 
 func TestCommittedImageAssetsDecode(t *testing.T) {
 	imageExts := map[string]bool{

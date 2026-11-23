@@ -1,9 +1,13 @@
 package scenario
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -59,6 +63,84 @@ At: 2026-08-01T09:03:00Z
 	}
 	runner := NewRunner(common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig()))
 	err = runner.Preflight(s)
+	if err == nil || !strings.Contains(err.Error(), "validate image asset") {
+		t.Fatalf("expected invalid image preflight failure, got %v", err)
+	}
+}
+
+func TestRunnerPreflightComposedScenarioUsesEventAssetFS(t *testing.T) {
+	scenarioText := `-- scenario.meta --
+Format: goa4web-scenario/v1
+Name: composed-image-asset
+
+-- 01-alice.event --
+Op: user.create
+Ref: alice
+Username: alice
+Email: alice@example.test
+Password: password
+At: 2026-08-01T09:00:00Z
+
+-- 02-bob.event --
+Op: user.create
+Ref: bob
+Username: bob
+Email: bob@example.test
+Password: password
+At: 2026-08-01T09:01:00Z
+
+-- 03-topic.event --
+Op: private-forum.create
+Ref: staff-room
+Actor: alice
+Participant: bob
+Title: Staff Room
+At: 2026-08-01T09:02:00Z
+
+-- 04-thread.event --
+Op: forum.thread.create
+Actor: alice
+Topic: staff-room
+Asset: assets/welcome.jpg
+At: 2026-08-01T09:03:00Z
+`
+
+	img := image.NewRGBA(image.Rect(0, 0, 4, 3))
+	img.Set(0, 0, color.RGBA{R: 0x10, G: 0x60, B: 0xa0, A: 0xff})
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, nil); err != nil {
+		t.Fatalf("encode JPEG: %v", err)
+	}
+
+	validBase, err := Parse([]byte(scenarioText), fstest.MapFS{
+		"assets/welcome.jpg": &fstest.MapFile{Data: buf.Bytes()},
+	})
+	if err != nil {
+		t.Fatalf("parse valid scenario: %v", err)
+	}
+	composedValid, err := Compose(validBase)
+	if err != nil {
+		t.Fatalf("compose valid scenario: %v", err)
+	}
+	if composedValid.FS != nil {
+		t.Fatalf("expected Compose to leave Scenario.FS nil and attach FS per-event")
+	}
+	runner := NewRunner(common.NewCoreData(context.Background(), nil, config.NewRuntimeConfig()))
+	if err := runner.Preflight(composedValid); err != nil {
+		t.Fatalf("expected Preflight to resolve composed event FS, got %v", err)
+	}
+
+	invalidBase, err := Parse([]byte(scenarioText), fstest.MapFS{
+		"assets/welcome.jpg": &fstest.MapFile{Data: []byte("not a JPEG")},
+	})
+	if err != nil {
+		t.Fatalf("parse invalid scenario: %v", err)
+	}
+	composedInvalid, err := Compose(invalidBase)
+	if err != nil {
+		t.Fatalf("compose invalid scenario: %v", err)
+	}
+	err = runner.Preflight(composedInvalid)
 	if err == nil || !strings.Contains(err.Error(), "validate image asset") {
 		t.Fatalf("expected invalid image preflight failure, got %v", err)
 	}

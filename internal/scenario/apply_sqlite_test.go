@@ -261,8 +261,8 @@ At: 2026-08-01T09:15:00Z
 		t.Fatalf("runner.Apply failed: %v", err)
 	}
 
-	if res.EventsApplied != 13 {
-		t.Errorf("expected 13 events applied, got %d", res.EventsApplied)
+	if res.EventsApplied != 14 {
+		t.Errorf("expected 14 events applied, got %d", res.EventsApplied)
 	}
 
 	// Step C: Verify that baseline user STILL has no privateforum permissions after scenario apply

@@ -107,7 +107,7 @@ func (r *Runner) Preflight(s *Scenario) error {
 
 	for _, evt := range s.Events {
 		if data, ok := evt.OpData.(*ForumThreadCreateData); ok {
-			if err := preflightImageAssets(s.FS, data.Assets); err != nil {
+			if err := preflightImageAssets(eventAssetFS(s, evt), data.Assets); err != nil {
 				return fmt.Errorf("preflight %s: %w", evt.File, err)
 			}
 		}
@@ -131,7 +131,7 @@ func (r *Runner) Apply(ctx context.Context, s *Scenario) (*ApplyResult, error) {
 
 	applied := 0
 	for _, evt := range s.Events {
-		if err := r.applyEvent(ctx, s.FS, evt); err != nil {
+		if err := r.applyEvent(ctx, eventAssetFS(s, evt), evt); err != nil {
 			return nil, fmt.Errorf("apply event %s (%s): %w", evt.File, evt.Op, err)
 		}
 		applied++
@@ -142,6 +142,16 @@ func (r *Runner) Apply(ctx context.Context, s *Scenario) (*ApplyResult, error) {
 		EventsApplied: applied,
 		Registry:      r.refRegistry,
 	}, nil
+}
+
+func eventAssetFS(s *Scenario, evt *Event) fs.FS {
+	if evt != nil && evt.FS != nil {
+		return evt.FS
+	}
+	if s != nil {
+		return s.FS
+	}
+	return nil
 }
 
 func (r *Runner) applyEvent(ctx context.Context, assets fs.FS, evt *Event) error {

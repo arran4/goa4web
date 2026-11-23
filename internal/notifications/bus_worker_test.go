@@ -379,6 +379,7 @@ func TestNotifySubscribersNews(t *testing.T) {
 
 	cfg := config.NewRuntimeConfig()
 	cfg.EmailFrom = "from@example.com"
+	cfg.BaseURL = "https://example.com"
 	cfg.NotificationsEnabled = true
 
 	task := newsSubscriberTask{TaskString: tasks.TaskString("Reply")}
@@ -399,6 +400,15 @@ func TestNotifySubscribersNews(t *testing.T) {
 	assertSubscriberCall(t, q.ListSubscribersForPatternsParams, "internal", patterns)
 	assertCallCount(t, "SystemGetUserByID", len(q.SystemGetUserByIDCalls), 3)
 	assertQueuedEmails(t, q.InsertPendingEmailCalls, []int32{2, 3, 4})
+	for _, queued := range q.InsertPendingEmailCalls {
+		message, err := mail.ReadMessage(strings.NewReader(queued.Body))
+		if err != nil {
+			t.Fatalf("read queued subscriber email: %v", err)
+		}
+		if got := message.Header.Get("List-Unsubscribe"); got != "<https://example.com/usr/subscriptions>" {
+			t.Errorf("List-Unsubscribe=%q, want authenticated subscription-management URL", got)
+		}
+	}
 	assertNotifications(t, q.SystemCreateNotificationCalls, []int32{2, 3, 4}, evt.Path)
 }
 

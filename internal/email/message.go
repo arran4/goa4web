@@ -9,6 +9,7 @@ import (
 	"mime/quotedprintable"
 	"net/mail"
 	"net/textproto"
+	"net/url"
 	"strings"
 	"time"
 
@@ -27,8 +28,9 @@ func SetDefaultFromName(addr string) {
 
 // MessageOptions configures optional RFC-style headers for an email message.
 type MessageOptions struct {
-	AutoSubmitted bool
-	ReplyTo       *mail.Address
+	AutoSubmitted      bool
+	ReplyTo            *mail.Address
+	ListUnsubscribeURL string
 }
 
 // MessageOption configures optional message metadata.
@@ -45,6 +47,13 @@ func WithAutoSubmitted() MessageOption {
 func WithReplyTo(address mail.Address) MessageOption {
 	return func(options *MessageOptions) {
 		options.ReplyTo = &address
+	}
+}
+
+// WithListUnsubscribe adds a standards-compliant subscription-management link.
+func WithListUnsubscribe(rawURL string) MessageOption {
+	return func(options *MessageOptions) {
+		options.ListUnsubscribeURL = rawURL
 	}
 }
 
@@ -76,6 +85,16 @@ func BuildMessage(from, to mail.Address, subject, textBody, htmlBody string, opt
 			return nil, fmt.Errorf("parse Reply-To address: %w", err)
 		}
 		hdr.Set("Reply-To", replyTo.String())
+	}
+	if options.ListUnsubscribeURL != "" {
+		if strings.ContainsAny(options.ListUnsubscribeURL, "\r\n<> \t") {
+			return nil, fmt.Errorf("invalid List-Unsubscribe URL")
+		}
+		unsubURL, err := url.ParseRequestURI(options.ListUnsubscribeURL)
+		if err != nil || unsubURL.Scheme != "https" || unsubURL.Host == "" {
+			return nil, fmt.Errorf("invalid List-Unsubscribe URL")
+		}
+		hdr.Set("List-Unsubscribe", "<"+unsubURL.String()+">")
 	}
 
 	domain := "localhost"

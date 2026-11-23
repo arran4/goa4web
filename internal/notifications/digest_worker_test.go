@@ -1,7 +1,10 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
+	"database/sql/driver"
+	"net/mail"
 	"testing"
 	"time"
 
@@ -151,5 +154,64 @@ func TestNotificationDigestWorker_DisabledDismissalPersistsOptOut(t *testing.T) 
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("disabled dismissal wrote unexpected state: %v", err)
+	}
+}
+
+type captureStringArg struct {
+	val string
+}
+
+func (c *captureStringArg) Match(v driver.Value) bool {
+	s, ok := v.(string)
+	if !ok {
+		return false
+	}
+	c.val = s
+	return true
+}
+
+func TestNotificationDigestWorker_MarksDigestEmailAutomatic(t *testing.T) {
+	conn, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	q := db.New(conn)
+	cfg := config.NewRuntimeConfig()
+	cfg.EmailFrom = "from@example.com"
+	n := New(WithQueries(q), WithConfig(cfg))
+	userID := int32(101)
+	rows := sqlmock.NewRows([]string{"id", "users_idusers", "link", "message", "created_at", "read_at"}).
+		AddRow(1, userID, "/link", "Test Notification", time.Now(), nil)
+	mock.ExpectQuery("SELECT id, users_idusers").
+		WithArgs(userID, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnRows(rows)
+	mock.ExpectExec("INSERT INTO digest_deliveries").
+		WithArgs(userID, true).
+		WillReturnResult(sqlmock.NewResult(25, 1))
+	mock.ExpectExec("INSERT INTO digest_delivery_notifications").
+		WithArgs(int32(25), int32(1)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	captured := &captureStringArg{}
+	mock.ExpectExec("INSERT INTO pending_emails").
+		WithArgs(userID, captured, false, int32(25)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE preferences SET last_digest_sent_at").
+		WithArgs(sqlmock.AnyArg(), userID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	if err := n.SendDigestToUser(context.Background(), userID, "user@example.com", true, false, DigestDaily); err != nil {
+		t.Fatalf("SendDigestToUser: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("expectations: %v", err)
+	}
+	parsed, err := mail.ReadMessage(bytes.NewBufferString(captured.val))
+	if err != nil {
+		t.Fatalf("read digest message: %v", err)
+	}
+	if got := parsed.Header.Get("Auto-Submitted"); got != "auto-generated" {
+		t.Errorf("digest Auto-Submitted=%q, want auto-generated", got)
 	}
 }

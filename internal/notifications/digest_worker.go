@@ -257,7 +257,7 @@ func (n *Notifier) SendDigestToUser(ctx context.Context, userID int32, email str
 		DigestTitle:   digestTitle,
 	}
 
-	msg, err := n.RenderEmailFromTemplates(ctx, email, et, data)
+	msg, err := n.RenderEmailFromTemplates(ctx, email, et, data, WithAutomaticDelivery())
 	if err != nil {
 		return err
 	}

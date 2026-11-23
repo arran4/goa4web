@@ -3,7 +3,9 @@ package dbstart
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/arran4/goa4web/config"
 	"github.com/arran4/goa4web/handlers"
@@ -33,12 +35,38 @@ func ValidateMigrationConnection(ctx context.Context, db *sql.DB, driverName, ds
 	if cfg.MultiStatements {
 		return nil
 	}
-	legacyVersion, err := legacySchemaVersion(ctx, db)
+	currentVersion, err := currentMigrationVersion(ctx, db)
 	if err != nil {
 		return fmt.Errorf("inspect schema version before migration: %w", err)
 	}
-	if legacyVersion >= handlers.ExpectedSchemaVersion {
+	if currentVersion >= handlers.ExpectedSchemaVersion {
 		return nil
 	}
-	return fmt.Errorf("schema migration from version %d to %d requires multiStatements=true on the MySQL migration connection; configure DB_MIGRATION_CONN (preferred) or DB_CONN explicitly; Goa4Web will not modify either DSN", legacyVersion, handlers.ExpectedSchemaVersion)
+	return fmt.Errorf("schema migration from version %d to %d requires multiStatements=true on the MySQL migration connection; configure DB_MIGRATION_CONN (preferred) or DB_CONN explicitly; Goa4Web will not modify either DSN", currentVersion, handlers.ExpectedSchemaVersion)
+}
+
+func currentMigrationVersion(ctx context.Context, db *sql.DB) (int, error) {
+	var gooseVersion int
+	err := db.QueryRowContext(ctx, "SELECT COALESCE(MAX(version_id), 0) FROM goose_db_version WHERE is_applied = 1").Scan(&gooseVersion)
+	if err != nil {
+		if !isMissingTableError(err) {
+			return 0, err
+		}
+		return legacySchemaVersion(ctx, db)
+	}
+	if gooseVersion > 0 {
+		return gooseVersion, nil
+	}
+	return legacySchemaVersion(ctx, db)
+}
+
+func isMissingTableError(err error) bool {
+	if errors.Is(err, sql.ErrNoRows) {
+		return true
+	}
+	var mysqlErr *sqlmysql.MySQLError
+	if errors.As(err, &mysqlErr) {
+		return mysqlErr.Number == 1146
+	}
+	return strings.Contains(strings.ToLower(err.Error()), "doesn't exist")
 }

@@ -476,6 +476,10 @@ CREATE TABLE IF NOT EXISTS `goose_db_version` (
   PRIMARY KEY (`id`)
 );
 
+CREATE TABLE IF NOT EXISTS `schema_version` (
+  `version` int NOT NULL
+);
+
 -- Store subscribed users for notifications.
 CREATE TABLE IF NOT EXISTS `subscriptions` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -970,3 +974,4 @@ INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (104, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (105, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (106, 1);
 INSERT INTO `goose_db_version` (`version_id`, `is_applied`) VALUES (107, 1);
+INSERT INTO `schema_version` (`version`) VALUES (107);

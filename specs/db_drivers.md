@@ -15,6 +15,8 @@ mysql examples:
 ```
 
 The MySQL `db create` and `db setup` commands install the canonical schema and
-record its baseline from the embedded migration versions. Migrate an existing
-database with `db migrate`, using the separate migration connection when it
-requires multi-statement execution.
+record its baseline (both `goose_db_version` and `schema_version`) from the
+embedded migration versions. Migrate an existing database with `db migrate`,
+using the separate migration connection when pending migrations require
+multi-statement execution; already-current databases start normally with
+`multiStatements=false`.

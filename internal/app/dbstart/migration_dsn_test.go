@@ -32,13 +32,47 @@ func TestMigrationConnectionString(t *testing.T) {
 
 func TestValidateMigrationConnection(t *testing.T) {
 	const dsn = "app:pass@tcp(127.0.0.1:3306)/goa4web?parseTime=true"
+	missingGooseTable := &sqlmysql.MySQLError{Number: 1146, Message: "Table 'goa4web.goose_db_version' doesn't exist"}
+
 	for _, tc := range []struct {
 		name     string
-		version  int
+		setup    func(sqlmock.Sqlmock)
 		wantFail bool
 	}{
-		{name: "pending migrations", version: handlers.ExpectedSchemaVersion - 1, wantFail: true},
-		{name: "already migrated", version: handlers.ExpectedSchemaVersion},
+		{
+			name: "legacy pending migrations",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT COALESCE\\(MAX\\(version_id\\), 0\\) FROM goose_db_version WHERE is_applied = 1").
+					WillReturnError(missingGooseTable)
+				mock.ExpectQuery("SELECT version FROM schema_version").
+					WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion - 1))
+			},
+			wantFail: true,
+		},
+		{
+			name: "goose pending migrations",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT COALESCE\\(MAX\\(version_id\\), 0\\) FROM goose_db_version WHERE is_applied = 1").
+					WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion - 1))
+			},
+			wantFail: true,
+		},
+		{
+			name: "goose already migrated",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT COALESCE\\(MAX\\(version_id\\), 0\\) FROM goose_db_version WHERE is_applied = 1").
+					WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion))
+			},
+		},
+		{
+			name: "legacy already migrated",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT COALESCE\\(MAX\\(version_id\\), 0\\) FROM goose_db_version WHERE is_applied = 1").
+					WillReturnError(missingGooseTable)
+				mock.ExpectQuery("SELECT version FROM schema_version").
+					WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow(handlers.ExpectedSchemaVersion))
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock, err := sqlmock.New()
@@ -46,8 +80,7 @@ func TestValidateMigrationConnection(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer func() { _ = db.Close() }()
-			mock.ExpectQuery("SELECT version FROM schema_version").WillReturnRows(
-				sqlmock.NewRows([]string{"version"}).AddRow(tc.version))
+			tc.setup(mock)
 			err = ValidateMigrationConnection(context.Background(), db, "mysql", dsn)
 			if tc.wantFail {
 				if err == nil || !strings.Contains(err.Error(), "DB_MIGRATION_CONN") {
@@ -99,6 +132,15 @@ func TestMigrationConnectionAgainstMariaDB(t *testing.T) {
 	chosenDSN := MigrationConnectionString(runtimeCfg)
 	if chosenDSN != explicitDSN || runtimeCfg.DBConn != applicationDSN {
 		t.Fatal("migration DSN selection changed the application's original DSN")
+	}
+	appDB, err := sql.Open("mysql", applicationDSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = appDB.Close() }()
+	if rows, err := appDB.Query("SELECT 1; SELECT 2"); err == nil {
+		_ = rows.Close()
+		t.Fatal("application DSN with multiStatements=false unexpectedly allowed multi-statement SQL")
 	}
 	db, err := sql.Open("mysql", chosenDSN)
 	if err != nil {

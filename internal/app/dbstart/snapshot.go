@@ -57,6 +57,13 @@ func RecordMySQLSnapshotBaseline(ctx context.Context, db *sql.DB) error {
 	if latest != expected || !applied {
 		return fmt.Errorf("imported snapshot does not record applied version %d", expected)
 	}
+	var legacy int64
+	if err := tx.QueryRowContext(ctx, "SELECT version FROM schema_version LIMIT 1 FOR UPDATE").Scan(&legacy); err != nil {
+		return fmt.Errorf("read imported schema_version: %w", err)
+	}
+	if legacy != expected {
+		return fmt.Errorf("imported snapshot does not record schema_version %d", expected)
+	}
 	if _, err := tx.ExecContext(ctx, "DELETE FROM goose_db_version"); err != nil {
 		return fmt.Errorf("replace imported version markers: %w", err)
 	}

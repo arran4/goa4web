@@ -417,6 +417,15 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Reject tracked runtime secret files
+        shell: bash
+        run: |
+          set -euo pipefail
+          tracked="$(git ls-files -- ':(glob)**/.*_secret')"
+          if [[ -n "$tracked" ]]; then
+            printf 'Generated secret files must not be tracked:\n%s\n' "$tracked" >&2
+            exit 1
+          fi
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

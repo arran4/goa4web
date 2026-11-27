@@ -103,7 +103,8 @@ fabric.properties
 /goa4web
 /goa4web.exe
 /server_bin
-/.session_secret
+# Runtime-generated development secrets, including future *_secret names.
+.*_secret
 /.bin/
 dbbackups
 /uploads/
@@ -111,15 +112,12 @@ dbbackups
 /dev-*-config.env
 /dlq
 /.idea/
-/.admin_api_secret
-/.link_sign_secret
 /*.db
 /.output.txt
 /*.log
 verification/
 verification_*.png
 a4code2html
-.share_sign_secret
 jmap.env
 /*.txt
 cmd/goa4web/cert.pem
